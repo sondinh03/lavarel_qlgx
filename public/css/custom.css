@@ -1,0 +1,14 @@
+@media only screen and (max-width: 800px) {
+	#crudTable td{
+		display: table-cell !important;
+	}
+	#crudTable th{
+		display: table-cell !important;
+	}
+	.table-responsive {
+	  overflow-x: auto;
+	}
+	#crudTable_wrapper > .row > .col-sm-12{
+		overflow-x: auto;
+	}
+}

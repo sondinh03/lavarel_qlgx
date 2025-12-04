@@ -1,0 +1,39 @@
+<!-- <IfModule mod_rewrite.c>
+    RewriteEngine On
+    RewriteCond %{REQUEST_URI} !^/public/
+    RewriteRule ^(.*)$ /public/$1 [L,QSA]
+</IfModule> -->
+
+<IfModule mod_rewrite.c>
+    <IfModule mod_negotiation.c>
+        Options -MultiViews -Indexes
+    </IfModule>
+
+    RewriteEngine On
+
+    # Buộc HTTPS (nên bật)
+    <!-- RewriteCond %{HTTPS} off
+    RewriteRule ^ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301] -->
+
+    # Xử lý Authorization header (cho API, Sanctum, Passport)
+    RewriteCond %{HTTP:Authorization} .
+    RewriteRule .* - [E=HTTP_AUTHORIZATION:%{HTTP_AUTHORIZATION}]
+
+    # Chuyển tất cả request về index.php (QUAN TRỌNG NHẤT)
+    RewriteCond %{REQUEST_FILENAME} !-d
+    RewriteCond %{REQUEST_FILENAME} !-f
+    RewriteRule ^ index.php [L]
+</IfModule>
+
+<!-- # Bảo vệ file nguy hiểm (bắt buộc)
+<Files ~ "(\.env|artisan|composer\.json|composer\.lock|\.git)">
+    Order allow,deny
+    Deny from all
+</Files>
+
+# Bảo vệ thư mục vendor, storage
+<IfModule mod_authz_core.c>
+    <Directory ~ "vendor|storage">
+        Require all denied
+    </Directory>
+</IfModule> -->

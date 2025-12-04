@@ -1,0 +1,40 @@
+{
+  "private": true,
+  "scripts": {
+    "dev": "npm run development",
+    "development": "mix",
+    "watch": "mix watch",
+    "watch-poll": "mix watch -- --watch-options-poll=1000",
+    "hot": "mix watch --hot",
+    "prod": "npm run production",
+    "production": "mix --production",
+    "manifest": "node node_modules/manifest/scripts/watch/watch.js",
+    "manifest:seed": "node node_modules/manifest/dist/manifest/src/seed/scripts/seed.js"
+  },
+  "devDependencies": {
+    "autoprefixer": "^10.4.22",
+    "axios": "^0.21",
+    "laravel-mix": "^6.0.49",
+    "laravel-mix-tailwind": "^0.1.2",
+    "lodash": "^4.17.19",
+    "postcss": "^8.5.6",
+    "resolve-url-loader": "^5.0.0",
+    "sass": "^1.86.3",
+    "sass-loader": "^12.1.0",
+    "tailwindcss": "^3.4.14",
+    "webpack-laravel-mix-manifest": "^3.1.2"
+  },
+  "dependencies": {
+    "@fancyapps/ui": "^5.0.36",
+    "alpinejs": "^3.14.9",
+    "apexcharts": "^4.7.0",
+    "bootstrap": "^5.3.5",
+    "bootstrap-icons": "^1.11.3",
+    "choices.js": "^11.1.0",
+    "jquery": "^3.7.1",
+    "js-cookie": "^3.0.5",
+    "manifest": "^4.11.5",
+    "slugify": "^1.6.0",
+    "validate.js": "^0.13.1"
+  }
+}
