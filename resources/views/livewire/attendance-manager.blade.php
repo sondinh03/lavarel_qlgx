@@ -1,7 +1,6 @@
 <div class="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-50 p-6">
     <div class="mx-auto max-w-7xl space-y-6">
-
-        {{-- ✅ BREADCRUMB ADDED với dynamic class name --}}
+        {{-- ✅ BREADCRUMB với dynamic class name --}}
         <x-breadcrumb :items="[
             [
                 'label' => 'Trang chủ', 
@@ -17,31 +16,6 @@
                 'icon' => '<svg class=\'w-4 h-4\' fill=\'none\' stroke=\'currentColor\' viewBox=\'0 0 24 24\'><path stroke-linecap=\'round\' stroke-linejoin=\'round\' stroke-width=\'2\' d=\'M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4\'/></svg>'
             ]
         ]" separator="arrow" />
-
-        {{-- Header --}}
-        <div class="flex items-center gap-4">
-            {{-- <a href="{{ route('attendance') }}"
-            class="inline-flex items-center px-4 py-2 text-sm text-slate-600 hover:bg-white rounded-lg transition"
-            aria-label="Quay lại trang danh sách điểm danh">
-            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
-            </svg>
-            Quay lại
-            </a> --}}
-            <div class="flex-1">
-                <h1 class="text-2xl font-bold text-slate-900">
-                    Điểm danh - {{ $classes->firstWhere('id', $selectedClassId)?->name ?? 'Chọn lớp' }}
-                </h1>
-                <p class="text-sm text-slate-600 mt-1">
-                    Điểm danh {{ $attendanceType == 1 ? 'đi học' : 'đi lễ' }}
-                    cho {{ count($students) }} học sinh •
-                    {{ count($sessions) }} buổi
-                    @if(isset($selectedNamHoc))
-                    • Năm học {{ $selectedNamHoc }}
-                    @endif
-                </p>
-            </div>
-        </div>
 
         {{-- Toast Notifications --}}
         @if (session()->has('message'))
@@ -79,31 +53,38 @@
         </div>
         @endif
 
-        {{-- Class Selector --}}
-        <div class="flex flex-col md:flex-row items-start md:items-center gap-4">
-            <div class="flex items-center gap-2">
-                <label for="class-selector" class="text-sm font-medium text-slate-600">Chọn lớp:</label>
-                <select id="class-selector"
-                    wire:model="selectedClassId"
-                    wire:change="changeClass($event.target.value)"
-                    class="px-4 py-2 border border-blue-200 rounded-lg bg-white text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50" wire:loading.attr="disabled" wire:target="changeClass,changeType"
-                    aria-label="Chọn lớp học để điểm danh">
-                    @foreach($classes as $class)
-                    <option value="{{ $class->id }}">{{ $class->name }}</option>
-                    @endforeach
-                </select>
+        {{-- Header Section with Filter --}}
+        <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+            {{-- Title --}}
+            <div class="p-6 border-b border-slate-200">
+                <h1 class="text-2xl font-bold text-slate-900">
+                    Điểm danh - {{ $classes->firstWhere('id', $selectedClassId)?->name ?? 'Chọn lớp' }}
+                </h1>
+                <p class="text-sm text-slate-600 mt-1">
+                    Điểm danh {{ $attendanceType == 1 ? 'đi học' : 'đi lễ' }}
+                    cho {{ count($students) }} học sinh •
+                    {{ count($sessions) }} buổi
+                </p>
+            </div>
 
-                <div wire:loading wire:target="changeClass"
-                    class="absolute right-2 top-1/2 -translate-y-1/2">
-                    <svg class="animate-spin h-4 w-4 text-blue-600" fill="none" viewBox="0 0 24 24">
-                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                    </svg>
-                </div>
+            {{-- Filter Section using ClassFilterSelector --}}
+            <div class="p-6 bg-slate-50">
+                @livewire('class-filter-selector', [
+                'parish_id' => $parish_id,
+                'showNamHoc' => true,
+                'showKhoi' => true,
+                'showLop' => true,
+                'showKy' => true,
+                'selectedNamHoc' => $selectedNamHoc ?? null,
+                'selectedKhoi' => $selectedKhoi ?? null,
+                'selectedLop' => $selectedLop ?? null,
+                'selectedLop' => $selectedKy ?? null,
+                ])
             </div>
 
             {{-- Search Box --}}
-            <div class="flex-1 max-w-md">
+            @if($selectedClassId)
+            <div class="p-6 pt-0 bg-slate-50">
                 <div class="relative">
                     <label for="student-search" class="sr-only">Tìm kiếm học sinh</label>
                     <input type="text"
@@ -145,6 +126,7 @@
                 </p>
                 @endif
             </div>
+            @endif
         </div>
 
         {{-- Main Card --}}

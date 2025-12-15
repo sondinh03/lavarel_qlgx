@@ -5,7 +5,7 @@
         <x-breadcrumb :items="[
             [
                 'label' => 'Trang chủ', 
-                'url' => route('ds-lop')
+                'url' => route('home')
             ],
             [
                 'label' => 'Quản lý lớp học',

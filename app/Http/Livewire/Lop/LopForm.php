@@ -8,7 +8,7 @@ use App\Models\NamHoc;
 use App\Models\Teacher;
 use Livewire\Component;
 
-class CreateEditClassForm extends Component
+class LopForm extends Component
 {
     public $classId;
     public $isEdit = false;
@@ -128,7 +128,7 @@ class CreateEditClassForm extends Component
 
     public function render()
     {
-        return view('livewire.lop.create-edit-class-form')
+        return view('livewire.lop.lop-form')
             ->extends('frontend.layout.main')
             ->section('content');
     }

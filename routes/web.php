@@ -51,8 +51,8 @@ use App\Http\Livewire\AttendanceManager;
 use App\Http\Livewire\Home;
 use App\Http\Livewire\Lop\CreateEditClassForm;
 use App\Http\Livewire\Lop\LopDetail;
+use App\Http\Livewire\Lop\LopForm;
 use App\Http\Livewire\Lop\LopList;
-use App\Http\Livewire\LopFilter;
 
 Paginator::useBootstrap();
 
@@ -80,10 +80,10 @@ Route::get('/dashboard', function () {
 })->middleware('auth')->name('dashboard');
 
 Route::get('/ds-lop', LopList::class)->name('ds-lop');
-Route::get('/attendance', AttendanceManager::class)->name('attendance');
-Route::get('/lop/create', CreateEditClassForm::class)->name('lop.create');
+Route::get('/lop/create', LopForm::class)->name('lop.create');
 Route::get('/lop/{id}', LopDetail::class)->name('lop.show');
-Route::get('/lop/{id}/edit', CreateEditClassForm::class)->name('lop.edit');
+Route::get('/lop/{id}/edit', LopForm::class)->name('lop.edit');
+Route::get('/attendance', AttendanceManager::class)->name('attendance');
 
 Route::get('{slug}', [SlugController::class, 'make']);
 

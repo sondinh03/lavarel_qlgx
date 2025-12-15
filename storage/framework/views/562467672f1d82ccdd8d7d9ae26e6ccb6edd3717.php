@@ -1,19 +1,18 @@
 
 
 <?php $__env->startSection('content'); ?>
-
 <?php
 if (! isset($_instance)) {
-    $html = \Livewire\Livewire::mount('pages.student.student-list', ['id' => $lopId])->html();
-} elseif ($_instance->childHasBeenRendered('ZPm3WoD')) {
-    $componentId = $_instance->getRenderedChildComponentId('ZPm3WoD');
-    $componentTag = $_instance->getRenderedChildComponentTagName('ZPm3WoD');
+    $html = \Livewire\Livewire::mount('student.student-list', ['id' => $lopId])->html();
+} elseif ($_instance->childHasBeenRendered('GG5aTab')) {
+    $componentId = $_instance->getRenderedChildComponentId('GG5aTab');
+    $componentTag = $_instance->getRenderedChildComponentTagName('GG5aTab');
     $html = \Livewire\Livewire::dummyMount($componentId, $componentTag);
-    $_instance->preserveRenderedChild('ZPm3WoD');
+    $_instance->preserveRenderedChild('GG5aTab');
 } else {
-    $response = \Livewire\Livewire::mount('pages.student.student-list', ['id' => $lopId]);
+    $response = \Livewire\Livewire::mount('student.student-list', ['id' => $lopId]);
     $html = $response->html();
-    $_instance->logRenderedChild('ZPm3WoD', $response->id(), \Livewire\Livewire::getRootElementTagName($html));
+    $_instance->logRenderedChild('GG5aTab', $response->id(), \Livewire\Livewire::getRootElementTagName($html));
 }
 echo $html;
 ?>

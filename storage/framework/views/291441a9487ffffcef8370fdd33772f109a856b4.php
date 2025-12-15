@@ -48,6 +48,10 @@
                     <a href="https://mvqlgiaoxu.org/tim-kiem" class="text-sm font-medium text-slate-600 hover:text-indigo-600 transition">
                         Kết quả học tập
                     </a>
+
+                    <a href="<?php echo e(route('attendance')); ?>" class="text-sm font-medium text-slate-600 hover:text-indigo-600 transition">
+                        Điểm danh
+                    </a>
                 </nav>
 
                 

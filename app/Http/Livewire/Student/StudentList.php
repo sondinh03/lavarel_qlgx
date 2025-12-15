@@ -1,19 +1,15 @@
 <?php
 
-namespace App\Http\Livewire;
+namespace App\Http\Livewire\Student;
 
 use App\Models\Block;
-use App\Models\Holymanagement;
-use App\Models\Lop as ModelsLop;
+use App\Models\Lop;
 use App\Models\NamHoc;
-use App\Models\Parish;
-use App\Models\Student;
 use App\Models\Teacher;
 use Livewire\Component;
 use Livewire\WithPagination;
-use SebastianBergmann\CodeUnit\FunctionUnit;
 
-class Lop extends Component
+class StudentList extends Component
 {
     use WithPagination;
 
@@ -22,7 +18,7 @@ class Lop extends Component
     public $search = '';
     public $selectedStudents = [];
     public $selectAll = false;
-    public $availableClasses = []; // Danh sách lớp có sẵn
+    public $availableClasses = []; 
 
     protected $paginationTheme = 'tailwind';
 
@@ -59,7 +55,7 @@ class Lop extends Component
     // Helper để tái sử dụng query
     private function getCurrentStudentsQuery()
     {
-        return ModelsLop::findOrFail($this->lopId)
+        return Lop::findOrFail($this->lopId)
             ->students()
             ->wherePivot('status', 1)
             ->when($this->search, function ($q) {
@@ -75,7 +71,7 @@ class Lop extends Component
 
     public function render()
     {
-        $lop = ModelsLop::findOrFail($this->lopId);
+        $lop = Lop::findOrFail($this->lopId);
         $lop->slug = url(slug($lop) . config('app.url_prefix', ''));
 
         if ($lop->block) {
@@ -147,10 +143,6 @@ class Lop extends Component
             $student->thugioithieu = url(slug($student) . config('app.url_prefix', '') . '/thugioithieu=' . $student->id);
             $student->edit = config('app.url') . '/admin/student/' . $student->id . '/edit';
 
-            // $student->holy = Holymanagement::find($student->holy)?->name ?? '';
-            // $student->schoolyear = NamHoc::find($student->schoolyear)?->name ?? '';
-            // $student->paid = Parish::find($student->paid)?->name ?? '';
-
             $student->holy = $student->holyRelation->name ?? '';
             $student->paid = $student->paidRelation->name ?? '';
 
@@ -161,7 +153,7 @@ class Lop extends Component
             return $student;
         });
 
-        return view('livewire.lop', [
+        return view('livewire.student.student-list', [
             'lop' => $lop,
             'students' => $students,
             'total' => $total,

@@ -1,6 +1,5 @@
 <div class="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-50 p-6">
     <div class="mx-auto max-w-7xl space-y-6">
-
         
         <?php if (isset($component)) { $__componentOriginalc254754b9d5db91d5165876f9d051922ca0066f4 = $component; } ?>
 <?php $component = $__env->getContainer()->make(Illuminate\View\AnonymousComponent::class, ['view' => 'components.breadcrumb','data' => ['items' => [
@@ -44,27 +43,6 @@
 <?php endif; ?>
 
         
-        <div class="flex items-center gap-4">
-            
-            <div class="flex-1">
-                <h1 class="text-2xl font-bold text-slate-900">
-                    Điểm danh - <?php echo e($classes->firstWhere('id', $selectedClassId)?->name ?? 'Chọn lớp'); ?>
-
-                </h1>
-                <p class="text-sm text-slate-600 mt-1">
-                    Điểm danh <?php echo e($attendanceType == 1 ? 'đi học' : 'đi lễ'); ?>
-
-                    cho <?php echo e(count($students)); ?> học sinh •
-                    <?php echo e(count($sessions)); ?> buổi
-                    <?php if(isset($selectedNamHoc)): ?>
-                    • Năm học <?php echo e($selectedNamHoc); ?>
-
-                    <?php endif; ?>
-                </p>
-            </div>
-        </div>
-
-        
         <?php if(session()->has('message')): ?>
         <div x-data="{ show: true }"
             x-show="show"
@@ -101,30 +79,63 @@
         <?php endif; ?>
 
         
-        <div class="flex flex-col md:flex-row items-start md:items-center gap-4">
-            <div class="flex items-center gap-2">
-                <label for="class-selector" class="text-sm font-medium text-slate-600">Chọn lớp:</label>
-                <select id="class-selector"
-                    wire:model="selectedClassId"
-                    wire:change="changeClass($event.target.value)"
-                    class="px-4 py-2 border border-blue-200 rounded-lg bg-white text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50" wire:loading.attr="disabled" wire:target="changeClass,changeType"
-                    aria-label="Chọn lớp học để điểm danh">
-                    <?php $__currentLoopData = $classes; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $class): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
-                    <option value="<?php echo e($class->id); ?>"><?php echo e($class->name); ?></option>
-                    <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
-                </select>
+        <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+            
+            <div class="p-6 border-b border-slate-200">
+                <h1 class="text-2xl font-bold text-slate-900">
+                    Điểm danh - <?php echo e($classes->firstWhere('id', $selectedClassId)?->name ?? 'Chọn lớp'); ?>
 
-                <div wire:loading wire:target="changeClass"
-                    class="absolute right-2 top-1/2 -translate-y-1/2">
-                    <svg class="animate-spin h-4 w-4 text-blue-600" fill="none" viewBox="0 0 24 24">
-                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                    </svg>
-                </div>
+                </h1>
+                <p class="text-sm text-slate-600 mt-1">
+                    Điểm danh <?php echo e($attendanceType == 1 ? 'đi học' : 'đi lễ'); ?>
+
+                    cho <?php echo e(count($students)); ?> học sinh •
+                    <?php echo e(count($sessions)); ?> buổi
+                </p>
             </div>
 
             
-            <div class="flex-1 max-w-md">
+            <div class="p-6 bg-slate-50">
+                <?php
+if (! isset($_instance)) {
+    $html = \Livewire\Livewire::mount('class-filter-selector', [
+                'parish_id' => $parish_id,
+                'showNamHoc' => true,
+                'showKhoi' => true,
+                'showLop' => true,
+                'showKy' => true,
+                'selectedNamHoc' => $selectedNamHoc ?? null,
+                'selectedKhoi' => $selectedKhoi ?? null,
+                'selectedLop' => $selectedLop ?? null,
+                'selectedLop' => $selectedKy ?? null,
+                ])->html();
+} elseif ($_instance->childHasBeenRendered('l342222745-0')) {
+    $componentId = $_instance->getRenderedChildComponentId('l342222745-0');
+    $componentTag = $_instance->getRenderedChildComponentTagName('l342222745-0');
+    $html = \Livewire\Livewire::dummyMount($componentId, $componentTag);
+    $_instance->preserveRenderedChild('l342222745-0');
+} else {
+    $response = \Livewire\Livewire::mount('class-filter-selector', [
+                'parish_id' => $parish_id,
+                'showNamHoc' => true,
+                'showKhoi' => true,
+                'showLop' => true,
+                'showKy' => true,
+                'selectedNamHoc' => $selectedNamHoc ?? null,
+                'selectedKhoi' => $selectedKhoi ?? null,
+                'selectedLop' => $selectedLop ?? null,
+                'selectedLop' => $selectedKy ?? null,
+                ]);
+    $html = $response->html();
+    $_instance->logRenderedChild('l342222745-0', $response->id(), \Livewire\Livewire::getRootElementTagName($html));
+}
+echo $html;
+?>
+            </div>
+
+            
+            <?php if($selectedClassId): ?>
+            <div class="p-6 pt-0 bg-slate-50">
                 <div class="relative">
                     <label for="student-search" class="sr-only">Tìm kiếm học sinh</label>
                     <input type="text"
@@ -166,6 +177,7 @@
                 </p>
                 <?php endif; ?>
             </div>
+            <?php endif; ?>
         </div>
 
         

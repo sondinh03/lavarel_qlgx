@@ -6,7 +6,7 @@
         <x-breadcrumb :items="[
             [
                 'label' => 'Trang chủ', 
-                'url' => route('ds-lop')
+                'url' => route('home')
             ],
             [
                 'label' => 'Quản lý lớp học',
@@ -46,13 +46,27 @@
                 :count="$selectedNamHoc && $lops ? $lops->total() : null"
                 count-label="Tổng số lớp" />
 
+            @if($parish_id && $selectedNamHoc)
+            <div class="flex-shrink-0">
+                <a href="{{ route('lop.create') }}"
+                    class="inline-flex items-center gap-2 bg-purple-600 text-white px-5 py-2.5 rounded-xl font-semibold hover:bg-purple-700 active:scale-95 transition-all shadow-lg hover:shadow-xl"
+                    aria-label="Thêm lớp học mới">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                    </svg>
+                    <span class="hidden sm:inline">Thêm lớp học</span>
+                    <span class="sm:hidden">Thêm</span>
+                </a>
+            </div>
+            @endif
+
             {{-- Filter Section: use shared ClassFilterSelector (hide lớp select here) --}}
             <div class="p-6 bg-slate-50">
                 @livewire('class-filter-selector', [
-                    'parish_id' => $parish_id,
-                    'selectedNamHoc' => $selectedNamHoc,
-                    'selectedKhoi' => $selectedKhoi,
-                    'showLop' => false,
+                'parish_id' => $parish_id,
+                'selectedNamHoc' => $selectedNamHoc,
+                'selectedKhoi' => $selectedKhoi,
+                'showLop' => false,
                 ])
 
                 {{-- keep inline loading indicator for page-level targets --}}
@@ -84,7 +98,7 @@
                     </thead>
                     <tbody class="divide-y divide-slate-100">
                         @forelse($lops as $index => $lop)
-                            <x-lop.row :lop="$lop" :index="$index" :paginator="$lops" />
+                        <x-lop.row :lop="$lop" :index="$index" :paginator="$lops" />
 
                         @empty
                         <x-empty-state

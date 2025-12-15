@@ -454,4 +454,4 @@
 <?php $__env->startPush('scripts'); ?>
 <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
 <?php $__env->stopPush(); ?>
-<?php /**PATH D:\Document\WORKING\lavarel_qlgx\resources\views/livewire/pages/student/student-list.blade.php ENDPATH**/ ?>
+<?php /**PATH D:\Document\WORKING\lavarel_qlgx\resources\views/livewire/student/student-list.blade.php ENDPATH**/ ?>
