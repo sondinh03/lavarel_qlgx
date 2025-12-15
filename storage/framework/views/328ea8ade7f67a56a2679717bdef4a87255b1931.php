@@ -2,6 +2,46 @@
     <div class="mx-auto max-w-7xl space-y-5">
 
         
+        <?php if (isset($component)) { $__componentOriginalc254754b9d5db91d5165876f9d051922ca0066f4 = $component; } ?>
+<?php $component = $__env->getContainer()->make(Illuminate\View\AnonymousComponent::class, ['view' => 'components.breadcrumb','data' => ['items' => [
+            [
+                'label' => 'Trang chủ', 
+                'url' => route('ds-lop')
+            ],
+            [
+                'label' => 'Quản lý lớp học',
+                'url' => route('ds-lop'),
+                'icon' => '<svg class=\'w-4 h-4\' fill=\'none\' stroke=\'currentColor\' viewBox=\'0 0 24 24\'><path stroke-linecap=\'round\' stroke-linejoin=\'round\' stroke-width=\'2\' d=\'M3 7a2 2 0 012-2h4l2 2h8a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V7z\'/></svg>'
+            ],
+            [
+                'label' => $lop->name ?? 'Chi tiết lớp'
+            ]
+        ],'separator' => 'arrow']]); ?>
+<?php $component->withName('breadcrumb'); ?>
+<?php if ($component->shouldRender()): ?>
+<?php $__env->startComponent($component->resolveView(), $component->data()); ?>
+<?php $component->withAttributes(['items' => \Illuminate\View\Compilers\BladeCompiler::sanitizeComponentAttribute([
+            [
+                'label' => 'Trang chủ', 
+                'url' => route('ds-lop')
+            ],
+            [
+                'label' => 'Quản lý lớp học',
+                'url' => route('ds-lop'),
+                'icon' => '<svg class=\'w-4 h-4\' fill=\'none\' stroke=\'currentColor\' viewBox=\'0 0 24 24\'><path stroke-linecap=\'round\' stroke-linejoin=\'round\' stroke-width=\'2\' d=\'M3 7a2 2 0 012-2h4l2 2h8a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V7z\'/></svg>'
+            ],
+            [
+                'label' => $lop->name ?? 'Chi tiết lớp'
+            ]
+        ]),'separator' => 'arrow']); ?>
+<?php echo $__env->renderComponent(); ?>
+<?php endif; ?>
+<?php if (isset($__componentOriginalc254754b9d5db91d5165876f9d051922ca0066f4)): ?>
+<?php $component = $__componentOriginalc254754b9d5db91d5165876f9d051922ca0066f4; ?>
+<?php unset($__componentOriginalc254754b9d5db91d5165876f9d051922ca0066f4); ?>
+<?php endif; ?>
+
+        
         <?php if(session()->has('message')): ?>
         <?php if (isset($component)) { $__componentOriginalc254754b9d5db91d5165876f9d051922ca0066f4 = $component; } ?>
 <?php $component = $__env->getContainer()->make(Illuminate\View\AnonymousComponent::class, ['view' => 'components.toast-notification','data' => ['type' => 'success']]); ?>
@@ -349,14 +389,15 @@
                                     </a>
 
                                     
-                                    <div class="relative inline-block" x-data="{ open: false }">
-                                        <button @click="open = !open" type="button" class="p-2 hover:bg-slate-100 rounded-lg active:scale-95 transition-all" title="Thêm">
+                                    <div class="relative" x-data="{ open: false, menuStyle: {}, toggleMenu(){ this.open = !this.open; if(this.open){ this.$nextTick(()=>{ const btn = this.$refs.toggle; const menu = this.$refs.menu; const rect = btn.getBoundingClientRect(); // ensure menu is visible to measure
+                                                        menu.style.display = 'block'; const menuH = menu.offsetHeight || 220; const menuW = menu.offsetWidth || 220; const spaceBelow = window.innerHeight - rect.bottom; const spaceAbove = rect.top; let top = rect.bottom; if(spaceBelow < menuH && spaceAbove > menuH){ top = rect.top - menuH; } let left = rect.right - menuW; if(left < 8) left = rect.left; this.menuStyle = { position: 'fixed', top: top + 'px', left: left + 'px', zIndex: 9999, minWidth: menuW + 'px' }; }); } }, closeMenu(){ this.open = false; this.menuStyle = {}; } }">
+                                        <button @click="toggleMenu()" x-ref="toggle" type="button" class="p-2 hover:bg-slate-100 rounded-lg active:scale-95 transition-all" title="Thêm" aria-haspopup="true" :aria-expanded="open">
                                             <svg class="w-4 h-4 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z" />
                                             </svg>
                                         </button>
 
-                                        <div x-show="open" @click.outside="open = false" x-transition class="absolute right-0 top-full mt-2 w-48 bg-white rounded-xl border border-slate-200 shadow-lg z-20 overflow-hidden">
+                                        <div x-ref="menu" x-show="open" @click.outside="closeMenu()" x-transition x-cloak :style="menuStyle" class="hidden bg-white rounded-xl border border-slate-200 shadow-lg overflow-hidden">
                                             <button type="button" class="w-full px-4 py-3 text-left hover:bg-slate-50 transition-colors flex items-center gap-3 border-b border-slate-100">
                                                 <svg class="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v1m6 11h2m-6 4v1m-6-4H5m3.5-7.5L12 3l3.5 3.5M12 21l-3.5-3.5L12 14l3.5 3.5L12 21z" />
@@ -378,7 +419,7 @@
                                                 <span class="text-sm font-medium text-slate-900">Kết quả</span>
                                             </button>
 
-                                            <a href="<?php echo e($hocsinh->thugioithieu ?? '#'); ?>" class="w-full px-4 py-3 text-left hover:bg-slate-50 transition-colors flex items-center gap-3 border-b border-slate-100 block">
+                                            <a href="<?php echo e($hocsinh->thugioithieu ?? '#'); ?>" class="w-full px-4 py-3 text-left hover:bg-slate-50 transition-colors flex items-center gap-3 border-b border-slate-100">
                                                 <svg class="w-4 h-4 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                                                 </svg>

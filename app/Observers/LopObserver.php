@@ -6,6 +6,7 @@ use App\Models\Lop;
 use App\Models\Slug;
 use Cocur\Slugify\Slugify;
 use App\Http\Controllers\LopController;
+use Illuminate\Support\Facades\Cache;
 
 class LopObserver
 {
@@ -15,67 +16,42 @@ class LopObserver
     {
         $this->slugify = new Slugify();
     }
-    
+
     /**
-     * Handle the Lop "created" event.
-     *
-     * @param  \App\Models\Lop  $lop
-     * @return void
-     */
-    public function created(Lop $lop)
-    {
-        //
-    }
-    
-    /**
-     * Handle the Lop "saved" event.
-     *
-     * @param  \App\Models\Lop  $lop
-     * @return void
+     * Handle the Lop "saved" event: create/update slug and invalidate cache version.
      */
     public function saved(Lop $lop)
     {
-        
-        if(!empty($lop->id)){
-            if(!empty($_POST['start_date_one']) AND !empty($_POST['end_date_one']) AND !empty($_POST['start_date_two']) AND !empty($_POST['end_date_two'])){
-                $update_time = Lop::where('id', $lop->id)->update([
-                    'start_date_one'    => $_POST['start_date_one'],
-                    'end_date_one'      => $_POST['end_date_one'],
-                    'start_date_two'    => $_POST['start_date_two'],
-                    'end_date_two'      => $_POST['end_date_two'],
-                ]);
-            }
+        // generate base slug from model name
+        $slugBase = $this->slugify->slugify($lop->name ?: 'lop-' . $lop->id);
+
+        // ensure uniqueness
+        $slugCandidate = $slugBase;
+        $existing = Slug::where('keyword', $slugCandidate)->first();
+        if ($existing && $existing->sluggable_id != $lop->id) {
+            $slugCandidate = $slugBase . '-' . $lop->id;
         }
-        
-        if(!empty($_POST['slug'])){
-            $sluglink = $_POST['slug'];
-        }else{
-            $sluglink = $this->slugify->slugify(request()->slug ?? $lop->name);
-        }
-        
-        $slug = Slug::where('keyword', '=' , $sluglink)->get()->first();
-        if(!empty($slug)){
-            if($slug->sluggable_id != $lop->id){
-                $slugmoi = $sluglink . '-' . $lop->id;
-                $checkslug = Slug::where('keyword', '=' , $slugmoi)->where('sluggable_id', $lop->id)->get()->first();
-                if(empty($checkslug)){
-                    Slug::create([
-                        'keyword' => $slugmoi,
-                        'controller' => LopController::class,
-                        'model' => Lop::class,
-                        'sluggable_id' => $lop->id
-                    ]);
-                }
+
+        // update existing slug for this lop or create
+        $current = $lop->slug()->first();
+        if ($current) {
+            if ($current->keyword !== $slugCandidate) {
+                $current->keyword = $slugCandidate;
+                $current->controller = LopController::class;
+                $current->model = Lop::class;
+                $current->save();
             }
-        }else{
+        } else {
             Slug::create([
-                'keyword' => $sluglink,
+                'keyword' => $slugCandidate,
                 'controller' => LopController::class,
                 'model' => Lop::class,
                 'sluggable_id' => $lop->id
             ]);
         }
-        
+
+        // Invalidate cached lists for this schoolyear
+        $this->incrementVersion($lop->schoolyear);
     }
 
     /**
@@ -105,7 +81,22 @@ class LopObserver
      */
     public function deleted(Lop $lop)
     {
-        //
+        $this->incrementVersion($lop->schoolyear);
+    }
+
+    protected function incrementVersion($namhocId): void
+    {
+        if (empty($namhocId)) return;
+        $key = "lops:version:namhoc:{$namhocId}";
+        try {
+            if (Cache::has($key)) {
+                Cache::increment($key);
+            } else {
+                Cache::forever($key, 2);
+            }
+        } catch (\Exception $e) {
+            Cache::forever($key, 1);
+        }
     }
 
     /**

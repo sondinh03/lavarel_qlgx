@@ -4,10 +4,13 @@ namespace App\Http\Livewire\Lop;
 
 use App\Models\Decen;
 use App\Models\SetAdmin;
+use App\Services\LopService;
 use App\Traits\FilterTrait;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Validation\ValidationException;
 use Livewire\Component;
 use Livewire\WithPagination;
+use Illuminate\Pagination\LengthAwarePaginator;
 
 class LopList extends Component
 {
@@ -24,6 +27,16 @@ class LopList extends Component
 
     public $search = '';
     public $perPage = 15;
+    protected $perPageOptions = [10, 15, 25, 50];
+
+    /**
+     * Validation rules for Livewire props
+     */
+    protected $rules = [
+        'selectedNamHoc' => 'nullable|integer|exists:nam_hoc,id',
+        'selectedKhoi' => 'nullable|integer',
+        'perPage' => 'required|integer|in:10,15,25,50',
+    ];
 
     protected $paginationTheme = 'tailwind';
 
@@ -40,12 +53,24 @@ class LopList extends Component
     /**
      * Listeners cho Livewire events
      */
-    protected $listeners = ['refreshLops' => 'loadLops'];
+    protected $listeners = [
+        'refreshLops' => 'loadLops',
+        'filtersChanged' => 'handleFiltersChanged',
+    ];
 
     public function mount()
     {
         $this->initializeUser();
         $this->loadInitialData();
+        $this->sanitizeQueryString();
+        try {
+            $this->validate();
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            // If validation fails for incoming query string values, reset to safe defaults
+            $this->selectedNamHoc = $this->selectedNamHoc ?: null;
+            $this->selectedKhoi = '';
+            $this->perPage = 15;
+        }
     }
 
     /**
@@ -61,6 +86,13 @@ class LopList extends Component
      */
     public function updatedPerPage()
     {
+        // sanitize incoming perPage value
+        $this->perPage = is_numeric($this->perPage) ? (int) $this->perPage : 15;
+        if (!in_array($this->perPage, $this->perPageOptions)) {
+            $this->perPage = 15;
+        }
+
+        $this->validateOnly('perPage');
         $this->resetPage();
     }
 
@@ -72,7 +104,9 @@ class LopList extends Component
         $user = backpack_user();
 
         if (!$user) {
-            return;
+            if (!$user) {
+                abort(403, 'Vui lòng đăng nhập');
+            }
         }
 
         $userId = $user->id;
@@ -104,7 +138,7 @@ class LopList extends Component
         if (!$this->parish_id) {
             $this->namHocs = [];
             $this->khois = [];
-            $this->lops = collect();
+            $this->lops_ = collect();
             return;
         }
 
@@ -126,6 +160,16 @@ class LopList extends Component
      */
     public function updatedSelectedNamHoc(): void
     {
+        // sanitize and validate selectedNamHoc
+        $this->selectedNamHoc = is_numeric($this->selectedNamHoc) ? (int) $this->selectedNamHoc : null;
+        try {
+            $this->validateOnly('selectedNamHoc');
+        } catch (ValidationException $e) {
+            // if invalid (e.g. id doesn't exist), reset to null and notify
+            $this->selectedNamHoc = null;
+            session()->flash('warning', 'Năm học không hợp lệ, đã đặt lại lựa chọn.');
+        }
+
         $this->selectedKhoi = '';
         $this->khois = [];
         $this->search = '';
@@ -139,7 +183,41 @@ class LopList extends Component
      */
     public function updatedSelectedKhoi(): void
     {
+        // allow empty string meaning "all"; otherwise cast to int
+        if ($this->selectedKhoi === '' || $this->selectedKhoi === null) {
+            $this->selectedKhoi = '';
+        } else {
+            $this->selectedKhoi = is_numeric($this->selectedKhoi) ? (int) $this->selectedKhoi : '';
+        }
+
+        $this->validateOnly('selectedKhoi');
         $this->resetPage();
+    }
+
+    /**
+     * Clean and coerce query string inputs to safe types
+     */
+    private function sanitizeQueryString(): void
+    {
+        // selectedNamHoc: null or int
+        if ($this->selectedNamHoc === '' || $this->selectedNamHoc === null) {
+            $this->selectedNamHoc = $this->selectedNamHoc ?: null;
+        } else {
+            $this->selectedNamHoc = is_numeric($this->selectedNamHoc) ? (int) $this->selectedNamHoc : null;
+        }
+
+        // selectedKhoi: '' or int
+        if ($this->selectedKhoi === '' || $this->selectedKhoi === null) {
+            $this->selectedKhoi = '';
+        } else {
+            $this->selectedKhoi = is_numeric($this->selectedKhoi) ? (int) $this->selectedKhoi : '';
+        }
+
+        // perPage: ensure allowed value
+        $this->perPage = is_numeric($this->perPage) ? (int) $this->perPage : 15;
+        if (!in_array($this->perPage, $this->perPageOptions)) {
+            $this->perPage = 15;
+        }
     }
 
     public function loadKhois()
@@ -152,37 +230,19 @@ class LopList extends Component
         $this->khois = $this->getKhois($this->selectedNamHoc);
     }
 
-    // public function loadLops(): void
-    // {
-    //     if (!$this->selectedNamHoc) {
-    //         $this->lops = collect();
-    //         return;
-    //     }
+    /**
+     * Handle filters emitted by ClassFilterSelector
+     */
+    public function handleFiltersChanged($filters)
+    {
+        // Expecting ['namHoc' => id, 'khoi' => id, 'lop' => id, 'ky' => id]
+        $this->selectedNamHoc = $filters['namHoc'] ?? $this->selectedNamHoc;
+        $this->selectedKhoi = $filters['khoi'] ?? $this->selectedKhoi;
 
-    //     try {
-    //         $this->lops = $this->getLopsDetailed(
-    //             $this->selectedNamHoc,
-    //             $this->selectedKhoi
-    //         );
-
-    //         session()->flash('message', 'Đã tải ' . $this->lops->count() . ' lớp học');
-
-    //         // $this->lops->transform(function ($lop) {
-    //         //     $lop->slug_url = $this->generateSlugUrl($lop);
-    //         //     return $lop;
-    //         // });
-    //     } catch (\Exception $e) {
-    //         Log::error('LopList: Error loading lops', [
-    //             'namhoc_id' => $this->selectedNamHoc,
-    //             'khoi_id' => $this->selectedKhoi,
-    //             'error' => $e->getMessage(),
-    //             'trace' => $e->getTraceAsString()
-    //         ]);
-
-    //         $this->lops = collect();
-    //         session()->flash('error', 'Có lỗi xảy ra khi tải danh sách lớp. Vui lòng thử lại.');
-    //     }
-    // }
+        // clear search & reset pagination when filters change
+        $this->search = '';
+        $this->resetPage();
+    }
 
     public function resetFilters()
     {
@@ -204,75 +264,24 @@ class LopList extends Component
 
     public function render()
     {
-
-        // dd(
-        //     $this->selectedNamHoc,
-        //     $this->selectedKhoi,
-        //     $this->search,
-        //     $this->parish_id,
-        //     $this->isAdmin,
-        //     $this->lops ?? 'lops = NULL TRƯỚC KHI XỬ LÝ',
-        //     '--- SAU KHI XỬ LÝ SẼ THÊM DƯỚI ---'
-        // );
-
-        $lops_ = collect();
+        // Ensure $lops_ is always a paginator to avoid calling paginator methods on plain collections
+        $lops_ = new LengthAwarePaginator([], 0, $this->perPage, 1);
 
         if ($this->selectedNamHoc) {
-            $query = $this->getLopsDetailedQuery($this->selectedNamHoc, $this->selectedKhoi);
-
-            if ($this->search) {
-                $query->where(function ($q) {
-                    $q->where('name', 'like', "%{$this->search}%")
-                        ->orWhere('symbol', 'like', "%{$this->search}%");
-                });
+            // Use LopService to fetch paginated, transformed lops (expected to return a LengthAwarePaginator)
+            $lops_ = app(LopService::class)->paginateLops(
+                $this->selectedNamHoc,
+                $this->selectedKhoi,
+                $this->perPage,
+                $this->search,
+                $this->page ?? 1
+            );
+            // If service returns a collection for some reason, wrap it into a paginator
+            if (! $lops_ instanceof LengthAwarePaginator) {
+                $items = is_countable($lops_) ? (array) $lops_ : [];
+                $total = count($items);
+                $lops_ = new LengthAwarePaginator($items, $total, $this->perPage, $this->page ?? 1);
             }
-
-            // ĐÚNG KIỂU: LengthAwarePaginator
-            $lops_ = $query->paginate($this->perPage);
-
-            $lops_->getCollection()->transform(function ($lop) {
-                $lop->slug_url = $lop->slug?->slug
-                    ? url($lop->slug->slug . config('settings.url_prefix', ''))
-                    : route('lop.show', $lop->id);
-
-                // ===== TRẢ VỀ MẢNG TÊN GIÁO VIÊN NGAY TẠI ĐÂY =====
-                $teacherIds = $lop->teacher;
-
-                // Chuẩn hóa teacherIds thành mảng số nguyên (xử lý mọi trường hợp bẩn)
-                if (empty($teacherIds) || in_array($teacherIds, ['', '[]', 'null', null], true)) {
-                    $teacherIds = [];
-                } elseif (is_string($teacherIds)) {
-                    $decoded = json_decode($teacherIds, true);
-                    $teacherIds = (json_last_error() === JSON_ERROR_NONE && is_array($decoded))
-                        ? $decoded
-                        : preg_split('/[\[\]\s,"\']+/', $teacherIds, -1, PREG_SPLIT_NO_EMPTY);
-                } elseif (is_numeric($teacherIds)) {
-                    $teacherIds = [(int)$teacherIds];
-                } elseif (!is_array($teacherIds)) {
-                    $teacherIds = [];
-                }
-
-                $teacherIds = array_values(array_unique(array_map('intval', array_filter($teacherIds, 'is_numeric'))));
-
-                // Lấy tên giáo viên (chỉ active, giữ đúng thứ tự)
-                if (!empty($teacherIds)) {
-                    $teacherNames = \App\Models\Teacher::whereIn('id', $teacherIds)
-                        ->where('status', 1)
-                        ->orderByRaw('FIELD(id, ' . implode(',', $teacherIds) . ')')
-                        ->pluck('name')
-                        ->toArray();
-                } else {
-                    $teacherNames = [];
-                }
-
-                // TRẢ VỀ MẢNG TÊN + SỐ LƯỢNG – DỄ DÙNG TRONG BLADE
-                $lop->teacher_names      = $teacherNames;                    // mảng tên
-                $lop->teacher_names_list = implode(', ', $teacherNames);     // chuỗi nối
-                $lop->teacher_count      = count($teacherNames);             // số lượng
-                $lop->has_teacher        = $lop->teacher_count > 0;          // boolean tiện dùng
-
-                return $lop;
-            });
         }
 
         return view('livewire.lop.lop-list', [
@@ -281,42 +290,4 @@ class LopList extends Component
             ->extends('frontend.layout.main')
             ->section('content');
     }
-
-    /**
-     * ✅ Trả về Query Builder, KHÔNG phải Collection
-     */
-    private function getLopsDetailedQuery($namHocId, $khoiId = null)
-    {
-        $query = \App\Models\Lop::query()
-            ->where('schoolyear', $namHocId)
-            ->where('status', 1)
-            ->with(['blockRelation', 'slug'])
-            ->withCount('students');
-
-        if (!empty($khoiId)) {
-            $query->where('block', $khoiId);
-        }
-
-        return $query->orderBy('name', 'asc');
-    }
-
-    // private function generateSlugUrl($lop): string
-    // {
-    //     try {
-    //         if ($lop->relationLoaded('slug') && $lop->slug && !empty($lop->slug->keyword)) {
-    //             $keyword = $lop->slug->keyword;
-    //             $extension = config('settings.url_prefix', '.html');
-    //             return url($keyword . $extension);
-    //         }
-
-    //         return route('lop.show', $lop->id);
-    //     } catch (\Exception $e) {
-    //         Log::warning('LopList: Error generating slug URL', [
-    //             'lop_id' => $lop->id,
-    //             'error' => $e->getMessage()
-    //         ]);
-
-    //         return route('lop.show', $lop->id ?? '#');
-    //     }
-    // }
 }

@@ -1,36 +1,57 @@
 <div class="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 p-4 sm:p-6">
-    <div class="mx-auto max-w-7xl space-y-5">
-        
-        {{-- Toast Notifications --}}
-        @if (session()->has('message'))
-        <x-toast-notification type="success" :duration="3000">
-            {{ session('message') }}
-        </x-toast-notification>
-        @endif
+    <a href="#lop-detail-main" class="sr-only focus:not-sr-only">Bỏ qua tới nội dung</a>
+    <div id="lop-detail-main" class="mx-auto max-w-7xl space-y-5">
 
-        @if (session()->has('error'))
-        <x-toast-notification type="error" :duration="4000">
-            {{ session('error') }}
-        </x-toast-notification>
-        @endif
+        {{-- ✅ BREADCRUMB ADDED --}}
+        <x-breadcrumb :items="[
+            [
+                'label' => 'Trang chủ',
+                'url' => route('ds-lop')
+            ],
+            [
+                'label' => 'Quản lý lớp học',
+                'url' => route('ds-lop'),
+                'icon' => '<svg class=\'w-4 h-4\' fill=\'none\' stroke=\'currentColor\' viewBox=\'0 0 24 24\'><path stroke-linecap=\'round\' stroke-linejoin=\'round\' stroke-width=\'2\' d=\'M3 7a2 2 0 012-2h4l2 2h8a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V7z\'/></svg>'
+            ],
+            [
+                'label' => $lopData['name'],
+            ]
+        ]" separator="arrow" />
 
-        {{-- Back Button --}}
-        <div>
-            <a href="{{ route('ds-lop') }}" 
-               class="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-slate-700 bg-white border border-slate-200 rounded-xl hover:bg-slate-50 active:scale-95 transition-all shadow-sm">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-                </svg>
-                Quay lại danh sách
-            </a>
+        {{-- Toast Notifications (live region + standardized durations) --}}
+        <div role="status" aria-live="polite" aria-atomic="true">
+            @if (session()->has('message'))
+            <x-toast-notification type="success" :duration="3500">
+                {{ session('message') }}
+            </x-toast-notification>
+            @endif
+
+            @if (session()->has('error'))
+            <x-toast-notification type="error" :duration="3500">
+                {{ session('error') }}
+            </x-toast-notification>
+            @endif
+        </div>
+
+        {{-- Inline class selector to switch class without leaving page --}}
+        <div class="p-3">
+            @livewire('class-filter-selector', [
+                'parish_id' => $parishId,
+                'showNamHoc' => true,
+                'showKhoi' => true,
+                'showLop' => true,
+                'selectedNamHoc' => $namHoc->id ?? null,
+                'selectedKhoi' => $block->id ?? null,
+                'selectedLop' => $lopData['id'] ?? null,
+            ])
         </div>
 
         {{-- Class Info Card --}}
         <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
             {{-- Header --}}
             <x-page-header
-                :title="$lop->name"
-                :description="$lop->symbol ? 'Mã lớp: ' . $lop->symbol : ''"
+                :title="$lopData['name']"
+                :description="$lopData['symbol'] ? 'Mã lớp: ' . $lopData['symbol'] : ''"
                 icon="class"
                 gradient="purple"
                 :count="$statistics['total']"
@@ -74,6 +95,7 @@
             </div>
 
             {{-- Teachers Section - Compact --}}
+
             @if($teachers && $teachers->count() > 0)
             <div class="p-4 border-b border-slate-200">
                 <h3 class="text-sm font-bold text-slate-900 mb-3 flex items-center gap-2">
@@ -84,20 +106,8 @@
                     <span class="text-xs font-normal text-slate-600">({{ $teachers->count() }})</span>
                 </h3>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-2">
-                    @foreach($teachers as $index => $teacher)
-                    <div class="flex items-center gap-2 p-2 bg-slate-50 rounded-lg border border-slate-200">
-                        <div class="w-8 h-8 {{ $index === 0 ? 'bg-purple-500' : 'bg-slate-400' }} rounded-full flex items-center justify-center flex-shrink-0">
-                            <span class="text-white font-semibold text-xs">
-                                {{ mb_substr($teacher->name, 0, 2) }}
-                            </span>
-                        </div>
-                        <div class="flex-1 min-w-0">
-                            <p class="font-medium text-slate-900 text-sm truncate">{{ $teacher->name }}</p>
-                            @if($index === 0)
-                            <span class="text-xs text-purple-600 font-medium">Chủ nhiệm</span>
-                            @endif
-                        </div>
-                    </div>
+                    @foreach($teachers as $teacher)
+                        <x-teacher.badge :name="$teacher['name']" :isChuNhiem="$teacher['is_chu_nhiem']" />
                     @endforeach
                 </div>
             </div>
@@ -113,7 +123,7 @@
             @endif
 
             {{-- Schedule Section - Compact --}}
-            @if($lop->start_date_one || $lop->end_date_one || $lop->start_date_two || $lop->end_date_two)
+            @if($lopData['start_date_one'] || $lopData['end_date_one'] || $lopData['start_date_two'] || $lopData['end_date_two'])
             <div class="p-4 border-b border-slate-200">
                 <h3 class="text-sm font-bold text-slate-900 mb-3 flex items-center gap-2">
                     <svg class="w-4 h-4 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -122,22 +132,22 @@
                     Lịch học
                 </h3>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-2">
-                    @if($lop->start_date_one && $lop->end_date_one)
+                    @if($lopData['start_date_one'] && $lopData['end_date_one'])
                     <div class="flex items-center justify-between p-2 bg-slate-50 rounded-lg border border-slate-200">
                         <span class="text-xs font-semibold text-slate-700">Học kỳ 1</span>
                         <span class="text-xs text-slate-600 font-medium">
-                            {{ \Carbon\Carbon::parse($lop->start_date_one)->format('d/m/Y') }} - 
-                            {{ \Carbon\Carbon::parse($lop->end_date_one)->format('d/m/Y') }}
+                            {{ \Carbon\Carbon::parse($lopData['start_date_one'])->format('d/m/Y') }} -
+                            {{ \Carbon\Carbon::parse($lopData['end_date_one'])->format('d/m/Y') }}
                         </span>
                     </div>
                     @endif
-                    
-                    @if($lop->start_date_two && $lop->end_date_two)
+
+                    @if($lopData['start_date_two'] && $lopData['end_date_two'])
                     <div class="flex items-center justify-between p-2 bg-slate-50 rounded-lg border border-slate-200">
                         <span class="text-xs font-semibold text-slate-700">Học kỳ 2</span>
                         <span class="text-xs text-slate-600 font-medium">
-                            {{ \Carbon\Carbon::parse($lop->start_date_two)->format('d/m/Y') }} - 
-                            {{ \Carbon\Carbon::parse($lop->end_date_two)->format('d/m/Y') }}
+                            {{ \Carbon\Carbon::parse($lopData['start_date_two'])->format('d/m/Y') }} -
+                            {{ \Carbon\Carbon::parse($lopData['end_date_two'])->format('d/m/Y') }}
                         </span>
                     </div>
                     @endif
@@ -146,7 +156,7 @@
             @endif
 
             {{-- Note Section - Compact --}}
-            @if($lop->note)
+            @if($lopData['note'])
             <div class="p-4 border-b border-slate-200">
                 <h3 class="text-sm font-bold text-slate-900 mb-2 flex items-center gap-2">
                     <svg class="w-4 h-4 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -154,14 +164,14 @@
                     </svg>
                     Ghi chú
                 </h3>
-                <p class="text-slate-700 text-sm leading-relaxed">{{ $lop->note }}</p>
+                <p class="text-slate-700 text-sm leading-relaxed">{{ $lopData['note'] }}</p>
             </div>
             @endif
 
             {{-- Quick Action - Single Link --}}
             <div class="p-4 bg-white">
-                <a href="{{ $slugUrl }}" 
-                   class="flex items-center justify-center gap-2 w-full px-4 py-3 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-xl hover:from-blue-600 hover:to-blue-700 active:scale-[0.98] transition-all shadow-sm font-semibold">
+                <a href="{{ $slugUrl }}"
+                    class="flex items-center justify-center gap-2 w-full px-4 py-3 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-xl hover:from-blue-600 hover:to-blue-700 active:scale-[0.98] transition-all shadow-sm font-semibold">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
                     </svg>

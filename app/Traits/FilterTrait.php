@@ -124,12 +124,6 @@ trait FilterTrait
             ]);
             return collect();
         }
-
-        // return Lop::where('status', 1)
-        //     ->where('schoolyear', $namhoc_id)
-        //     ->when($khoi_id, fn($query) => $query->where('block', $khoi_id))
-        //     ->orderBy('name')
-        //     ->pluck('name', 'id');
     }
 
     /**

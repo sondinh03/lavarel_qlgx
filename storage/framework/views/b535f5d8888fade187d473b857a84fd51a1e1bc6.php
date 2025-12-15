@@ -1,61 +1,128 @@
 <div class="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 p-4 sm:p-6">
-    <div class="mx-auto max-w-7xl space-y-5">
+    <a href="#lop-detail-main" class="sr-only focus:not-sr-only">Bỏ qua tới nội dung</a>
+    <div id="lop-detail-main" class="mx-auto max-w-7xl space-y-5">
+
         
-        
-        <?php if(session()->has('message')): ?>
         <?php if (isset($component)) { $__componentOriginalc254754b9d5db91d5165876f9d051922ca0066f4 = $component; } ?>
-<?php $component = $__env->getContainer()->make(Illuminate\View\AnonymousComponent::class, ['view' => 'components.toast-notification','data' => ['type' => 'success','duration' => 3000]]); ?>
-<?php $component->withName('toast-notification'); ?>
+<?php $component = $__env->getContainer()->make(Illuminate\View\AnonymousComponent::class, ['view' => 'components.breadcrumb','data' => ['items' => [
+            [
+                'label' => 'Trang chủ',
+                'url' => route('ds-lop')
+            ],
+            [
+                'label' => 'Quản lý lớp học',
+                'url' => route('ds-lop'),
+                'icon' => '<svg class=\'w-4 h-4\' fill=\'none\' stroke=\'currentColor\' viewBox=\'0 0 24 24\'><path stroke-linecap=\'round\' stroke-linejoin=\'round\' stroke-width=\'2\' d=\'M3 7a2 2 0 012-2h4l2 2h8a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V7z\'/></svg>'
+            ],
+            [
+                'label' => $lopData['name'],
+            ]
+        ],'separator' => 'arrow']]); ?>
+<?php $component->withName('breadcrumb'); ?>
 <?php if ($component->shouldRender()): ?>
 <?php $__env->startComponent($component->resolveView(), $component->data()); ?>
-<?php $component->withAttributes(['type' => 'success','duration' => 3000]); ?>
-            <?php echo e(session('message')); ?>
-
-         <?php echo $__env->renderComponent(); ?>
+<?php $component->withAttributes(['items' => \Illuminate\View\Compilers\BladeCompiler::sanitizeComponentAttribute([
+            [
+                'label' => 'Trang chủ',
+                'url' => route('ds-lop')
+            ],
+            [
+                'label' => 'Quản lý lớp học',
+                'url' => route('ds-lop'),
+                'icon' => '<svg class=\'w-4 h-4\' fill=\'none\' stroke=\'currentColor\' viewBox=\'0 0 24 24\'><path stroke-linecap=\'round\' stroke-linejoin=\'round\' stroke-width=\'2\' d=\'M3 7a2 2 0 012-2h4l2 2h8a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V7z\'/></svg>'
+            ],
+            [
+                'label' => $lopData['name'],
+            ]
+        ]),'separator' => 'arrow']); ?>
+<?php echo $__env->renderComponent(); ?>
 <?php endif; ?>
 <?php if (isset($__componentOriginalc254754b9d5db91d5165876f9d051922ca0066f4)): ?>
 <?php $component = $__componentOriginalc254754b9d5db91d5165876f9d051922ca0066f4; ?>
 <?php unset($__componentOriginalc254754b9d5db91d5165876f9d051922ca0066f4); ?>
 <?php endif; ?>
-        <?php endif; ?>
 
-        <?php if(session()->has('error')): ?>
-        <?php if (isset($component)) { $__componentOriginalc254754b9d5db91d5165876f9d051922ca0066f4 = $component; } ?>
-<?php $component = $__env->getContainer()->make(Illuminate\View\AnonymousComponent::class, ['view' => 'components.toast-notification','data' => ['type' => 'error','duration' => 4000]]); ?>
+        
+        <div role="status" aria-live="polite" aria-atomic="true">
+            <?php if(session()->has('message')): ?>
+            <?php if (isset($component)) { $__componentOriginalc254754b9d5db91d5165876f9d051922ca0066f4 = $component; } ?>
+<?php $component = $__env->getContainer()->make(Illuminate\View\AnonymousComponent::class, ['view' => 'components.toast-notification','data' => ['type' => 'success','duration' => 3500]]); ?>
 <?php $component->withName('toast-notification'); ?>
 <?php if ($component->shouldRender()): ?>
 <?php $__env->startComponent($component->resolveView(), $component->data()); ?>
-<?php $component->withAttributes(['type' => 'error','duration' => 4000]); ?>
-            <?php echo e(session('error')); ?>
+<?php $component->withAttributes(['type' => 'success','duration' => 3500]); ?>
+                <?php echo e(session('message')); ?>
 
-         <?php echo $__env->renderComponent(); ?>
+             <?php echo $__env->renderComponent(); ?>
 <?php endif; ?>
 <?php if (isset($__componentOriginalc254754b9d5db91d5165876f9d051922ca0066f4)): ?>
 <?php $component = $__componentOriginalc254754b9d5db91d5165876f9d051922ca0066f4; ?>
 <?php unset($__componentOriginalc254754b9d5db91d5165876f9d051922ca0066f4); ?>
 <?php endif; ?>
-        <?php endif; ?>
+            <?php endif; ?>
+
+            <?php if(session()->has('error')): ?>
+            <?php if (isset($component)) { $__componentOriginalc254754b9d5db91d5165876f9d051922ca0066f4 = $component; } ?>
+<?php $component = $__env->getContainer()->make(Illuminate\View\AnonymousComponent::class, ['view' => 'components.toast-notification','data' => ['type' => 'error','duration' => 3500]]); ?>
+<?php $component->withName('toast-notification'); ?>
+<?php if ($component->shouldRender()): ?>
+<?php $__env->startComponent($component->resolveView(), $component->data()); ?>
+<?php $component->withAttributes(['type' => 'error','duration' => 3500]); ?>
+                <?php echo e(session('error')); ?>
+
+             <?php echo $__env->renderComponent(); ?>
+<?php endif; ?>
+<?php if (isset($__componentOriginalc254754b9d5db91d5165876f9d051922ca0066f4)): ?>
+<?php $component = $__componentOriginalc254754b9d5db91d5165876f9d051922ca0066f4; ?>
+<?php unset($__componentOriginalc254754b9d5db91d5165876f9d051922ca0066f4); ?>
+<?php endif; ?>
+            <?php endif; ?>
+        </div>
 
         
-        <div>
-            <a href="<?php echo e(route('ds-lop')); ?>" 
-               class="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-slate-700 bg-white border border-slate-200 rounded-xl hover:bg-slate-50 active:scale-95 transition-all shadow-sm">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-                </svg>
-                Quay lại danh sách
-            </a>
+        <div class="p-3">
+            <?php
+if (! isset($_instance)) {
+    $html = \Livewire\Livewire::mount('class-filter-selector', [
+                'parish_id' => $parishId,
+                'showNamHoc' => true,
+                'showKhoi' => true,
+                'showLop' => true,
+                'selectedNamHoc' => $namHoc->id ?? null,
+                'selectedKhoi' => $block->id ?? null,
+                'selectedLop' => $lopData['id'] ?? null,
+            ])->html();
+} elseif ($_instance->childHasBeenRendered('l1889278489-0')) {
+    $componentId = $_instance->getRenderedChildComponentId('l1889278489-0');
+    $componentTag = $_instance->getRenderedChildComponentTagName('l1889278489-0');
+    $html = \Livewire\Livewire::dummyMount($componentId, $componentTag);
+    $_instance->preserveRenderedChild('l1889278489-0');
+} else {
+    $response = \Livewire\Livewire::mount('class-filter-selector', [
+                'parish_id' => $parishId,
+                'showNamHoc' => true,
+                'showKhoi' => true,
+                'showLop' => true,
+                'selectedNamHoc' => $namHoc->id ?? null,
+                'selectedKhoi' => $block->id ?? null,
+                'selectedLop' => $lopData['id'] ?? null,
+            ]);
+    $html = $response->html();
+    $_instance->logRenderedChild('l1889278489-0', $response->id(), \Livewire\Livewire::getRootElementTagName($html));
+}
+echo $html;
+?>
         </div>
 
         
         <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
             
             <?php if (isset($component)) { $__componentOriginalc254754b9d5db91d5165876f9d051922ca0066f4 = $component; } ?>
-<?php $component = $__env->getContainer()->make(Illuminate\View\AnonymousComponent::class, ['view' => 'components.page-header','data' => ['title' => $lop->name,'description' => $lop->symbol ? 'Mã lớp: ' . $lop->symbol : '','icon' => 'class','gradient' => 'purple','count' => $statistics['total'],'countLabel' => 'Tổng sĩ số']]); ?>
+<?php $component = $__env->getContainer()->make(Illuminate\View\AnonymousComponent::class, ['view' => 'components.page-header','data' => ['title' => $lopData['name'],'description' => $lopData['symbol'] ? 'Mã lớp: ' . $lopData['symbol'] : '','icon' => 'class','gradient' => 'purple','count' => $statistics['total'],'countLabel' => 'Tổng sĩ số']]); ?>
 <?php $component->withName('page-header'); ?>
 <?php if ($component->shouldRender()): ?>
 <?php $__env->startComponent($component->resolveView(), $component->data()); ?>
-<?php $component->withAttributes(['title' => \Illuminate\View\Compilers\BladeCompiler::sanitizeComponentAttribute($lop->name),'description' => \Illuminate\View\Compilers\BladeCompiler::sanitizeComponentAttribute($lop->symbol ? 'Mã lớp: ' . $lop->symbol : ''),'icon' => 'class','gradient' => 'purple','count' => \Illuminate\View\Compilers\BladeCompiler::sanitizeComponentAttribute($statistics['total']),'count-label' => 'Tổng sĩ số']); ?>
+<?php $component->withAttributes(['title' => \Illuminate\View\Compilers\BladeCompiler::sanitizeComponentAttribute($lopData['name']),'description' => \Illuminate\View\Compilers\BladeCompiler::sanitizeComponentAttribute($lopData['symbol'] ? 'Mã lớp: ' . $lopData['symbol'] : ''),'icon' => 'class','gradient' => 'purple','count' => \Illuminate\View\Compilers\BladeCompiler::sanitizeComponentAttribute($statistics['total']),'count-label' => 'Tổng sĩ số']); ?>
 <?php echo $__env->renderComponent(); ?>
 <?php endif; ?>
 <?php if (isset($__componentOriginalc254754b9d5db91d5165876f9d051922ca0066f4)): ?>
@@ -101,6 +168,7 @@
             </div>
 
             
+
             <?php if($teachers && $teachers->count() > 0): ?>
             <div class="p-4 border-b border-slate-200">
                 <h3 class="text-sm font-bold text-slate-900 mb-3 flex items-center gap-2">
@@ -111,21 +179,19 @@
                     <span class="text-xs font-normal text-slate-600">(<?php echo e($teachers->count()); ?>)</span>
                 </h3>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-2">
-                    <?php $__currentLoopData = $teachers; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $index => $teacher): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
-                    <div class="flex items-center gap-2 p-2 bg-slate-50 rounded-lg border border-slate-200">
-                        <div class="w-8 h-8 <?php echo e($index === 0 ? 'bg-purple-500' : 'bg-slate-400'); ?> rounded-full flex items-center justify-center flex-shrink-0">
-                            <span class="text-white font-semibold text-xs">
-                                <?php echo e(mb_substr($teacher->name, 0, 2)); ?>
-
-                            </span>
-                        </div>
-                        <div class="flex-1 min-w-0">
-                            <p class="font-medium text-slate-900 text-sm truncate"><?php echo e($teacher->name); ?></p>
-                            <?php if($index === 0): ?>
-                            <span class="text-xs text-purple-600 font-medium">Chủ nhiệm</span>
-                            <?php endif; ?>
-                        </div>
-                    </div>
+                    <?php $__currentLoopData = $teachers; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $teacher): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                        <?php if (isset($component)) { $__componentOriginalc254754b9d5db91d5165876f9d051922ca0066f4 = $component; } ?>
+<?php $component = $__env->getContainer()->make(Illuminate\View\AnonymousComponent::class, ['view' => 'components.teacher.badge','data' => ['name' => $teacher['name'],'isChuNhiem' => $teacher['is_chu_nhiem']]]); ?>
+<?php $component->withName('teacher.badge'); ?>
+<?php if ($component->shouldRender()): ?>
+<?php $__env->startComponent($component->resolveView(), $component->data()); ?>
+<?php $component->withAttributes(['name' => \Illuminate\View\Compilers\BladeCompiler::sanitizeComponentAttribute($teacher['name']),'isChuNhiem' => \Illuminate\View\Compilers\BladeCompiler::sanitizeComponentAttribute($teacher['is_chu_nhiem'])]); ?>
+<?php echo $__env->renderComponent(); ?>
+<?php endif; ?>
+<?php if (isset($__componentOriginalc254754b9d5db91d5165876f9d051922ca0066f4)): ?>
+<?php $component = $__componentOriginalc254754b9d5db91d5165876f9d051922ca0066f4; ?>
+<?php unset($__componentOriginalc254754b9d5db91d5165876f9d051922ca0066f4); ?>
+<?php endif; ?>
                     <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                 </div>
             </div>
@@ -141,7 +207,7 @@
             <?php endif; ?>
 
             
-            <?php if($lop->start_date_one || $lop->end_date_one || $lop->start_date_two || $lop->end_date_two): ?>
+            <?php if($lopData['start_date_one'] || $lopData['end_date_one'] || $lopData['start_date_two'] || $lopData['end_date_two']): ?>
             <div class="p-4 border-b border-slate-200">
                 <h3 class="text-sm font-bold text-slate-900 mb-3 flex items-center gap-2">
                     <svg class="w-4 h-4 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -150,23 +216,23 @@
                     Lịch học
                 </h3>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-2">
-                    <?php if($lop->start_date_one && $lop->end_date_one): ?>
+                    <?php if($lopData['start_date_one'] && $lopData['end_date_one']): ?>
                     <div class="flex items-center justify-between p-2 bg-slate-50 rounded-lg border border-slate-200">
                         <span class="text-xs font-semibold text-slate-700">Học kỳ 1</span>
                         <span class="text-xs text-slate-600 font-medium">
-                            <?php echo e(\Carbon\Carbon::parse($lop->start_date_one)->format('d/m/Y')); ?> - 
-                            <?php echo e(\Carbon\Carbon::parse($lop->end_date_one)->format('d/m/Y')); ?>
+                            <?php echo e(\Carbon\Carbon::parse($lopData['start_date_one'])->format('d/m/Y')); ?> -
+                            <?php echo e(\Carbon\Carbon::parse($lopData['end_date_one'])->format('d/m/Y')); ?>
 
                         </span>
                     </div>
                     <?php endif; ?>
-                    
-                    <?php if($lop->start_date_two && $lop->end_date_two): ?>
+
+                    <?php if($lopData['start_date_two'] && $lopData['end_date_two']): ?>
                     <div class="flex items-center justify-between p-2 bg-slate-50 rounded-lg border border-slate-200">
                         <span class="text-xs font-semibold text-slate-700">Học kỳ 2</span>
                         <span class="text-xs text-slate-600 font-medium">
-                            <?php echo e(\Carbon\Carbon::parse($lop->start_date_two)->format('d/m/Y')); ?> - 
-                            <?php echo e(\Carbon\Carbon::parse($lop->end_date_two)->format('d/m/Y')); ?>
+                            <?php echo e(\Carbon\Carbon::parse($lopData['start_date_two'])->format('d/m/Y')); ?> -
+                            <?php echo e(\Carbon\Carbon::parse($lopData['end_date_two'])->format('d/m/Y')); ?>
 
                         </span>
                     </div>
@@ -176,7 +242,7 @@
             <?php endif; ?>
 
             
-            <?php if($lop->note): ?>
+            <?php if($lopData['note']): ?>
             <div class="p-4 border-b border-slate-200">
                 <h3 class="text-sm font-bold text-slate-900 mb-2 flex items-center gap-2">
                     <svg class="w-4 h-4 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -184,14 +250,14 @@
                     </svg>
                     Ghi chú
                 </h3>
-                <p class="text-slate-700 text-sm leading-relaxed"><?php echo e($lop->note); ?></p>
+                <p class="text-slate-700 text-sm leading-relaxed"><?php echo e($lopData['note']); ?></p>
             </div>
             <?php endif; ?>
 
             
             <div class="p-4 bg-white">
-                <a href="<?php echo e($slugUrl); ?>" 
-                   class="flex items-center justify-center gap-2 w-full px-4 py-3 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-xl hover:from-blue-600 hover:to-blue-700 active:scale-[0.98] transition-all shadow-sm font-semibold">
+                <a href="<?php echo e($slugUrl); ?>"
+                    class="flex items-center justify-center gap-2 w-full px-4 py-3 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-xl hover:from-blue-600 hover:to-blue-700 active:scale-[0.98] transition-all shadow-sm font-semibold">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
                     </svg>

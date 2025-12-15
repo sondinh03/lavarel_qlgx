@@ -8,8 +8,6 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-datepicker/1.9.0/js/bootstrap-datepicker.min.js"></script>    
 
 
-
-
 <!-- {{-- FOOTER --}}
 <footer class="bg-white/95 backdrop-blur-sm border-t border-gray-200 py-6 text-center text-sm text-gray-600">
 	<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">

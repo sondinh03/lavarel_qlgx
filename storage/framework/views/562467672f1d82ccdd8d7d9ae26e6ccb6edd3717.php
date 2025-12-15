@@ -1,18 +1,19 @@
 
 
 <?php $__env->startSection('content'); ?>
+
 <?php
 if (! isset($_instance)) {
-    $html = \Livewire\Livewire::mount('lop', ['id' => $lopId])->html();
-} elseif ($_instance->childHasBeenRendered('LovjLDf')) {
-    $componentId = $_instance->getRenderedChildComponentId('LovjLDf');
-    $componentTag = $_instance->getRenderedChildComponentTagName('LovjLDf');
+    $html = \Livewire\Livewire::mount('pages.student.student-list', ['id' => $lopId])->html();
+} elseif ($_instance->childHasBeenRendered('ZPm3WoD')) {
+    $componentId = $_instance->getRenderedChildComponentId('ZPm3WoD');
+    $componentTag = $_instance->getRenderedChildComponentTagName('ZPm3WoD');
     $html = \Livewire\Livewire::dummyMount($componentId, $componentTag);
-    $_instance->preserveRenderedChild('LovjLDf');
+    $_instance->preserveRenderedChild('ZPm3WoD');
 } else {
-    $response = \Livewire\Livewire::mount('lop', ['id' => $lopId]);
+    $response = \Livewire\Livewire::mount('pages.student.student-list', ['id' => $lopId]);
     $html = $response->html();
-    $_instance->logRenderedChild('LovjLDf', $response->id(), \Livewire\Livewire::getRootElementTagName($html));
+    $_instance->logRenderedChild('ZPm3WoD', $response->id(), \Livewire\Livewire::getRootElementTagName($html));
 }
 echo $html;
 ?>

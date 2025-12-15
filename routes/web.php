@@ -16,7 +16,6 @@ use App\Models\Page;
 use App\Http\Controllers\PageController;
 use App\Http\Controllers\GiaDinhController;
 use App\Http\Controllers\GiaoPhanController;
-//use App\Http\Controllers\GiaoDanController;
 use App\Http\Controllers\UsersImportController;
 use App\Http\Controllers\UsersExportController;
 use App\Http\Controllers\FamilyController;
@@ -48,6 +47,9 @@ use App\Http\Controllers\LopImportController;
 use App\Http\Controllers\TeacherImportController;
 use App\Http\Controllers\KetQuaExportController;
 use App\Http\Controllers\HonPhoiExportController;
+use App\Http\Livewire\AttendanceManager;
+use App\Http\Livewire\Home;
+use App\Http\Livewire\Lop\CreateEditClassForm;
 use App\Http\Livewire\Lop\LopDetail;
 use App\Http\Livewire\Lop\LopList;
 use App\Http\Livewire\LopFilter;
@@ -72,10 +74,16 @@ Route::get('/', function () {
 */
 Auth::routes();
 
-Route::get('/', [HomeController::class, 'index']);
+Route::get('/', Home::class)->name('home');
+Route::get('/dashboard', function () {
+    return view('frontend.dashboard');
+})->middleware('auth')->name('dashboard');
 
 Route::get('/ds-lop', LopList::class)->name('ds-lop');
+Route::get('/attendance', AttendanceManager::class)->name('attendance');
+Route::get('/lop/create', CreateEditClassForm::class)->name('lop.create');
 Route::get('/lop/{id}', LopDetail::class)->name('lop.show');
+Route::get('/lop/{id}/edit', CreateEditClassForm::class)->name('lop.edit');
 
 Route::get('{slug}', [SlugController::class, 'make']);
 

@@ -54,9 +54,79 @@ class Lop extends Model
         return $this->morphOne(Slug::class, 'sluggable', 'model');
     }
 
+    // public function teachers()
+    // {
+    //     return Teacher::whereIn('id', $this->teacher ?? [])->get();
+    // }
+
+    public function classTeachers()
+    {
+        return $this->hasMany(ClassTeacher::class, 'class_id');
+    }
+
+    public function getTeacherNamesAttribute()
+    {
+        $names = [];
+
+        if ($this->relationLoaded('classTeachers')) {
+            $classTeachers = $this->classTeachers;
+        } else {
+            $classTeachers = $this->classTeachers()->where('status', 1)->with('teacher')->get();
+        }
+
+        foreach ($classTeachers as $ct) {
+            if ($ct->teacher && $ct->teacher->status == 1) {
+                $name = $ct->teacher->name;
+                if ($ct->role == ClassTeacher::ROLE_CHU_NHIEM) {
+                    $names[] = $name . ' (CN)';
+                } else {
+                    $names[] = $name;
+                }
+            }
+        }
+
+        return $names;
+    }
+
+    public function getTeacherCountAttribute()
+    {
+        return count($this->teacher_names ?? []);
+    }
+
+    public function getHasTeacherAttribute()
+    {
+        return $this->teacher_count > 0;
+    }
+
+    public function getChuNhiemNameAttribute()
+    {
+        if ($this->relationLoaded('classTeachers')) {
+            $classTeachers = $this->classTeachers;
+        } else {
+            $classTeachers = $this->classTeachers()->where('status', 1)->with('teacher')->get();
+        }
+
+        foreach ($classTeachers as $ct) {
+            if ($ct->role == ClassTeacher::ROLE_CHU_NHIEM && $ct->teacher && $ct->teacher->status == 1) {
+                return $ct->teacher->name;
+            }
+        }
+
+        return null;
+    }
+
     public function teachers()
     {
-        return Teacher::whereIn('id', $this->teacher ?? [])->get();
+        return $this->belongsToMany(Teacher::class, 'class_teachers', 'class_id', 'teacher_id')
+            ->withPivot('namhoc_id', 'role', 'status')
+            ->withTimestamps();
+    }
+
+    public function chuNhiem()
+    {
+        return $this->hasOne(ClassTeacher::class, 'class_id')
+            ->where('role', ClassTeacher::ROLE_CHU_NHIEM)
+            ->where('status', 1);
     }
 
     public function getTeachersAttribute()

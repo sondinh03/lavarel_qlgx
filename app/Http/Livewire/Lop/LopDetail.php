@@ -2,107 +2,94 @@
 
 namespace App\Http\Livewire\Lop;
 
+use App\Models\ClassTeacher;
 use App\Models\Lop;
-use App\Models\NamHoc;
-use App\Models\Teacher;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Cache;
 use Livewire\Component;
-use Livewire\WithPagination;
 
 class LopDetail extends Component
 {
-    public $lopId;
-    public $lop;
+    public ?int $lopId = null;
+    protected ?Lop $lopModel = null;
+    public $lopData = [];
     public $teachers = [];
     public $block;
     public $namHoc;
     public $statistics = [];
+    protected $listeners = ['filtersChanged' => 'handleFiltersChanged'];
 
     public function mount($id)
     {
         $this->lopId = $id;
         $this->loadLopDetails();
+        if (!$this->lopModel) {
+            $this->redirectRoute('lop.index');
+            return;
+        }
+
         $this->loadStatistics();
     }
-
-    // private function loadLopDetails()
-    // {
-    //     try {
-    //         $this->lop = Lop::with(['blockRelation', 'schoolYear', 'slug'])
-    //             ->withCount('students')
-    //             ->findOrFail($this->lopId);
-
-    //         // Load teachers
-    //         $teacherIds = $this->lop->teacher;
-
-    //         if (empty($teacherIds) || in_array($teacherIds, ['', '[]', 'null', null], true)) {
-    //             $teacherIds = [];
-    //         } elseif (is_string($teacherIds)) {
-    //             $decoded = json_decode($teacherIds, true);
-    //             $teacherIds = (json_last_error() === JSON_ERROR_NONE && is_array($decoded))
-    //                 ? $decoded
-    //                 : preg_split('/[\[\]\s,"\']+/', $teacherIds, -1, PREG_SPLIT_NO_EMPTY);
-    //         } elseif (is_numeric($teacherIds)) {
-    //             $teacherIds = [(int)$teacherIds];
-    //         } elseif (!is_array($teacherIds)) {
-    //             $teacherIds = [];
-    //         }
-
-    //         $teacherIds = array_values(array_unique(array_map('intval', array_filter($teacherIds, 'is_numeric'))));
-
-    //         if (!empty($teacherIds)) {
-    //             $this->teachers = Teacher::whereIn('id', $teacherIds)
-    //                 ->where('status', 1)
-    //                 ->orderByRaw('FIELD(id, ' . implode(',', $teacherIds) . ')')
-    //                 ->get();
-    //         }
-
-    //         $this->block = $this->lop->blockRelation;
-    //         $this->namHoc = $this->lop->schoolYear;
-    //     } catch (\Exception $e) {
-    //         Log::error('LopDetail: Error loading class details', [
-    //             'lop_id' => $this->lopId,
-    //             'error' => $e->getMessage()
-    //         ]);
-
-    //         session()->flash('error', 'Không tìm thấy lớp học này.');
-    //         return redirect()->route('lop.index');
-    //     }
-    // }
 
     private function loadLopDetails()
     {
         try {
-            $this->lop = Lop::with(['blockRelation', 'schoolYear', 'slug'])
+            $this->lopModel = Lop::with([
+                'blockRelation',
+                'schoolYear',
+                'slug',
+                // Load teachers via classTeachers
+                'classTeachers' => function ($q) {
+                    $q->where('status', 1)
+                        ->with('teacher')
+                        ->orderBy('role', 'asc');
+                }
+            ])
                 ->withCount('students')
                 ->findOrFail($this->lopId);
 
-            // === PHẦN QUAN TRỌNG NHẤT: LẤY DANH SÁCH GIÁO VIÊN AN TOÀN ===
-            $teacherIds = $this->lop->teacher ?? []; // nhờ $casts => luôn là array hoặc null
+            $teachersData = [];
 
-            // Đảm bảo chỉ lấy số nguyên, loại bỏ rác
-            $teacherIds = array_unique(
-                array_filter(
-                    array_map('intval', $teacherIds),
-                    'is_numeric'
-                )
-            );
+            if ($this->lopModel->relationLoaded('classTeachers') && $this->lopModel->classTeachers->isNotEmpty()) {
+                $schoolYearId = $this->lopModel->schoolYear?->id ?? null;
+                foreach ($this->lopModel->classTeachers as $ct) {
+                    // filter by school year if available, and ensure teacher exists and is active
+                    if ($ct->teacher && $ct->teacher->status == 1 && (is_null($schoolYearId) || $ct->namhoc_id == $schoolYearId)) {
+                        $teacher = $ct->teacher;
+                        $isChuNhiem = ($ct->role == ClassTeacher::ROLE_CHU_NHIEM);
 
-            if (!empty($teacherIds)) {
-                $this->teachers = Teacher::whereIn('id', $teacherIds)
-                    ->where('status', 1)
-                    // Cách viết orderByRaw AN TOÀN 100% với placeholder ?
-                    ->orderByRaw(
-                        'FIELD(id, ' . implode(',', array_fill(0, count($teacherIds), '?')) . ')',
-                        $teacherIds
-                    )
-                    ->get();
-            } else {
-                $this->teachers = collect(); // collection rỗng
+                        $teachersData[] = [
+                            'id' => $teacher->id,
+                            'name' => $teacher->name,
+                            'birthday' => $teacher->birthday,
+                            'phone' => $teacher->phone,
+                            'is_chu_nhiem' => $isChuNhiem
+                        ];
+                    }
+                }
             }
 
-            $this->block   = $this->lop->blockRelation;
-            $this->namHoc  = $this->lop->schoolYear;
+            $this->teachers = collect($teachersData);
+            $this->block = $this->lopModel->blockRelation;
+            $this->namHoc = $this->lopModel->schoolYear;
+
+            // expose minimal public data to avoid serializing full model
+            $this->lopData = [
+                'id' => $this->lopModel->id,
+                'name' => $this->lopModel->name ?? null,
+                'symbol' => $this->lopModel->symbol ?? null,
+                'students_count' => (int) ($this->lopModel->students_count ?? 0),
+                'slug' => $this->lopModel->slug?->keyword ?? null,
+                'start_date_one' => $this->lopModel->start_date_one ?? null,
+                'end_date_one' => $this->lopModel->end_date_one ?? null,
+                'start_date_two' => $this->lopModel->start_date_two ?? null,
+                'end_date_two' => $this->lopModel->end_date_two ?? null,
+                'note' => $this->lopModel->note ?? null,
+            ];
+        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+            session()->flash('error', 'Không tìm thấy lớp học này.');
+            Log::warning('LopDetail: class not found', ['lop_id' => $this->lopId]);
+            $this->lopModel = null;
         } catch (\Exception $e) {
             Log::error('LopDetail: Error loading class details', [
                 'lop_id' => $this->lopId,
@@ -110,47 +97,67 @@ class LopDetail extends Component
                 'trace'  => $e->getTraceAsString(),
             ]);
 
-            session()->flash('error', 'Không tìm thấy lớp học này.');
-            // return redirect()->route('lop.index');
+            session()->flash('error', 'Có lỗi trong lúc tải thông tin lớp.');
         }
     }
 
     private function loadStatistics()
     {
-        $stats = $this->lop->students()
-            ->selectRaw('
-            COUNT(*) as total,
-            SUM(sex = 1) as male,
-            SUM(sex = 0) as female
-        ')
-            ->wherePivot('status', 1)
-            ->withoutGlobalScopes() // optional
-            ->getQuery()            // LẤY QUERY GỐC KHÔNG LẤY PIVOT COLUMNS
-            ->first();
+        if (!$this->lopModel) {
+            $this->statistics = ['total' => 0, 'male' => 0, 'female' => 0];
+            return;
+        }
+        $schoolYearId = $this->lopModel->schoolYear?->id ?? 'none';
+        $key = "class_stats:{$this->lopModel->id}:{$schoolYearId}";
+        $ttlSeconds = 300; // cache 5 minutes
 
-        $this->statistics = [
-            'total'  => $stats->total,
-            'male'   => $stats->male,
-            'female' => $stats->female,
-        ];
+        $this->statistics = Cache::remember($key, $ttlSeconds, function () {
+            $res = $this->lopModel->students()
+                ->wherePivot('status', 1)
+                ->withoutGlobalScopes()
+                ->selectRaw("COUNT(*) as total, SUM(CASE WHEN sex = 1 THEN 1 ELSE 0 END) as male, SUM(CASE WHEN sex = 0 THEN 1 ELSE 0 END) as female")
+                ->getQuery()
+                ->first();
+
+            return [
+                'total'  => (int) ($res->total ?? 0),
+                'male'   => (int) ($res->male ?? 0),
+                'female' => (int) ($res->female ?? 0),
+            ];
+        });
     }
-
 
     public function render()
     {
-        if (!$this->lop) {
-            return redirect()->route('lop.index');
-        }
+        // Generate slug URL (use minimal public data when possible)
+        $slugKeyword = $this->lopModel->slug?->keyword ?? $this->lopData['slug'] ?? null;
+        $slugUrl = $slugKeyword
+            ? url($slugKeyword . config('settings.url_prefix', ''))
+            : route('lop.show', $this->lopModel->id);
 
-        // Generate slug URL
-        $slugUrl = $this->lop->slug?->keyword
-            ? url($this->lop->slug->keyword . config('settings.url_prefix', ''))
-            : route('lop.show', $this->lop->id);
+        // determine parish id (DB uses `pid`); prefer `pid` then fallbacks
+        $parishId = $this->lopModel->pid  ?? null;
+        $parishId = is_null($parishId) ? null : (int) $parishId;
 
         return view('livewire.lop.lop-detail', [
             'slugUrl' => $slugUrl,
+            'parishId' => $parishId,
         ])
             ->extends('frontend.layout.main')
             ->section('content');
+    }
+
+    public function handleFiltersChanged($filters)
+    {
+        if (!is_array($filters)) {
+            return;
+        }
+
+        $lopId = $filters['lop'] ?? null;
+        if ($lopId && (int)$lopId !== (int)$this->lopId) {
+            $this->lopId = (int) $lopId;
+            $this->loadLopDetails();
+            $this->loadStatistics();
+        }
     }
 }

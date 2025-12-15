@@ -29,6 +29,7 @@ class Student extends Model
     // protected $dates = [];
 
     //protected $appends = ['lop'];
+    protected $appends = ['holy_name'];
 
     /*
     |--------------------------------------------------------------------------
@@ -64,6 +65,11 @@ class Student extends Model
     public function getBirthdayAttribute($value)
     {
         return $value ? \Carbon\Carbon::parse($value)->format('d-m-Y') : '-';
+    }
+
+    public function getHolyNameAttribute()
+    {
+        return $this->holyRelation->name ?? null;
     }
 
     public function holyRelation()
