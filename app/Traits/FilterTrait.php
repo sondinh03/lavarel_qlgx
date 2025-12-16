@@ -16,6 +16,7 @@ trait FilterTrait
      */
     private int $cacheTTL = 3600;
 
+
     /**
      * Lấy danh sách năm học theo giáo xứ
      * 

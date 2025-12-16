@@ -124,8 +124,13 @@ class ClassFilterSelector extends Component
         }
 
         // Use FilterTrait::getLops to get cached, consistent list
-        $lops = $this->getLops((int) $this->selectedNamHoc, $this->selectedKhoi);
-        $this->lops = is_object($lops) ? $lops->toArray() : (array) $lops;
+        // $lops = $this->getLops((int) $this->selectedNamHoc, $this->selectedKhoi);
+        // $this->lops = is_object($lops) ? $lops->toArray() : (array) $lops;
+
+        $this->lops = $this->getLops(
+            (int) $this->selectedNamHoc,
+            $this->selectedKhoi
+        )->toArray();
     }
 
     public function loadKys()
@@ -165,7 +170,7 @@ class ClassFilterSelector extends Component
     public function render()
     {
         return view('livewire.class-filter-selector')
-        ->extends('frontend.layout.main')
-        ->section('content');
+            ->extends('frontend.layout.main')
+            ->section('content');
     }
 }

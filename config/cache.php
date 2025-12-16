@@ -107,4 +107,19 @@ return [
 
     'prefix' => env('CACHE_PREFIX', Str::slug(env('APP_NAME', 'laravel'), '_').'_cache'),
 
+    /*
+    |--------------------------------------------------------------------------
+    | Cache TTL Settings (Time To Live in seconds)
+    |--------------------------------------------------------------------------
+    */
+    'ttl' => [
+        'user_context' => env('CACHE_TTL_USER_CONTEXT', 300),      // 5 minutes
+        'class_data' => env('CACHE_TTL_CLASS_DATA', 600),          // 10 minutes
+        'student_list' => env('CACHE_TTL_STUDENT_LIST', 300),      // 5 minutes
+        'attendance' => env('CACHE_TTL_ATTENDANCE', 180),          // 3 minutes
+        'nam_hoc' => env('CACHE_TTL_NAM_HOC', 3600),              // 1 hour
+        'default' => env('CACHE_TTL_DEFAULT', 300),                // 5 minutes
+    ],
+
+
 ];

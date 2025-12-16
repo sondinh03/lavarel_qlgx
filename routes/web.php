@@ -83,7 +83,7 @@ Route::get('/ds-lop', LopList::class)->name('ds-lop');
 Route::get('/lop/create', LopForm::class)->name('lop.create');
 Route::get('/lop/{id}', LopDetail::class)->name('lop.show');
 Route::get('/lop/{id}/edit', LopForm::class)->name('lop.edit');
-Route::get('/attendance', AttendanceManager::class)->name('attendance');
+Route::get('/attendance/{classId?}', AttendanceManager::class)->name('attendance');
 
 Route::get('{slug}', [SlugController::class, 'make']);
 

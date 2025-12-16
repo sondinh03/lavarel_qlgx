@@ -1,6 +1,7 @@
 <div class="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-50 p-6">
     <div class="mx-auto max-w-7xl space-y-6">
-        {{-- ✅ BREADCRUMB với dynamic class name --}}
+
+        {{-- ✅ BREADCRUMB ADDED với dynamic class name --}}
         <x-breadcrumb :items="[
             [
                 'label' => 'Trang chủ', 
@@ -12,10 +13,27 @@
                 'icon' => '<svg class=\'w-4 h-4\' fill=\'none\' stroke=\'currentColor\' viewBox=\'0 0 24 24\'><path stroke-linecap=\'round\' stroke-linejoin=\'round\' stroke-width=\'2\' d=\'M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01\'/></svg>'
             ],
             [
-                'label' => $classes->firstWhere('id', $selectedClassId)?->name ?? 'Chọn lớp',
+                'label' => $this->selectedClassName,
                 'icon' => '<svg class=\'w-4 h-4\' fill=\'none\' stroke=\'currentColor\' viewBox=\'0 0 24 24\'><path stroke-linecap=\'round\' stroke-linejoin=\'round\' stroke-width=\'2\' d=\'M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4\'/></svg>'
             ]
         ]" separator="arrow" />
+
+        {{-- Header --}}
+        <div class="flex items-center gap-4">
+            <div class="flex-1">
+                <h1 class="text-2xl font-bold text-slate-900">
+                    Điểm danh - {{ $this->selectedClassName ?? 'Chọn lớp' }}
+                </h1>
+                <p class="text-sm text-slate-600 mt-1">
+                    Điểm danh {{ $attendanceType == 1 ? 'đi học' : 'đi lễ' }}
+                    cho {{ count($students) }} học sinh •
+                    {{ count($sessions) }} buổi
+                    @if(isset($selectedNamHoc))
+                    • Năm học {{ $selectedNamHoc }}
+                    @endif
+                </p>
+            </div>
+        </div>
 
         {{-- Toast Notifications --}}
         @if (session()->has('message'))
@@ -53,12 +71,12 @@
         </div>
         @endif
 
-        {{-- Header Section with Filter --}}
+        {{-- Class Selector --}}
         <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
             {{-- Title --}}
             <div class="p-6 border-b border-slate-200">
                 <h1 class="text-2xl font-bold text-slate-900">
-                    Điểm danh - {{ $classes->firstWhere('id', $selectedClassId)?->name ?? 'Chọn lớp' }}
+                    Điểm danh - {{ $this->selectedClassName ?? 'Chọn lớp' }} 
                 </h1>
                 <p class="text-sm text-slate-600 mt-1">
                     Điểm danh {{ $attendanceType == 1 ? 'đi học' : 'đi lễ' }}
@@ -77,8 +95,8 @@
                 'showKy' => true,
                 'selectedNamHoc' => $selectedNamHoc ?? null,
                 'selectedKhoi' => $selectedKhoi ?? null,
-                'selectedLop' => $selectedLop ?? null,
-                'selectedLop' => $selectedKy ?? null,
+                'selectedLop' => $selectedClassId ?? null,
+                'selectedKy' => $selectedKy ?? null,
                 ])
             </div>
 
@@ -345,8 +363,7 @@
                     </div>
                 </div>
 
-
-                {{-- Mobile Card View   --}}
+                {{-- Mobile Table View   --}}
                 <div class="lg:hidden space-y-4">
                     {{-- Date Selector --}}
                     <div class="space-y-2">
@@ -447,19 +464,19 @@
                             </div>
                             @else
                             <div class="grid grid-cols-3 gap-2">
-                                <button wire:click="setAttendance({{ $student->id }}, '{{ $selectedDate }}', {{ $status == 1 ? 'null' : 1 }})"
+                                <button wire:click="setAttendance({{ $student->id }}, '{{ $session['id'] }}', {{ $status == 1 ? 'null' : 1 }})"
                                     class="py-3 rounded-lg text-sm font-medium transition-all
                                                            {{ $status == 1 ? 'bg-green-500 text-white shadow-md' : 'bg-green-50 text-green-700 border border-green-200' }}">
                                     <div class="text-lg mb-1">✓</div>
                                     <div class="text-xs">Có mặt</div>
                                 </button>
-                                <button wire:click="setAttendance({{ $student->id }}, '{{ $selectedDate }}', {{ $status == 2 ? 'null' : 2 }})"
+                                <button wire:click="setAttendance({{ $student->id }}, '{{ $session['id'] }}', {{ $status == 2 ? 'null' : 2 }})"
                                     class="py-3 rounded-lg text-sm font-medium transition-all
                                                            {{ $status == 2 ? 'bg-yellow-400 text-slate-900 shadow-md' : 'bg-yellow-50 text-yellow-700 border border-yellow-200' }}">
                                     <div class="text-lg mb-1">P</div>
                                     <div class="text-xs">Vắng CP</div>
                                 </button>
-                                <button wire:click="setAttendance({{ $student->id }}, '{{ $selectedDate }}', {{ $status == 3 ? 'null' : 3 }})"
+                                <button wire:click="setAttendance({{ $student->id }}, '{{ $session['id'] }}', {{ $status == 3 ? 'null' : 3 }})"
                                     class="py-3 rounded-lg text-sm font-medium transition-all
                                                            {{ $status == 3 ? 'bg-red-500 text-white shadow-md' : 'bg-red-50 text-red-700 border border-red-200' }}">
                                     <div class="text-lg mb-1">✕</div>
@@ -500,17 +517,17 @@
                         class="px-4 py-2 border border-blue-200 hover:bg-blue-50 bg-white rounded-lg text-center">
                         Hủy
                     </a>
-                    <button wire:click="saveAndClose"
+                    <button wire:click="saveAttendance"
                         class="px-4 py-2 bg-gradient-to-r from-blue-500 to-indigo-500  hover:from-blue-600 hover:to-indigo-600 text-white rounded-lg shadow-md transition-all
                             disabled:opacity-50 disabled:cursor-not-allowed 
                             flex items-center justify-center gap-2"
                         wire:loading.attr="disabled"
-                        wire:target="saveAndClose">
+                        wire:target="saveAttendance">
 
-                        <span wire:loading.remove wire:target="saveAndClose">
+                        <span wire:loading.remove wire:target="saveAttendance">
                             Lưu điểm danh
                         </span>
-                        <span wire:loading wire:target="saveAndClose" class="flex items-center gap-2">
+                        <span wire:loading wire:target="saveAttendance" class="flex items-center gap-2">
                             <svg class="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24">
                                 <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                                 <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
@@ -519,7 +536,7 @@
                         </span>
                     </button>
                     {{--
-                    <button wire:click="saveAndClose"
+                    <button wire:click="saveAttendance"
                         class="px-4 py-2 bg-gradient-to-r from-blue-500 to-indigo-500 hover:from-blue-600 hover:to-indigo-600 text-white rounded-lg shadow-md transition-all">
                         Lưu điểm danh
                     </button>
@@ -537,7 +554,7 @@
     window.addEventListener('keydown', function(e) {
         if ((e.ctrlKey || e.metaKey) && e.key === 's') {
             e.preventDefault();
-            @this.call('saveAndClose');
+            @this.call('saveAttendance');
         }
     });
 </script>
