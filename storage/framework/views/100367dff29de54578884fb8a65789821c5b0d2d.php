@@ -24,6 +24,23 @@
 <?php endif; ?>
 
         
+        <?php if(session()->has('success')): ?>
+        <?php if (isset($component)) { $__componentOriginalc254754b9d5db91d5165876f9d051922ca0066f4 = $component; } ?>
+<?php $component = $__env->getContainer()->make(Illuminate\View\AnonymousComponent::class, ['view' => 'components.toast-notification','data' => ['type' => 'success','duration' => 3000]]); ?>
+<?php $component->withName('toast-notification'); ?>
+<?php if ($component->shouldRender()): ?>
+<?php $__env->startComponent($component->resolveView(), $component->data()); ?>
+<?php $component->withAttributes(['type' => 'success','duration' => 3000]); ?>
+            <?php echo e(session('success')); ?>
+
+         <?php echo $__env->renderComponent(); ?>
+<?php endif; ?>
+<?php if (isset($__componentOriginalc254754b9d5db91d5165876f9d051922ca0066f4)): ?>
+<?php $component = $__componentOriginalc254754b9d5db91d5165876f9d051922ca0066f4; ?>
+<?php unset($__componentOriginalc254754b9d5db91d5165876f9d051922ca0066f4); ?>
+<?php endif; ?>
+        <?php endif; ?>
+
         <?php if(session()->has('message')): ?>
         <?php if (isset($component)) { $__componentOriginalc254754b9d5db91d5165876f9d051922ca0066f4 = $component; } ?>
 <?php $component = $__env->getContainer()->make(Illuminate\View\AnonymousComponent::class, ['view' => 'components.toast-notification','data' => ['type' => 'success','duration' => 3000]]); ?>
@@ -94,8 +111,8 @@
                                 <label for="symbol" class="block text-sm font-semibold text-slate-700 mb-2">
                                     Mã lớp <span class="text-red-500">*</span>
                                 </label>
-                                <input 
-                                    type="text" 
+                                <input
+                                    type="text"
                                     id="symbol"
                                     wire:model.defer="form.symbol"
                                     class="w-full px-4 py-2.5 bg-white border border-slate-200 rounded-xl text-slate-900 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all <?php $__errorArgs = ['form.symbol'];
@@ -130,8 +147,8 @@ unset($__errorArgs, $__bag); ?>
                                 <label for="name" class="block text-sm font-semibold text-slate-700 mb-2">
                                     Tên lớp <span class="text-red-500">*</span>
                                 </label>
-                                <input 
-                                    type="text" 
+                                <input
+                                    type="text"
                                     id="name"
                                     wire:model.defer="form.name"
                                     class="w-full px-4 py-2.5 bg-white border border-slate-200 rounded-xl text-slate-900 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all <?php $__errorArgs = ['form.name'];
@@ -163,13 +180,14 @@ unset($__errorArgs, $__bag); ?>
 
                             
                             <div>
-                                <label for="schoolyear_id" class="block text-sm font-semibold text-slate-700 mb-2">
+                                <label for="schoolyear" class="block text-sm font-semibold text-slate-700 mb-2">
                                     Năm học <span class="text-red-500">*</span>
                                 </label>
-                                <select 
-                                    id="schoolyear_id"
-                                    wire:model.defer="form.schoolyear_id"
-                                    class="w-full px-4 py-2.5 bg-white border border-slate-200 rounded-xl text-slate-900 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all <?php $__errorArgs = ['form.schoolyear_id'];
+
+                                <select
+                                    id="schoolyear"
+                                    wire:model="form.schoolyear"
+                                    class="w-full px-4 py-2.5 bg-white border border-slate-200 rounded-xl text-slate-900 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all <?php $__errorArgs = ['form.schoolyear'];
 $__bag = $errors->getBag($__errorArgs[1] ?? 'default');
 if ($__bag->has($__errorArgs[0])) :
 if (isset($message)) { $__messageOriginal = $message; }
@@ -182,7 +200,8 @@ unset($__errorArgs, $__bag); ?>">
                                     <option value="<?php echo e($id); ?>"><?php echo e($name); ?></option>
                                     <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                                 </select>
-                                <?php $__errorArgs = ['form.schoolyear_id'];
+
+                                <?php $__errorArgs = ['form.schoolyear'];
 $__bag = $errors->getBag($__errorArgs[1] ?? 'default');
 if ($__bag->has($__errorArgs[0])) :
 if (isset($message)) { $__messageOriginal = $message; }
@@ -202,13 +221,14 @@ unset($__errorArgs, $__bag); ?>
 
                             
                             <div>
-                                <label for="block_id" class="block text-sm font-semibold text-slate-700 mb-2">
+                                <label for="block" class="block text-sm font-semibold text-slate-700 mb-2">
                                     Khối <span class="text-red-500">*</span>
                                 </label>
-                                <select 
-                                    id="block_id"
-                                    wire:model.defer="form.block_id"
-                                    class="w-full px-4 py-2.5 bg-white border border-slate-200 rounded-xl text-slate-900 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all <?php $__errorArgs = ['form.block_id'];
+
+                                <select
+                                    id="block"
+                                    wire:model="form.block"
+                                    class="w-full px-4 py-2.5 bg-white border border-slate-200 rounded-xl text-slate-900 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all <?php $__errorArgs = ['form.block'];
 $__bag = $errors->getBag($__errorArgs[1] ?? 'default');
 if ($__bag->has($__errorArgs[0])) :
 if (isset($message)) { $__messageOriginal = $message; }
@@ -221,7 +241,9 @@ unset($__errorArgs, $__bag); ?>">
                                     <option value="<?php echo e($id); ?>"><?php echo e($name); ?></option>
                                     <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                                 </select>
-                                <?php $__errorArgs = ['form.block_id'];
+
+
+                                <?php $__errorArgs = ['form.block'];
 $__bag = $errors->getBag($__errorArgs[1] ?? 'default');
 if ($__bag->has($__errorArgs[0])) :
 if (isset($message)) { $__messageOriginal = $message; }
@@ -238,72 +260,8 @@ if (isset($__messageOriginal)) { $message = $__messageOriginal; }
 endif;
 unset($__errorArgs, $__bag); ?>
                             </div>
-                        </div>
-                    </div>
-
-                    
-                    <div class="border-t border-slate-200 pt-6">
-                        <h3 class="text-lg font-bold text-slate-900 mb-4 flex items-center gap-2">
-                            <svg class="w-5 h-5 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                            </svg>
-                            Lịch học
-                        </h3>
-
-                        <div class="space-y-4">
-                            
-                            <div class="bg-slate-50 rounded-xl p-4">
-                                <h4 class="font-semibold text-slate-900 mb-3">Học kỳ 1</h4>
-                                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                    <div>
-                                        <label for="start_date_one" class="block text-sm font-medium text-slate-700 mb-2">
-                                            Ngày bắt đầu
-                                        </label>
-                                        <input 
-                                            type="date" 
-                                            id="start_date_one"
-                                            wire:model.defer="form.start_date_one"
-                                            class="w-full px-4 py-2.5 bg-white border border-slate-200 rounded-xl text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all">
-                                    </div>
-                                    <div>
-                                        <label for="end_date_one" class="block text-sm font-medium text-slate-700 mb-2">
-                                            Ngày kết thúc
-                                        </label>
-                                        <input 
-                                            type="date" 
-                                            id="end_date_one"
-                                            wire:model.defer="form.end_date_one"
-                                            class="w-full px-4 py-2.5 bg-white border border-slate-200 rounded-xl text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all">
-                                    </div>
-                                </div>
-                            </div>
 
                             
-                            <div class="bg-slate-50 rounded-xl p-4">
-                                <h4 class="font-semibold text-slate-900 mb-3">Học kỳ 2</h4>
-                                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                    <div>
-                                        <label for="start_date_two" class="block text-sm font-medium text-slate-700 mb-2">
-                                            Ngày bắt đầu
-                                        </label>
-                                        <input 
-                                            type="date" 
-                                            id="start_date_two"
-                                            wire:model.defer="form.start_date_two"
-                                            class="w-full px-4 py-2.5 bg-white border border-slate-200 rounded-xl text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all">
-                                    </div>
-                                    <div>
-                                        <label for="end_date_two" class="block text-sm font-medium text-slate-700 mb-2">
-                                            Ngày kết thúc
-                                        </label>
-                                        <input 
-                                            type="date" 
-                                            id="end_date_two"
-                                            wire:model.defer="form.end_date_two"
-                                            class="w-full px-4 py-2.5 bg-white border border-slate-200 rounded-xl text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all">
-                                    </div>
-                                </div>
-                            </div>
                         </div>
                     </div>
 
@@ -322,7 +280,7 @@ unset($__errorArgs, $__bag); ?>
                                 <label for="main_teacher" class="block text-sm font-semibold text-slate-700 mb-2">
                                     Giáo lý viên chủ nhiệm
                                 </label>
-                                <select 
+                                <select
                                     id="main_teacher"
                                     wire:model.defer="form.main_teacher_id"
                                     class="w-full px-4 py-2.5 bg-white border border-slate-200 rounded-xl text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all">
@@ -338,7 +296,7 @@ unset($__errorArgs, $__bag); ?>
                                 <label for="assistant_teachers" class="block text-sm font-semibold text-slate-700 mb-2">
                                     Giáo lý viên phụ trách (có thể chọn nhiều)
                                 </label>
-                                <select 
+                                <select
                                     id="assistant_teachers"
                                     wire:model.defer="form.assistant_teacher_ids"
                                     multiple
@@ -364,7 +322,7 @@ unset($__errorArgs, $__bag); ?>
 
                         <div>
                             <label for="note" class="sr-only">Ghi chú về lớp học</label>
-                            <textarea 
+                            <textarea
                                 id="note"
                                 wire:model.defer="form.note"
                                 rows="4"
@@ -381,7 +339,7 @@ unset($__errorArgs, $__bag); ?>
                             class="w-full sm:w-auto px-6 py-2.5 bg-white border border-slate-200 rounded-xl text-slate-700 font-semibold hover:bg-slate-50 active:scale-95 transition-all text-center">
                             Hủy
                         </a>
-                        <button 
+                        <button
                             type="submit"
                             class="w-full sm:w-auto px-6 py-2.5 bg-gradient-to-r from-purple-600 to-indigo-600 text-white rounded-xl font-semibold hover:from-purple-700 hover:to-indigo-700 active:scale-95 transition-all shadow-sm flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
                             wire:loading.attr="disabled"
@@ -401,6 +359,22 @@ unset($__errorArgs, $__bag); ?>
                                 Đang lưu...
                             </span>
                         </button>
+                        <?php if(session()->has('success')): ?>
+                        <?php if (isset($component)) { $__componentOriginalc254754b9d5db91d5165876f9d051922ca0066f4 = $component; } ?>
+<?php $component = $__env->getContainer()->make(Illuminate\View\AnonymousComponent::class, ['view' => 'components.toast-notification','data' => ['type' => 'success','duration' => 3000]]); ?>
+<?php $component->withName('toast-notification'); ?>
+<?php if ($component->shouldRender()): ?>
+<?php $__env->startComponent($component->resolveView(), $component->data()); ?>
+<?php $component->withAttributes(['type' => 'success','duration' => 3000]); ?>
+                            <?php echo e(session('success')); ?>
+
+                         <?php echo $__env->renderComponent(); ?>
+<?php endif; ?>
+<?php if (isset($__componentOriginalc254754b9d5db91d5165876f9d051922ca0066f4)): ?>
+<?php $component = $__componentOriginalc254754b9d5db91d5165876f9d051922ca0066f4; ?>
+<?php unset($__componentOriginalc254754b9d5db91d5165876f9d051922ca0066f4); ?>
+<?php endif; ?>
+                        <?php endif; ?>
                     </div>
                 </div>
             </div>

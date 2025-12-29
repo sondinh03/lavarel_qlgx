@@ -48,11 +48,14 @@ use App\Http\Controllers\TeacherImportController;
 use App\Http\Controllers\KetQuaExportController;
 use App\Http\Controllers\HonPhoiExportController;
 use App\Http\Livewire\AttendanceManager;
+use App\Http\Livewire\Block\Block;
+use App\Http\Livewire\Block\BlockManager;
 use App\Http\Livewire\Home;
 use App\Http\Livewire\Lop\CreateEditClassForm;
 use App\Http\Livewire\Lop\LopDetail;
 use App\Http\Livewire\Lop\LopForm;
 use App\Http\Livewire\Lop\LopList;
+use App\Http\Livewire\NamHoc\NamHocManager;
 
 Paginator::useBootstrap();
 
@@ -84,6 +87,12 @@ Route::get('/lop/create', LopForm::class)->name('lop.create');
 Route::get('/lop/{id}', LopDetail::class)->name('lop.show');
 Route::get('/lop/{id}/edit', LopForm::class)->name('lop.edit');
 Route::get('/attendance/{classId?}', AttendanceManager::class)->name('attendance');
+Route::get('/nam-hoc', NamHocManager::class)->name('nam-hoc');
+Route::get(
+    '/nam-hoc/khoi',
+    BlockManager::class
+)->name('khoi.manage');
+
 
 Route::get('{slug}', [SlugController::class, 'make']);
 

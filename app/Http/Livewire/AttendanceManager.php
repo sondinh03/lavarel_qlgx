@@ -183,37 +183,62 @@ class AttendanceManager extends Component
 
     public function loadSessions()
     {
-        $sessions = AttendanceSession::where('class_id', $this->selectedClassId)
-            ->when($this->attendanceType, function ($q) {
-                return $q->where('type', $this->attendanceType);
-            })
-            ->orderBy('date')
-            ->get();
+        try {
+            // Validate trước khi query
+            if (!$this->selectedClassId) {
+                $this->reset(['sessions', 'selectedDate', 'attendanceRecords']);
+                return;
+            }
 
-        $this->sessions = $sessions->map(function ($s) {
-            $date = Carbon::parse($s->date);
+            $sessions = AttendanceSession::where('class_id', $this->selectedClassId)
+                ->when($this->attendanceType, function ($q) {
+                    return $q->where('type', $this->attendanceType);
+                })
+                ->orderBy('date')
+                ->get();
 
-            return [
-                'id'        => $s->id,
-                'date'      => $date,
-                'dateStr'   => $date->format('Y-m-d'),
-                'fullDate'  => $date->format('d/m'),
-                'dayName'   => $this->getVietnameseDayName($date),
-                'type'      => $s->type,
-                'status'    => $s->status,
-                'locked'    => $s->status == AttendanceSession::STATUS_CLOSED,
-            ];
-        })->toArray();
+            $this->sessions = $sessions->map(function ($s) {
+                $date = Carbon::parse($s->date);
 
-        // Load attendance records
-        $this->loadAttendanceRecords();
+                return [
+                    'id'        => $s->id,
+                    'date'      => $date,
+                    'dateStr'   => $date->format('Y-m-d'),
+                    'fullDate'  => $date->format('d/m'),
+                    'dayName'   => $this->getVietnameseDayName($date),
+                    'type'      => $s->type,
+                    'status'    => $s->status,
+                    'locked'    => $s->status == AttendanceSession::STATUS_CLOSED,
+                ];
+            })->toArray();
 
-        // Set selected date (cho mobile)
-        if (!$this->selectedDate && !empty($this->sessions)) {
-            $unlocked = collect($this->sessions)->first(fn($s) => !$s['locked']);
-            $this->selectedDate = $unlocked
-                ? $unlocked['dateStr']
-                : $this->sessions[0]['dateStr'];
+            // Load attendance records
+            $this->loadAttendanceRecords();
+
+            // Set selected date (cho mobile)
+            if (!$this->selectedDate && !empty($this->sessions)) {
+                $unlocked = collect($this->sessions)->first(fn($s) => !$s['locked']);
+                $this->selectedDate = $unlocked
+                    ? $unlocked['dateStr']
+                    : $this->sessions[0]['dateStr'];
+            }
+
+            if (empty($this->sessions)) {
+                session()->flash('info', 'Chưa có buổi điểm danh nào');
+            }
+        } catch (\Exception $e) {
+            Log::error('Error loading sessions', [
+                'class_id' => $this->selectedClassId,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+
+            $this->reset(['sessions', 'selectedDate', 'attendanceRecords']);
+
+            $this->dispatch('notify', [
+                'type' => 'error',
+                'message' => 'Không thể tải danh sách buổi học. Vui lòng thử lại.'
+            ]);
         }
     }
 
@@ -246,7 +271,6 @@ class AttendanceManager extends Component
 
         $this->attendanceRecords = $records->map(fn($g) => $g->first())->toArray();
     }
-
 
     /**
      * Change class
@@ -299,22 +323,6 @@ class AttendanceManager extends Component
     {
         $session = collect($this->sessions)->firstWhere('id', $sessionId);
 
-        // if (!$session) {
-        //     $this->dispatchBrowserEvent('show-alert', [
-        //         'type' => 'error',
-        //         'message' => 'Không tìm thấy buổi điểm danh!'
-        //     ]);
-        //     return;
-        // }
-
-        // if ($session['locked']) {
-        //     $this->dispatchBrowserEvent('show-alert', [
-        //         'type' => 'error',
-        //         'message' => 'Buổi điểm danh đã khóa!'
-        //     ]);
-        //     return;
-        // }
-
         if (!$session || $session['locked']) {
             return;
         }
@@ -339,49 +347,31 @@ class AttendanceManager extends Component
      */
     public function markAllPresent($sessionId)
     {
-        try {
-            // Lấy session theo ID
-            $session = collect($this->sessions)->firstWhere('id', $sessionId);
+        // Lấy session theo ID
+        $session = collect($this->sessions)->firstWhere('id', $sessionId);
 
-            if (!$session || $session['locked']) {
-                $this->dispatchBrowserEvent('show-alert', [
-                    'type' => 'error',
-                    'message' => 'Không thể điểm danh cho buổi này!'
-                ]);
-                return;
-            }
-
-            // Chuẩn bị dữ liệu
-            $attendanceData = $this->students->map(fn($s) => [
-                'student_id' => $s->id,
-                'status' => AttendanceRecord::STATUS_PRESENT,
-            ])->toArray();
-
-            // Gọi service
-            $result = $this->attendanceService->bulkImportBySessionId(
-                $sessionId,
-                $attendanceData
-            );
-
-            if ($result['success']) {
-                $this->loadAttendanceRecords();
-
-                $this->dispatchBrowserEvent('show-alert', [
-                    'type' => 'success',
-                    'message' => 'Đã điểm danh tất cả có mặt!'
-                ]);
-            } else {
-                $this->dispatchBrowserEvent('show-alert', [
-                    'type' => 'error',
-                    'message' => $result['message']
-                ]);
-            }
-        } catch (\Exception $e) {
+        if (!$session || $session['locked']) {
             $this->dispatchBrowserEvent('show-alert', [
                 'type' => 'error',
-                'message' => 'Có lỗi xảy ra: ' . $e->getMessage()
+                'message' => 'Không thể điểm danh cho buổi này!'
             ]);
+            return;
         }
+
+        foreach ($this->students as $student) {
+            $key = $student->id . '_' . $sessionId;
+            $this->draftAttendance[$key] = [
+                'student_id'     => $student->id,
+                'session_id'     => $sessionId,
+                'status'         => AttendanceRecord::STATUS_PRESENT,
+                'attendanceType' => $this->attendanceType,
+            ];
+        }
+
+        $this->dispatchBrowserEvent('show-alert', [
+            'type' => 'success',
+            'message' => 'Đã đánh dấu tất cả có mặt (chỉ lưu tạm)'
+        ]);
     }
 
     /**

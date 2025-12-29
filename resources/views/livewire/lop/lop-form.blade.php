@@ -9,6 +9,12 @@
         ]" />
 
         {{-- Toast Notifications --}}
+        @if (session()->has('success'))
+        <x-toast-notification type="success" :duration="3000">
+            {{ session('success') }}
+        </x-toast-notification>
+        @endif
+
         @if (session()->has('message'))
         <x-toast-notification type="success" :duration="3000">
             {{ session('message') }}
@@ -50,8 +56,8 @@
                                 <label for="symbol" class="block text-sm font-semibold text-slate-700 mb-2">
                                     Mã lớp <span class="text-red-500">*</span>
                                 </label>
-                                <input 
-                                    type="text" 
+                                <input
+                                    type="text"
                                     id="symbol"
                                     wire:model.defer="form.symbol"
                                     class="w-full px-4 py-2.5 bg-white border border-slate-200 rounded-xl text-slate-900 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all @error('form.symbol') border-red-300 @enderror"
@@ -71,8 +77,8 @@
                                 <label for="name" class="block text-sm font-semibold text-slate-700 mb-2">
                                     Tên lớp <span class="text-red-500">*</span>
                                 </label>
-                                <input 
-                                    type="text" 
+                                <input
+                                    type="text"
                                     id="name"
                                     wire:model.defer="form.name"
                                     class="w-full px-4 py-2.5 bg-white border border-slate-200 rounded-xl text-slate-900 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all @error('form.name') border-red-300 @enderror"
@@ -89,19 +95,21 @@
 
                             {{-- Năm học --}}
                             <div>
-                                <label for="schoolyear_id" class="block text-sm font-semibold text-slate-700 mb-2">
+                                <label for="schoolyear" class="block text-sm font-semibold text-slate-700 mb-2">
                                     Năm học <span class="text-red-500">*</span>
                                 </label>
-                                <select 
-                                    id="schoolyear_id"
-                                    wire:model.defer="form.schoolyear_id"
-                                    class="w-full px-4 py-2.5 bg-white border border-slate-200 rounded-xl text-slate-900 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all @error('form.schoolyear_id') border-red-300 @enderror">
+
+                                <select
+                                    id="schoolyear"
+                                    wire:model="form.schoolyear"
+                                    class="w-full px-4 py-2.5 bg-white border border-slate-200 rounded-xl text-slate-900 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all @error('form.schoolyear') border-red-300 @enderror">
                                     <option value="">-- Chọn năm học --</option>
                                     @foreach($schoolyears as $id => $name)
                                     <option value="{{ $id }}">{{ $name }}</option>
                                     @endforeach
                                 </select>
-                                @error('form.schoolyear_id')
+
+                                @error('form.schoolyear')
                                 <p class="mt-1 text-sm text-red-600 flex items-center gap-1">
                                     <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
                                         <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
@@ -113,19 +121,22 @@
 
                             {{-- Khối --}}
                             <div>
-                                <label for="block_id" class="block text-sm font-semibold text-slate-700 mb-2">
+                                <label for="block" class="block text-sm font-semibold text-slate-700 mb-2">
                                     Khối <span class="text-red-500">*</span>
                                 </label>
-                                <select 
-                                    id="block_id"
-                                    wire:model.defer="form.block_id"
-                                    class="w-full px-4 py-2.5 bg-white border border-slate-200 rounded-xl text-slate-900 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all @error('form.block_id') border-red-300 @enderror">
+
+                                <select
+                                    id="block"
+                                    wire:model="form.block"
+                                    class="w-full px-4 py-2.5 bg-white border border-slate-200 rounded-xl text-slate-900 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all @error('form.block') border-red-300 @enderror">
                                     <option value="">-- Chọn khối --</option>
                                     @foreach($blocks as $id => $name)
                                     <option value="{{ $id }}">{{ $name }}</option>
                                     @endforeach
                                 </select>
-                                @error('form.block_id')
+
+
+                                @error('form.block')
                                 <p class="mt-1 text-sm text-red-600 flex items-center gap-1">
                                     <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
                                         <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
@@ -134,72 +145,17 @@
                                 </p>
                                 @enderror
                             </div>
+
+                            {{--
+                            <div class="p-4 bg-slate-50 rounded-xl">
+                                @livewire('class-filter-selector', [
+                                'parish_id' => $parish_id,
+                                'selectedNamHoc' => $form['schoolyear'],
+                                'selectedKhoi' => $form['block'],
+                                'showLop' => false, 
+                            ])
                         </div>
-                    </div>
-
-                    {{-- Schedule Section --}}
-                    <div class="border-t border-slate-200 pt-6">
-                        <h3 class="text-lg font-bold text-slate-900 mb-4 flex items-center gap-2">
-                            <svg class="w-5 h-5 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                            </svg>
-                            Lịch học
-                        </h3>
-
-                        <div class="space-y-4">
-                            {{-- Học kỳ 1 --}}
-                            <div class="bg-slate-50 rounded-xl p-4">
-                                <h4 class="font-semibold text-slate-900 mb-3">Học kỳ 1</h4>
-                                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                    <div>
-                                        <label for="start_date_one" class="block text-sm font-medium text-slate-700 mb-2">
-                                            Ngày bắt đầu
-                                        </label>
-                                        <input 
-                                            type="date" 
-                                            id="start_date_one"
-                                            wire:model.defer="form.start_date_one"
-                                            class="w-full px-4 py-2.5 bg-white border border-slate-200 rounded-xl text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all">
-                                    </div>
-                                    <div>
-                                        <label for="end_date_one" class="block text-sm font-medium text-slate-700 mb-2">
-                                            Ngày kết thúc
-                                        </label>
-                                        <input 
-                                            type="date" 
-                                            id="end_date_one"
-                                            wire:model.defer="form.end_date_one"
-                                            class="w-full px-4 py-2.5 bg-white border border-slate-200 rounded-xl text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all">
-                                    </div>
-                                </div>
-                            </div>
-
-                            {{-- Học kỳ 2 --}}
-                            <div class="bg-slate-50 rounded-xl p-4">
-                                <h4 class="font-semibold text-slate-900 mb-3">Học kỳ 2</h4>
-                                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                    <div>
-                                        <label for="start_date_two" class="block text-sm font-medium text-slate-700 mb-2">
-                                            Ngày bắt đầu
-                                        </label>
-                                        <input 
-                                            type="date" 
-                                            id="start_date_two"
-                                            wire:model.defer="form.start_date_two"
-                                            class="w-full px-4 py-2.5 bg-white border border-slate-200 rounded-xl text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all">
-                                    </div>
-                                    <div>
-                                        <label for="end_date_two" class="block text-sm font-medium text-slate-700 mb-2">
-                                            Ngày kết thúc
-                                        </label>
-                                        <input 
-                                            type="date" 
-                                            id="end_date_two"
-                                            wire:model.defer="form.end_date_two"
-                                            class="w-full px-4 py-2.5 bg-white border border-slate-200 rounded-xl text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all">
-                                    </div>
-                                </div>
-                            </div>
+                        --}}
                         </div>
                     </div>
 
@@ -218,7 +174,7 @@
                                 <label for="main_teacher" class="block text-sm font-semibold text-slate-700 mb-2">
                                     Giáo lý viên chủ nhiệm
                                 </label>
-                                <select 
+                                <select
                                     id="main_teacher"
                                     wire:model.defer="form.main_teacher_id"
                                     class="w-full px-4 py-2.5 bg-white border border-slate-200 rounded-xl text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all">
@@ -234,7 +190,7 @@
                                 <label for="assistant_teachers" class="block text-sm font-semibold text-slate-700 mb-2">
                                     Giáo lý viên phụ trách (có thể chọn nhiều)
                                 </label>
-                                <select 
+                                <select
                                     id="assistant_teachers"
                                     wire:model.defer="form.assistant_teacher_ids"
                                     multiple
@@ -260,7 +216,7 @@
 
                         <div>
                             <label for="note" class="sr-only">Ghi chú về lớp học</label>
-                            <textarea 
+                            <textarea
                                 id="note"
                                 wire:model.defer="form.note"
                                 rows="4"
@@ -277,7 +233,7 @@
                             class="w-full sm:w-auto px-6 py-2.5 bg-white border border-slate-200 rounded-xl text-slate-700 font-semibold hover:bg-slate-50 active:scale-95 transition-all text-center">
                             Hủy
                         </a>
-                        <button 
+                        <button
                             type="submit"
                             class="w-full sm:w-auto px-6 py-2.5 bg-gradient-to-r from-purple-600 to-indigo-600 text-white rounded-xl font-semibold hover:from-purple-700 hover:to-indigo-700 active:scale-95 transition-all shadow-sm flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
                             wire:loading.attr="disabled"
@@ -296,6 +252,11 @@
                                 Đang lưu...
                             </span>
                         </button>
+                        @if (session()->has('success'))
+                        <x-toast-notification type="success" :duration="3000">
+                            {{ session('success') }}
+                        </x-toast-notification>
+                        @endif
                     </div>
                 </div>
             </div>

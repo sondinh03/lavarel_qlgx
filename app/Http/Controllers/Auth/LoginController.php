@@ -3,6 +3,8 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
+use App\Models\Decen;
+use App\Models\SetAdmin;
 use App\Providers\RouteServiceProvider;
 use Illuminate\Foundation\Auth\AuthenticatesUsers;
 
@@ -36,5 +38,31 @@ class LoginController extends Controller
     public function __construct()
     {
         $this->middleware('guest')->except('logout');
+    }
+
+    protected function authenticated($request, $user)
+    {
+        // Custom logic after user is authenticated
+        // For example, log the login time or redirect based on role
+
+        // Xác định parish_id và isAdmin
+        $setadmin = SetAdmin::where('use', $user->id)->where('status', 1)->first();
+
+        if ($setadmin) {
+            session([
+                'parish_id' => $request->get('giaoxu'),
+                'isAdmin' => true,
+                'isDecen' => false
+            ]);
+        } else {
+            $decen = Decen::where('use', $user->id)
+                ->where('status', 1)
+                ->where('student', 1)->first();
+            session([
+                'parish_id' => $decen->pid,
+                'isAdmin' => false,
+                'isDecen' => true
+            ]);
+        }
     }
 }

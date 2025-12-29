@@ -14,7 +14,7 @@ class Lop extends Model
 
     protected $table = 'lop';
     protected $guarded = ['id'];
-    protected $fillable = ['id', 'did', 'deid', 'pid', 'block', 'start_date_one', 'end_date_one', 'start_date_two', 'end_date_two', 'name', 'symbol', 'teacher', 'note', 'status', 'created_at', 'updated_at'];
+    protected $fillable = ['id', 'did', 'deid', 'pid', 'block', 'start_date_one', 'end_date_one', 'start_date_two', 'end_date_two', 'name', 'symbol', 'teacher', 'schoolyear',  'note', 'status', 'created_at', 'updated_at'];
 
     protected $appends = ['lop'];
     protected $casts = [

@@ -6,25 +6,23 @@ use App\Models\Block;
 use App\Models\Lop;
 use App\Models\NamHoc;
 use App\Models\Teacher;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Livewire\Component;
 
 class LopForm extends Component
 {
     public $classId;
     public $isEdit = false;
+    public $parish_id;
 
     public $form = [
         'symbol' => '',
         'name' => '',
-        'schoolyear_id' => '',
-        'block_id' => '',
-        'start_date_one' => '',
-        'end_date_one' => '',
-        'start_date_two' => '',
-        'end_date_two' => '',
-        'main_teacher_id' => '',
-        'assistant_teacher_ids' => [],
-        'note' => '',
+        'schoolyear' => '',
+        'block' => '',
+        'note' => null,
+        'status' => 1,
     ];
 
     public $schoolyears = [];
@@ -34,97 +32,99 @@ class LopForm extends Component
     protected $rules = [
         'form.symbol' => 'required|string|max:50',
         'form.name' => 'required|string|max:255',
-        'form.schoolyear_id' => 'required|exists:schoolyears,id',
-        'form.block_id' => 'required|exists:blocks,id',
-        'form.start_date_one' => 'nullable|date',
-        'form.end_date_one' => 'nullable|date|after_or_equal:form.start_date_one',
-        'form.start_date_two' => 'nullable|date',
-        'form.end_date_two' => 'nullable|date|after_or_equal:form.start_date_two',
-        'form.main_teacher_id' => 'nullable|exists:users,id',
-        'form.assistant_teacher_ids' => 'nullable|array',
-        'form.assistant_teacher_ids.*' => 'exists:users,id',
+        'form.schoolyear' => 'required|exists:nam_hoc,id',
+        'form.block' => 'required|exists:block,id',
         'form.note' => 'nullable|string|max:1000',
     ];
 
     protected $messages = [
         'form.symbol.required' => 'Mã lớp là bắt buộc',
         'form.name.required' => 'Tên lớp là bắt buộc',
-        'form.schoolyear_id.required' => 'Vui lòng chọn năm học',
-        'form.block_id.required' => 'Vui lòng chọn khối',
-        'form.end_date_one.after_or_equal' => 'Ngày kết thúc phải sau ngày bắt đầu',
-        'form.end_date_two.after_or_equal' => 'Ngày kết thúc phải sau ngày bắt đầu',
+        'form.schoolyear.required' => 'Vui lòng chọn năm học',
+        'form.block.required' => 'Vui lòng chọn khối',
     ];
 
     public function mount($id = null)
     {
+        $this->parish_id = session('parish_id');
         $this->classId = $id;
         $this->isEdit = !is_null($id);
 
-        // Load dropdown data
-        $this->schoolyears = NamHoc::pluck('name', 'id')->toArray();
-        $this->blocks = Block::pluck('name', 'id')->toArray();
+        $this->schoolyears = NamHoc::where('parish_id', $this->parish_id)
+            ->orderBy('name', 'desc')
+            ->pluck('name', 'id')
+            ->toArray();
+
         $this->teachers = Teacher::pluck('name', 'id')->toArray();
 
-        // Load existing class data if editing
         if ($this->isEdit) {
             $class = Lop::with('teachers')->findOrFail($id);
 
             $this->form = [
                 'symbol' => $class->symbol,
                 'name' => $class->name,
-                'schoolyear_id' => $class->schoolyear_id,
-                'block_id' => $class->block_id,
-                'start_date_one' => $class->start_date_one,
-                'end_date_one' => $class->end_date_one,
-                'start_date_two' => $class->start_date_two,
-                'end_date_two' => $class->end_date_two,
-                'main_teacher_id' => $class->main_teacher_id ?? '',
-                'assistant_teacher_ids' => $class->teachers->where('is_main', false)->pluck('id')->toArray(),
+                'schoolyear' => $class->schoolyear,
+                'block' => $class->block,
                 'note' => $class->note ?? '',
+                'status' => $class->status,
             ];
+
+            // Load blocks theo schoolyear
+            $this->blocks = Block::where('namhoc', $class->schoolyear)
+                ->where('pid', $this->parish_id)
+                ->pluck('name', 'id')
+                ->toArray();
         }
+    }
+
+    public function updatedFormSchoolyear($schoolyear)
+    {
+        $this->blocks = Block::where('namhoc', $schoolyear)
+            ->where('pid', $this->parish_id)
+            ->pluck('name', 'id')
+            ->toArray();
+
+        $this->form['block'] = '';
     }
 
     public function save()
     {
         $this->validate();
 
+        DB::beginTransaction();
+
         try {
             if ($this->isEdit) {
                 $class = Lop::findOrFail($this->classId);
                 $class->update($this->form);
-                $message = 'Cập nhật lớp học thành công!';
             } else {
                 $class = Lop::create($this->form);
-                $message = 'Tạo lớp học thành công!';
             }
 
-            // Sync teachers
-            $teacherIds = [];
+            // 👉 nếu sau này có sync teacher, pivot, log... thì đặt ở đây
 
-            // Main teacher
-            if (!empty($this->form['main_teacher_id'])) {
-                $teacherIds[$this->form['main_teacher_id']] = ['is_main' => true];
-            }
+            DB::commit();
 
-            // Assistant teachers
-            if (!empty($this->form['assistant_teacher_ids'])) {
-                foreach ($this->form['assistant_teacher_ids'] as $teacherId) {
-                    if ($teacherId != $this->form['main_teacher_id']) {
-                        $teacherIds[$teacherId] = ['is_main' => false];
-                    }
-                }
-            }
+            session()->flash(
+                'success',
+                $this->isEdit
+                    ? 'Cập nhật lớp học thành công!'
+                    : 'Tạo lớp học thành công!'
+            );
 
-            $class->teachers()->sync($teacherIds);
-
-            session()->flash('message', $message);
             return redirect()->route('ds-lop');
-        } catch (\Exception $e) {
-            session()->flash('error', 'Có lỗi xảy ra: ' . $e->getMessage());
+        } catch (\Throwable $e) {
+
+            DB::rollBack(); // ⬅️ QUAN TRỌNG
+
+            session()->flash('error', 'Lưu dữ liệu thất bại!');
+
+            Log::error('LopForm save error', [
+                'error' => $e->getMessage(),
+                'data' => $this->form,
+            ]);
         }
     }
-
 
     public function render()
     {

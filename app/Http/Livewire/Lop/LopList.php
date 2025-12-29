@@ -2,8 +2,6 @@
 
 namespace App\Http\Livewire\Lop;
 
-use App\Models\Decen;
-use App\Models\SetAdmin;
 use App\Services\LopService;
 use App\Traits\FilterTrait;
 use Illuminate\Support\Facades\Log;
@@ -101,35 +99,11 @@ class LopList extends Component
      */
     private function initializeUser(): void
     {
-        $user = backpack_user();
+        $this->parish_id = session('parish_id');
+        $this->isAdmin = session('isAdmin', false);
 
-        if (!$user) {
-            if (!$user) {
-                abort(403, 'Vui lòng đăng nhập');
-            }
-        }
-
-        $userId = $user->id;
-
-        $setadmin = SetAdmin::where('use', $userId)
-            ->where('status', 1)
-            ->first();
-
-        if ($setadmin) {
-            // Admin - lấy giáo xứ từ request
-            $this->isAdmin = true;
-            $this->parish_id = request()->get('giaoxu');
-            return;
-        }
-
-        $decen = Decen::where('use', $userId)
-            ->where('status', 1)
-            ->where('student', 1)
-            ->first();
-
-        if ($decen) {
-            $this->parish_id = $decen->pid;
-            $this->isAdmin = false;
+        if (!$this->parish_id) {
+            abort(403, 'Không có quyền truy cập');
         }
     }
 
@@ -142,7 +116,10 @@ class LopList extends Component
             return;
         }
 
+        Log::info('Loading initial data for parish_id: ' . $this->parish_id);
+
         $data = $this->getNamHocs($this->parish_id);
+        Log::info('NamHocs:', $data['namHocs']->toArray());
         $this->namHocs = $data['namHocs'];
 
         // ✅ Nếu chưa chọn năm học, lấy năm học mới nhất

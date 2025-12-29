@@ -39,6 +39,52 @@
                     <a href="{{ route('attendance') }}" class="text-sm font-medium text-slate-600 hover:text-indigo-600 transition">
                         Điểm danh
                     </a>
+
+                    <div class="relative" x-data="{ openManage: false }">
+                        <button @click="openManage = !openManage"
+                            class="flex items-center gap-1 text-sm font-medium text-slate-600 hover:text-indigo-600 transition">
+                            Quản lý
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M19 9l-7 7-7-7" />
+                            </svg>
+                        </button>
+
+                        <div x-show="openManage"
+                            @click.outside="openManage = false"
+                            x-transition
+                            class="absolute right-0 mt-2 w-56 bg-white border border-slate-200 rounded-xl shadow-lg overflow-hidden z-50">
+
+                            {{-- Nghiệp vụ gốc --}}
+                            <a href="{{ route('nam-hoc') }}"
+                                class="block px-4 py-2 text-sm hover:bg-indigo-50">
+                                Năm học
+                            </a>
+
+                            <a href="{{ route('khoi.manage') }}"
+                                class="block px-4 py-2 text-sm hover:bg-indigo-50">
+                                Khối
+                            </a>
+
+                            <a href="{{ route('ds-lop') }}"
+                                class="block px-4 py-2 text-sm hover:bg-indigo-50">
+                                Lớp
+                            </a>
+
+                            <div class="border-t my-1"></div>
+
+                            {{-- Nhân sự --}}
+                            <a href="{{ route('nam-hoc.index') }}"
+                                class="block px-4 py-2 text-sm hover:bg-indigo-50">
+                                Giáo lý viên
+                            </a>
+
+                            <a href="{{ route('nam-hoc') }}"
+                                class="block px-4 py-2 text-sm hover:bg-indigo-50">
+                                Học sinh
+                            </a>
+                        </div>
+                    </div>
                 </nav>
 
                 {{-- Actions --}}
