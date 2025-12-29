@@ -2,162 +2,590 @@
 
 namespace App\Http\Livewire\Block;
 
+use App\Http\Livewire\Base\BaseComponent;
 use App\Models\Block;
 use App\Models\NamHoc;
-use Livewire\Component;
-use Livewire\WithPagination;
+use Illuminate\Pagination\LengthAwarePaginator;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\ValidationException;
 
-class BlockManager extends Component
+/**
+ * Component quản lý Khối học (CRUD)
+ * 
+ * Features:
+ * - Chọn năm học
+ * - List khối theo năm học với pagination
+ * - Create/Edit/Delete khối
+ * - Toggle status
+ * - Sắp xếp thứ tự (weight)
+ * - Search khối
+ */
+
+class BlockManager extends BaseComponent
 {
-    use WithPagination;
+    // ==================== FILTERS ====================
 
-    public $parish_id;
-    public $isAdmin;
-    public $showForm = false;
-
+    /** @var int|null Selected năm học ID */
     public $selectedNamHoc;
+
+    /** @var \Illuminate\Support\Collection Danh sách năm học */
     public $namHocs = [];
 
-    public $blocks; // Livewire v2.12: public property can be Collection
+    // ==================== FORM STATE ====================
 
+    /** @var bool Hiển thị form create/edit */
+    public $showForm = false;
+
+    /** @var int|null ID của khối đang edit (null = create mode) */
     public $editingId = null;
+
+    // ==================== FORM FIELDS ====================
+
+    /** @var string Tên khối */
     public $name;
+
+    /** @var int Trạng thái (1 = active, 0 = inactive) */
     public $status = 1;
 
-    public $perPage = 15;
-    public $perPageOptions = [10, 15, 25, 50];
+    /** @var int Weight - Thứ tự sắp xếp */
+    public $weight = 0;
 
+    // ==================== DATA ====================
+
+    /** @var \Illuminate\Pagination\LengthAwarePaginator Danh sách khối */
+    protected $blocks = [];
+
+
+    // ==================== VALIDATION ====================
+
+    /**
+     * Validation rules
+     */
     protected $rules = [
         'selectedNamHoc' => 'required|integer|exists:nam_hoc,id',
         'name' => 'required|string|max:255',
+        'weight' => 'nullable|integer|min:0',
         'status' => 'required|boolean',
         'perPage' => 'required|integer|in:10,15,25,50',
     ];
 
-    protected $listeners = [
-        'refreshBlocks' => 'loadBlocks'
+    /**
+     * Custom validation messages
+     */
+    protected $messages = [
+        'selectedNamHoc.required' => 'Vui lòng chọn năm học',
+        'selectedNamHoc.exists' => 'Năm học không hợp lệ',
+        'name.required' => 'Vui lòng nhập tên khối',
+        'name.max' => 'Tên khối không được quá 255 ký tự',
+        'weight.integer' => 'Thứ tự phải là số nguyên',
+        'weight.min' => 'Thứ tự phải lớn hơn hoặc bằng 0',
     ];
 
+    // ==================== QUERY STRING ====================
+
+    /**
+     * Query string để share URL
+     */
+    protected $queryString = [
+        'selectedNamHoc' => ['except' => ''],
+        'search' => ['except' => ''],
+        'page' => ['except' => 1],
+        'showForm' => ['except' => false],
+    ];
+
+    // ==================== LISTENERS ====================
+
+    /**
+     * Listeners cho Livewire events
+     */
+    protected $listeners = [
+        'refresh' => 'handleRefresh',
+        'blockCreated' => 'loadBlocks',
+        'blockUpdated' => 'loadBlocks',
+    ];
+
+    // ==================== LIFECYCLE ====================
+
+    /**
+     * Component initialization
+     */
     public function mount()
     {
-        $this->parish_id = session('parish_id');
-        $this->isAdmin   = session('isAdmin');
+        parent::mount();
 
-        abort_if(!$this->parish_id, 403);
+        // Yêu cầu quyền quản trị (Admin hoặc Decen)
+        $this->requireManager();
 
+        // Bắt buộc phải có parish_id
+        $this->requireParishId();
+    }
+
+    /**
+     * Load dữ liệu ban đầu (implement từ BaseComponent)
+     */
+    protected function loadInitialData(): void
+    {
         $this->loadNamHocs();
-        $this->setDefaultNamHoc();
-        $this->loadBlocks();
-    }
 
-    public function loadNamHocs()
-    {
-        $this->namHocs = NamHoc::ofParish($this->parish_id)
-            ->orderByDesc('start_date_one')
-            ->get();
-    }
-
-    private function setDefaultNamHoc()
-    {
-        if (!$this->selectedNamHoc && $this->namHocs->count()) {
-            $this->selectedNamHoc = $this->namHocs->first()->id;
+        // Nếu đã có selectedNamHoc, load blocks
+        if ($this->selectedNamHoc) {
+            $this->loadBlocks();
         }
     }
 
-    public function loadBlocks()
+    /**
+     * Override sanitizeQueryString để xử lý selectedNamHoc
+     */
+    protected function sanitizeQueryString(): void
+    {
+        parent::sanitizeQueryString();
+
+        // selectedNamHoc: null or int
+        if ($this->selectedNamHoc === '' || $this->selectedNamHoc === null) {
+            $this->selectedNamHoc = null;
+        } else {
+            $this->selectedNamHoc = is_numeric($this->selectedNamHoc)
+                ? (int) $this->selectedNamHoc
+                : null;
+        }
+    }
+
+    /**
+     * Load danh sách năm học
+     */
+    public function loadNamHocs()
+    {
+        try {
+            $this->namHocs = NamHoc::ofParish($this->parish_id)
+                ->active()
+                ->orderByDesc('start_date_one')
+                ->get();
+
+            // Nếu chưa chọn năm học và có năm học available, chọn năm học mới nhất
+            if (!$this->selectedNamHoc && $this->namHocs->isNotEmpty()) {
+                $this->selectedNamHoc = $this->namHocs->first()->id;
+            }
+        } catch (\Exception $e) {
+            $this->logError($e, 'Error loading nam hocs');
+            session()->flash('error', 'Có lỗi khi tải danh sách năm học');
+            $this->namHocs = collect();
+        }
+    }
+
+    /**
+     * Load danh sách khối với pagination
+     */
+    public function loadBlocks(): void
     {
         if (!$this->selectedNamHoc) {
-            $this->blocks = collect();
+            $this->blocks = new LengthAwarePaginator([], 0, $this->perPage, 1);
             return;
         }
 
-        $this->blocks = Block::where('pid', $this->parish_id)
-            ->where('namhoc', $this->selectedNamHoc)
-            ->orderBy('name')
-            ->paginate($this->perPage);
+        try {
+            $query = Block::where('pid', $this->parish_id)
+                ->where('namhoc', $this->selectedNamHoc)
+                ->orderBy('weight', 'asc');
+
+            // Apply search filter
+            if (!empty($this->search)) {
+                $query->where('name', 'like', '%' . $this->search . '%');
+            }
+
+            $this->blocks = $query->paginate($this->perPage);
+        } catch (\Exception $e) {
+            $this->logError($e, 'Error loading blocks');
+            session()->flash('error', 'Có lỗi khi tải danh sách khối');
+            $this->blocks = new LengthAwarePaginator([], 0, $this->perPage, 1);
+            return;
+        }
     }
 
-    public function updatedSelectedNamHoc()
+    // ==================== PROPERTY UPDATERS ====================
+
+    /**
+     * Khi thay đổi năm học
+     */
+    public function updatedSelectedNamHoc(): void
     {
+        // Sanitize and validate
+        $this->selectedNamHoc = is_numeric($this->selectedNamHoc)
+            ? (int) $this->selectedNamHoc
+            : null;
+
+        try {
+            $this->validateOnly('selectedNamHoc');
+        } catch (ValidationException $e) {
+            $this->selectedNamHoc = null;
+            session()->flash('warning', 'Năm học không hợp lệ, đã đặt lại lựa chọn.');
+        }
+
+        // Reset search và reload blocks
+        $this->search = '';
+        $this->resetPage();
+        $this->loadBlocks();
+
+        // Đóng form nếu đang mở
         $this->resetForm();
-        $this->resetPage();
+    }
+
+    /**
+     * Khi search thay đổi, reload data
+     */
+    public function updatedSearch(): void
+    {
+        parent::updatedSearch();
         $this->loadBlocks();
     }
 
-    public function updatedPerPage()
+    /**
+     * Khi perPage thay đổi, reload data
+     */
+    public function updatedPerPage(): void
     {
-        $this->validateOnly('perPage');
-        $this->resetPage();
+        parent::updatedPerPage();
         $this->loadBlocks();
     }
 
-    public function create()
+    // ==================== CRUD ACTIONS ====================
+
+    /**
+     * Mở form tạo mới
+     */
+    public function create(): void
     {
+        $this->requireManager();
+
+        if (!$this->selectedNamHoc) {
+            session()->flash('warning', 'Vui lòng chọn năm học trước');
+            return;
+        }
+
         $this->resetForm();
         $this->showForm = true;
     }
 
-    public function edit($id)
+    /**
+     * Mở form edit
+     */
+    public function edit(int $id): void
     {
-        $block = Block::where('pid', $this->parish_id)
-            ->where('namhoc', $this->selectedNamHoc)
-            ->findOrFail($id);
+        $this->requireManager();
 
-        $this->editingId = $block->id;
-        $this->name = $block->name;
-        $this->status = $block->status;
+        try {
+            $block = Block::where('pid', $this->parish_id)
+                ->where('namhoc', $this->selectedNamHoc)
+                ->findOrFail($id);
 
-        $this->showForm = true;
+            $this->editingId = $block->id;
+            $this->name = $block->name;
+            $this->weight = $block->weight ?? 0;
+            $this->status = $block->status;
+
+            $this->showForm = true;
+        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+            session()->flash('error', 'Không tìm thấy khối học này');
+        } catch (\Exception $e) {
+            $this->logError($e, 'Error loading block for edit', ['id' => $id]);
+            session()->flash('error', 'Có lỗi khi tải thông tin khối học');
+        }
     }
 
-    public function save()
+    /**
+     * Lưu (create hoặc update)
+     */
+    public function save(): void
     {
-        $this->validate();
+        $this->requireManager();
 
-        Block::updateOrCreate(
-            ['id' => $this->editingId],
-            [
+        if (!$this->selectedNamHoc) {
+            session()->flash('error', 'Vui lòng chọn năm học');
+            return;
+        }
+
+        // Validate form data (excluding selectedNamHoc from form validation)
+        try {
+            $this->validate([
+                'name' => 'required|string|max:255',
+                'weight' => 'nullable|integer|min:0',
+                'status' => 'required|boolean',
+            ]);
+        } catch (ValidationException $e) {
+            // Livewire tự động hiển thị errors
+            return;
+        }
+
+        try {
+            DB::beginTransaction();
+
+            // Check trùng tên trong cùng năm học và xứ
+            $exists = Block::where('pid', $this->parish_id)
+                ->where('namhoc', $this->selectedNamHoc)
+                ->where('name', $this->name)
+                ->when($this->editingId, function ($q) {
+                    $q->where('id', '!=', $this->editingId);
+                })
+                ->exists();
+
+            if ($exists) {
+                session()->flash('error', 'Tên khối đã tồn tại trong năm học này');
+                return;
+            }
+
+            Block::updateOrCreate(
+                ['id' => $this->editingId],
+                [
+                    'name' => $this->name,
+                    'weight' => $this->weight ?? 0,
+                    'status' => $this->status,
+                    'namhoc' => $this->selectedNamHoc,
+                    'pid' => $this->parish_id,
+                    // Set other fields if needed
+                    'did' => 0, // Default value
+                    'deid' => 0, // Default value
+                    'paid' => 0, // Default value
+                ]
+            );
+
+            DB::commit();
+
+            $message = $this->editingId
+                ? 'Cập nhật khối học thành công'
+                : 'Tạo khối học mới thành công';
+
+            session()->flash('message', $message);
+
+            $this->resetForm();
+            $this->loadBlocks();
+
+            // Emit event
+            $this->emit($this->editingId ? 'blockUpdated' : 'blockCreated');
+        } catch (\Exception $e) {
+            DB::rollBack();
+
+            $this->logError($e, 'Error saving block', [
+                'editing_id' => $this->editingId,
                 'name' => $this->name,
-                'pid' => $this->parish_id,
                 'namhoc' => $this->selectedNamHoc,
-                'status' => $this->status,
-            ]
-        );
+            ]);
 
-        session()->flash('message', 'Lưu khối thành công');
-
-        $this->resetForm();
-        $this->loadBlocks();
+            session()->flash('error', 'Có lỗi khi lưu khối học. Vui lòng thử lại.');
+        }
     }
 
-    public function toggleStatus($id)
+    /**
+     * Toggle status khối học
+     */
+    public function toggleStatus(int $id): void
     {
-        $block = Block::where('pid', $this->parish_id)
-            ->where('namhoc', $this->selectedNamHoc)
-            ->findOrFail($id);
+        $this->requireManager();
 
-        $block->update(['status' => !$block->status]);
+        try {
+            $block = Block::where('pid', $this->parish_id)
+                ->where('namhoc', $this->selectedNamHoc)
+                ->findOrFail($id);
 
-        $this->loadBlocks();
+            $block->update(['status' => !$block->status]);
+
+            $message = $block->status
+                ? 'Đã kích hoạt khối học'
+                : 'Đã vô hiệu hóa khối học';
+
+            session()->flash('message', $message);
+
+            $this->loadBlocks();
+        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+            session()->flash('error', 'Không tìm thấy khối học này');
+        } catch (\Exception $e) {
+            $this->logError($e, 'Error toggling block status', ['id' => $id]);
+            session()->flash('error', 'Có lỗi khi thay đổi trạng thái khối học');
+        }
     }
 
-    public function resetForm()
+    /**
+     * Xóa khối học
+     */
+    public function delete(int $id): void
+    {
+        // Chỉ Admin mới được xóa
+        $this->requireAdmin();
+
+        try {
+            DB::beginTransaction();
+
+            $block = Block::where('pid', $this->parish_id)
+                ->where('namhoc', $this->selectedNamHoc)
+                ->findOrFail($id);
+
+            // Check nếu khối đang được sử dụng (có lớp học)
+            $hasClasses = \App\Models\Lop::where('block', $block->id)->exists();
+
+            if ($hasClasses) {
+                session()->flash('error', 'Không thể xóa khối học đang có lớp học');
+                return;
+            }
+
+            $block->delete();
+
+            DB::commit();
+
+            session()->flash('message', 'Đã xóa khối học thành công');
+
+            $this->loadBlocks();
+        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+            DB::rollBack();
+            session()->flash('error', 'Không tìm thấy khối học này');
+        } catch (\Exception $e) {
+            DB::rollBack();
+            $this->logError($e, 'Error deleting block', ['id' => $id]);
+            session()->flash('error', 'Có lỗi khi xóa khối học');
+        }
+    }
+
+    /**
+     * Sắp xếp thứ tự khối (move up)
+     */
+    public function moveUp(int $id): void
+    {
+        $this->requireManager();
+
+        try {
+            DB::beginTransaction();
+
+            $block = Block::where('pid', $this->parish_id)
+                ->where('namhoc', $this->selectedNamHoc)
+                ->findOrFail($id);
+
+            // Find block với weight nhỏ hơn gần nhất
+            $prevBlock = Block::where('pid', $this->parish_id)
+                ->where('namhoc', $this->selectedNamHoc)
+                ->where('weight', '<', $block->weight)
+                ->orderBy('weight', 'desc')
+                ->first();
+
+            if ($prevBlock) {
+                // Swap weights
+                $tempWeight = $block->weight;
+                $block->update(['weight' => $prevBlock->weight]);
+                $prevBlock->update(['weight' => $tempWeight]);
+
+                session()->flash('message', 'Đã di chuyển khối học lên');
+            } else {
+                session()->flash('info', 'Khối học đã ở vị trí đầu tiên');
+            }
+
+            DB::commit();
+            $this->loadBlocks();
+        } catch (\Exception $e) {
+            DB::rollBack();
+            $this->logError($e, 'Error moving block up', ['id' => $id]);
+            session()->flash('error', 'Có lỗi khi di chuyển khối học');
+        }
+    }
+
+    /**
+     * Sắp xếp thứ tự khối (move down)
+     */
+    public function moveDown(int $id): void
+    {
+        $this->requireManager();
+
+        try {
+            DB::beginTransaction();
+
+            $block = Block::where('pid', $this->parish_id)
+                ->where('namhoc', $this->selectedNamHoc)
+                ->findOrFail($id);
+
+            // Find block với weight lớn hơn gần nhất
+            $nextBlock = Block::where('pid', $this->parish_id)
+                ->where('namhoc', $this->selectedNamHoc)
+                ->where('weight', '>', $block->weight)
+                ->orderBy('weight', 'asc')
+                ->first();
+
+            if ($nextBlock) {
+                // Swap weights
+                $tempWeight = $block->weight;
+                $block->update(['weight' => $nextBlock->weight]);
+                $nextBlock->update(['weight' => $tempWeight]);
+
+                session()->flash('message', 'Đã di chuyển khối học xuống');
+            } else {
+                session()->flash('info', 'Khối học đã ở vị trí cuối cùng');
+            }
+
+            DB::commit();
+            $this->loadBlocks();
+        } catch (\Exception $e) {
+            DB::rollBack();
+            $this->logError($e, 'Error moving block down', ['id' => $id]);
+            session()->flash('error', 'Có lỗi khi di chuyển khối học');
+        }
+    }
+
+    // ==================== FORM HELPERS ====================
+
+    /**
+     * Reset form về trạng thái mặc định
+     */
+    public function resetForm(): void
     {
         $this->reset([
             'editingId',
             'name',
+            'weight',
             'status',
         ]);
 
+        $this->status = 1; // Default active
+        $this->weight = 0; // Default weight
         $this->showForm = false;
+
+        // Clear validation errors
+        $this->resetValidation();
     }
 
+    /**
+     * Cancel và đóng form
+     */
+    public function cancel(): void
+    {
+        $this->resetForm();
+    }
+
+    /**
+     * Override resetFilters để reset năm học
+     */
+    public function resetFilters(): void
+    {
+        $this->search = '';
+        // Không reset selectedNamHoc vì cần giữ năm học đang chọn
+        $this->resetPage();
+
+        session()->flash('message', 'Đã đặt lại bộ lọc');
+    }
+
+    // public function render()
+    // {
+    //     return view('livewire.block.block-manager', [
+    //         'blocks' => $this->blocks,
+    //     ])
+    //         ->extends('frontend.layout.main')
+    //         ->section('content');
+    // }
+
+    // ==================== RENDER ====================
+
+    /**
+     * Render component
+     */
     public function render()
     {
         return view('livewire.block.block-manager', [
             'blocks' => $this->blocks,
         ])
-        ->extends('frontend.layout.main')
-        ->section('content');
+            ->extends('frontend.layout.main')
+            ->section('content');
     }
 }

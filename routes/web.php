@@ -89,7 +89,7 @@ Route::get('/lop/{id}/edit', LopForm::class)->name('lop.edit');
 Route::get('/attendance/{classId?}', AttendanceManager::class)->name('attendance');
 Route::get('/nam-hoc', NamHocManager::class)->name('nam-hoc');
 Route::get(
-    '/nam-hoc/khoi',
+    '/khoi-manage',
     BlockManager::class
 )->name('khoi.manage');
 

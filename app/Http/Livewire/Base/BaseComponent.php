@@ -144,6 +144,8 @@ abstract class BaseComponent extends Component
             return;
         }
 
+        dd($this->isAdmin, $this->isDecen, $this->parish_id);
+
         // Không phải admin cũng không phải decen
         abort(403, 'Không có quyền truy cập');
     }
