@@ -36,13 +36,13 @@
         {{-- Inline class selector to switch class without leaving page --}}
         <div class="p-3">
             @livewire('class-filter-selector', [
-                'parish_id' => $parishId,
-                'showNamHoc' => true,
-                'showKhoi' => true,
-                'showLop' => true,
-                'selectedNamHoc' => $namHoc->id ?? null,
-                'selectedKhoi' => $block->id ?? null,
-                'selectedLop' => $lopData['id'] ?? null,
+            'parish_id' => $parishId,
+            'showNamHoc' => true,
+            'showKhoi' => true,
+            'showLop' => true,
+            'selectedNamHoc' => $namHoc->id ?? null,
+            'selectedKhoi' => $block->id ?? null,
+            'selectedLop' => $lopData['id'] ?? null,
             ])
         </div>
 
@@ -107,7 +107,7 @@
                 </h3>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-2">
                     @foreach($teachers as $teacher)
-                        <x-teacher.badge :name="$teacher['name']" :isChuNhiem="$teacher['is_chu_nhiem']" />
+                    <x-teacher.badge :name="$teacher['name']" :isChuNhiem="$teacher['is_chu_nhiem']" />
                     @endforeach
                 </div>
             </div>
@@ -155,6 +155,61 @@
             </div>
             @endif
 
+            {{-- Thay thế schedule section --}}
+            @if($lopData['start_date_one'] || $lopData['end_date_one'] || $lopData['start_date_two'] || $lopData['end_date_two'])
+            <div class="p-4 border-b border-slate-200">
+                <h3 class="text-sm font-bold text-slate-900 mb-3 flex items-center gap-2">
+                    <svg class="w-4 h-4 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                    </svg>
+                    Lịch học
+                </h3>
+                <div class="space-y-2">
+                    @if($lopData['start_date_one'] && $lopData['end_date_one'])
+                    <div class="flex items-center gap-3 p-3 bg-gradient-to-r from-indigo-50 to-purple-50 rounded-xl border border-indigo-100">
+                        <div class="flex-shrink-0 w-10 h-10 bg-indigo-600 rounded-lg flex items-center justify-center">
+                            <span class="text-white font-bold text-sm">HK1</span>
+                        </div>
+                        <div class="flex-1 min-w-0">
+                            <p class="text-xs font-semibold text-slate-700">Học kỳ 1</p>
+                            <p class="text-xs text-slate-600 font-medium">
+                                {{ \Carbon\Carbon::parse($lopData['start_date_one'])->format('d/m/Y') }}
+                                -
+                                {{ \Carbon\Carbon::parse($lopData['end_date_one'])->format('d/m/Y') }}
+                            </p>
+                        </div>
+                        @if(\Carbon\Carbon::now()->between($lopData['start_date_one'], $lopData['end_date_one']))
+                        <span class="px-2 py-1 bg-green-100 text-green-700 rounded-md text-xs font-semibold">
+                            Đang học
+                        </span>
+                        @endif
+                    </div>
+                    @endif
+
+                    @if($lopData['start_date_two'] && $lopData['end_date_two'])
+                    <div class="flex items-center gap-3 p-3 bg-gradient-to-r from-purple-50 to-pink-50 rounded-xl border border-purple-100">
+                        <div class="flex-shrink-0 w-10 h-10 bg-purple-500 rounded-lg flex items-center justify-center">
+                            <span class="text-white font-bold text-sm">HK2</span>
+                        </div>
+                        <div class="flex-1 min-w-0">
+                            <p class="text-xs font-semibold text-slate-700">Học kỳ 2</p>
+                            <p class="text-xs text-slate-600 font-medium">
+                                {{ \Carbon\Carbon::parse($lopData['start_date_two'])->format('d/m/Y') }}
+                                -
+                                {{ \Carbon\Carbon::parse($lopData['end_date_two'])->format('d/m/Y') }}
+                            </p>
+                        </div>
+                        @if(\Carbon\Carbon::now()->between($lopData['start_date_two'], $lopData['end_date_two']))
+                        <span class="px-2 py-1 bg-green-100 text-green-700 rounded-md text-xs font-semibold">
+                            Đang học
+                        </span>
+                        @endif
+                    </div>
+                    @endif
+                </div>
+            </div>
+            @endif
+
             {{-- Note Section - Compact --}}
             @if($lopData['note'])
             <div class="p-4 border-b border-slate-200">
@@ -168,8 +223,8 @@
             </div>
             @endif
 
-            {{-- Quick Action - Single Link --}}
-            <div class="p-4 bg-white">
+            <div class="p-4 bg-white space-y-2">
+                {{-- Primary Action --}}
                 <a href="{{ $slugUrl }}"
                     class="flex items-center justify-center gap-2 w-full px-4 py-3 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-xl hover:from-blue-600 hover:to-blue-700 active:scale-[0.98] transition-all shadow-sm font-semibold">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -177,6 +232,25 @@
                     </svg>
                     Xem danh sách học sinh
                 </a>
+
+                {{-- Secondary Actions Grid --}}
+                <div class="grid grid-cols-2 gap-2">
+                    <a href="{{ route('attendance', $lopData['id']) }}"
+                        class="flex items-center justify-center gap-2 px-3 py-2.5 bg-slate-100 text-slate-900 rounded-xl hover:bg-slate-200 active:scale-[0.98] transition-all font-medium text-sm">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                        </svg>
+                        <span>Điểm danh</span>
+                    </a>
+
+                    <a href="{{ route('lop.edit', $lopData['id']) }}"
+                        class="flex items-center justify-center gap-2 px-3 py-2.5 bg-slate-100 text-slate-900 rounded-xl hover:bg-slate-200 active:scale-[0.98] transition-all font-medium text-sm">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                        </svg>
+                        <span>Chỉnh sửa</span>
+                    </a>
+                </div>
             </div>
         </div>
     </div>

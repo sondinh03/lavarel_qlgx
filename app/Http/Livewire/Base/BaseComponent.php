@@ -53,6 +53,11 @@ abstract class BaseComponent extends Component
     /** @var string Pagination theme */
     protected $paginationTheme = 'tailwind';
 
+    // ==================== IMPORTANT NOTE ====================
+    // Livewire chỉ cho phép public properties là: numeric, string, array, null, boolean
+    // Các data phức tạp (Collections, Paginators, Models) phải là PROTECTED
+    // và pass qua view trong render() method
+
     // ==================== VALIDATION ====================
 
     /**
@@ -144,8 +149,6 @@ abstract class BaseComponent extends Component
             return;
         }
 
-        dd($this->isAdmin, $this->isDecen, $this->parish_id);
-
         // Không phải admin cũng không phải decen
         abort(403, 'Không có quyền truy cập');
     }
@@ -213,7 +216,7 @@ abstract class BaseComponent extends Component
     protected function resetToDefaults(): void
     {
         $this->search = '';
-        $this->perPage = 15;
+        $this->perPage = 10;
         $this->resetPage();
     }
 
@@ -234,9 +237,9 @@ abstract class BaseComponent extends Component
     public function updatedPerPage(): void
     {
         // Sanitize incoming perPage value
-        $this->perPage = is_numeric($this->perPage) ? (int) $this->perPage : 15;
+        $this->perPage = is_numeric($this->perPage) ? (int) $this->perPage : 10;
         if (!in_array($this->perPage, $this->perPageOptions)) {
-            $this->perPage = 15;
+            $this->perPage = 10;
         }
 
         $this->validateOnly('perPage');
