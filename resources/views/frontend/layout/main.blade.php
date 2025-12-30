@@ -61,7 +61,7 @@
                                 Năm học
                             </a>
 
-                            <a href="{{ route('khoi.manage') }}"
+                            <a href="{{ route('khoi-hoc') }}"
                                 class="block px-4 py-2 text-sm hover:bg-indigo-50">
                                 Khối
                             </a>

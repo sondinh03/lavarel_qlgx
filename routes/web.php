@@ -88,10 +88,7 @@ Route::get('/lop/{id}', LopDetail::class)->name('lop.show');
 Route::get('/lop/{id}/edit', LopForm::class)->name('lop.edit');
 Route::get('/attendance/{classId?}', AttendanceManager::class)->name('attendance');
 Route::get('/nam-hoc', NamHocManager::class)->name('nam-hoc');
-Route::get(
-    '/khoi-manage',
-    BlockManager::class
-)->name('khoi.manage');
+Route::get('/khoi-hoc', BlockManager::class)->name('khoi-hoc');
 
 
 Route::get('{slug}', [SlugController::class, 'make']);

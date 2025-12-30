@@ -6,18 +6,30 @@
         
         <?php if (isset($component)) { $__componentOriginalc254754b9d5db91d5165876f9d051922ca0066f4 = $component; } ?>
 <?php $component = $__env->getContainer()->make(Illuminate\View\AnonymousComponent::class, ['view' => 'components.breadcrumb','data' => ['items' => [
-            ['label' => 'Trang chủ', 'url' => route('home')],
-            ['label' => 'Cài đặt hệ thống'],
-            ['label' => 'Năm học']
-        ]]]); ?>
+            [
+                'label' => 'Trang chủ',
+                'url' => route('home'),
+            ],
+            [
+                'label' => 'Quản lý năm học',
+                'url' => route('nam-hoc'),
+                'icon' => '<svg class=\'w-4 h-4\' fill=\'none\' stroke=\'currentColor\' viewBox=\'0 0 24 24\'><path stroke-linecap=\'round\' stroke-linejoin=\'round\' stroke-width=\'2\' d=\'M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z\'/></svg>'
+            ],
+        ],'separator' => 'arrow']]); ?>
 <?php $component->withName('breadcrumb'); ?>
 <?php if ($component->shouldRender()): ?>
 <?php $__env->startComponent($component->resolveView(), $component->data()); ?>
 <?php $component->withAttributes(['items' => \Illuminate\View\Compilers\BladeCompiler::sanitizeComponentAttribute([
-            ['label' => 'Trang chủ', 'url' => route('home')],
-            ['label' => 'Cài đặt hệ thống'],
-            ['label' => 'Năm học']
-        ])]); ?>
+            [
+                'label' => 'Trang chủ',
+                'url' => route('home'),
+            ],
+            [
+                'label' => 'Quản lý năm học',
+                'url' => route('nam-hoc'),
+                'icon' => '<svg class=\'w-4 h-4\' fill=\'none\' stroke=\'currentColor\' viewBox=\'0 0 24 24\'><path stroke-linecap=\'round\' stroke-linejoin=\'round\' stroke-width=\'2\' d=\'M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z\'/></svg>'
+            ],
+        ]),'separator' => 'arrow']); ?>
 <?php echo $__env->renderComponent(); ?>
 <?php endif; ?>
 <?php if (isset($__componentOriginalc254754b9d5db91d5165876f9d051922ca0066f4)): ?>
@@ -49,26 +61,39 @@
         <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
 
             
-            <?php if (isset($component)) { $__componentOriginalc254754b9d5db91d5165876f9d051922ca0066f4 = $component; } ?>
-<?php $component = $__env->getContainer()->make(Illuminate\View\AnonymousComponent::class, ['view' => 'components.page-header','data' => ['title' => 'Cài đặt năm học','description' => 'Quản lý danh sách năm học trong giáo xứ','icon' => 'calendar','gradient' => 'blue','count' => count($namHocs),'countLabel' => 'Năm học']]); ?>
-<?php $component->withName('page-header'); ?>
-<?php if ($component->shouldRender()): ?>
-<?php $__env->startComponent($component->resolveView(), $component->data()); ?>
-<?php $component->withAttributes(['title' => 'Cài đặt năm học','description' => 'Quản lý danh sách năm học trong giáo xứ','icon' => 'calendar','gradient' => 'blue','count' => \Illuminate\View\Compilers\BladeCompiler::sanitizeComponentAttribute(count($namHocs)),'count-label' => 'Năm học']); ?>
-<?php echo $__env->renderComponent(); ?>
-<?php endif; ?>
-<?php if (isset($__componentOriginalc254754b9d5db91d5165876f9d051922ca0066f4)): ?>
-<?php $component = $__componentOriginalc254754b9d5db91d5165876f9d051922ca0066f4; ?>
-<?php unset($__componentOriginalc254754b9d5db91d5165876f9d051922ca0066f4); ?>
-<?php endif; ?>
+
+            <div class="p-6 border-b border-slate-200 bg-gradient-to-br from-indigo-50 to-white">
+                <div class="flex items-start justify-between">
+                    <div class="flex items-center gap-4">
+                        <div class="w-14 h-14 bg-indigo-500 rounded-xl flex items-center justify-center shadow-sm">
+                            <svg class="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                            </svg>
+                        </div>
+
+                        <div>
+                            <h1 class="text-2xl font-bold text-slate-900">Quản lý năm học</h1>
+                            <p class="text-sm text-slate-600 mt-1">
+                                Danh sách các năm học đã được tạo trong hệ thống
+                            </p>
+                        </div>
+                    </div>
+
+                    <div class="text-right">
+                        <div class="text-3xl font-bold text-indigo-600"><?php echo e($namHocs->count()); ?></div>
+                        <div class="text-xs text-slate-600 font-medium">Năm học</div>
+                    </div>
+                </div>
+            </div>
 
             
-            <div class="px-6 pb-4 flex justify-end">
+            <div class="px-6 py-4 flex justify-end border-b border-slate-200 bg-slate-50/70">
                 <button
                     wire:click="create"
-                    class="inline-flex items-center gap-2 bg-blue-600 text-white px-5 py-2.5 rounded-xl font-semibold
-                           hover:bg-blue-700 active:scale-95 transition-all shadow-lg hover:shadow-xl">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    class="inline-flex items-center gap-2 bg-indigo-600 text-white px-4 py-2 rounded-xl
+               text-sm font-semibold hover:bg-indigo-700 active:scale-95 transition-all shadow-sm">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                             d="M12 4v16m8-8H4" />
                     </svg>
@@ -153,12 +178,12 @@
                     <tbody class="divide-y divide-slate-100">
                         <?php $__empty_1 = true; $__currentLoopData = $namHocs; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $nh): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); $__empty_1 = false; ?>
                         <tr class="hover:bg-slate-50">
-                            <td class="px-6 py-3 font-medium">
+                            <td class="px-6 py-4 font-semibold text-slate-900">
                                 <?php echo e($nh->name); ?>
 
                             </td>
 
-                            <td class="px-6 py-3 text-center text-sm">
+                            <td class="px-6 py-4 text-center text-sm">
                                 <?php echo e(optional($nh->start_date_one)->format('d/m/Y')); ?>
 
                                 →
@@ -166,7 +191,7 @@
 
                             </td>
 
-                            <td class="px-6 py-3 text-center text-sm">
+                            <td class="px-6 py-4 text-center text-sm">
                                 <?php echo e(optional($nh->start_date_two)->format('d/m/Y')); ?>
 
                                 →
@@ -174,9 +199,9 @@
 
                             </td>
 
-                            <td class="px-6 py-3 text-center">
+                            <td class="px-6 py-4 text-center">
                                 <?php if($nh->current_semester): ?>
-                                <span class="px-2 py-1 text-xs bg-green-100 text-green-700 rounded-lg">
+                                <span class="px-2.5 py-1 text-xs font-semibold rounded-full bg-emerald-100 text-emerald-700">
                                     HK <?php echo e($nh->current_semester); ?>
 
                                 </span>
@@ -185,29 +210,33 @@
                                 <?php endif; ?>
                             </td>
 
-                            <td class="px-6 py-3 text-center">
+                            <td class="px-6 py-4 text-center">
                                 <?php if($nh->status): ?>
-                                <span class="px-2 py-1 text-xs bg-blue-100 text-blue-700 rounded-lg">
+                                <span class="px-3 py-1 text-xs font-semibold rounded-full bg-indigo-100 text-indigo-700">
                                     Hoạt động
                                 </span>
                                 <?php else: ?>
-                                <span class="px-2 py-1 text-xs bg-slate-200 text-slate-600 rounded-lg">
+                                <span class="px-3 py-1 text-xs font-semibold rounded-full bg-slate-200 text-slate-600">
                                     Lưu trữ
                                 </span>
                                 <?php endif; ?>
                             </td>
 
-                            <td class="px-6 py-3 text-center space-x-3 text-sm">
-                                <button wire:click="edit(<?php echo e($nh->id); ?>)"
-                                    class="text-blue-600 hover:underline">
-                                    Sửa
-                                </button>
+                            <td class="px-6 py-4 text-center">
+                                <div class="inline-flex items-center gap-3 text-sm font-medium">
+                                    <button wire:click="edit(<?php echo e($nh->id); ?>)"
+                                        class="text-indigo-600 hover:text-indigo-800">
+                                        Sửa
+                                    </button>
 
-                                <button wire:click="toggleStatus(<?php echo e($nh->id); ?>)"
-                                    class="text-orange-600 hover:underline">
-                                    <?php echo e($nh->status ? 'Lưu trữ' : 'Kích hoạt'); ?>
+                                    <span class="text-slate-300">|</span>
 
-                                </button>
+                                    <button wire:click="toggleStatus(<?php echo e($nh->id); ?>)"
+                                        class="text-orange-600 hover:text-orange-800">
+                                        <?php echo e($nh->status ? 'Lưu trữ' : 'Kích hoạt'); ?>
+
+                                    </button>
+                                </div>
                             </td>
                         </tr>
                         <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); if ($__empty_1): ?>

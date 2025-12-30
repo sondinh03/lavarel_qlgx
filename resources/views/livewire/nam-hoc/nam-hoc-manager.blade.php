@@ -5,10 +5,16 @@
 
         {{-- Breadcrumb --}}
         <x-breadcrumb :items="[
-            ['label' => 'Trang chủ', 'url' => route('home')],
-            ['label' => 'Cài đặt hệ thống'],
-            ['label' => 'Năm học']
-        ]" />
+            [
+                'label' => 'Trang chủ',
+                'url' => route('home'),
+            ],
+            [
+                'label' => 'Quản lý năm học',
+                'url' => route('nam-hoc'),
+                'icon' => '<svg class=\'w-4 h-4\' fill=\'none\' stroke=\'currentColor\' viewBox=\'0 0 24 24\'><path stroke-linecap=\'round\' stroke-linejoin=\'round\' stroke-width=\'2\' d=\'M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z\'/></svg>'
+            ],
+        ]" separator="arrow" />
 
         {{-- Toast --}}
         <div role="status" aria-live="polite">
@@ -22,7 +28,7 @@
         {{-- Main Card --}}
         <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
 
-            {{-- Header --}}
+            {{-- Header
             <x-page-header
                 title="Cài đặt năm học"
                 description="Quản lý danh sách năm học trong giáo xứ"
@@ -31,13 +37,40 @@
                 :count="count($namHocs)"
                 count-label="Năm học" />
 
+                 --}}
+
+            <div class="p-6 border-b border-slate-200 bg-gradient-to-br from-indigo-50 to-white">
+                <div class="flex items-start justify-between">
+                    <div class="flex items-center gap-4">
+                        <div class="w-14 h-14 bg-indigo-500 rounded-xl flex items-center justify-center shadow-sm">
+                            <svg class="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                            </svg>
+                        </div>
+
+                        <div>
+                            <h1 class="text-2xl font-bold text-slate-900">Quản lý năm học</h1>
+                            <p class="text-sm text-slate-600 mt-1">
+                                Danh sách các năm học đã được tạo trong hệ thống
+                            </p>
+                        </div>
+                    </div>
+
+                    <div class="text-right">
+                        <div class="text-3xl font-bold text-indigo-600">{{ $namHocs->count() }}</div>
+                        <div class="text-xs text-slate-600 font-medium">Năm học</div>
+                    </div>
+                </div>
+            </div>
+
             {{-- Action --}}
-            <div class="px-6 pb-4 flex justify-end">
+            <div class="px-6 py-4 flex justify-end border-b border-slate-200 bg-slate-50/70">
                 <button
                     wire:click="create"
-                    class="inline-flex items-center gap-2 bg-blue-600 text-white px-5 py-2.5 rounded-xl font-semibold
-                           hover:bg-blue-700 active:scale-95 transition-all shadow-lg hover:shadow-xl">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    class="inline-flex items-center gap-2 bg-indigo-600 text-white px-4 py-2 rounded-xl
+               text-sm font-semibold hover:bg-indigo-700 active:scale-95 transition-all shadow-sm">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                             d="M12 4v16m8-8H4" />
                     </svg>
@@ -62,25 +95,25 @@
                     <tbody class="divide-y divide-slate-100">
                         @forelse ($namHocs as $nh)
                         <tr class="hover:bg-slate-50">
-                            <td class="px-6 py-3 font-medium">
+                            <td class="px-6 py-4 font-semibold text-slate-900">
                                 {{ $nh->name }}
                             </td>
 
-                            <td class="px-6 py-3 text-center text-sm">
+                            <td class="px-6 py-4 text-center text-sm">
                                 {{ optional($nh->start_date_one)->format('d/m/Y') }}
                                 →
                                 {{ optional($nh->end_date_one)->format('d/m/Y') }}
                             </td>
 
-                            <td class="px-6 py-3 text-center text-sm">
+                            <td class="px-6 py-4 text-center text-sm">
                                 {{ optional($nh->start_date_two)->format('d/m/Y') }}
                                 →
                                 {{ optional($nh->end_date_two)->format('d/m/Y') }}
                             </td>
 
-                            <td class="px-6 py-3 text-center">
+                            <td class="px-6 py-4 text-center">
                                 @if ($nh->current_semester)
-                                <span class="px-2 py-1 text-xs bg-green-100 text-green-700 rounded-lg">
+                                <span class="px-2.5 py-1 text-xs font-semibold rounded-full bg-emerald-100 text-emerald-700">
                                     HK {{ $nh->current_semester }}
                                 </span>
                                 @else
@@ -88,28 +121,32 @@
                                 @endif
                             </td>
 
-                            <td class="px-6 py-3 text-center">
+                            <td class="px-6 py-4 text-center">
                                 @if ($nh->status)
-                                <span class="px-2 py-1 text-xs bg-blue-100 text-blue-700 rounded-lg">
+                                <span class="px-3 py-1 text-xs font-semibold rounded-full bg-indigo-100 text-indigo-700">
                                     Hoạt động
                                 </span>
                                 @else
-                                <span class="px-2 py-1 text-xs bg-slate-200 text-slate-600 rounded-lg">
+                                <span class="px-3 py-1 text-xs font-semibold rounded-full bg-slate-200 text-slate-600">
                                     Lưu trữ
                                 </span>
                                 @endif
                             </td>
 
-                            <td class="px-6 py-3 text-center space-x-3 text-sm">
-                                <button wire:click="edit({{ $nh->id }})"
-                                    class="text-blue-600 hover:underline">
-                                    Sửa
-                                </button>
+                            <td class="px-6 py-4 text-center">
+                                <div class="inline-flex items-center gap-3 text-sm font-medium">
+                                    <button wire:click="edit({{ $nh->id }})"
+                                        class="text-indigo-600 hover:text-indigo-800">
+                                        Sửa
+                                    </button>
 
-                                <button wire:click="toggleStatus({{ $nh->id }})"
-                                    class="text-orange-600 hover:underline">
-                                    {{ $nh->status ? 'Lưu trữ' : 'Kích hoạt' }}
-                                </button>
+                                    <span class="text-slate-300">|</span>
+
+                                    <button wire:click="toggleStatus({{ $nh->id }})"
+                                        class="text-orange-600 hover:text-orange-800">
+                                        {{ $nh->status ? 'Lưu trữ' : 'Kích hoạt' }}
+                                    </button>
+                                </div>
                             </td>
                         </tr>
                         @empty

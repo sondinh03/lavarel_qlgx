@@ -7,6 +7,7 @@ use App\Models\Block;
 use App\Models\NamHoc;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\ValidationException;
 
 /**
@@ -63,10 +64,13 @@ class BlockManager extends BaseComponent
      */
     protected $rules = [
         'selectedNamHoc' => 'required|integer|exists:nam_hoc,id',
+    ];
+
+    // Rules riêng cho form – chỉ dùng khi save
+    protected $formRules = [
         'name' => 'required|string|max:255',
-        'weight' => 'nullable|integer|min:0',
+        'weight' => 'nullable|integer|min:1',
         'status' => 'required|boolean',
-        'perPage' => 'required|integer|in:10,15,25,50',
     ];
 
     /**
@@ -111,6 +115,24 @@ class BlockManager extends BaseComponent
      */
     public function mount()
     {
+
+        Log::info('DEBUG MOUNT - QUERY STRING VALUES', [
+            'class' => static::class,
+            'full_url' => request()->fullUrl(),
+            'query_params' => request()->query(), // ← TẤT CẢ QUERY STRING Ở ĐÂY
+            'livewire_properties' => [
+                'search' => $this->search,
+                'perPage' => $this->perPage,
+                'page' => $this->page ?? 'null',
+                'selectedNamHoc' => $this->selectedNamHoc ?? 'null',
+                'selectedKhoi' => $this->selectedKhoi ?? 'null',
+                // thêm bất kỳ property nào bạn muốn kiểm tra
+            ],
+            'session_parish_id' => session('parish_id'),
+            'isAdmin' => $this->isAdmin,
+            'isDecen' => $this->isDecen,
+        ]);
+
         parent::mount();
 
         // Yêu cầu quyền quản trị (Admin hoặc Decen)
@@ -306,9 +328,7 @@ class BlockManager extends BaseComponent
         // Validate form data (excluding selectedNamHoc from form validation)
         try {
             $this->validate([
-                'name' => 'required|string|max:255',
-                'weight' => 'nullable|integer|min:0',
-                'status' => 'required|boolean',
+                $this->formRules
             ]);
         } catch (ValidationException $e) {
             // Livewire tự động hiển thị errors
@@ -565,15 +585,6 @@ class BlockManager extends BaseComponent
 
         session()->flash('message', 'Đã đặt lại bộ lọc');
     }
-
-    // public function render()
-    // {
-    //     return view('livewire.block.block-manager', [
-    //         'blocks' => $this->blocks,
-    //     ])
-    //         ->extends('frontend.layout.main')
-    //         ->section('content');
-    // }
 
     // ==================== RENDER ====================
 
