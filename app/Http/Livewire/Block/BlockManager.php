@@ -61,10 +61,12 @@ class BlockManager extends BaseComponent
 
     /**
      * Validation rules
-     */
+     
     protected $rules = [
+        // 'selectedNamHoc' => 'required|integer|exists:nam_hoc,id',
         'selectedNamHoc' => 'required|integer|exists:nam_hoc,id',
     ];
+     */
 
     // Rules riêng cho form – chỉ dùng khi save
     protected $formRules = [
