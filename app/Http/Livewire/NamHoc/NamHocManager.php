@@ -4,8 +4,8 @@ namespace App\Http\Livewire\NamHoc;
 
 use App\Http\Livewire\Base\BaseComponent;
 use App\Models\NamHoc;
-use App\Traits\FilterTrait;
-use Livewire\Component;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\ValidationException;
 
 /**
  * Component quản lý Năm học (CRUD)
@@ -51,7 +51,7 @@ class NamHocManager extends BaseComponent
     // ==================== DATA ====================
 
     /** @var \Illuminate\Support\Collection Danh sách năm học */
-    protected $namHocs = [];
+    public $namHocs;
 
     // ==================== VALIDATION ====================
 
@@ -66,14 +66,6 @@ class NamHocManager extends BaseComponent
         'end_date_two' => 'nullable|date|after_or_equal:start_date_two',
         'status' => 'required|boolean',
     ];
-
-    // protected $rules = [
-    //     'name' => 'required|string|max:255',
-    //     'start_date_one' => 'nullable|date',
-    //     'end_date_one' => 'nullable|date|after_or_equal:start_date_one',
-    //     'start_date_two' => 'nullable|date',
-    //     'end_date_two' => 'nullable|date|after_or_equal:start_date_two',
-    // ];
 
     /**
      * Custom validation messages
@@ -150,7 +142,8 @@ class NamHocManager extends BaseComponent
                 $query->where('name', 'like', '%' . $this->search . '%');
             }
 
-            $this->namHocs = $query->paginate($this->perPage);
+            $this->namHocs = $query->get();
+            // $this->namHocs = $query->paginate($this->perPage);
         } catch (\Exception $e) {
             $this->logError($e, 'Error loading nam hocs');
             session()->flash('error', 'Có lỗi khi tải danh sách năm học');
@@ -228,6 +221,7 @@ class NamHocManager extends BaseComponent
 
         // Validate form data
         try {
+            dd($this->formRules, $this->messages, $this->validate($this->formRules, $this->messages));
             $this->validate($this->formRules, $this->messages);
         } catch (ValidationException $e) {
             // Livewire tự động hiển thị errors
@@ -254,6 +248,7 @@ class NamHocManager extends BaseComponent
                 ->exists();
 
             if ($exists) {
+                DB::rollBack();
                 session()->flash('error', 'Tên năm học đã tồn tại');
                 return;
             }
@@ -400,7 +395,7 @@ class NamHocManager extends BaseComponent
     /**
      * Render component
      */
-    
+
     public function render()
     {
         return view('livewire.nam-hoc.nam-hoc-manager', [

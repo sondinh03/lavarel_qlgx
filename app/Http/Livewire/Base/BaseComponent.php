@@ -53,11 +53,6 @@ abstract class BaseComponent extends Component
     /** @var string Pagination theme */
     protected $paginationTheme = 'tailwind';
 
-    // ==================== IMPORTANT NOTE ====================
-    // Livewire chỉ cho phép public properties là: numeric, string, array, null, boolean
-    // Các data phức tạp (Collections, Paginators, Models) phải là PROTECTED
-    // và pass qua view trong render() method
-
     // ==================== VALIDATION ====================
 
     /**

@@ -10,6 +10,8 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\ValidationException;
 
+use function PHPSTORM_META\type;
+
 /**
  * Component quản lý Khối học (CRUD)
  * 
@@ -53,25 +55,15 @@ class BlockManager extends BaseComponent
 
     // ==================== DATA ====================
 
-    /** @var \Illuminate\Pagination\LengthAwarePaginator Danh sách khối */
-    protected $blocks = [];
-
+    /** @var \Illuminate\Support\Collection Danh sách khối */
+    public $blocks = [];
 
     // ==================== VALIDATION ====================
-
-    /**
-     * Validation rules
-     
-    protected $rules = [
-        // 'selectedNamHoc' => 'required|integer|exists:nam_hoc,id',
-        'selectedNamHoc' => 'required|integer|exists:nam_hoc,id',
-    ];
-     */
 
     // Rules riêng cho form – chỉ dùng khi save
     protected $formRules = [
         'name' => 'required|string|max:255',
-        'weight' => 'nullable|integer|min:1',
+        'weight' => 'nullable|numeric|integer|min:0',
         'status' => 'required|boolean',
     ];
 
@@ -83,6 +75,7 @@ class BlockManager extends BaseComponent
         'selectedNamHoc.exists' => 'Năm học không hợp lệ',
         'name.required' => 'Vui lòng nhập tên khối',
         'name.max' => 'Tên khối không được quá 255 ký tự',
+        'weight.numeric'  => 'Thứ tự phải là một số hợp lệ',
         'weight.integer' => 'Thứ tự phải là số nguyên',
         'weight.min' => 'Thứ tự phải lớn hơn hoặc bằng 0',
     ];
@@ -202,7 +195,8 @@ class BlockManager extends BaseComponent
     public function loadBlocks(): void
     {
         if (!$this->selectedNamHoc) {
-            $this->blocks = new LengthAwarePaginator([], 0, $this->perPage, 1);
+            // $this->blocks = new LengthAwarePaginator([], 0, $this->perPage, 1);
+            $this->blocks = collect();
             return;
         }
 
@@ -216,11 +210,12 @@ class BlockManager extends BaseComponent
                 $query->where('name', 'like', '%' . $this->search . '%');
             }
 
-            $this->blocks = $query->paginate($this->perPage);
+            // $this->blocks = $query->paginate($this->perPage);
+            $this->blocks = $query->get();
         } catch (\Exception $e) {
             $this->logError($e, 'Error loading blocks');
             session()->flash('error', 'Có lỗi khi tải danh sách khối');
-            $this->blocks = new LengthAwarePaginator([], 0, $this->perPage, 1);
+            $this->blocks = collect();
             return;
         }
     }
@@ -327,15 +322,18 @@ class BlockManager extends BaseComponent
             return;
         }
 
+
         // Validate form data (excluding selectedNamHoc from form validation)
         try {
-            $this->validate([
-                $this->formRules
-            ]);
+            $this->validate($this->formRules);
         } catch (ValidationException $e) {
             // Livewire tự động hiển thị errors
             return;
         }
+
+        dd('weight after validate', $this->weight);
+
+        // Save data
 
         try {
             DB::beginTransaction();

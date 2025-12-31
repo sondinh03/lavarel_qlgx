@@ -51,10 +51,10 @@
                 {{-- Main Class Info Card --}}
                 <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
                     {{-- Header với stats inline --}}
-                    <div class="p-6 border-b border-slate-200 bg-gradient-to-br from-purple-50 to-white">
+                    <div class="p-6 border-b border-slate-200 bg-gradient-to-br from-primary-50 to-white">
                         <div class="flex items-start justify-between">
                             <div class="flex items-center gap-4">
-                                <div class="w-14 h-14 bg-purple-500 rounded-xl flex items-center justify-center shadow-sm">
+                                <div class="w-14 h-14 bg-primary-500 rounded-xl flex items-center justify-center shadow-sm">
                                     <svg class="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
                                     </svg>
@@ -71,7 +71,7 @@
 
                             {{-- Badge tổng sĩ số --}}
                             <div class="text-right">
-                                <div class="text-3xl font-bold text-purple-600">{{ $statistics['total'] }}</div>
+                                <div class="text-3xl font-bold text-primary-600">{{ $statistics['total'] }}</div>
                                 <div class="text-xs text-slate-600 font-medium">Tổng sĩ số</div>
                             </div>
                         </div>
@@ -81,7 +81,7 @@
                     <div class="grid grid-cols-4 gap-4 p-6 bg-slate-50 border-b border-slate-200">
                         {{-- Năm học --}}
                         <div class="flex flex-col items-center text-center p-4 bg-white rounded-xl border border-slate-200">
-                            <svg class="w-5 h-5 text-purple-600 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <svg class="w-5 h-5 text-primary-600 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                     d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                             </svg>
@@ -93,7 +93,7 @@
 
                         {{-- Khối --}}
                         <div class="flex flex-col items-center text-center p-4 bg-white rounded-xl border border-slate-200">
-                            <svg class="w-5 h-5 text-purple-600 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <svg class="w-5 h-5 text-primary-600 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                     d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
                             </svg>
@@ -147,15 +147,15 @@
                 <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
                     <div class="p-6">
                         <h3 class="text-lg font-bold text-slate-900 mb-4 flex items-center gap-2">
-                            <svg class="w-5 h-5 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <svg class="w-5 h-5 text-primary-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                             </svg>
                             Lịch học
                         </h3>
                         <div class="grid grid-cols-2 gap-4">
                             @if($lopData['start_date_one'] && $lopData['end_date_one'])
-                            <div class="flex items-center gap-4 p-4 bg-gradient-to-br from-indigo-50 to-purple-50 rounded-xl border border-indigo-200">
-                                <div class="flex-shrink-0 w-12 h-12 bg-indigo-500 rounded-xl flex items-center justify-center shadow-sm">
+                            <div class="flex items-center gap-4 p-4 bg-gradient-to-br from-primary-50 to-primary-50 rounded-xl border border-primary-200">
+                                <div class="flex-shrink-0 w-12 h-12 bg-primary-500 rounded-xl flex items-center justify-center shadow-sm">
                                     <span class="text-white font-bold">HK1</span>
                                 </div>
                                 <div class="min-w-0">
@@ -168,8 +168,8 @@
                             @endif
 
                             @if($lopData['start_date_two'] && $lopData['end_date_two'])
-                            <div class="flex items-center gap-4 p-4 bg-gradient-to-br from-purple-50 to-pink-50 rounded-xl border border-purple-200">
-                                <div class="flex-shrink-0 w-12 h-12 bg-purple-500 rounded-xl flex items-center justify-center shadow-sm">
+                            <div class="flex items-center gap-4 p-4 bg-gradient-to-br from-primary-50 to-pink-50 rounded-xl border border-primary-200">
+                                <div class="flex-shrink-0 w-12 h-12 bg-primary-500 rounded-xl flex items-center justify-center shadow-sm">
                                     <span class="text-white font-bold">HK2</span>
                                 </div>
                                 <div class="min-w-0">
@@ -197,7 +197,7 @@
                     <div class="p-4 space-y-2">
                         {{-- Primary Action --}}
                         <a href="{{ $slugUrl }}"
-                            class="flex items-center justify-center gap-2 w-full px-4 py-3 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-xl hover:from-blue-600 hover:to-blue-700 active:scale-[0.98] transition-all shadow-sm font-semibold">
+                            class="flex items-center justify-center gap-2 w-full px-4 py-3 bg-gradient-to-r from-primary-500 to-primary-600 text-white rounded-xl hover:from-primary-600 hover:to-primary-700 active:scale-[0.98] transition-all shadow-sm font-semibold">
                             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
                             </svg>
@@ -235,7 +235,7 @@
                 <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
                     <div class="p-4 border-b border-slate-200 bg-slate-50">
                         <h3 class="text-sm font-bold text-slate-900 flex items-center gap-2">
-                            <svg class="w-4 h-4 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <svg class="w-4 h-4 text-primary-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
                             </svg>
                             Giáo lý viên
@@ -257,7 +257,7 @@
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
                             </svg>
                             <p class="text-sm text-slate-600 font-medium mb-3">Chưa phân công giáo lý viên</p>
-                            <button class="text-xs text-blue-600 hover:text-blue-700 font-semibold">
+                            <button class="text-xs text-primary-600 hover:text-primary-700 font-semibold">
                                 + Phân công ngay
                             </button>
                         </div>
