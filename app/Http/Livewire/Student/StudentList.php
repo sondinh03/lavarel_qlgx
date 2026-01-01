@@ -2,187 +2,491 @@
 
 namespace App\Http\Livewire\Student;
 
+use App\Http\Livewire\Base\BaseComponent;
 use App\Models\Block;
 use App\Models\Lop;
 use App\Models\NamHoc;
+use App\Models\Student;
 use App\Models\Teacher;
-use Livewire\Component;
-use Livewire\WithPagination;
+use Illuminate\Pagination\LengthAwarePaginator;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Validation\ValidationException;
 
-class StudentList extends Component
+/**
+ * Component danh sách học viên trong lớp
+ * 
+ * Features:
+ * - Pagination with options
+ * - Search by name, holy name, mahv
+ * - Bulk selection
+ * - Gender statistics
+ * - URL slug generation
+ * 
+ * @package App\Http\Livewire\Student
+ */
+class StudentList extends BaseComponent
 {
-    use WithPagination;
+    // ==================== ROUTE PARAMS ====================
 
+    /** @var int Lớp ID */
     public $lopId;
-    public $perPage = 10;
-    public $search = '';
+
+    // ==================== SELECTION ====================
+
+    /** @var array Selected student IDs */
     public $selectedStudents = [];
+
+    /** @var bool Select all checkbox state */
     public $selectAll = false;
-    public $availableClasses = []; 
 
-    protected $paginationTheme = 'tailwind';
+    // ==================== PROTECTED DATA ====================
 
+    /** @var \App\Models\Lop|null Lớp model instance */
+    protected $lopModel = null;
 
-    public function mount($id)
+    // ==================== VALIDATION ====================
+
+    protected $rules = [
+        'search' => 'nullable|string|max:255',
+        'perPage' => 'required|integer|in:10,15,25,50',
+        'selectedStudents' => 'nullable|array',
+        'selectedStudents.*' => 'integer',
+    ];
+
+    protected $messages = [
+        'search.max' => 'Tìm kiếm không được quá 255 ký tự',
+        'perPage.in' => 'Số mục trên trang không hợp lệ',
+        'selectedStudents.*.integer' => 'ID học viên không hợp lệ',
+    ];
+
+    // ==================== QUERY STRING ====================
+
+    protected $queryString = [
+        'search' => ['except' => ''],
+        'perPage' => ['except' => 10],
+        'page' => ['except' => 1],
+    ];
+
+    // ==================== LISTENERS ====================
+
+    protected $listeners = [
+        'refresh' => 'handleRefresh',
+        'refreshStudents' => 'handleRefresh',
+    ];
+
+    // ==================== LIFECYCLE ====================
+
+    /**
+     * Component initialization
+     */
+    public function mount($id = null): void
     {
-        $this->lopId = $id;
+        $this->lopId = (int) $id;
+
+        parent::mount();
     }
 
-    public function updatedSearch()
+    /**
+     * Load dữ liệu ban đầu (required by BaseComponent)
+     */
+    protected function loadInitialData(): void
     {
+        $this->loadLopData();
+    }
+
+    /**
+     * Override validateUserAccess
+     */
+    protected function validateUserAccess(): void
+    {
+        parent::validateUserAccess();
+
+        // Component này BẮT BUỘC phải có parish_id
+        if (!$this->parish_id) {
+            abort(403, 'Không xác định được giáo xứ');
+        }
+    }
+
+    // ==================== DATA LOADING ====================
+
+    /**
+     * Load thông tin lớp học
+     */
+    private function loadLopData(): void
+    {
+        try {
+            $this->lopModel = Lop::with(['blockRelation', 'schoolYear', 'classTeachers.teacher'])
+                ->findOrFail($this->lopId);
+
+            // Validate ownership
+            $this->validateLopOwnership();
+        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+            session()->flash('error', 'Không tìm thấy lớp học này.');
+            $this->logError($e, 'Lop not found', ['lop_id' => $this->lopId]);
+            $this->redirectRoute('ds-lop');
+        } catch (\Exception $e) {
+            $this->logError($e, 'Error loading lop data', ['lop_id' => $this->lopId]);
+            session()->flash('error', 'Có lỗi khi tải thông tin lớp học.');
+            $this->redirectRoute('ds-lop');
+        }
+    }
+
+    /**
+     * Validate user can access this lop
+     */
+    private function validateLopOwnership(): void
+    {
+        if (!$this->lopModel) {
+            return;
+        }
+
+        // Admin có thể xem mọi lớp
+        if ($this->isAdmin) {
+            return;
+        }
+
+        // Decen chỉ xem lớp của parish mình
+        if ($this->isDecen) {
+            if ($this->lopModel->pid != $this->parish_id) {
+                abort(403, 'Bạn không có quyền xem lớp học này.');
+            }
+            return;
+        }
+
+        abort(403, 'Không có quyền xem lớp học này.');
+    }
+
+    // ==================== PROPERTY UPDATERS ====================
+
+    /**
+     * Override updatedSearch để validate
+     */
+    public function updatedSearch(): void
+    {
+        $this->search = trim($this->search);
+
+        try {
+            $this->validateOnly('search');
+        } catch (ValidationException $e) {
+            $this->search = '';
+            session()->flash('warning', 'Từ khóa tìm kiếm không hợp lệ.');
+        }
+
         $this->resetPage();
+        $this->resetSelection();
     }
 
-    public function updatedPerPage()
+    /**
+     * When select all checkbox changes
+     */
+    public function updatedSelectAll($value): void
     {
-        $this->resetPage();
+        if ($value) {
+            // Select all students on current page
+            $ids = $this->getCurrentStudentsQuery()
+                ->pluck('id')
+                ->map(fn($id) => (int) $id)
+                ->toArray();
+
+            $this->selectedStudents = $ids;
+        } else {
+            // Deselect all
+            $this->selectedStudents = [];
+        }
     }
 
-    public function updatedSelectAll($value)
+    /**
+     * When individual checkboxes change
+     */
+    public function updatedSelectedStudents(): void
     {
-        $ids = $this->getCurrentStudentsQuery()->pluck('id')->toArray();
-        $this->selectedStudents = $value ? array_map('intval', $ids) : [];
+        // Sanitize: ensure array of integers
+        $this->selectedStudents = array_values(
+            array_unique(
+                array_map('intval', array_filter($this->selectedStudents, 'is_numeric'))
+            )
+        );
+
+        // Update select all checkbox state
+        $currentIds = $this->getCurrentStudentsQuery()->pluck('id')->toArray();
+        $selectedCount = count(array_intersect($this->selectedStudents, $currentIds));
+        $totalCount = count($currentIds);
+
+        $this->selectAll = $totalCount > 0 && $selectedCount === $totalCount;
     }
 
-    public function updatedSelectedStudents()
-    {
-        $currentCount = $this->getCurrentStudentsQuery()->count();
-        $selectedCount = count(array_intersect($this->selectedStudents, $this->getCurrentStudentsQuery()->pluck('id')->toArray()));
+    // ==================== QUERY HELPERS ====================
 
-        $this->selectAll = $currentCount > 0 && $selectedCount === $currentCount;
-    }
-
-    // Helper để tái sử dụng query
+    /**
+     * Get base query for students in this lop
+     */
     private function getCurrentStudentsQuery()
     {
-        return Lop::findOrFail($this->lopId)
-            ->students()
+        if (!$this->lopModel) {
+            return Student::whereRaw('1 = 0'); // Empty query
+        }
+
+        return $this->lopModel->students()
             ->wherePivot('status', 1)
             ->when($this->search, function ($q) {
-                $q->where(function ($sq) {
-                    $sq->where('name', 'like', "%{$this->search}%")
-                        ->orWhere('last_name', 'like', "%{$this->search}%")
-                        ->orWhere('holy', 'like', "%{$this->search}%")
-                        ->orWhere('mahv', 'like', "%{$this->search}%");
+                $search = trim($this->search);
+                $q->where(function ($sq) use ($search) {
+                    $sq->where('name', 'like', "%{$search}%")
+                        ->orWhere('last_name', 'like', "%{$search}%")
+                        ->orWhere('holy', 'like', "%{$search}%")
+                        ->orWhere('mahv', 'like', "%{$search}%");
                 });
             })
             ->orderBy('name', 'asc');
     }
 
-    public function render()
+    /**
+     * Get paginated students
+     */
+    private function getStudentsPaginated(): LengthAwarePaginator
     {
-        $lop = Lop::findOrFail($this->lopId);
+        try {
+            $students = $this->getCurrentStudentsQuery()->paginate($this->perPage);
+
+            // Transform each student
+            $students->getCollection()->transform(function ($student, $index) use ($students) {
+                return $this->transformStudent($student, $students->firstItem() + $index);
+            });
+
+            return $students;
+        } catch (\Exception $e) {
+            $this->logError($e, 'Error loading students', [
+                'lop_id' => $this->lopId,
+                'search' => $this->search,
+            ]);
+
+            session()->flash('error', 'Có lỗi khi tải danh sách học viên.');
+
+            return new LengthAwarePaginator([], 0, $this->perPage, $this->page ?? 1);
+        }
+    }
+
+    /**
+     * Transform student data for display
+     */
+    private function transformStudent($student, int $stt)
+    {
+        $student->stt = $stt;
+
+        // Generate URLs
+        $baseSlug = slug($student) . config('app.url_prefix', '');
+        $student->slug = url($baseSlug);
+        $student->thugioithieu = url($baseSlug . '/thugioithieu=' . $student->id);
+        $student->edit = config('app.url') . '/admin/student/' . $student->id . '/edit';
+
+        // Load relationships
+        $student->holy = $student->holyRelation->name ?? '';
+        $student->paid = $student->paidRelation->name ?? '';
+
+        // Address
+        $student->ward = $this->getXaPhuongName($student->ward);
+        $student->province = $this->getTinhThanhName($student->province);
+
+        return $student;
+    }
+
+    // ==================== STATISTICS ====================
+
+    /**
+     * Get gender statistics
+     */
+    private function getGenderStats(): array
+    {
+        if (!$this->lopModel) {
+            return [
+                'total' => 0,
+                'countnam' => 0,
+                'countnu' => 0,
+            ];
+        }
+
+        try {
+            $activeStudents = $this->lopModel->students()->wherePivot('status', 1);
+
+            $countnam = (clone $activeStudents)->where('sex', 1)->count();
+            $countnu = (clone $activeStudents)->where('sex', 0)->count();
+
+            return [
+                'total' => $countnam + $countnu,
+                'countnam' => $countnam,
+                'countnu' => $countnu,
+            ];
+        } catch (\Exception $e) {
+            $this->logError($e, 'Error calculating gender stats', ['lop_id' => $this->lopId]);
+
+            return [
+                'total' => 0,
+                'countnam' => 0,
+                'countnu' => 0,
+            ];
+        }
+    }
+
+    // ==================== LOP INFO HELPERS ====================
+
+    /**
+     * Get formatted lop info for view
+     */
+    private function getLopInfo(): object
+    {
+        if (!$this->lopModel) {
+            return (object) [
+                'name' => 'N/A',
+                'symbol' => 'N/A',
+                'block' => '',
+                'schoolyear' => '',
+                'teachers' => [],
+                'slug' => '#',
+            ];
+        }
+
+        $lop = clone $this->lopModel;
+
+        // Generate slug
         $lop->slug = url(slug($lop) . config('app.url_prefix', ''));
 
-        if ($lop->block) {
-            $lop->block = Block::find($lop->block)?->name ?? '';
-        }
-        if ($lop->schoolyear) {
-            $lop->schoolyear = NamHoc::find($lop->schoolyear)?->name ?? '';
+        // Block name
+        $lop->block = $lop->blockRelation->name ?? '';
+
+        // School year name
+        $lop->schoolyear = $lop->schoolYear->name ?? '';
+
+        // Teachers (using relationship instead of parsing JSON)
+        $lop->teachers = $this->getLopTeachers();
+
+        return $lop;
+    }
+
+    /**
+     * Get teachers for this lop
+     */
+    private function getLopTeachers(): array
+    {
+        if (!$this->lopModel || !$this->lopModel->relationLoaded('classTeachers')) {
+            return [];
         }
 
-        $teacherIds = $lop->teacher ?? null;
+        return $this->lopModel->classTeachers
+            ->filter(fn($ct) => $ct->teacher && $ct->teacher->status == 1)
+            ->sortBy(fn($ct) => $ct->role == 'chu_nhiem' ? 0 : 1) // Chủ nhiệm first
+            ->pluck('teacher.name')
+            ->toArray();
+    }
 
-        if (empty($teacherIds) || $teacherIds === '' || $teacherIds === '[]' || $teacherIds === 'null') {
-            $teacherIds = [];
+    // ==================== ADDRESS HELPERS ====================
+
+    /**
+     * Get tỉnh/thành phố name
+     */
+    private function getTinhThanhName($provinceId): string
+    {
+        if (!$provinceId) {
+            return '';
         }
-        // 2. Nếu là chuỗi → chuyển thành mảng
-        elseif (is_string($teacherIds)) {
-            // Thử json_decode trước (ưu tiên vì chính xác nhất)
-            $decoded = json_decode($teacherIds, true);
 
-            if (json_last_error() === JSON_ERROR_NONE && is_array($decoded)) {
-                $teacherIds = $decoded;
-            } else {
-                // Nếu không phải JSON → thử tách bằng dấu phẩy, khoảng trắng, ngoặc...
-                $teacherIds = preg_split('/[\[\]\s,"\']+/', $teacherIds, -1, PREG_SPLIT_NO_EMPTY);
+        // Cache 1 hour
+        return Cache::remember("tinh_thanh_{$provinceId}", 3600, function () use ($provinceId) {
+            $filePath = resource_path('cities/tinh_thanhpho.php');
+
+            if (!file_exists($filePath)) {
+                return '';
             }
-        }
-        // 3. Nếu là số (trường hợp chỉ có 1 giáo viên, lưu nhầm kiểu int)
-        //    → chuyển thành mảng 1 phần tử
-        elseif (is_numeric($teacherIds)) {
-            $teacherIds = [(int)$teacherIds];
-        }
-        // 4. Nếu đã là mảng → giữ nguyên
-        elseif (!is_array($teacherIds)) {
-            // Trường hợp bất ngờ (object, bool, v.v.) → ép về mảng rỗng
-            $teacherIds = [];
-        }
 
-        // === LỌC & CHUẨN HÓA ID ===
-        $teacherIds = array_filter($teacherIds, 'is_numeric');           // chỉ giữ số
-        $teacherIds = array_map('intval', $teacherIds);                   // ép kiểu int
-        $teacherIds = array_values(array_unique($teacherIds));            // loại trùng, reset key
+            include $filePath;
 
-        // === LẤY TÊN GIÁO VIÊN (chỉ khi có ID hợp lệ) ===
-        $teachers = [];
-        if (!empty($teacherIds)) {
-            $teachers = Teacher::whereIn('id', $teacherIds)
-                ->where('status', 1)
-                ->orderByRaw('FIELD(id, ' . implode(',', $teacherIds) . ')') // giữ đúng thứ tự ban đầu
-                ->pluck('name', 'id')
-                ->toArray();
-        }
-
-        // === GÁN KẾT QUẢ CHO $lop ===
-        $lop->tech = array_values($teachers);
-
-        // === ĐẾM NAM / NỮ – CŨNG PHẢI QUA PIVOT ===
-        $activeStudents = $lop->students()->wherePivot('status', 1);
-        $countnam = (clone $activeStudents)->where('sex', 1)->count();
-        $countnu  = (clone $activeStudents)->where('sex', 0)->count();
-        $total    = $countnam + $countnu;
-
-        // === DANH SÁCH + PHÂN TRANG ===
-        $students = $this->getCurrentStudentsQuery()->paginate($this->perPage);
-
-        // === TRANSFORM DATA ===
-        $students->getCollection()->transform(function ($student, $index) use ($students, $lop) {
-            $student->stt = $students->firstItem() + $index;
-            $student->slug = url(slug($student) . config('app.url_prefix', ''));
-            $student->thugioithieu = url(slug($student) . config('app.url_prefix', '') . '/thugioithieu=' . $student->id);
-            $student->edit = config('app.url') . '/admin/student/' . $student->id . '/edit';
-
-            $student->holy = $student->holyRelation->name ?? '';
-            $student->paid = $student->paidRelation->name ?? '';
-
-            // Địa chỉ
-            $student->ward = $this->getXaPhuong($student->ward);
-            $student->province = $this->getTinhThanh($student->province);
-
-            return $student;
+            return isset($tinh_thanhpho[$provinceId])
+                ? ', ' . $tinh_thanhpho[$provinceId]
+                : '';
         });
+    }
+
+    /**
+     * Get xã/phường name
+     */
+    private function getXaPhuongName($wardId): string
+    {
+        if (!$wardId) {
+            return '';
+        }
+
+        // Cache 1 hour
+        return Cache::remember("xa_phuong_{$wardId}", 3600, function () use ($wardId) {
+            $filePath = resource_path('cities/xa_phuong_thitran.php');
+
+            if (!file_exists($filePath)) {
+                return '';
+            }
+
+            include $filePath;
+
+            foreach ($xa_phuong_thitran as $xaphuong) {
+                if ($xaphuong['xaid'] == $wardId) {
+                    return $xaphuong['name'] ?? '';
+                }
+            }
+
+            return '';
+        });
+    }
+
+    // ==================== ACTIONS ====================
+
+    /**
+     * Reset selection
+     */
+    private function resetSelection(): void
+    {
+        $this->selectedStudents = [];
+        $this->selectAll = false;
+    }
+
+    /**
+     * Refresh danh sách
+     */
+    public function handleRefresh(): void
+    {
+        $this->loadLopData();
+        $this->resetPage();
+        $this->resetSelection();
+        session()->flash('message', 'Đã làm mới danh sách học viên');
+    }
+
+    /**
+     * Reset filters
+     */
+    public function resetFilters(): void
+    {
+        $this->search = '';
+        $this->resetPage();
+        $this->resetSelection();
+        session()->flash('message', 'Đã đặt lại bộ lọc');
+    }
+
+    // ==================== RENDER ====================
+
+    /**
+     * Render component
+     */
+    public function render()
+    {
+        $students = $this->getStudentsPaginated();
+        $stats = $this->getGenderStats();
+        $lop = $this->getLopInfo();
 
         return view('livewire.student.student-list', [
             'lop' => $lop,
             'students' => $students,
-            'total' => $total,
-            'countnam' => $countnam,
-            'countnu' => $countnu,
-        ]);
-    }
-
-    private function getTinhThanh($provinceId)
-    {
-        if (!$provinceId) return '';
-
-        @include resource_path('cities/tinh_thanhpho.php');
-
-        return isset($tinh_thanhpho[$provinceId]) ? ', ' . $tinh_thanhpho[$provinceId] : '';
-    }
-
-    private function getXaPhuong($wardId)
-    {
-        if (!$wardId) return '';
-
-        @include resource_path('cities/xa_phuong_thitran.php');
-
-        foreach ($xa_phuong_thitran as $xaphuong) {
-            if ($xaphuong['xaid'] == $wardId) {
-                return $xaphuong['name'] ?? '';
-            }
-        }
-
-        return '';
+            'total' => $stats['total'],
+            'countnam' => $stats['countnam'],
+            'countnu' => $stats['countnu'],
+            'parishId' => $this->parish_id,
+        ])
+            ->extends('frontend.layout.main')
+            ->section('content');
     }
 }

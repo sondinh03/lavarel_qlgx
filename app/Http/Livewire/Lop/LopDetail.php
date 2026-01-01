@@ -39,7 +39,7 @@ class LopDetail extends BaseComponent
     protected $lopModel = null;
 
     /** @var \App\Models\Block|null Block relation */
-    public $block;
+    protected $block = null;
 
     /** @var \App\Models\NamHoc|null Năm học relation */
     protected $namHoc = null;
@@ -59,6 +59,12 @@ class LopDetail extends BaseComponent
     public function mount($id = null)
     {
         $this->lopId = (int) $id;
+
+        if ($this->lopId <= 0) {
+            session()->flash('error', 'ID lớp học không hợp lệ.');
+            $this->redirectRoute('ds-lop');
+            return;
+        }
 
         parent::mount();
         // Không cần requireManager vì đây là view public
@@ -231,9 +237,9 @@ class LopDetail extends BaseComponent
         $newLopId = $filters['lop'] ?? null;
 
         if ($newLopId && (int) $newLopId !== (int) $this->lopId) {
-            $this->lopId = (int) $newLopId;
-            $this->loadLopDetails();
-            $this->loadStatistics();
+            // $this->lopId = (int) $newLopId;
+            // $this->loadLopDetails();
+            // $this->loadStatistics();
             $this->redirect(route('lop.show', $newLopId));
         }
     }
@@ -273,5 +279,4 @@ class LopDetail extends BaseComponent
             ->extends('frontend.layout.main')
             ->section('content');
     }
-
 }

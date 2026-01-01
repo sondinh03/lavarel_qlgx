@@ -2,24 +2,46 @@
 
 namespace App\Http\Livewire\Lop;
 
+use App\Http\Livewire\Base\BaseComponent;
 use App\Services\LopService;
 use App\Traits\FilterTrait;
+use Faker\Provider\Base;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\ValidationException;
 use Livewire\Component;
 use Livewire\WithPagination;
 use Illuminate\Pagination\LengthAwarePaginator;
 
-class LopList extends Component
-{
-    use FilterTrait;
-    use WithPagination;
+/**
+ * Component danh sách Lớp học
+ * 
+ * Features:
+ * - Phân trang với options
+ * - Tìm kiếm theo tên
+ * - Lọc theo năm học, khối
+ * - Query string support (URL sharing)
+ * - Auto-select năm học mới nhất
+ */
 
-    public $parish_id;
-    public $selectedNamHoc;
+class LopList extends BaseComponent
+{
+    // ==================== FILTERS ====================
+
+    /** @var int|null Selected năm học ID */
+    public $selectedNamHoc = null;
+
+    /** @var int|string Selected khối ('' = all) */
     public $selectedKhoi = '';
+
+    // ==================== PUBLIC DATA ====================
+
+    /** @var array Danh sách năm học */
     public $namHocs = [];
+
+    /** @var array Danh sách khối */
     public $khois = [];
+
+
     public $lops_;
     public $isAdmin = false;
 
@@ -27,105 +49,58 @@ class LopList extends Component
     public $perPage = 15;
     protected $perPageOptions = [10, 15, 25, 50];
 
-    /**
-     * Validation rules for Livewire props
-     */
+    // ==================== VALIDATION ====================
+
     protected $rules = [
         'selectedNamHoc' => 'nullable|integer|exists:nam_hoc,id',
         'selectedKhoi' => 'nullable|integer',
-        'perPage' => 'required|integer|in:10,15,25,50',
+        'search' => 'nullable|string|max:255',
     ];
 
-    protected $paginationTheme = 'tailwind';
+    protected $messages = [
+        'selectedNamHoc.exists' => 'Năm học không tồn tại.',
+        'perPage.in' => 'Số mục trên trang không hợp lệ.',
+    ];
 
-    /**
-     * ✅ Query string để share URL
-     */
+    // ==================== QUERY STRING ====================
+
     protected $queryString = [
-        'selectedNamHoc' => ['except' => ''],
+        'selectedNamHoc' => ['except' => null],
         'selectedKhoi' => ['except' => ''],
         'search' => ['except' => ''],
+        'perPage' => ['except' => 15],
         'page' => ['except' => 1],
     ];
 
-    /**
-     * Listeners cho Livewire events
-     */
+    // ==================== LISTENERS ====================
+
     protected $listeners = [
-        'refreshLops' => 'loadLops',
+        'refresh' => 'handleRefresh',
+        'refreshLops' => 'handleRefresh',
         'filtersChanged' => 'handleFiltersChanged',
     ];
 
+    // ==================== LIFECYCLE ====================
+
+    /**
+     * Override mount để set perPage default
+     */
     public function mount()
     {
-        $this->initializeUser();
-        $this->loadInitialData();
-        $this->sanitizeQueryString();
-        try {
-            $this->validate();
-        } catch (\Illuminate\Validation\ValidationException $e) {
-            // If validation fails for incoming query string values, reset to safe defaults
-            $this->selectedNamHoc = $this->selectedNamHoc ?: null;
-            $this->selectedKhoi = '';
-            $this->perPage = 15;
-        }
+        // Set default perPage if not set
+        // if (!$this->perPage || $this->perPage === 10) {
+        //     $this->perPage = 15;
+        // }
+
+        parent::mount();
     }
 
     /**
-     * ✅ Auto reset page khi search
+     * Load dữ liệu ban đầu (required by BaseComponent)
      */
-    public function updatedSearch()
+    protected function loadInitialData(): void
     {
-        $this->resetPage();
-    }
-
-    /**
-     * ✅ Auto reset page khi thay đổi perPage
-     */
-    public function updatedPerPage()
-    {
-        // sanitize incoming perPage value
-        $this->perPage = is_numeric($this->perPage) ? (int) $this->perPage : 15;
-        if (!in_array($this->perPage, $this->perPageOptions)) {
-            $this->perPage = 15;
-        }
-
-        $this->validateOnly('perPage');
-        $this->resetPage();
-    }
-
-    /**
-     * ✅ Khởi tạo thông tin user
-     */
-    private function initializeUser(): void
-    {
-        $this->parish_id = session('parish_id');
-        $this->isAdmin = session('isAdmin', false);
-
-        if (!$this->parish_id) {
-            abort(403, 'Không có quyền truy cập');
-        }
-    }
-
-    public function loadInitialData(): void
-    {
-        if (!$this->parish_id) {
-            $this->namHocs = [];
-            $this->khois = [];
-            $this->lops_ = collect();
-            return;
-        }
-
-        Log::info('Loading initial data for parish_id: ' . $this->parish_id);
-
-        $data = $this->getNamHocs($this->parish_id);
-        Log::info('NamHocs:', $data['namHocs']->toArray());
-        $this->namHocs = $data['namHocs'];
-
-        // ✅ Nếu chưa chọn năm học, lấy năm học mới nhất
-        if (!$this->selectedNamHoc && $data['selectedId']) {
-            $this->selectedNamHoc = $data['selectedId'];
-        }
+        $this->loadNamHocs();
 
         if ($this->selectedNamHoc) {
             $this->loadKhois();
@@ -133,25 +108,131 @@ class LopList extends Component
     }
 
     /**
+     * Override validateUserAccess - Component này cần parish_id
+     */
+    protected function validateUserAccess(): void
+    {
+        // Gọi parent để check admin/decen
+        parent::validateUserAccess();
+
+        // Component này BẮT BUỘC phải có parish_id
+        if (!$this->parish_id) {
+            abort(403, 'Không xác định được giáo xứ');
+        }
+    }
+
+
+    /**
+     * Override sanitizeQueryString để xử lý thêm filters
+     */
+    protected function sanitizeQueryString(): void
+    {
+        parent::sanitizeQueryString();
+
+        // Sanitize selectedNamHoc: null or int
+        if ($this->selectedNamHoc === '' || $this->selectedNamHoc === null) {
+            $this->selectedNamHoc = null;
+        } else {
+            $this->selectedNamHoc = is_numeric($this->selectedNamHoc)
+                ? (int) $this->selectedNamHoc
+                : null;
+        }
+
+        // Sanitize selectedKhoi: '' or int
+        if ($this->selectedKhoi === '' || $this->selectedKhoi === null) {
+            $this->selectedKhoi = '';
+        } else {
+            $this->selectedKhoi = is_numeric($this->selectedKhoi)
+                ? (int) $this->selectedKhoi
+                : '';
+        }
+    }
+
+    /**
+     * Override resetToDefaults để reset thêm filters
+     */
+    protected function resetToDefaults(): void
+    {
+        parent::resetToDefaults();
+
+        $this->selectedKhoi = '';
+        // Không reset selectedNamHoc vì cần giữ năm học hiện tại
+    }
+
+    // ==================== DATA LOADING ====================
+
+    /**
+     * Load danh sách năm học
+     */
+    private function loadNamHocs(): void
+    {
+        try {
+            $data = $this->getNamHocs($this->parish_id);
+            $this->namHocs = $data['namHocs'] ?? [];
+
+            // Auto-select năm học mới nhất nếu chưa chọn
+            if (!$this->selectedNamHoc && !empty($data['selectedId'])) {
+                $this->selectedNamHoc = $data['selectedId'];
+            }
+        } catch (\Exception $e) {
+            $this->logError($e, 'Error loading nam hocs');
+            $this->namHocs = [];
+            session()->flash('error', 'Không thể tải danh sách năm học.');
+        }
+    }
+
+    /**
+     * Load danh sách khối theo năm học đã chọn
+     */
+    private function loadKhois(): void
+    {
+        if (!$this->selectedNamHoc) {
+            $this->khois = [];
+            return;
+        }
+
+        try {
+            $this->khois = $this->getKhois($this->selectedNamHoc);
+        } catch (\Exception $e) {
+            $this->logError($e, 'Error loading khois', [
+                'namhoc_id' => $this->selectedNamHoc
+            ]);
+            $this->khois = [];
+            session()->flash('warning', 'Không thể tải danh sách khối.');
+        }
+    }
+
+    // ==================== PROPERTY UPDATERS ====================
+
+    /**
      * Khi thay đổi năm học
      */
     public function updatedSelectedNamHoc(): void
     {
-        // sanitize and validate selectedNamHoc
-        $this->selectedNamHoc = is_numeric($this->selectedNamHoc) ? (int) $this->selectedNamHoc : null;
+        // Sanitize
+        $this->selectedNamHoc = is_numeric($this->selectedNamHoc)
+            ? (int) $this->selectedNamHoc
+            : null;
+
+        // Validate
         try {
             $this->validateOnly('selectedNamHoc');
         } catch (ValidationException $e) {
-            // if invalid (e.g. id doesn't exist), reset to null and notify
             $this->selectedNamHoc = null;
-            session()->flash('warning', 'Năm học không hợp lệ, đã đặt lại lựa chọn.');
+            session()->flash('warning', 'Năm học không hợp lệ.');
+            $this->logError($e, 'Invalid selectedNamHoc');
         }
 
+        // Reset dependent filters
         $this->selectedKhoi = '';
-        $this->khois = [];
         $this->search = '';
+        $this->khois = [];
 
-        $this->loadKhois();
+        // Reload data
+        if ($this->selectedNamHoc) {
+            $this->loadKhois();
+        }
+
         $this->resetPage();
     }
 
@@ -160,68 +241,69 @@ class LopList extends Component
      */
     public function updatedSelectedKhoi(): void
     {
-        // allow empty string meaning "all"; otherwise cast to int
+        // Sanitize: allow empty string (all) or int
         if ($this->selectedKhoi === '' || $this->selectedKhoi === null) {
             $this->selectedKhoi = '';
         } else {
-            $this->selectedKhoi = is_numeric($this->selectedKhoi) ? (int) $this->selectedKhoi : '';
+            $this->selectedKhoi = is_numeric($this->selectedKhoi)
+                ? (int) $this->selectedKhoi
+                : '';
         }
 
-        $this->validateOnly('selectedKhoi');
+        // Validate only if not empty
+        if ($this->selectedKhoi !== '') {
+            try {
+                $this->validateOnly('selectedKhoi');
+            } catch (ValidationException $e) {
+                $this->selectedKhoi = '';
+                session()->flash('warning', 'Khối không hợp lệ.');
+            }
+        }
+
         $this->resetPage();
     }
 
+    // ==================== EVENT HANDLERS ====================
+
     /**
-     * Clean and coerce query string inputs to safe types
+     * Handle filters changed event từ ClassFilterSelector
      */
-    private function sanitizeQueryString(): void
+    public function handleFiltersChanged($filters): void
     {
-        // selectedNamHoc: null or int
-        if ($this->selectedNamHoc === '' || $this->selectedNamHoc === null) {
-            $this->selectedNamHoc = $this->selectedNamHoc ?: null;
-        } else {
-            $this->selectedNamHoc = is_numeric($this->selectedNamHoc) ? (int) $this->selectedNamHoc : null;
-        }
-
-        // selectedKhoi: '' or int
-        if ($this->selectedKhoi === '' || $this->selectedKhoi === null) {
-            $this->selectedKhoi = '';
-        } else {
-            $this->selectedKhoi = is_numeric($this->selectedKhoi) ? (int) $this->selectedKhoi : '';
-        }
-
-        // perPage: ensure allowed value
-        $this->perPage = is_numeric($this->perPage) ? (int) $this->perPage : 15;
-        if (!in_array($this->perPage, $this->perPageOptions)) {
-            $this->perPage = 15;
-        }
-    }
-
-    public function loadKhois()
-    {
-        if (!$this->selectedNamHoc) {
-            $this->khois = [];
+        if (!is_array($filters)) {
             return;
         }
 
-        $this->khois = $this->getKhois($this->selectedNamHoc);
+        // Update filters from event
+        $hasChanges = false;
+
+        if (isset($filters['namHoc']) && $filters['namHoc'] != $this->selectedNamHoc) {
+            $this->selectedNamHoc = $filters['namHoc'];
+            $hasChanges = true;
+        }
+
+        if (isset($filters['khoi']) && $filters['khoi'] != $this->selectedKhoi) {
+            $this->selectedKhoi = $filters['khoi'];
+            $hasChanges = true;
+        }
+
+        // Clear search when filters change
+        if ($hasChanges) {
+            $this->search = '';
+            $this->resetPage();
+
+            // Reload khois if namHoc changed
+            if (isset($filters['namHoc'])) {
+                $this->loadKhois();
+            }
+        }
     }
 
     /**
-     * Handle filters emitted by ClassFilterSelector
+     * Reset filters về giá trị mặc định
+     * Override từ BaseComponent để reset thêm filters
      */
-    public function handleFiltersChanged($filters)
-    {
-        // Expecting ['namHoc' => id, 'khoi' => id, 'lop' => id, 'ky' => id]
-        $this->selectedNamHoc = $filters['namHoc'] ?? $this->selectedNamHoc;
-        $this->selectedKhoi = $filters['khoi'] ?? $this->selectedKhoi;
-
-        // clear search & reset pagination when filters change
-        $this->search = '';
-        $this->resetPage();
-    }
-
-    public function resetFilters()
+    public function resetFilters(): void
     {
         $this->selectedKhoi = '';
         $this->search = '';
@@ -231,40 +313,132 @@ class LopList extends Component
     }
 
     /**
-     * ✅ Refresh manual
+     * Refresh danh sách
+     * Override từ BaseComponent
      */
-    public function refresh()
+    public function handleRefresh(): void
     {
-        $this->resetPage();
-        session()->flash('message', 'Đã làm mới danh sách');
-    }
-
-    public function render()
-    {
-        // Ensure $lops_ is always a paginator to avoid calling paginator methods on plain collections
-        $lops_ = new LengthAwarePaginator([], 0, $this->perPage, 1);
+        $this->loadNamHocs();
 
         if ($this->selectedNamHoc) {
-            // Use LopService to fetch paginated, transformed lops (expected to return a LengthAwarePaginator)
-            $lops_ = app(LopService::class)->paginateLops(
+            $this->loadKhois();
+        }
+
+        $this->resetPage();
+        session()->flash('message', 'Đã làm mới danh sách lớp học');
+    }
+
+    /**
+     * Render component
+     */
+    public function render()
+    {
+        // Load lops using service
+        $lops = $this->getLopsPaginated();
+
+        return view('livewire.lop.lop-list', [
+            'lops' => $lops,
+            'parishId' => $this->parish_id,
+        ])
+            ->extends('frontend.layout.main')
+            ->section('content');
+    }
+
+    /**
+     * Get paginated lops using LopService
+     * 
+     * @return \Illuminate\Pagination\LengthAwarePaginator
+     */
+    private function getLopsPaginated()
+    {
+        // Nếu chưa chọn năm học, return empty paginator
+        if (!$this->selectedNamHoc) {
+            return new \Illuminate\Pagination\LengthAwarePaginator(
+                [],
+                0,
+                $this->perPage,
+                $this->page ?? 1
+            );
+        }
+
+        try {
+            $lops = app(LopService::class)->paginateLops(
                 $this->selectedNamHoc,
                 $this->selectedKhoi,
                 $this->perPage,
                 $this->search,
                 $this->page ?? 1
             );
-            // If service returns a collection for some reason, wrap it into a paginator
-            if (! $lops_ instanceof LengthAwarePaginator) {
-                $items = is_countable($lops_) ? (array) $lops_ : [];
-                $total = count($items);
-                $lops_ = new LengthAwarePaginator($items, $total, $this->perPage, $this->page ?? 1);
-            }
-        }
 
-        return view('livewire.lop.lop-list', [
-            'lops' => $lops_,
-        ])
-            ->extends('frontend.layout.main')
-            ->section('content');
+            // Ensure we always return a paginator
+            if (!$lops instanceof \Illuminate\Pagination\LengthAwarePaginator) {
+                $items = is_countable($lops) ? (array) $lops : [];
+                $total = count($items);
+
+                return new \Illuminate\Pagination\LengthAwarePaginator(
+                    $items,
+                    $total,
+                    $this->perPage,
+                    $this->page ?? 1
+                );
+            }
+
+            return $lops;
+        } catch (\Exception $e) {
+            $this->logError($e, 'Error loading lops', [
+                'namhoc_id' => $this->selectedNamHoc,
+                'khoi' => $this->selectedKhoi,
+                'search' => $this->search,
+            ]);
+
+            session()->flash('error', 'Có lỗi khi tải danh sách lớp học.');
+
+            return new \Illuminate\Pagination\LengthAwarePaginator(
+                [],
+                0,
+                $this->perPage,
+                $this->page ?? 1
+            );
+        }
+    }
+
+    // public function render()
+    // {
+    //     // Ensure $lops_ is always a paginator to avoid calling paginator methods on plain collections
+    //     $lops_ = new LengthAwarePaginator([], 0, $this->perPage, 1);
+
+    //     if ($this->selectedNamHoc) {
+    //         // Use LopService to fetch paginated, transformed lops (expected to return a LengthAwarePaginator)
+    //         $lops_ = app(LopService::class)->paginateLops(
+    //             $this->selectedNamHoc,
+    //             $this->selectedKhoi,
+    //             $this->perPage,
+    //             $this->search,
+    //             $this->page ?? 1
+    //         );
+    //         // If service returns a collection for some reason, wrap it into a paginator
+    //         if (! $lops_ instanceof LengthAwarePaginator) {
+    //             $items = is_countable($lops_) ? (array) $lops_ : [];
+    //             $total = count($items);
+    //             $lops_ = new LengthAwarePaginator($items, $total, $this->perPage, $this->page ?? 1);
+    //         }
+    //     }
+
+    //     return view('livewire.lop.lop-list', [
+    //         'lops' => $lops_,
+    //     ])
+    //         ->extends('frontend.layout.main')
+    //         ->section('content');
+    // }
+
+    // ==================== HELPER METHODS ====================
+
+    /**
+     * Get per page options cho dropdown
+     * Override để change default
+     */
+    public function getPerPageOptions(): array
+    {
+        return [10, 15, 25, 50];
     }
 }

@@ -4,7 +4,7 @@
     <div>
         <label class="block text-sm font-semibold text-slate-700 mb-2">Năm học</label>
         <select wire:model.live="selectedNamHoc"
-            class="w-full px-4 py-2.5 bg-white border border-slate-200 rounded-xl text-slate-900 focus:outline-none focus:ring-2 focus:ring-purple-500">
+            class="w-full px-4 py-2.5 bg-white border border-slate-200 rounded-xl text-slate-900 focus:outline-none focus:ring-2 focus:ring-primary-500">
             <option value="">-- Chọn năm học --</option>
             @foreach($namHocs as $id => $name)
             <option value="{{ $id }}">{{ $name }}</option>
@@ -18,7 +18,7 @@
     <div>
         <label class="block text-sm font-semibold text-slate-700 mb-2">Khối</label>
         <select wire:model.live="selectedKhoi"
-            class="w-full px-4 py-2.5 bg-white border border-slate-200 rounded-xl text-slate-900 focus:outline-none focus:ring-2 focus:ring-purple-500"
+            class="w-full px-4 py-2.5 bg-white border border-slate-200 rounded-xl text-slate-900 focus:outline-none focus:ring-2 focus:ring-primary-500"
             @if(!$selectedNamHoc) disabled @endif>
             <option value="">-- Tất cả khối --</option>
             @foreach($khois as $id => $name)
@@ -33,9 +33,9 @@
     <div>
         <label class="block text-sm font-semibold text-slate-700 mb-2">Lớp</label>
         <select wire:model.live="selectedLop"
-            class="w-full px-4 py-2.5 bg-white border border-slate-200 rounded-xl text-slate-900 focus:outline-none focus:ring-2 focus:ring-purple-500"
+            class="w-full px-4 py-2.5 bg-white border border-slate-200 rounded-xl text-slate-900 focus:outline-none focus:ring-2 focus:ring-primary-500"
             @if(!$selectedNamHoc) disabled @endif>
-            <option value="">-- Chọn lớp --</option>
+            <option value="">-- Tất cả lớp --</option>
             @foreach($lops as $id => $name)
             <option value="{{ $id }}">{{ $name }}</option>
             @endforeach
@@ -48,9 +48,9 @@
     <div>
         <label class="block text-sm font-semibold text-slate-700 mb-2">Kỳ</label>
         <select wire:model.live="selectedKy"
-            class="w-full px-4 py-2.5 bg-white border border-slate-200 rounded-xl text-slate-900 focus:outline-none focus:ring-2 focus:ring-purple-500"
+            class="w-full px-4 py-2.5 bg-white border border-slate-200 rounded-xl text-slate-900 focus:outline-none focus:ring-2 focus:ring-primary-500"
             @if(!$selectedNamHoc) disabled @endif>
-            <option value="">-- Chọn kỳ --</option>
+            <option value="">-- Chọn học kỳ --</option>
             @foreach($kys as $id => $name)
             <option value="{{ $id }}">{{ $name }}</option>
             @endforeach
@@ -58,7 +58,7 @@
     </div>
     @endif
 
-    {{-- Reset Button --}}
+    {{-- Reset Button 
     <div class="flex items-end">
         <button wire:click="resetFiltersHandler"
             type="button"
@@ -69,4 +69,5 @@
             <span class="font-semibold text-slate-900">Đặt lại</span>
         </button>
     </div>
+    --}}
 </div>

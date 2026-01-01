@@ -169,8 +169,8 @@ class ClassFilterSelector extends Component
 
     public function render()
     {
-        return view('livewire.class-filter-selector')
-            ->extends('frontend.layout.main')
-            ->section('content');
+        return view('livewire.class-filter-selector');
+            // ->extends('frontend.layout.main')
+            // ->section('content');
     }
 }

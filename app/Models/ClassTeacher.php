@@ -42,7 +42,7 @@ class ClassTeacher extends Pivot
 
     // Định nghĩa constants cho role
     const ROLE_CHU_NHIEM = 1;
-    const ROLE_PHU_TRACH = 2;
+    const ROLE_PHO = 2;
 
     /*
     |--------------------------------------------------------------------------
@@ -80,7 +80,7 @@ class ClassTeacher extends Pivot
     {
         $roles = [
             self::ROLE_CHU_NHIEM => '<span class="badge badge-primary">Chủ nhiệm</span>',
-            self::ROLE_PHU_TRACH => '<span class="badge badge-warning">Phụ trách</span>',
+            self::ROLE_PHO => '<span class="badge badge-warning">Phụ trách</span>',
         ];
 
         return $roles[$this->role] ?? '<span class="badge badge-secondary">Không xác định</span>';

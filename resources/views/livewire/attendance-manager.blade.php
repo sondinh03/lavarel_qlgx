@@ -1,39 +1,14 @@
-<div class="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-50 p-6">
+<div class="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 p-6">
     <div class="mx-auto max-w-7xl space-y-6">
 
-        {{-- ✅ BREADCRUMB ADDED với dynamic class name --}}
+        {{-- ✅ BREADCRUMB  --}}
         <x-breadcrumb :items="[
-            [
-                'label' => 'Trang chủ', 
-                'url' => route('ds-lop')
-            ],
-            [
-                'label' => 'Điểm danh', 
-                'url' => route('attendance'),
-                'icon' => '<svg class=\'w-4 h-4\' fill=\'none\' stroke=\'currentColor\' viewBox=\'0 0 24 24\'><path stroke-linecap=\'round\' stroke-linejoin=\'round\' stroke-width=\'2\' d=\'M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01\'/></svg>'
-            ],
-            [
-                'label' => $this->selectedClassName,
-                'icon' => '<svg class=\'w-4 h-4\' fill=\'none\' stroke=\'currentColor\' viewBox=\'0 0 24 24\'><path stroke-linecap=\'round\' stroke-linejoin=\'round\' stroke-width=\'2\' d=\'M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4\'/></svg>'
-            ]
-        ]" separator="arrow" />
+            ['label' => 'Trang chủ', 'url' => route('ds-lop')],
+            ['label' => 'Điểm danh', 'url' => route('attendance')],
+            ['label' => $this->selectedClassName]
+        ]" />
 
-        {{-- Header --}}
-        <div class="flex items-center gap-4">
-            <div class="flex-1">
-                <h1 class="text-2xl font-bold text-slate-900">
-                    Điểm danh - {{ $this->selectedClassName ?? 'Chọn lớp' }}
-                </h1>
-                <p class="text-sm text-slate-600 mt-1">
-                    Điểm danh {{ $attendanceType == 1 ? 'đi học' : 'đi lễ' }}
-                    cho {{ count($students) }} học sinh •
-                    {{ count($sessions) }} buổi
-                    @if(isset($selectedNamHoc))
-                    • Năm học {{ $selectedNamHoc }}
-                    @endif
-                </p>
-            </div>
-        </div>
+
 
         {{-- Toast Notifications --}}
         @if (session()->has('message'))
@@ -72,142 +47,105 @@
         @endif
 
         {{-- Class Selector --}}
-        <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
-            {{-- Title --}}
-            <div class="p-6 border-b border-slate-200">
-                <h1 class="text-2xl font-bold text-slate-900">
-                    Điểm danh - {{ $this->selectedClassName ?? 'Chọn lớp' }} 
-                </h1>
-                <p class="text-sm text-slate-600 mt-1">
-                    Điểm danh {{ $attendanceType == 1 ? 'đi học' : 'đi lễ' }}
-                    cho {{ count($students) }} học sinh •
-                    {{ count($sessions) }} buổi
-                </p>
-            </div>
-
-            {{-- Filter Section using ClassFilterSelector --}}
-            <div class="p-6 bg-slate-50">
-                @livewire('class-filter-selector', [
-                'parish_id' => $parish_id,
-                'showNamHoc' => true,
-                'showKhoi' => true,
-                'showLop' => true,
-                'showKy' => true,
-                'selectedNamHoc' => $selectedNamHoc ?? null,
-                'selectedKhoi' => $selectedKhoi ?? null,
-                'selectedLop' => $selectedClassId ?? null,
-                'selectedKy' => $selectedKy ?? null,
-                ])
-            </div>
-
-            {{-- Search Box --}}
-            @if($selectedClassId)
-            <div class="p-6 pt-0 bg-slate-50">
-                <div class="relative">
-                    <label for="student-search" class="sr-only">Tìm kiếm học sinh</label>
-                    <input type="text"
-                        id="student-search"
-                        wire:model.live.debounce.300ms="searchTerm"
-                        placeholder="Tìm học sinh (tên thánh, họ, tên)..."
-                        class="w-full px-4 py-2 pl-10 border border-blue-200 rounded-lg bg-white text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        aria-label="Tìm kiếm học sinh theo tên thánh, họ hoặc tên">
-                    <svg class="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" wire:loading.remove wire:target="searchTerm" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                    </svg>
-
-                    <svg wire:loading
-                        wire:target="searchTerm"
-                        class="absolute left-3 top-1/2 -translate-y-1/2 animate-spin h-4 w-4 text-blue-600"
-                        fill="none" viewBox="0 0 24 24">
-                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                    </svg>
-
-                    @if($searchTerm)
-                    <button wire:click="$set('searchTerm', '')"
-                        class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
-                        aria-label="Xóa tìm kiếm">
-                        <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-                        </svg>
-                    </button>
-                    @endif
+        <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+            {{-- Header --}}
+            <div class="p-6 border-b border-slate-200 bg-gradient-to-br from-primary-50 to-white">
+                <div class="flex-1">
+                    <h1 class="text-2xl font-bold text-slate-900">
+                        Điểm danh - {{ $this->selectedClassName ?? 'Chọn lớp' }}
+                    </h1>
+                    <p class="text-sm text-slate-600 mt-1">
+                        Điểm danh {{ $attendanceType == 1 ? 'đi học' : 'đi lễ' }}
+                        cho {{ count($students) }} học sinh • {{ count($sessions) }} buổi
+                    </p>
                 </div>
-                @if($searchTerm)
-                <p class="text-xs text-slate-500 mt-1" role="status" aria-live="polite">
-                    <span wire:loading.remove wire:target="searchTerm">
-                        Tìm thấy {{ count($students) }} học sinh
-                    </span>
-                    <span wire:loading wire:target="searchTerm" class="text-blue-600">
-                        Đang tìm kiếm...
-                    </span>
-                </p>
-                @endif
             </div>
-            @endif
+
+            {{-- Filter --}}
+            <div class="px-6 py-4 bg-slate-50 border-b border-slate-200">
+                <div class="flex flex-col gap-4 lg:flex-row lg:items-end">
+
+                    {{-- Filters --}}
+                    <div class="flex-1">
+                        @livewire('class-filter-selector', [
+                        'parish_id' => $parish_id,
+                        'showNamHoc' => true,
+                        'showKhoi' => true,
+                        'showLop' => true,
+                        'showKy' => true,
+                        ])
+                    </div>
+
+                    {{-- Search --}}
+                    <div class="relative w-full lg:max-w-sm">
+                        <input
+                            type="text"
+                            wire:model.live.debounce.300ms="searchTerm"
+                            placeholder="Tìm học sinh (tên thánh, họ, tên)..."
+                            class="w-full px-4 py-2 pl-10 rounded-xl
+                       border border-slate-300 bg-white
+                       focus:ring-2 focus:ring-primary-500">
+
+                        <svg
+                            class="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400"
+                            fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                        </svg>
+                    </div>
+
+                    {{-- Actions (để sẵn cho sau) --}}
+                    <div class="flex gap-2">
+                        <button class="px-4 py-2 bg-primary-600 text-white rounded-xl hover:bg-primary-700">
+                            Xuất Excel
+                        </button>
+                    </div>
+                </div>
+            </div>
+
         </div>
 
         {{-- Main Card --}}
-        <div class="bg-white rounded-lg shadow-sm border-0">
+        <div class="bg-white rounded-xl shadow-sm border-0">
             {{-- Tabs  --}}
-            <div class="bg-blue-50 p-1 rounded-t-lg" role="tablist" aria-label="Loại điểm danh">
-                <div class="flex gap-1">
-                    <button wire:click="changeType(1)"
-                        role="tab"
-                        aria-selected="{{ $attendanceType == 1 ? 'true' : 'false' }}"
-                        aria-controls="attendance-panel"
-                        class="flex-1 py-2 px-4 rounded-lg text-sm font-medium transition-all
-            {{ $attendanceType == 1 ? 'bg-white text-blue-600 shadow-sm' : 'text-slate-600 hover:text-slate-900' }}">
-                        Điểm danh đi học
-                    </button>
-                    <button wire:click="changeType(2)"
-                        role="tab"
-                        aria-selected="{{ $attendanceType == 2 ? 'true' : 'false' }}"
-                        aria-controls="attendance-panel"
-                        class="flex-1 py-2 px-4 rounded-lg text-sm font-medium transition-all
-                               {{ $attendanceType == 2 ? 'bg-white text-blue-600 shadow-sm' : 'text-slate-600 hover:text-slate-900' }}">
-                        Điểm danh đi lễ
-                    </button>
-                </div>
+            <div class="bg-primary-50 p-1 rounded-t-lg flex gap-1">
+                <button wire:click="changeType(1)"
+                    class="flex-1 py-2 rounded-lg text-sm font-semibold
+                    {{ $attendanceType == 1 ? 'bg-white text-primary-600 shadow-sm' : 'text-slate-600 hover:text-slate-900' }}">
+                    Điểm danh đi học
+                </button>
+                <button wire:click="changeType(2)"
+                    class="flex-1 py-2 rounded-lg text-sm font-semibold
+                    {{ $attendanceType == 2 ? 'bg-white text-primary-600 shadow-sm' : 'text-slate-600 hover:text-slate-900' }}">
+                    Điểm danh đi lễ
+                </button>
             </div>
 
+            {{-- Content --}}
             <div class="p-6" id="attendance-panel" role="tabpanel">
                 {{-- Quick Stats --}}
-                <div class="mb-4 grid grid-cols-2 md:grid-cols-4 gap-3">
-                    <div class="bg-blue-50 rounded-lg p-3">
-                        <div class="text-xs text-blue-600 font-medium">Tổng học sinh</div>
-                        <div class="text-2xl font-bold text-blue-700">{{ count($students) }}</div>
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
+                    <div class="bg-primary-50 rounded-xl p-3">
+                        <div class="text-xs text-primary-600 font-semibold">Tổng học sinh</div>
+                        <div class="text-2xl font-bold text-primary-700">{{ count($students) }}</div>
                     </div>
-                    <div class="bg-green-50 rounded-lg p-3">
-                        <div class="text-xs text-green-600 font-medium">Đã điểm danh</div>
-                        <div class="text-2xl font-bold text-green-700">
-                            @php
-                            $totalChecked = 0;
-                            foreach($sessions as $session) {
-                            if (!$session['locked']) {
-                            $stats = $this->getDateStats($session['dateStr']);
-                            $totalChecked += $stats['present'] + $stats['absentPermitted'] + $stats['absentNotPermitted'];
-                            }
-                            }
-                            @endphp
-                            {{ $totalChecked }}
-                        </div>
+                    <div class="bg-green-50 rounded-xl p-3">
+                        <div class="text-xs text-green-600 font-semibold">Đã điểm danh</div>
+                        <div class="text-2xl font-bold text-green-700">{{ $totalChecked ?? 0 }}</div>
                     </div>
-                    <div class="bg-slate-50 rounded-lg p-3">
-                        <div class="text-xs text-slate-600 font-medium">Số buổi</div>
-                        <div class="text-2xl font-bold text-slate-700">
-                            {{ collect($sessions)->where('locked', true)->count() }}
-                        </div>
+                    <div class="bg-slate-50 rounded-xl p-3">
+                        <div class="text-xs text-slate-600 font-semibold">Số buổi</div>
+                        <div class="text-2xl font-bold text-slate-700">{{ count($sessions) }}</div>
                     </div>
-                    <div class="bg-purple-50 rounded-lg p-3">
-                        <div class="text-xs text-purple-600 font-medium">Loại</div>
+                    <div class="bg-purple-50 rounded-xl p-3">
+                        <div class="text-xs text-purple-600 font-semibold">Loại</div>
                         <div class="text-sm font-bold text-purple-700">
                             {{ $attendanceType == 1 ? 'Đi học' : 'Đi lễ' }}
                         </div>
                     </div>
                 </div>
 
-                {{-- Desktop Table View --}}
+                {{-- Table --}}
                 <div class="hidden lg:block">
                     <div wire:loading.delay
                         wire:target="changeClass,changeType"

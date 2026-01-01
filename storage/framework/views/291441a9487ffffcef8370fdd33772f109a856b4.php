@@ -53,6 +53,10 @@
                         Điểm danh
                     </a>
 
+                    <a href="<?php echo e(route('ds-lop')); ?>" class="text-sm font-medium text-slate-600 hover:text-indigo-600 transition">
+                       Danh sách lớp
+                    </a>
+
                     <div class="relative" x-data="{ openManage: false }">
                         <button @click="openManage = !openManage"
                             class="flex items-center gap-1 text-sm font-medium text-slate-600 hover:text-indigo-600 transition">

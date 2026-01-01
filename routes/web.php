@@ -56,6 +56,7 @@ use App\Http\Livewire\Lop\LopDetail;
 use App\Http\Livewire\Lop\LopForm;
 use App\Http\Livewire\Lop\LopList;
 use App\Http\Livewire\NamHoc\NamHocManager;
+use App\Http\Livewire\Student\StudentDetail;
 
 Paginator::useBootstrap();
 
@@ -89,7 +90,7 @@ Route::get('/lop/{id}/edit', LopForm::class)->name('lop.edit');
 Route::get('/attendance/{classId?}', AttendanceManager::class)->name('attendance');
 Route::get('/nam-hoc', NamHocManager::class)->name('nam-hoc');
 Route::get('/khoi-hoc', BlockManager::class)->name('khoi-hoc');
-
+Route::get('/ho-so-hs/{id}', StudentDetail::class)->name('ho-so-hs');
 
 Route::get('{slug}', [SlugController::class, 'make']);
 
