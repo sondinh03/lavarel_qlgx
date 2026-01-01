@@ -45,7 +45,7 @@ abstract class BaseComponent extends Component
     public $search = '';
 
     /** @var int Items per page */
-    public $perPage = 10;
+    public $perPage = 15;
 
     /** @var array Allowed per page options */
     protected $perPageOptions = [10, 15, 25, 50];
@@ -81,7 +81,7 @@ abstract class BaseComponent extends Component
      */
     protected $queryString = [
         'search' => ['except' => ''],
-        'perPage' => ['except' => 10],
+        'perPage' => ['except' => 15],
         'page' => ['except' => 1],
     ];
 
@@ -176,9 +176,9 @@ abstract class BaseComponent extends Component
      */
     protected function sanitizeQueryString(): void
     {
-        $this->perPage = is_numeric($this->perPage) ? (int) $this->perPage : 10;
+        $this->perPage = is_numeric($this->perPage) ? (int) $this->perPage : 15;
         if (!in_array($this->perPage, $this->perPageOptions)) {
-            $this->perPage = 10;
+            $this->perPage = 15;
         }
 
         // Sanitize search: trim whitespace
@@ -211,7 +211,7 @@ abstract class BaseComponent extends Component
     protected function resetToDefaults(): void
     {
         $this->search = '';
-        $this->perPage = 10;
+        $this->perPage = 15;
         $this->resetPage();
     }
 
@@ -232,9 +232,9 @@ abstract class BaseComponent extends Component
     public function updatedPerPage(): void
     {
         // Sanitize incoming perPage value
-        $this->perPage = is_numeric($this->perPage) ? (int) $this->perPage : 10;
+        $this->perPage = is_numeric($this->perPage) ? (int) $this->perPage : 15;
         if (!in_array($this->perPage, $this->perPageOptions)) {
-            $this->perPage = 10;
+            $this->perPage = 15;
         }
 
         $this->validateOnly('perPage');
