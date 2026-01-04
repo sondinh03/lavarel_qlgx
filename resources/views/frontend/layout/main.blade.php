@@ -78,9 +78,20 @@
                             <div class="border-t my-1"></div>
 
                             {{-- Nhân sự --}}
-                            <a href="{{ route('nam-hoc.index') }}"
+                            <a href="{{ route('teacher.show') }}"
                                 class="block px-4 py-2 text-sm hover:bg-indigo-50">
                                 Giáo lý viên
+                            </a>
+
+                            <a href="{{ route('nam-hoc') }}"
+                                class="block px-4 py-2 text-sm hover:bg-indigo-50">
+                                Học sinh
+                            </a>
+
+                            {{-- Hệ thống --}}
+                            <a href="{{ route('parish-child.show') }}"
+                                class="block px-4 py-2 text-sm hover:bg-indigo-50">
+                                Giáo họ
                             </a>
 
                             <a href="{{ route('nam-hoc') }}"

@@ -65,11 +65,11 @@
 
         
         <?php if (isset($component)) { $__componentOriginalc254754b9d5db91d5165876f9d051922ca0066f4 = $component; } ?>
-<?php $component = $__env->getContainer()->make(Illuminate\View\AnonymousComponent::class, ['view' => 'components.page-header','data' => ['title' => $isEdit ? 'Chỉnh sửa lớp học' : 'Tạo lớp học mới','description' => $isEdit ? 'Cập nhật thông tin lớp học' : 'Thêm lớp học mới vào hệ thống','icon' => 'class','gradient' => 'primary']]); ?>
+<?php $component = $__env->getContainer()->make(Illuminate\View\AnonymousComponent::class, ['view' => 'components.page-header','data' => ['title' => $isEdit ? 'Chỉnh sửa lớp học' : 'Tạo lớp học mới','description' => $isEdit ? 'Cập nhật thông tin lớp học' : 'Thêm lớp học mới vào hệ thống','icon' => 'class']]); ?>
 <?php $component->withName('page-header'); ?>
 <?php if ($component->shouldRender()): ?>
 <?php $__env->startComponent($component->resolveView(), $component->data()); ?>
-<?php $component->withAttributes(['title' => \Illuminate\View\Compilers\BladeCompiler::sanitizeComponentAttribute($isEdit ? 'Chỉnh sửa lớp học' : 'Tạo lớp học mới'),'description' => \Illuminate\View\Compilers\BladeCompiler::sanitizeComponentAttribute($isEdit ? 'Cập nhật thông tin lớp học' : 'Thêm lớp học mới vào hệ thống'),'icon' => 'class','gradient' => 'primary']); ?>
+<?php $component->withAttributes(['title' => \Illuminate\View\Compilers\BladeCompiler::sanitizeComponentAttribute($isEdit ? 'Chỉnh sửa lớp học' : 'Tạo lớp học mới'),'description' => \Illuminate\View\Compilers\BladeCompiler::sanitizeComponentAttribute($isEdit ? 'Cập nhật thông tin lớp học' : 'Thêm lớp học mới vào hệ thống'),'icon' => 'class']); ?>
 <?php echo $__env->renderComponent(); ?>
 <?php endif; ?>
 <?php if (isset($__componentOriginalc254754b9d5db91d5165876f9d051922ca0066f4)): ?>

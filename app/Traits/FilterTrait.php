@@ -32,8 +32,8 @@ trait FilterTrait
                 "namhocs:parish:{$parish_id}",
                 $this->cacheTTL,
                 function () use ($parish_id) {
-                    return NamHoc::where('parish_id', $parish_id)
-                        ->where('status', 1)
+                    return NamHoc::ofParish($parish_id)
+                        ->active()
                         ->orderByDesc('name')
                         ->pluck('name', 'id');
                 }

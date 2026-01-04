@@ -50,6 +50,9 @@ abstract class BaseComponent extends Component
     /** @var array Allowed per page options */
     protected $perPageOptions = [10, 15, 25, 50];
 
+    /** @var bool Component có dùng pagination không */
+    protected $usePagination = true;
+
     /** @var string Pagination theme */
     protected $paginationTheme = 'tailwind';
 
@@ -70,20 +73,6 @@ abstract class BaseComponent extends Component
      * @var array
      */
     protected $messages = [];
-
-    // ==================== QUERY STRING ====================
-
-    /**
-     * Query string parameters cho URL sharing
-     * Override và merge với parent trong child class
-     * 
-     * @var array
-     */
-    protected $queryString = [
-        'search' => ['except' => ''],
-        'perPage' => ['except' => 15],
-        'page' => ['except' => 1],
-    ];
 
     // ==================== LISTENERS ====================
 
@@ -172,13 +161,32 @@ abstract class BaseComponent extends Component
     abstract protected function loadInitialData(): void;
 
     /**
+     * Get query string parameters động dựa vào usePagination
+     */
+    protected function queryString()
+    {
+        $params = [
+            'search' => ['except' => ''],
+        ];
+
+        if ($this->usePagination) {
+            $params['perPage'] = ['except' => 10];
+            $params['page'] = ['except' => 1];
+        }
+
+        return $params;
+    }
+
+    /**
      * Sanitize và coerce query string inputs về đúng type
      */
     protected function sanitizeQueryString(): void
     {
-        $this->perPage = is_numeric($this->perPage) ? (int) $this->perPage : 15;
-        if (!in_array($this->perPage, $this->perPageOptions)) {
-            $this->perPage = 15;
+        if ($this->usePagination) {
+            $this->perPage = is_numeric($this->perPage) ? (int) $this->perPage : 15;
+            if (!in_array($this->perPage, $this->perPageOptions)) {
+                $this->perPage = 15;
+            }
         }
 
         // Sanitize search: trim whitespace

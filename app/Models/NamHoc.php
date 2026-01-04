@@ -41,20 +41,7 @@ class NamHoc extends Model
     |--------------------------------------------------------------------------
     | FUNCTIONS
     |--------------------------------------------------------------------------
-    // */
-    // public function getDisplayNameAttribute(): string
-    // {
-    //     $start = $this->start_date_one?->format('Y');
-    //     $end  = $this->end_date_two?->format('Y');
-
-    //     // Ưu tiên học kỳ 1
-    //     if ($start && $end) {
-    //         return "{$start} - {$end}";
-    //     }
-
-    //     // Dự phòng nếu chỉ có name
-    //     return $this->name ?? 'N/A';
-    // }
+    */
 
     public function getCurrentSemesterAttribute(): ?int
     {

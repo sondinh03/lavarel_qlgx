@@ -26,12 +26,11 @@
         </x-toast-notification>
         @endif
 
-        {{-- Page Header (PRIMARY) --}}
+        {{-- Page Header --}}
         <x-page-header
             :title="$isEdit ? 'Chỉnh sửa lớp học' : 'Tạo lớp học mới'"
             :description="$isEdit ? 'Cập nhật thông tin lớp học' : 'Thêm lớp học mới vào hệ thống'"
-            icon="class"
-            gradient="primary" />
+            icon="class" />
 
         {{-- FORM --}}
         <form wire:submit.prevent="save" id="main-content">

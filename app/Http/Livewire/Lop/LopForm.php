@@ -324,23 +324,23 @@ class LopForm extends BaseComponent
     /**
      * Khi thêm/bỏ giáo lý viên, validate chủ nhiệm
      */
-    public function updatedSelectedTeachers($value): void
-    {
-        // Nếu chủ nhiệm bị xóa khỏi danh sách
-        if ($this->mainTeacherId && !in_array($this->mainTeacherId, $this->selectedTeachers)) {
-            $this->mainTeacherId = null;
-        }
-    }
+    // public function updatedSelectedTeachers($value): void
+    // {
+    //     // Nếu chủ nhiệm bị xóa khỏi danh sách
+    //     if ($this->mainTeacherId && !in_array($this->mainTeacherId, $this->selectedTeachers)) {
+    //         $this->mainTeacherId = null;
+    //     }
+    // }
 
-    /**
-     * Khi đổi chủ nhiệm, tự động thêm vào selectedTeachers
-     */
-    public function updatedChuNhiemId($value): void
-    {
-        if ($value && !in_array($value, $this->selectedTeachers)) {
-            $this->selectedTeachers[] = (int) $value;
-        }
-    }
+    // /**
+    //  * Khi đổi chủ nhiệm, tự động thêm vào selectedTeachers
+    //  */
+    // public function updatedChuNhiemId($value): void
+    // {
+    //     if ($value && !in_array($value, $this->selectedTeachers)) {
+    //         $this->selectedTeachers[] = (int) $value;
+    //     }
+    // }
 
     // ==================== FORM ACTIONS ====================
 

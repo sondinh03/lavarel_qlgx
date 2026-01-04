@@ -91,9 +91,20 @@
                             <div class="border-t my-1"></div>
 
                             
-                            <a href="<?php echo e(route('nam-hoc.index')); ?>"
+                            <a href="<?php echo e(route('teacher.show')); ?>"
                                 class="block px-4 py-2 text-sm hover:bg-indigo-50">
                                 Giáo lý viên
+                            </a>
+
+                            <a href="<?php echo e(route('nam-hoc')); ?>"
+                                class="block px-4 py-2 text-sm hover:bg-indigo-50">
+                                Học sinh
+                            </a>
+
+                            
+                            <a href="<?php echo e(route('parish-child.show')); ?>"
+                                class="block px-4 py-2 text-sm hover:bg-indigo-50">
+                                Giáo họ
                             </a>
 
                             <a href="<?php echo e(route('nam-hoc')); ?>"

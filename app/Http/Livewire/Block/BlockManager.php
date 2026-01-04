@@ -53,6 +53,9 @@ class BlockManager extends BaseComponent
     /** @var int Weight - Thứ tự sắp xếp */
     public $weight = 0;
 
+    /** @var bool Không dùng pagination */
+    protected $usePagination = false;
+
     // ==================== DATA ====================
 
     /** @var \Illuminate\Support\Collection Danh sách khối */
@@ -63,7 +66,7 @@ class BlockManager extends BaseComponent
     // Rules riêng cho form – chỉ dùng khi save
     protected $formRules = [
         'name' => 'required|string|max:255',
-        'weight' => 'nullable|numeric|integer|min:0',
+        'weight' => 'nullable|integer|min:0',
         'status' => 'required|boolean',
     ];
 
@@ -82,15 +85,13 @@ class BlockManager extends BaseComponent
 
     // ==================== QUERY STRING ====================
 
-    /**
-     * Query string để share URL
-     */
-    protected $queryString = [
-        'selectedNamHoc' => ['except' => ''],
-        'search' => ['except' => ''],
-        'page' => ['except' => 1],
-        'showForm' => ['except' => false],
-    ];
+    protected function queryString()
+    {
+        return [
+            'search' => ['except' => ''],
+            'showForm' => ['except' => false],
+        ];
+    }
 
     // ==================== LISTENERS ====================
 
@@ -110,24 +111,6 @@ class BlockManager extends BaseComponent
      */
     public function mount()
     {
-
-        Log::info('DEBUG MOUNT - QUERY STRING VALUES', [
-            'class' => static::class,
-            'full_url' => request()->fullUrl(),
-            'query_params' => request()->query(), // ← TẤT CẢ QUERY STRING Ở ĐÂY
-            'livewire_properties' => [
-                'search' => $this->search,
-                'perPage' => $this->perPage,
-                'page' => $this->page ?? 'null',
-                'selectedNamHoc' => $this->selectedNamHoc ?? 'null',
-                'selectedKhoi' => $this->selectedKhoi ?? 'null',
-                // thêm bất kỳ property nào bạn muốn kiểm tra
-            ],
-            'session_parish_id' => session('parish_id'),
-            'isAdmin' => $this->isAdmin,
-            'isDecen' => $this->isDecen,
-        ]);
-
         parent::mount();
 
         // Yêu cầu quyền quản trị (Admin hoặc Decen)
@@ -175,7 +158,7 @@ class BlockManager extends BaseComponent
         try {
             $this->namHocs = NamHoc::ofParish($this->parish_id)
                 ->active()
-                ->orderByDesc('start_date_one')
+                ->orderByDesc('name')
                 ->get();
 
             // Nếu chưa chọn năm học và có năm học available, chọn năm học mới nhất
@@ -195,7 +178,6 @@ class BlockManager extends BaseComponent
     public function loadBlocks(): void
     {
         if (!$this->selectedNamHoc) {
-            // $this->blocks = new LengthAwarePaginator([], 0, $this->perPage, 1);
             $this->blocks = collect();
             return;
         }
@@ -210,7 +192,6 @@ class BlockManager extends BaseComponent
                 $query->where('name', 'like', '%' . $this->search . '%');
             }
 
-            // $this->blocks = $query->paginate($this->perPage);
             $this->blocks = $query->get();
         } catch (\Exception $e) {
             $this->logError($e, 'Error loading blocks');
@@ -254,15 +235,6 @@ class BlockManager extends BaseComponent
     public function updatedSearch(): void
     {
         parent::updatedSearch();
-        $this->loadBlocks();
-    }
-
-    /**
-     * Khi perPage thay đổi, reload data
-     */
-    public function updatedPerPage(): void
-    {
-        parent::updatedPerPage();
         $this->loadBlocks();
     }
 
@@ -324,14 +296,15 @@ class BlockManager extends BaseComponent
 
 
         // Validate form data (excluding selectedNamHoc from form validation)
-        try {
-            $this->validate($this->formRules);
-        } catch (ValidationException $e) {
-            // Livewire tự động hiển thị errors
-            return;
-        }
+        // try {
+        //     // $this->validate($this->formRules);
+        //     $this->validate(array_merge($this->rules, $this->formRules));
+        // } catch (ValidationException $e) {
+        //     // Livewire tự động hiển thị errors
+        //     return;
+        // }
 
-        dd('weight after validate', $this->weight);
+        $this->validate($this->formRules, $this->messages);
 
         // Save data
 
@@ -360,7 +333,6 @@ class BlockManager extends BaseComponent
                     'status' => $this->status,
                     'namhoc' => $this->selectedNamHoc,
                     'pid' => $this->parish_id,
-                    // Set other fields if needed
                     'did' => 0, // Default value
                     'deid' => 0, // Default value
                     'paid' => 0, // Default value

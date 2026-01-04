@@ -48,6 +48,9 @@ class NamHocManager extends BaseComponent
     /** @var int Trạng thái (1 = active, 0 = inactive) */
     public $status = 1;
 
+    /** @var bool Không dùng pagination */
+    protected $usePagination = false;
+
     // ==================== DATA ====================
 
     /** @var \Illuminate\Support\Collection Danh sách năm học */
@@ -82,16 +85,13 @@ class NamHocManager extends BaseComponent
     ];
 
     // ==================== QUERY STRING ====================
-
-    /**
-     * Query string để share URL
-     */
-    protected $queryString = [
-        'search' => ['except' => ''],
-        'page' => ['except' => 1],
-        'perPage' => ['except' => 10],
-        'showForm' => ['except' => false],
-    ];
+    protected function queryString()
+    {
+        return [
+            'search' => ['except' => ''],
+            'showForm' => ['except' => false],
+        ];
+    }
 
     // ==================== LISTENERS ====================
 
@@ -143,7 +143,6 @@ class NamHocManager extends BaseComponent
             }
 
             $this->namHocs = $query->get();
-            // $this->namHocs = $query->paginate($this->perPage);
         } catch (\Exception $e) {
             $this->logError($e, 'Error loading nam hocs');
             session()->flash('error', 'Có lỗi khi tải danh sách năm học');
@@ -159,15 +158,6 @@ class NamHocManager extends BaseComponent
     public function updatedSearch(): void
     {
         parent::updatedSearch();
-        $this->loadNamHocs();
-    }
-
-    /**
-     * Khi perPage thay đổi, reload data
-     */
-    public function updatedPerPage(): void
-    {
-        parent::updatedPerPage();
         $this->loadNamHocs();
     }
 
@@ -218,15 +208,7 @@ class NamHocManager extends BaseComponent
     public function save(): void
     {
         $this->requireManager();
-
-        // Validate form data
-        try {
-            dd($this->formRules, $this->messages, $this->validate($this->formRules, $this->messages));
-            $this->validate($this->formRules, $this->messages);
-        } catch (ValidationException $e) {
-            // Livewire tự động hiển thị errors
-            return;
-        }
+        $this->validate($this->formRules, $this->messages);
 
         // Custom validation: Kỳ 2 phải sau kỳ 1
         if ($this->start_date_two && $this->end_date_one) {

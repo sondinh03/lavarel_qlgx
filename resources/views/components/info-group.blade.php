@@ -1,8 +1,12 @@
-<div class="bg-slate-50 rounded-xl border border-slate-200 overflow-hidden">
-    <div class="px-4 py-3 border-b border-slate-200 font-semibold text-slate-900">
+<div class="bg-white rounded-xl border border-slate-200 overflow-hidden">
+    <div
+        class="px-4 py-3 border-b border-slate-200
+               bg-gradient-to-br from-primary-50 to-white
+               text-sm font-semibold text-slate-900">
         {{ $title }}
     </div>
-    <div class="divide-y divide-slate-200">
+
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 p-4">
         {{ $slot }}
     </div>
 </div>

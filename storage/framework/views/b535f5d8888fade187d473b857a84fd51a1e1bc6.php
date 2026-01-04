@@ -243,7 +243,7 @@ echo $html;
 
                             
                             <?php if(!empty($lopData['start_date_two']) && !empty($lopData['end_date_two'])): ?>
-                            <div class="flex items-center gap-4 p-4 bg-gradient-to-br from-primary-50 to-pink-50 rounded-xl border border-primary-200">
+                            <div class="flex items-center gap-4 p-4 bg-gradient-to-br from-primary-50 to-primary-100 rounded-xl border border-primary-200">
                                 <div class="flex-shrink-0 w-12 h-12 bg-primary-500 rounded-xl flex items-center justify-center shadow-sm">
                                     <span class="text-white font-bold">HK2</span>
                                 </div>

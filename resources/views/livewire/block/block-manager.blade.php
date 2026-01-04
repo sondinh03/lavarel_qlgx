@@ -21,33 +21,13 @@
 
         {{-- Header --}}
         <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
-            <div class="p-6 border-b border-slate-200 bg-gradient-to-br from-primary-50 to-white">
-                <div class="flex items-start justify-between">
-                    <div class="flex items-center gap-4">
-                        <div class="w-12 h-12 bg-primary-500 rounded-xl flex items-center justify-center shadow-sm">
-                            <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M4 6h16M4 12h16M4 18h16" />
-                            </svg>
-                        </div>
-                        <div>
-                            <h1 class="text-2xl font-bold text-slate-900">Quản lý khối học</h1>
-                            <p class="text-sm text-slate-600 mt-1">
-                                Quản lý các khối theo năm học
-                            </p>
-                        </div>
-                    </div>
-
-                    @if($blocks)
-                    <div class="text-right pl-6 border-l border-slate-200">
-                        <div class="text-3xl font-bold text-primary-600">
-                            {{ $blocks->count() }}
-                        </div>
-                        <div class="text-xs text-slate-600 font-medium">Khối</div>
-                    </div>
-                    @endif
-                </div>
-            </div>
+            <x-page-header
+                title="Quản lý khối học"
+                description="Danh sách các khối theo năm học"
+                :stat-value="$blocks?->count()"
+                stat-label="Khối học"
+                icon-type="block">
+            </x-page-header>
 
             {{-- Toast Messages --}}
             <div role="status" aria-live="polite">
@@ -76,43 +56,51 @@
                 @endif
             </div>
 
-            {{-- Filters Section --}}
+            {{-- Filters Bar --}}
             <div class="px-6 py-4 border-b border-slate-200 bg-slate-50/70">
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    {{-- Năm học --}}
-                    <select wire:model="selectedNamHoc"
-                        class="w-full px-3 py-2 rounded-xl border border-slate-300 focus:ring-2 focus:ring-primary-500">
-                        <option value="">-- Chọn năm học --</option>
-                        @foreach($namHocs as $nh)
-                        <option value="{{ $nh->id }}">{{ $nh->name }}</option>
-                        @endforeach
-                    </select>
+                <div class="flex items-center justify-between gap-4">
 
-                    {{-- Search --}}
-                    <input wire:model.debounce.500ms="search"
-                        placeholder="Tìm theo tên khối..."
-                        class="w-full px-3 py-2 rounded-xl border border-slate-300 focus:ring-2 focus:ring-primary-500">
+                    {{-- LEFT: Filters --}}
+                    <div class="flex items-center gap-3">
 
-                </div>
+                        {{-- Năm học --}}
+                        @livewire('class-filter-selector', [
+                        'parish_id' => $parish_id,
+                        'selectedNamHoc' => $selectedNamHoc,
+                        'showKhoi' => false,
+                        'showLop' => false,
+                        ])
 
-                <div class="mt-4 flex justify-end">
+                        {{-- Search --}}
+                        <input
+                            wire:model.debounce.500ms="search"
+                            placeholder="Tìm kiếm khối"
+                            class="w-56 px-3 py-2 rounded-xl
+                       border border-slate-300
+                       text-sm
+                       focus:ring-2 focus:ring-primary-500" />
+                    </div>
+
+                    {{-- RIGHT: Primary Action --}}
                     <button
                         wire:click="create"
                         @disabled(!$selectedNamHoc)
                         class="inline-flex items-center gap-2
-               px-4 py-2 rounded-xl
-               bg-primary-600 text-white text-sm font-semibold
-               hover:bg-primary-700 active:scale-95
-               disabled:bg-slate-300 disabled:cursor-not-allowed
-               transition-all">
+                            px-5 py-2.5 rounded-xl
+                            bg-gradient-to-r from-primary-500 to-primary-600
+                            hover:from-primary-600 hover:to-primary-700
+                            text-white text-sm font-semibold
+                            active:scale-95
+                            disabled:bg-slate-300 disabled:cursor-not-allowed
+                            transition-all shadow-sm">
 
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                 d="M12 4v16m8-8H4" />
                         </svg>
-
                         Thêm khối
                     </button>
+
                 </div>
             </div>
         </div>
@@ -125,7 +113,7 @@
                 <table class="w-full border-separate border-spacing-0">
                     <thead class="bg-slate-50 border-b border-slate-200">
                         <tr>
-                            <x-table-header>#</x-table-header>
+                            <x-table-header>STT</x-table-header>
                             <x-table-header>Tên khối</x-table-header>
                             <x-table-header>Năm học</x-table-header>
                             <x-table-header class="text-center">Thứ tự</x-table-header>

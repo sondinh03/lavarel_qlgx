@@ -56,7 +56,9 @@ use App\Http\Livewire\Lop\LopDetail;
 use App\Http\Livewire\Lop\LopForm;
 use App\Http\Livewire\Lop\LopList;
 use App\Http\Livewire\NamHoc\NamHocManager;
+use App\Http\Livewire\Parish\ParishChild;
 use App\Http\Livewire\Student\StudentDetail;
+use App\Http\Livewire\Teacher\TeacherManager;
 
 Paginator::useBootstrap();
 
@@ -90,7 +92,9 @@ Route::get('/lop/{id}/edit', LopForm::class)->name('lop.edit');
 Route::get('/attendance/{classId?}', AttendanceManager::class)->name('attendance');
 Route::get('/nam-hoc', NamHocManager::class)->name('nam-hoc');
 Route::get('/khoi-hoc', BlockManager::class)->name('khoi-hoc');
-Route::get('/ho-so-hs/{id}', StudentDetail::class)->name('ho-so-hs');
+Route::get('/ho-so-hoc-sinh/{id}', StudentDetail::class)->name('student.detail');
+Route::get('/teacher', TeacherManager::class)->name('teacher.show');
+Route::get('/parish-child', ParishChild::class)->name('parish-child.show');
 
 Route::get('{slug}', [SlugController::class, 'make']);
 

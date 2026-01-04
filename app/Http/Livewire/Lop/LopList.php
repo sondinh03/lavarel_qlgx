@@ -41,8 +41,6 @@ class LopList extends BaseComponent
     /** @var array Danh sách khối */
     public $khois = [];
 
-
-    public $lops_;
     public $isAdmin = false;
 
     public $search = '';
@@ -401,36 +399,7 @@ class LopList extends BaseComponent
             );
         }
     }
-
-    // public function render()
-    // {
-    //     // Ensure $lops_ is always a paginator to avoid calling paginator methods on plain collections
-    //     $lops_ = new LengthAwarePaginator([], 0, $this->perPage, 1);
-
-    //     if ($this->selectedNamHoc) {
-    //         // Use LopService to fetch paginated, transformed lops (expected to return a LengthAwarePaginator)
-    //         $lops_ = app(LopService::class)->paginateLops(
-    //             $this->selectedNamHoc,
-    //             $this->selectedKhoi,
-    //             $this->perPage,
-    //             $this->search,
-    //             $this->page ?? 1
-    //         );
-    //         // If service returns a collection for some reason, wrap it into a paginator
-    //         if (! $lops_ instanceof LengthAwarePaginator) {
-    //             $items = is_countable($lops_) ? (array) $lops_ : [];
-    //             $total = count($items);
-    //             $lops_ = new LengthAwarePaginator($items, $total, $this->perPage, $this->page ?? 1);
-    //         }
-    //     }
-
-    //     return view('livewire.lop.lop-list', [
-    //         'lops' => $lops_,
-    //     ])
-    //         ->extends('frontend.layout.main')
-    //         ->section('content');
-    // }
-
+    
     // ==================== HELPER METHODS ====================
 
     /**

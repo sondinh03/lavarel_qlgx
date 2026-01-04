@@ -94,30 +94,18 @@
         
         <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
             
-            <div class="p-6 border-b border-slate-200 bg-gradient-to-br from-primary-50 to-white">
-                <div class="flex items-start justify-between">
-                    <div class="flex items-center gap-4">
-                        <div class="w-14 h-14 bg-primary-500 rounded-xl flex items-center justify-center shadow-sm">
-                            <svg class="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                            </svg>
-                        </div>
-
-                        <div>
-                            <h1 class="text-2xl font-bold text-slate-900">Quản lý năm học</h1>
-                            <p class="text-sm text-slate-600 mt-1">
-                                Danh sách các năm học đã được tạo trong hệ thống của giáo xứ.
-                            </p>
-                        </div>
-                    </div>
-
-                    <div class="text-right">
-                        <div class="text-3xl font-bold text-primary-600"><?php echo e($namHocs->count()); ?></div>
-                        <div class="text-xs text-slate-600 font-medium">Năm học</div>
-                    </div>
-                </div>
-            </div>
+            <?php if (isset($component)) { $__componentOriginalc254754b9d5db91d5165876f9d051922ca0066f4 = $component; } ?>
+<?php $component = $__env->getContainer()->make(Illuminate\View\AnonymousComponent::class, ['view' => 'components.page-header','data' => ['title' => 'Quản lý năm học','description' => 'Danh sách các năm học của giáo xứ','statValue' => $namHocs?->count(),'statLabel' => 'Năm học','iconType' => 'schoolYear']]); ?>
+<?php $component->withName('page-header'); ?>
+<?php if ($component->shouldRender()): ?>
+<?php $__env->startComponent($component->resolveView(), $component->data()); ?>
+<?php $component->withAttributes(['title' => 'Quản lý năm học','description' => 'Danh sách các năm học của giáo xứ','stat-value' => \Illuminate\View\Compilers\BladeCompiler::sanitizeComponentAttribute($namHocs?->count()),'stat-label' => 'Năm học','icon-type' => 'schoolYear']); ?>
+             <?php echo $__env->renderComponent(); ?>
+<?php endif; ?>
+<?php if (isset($__componentOriginalc254754b9d5db91d5165876f9d051922ca0066f4)): ?>
+<?php $component = $__componentOriginalc254754b9d5db91d5165876f9d051922ca0066f4; ?>
+<?php unset($__componentOriginalc254754b9d5db91d5165876f9d051922ca0066f4); ?>
+<?php endif; ?>
 
             
             <div class="px-6 py-4 border-b border-slate-200 bg-slate-50/70">
@@ -125,9 +113,10 @@
                     
                     <button
                         wire:click="create"
-                        class="inline-flex items-center gap-2 bg-primary-600 text-white px-4 py-2 
-                                   rounded-xl text-sm font-semibold hover:bg-primary-700 active:scale-95 
-                                   transition-all shadow-sm"
+                        class="inline-flex items-center gap-2
+                             bg-primary-600 px-5 py-2.5 rounded-xl bg-gradient-to-r from-primary-500 to-primary-600
+                             text-white text-sm font-semibold hover:from-primary-600 hover:to-primary-700 active:scale-95 
+                             disabled:bg-slate-300 disabled:cursor-not-allowed transition-all shadow-sm"
                         aria-label="Thêm năm học mới">
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -145,6 +134,17 @@
                 <table class="w-full border-separate border-spacing-0">
                     <thead class="bg-slate-50 border-b border-slate-200">
                         <tr>
+                            <?php if (isset($component)) { $__componentOriginalc254754b9d5db91d5165876f9d051922ca0066f4 = $component; } ?>
+<?php $component = $__env->getContainer()->make(Illuminate\View\AnonymousComponent::class, ['view' => 'components.table-header','data' => []]); ?>
+<?php $component->withName('table-header'); ?>
+<?php if ($component->shouldRender()): ?>
+<?php $__env->startComponent($component->resolveView(), $component->data()); ?>
+<?php $component->withAttributes([]); ?>STT <?php echo $__env->renderComponent(); ?>
+<?php endif; ?>
+<?php if (isset($__componentOriginalc254754b9d5db91d5165876f9d051922ca0066f4)): ?>
+<?php $component = $__componentOriginalc254754b9d5db91d5165876f9d051922ca0066f4; ?>
+<?php unset($__componentOriginalc254754b9d5db91d5165876f9d051922ca0066f4); ?>
+<?php endif; ?>
                             <?php if (isset($component)) { $__componentOriginalc254754b9d5db91d5165876f9d051922ca0066f4 = $component; } ?>
 <?php $component = $__env->getContainer()->make(Illuminate\View\AnonymousComponent::class, ['view' => 'components.table-header','data' => []]); ?>
 <?php $component->withName('table-header'); ?>
@@ -215,8 +215,12 @@
                     </thead>
 
                     <tbody class="divide-y divide-slate-100">
-                        <?php $__empty_1 = true; $__currentLoopData = $namHocs; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $nh): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); $__empty_1 = false; ?>
+                        <?php $__empty_1 = true; $__currentLoopData = $namHocs; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $i => $nh): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); $__empty_1 = false; ?>
                         <tr class="hover:bg-slate-50 transition-colors">
+                            <td class="px-6 py-4 text-sm text-slate-500">
+                                <?php echo e($i + 1); ?>
+
+                            </td>
                             <td class="px-6 py-4">
                                 <div class="font-semibold text-slate-900">
                                     <?php echo e($nh->name); ?>
@@ -268,13 +272,11 @@
                                 <?php if($nh->status): ?>
                                 <span class="inline-flex items-center px-3 py-1 text-xs font-semibold 
                                                    rounded-full bg-primary-100 text-primary-700">
-                                    <span class="w-1.5 h-1.5 bg-primary-500 rounded-full mr-1.5"></span>
                                     Hoạt động
                                 </span>
                                 <?php else: ?>
                                 <span class="inline-flex items-center px-3 py-1 text-xs font-semibold 
                                                    rounded-full bg-slate-200 text-slate-600">
-                                    <span class="w-1.5 h-1.5 bg-slate-400 rounded-full mr-1.5"></span>
                                     Lưu trữ
                                 </span>
                                 <?php endif; ?>
@@ -368,133 +370,196 @@
                     </tbody>
                 </table>
             </div>
+        </div>
 
-            
-    </div>
-
-    
-    <?php if($showForm): ?>
-    <div
-        class="fixed inset-0 bg-black/40 flex items-center justify-center z-50"
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="namhoc-modal-title"
-        wire:click="$set('showForm', false)">
+        
+        <?php if($showForm): ?>
         <div
-            class="bg-white rounded-2xl shadow-xl w-full max-w-xl overflow-hidden"
-            wire:click.stop>
-            
-            <div class="p-6 border-b border-slate-200 bg-gradient-to-br from-primary-50 to-white">
-                <h2 id="namhoc-modal-title" class="text-xl font-bold text-slate-900">
-                    <?php echo e($editingId ? 'Cập nhật năm học' : 'Thêm năm học mới'); ?>
-
-                </h2>
-                <p class="text-sm text-slate-600 mt-1">
-                    Thiết lập thông tin năm học và thời gian các học kỳ
-                </p>
-            </div>
-
-            
-            <div class="p-6 space-y-5">
+            class="fixed inset-0 bg-black/40 flex items-center justify-center z-50"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="namhoc-modal-title"
+            wire:click="$set('showForm', false)">
+            <div
+                class="bg-white rounded-2xl shadow-xl w-full max-w-xl overflow-hidden"
+                wire:click.stop>
                 
-                <div>
-                    <label class="block text-sm font-semibold text-slate-700 mb-1">
-                        Tên năm học <span class="text-red-500">*</span>
-                    </label>
-                    <input
-                        type="text"
-                        wire:model.defer="name"
-                        placeholder="Ví dụ: 2024 – 2025"
-                        class="w-full px-3 py-2 rounded-xl border border-slate-300
+                <div class="p-6 border-b border-slate-200 bg-gradient-to-br from-primary-50 to-white">
+                    <h2 id="namhoc-modal-title" class="text-xl font-bold text-slate-900">
+                        <?php echo e($editingId ? 'Cập nhật năm học' : 'Thêm năm học mới'); ?>
+
+                    </h2>
+                    <p class="text-sm text-slate-600 mt-1">
+                        Thiết lập thông tin năm học và thời gian các học kỳ
+                    </p>
+                </div>
+
+                
+                <div class="p-6 space-y-5">
+                    
+                    <?php if($errors->any()): ?>
+                    <div class="bg-red-50 border-l-4 border-red-500 rounded-lg p-4">
+                        <div class="flex items-start gap-3">
+                            <svg class="w-5 h-5 text-red-500 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                            <div class="flex-1">
+                                <h4 class="text-sm font-semibold text-red-800 mb-2">
+                                    Vui lòng kiểm tra lại thông tin
+                                </h4>
+                                <ul class="space-y-1 text-sm text-red-700">
+                                    <?php $__currentLoopData = $errors->all(); $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $error): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                                    <li class="flex items-start gap-2">
+                                        <span class="text-red-400 font-bold">•</span>
+                                        <span><?php echo e($error); ?></span>
+                                    </li>
+                                    <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                    <?php endif; ?>
+
+                    
+                    <div>
+                        <label class="block text-sm font-semibold text-slate-700 mb-1">
+                            Tên năm học <span class="text-red-500">*</span>
+                        </label>
+                        <input
+                            type="text"
+                            wire:model.defer="name"
+                            placeholder="Ví dụ: 2024 – 2025"
+                            class="w-full px-3 py-2 rounded-xl border border-slate-300
                            focus:outline-none focus:ring-2 focus:ring-primary-500">
-                    <?php $__errorArgs = ['name'];
+                        <?php $__errorArgs = ['name'];
 $__bag = $errors->getBag($__errorArgs[1] ?? 'default');
 if ($__bag->has($__errorArgs[0])) :
 if (isset($message)) { $__messageOriginal = $message; }
 $message = $__bag->first($__errorArgs[0]); ?>
-                    <p class="mt-1 text-sm text-red-500"><?php echo e($message); ?></p>
-                    <?php unset($message);
+                        <p class="mt-1 text-sm text-red-500"><?php echo e($message); ?></p>
+                        <?php unset($message);
 if (isset($__messageOriginal)) { $message = $__messageOriginal; }
 endif;
 unset($__errorArgs, $__bag); ?>
-                </div>
+                    </div>
 
-                
-                <div class="border border-slate-200 rounded-xl p-4 space-y-3">
-                    <h3 class="text-sm font-bold text-slate-900">
-                        Học kỳ I
-                    </h3>
+                    
+                    <div class="border border-slate-200 rounded-xl p-4 space-y-3">
+                        <h3 class="text-sm font-bold text-slate-900">
+                            Học kỳ I
+                        </h3>
 
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        <div>
-                            <label class="text-sm text-slate-600">Bắt đầu</label>
-                            <input
-                                type="date"
-                                wire:model.defer="start_date_one"
-                                class="w-full mt-1 px-3 py-2 rounded-xl border border-slate-300
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <div>
+                                <label class="text-sm text-slate-600">Bắt đầu</label>
+                                <input
+                                    type="date"
+                                    wire:model.defer="start_date_one"
+                                    class="w-full mt-1 px-3 py-2 rounded-xl border border-slate-300
                                    focus:ring-2 focus:ring-primary-500">
+                                <?php $__errorArgs = ['start_date_one'];
+$__bag = $errors->getBag($__errorArgs[1] ?? 'default');
+if ($__bag->has($__errorArgs[0])) :
+if (isset($message)) { $__messageOriginal = $message; }
+$message = $__bag->first($__errorArgs[0]); ?>
+                                <p class="mt-1 text-sm text-red-500"><?php echo e($message); ?></p>
+                                <?php unset($message);
+if (isset($__messageOriginal)) { $message = $__messageOriginal; }
+endif;
+unset($__errorArgs, $__bag); ?>
+                            </div>
+
+                            <div>
+                                <label class="text-sm text-slate-600">Kết thúc</label>
+                                <input
+                                    type="date"
+                                    wire:model.defer="end_date_one"
+                                    class="w-full mt-1 px-3 py-2 rounded-xl border border-slate-300
+                                   focus:ring-2 focus:ring-primary-500">
+                                <?php $__errorArgs = ['end_date_one'];
+$__bag = $errors->getBag($__errorArgs[1] ?? 'default');
+if ($__bag->has($__errorArgs[0])) :
+if (isset($message)) { $__messageOriginal = $message; }
+$message = $__bag->first($__errorArgs[0]); ?>
+                                <p class="mt-1 text-sm text-red-500"><?php echo e($message); ?></p>
+                                <?php unset($message);
+if (isset($__messageOriginal)) { $message = $__messageOriginal; }
+endif;
+unset($__errorArgs, $__bag); ?>
+                            </div>
                         </div>
+                    </div>
 
-                        <div>
-                            <label class="text-sm text-slate-600">Kết thúc</label>
-                            <input
-                                type="date"
-                                wire:model.defer="end_date_one"
-                                class="w-full mt-1 px-3 py-2 rounded-xl border border-slate-300
+                    
+                    <div class="border border-slate-200 rounded-xl p-4 space-y-3">
+                        <h3 class="text-sm font-bold text-slate-900">
+                            Học kỳ II
+                        </h3>
+
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <div>
+                                <label class="text-sm text-slate-600">Bắt đầu</label>
+                                <input
+                                    type="date"
+                                    wire:model.defer="start_date_two"
+                                    class="w-full mt-1 px-3 py-2 rounded-xl border border-slate-300
                                    focus:ring-2 focus:ring-primary-500">
+                                <?php $__errorArgs = ['start_date_two'];
+$__bag = $errors->getBag($__errorArgs[1] ?? 'default');
+if ($__bag->has($__errorArgs[0])) :
+if (isset($message)) { $__messageOriginal = $message; }
+$message = $__bag->first($__errorArgs[0]); ?>
+                                <p class="mt-1 text-sm text-red-500"><?php echo e($message); ?></p>
+                                <?php unset($message);
+if (isset($__messageOriginal)) { $message = $__messageOriginal; }
+endif;
+unset($__errorArgs, $__bag); ?>
+                            </div>
+
+                            <div>
+                                <label class="text-sm text-slate-600">Kết thúc</label>
+                                <input
+                                    type="date"
+                                    wire:model.defer="end_date_two"
+                                    class="w-full mt-1 px-3 py-2 rounded-xl border border-slate-300
+                                   focus:ring-2 focus:ring-primary-500">
+                                <?php $__errorArgs = ['end_date_two'];
+$__bag = $errors->getBag($__errorArgs[1] ?? 'default');
+if ($__bag->has($__errorArgs[0])) :
+if (isset($message)) { $__messageOriginal = $message; }
+$message = $__bag->first($__errorArgs[0]); ?>
+                                <p class="mt-1 text-sm text-red-500"><?php echo e($message); ?></p>
+                                <?php unset($message);
+if (isset($__messageOriginal)) { $message = $__messageOriginal; }
+endif;
+unset($__errorArgs, $__bag); ?>
+                            </div>
                         </div>
                     </div>
                 </div>
 
                 
-                <div class="border border-slate-200 rounded-xl p-4 space-y-3">
-                    <h3 class="text-sm font-bold text-slate-900">
-                        Học kỳ II
-                    </h3>
-
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        <div>
-                            <label class="text-sm text-slate-600">Bắt đầu</label>
-                            <input
-                                type="date"
-                                wire:model.defer="start_date_two"
-                                class="w-full mt-1 px-3 py-2 rounded-xl border border-slate-300
-                                   focus:ring-2 focus:ring-primary-500">
-                        </div>
-
-                        <div>
-                            <label class="text-sm text-slate-600">Kết thúc</label>
-                            <input
-                                type="date"
-                                wire:model.defer="end_date_two"
-                                class="w-full mt-1 px-3 py-2 rounded-xl border border-slate-300
-                                   focus:ring-2 focus:ring-primary-500">
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            
-            <div class="px-6 py-4 border-t border-slate-200 bg-slate-50 flex justify-end gap-3">
-                <button
-                    wire:click="$set('showForm', false)"
-                    class="px-4 py-2 rounded-xl bg-white border border-slate-300
+                <div class="px-6 py-4 border-t border-slate-200 bg-slate-50 flex justify-end gap-3">
+                    <button
+                        wire:click="$set('showForm', false)"
+                        class="px-4 py-2 rounded-xl bg-white border border-slate-300
                        text-slate-700 font-semibold hover:bg-slate-100
                        active:scale-95 transition-all">
-                    Huỷ
-                </button>
+                        Huỷ
+                    </button>
 
-                <button
-                    wire:click="save"
-                    wire:loading.attr="disabled"
-                    class="px-5 py-2 rounded-xl bg-primary-600 text-white
+                    <button
+                        wire:click="save"
+                        wire:loading.attr="disabled"
+                        class="px-5 py-2 rounded-xl bg-primary-600 text-white
                        font-semibold hover:bg-primary-700
                        active:scale-95 transition-all
                        disabled:opacity-60">
-                    Lưu năm học
-                </button>
+                        Lưu năm học
+                    </button>
+                </div>
             </div>
         </div>
-    </div>
-    <?php endif; ?>
-</div><?php /**PATH D:\Document\WORKING\lavarel_qlgx\resources\views/livewire/nam-hoc/nam-hoc-manager.blade.php ENDPATH**/ ?>
+        <?php endif; ?>
+    </div><?php /**PATH D:\Document\WORKING\lavarel_qlgx\resources\views/livewire/nam-hoc/nam-hoc-manager.blade.php ENDPATH**/ ?>

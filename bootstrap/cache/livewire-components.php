@@ -7,6 +7,8 @@
   'lop.lop-form' => 'App\\Http\\Livewire\\Lop\\LopForm',
   'lop.lop-list' => 'App\\Http\\Livewire\\Lop\\LopList',
   'nam-hoc.nam-hoc-manager' => 'App\\Http\\Livewire\\NamHoc\\NamHocManager',
+  'parish.parish-child' => 'App\\Http\\Livewire\\Parish\\ParishChild',
   'student.student-detail' => 'App\\Http\\Livewire\\Student\\StudentDetail',
   'student.student-list' => 'App\\Http\\Livewire\\Student\\StudentList',
+  'teacher.teacher-manager' => 'App\\Http\\Livewire\\Teacher\\TeacherManager',
 );
