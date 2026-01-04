@@ -55,7 +55,7 @@
                     <button
                         wire:click="create"
                         class="inline-flex items-center gap-2
-                             bg-primary-600 px-5 py-2.5 rounded-xl bg-gradient-to-r from-primary-500 to-primary-600
+                             px-5 py-2.5 rounded-xl bg-gradient-to-r from-primary-500 to-primary-600
                              text-white text-sm font-semibold hover:from-primary-600 hover:to-primary-700 active:scale-95 
                              disabled:bg-slate-300 disabled:cursor-not-allowed transition-all shadow-sm"
                         aria-label="Thêm năm học mới">
@@ -156,7 +156,7 @@
                                     <button
                                         wire:click="edit({{ $nh->id }})"
                                         class="inline-flex items-center gap-1 text-sm font-medium 
-                                                   text-primary-600 hover:text-primary-800 transition-colors"
+                                                   text-primary-600 hover:text-primary-700 transition-colors"
                                         aria-label="Sửa năm học {{ $nh->name }}">
                                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -169,11 +169,33 @@
 
                                     {{-- Toggle Status Button --}}
                                     <button
-                                        wire:click="toggleStatus({{ $nh->id }})"
+                                        wire:click.debounce.500ms="toggleStatus({{ $nh->id }})"
+                                        wire:loading:attr="disabled"
+                                        wire:target="toggleStatus({{ $nh->id }})"
                                         class="inline-flex items-center gap-1 text-sm font-medium 
-                                                   text-orange-600 hover:text-orange-800 transition-colors"
-                                        aria-label="{{ $nh->status ? 'Lưu trữ' : 'Kích hoạt' }} năm học {{ $nh->name }}">
-                                        @if($nh->status)
+                                            {{ $nh->status ? 'text-orange-600 hover:text-orange-700' : 'text-primary-600 hover:text-primary-700' }}
+                                            transition-colors
+                                            disabled:opacity-50 disabled:cursor-not-allowed">
+
+                                        {{-- Loading spinner --}}
+                                        <svg wire:loading wire:target="toggleStatus({{ $nh->id }})"
+                                            class="animate-spin w-4 h-4" fill="none" viewBox="0 0 24 24">
+                                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+                                        </svg>
+
+                                        {{-- Icon --}}
+                                        <svg wire:loading.remove wire:target="toggleStatus({{ $nh->id }})" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            @if($nh->status)
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" />
+                                            @else
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                            @endif
+                                        </svg>
+
+                                        {{-- @if($nh->status)
                                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                                 d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" />
@@ -185,25 +207,10 @@
                                                 d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                                         </svg>
                                         Kích hoạt
-                                        @endif
-                                    </button>
+                                        @endif --}}
 
-                                    {{-- Delete Button (Only for Admin) --}}
-                                    @if($isAdmin)
-                                    <span class="text-slate-300">|</span>
-                                    <button
-                                        wire:click="delete({{ $nh->id }})"
-                                        onclick="return confirm('Bạn có chắc chắn muốn xóa năm học này?\n\nLưu ý: Chỉ có thể xóa năm học chưa có khối học hoặc lớp học.')"
-                                        class="inline-flex items-center gap-1 text-sm font-medium 
-                                                       text-red-600 hover:text-red-800 transition-colors"
-                                        aria-label="Xóa năm học {{ $nh->name }}">
-                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                                        </svg>
-                                        Xóa
+                                        <span>{{ $nh->status ? 'Lưu trữ' : 'Kích hoạt' }}</span>
                                     </button>
-                                    @endif
                                 </div>
                             </td>
                         </tr>
@@ -236,16 +243,17 @@
         {{-- Modal Form --}}
         @if ($showForm)
         <div
-            class="fixed inset-0 bg-black/40 flex items-center justify-center z-50"
+            class="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4"
             role="dialog"
             aria-modal="true"
             aria-labelledby="namhoc-modal-title"
-            wire:click="$set('showForm', false)">
+            wire:click="closeModal">
             <div
-                class="bg-white rounded-2xl shadow-xl w-full max-w-xl overflow-hidden"
+                class="bg-white rounded-2xl shadow-xl w-full max-w-xl max-h-[90vh] overflow-hidden flex flex-col"
                 wire:click.stop>
+
                 {{-- Header --}}
-                <div class="p-6 border-b border-slate-200 bg-gradient-to-br from-primary-50 to-white">
+                <div class="flex-shrink-0 p-6 border-b border-slate-200 bg-gradient-to-br from-primary-50 to-white">
                     <h2 id="namhoc-modal-title" class="text-xl font-bold text-slate-900">
                         {{ $editingId ? 'Cập nhật năm học' : 'Thêm năm học mới' }}
                     </h2>
@@ -254,11 +262,11 @@
                     </p>
                 </div>
 
-                {{-- Body --}}
-                <div class="p-6 space-y-5">
+                {{-- Body - SCROLLABLE --}}
+                <div class="flex-1 overflow-y-auto p-6 space-y-5">
                     {{-- ✅ ERROR SUMMARY - Hiển thị tất cả lỗi --}}
                     @if ($errors->any())
-                    <div class="bg-red-50 border-l-4 border-red-500 rounded-lg p-4">
+                    <div class="bg-red-50 border-l-4 border-red-500 rounded-xl p-4 animate-shake">
                         <div class="flex items-start gap-3">
                             <svg class="w-5 h-5 text-red-500 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -289,12 +297,10 @@
                         <input
                             type="text"
                             wire:model.defer="name"
-                            placeholder="Ví dụ: 2024 – 2025"
-                            class="w-full px-3 py-2 rounded-xl border border-slate-300
+                            placeholder="Ví dụ: 2025 – 2026"
+                            class="w-full px-3 py-2 rounded-xl border
+                            {{ $errors->has('name') ? 'border-red-500' : 'border-slate-300' }}
                            focus:outline-none focus:ring-2 focus:ring-primary-500">
-                        @error('name')
-                        <p class="mt-1 text-sm text-red-500">{{ $message }}</p>
-                        @enderror
                     </div>
 
                     {{-- Học kỳ I  --}}
@@ -309,11 +315,11 @@
                                 <input
                                     type="date"
                                     wire:model.defer="start_date_one"
-                                    class="w-full mt-1 px-3 py-2 rounded-xl border border-slate-300
+                                    min="{{ now()->subYears(10)->format('Y-m-d') }}"
+                                    max="{{ now()->addYears(10)->format('Y-m-d') }}"
+                                    class="w-full mt-1 px-3 py-2 rounded-xl border
+                                    {{ $errors->has('start_date_one') ? 'border-red-500' : 'border-slate-300' }}
                                    focus:ring-2 focus:ring-primary-500">
-                                @error('start_date_one')
-                                <p class="mt-1 text-sm text-red-500">{{ $message }}</p>
-                                @enderror
                             </div>
 
                             <div>
@@ -321,11 +327,11 @@
                                 <input
                                     type="date"
                                     wire:model.defer="end_date_one"
-                                    class="w-full mt-1 px-3 py-2 rounded-xl border border-slate-300
+                                    min="{{ now()->subYears(10)->format('Y-m-d') }}"
+                                    max="{{ now()->addYears(10)->format('Y-m-d') }}"
+                                    class="w-full mt-1 px-3 py-2 rounded-xl border
+                                    {{ $errors->has('end_date_one') ? 'border-red-500' : 'border-slate-300' }}
                                    focus:ring-2 focus:ring-primary-500">
-                                @error('end_date_one')
-                                <p class="mt-1 text-sm text-red-500">{{ $message }}</p>
-                                @enderror
                             </div>
                         </div>
                     </div>
@@ -342,11 +348,11 @@
                                 <input
                                     type="date"
                                     wire:model.defer="start_date_two"
-                                    class="w-full mt-1 px-3 py-2 rounded-xl border border-slate-300
+                                    min="{{ now()->subYears(10)->format('Y-m-d') }}"
+                                    max="{{ now()->addYears(10)->format('Y-m-d') }}"
+                                    class="w-full mt-1 px-3 py-2 rounded-xl border
+                                    {{ $errors->has('start_date_two') ? 'border-red-500' : 'border-slate-300' }}
                                    focus:ring-2 focus:ring-primary-500">
-                                @error('start_date_two')
-                                <p class="mt-1 text-sm text-red-500">{{ $message }}</p>
-                                @enderror
                             </div>
 
                             <div>
@@ -354,20 +360,20 @@
                                 <input
                                     type="date"
                                     wire:model.defer="end_date_two"
-                                    class="w-full mt-1 px-3 py-2 rounded-xl border border-slate-300
+                                    min="{{ now()->subYears(10)->format('Y-m-d') }}"
+                                    max="{{ now()->addYears(10)->format('Y-m-d') }}"
+                                    class="w-full mt-1 px-3 py-2 rounded-xl border
+                                    {{ $errors->has('end_date_two') ? 'border-red-500' : 'border-slate-300' }}
                                    focus:ring-2 focus:ring-primary-500">
-                                @error('end_date_two')
-                                <p class="mt-1 text-sm text-red-500">{{ $message }}</p>
-                                @enderror
                             </div>
                         </div>
                     </div>
                 </div>
 
                 {{-- Footer --}}
-                <div class="px-6 py-4 border-t border-slate-200 bg-slate-50 flex justify-end gap-3">
+                <div class="flex-shrink-0 px-6 py-4 border-t border-slate-200 bg-slate-50 flex justify-end gap-3">
                     <button
-                        wire:click="$set('showForm', false)"
+                        wire:click="closeModal"
                         class="px-4 py-2 rounded-xl bg-white border border-slate-300
                        text-slate-700 font-semibold hover:bg-slate-100
                        active:scale-95 transition-all">
@@ -377,14 +383,29 @@
                     <button
                         wire:click="save"
                         wire:loading.attr="disabled"
+                        wire:target="save"
                         class="px-5 py-2 rounded-xl bg-primary-600 text-white
                        font-semibold hover:bg-primary-700
                        active:scale-95 transition-all
-                       disabled:opacity-60">
-                        Lưu năm học
+                       disabled:opacity-60 disabled:cursor-not-allowed">
+
+                        {{-- Loading state --}}
+                        <span wire:loading wire:target="save" class="inline-flex items-center gap-2">
+                            <svg class="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24">
+                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+                            </svg>
+                            Đang lưu...
+                        </span>
+
+                        {{-- Normal state --}}
+                        <span wire:loading.remove wire:target="save">
+                            Lưu năm học
+                        </span>
                     </button>
                 </div>
             </div>
         </div>
         @endif
     </div>
+</div>

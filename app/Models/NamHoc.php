@@ -35,6 +35,23 @@ class NamHoc extends Model
         'end_date_one'   => 'date',
         'start_date_two' => 'date',
         'end_date_two'   => 'date',
+        'status'         => 'boolean'
+    ];
+
+    // ===== STATUS CONSTANTS =====
+    public const STATUS_ACTIVE = 1;
+    public const STATUS_ARCHIVED = 0;
+
+    // ===== STATUS LABELS =====
+    public const STATUS_LABELS = [
+        self::STATUS_ACTIVE => 'Hoạt động',
+        self::STATUS_ARCHIVED => 'Lưu trữ',
+    ];
+
+    // ===== STATUS STYLES (UI-related nhưng chấp nhận được) =====
+    public const STATUS_STYLES = [
+        self::STATUS_ACTIVE => 'bg-primary-100 text-primary-700',
+        self::STATUS_ARCHIVED => 'bg-slate-200 text-slate-600',
     ];
 
     /*
@@ -90,12 +107,7 @@ class NamHoc extends Model
 
     public function scopeActive($q)
     {
-        return $q->where('status', 1);
-    }
-
-    public function scopeArchived($q)
-    {
-        return $q->where('status', 0);
+        return $q->where('status', self::STATUS_ACTIVE);
     }
 
     public function scopeCurrent($q)
@@ -116,6 +128,16 @@ class NamHoc extends Model
     | ACCESSORS
     |--------------------------------------------------------------------------
     */
+    // ===== ACCESSORS =====
+    public function getStatusLabelAttribute(): string
+    {
+        return self::STATUS_LABELS[$this->status] ?? 'Không xác định';
+    }
+
+    public function getStatusClassAttribute(): string
+    {
+        return self::STATUS_STYLES[$this->status] ?? 'bg-slate-100 text-slate-500';
+    }
 
     /*
     |--------------------------------------------------------------------------

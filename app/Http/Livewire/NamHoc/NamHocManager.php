@@ -288,7 +288,7 @@ class NamHocManager extends BaseComponent
 
             $message = $namHoc->status
                 ? 'Đã kích hoạt năm học'
-                : 'Đã vô hiệu hóa năm học';
+                : 'Đã lưu trữ năm học';
 
             session()->flash('message', $message);
 
@@ -342,6 +342,13 @@ class NamHocManager extends BaseComponent
 
     // ==================== FORM HELPERS ====================
 
+    public function closeModal()
+    {
+        $this->showForm = false;
+        $this->resetForm();
+        $this->resetValidation();
+    }
+
     /**
      * Reset form về trạng thái mặc định
      */
@@ -362,14 +369,6 @@ class NamHocManager extends BaseComponent
 
         // Clear validation errors
         $this->resetValidation();
-    }
-
-    /**
-     * Cancel và đóng form
-     */
-    public function cancel(): void
-    {
-        $this->resetForm();
     }
 
     // ==================== RENDER ====================

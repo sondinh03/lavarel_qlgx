@@ -19,8 +19,36 @@
             ]"
             separator="arrow" />
 
-        {{-- Header --}}
+        {{-- Toast Notifications --}}
+        <div role="status" aria-live="polite">
+            @if (session()->has('message'))
+            <x-toast-notification type="success" :duration="3500">
+                {{ session('message') }}
+            </x-toast-notification>
+            @endif
+
+            @if (session()->has('error'))
+            <x-toast-notification type="error" :duration="4000">
+                {{ session('error') }}
+            </x-toast-notification>
+            @endif
+
+            @if (session()->has('warning'))
+            <x-toast-notification type="warning" :duration="4000">
+                {{ session('warning') }}
+            </x-toast-notification>
+            @endif
+
+            @if (session()->has('info'))
+            <x-toast-notification type="info" :duration="3500">
+                {{ session('info') }}
+            </x-toast-notification>
+            @endif
+        </div>
+
+        {{-- Main Card --}}
         <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+            {{-- Header --}}
             <x-page-header
                 title="Quản lý khối học"
                 description="Danh sách các khối theo năm học"
@@ -29,34 +57,7 @@
                 icon-type="block">
             </x-page-header>
 
-            {{-- Toast Messages --}}
-            <div role="status" aria-live="polite">
-                @if (session()->has('message'))
-                <x-toast-notification type="success" :duration="3500">
-                    {{ session('message') }}
-                </x-toast-notification>
-                @endif
-
-                @if (session()->has('error'))
-                <x-toast-notification type="error" :duration="4000">
-                    {{ session('error') }}
-                </x-toast-notification>
-                @endif
-
-                @if (session()->has('warning'))
-                <x-toast-notification type="warning" :duration="4000">
-                    {{ session('warning') }}
-                </x-toast-notification>
-                @endif
-
-                @if (session()->has('info'))
-                <x-toast-notification type="info" :duration="3500">
-                    {{ session('info') }}
-                </x-toast-notification>
-                @endif
-            </div>
-
-            {{-- Filters Bar --}}
+            {{-- Actions Bar --}}
             <div class="px-6 py-4 border-b border-slate-200 bg-slate-50/70">
                 <div class="flex items-center justify-between gap-4">
 
@@ -100,7 +101,6 @@
                         </svg>
                         Thêm khối
                     </button>
-
                 </div>
             </div>
         </div>
@@ -124,7 +124,7 @@
 
                     <tbody class="divide-y divide-slate-100">
                         @foreach($blocks as $i => $block)
-                        <tr class="hover:bg-slate-50">
+                        <tr class="hover:bg-slate-50 transition-colors">
                             <td class="px-6 py-4 text-sm text-slate-500">
                                 {{ $i + 1}}
                             </td>
@@ -137,7 +137,7 @@
                                 {{ $block->namHoc->name ?? 'N/A' }}
                             </td>
 
-                            <td class="px-6 py-4 text-center">
+                            <td class="px-6 py-4 text-center text-slate-600">
                                 {{ $block->weight }}
                             </td>
 
