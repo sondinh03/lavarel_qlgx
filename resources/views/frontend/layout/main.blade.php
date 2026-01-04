@@ -13,7 +13,6 @@
 </head>
 
 <body class="min-h-screen bg-slate-50 text-slate-800 antialiased flex flex-col" x-data="{open:false}">
-
     {{-- Loading --}}
     <x-loading-indicator target="selectedNamHoc,selectedKhoi,resetFilters" />
 
@@ -41,7 +40,7 @@
                     </a>
 
                     <a href="{{ route('ds-lop') }}" class="text-sm font-medium text-slate-600 hover:text-indigo-600 transition">
-                       Danh sách lớp
+                        Danh sách lớp
                     </a>
 
                     <div class="relative" x-data="{ openManage: false }">

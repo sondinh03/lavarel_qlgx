@@ -52,19 +52,9 @@
             <div class="px-6 py-4 border-b border-slate-200 bg-slate-50/70">
                 <div class="flex justify-end">
                     {{-- Create Button --}}
-                    <button
-                        wire:click="create"
-                        class="inline-flex items-center gap-2
-                             px-5 py-2.5 rounded-xl bg-gradient-to-r from-primary-500 to-primary-600
-                             text-white text-sm font-semibold hover:from-primary-600 hover:to-primary-700 active:scale-95 
-                             disabled:bg-slate-300 disabled:cursor-not-allowed transition-all shadow-sm"
-                        aria-label="Thêm năm học mới">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M12 4v16m8-8H4" />
-                        </svg>
+                    <x-action-button wire="create" icon="plus">
                         Thêm năm học
-                    </button>
+                    </x-action-button>
                 </div>
             </div>
         </div>
@@ -137,33 +127,21 @@
                             </td>
 
                             <td class="px-6 py-4 text-center">
-                                @if ($nh->status)
                                 <span class="inline-flex items-center px-3 py-1 text-xs font-semibold 
-                                                   rounded-full bg-primary-100 text-primary-700">
-                                    Hoạt động
+                                                   rounded-full {{ $nh->status_class }}">
+                                    {{ $nh->status_label }}
                                 </span>
-                                @else
-                                <span class="inline-flex items-center px-3 py-1 text-xs font-semibold 
-                                                   rounded-full bg-slate-200 text-slate-600">
-                                    Lưu trữ
-                                </span>
-                                @endif
                             </td>
 
                             <td class="px-6 py-4">
                                 <div class="flex items-center justify-center gap-3">
-                                    {{-- Edit Button --}}
-                                    <button
-                                        wire:click="edit({{ $nh->id }})"
-                                        class="inline-flex items-center gap-1 text-sm font-medium 
-                                                   text-primary-600 hover:text-primary-700 transition-colors"
-                                        aria-label="Sửa năm học {{ $nh->name }}">
-                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                                        </svg>
+                                    {{-- Edit Button  --}}
+                                    <x-table-action
+                                        wire="edit({{ $nh->id }})"
+                                        icon="edit"
+                                        color="primary">
                                         Sửa
-                                    </button>
+                                    </x-table-action>
 
                                     <span class="text-slate-300">|</span>
 
@@ -221,16 +199,9 @@
                                     icon="calendar"
                                     title="Chưa có năm học"
                                     description="Hãy tạo năm học đầu tiên cho giáo xứ">
-                                    <button
-                                        wire:click="create"
-                                        class="inline-flex items-center gap-2 bg-primary-600 text-white 
-                                                   px-4 py-2 rounded-xl text-sm font-semibold 
-                                                   hover:bg-primary-700 transition-all mt-4">
-                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
-                                        </svg>
-                                        Thêm năm học đầu tiên
-                                    </button>
+                                    <x-action-button wire="create" icon="plus">
+                                        Thêm năm học
+                                    </x-action-button>
                                 </x-empty-state>
                             </td>
                         </tr>
@@ -289,19 +260,12 @@
                     </div>
                     @endif
 
-                    {{-- Tên năm học --}}
-                    <div>
-                        <label class="block text-sm font-semibold text-slate-700 mb-1">
-                            Tên năm học <span class="text-red-500">*</span>
-                        </label>
-                        <input
-                            type="text"
-                            wire:model.defer="name"
-                            placeholder="Ví dụ: 2025 – 2026"
-                            class="w-full px-3 py-2 rounded-xl border
-                            {{ $errors->has('name') ? 'border-red-500' : 'border-slate-300' }}
-                           focus:outline-none focus:ring-2 focus:ring-primary-500">
-                    </div>
+                    {{-- Tên năm học  --}}
+                    <x-form-input label="Tên năm học"
+                        name="name"
+                        wire:model="name"
+                        placeholder="Ví dụ: 2025 – 2026"
+                        required />
 
                     {{-- Học kỳ I  --}}
                     <div class="border border-slate-200 rounded-xl p-4 space-y-3">
@@ -310,29 +274,15 @@
                         </h3>
 
                         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                            <div>
-                                <label class="text-sm text-slate-600">Bắt đầu</label>
-                                <input
-                                    type="date"
-                                    wire:model.defer="start_date_one"
-                                    min="{{ now()->subYears(10)->format('Y-m-d') }}"
-                                    max="{{ now()->addYears(10)->format('Y-m-d') }}"
-                                    class="w-full mt-1 px-3 py-2 rounded-xl border
-                                    {{ $errors->has('start_date_one') ? 'border-red-500' : 'border-slate-300' }}
-                                   focus:ring-2 focus:ring-primary-500">
-                            </div>
+                            <x-form-input label="Bắt đầu"
+                                name="start_date_one"
+                                type="date"
+                                wire:model="start_date_one" />
 
-                            <div>
-                                <label class="text-sm text-slate-600">Kết thúc</label>
-                                <input
-                                    type="date"
-                                    wire:model.defer="end_date_one"
-                                    min="{{ now()->subYears(10)->format('Y-m-d') }}"
-                                    max="{{ now()->addYears(10)->format('Y-m-d') }}"
-                                    class="w-full mt-1 px-3 py-2 rounded-xl border
-                                    {{ $errors->has('end_date_one') ? 'border-red-500' : 'border-slate-300' }}
-                                   focus:ring-2 focus:ring-primary-500">
-                            </div>
+                            <x-form-input label="Kết thúc"
+                                name="end_date_one"
+                                type="date"
+                                wire:model="end_date_one" />
                         </div>
                     </div>
 
@@ -343,66 +293,27 @@
                         </h3>
 
                         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                            <div>
-                                <label class="text-sm text-slate-600">Bắt đầu</label>
-                                <input
-                                    type="date"
-                                    wire:model.defer="start_date_two"
-                                    min="{{ now()->subYears(10)->format('Y-m-d') }}"
-                                    max="{{ now()->addYears(10)->format('Y-m-d') }}"
-                                    class="w-full mt-1 px-3 py-2 rounded-xl border
-                                    {{ $errors->has('start_date_two') ? 'border-red-500' : 'border-slate-300' }}
-                                   focus:ring-2 focus:ring-primary-500">
-                            </div>
+                            <x-form-input label="Bắt đầu"
+                                name="start_date_two"
+                                type="date"
+                                wire:model="start_date_two" />
 
-                            <div>
-                                <label class="text-sm text-slate-600">Kết thúc</label>
-                                <input
-                                    type="date"
-                                    wire:model.defer="end_date_two"
-                                    min="{{ now()->subYears(10)->format('Y-m-d') }}"
-                                    max="{{ now()->addYears(10)->format('Y-m-d') }}"
-                                    class="w-full mt-1 px-3 py-2 rounded-xl border
-                                    {{ $errors->has('end_date_two') ? 'border-red-500' : 'border-slate-300' }}
-                                   focus:ring-2 focus:ring-primary-500">
-                            </div>
+                            <x-form-input label="Kết thúc"
+                                name="end_date_two"
+                                type="date"
+                                wire:model="end_date_two" />
                         </div>
                     </div>
                 </div>
 
                 {{-- Footer --}}
                 <div class="flex-shrink-0 px-6 py-4 border-t border-slate-200 bg-slate-50 flex justify-end gap-3">
-                    <button
-                        wire:click="closeModal"
-                        class="px-4 py-2 rounded-xl bg-white border border-slate-300
-                       text-slate-700 font-semibold hover:bg-slate-100
-                       active:scale-95 transition-all">
-                        Huỷ
-                    </button>
-
-                    <button
-                        wire:click="save"
-                        wire:loading.attr="disabled"
-                        wire:target="save"
-                        class="px-5 py-2 rounded-xl bg-primary-600 text-white
-                       font-semibold hover:bg-primary-700
-                       active:scale-95 transition-all
-                       disabled:opacity-60 disabled:cursor-not-allowed">
-
-                        {{-- Loading state --}}
-                        <span wire:loading wire:target="save" class="inline-flex items-center gap-2">
-                            <svg class="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24">
-                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
-                            </svg>
-                            Đang lưu...
-                        </span>
-
-                        {{-- Normal state --}}
-                        <span wire:loading.remove wire:target="save">
-                            Lưu năm học
-                        </span>
-                    </button>
+                    <x-action-button wire="closeModal" variant="secondary">
+                        Hủy
+                    </x-action-button>
+                    <x-action-button wire="save" :loading="true">
+                        Lưu
+                    </x-action-button>
                 </div>
             </div>
         </div>
