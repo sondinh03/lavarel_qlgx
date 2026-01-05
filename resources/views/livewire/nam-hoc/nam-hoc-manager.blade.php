@@ -138,57 +138,21 @@
                                     {{-- Edit Button  --}}
                                     <x-table-action
                                         wire="edit({{ $nh->id }})"
-                                        icon="edit"
-                                        color="primary">
+                                        icon="edit">
                                         Sửa
                                     </x-table-action>
 
                                     <span class="text-slate-300">|</span>
 
                                     {{-- Toggle Status Button --}}
-                                    <button
-                                        wire:click.debounce.500ms="toggleStatus({{ $nh->id }})"
-                                        wire:loading:attr="disabled"
-                                        wire:target="toggleStatus({{ $nh->id }})"
-                                        class="inline-flex items-center gap-1 text-sm font-medium 
-                                            {{ $nh->status ? 'text-orange-600 hover:text-orange-700' : 'text-primary-600 hover:text-primary-700' }}
-                                            transition-colors
-                                            disabled:opacity-50 disabled:cursor-not-allowed">
-
-                                        {{-- Loading spinner --}}
-                                        <svg wire:loading wire:target="toggleStatus({{ $nh->id }})"
-                                            class="animate-spin w-4 h-4" fill="none" viewBox="0 0 24 24">
-                                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
-                                        </svg>
-
-                                        {{-- Icon --}}
-                                        <svg wire:loading.remove wire:target="toggleStatus({{ $nh->id }})" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            @if($nh->status)
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" />
-                                            @else
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                            @endif
-                                        </svg>
-
-                                        {{-- @if($nh->status)
-                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" />
-                                        </svg>
-                                        Lưu trữ
-                                        @else
-                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                        </svg>
-                                        Kích hoạt
-                                        @endif --}}
-
-                                        <span>{{ $nh->status ? 'Lưu trữ' : 'Kích hoạt' }}</span>
-                                    </button>
+                                    <x-table-action
+                                        wire="toggleStatus({{ $nh->id }})"
+                                        :icon="$nh->status ? 'archive' : 'check'"
+                                        :color="$nh->status ? 'warning' : 'success'"
+                                        :loading="true"
+                                        debounce="500">
+                                        {{ $nh->status ? 'Lưu trữ' : 'Kích hoạt' }}
+                                    </x-table-action>
                                 </div>
                             </td>
                         </tr>
@@ -311,7 +275,7 @@
                     <x-action-button wire="closeModal" variant="secondary">
                         Hủy
                     </x-action-button>
-                    <x-action-button wire="save" :loading="true">
+                    <x-action-button wire="save" icon="save" :loading="true">
                         Lưu
                     </x-action-button>
                 </div>

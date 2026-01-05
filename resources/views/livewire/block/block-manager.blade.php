@@ -1,4 +1,6 @@
 <div class="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 p-4 sm:p-6">
+    <a href="#main-content" class="sr-only focus:not-sr-only">Bỏ qua tới nội dung</a>
+
     <div class="mx-auto max-w-7xl space-y-5">
 
         {{-- Breadcrumb --}}
@@ -65,25 +67,30 @@
                     <div class="flex items-center gap-3">
 
                         {{-- Năm học --}}
-                        @livewire('class-filter-selector', [
-                        'parish_id' => $parish_id,
-                        'selectedNamHoc' => $selectedNamHoc,
-                        'showKhoi' => false,
-                        'showLop' => false,
-                        ])
+                        <livewire:filters.filter-bar
+                            :show-nam-hoc="true"
+                            :show-khoi="false"
+                            :show-lop="false"
+                            :show-ky="false" />
 
                         {{-- Search --}}
                         <input
                             wire:model.debounce.500ms="search"
                             placeholder="Tìm kiếm khối"
                             class="w-56 px-3 py-2 rounded-xl
-                       border border-slate-300
-                       text-sm
-                       focus:ring-2 focus:ring-primary-500" />
+                                border border-slate-300
+                                text-sm focus:outline-none
+                                focus:ring-2 focus:ring-primary-500" />
                     </div>
 
                     {{-- RIGHT: Primary Action --}}
-                    <button
+                    <x-action-button
+                        wire="create"
+                        icon="plus"
+                        :disabled="!$selectedNamHoc">
+                        Thêm khối
+                    </x-action-button>
+                    {{-- <button
                         wire:click="create"
                         @disabled(!$selectedNamHoc)
                         class="inline-flex items-center gap-2
@@ -100,7 +107,7 @@
                                 d="M12 4v16m8-8H4" />
                         </svg>
                         Thêm khối
-                    </button>
+                    </button> --}}
                 </div>
             </div>
         </div>

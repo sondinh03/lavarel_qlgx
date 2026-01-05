@@ -279,25 +279,12 @@
                             <td class="px-6 py-4">
                                 <div class="flex items-center justify-center gap-3">
                                     
-                                    <button
-                                        wire:click="edit(<?php echo e($nh->id); ?>)"
-                                    class="inline-flex items-center gap-1 text-sm font-medium
-                                    text-primary-600 hover:text-primary-700 transition-colors"
-                                    aria-label="Sửa năm học <?php echo e($nh->name); ?>">
-                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                            d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                                    </svg>
-                                    Sửa
-                                    </button>
-                                    
-
                                     <?php if (isset($component)) { $__componentOriginalc254754b9d5db91d5165876f9d051922ca0066f4 = $component; } ?>
-<?php $component = $__env->getContainer()->make(Illuminate\View\AnonymousComponent::class, ['view' => 'components.table-action','data' => ['wire' => 'edit('.e($nh->id).')','icon' => 'edit','color' => 'primary']]); ?>
+<?php $component = $__env->getContainer()->make(Illuminate\View\AnonymousComponent::class, ['view' => 'components.table-action','data' => ['wire' => 'edit('.e($nh->id).')','icon' => 'edit']]); ?>
 <?php $component->withName('table-action'); ?>
 <?php if ($component->shouldRender()): ?>
 <?php $__env->startComponent($component->resolveView(), $component->data()); ?>
-<?php $component->withAttributes(['wire' => 'edit('.e($nh->id).')','icon' => 'edit','color' => 'primary']); ?>
+<?php $component->withAttributes(['wire' => 'edit('.e($nh->id).')','icon' => 'edit']); ?>
                                         Sửa
                                      <?php echo $__env->renderComponent(); ?>
 <?php endif; ?>
@@ -309,38 +296,20 @@
                                     <span class="text-slate-300">|</span>
 
                                     
-                                    <button
-                                        wire:click.debounce.500ms="toggleStatus(<?php echo e($nh->id); ?>)"
-                                        wire:loading:attr="disabled"
-                                        wire:target="toggleStatus(<?php echo e($nh->id); ?>)"
-                                        class="inline-flex items-center gap-1 text-sm font-medium 
-                                            <?php echo e($nh->status ? 'text-orange-600 hover:text-orange-700' : 'text-primary-600 hover:text-primary-700'); ?>
+                                    <?php if (isset($component)) { $__componentOriginalc254754b9d5db91d5165876f9d051922ca0066f4 = $component; } ?>
+<?php $component = $__env->getContainer()->make(Illuminate\View\AnonymousComponent::class, ['view' => 'components.table-action','data' => ['wire' => 'toggleStatus('.e($nh->id).')','icon' => $nh->status ? 'archive' : 'check','color' => $nh->status ? 'warning' : 'success','loading' => true,'debounce' => '500']]); ?>
+<?php $component->withName('table-action'); ?>
+<?php if ($component->shouldRender()): ?>
+<?php $__env->startComponent($component->resolveView(), $component->data()); ?>
+<?php $component->withAttributes(['wire' => 'toggleStatus('.e($nh->id).')','icon' => \Illuminate\View\Compilers\BladeCompiler::sanitizeComponentAttribute($nh->status ? 'archive' : 'check'),'color' => \Illuminate\View\Compilers\BladeCompiler::sanitizeComponentAttribute($nh->status ? 'warning' : 'success'),'loading' => true,'debounce' => '500']); ?>
+                                        <?php echo e($nh->status ? 'Lưu trữ' : 'Kích hoạt'); ?>
 
-                                            transition-colors
-                                            disabled:opacity-50 disabled:cursor-not-allowed">
-
-                                        
-                                        <svg wire:loading wire:target="toggleStatus(<?php echo e($nh->id); ?>)"
-                                            class="animate-spin w-4 h-4" fill="none" viewBox="0 0 24 24">
-                                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
-                                        </svg>
-
-                                        
-                                        <svg wire:loading.remove wire:target="toggleStatus(<?php echo e($nh->id); ?>)" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <?php if($nh->status): ?>
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" />
-                                            <?php else: ?>
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                            <?php endif; ?>
-                                        </svg>
-
-                                        
-
-                                        <span><?php echo e($nh->status ? 'Lưu trữ' : 'Kích hoạt'); ?></span>
-                                    </button>
+                                     <?php echo $__env->renderComponent(); ?>
+<?php endif; ?>
+<?php if (isset($__componentOriginalc254754b9d5db91d5165876f9d051922ca0066f4)): ?>
+<?php $component = $__componentOriginalc254754b9d5db91d5165876f9d051922ca0066f4; ?>
+<?php unset($__componentOriginalc254754b9d5db91d5165876f9d051922ca0066f4); ?>
+<?php endif; ?>
                                 </div>
                             </td>
                         </tr>
@@ -531,11 +500,11 @@
 <?php unset($__componentOriginalc254754b9d5db91d5165876f9d051922ca0066f4); ?>
 <?php endif; ?>
                     <?php if (isset($component)) { $__componentOriginalc254754b9d5db91d5165876f9d051922ca0066f4 = $component; } ?>
-<?php $component = $__env->getContainer()->make(Illuminate\View\AnonymousComponent::class, ['view' => 'components.action-button','data' => ['wire' => 'save','loading' => true]]); ?>
+<?php $component = $__env->getContainer()->make(Illuminate\View\AnonymousComponent::class, ['view' => 'components.action-button','data' => ['wire' => 'save','icon' => 'save','loading' => true]]); ?>
 <?php $component->withName('action-button'); ?>
 <?php if ($component->shouldRender()): ?>
 <?php $__env->startComponent($component->resolveView(), $component->data()); ?>
-<?php $component->withAttributes(['wire' => 'save','loading' => true]); ?>
+<?php $component->withAttributes(['wire' => 'save','icon' => 'save','loading' => true]); ?>
                         Lưu
                      <?php echo $__env->renderComponent(); ?>
 <?php endif; ?>

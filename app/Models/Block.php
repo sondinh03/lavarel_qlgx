@@ -27,6 +27,10 @@ class Block extends Model
     protected $fillable = ['did', 'deid', 'pid', 'paid', 'name', 'namhoc', 'weight', 'status', 'created_at', 'updated_at'];
     protected $appends = ['display_name'];
 
+    // ===== STATUS CONSTANTS =====
+    public const STATUS_ACTIVE = 1;
+    public const STATUS_ARCHIVED = 0;
+
     /*
     |--------------------------------------------------------------------------
     | FUNCTIONS
@@ -59,6 +63,11 @@ class Block extends Model
     |--------------------------------------------------------------------------
     */
 
+    public function scopeActive($q)
+    {
+        return $q->where('status', self::STATUS_ACTIVE);
+    }
+
     /*
     |--------------------------------------------------------------------------
     | ACCESSORS
@@ -70,4 +79,11 @@ class Block extends Model
     | MUTATORS
     |--------------------------------------------------------------------------
     */
+    /**
+     * Tự động format tên: Chữ hoa đầu mỗi từ
+     */
+    public function setNameAttribute($value): void
+    {
+        $this->attributes['name'] = ucwords(strtolower(trim($value)));
+    }
 }

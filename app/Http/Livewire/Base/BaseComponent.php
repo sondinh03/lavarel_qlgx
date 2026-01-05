@@ -84,6 +84,7 @@ abstract class BaseComponent extends Component
      */
     protected $listeners = [
         'refresh' => '$refresh',
+        
     ];
 
     // ==================== LIFECYCLE HOOKS ====================

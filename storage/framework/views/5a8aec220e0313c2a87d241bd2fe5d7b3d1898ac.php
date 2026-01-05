@@ -1,4 +1,6 @@
 <div class="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 p-4 sm:p-6">
+    <a href="#main-content" class="sr-only focus:not-sr-only">Bỏ qua tới nội dung</a>
+
     <div class="mx-auto max-w-7xl space-y-5">
 
         
@@ -138,24 +140,14 @@
                         
                         <?php
 if (! isset($_instance)) {
-    $html = \Livewire\Livewire::mount('class-filter-selector', [
-                        'parish_id' => $parish_id,
-                        'selectedNamHoc' => $selectedNamHoc,
-                        'showKhoi' => false,
-                        'showLop' => false,
-                        ])->html();
+    $html = \Livewire\Livewire::mount('filters.filter-bar', ['showNamHoc' => true,'showKhoi' => false,'showLop' => false,'showKy' => false])->html();
 } elseif ($_instance->childHasBeenRendered('l3699612363-0')) {
     $componentId = $_instance->getRenderedChildComponentId('l3699612363-0');
     $componentTag = $_instance->getRenderedChildComponentTagName('l3699612363-0');
     $html = \Livewire\Livewire::dummyMount($componentId, $componentTag);
     $_instance->preserveRenderedChild('l3699612363-0');
 } else {
-    $response = \Livewire\Livewire::mount('class-filter-selector', [
-                        'parish_id' => $parish_id,
-                        'selectedNamHoc' => $selectedNamHoc,
-                        'showKhoi' => false,
-                        'showLop' => false,
-                        ]);
+    $response = \Livewire\Livewire::mount('filters.filter-bar', ['showNamHoc' => true,'showKhoi' => false,'showLop' => false,'showKy' => false]);
     $html = $response->html();
     $_instance->logRenderedChild('l3699612363-0', $response->id(), \Livewire\Livewire::getRootElementTagName($html));
 }
@@ -167,30 +159,26 @@ echo $html;
                             wire:model.debounce.500ms="search"
                             placeholder="Tìm kiếm khối"
                             class="w-56 px-3 py-2 rounded-xl
-                       border border-slate-300
-                       text-sm
-                       focus:ring-2 focus:ring-primary-500" />
+                                border border-slate-300
+                                text-sm focus:outline-none
+                                focus:ring-2 focus:ring-primary-500" />
                     </div>
 
                     
-                    <button
-                        wire:click="create"
-                        @disabled(!$selectedNamHoc)
-                        class="inline-flex items-center gap-2
-                            px-5 py-2.5 rounded-xl
-                            bg-gradient-to-r from-primary-500 to-primary-600
-                            hover:from-primary-600 hover:to-primary-700
-                            text-white text-sm font-semibold
-                            active:scale-95
-                            disabled:bg-slate-300 disabled:cursor-not-allowed
-                            transition-all shadow-sm">
-
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M12 4v16m8-8H4" />
-                        </svg>
+                    <?php if (isset($component)) { $__componentOriginalc254754b9d5db91d5165876f9d051922ca0066f4 = $component; } ?>
+<?php $component = $__env->getContainer()->make(Illuminate\View\AnonymousComponent::class, ['view' => 'components.action-button','data' => ['wire' => 'create','icon' => 'plus','disabled' => !$selectedNamHoc]]); ?>
+<?php $component->withName('action-button'); ?>
+<?php if ($component->shouldRender()): ?>
+<?php $__env->startComponent($component->resolveView(), $component->data()); ?>
+<?php $component->withAttributes(['wire' => 'create','icon' => 'plus','disabled' => \Illuminate\View\Compilers\BladeCompiler::sanitizeComponentAttribute(!$selectedNamHoc)]); ?>
                         Thêm khối
-                    </button>
+                     <?php echo $__env->renderComponent(); ?>
+<?php endif; ?>
+<?php if (isset($__componentOriginalc254754b9d5db91d5165876f9d051922ca0066f4)): ?>
+<?php $component = $__componentOriginalc254754b9d5db91d5165876f9d051922ca0066f4; ?>
+<?php unset($__componentOriginalc254754b9d5db91d5165876f9d051922ca0066f4); ?>
+<?php endif; ?>
+                    
                 </div>
             </div>
         </div>

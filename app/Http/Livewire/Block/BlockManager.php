@@ -59,7 +59,7 @@ class BlockManager extends BaseComponent
     // ==================== DATA ====================
 
     /** @var \Illuminate\Support\Collection Danh sách khối */
-    public $blocks = [];
+    public $blocks;
 
     // ==================== VALIDATION ====================
 
@@ -102,7 +102,30 @@ class BlockManager extends BaseComponent
         'refresh' => 'handleRefresh',
         'blockCreated' => 'loadBlocks',
         'blockUpdated' => 'loadBlocks',
+        'filterChanged' => 'handleFilterChanged',
     ];
+
+    /**
+     * Xử lý khi filter thay đổi từ FilterBar
+     */
+    public function handleFilterChanged($filters)
+    {
+        // Cập nhật selectedNamHoc từ FilterBar
+        // if (isset($filters['namHoc'])) {
+        //     $this->selectedNamHoc = $filters['namHoc'];
+        //     $this->loadBlocks();
+        // }
+
+        $this->selectedNamHoc = isset($filters['namHoc']) && is_numeric($filters['namHoc'])
+            ? (int) $filters['namHoc']
+            : null;
+
+        $this->search = '';
+        $this->resetPage();
+        $this->resetForm();
+
+        $this->loadBlocks();
+    }
 
     // ==================== LIFECYCLE ====================
 
@@ -206,28 +229,28 @@ class BlockManager extends BaseComponent
     /**
      * Khi thay đổi năm học
      */
-    public function updatedSelectedNamHoc(): void
-    {
-        // Sanitize and validate
-        $this->selectedNamHoc = is_numeric($this->selectedNamHoc)
-            ? (int) $this->selectedNamHoc
-            : null;
+    // public function updatedSelectedNamHoc(): void
+    // {
+    //     // Sanitize and validate
+    //     $this->selectedNamHoc = is_numeric($this->selectedNamHoc)
+    //         ? (int) $this->selectedNamHoc
+    //         : null;
 
-        try {
-            $this->validateOnly('selectedNamHoc');
-        } catch (ValidationException $e) {
-            $this->selectedNamHoc = null;
-            session()->flash('warning', 'Năm học không hợp lệ, đã đặt lại lựa chọn.');
-        }
+    //     try {
+    //         $this->validateOnly('selectedNamHoc');
+    //     } catch (ValidationException $e) {
+    //         $this->selectedNamHoc = null;
+    //         session()->flash('warning', 'Năm học không hợp lệ, đã đặt lại lựa chọn.');
+    //     }
 
-        // Reset search và reload blocks
-        $this->search = '';
-        $this->resetPage();
-        $this->loadBlocks();
+    //     // Reset search và reload blocks
+    //     $this->search = '';
+    //     $this->resetPage();
+    //     $this->loadBlocks();
 
-        // Đóng form nếu đang mở
-        $this->resetForm();
-    }
+    //     // Đóng form nếu đang mở
+    //     $this->resetForm();
+    // }
 
     /**
      * Khi search thay đổi, reload data
@@ -293,16 +316,6 @@ class BlockManager extends BaseComponent
             session()->flash('error', 'Vui lòng chọn năm học');
             return;
         }
-
-
-        // Validate form data (excluding selectedNamHoc from form validation)
-        // try {
-        //     // $this->validate($this->formRules);
-        //     $this->validate(array_merge($this->rules, $this->formRules));
-        // } catch (ValidationException $e) {
-        //     // Livewire tự động hiển thị errors
-        //     return;
-        // }
 
         $this->validate($this->formRules, $this->messages);
 

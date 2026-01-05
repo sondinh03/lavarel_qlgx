@@ -21,6 +21,10 @@ class Lop extends Model
         'teacher' => 'array',
     ];
 
+    // ===== STATUS CONSTANTS =====
+    public const STATUS_ACTIVE = 1;
+    public const STATUS_ARCHIVED = 0;
+
     public function openLink(): string
     {
         $slug = slug($this) . config('settings.url_prefix');
@@ -154,5 +158,10 @@ class Lop extends Model
     public function schoolYear()
     {
         return $this->belongsTo(NamHoc::class, 'schoolyear', 'id');
+    }
+
+    public function scopeActive($q)
+    {
+        return $q->where('status', self::STATUS_ACTIVE);
     }
 }
