@@ -155,6 +155,7 @@ class Lop extends Model
     {
         return $this->belongsTo(Block::class, 'block', 'id');
     }
+
     public function schoolYear()
     {
         return $this->belongsTo(NamHoc::class, 'schoolyear', 'id');
@@ -163,5 +164,10 @@ class Lop extends Model
     public function scopeActive($q)
     {
         return $q->where('status', self::STATUS_ACTIVE);
+    }
+
+    public function scopeOfParish($q, int $parishId)
+    {
+        return $q->where('pid', $parishId);
     }
 }

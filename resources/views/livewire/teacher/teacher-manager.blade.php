@@ -1,5 +1,7 @@
 <div class="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 p-4 sm:p-6">
-    <div class="mx-auto max-w-7xl space-y-5">
+    <a href="#main-content" class="sr-only focus:not-sr-only">Bỏ qua tới nội dung</a>
+
+    <div id="main-content" class="mx-auto max-w-7xl space-y-5">
 
         {{-- Breadcrumb --}}
         <x-breadcrumb
@@ -16,89 +18,76 @@
             ]"
             separator="arrow" />
 
-        {{-- Header --}}
+        {{-- Toast Notifications --}}
+        <div role="status" aria-live="polite">
+            @if (session()->has('message'))
+            <x-toast-notification type="success" :duration="3500">
+                {{ session('message') }}
+            </x-toast-notification>
+            @endif
+
+            @if (session()->has('error'))
+            <x-toast-notification type="error" :duration="4000">
+                {{ session('error') }}
+            </x-toast-notification>
+            @endif
+
+            @if (session()->has('warning'))
+            <x-toast-notification type="warning" :duration="4000">
+                {{ session('warning') }}
+            </x-toast-notification>
+            @endif
+
+            @if (session()->has('info'))
+            <x-toast-notification type="info" :duration="3500">
+                {{ session('info') }}
+            </x-toast-notification>
+            @endif
+        </div>
+
+        {{-- Main Card --}}
         <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+            {{-- Header --}}
             <x-page-header
                 title="Quản lý giáo viên"
                 description="Danh sách giáo viên giáo lý"
-                :stat-value="$teachers->total()"
+                :stat-value="$teachers?->total()"
                 stat-label="Giáo viên"
                 icon-type="teacher">
             </x-page-header>
 
-            {{-- Toast Messages --}}
-            <div role="status" aria-live="polite">
-                @if (session()->has('message'))
-                <x-toast-notification type="success" :duration="3500">
-                    {{ session('message') }}
-                </x-toast-notification>
-                @endif
-
-                @if (session()->has('error'))
-                <x-toast-notification type="error" :duration="4000">
-                    {{ session('error') }}
-                </x-toast-notification>
-                @endif
-
-                @if (session()->has('warning'))
-                <x-toast-notification type="warning" :duration="4000">
-                    {{ session('warning') }}
-                </x-toast-notification>
-                @endif
-
-                @if (session()->has('info'))
-                <x-toast-notification type="info" :duration="3500">
-                    {{ session('info') }}
-                </x-toast-notification>
-                @endif
-            </div>
-
-            {{-- Filters Bar --}}
+            {{-- Actions Bar --}}
             <div class="px-6 py-4 border-b border-slate-200 bg-slate-50/70">
                 <div class="flex items-center justify-between gap-4">
 
-                    {{-- LEFT: Search & Filters --}}
+                    {{-- LEFT: Search --}}
                     <div class="flex items-center gap-3">
-                        {{-- Search --}}
                         <input
                             wire:model.debounce.500ms="search"
                             placeholder="Tìm theo tên hoặc SĐT"
                             class="w-64 px-3 py-2 rounded-xl
                                    border border-slate-300
-                                   text-sm
-                                   focus:ring-2 focus:ring-primary-500
-                                   focus:border-transparent" />
+                                   text-sm focus:outline-none
+                                   focus:ring-2 focus:ring-primary-500" />
                     </div>
 
                     {{-- RIGHT: Primary Action --}}
-                    <button
-                        wire:click="create"
-                        class="inline-flex items-center gap-2
-                               px-5 py-2.5 rounded-xl
-                               bg-gradient-to-r from-primary-500 to-primary-600
-                               hover:from-primary-600 hover:to-primary-700
-                               text-white text-sm font-semibold
-                               active:scale-95
-                               transition-all shadow-sm">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M12 4v16m8-8H4" />
-                        </svg>
+                    <x-action-button wire="create" icon="plus">
                         Thêm giáo viên
-                    </button>
-
+                    </x-action-button>
                 </div>
             </div>
         </div>
 
         {{-- Table Section --}}
         <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
-            @if($teachers->count() > 0)
+            @if($teachers && $teachers->count() > 0)
             <div class="overflow-x-auto">
                 <table class="w-full border-separate border-spacing-0">
                     <thead class="bg-slate-50 border-b border-slate-200">
                         <tr>
                             <x-table-header>STT</x-table-header>
+                            <x-table-header>Tên thánh</x-table-header>
                             <x-table-header>Họ tên</x-table-header>
                             <x-table-header>Ngày sinh</x-table-header>
                             <x-table-header>Số điện thoại</x-table-header>
@@ -115,15 +104,18 @@
                                 {{ $teachers->firstItem() + $i }}
                             </td>
 
-                            <td class="px-6 py-4">
-                                <div class="font-semibold text-slate-900">
-                                    {{ $teacher->name }}
-                                </div>
-                                @if($teacher->year)
-                                <div class="text-xs text-slate-500 mt-0.5">
-                                    Năm {{ $teacher->year }}
-                                </div>
+                            <td class="px-6 py-4 text-sm text-slate-600">
+                                @if($teacher->holyName)
+                                <span class="font-medium text-primary-600">
+                                    {{ $teacher->holyName }}
+                                </span>
+                                @else
+                                <span class="text-slate-400">—</span>
                                 @endif
+                            </td>
+
+                            <td class="px-6 py-4 font-semibold text-slate-900">
+                                {{ $teacher->name }}
                             </td>
 
                             <td class="px-6 py-4 text-sm text-slate-600">
@@ -148,10 +140,10 @@
                                 @endif
                             </td>
 
-                            <td class="px-6 py-4 text-sm text-slate-600 max-w-xs">
-                                @if($teacher->parish_child_name )
-                                <div class="truncate" title="{{ $teacher->parish_child_name }}">
-                                    {{ $teacher->parish_child_name }}
+                            <td class="px-6 py-4 text-sm text-slate-600">
+                                @if($teacher->parishChild)
+                                <div class="truncate max-w-xs" title="{{ $teacher->parishChild->name }}">
+                                    {{ $teacher->parishChild->name }}
                                 </div>
                                 @else
                                 <span class="text-slate-400">—</span>
@@ -159,21 +151,17 @@
                             </td>
 
                             <td class="px-6 py-4 text-center">
-                                <button
-                                    wire:click="toggleStatus({{ $teacher->id }})"
-                                    class="px-2.5 py-1 text-xs font-semibold rounded-full
-                                           transition-all hover:scale-105
-                                           {{ $teacher->status ? 'bg-primary-100 text-primary-700 hover:bg-primary-200' : 'bg-slate-200 text-slate-600 hover:bg-slate-300' }}">
+                                <span class="px-2.5 py-1 text-xs font-semibold rounded-full
+                                    {{ $teacher->status ? 'bg-primary-100 text-primary-700' : 'bg-slate-200 text-slate-600' }}">
                                     {{ $teacher->status ? 'Hoạt động' : 'Tắt' }}
-                                </button>
+                                </span>
                             </td>
 
                             <td class="px-6 py-4 text-center">
                                 <div class="inline-flex gap-3">
                                     <button
                                         wire:click="edit({{ $teacher->id }})"
-                                        class="text-primary-600 hover:text-primary-800 font-medium text-sm
-                                               transition-colors">
+                                        class="text-primary-600 hover:text-primary-800">
                                         Sửa
                                     </button>
 
@@ -181,8 +169,7 @@
                                     <button
                                         wire:click="delete({{ $teacher->id }})"
                                         onclick="return confirm('Xác nhận xóa giáo viên {{ $teacher->name }}?')"
-                                        class="text-red-600 hover:text-red-800 font-medium text-sm
-                                               transition-colors">
+                                        class="text-red-600 hover:text-red-800">
                                         Xóa
                                     </button>
                                     @endif
@@ -196,24 +183,20 @@
 
             {{-- Pagination --}}
             @if ($teachers->hasPages())
-            <div class="border-t border-slate-200">
-                <x-pagination
-                    :paginator="$teachers"
-                    :per-page-options="$this->getPerPageOptions()" />
+            <div class="px-6 py-4 border-t border-slate-200">
+                {{ $teachers->links() }}
             </div>
             @endif
             @else
-            <div class="text-center py-16">
+            <div class="text-center py-12">
                 <svg class="mx-auto w-16 h-16 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                         d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
                 </svg>
-                <p class="mt-4 text-lg text-slate-500">Chưa có giáo viên nào</p>
+                <p class="mt-2 text-gray-500">Chưa có giáo viên nào</p>
                 <button
                     wire:click="create"
-                    class="mt-4 px-5 py-2.5 bg-primary-600 text-white rounded-xl
-                           hover:bg-primary-700 font-semibold
-                           active:scale-95 transition-all">
+                    class="mt-4 px-4 py-2 bg-primary-600 text-white rounded-md hover:bg-primary-700">
                     <i class="las la-plus mr-1"></i> Thêm giáo viên đầu tiên
                 </button>
             </div>
@@ -227,12 +210,13 @@
             role="dialog"
             aria-modal="true"
             aria-labelledby="teacher-modal-title"
-            wire:click="$set('showForm', false)">
+            wire:click="closeModal">
             <div
-                class="bg-white rounded-2xl shadow-xl w-full max-w-2xl overflow-hidden max-h-[90vh] overflow-y-auto"
+                class="bg-white rounded-2xl shadow-xl w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col"
                 wire:click.stop>
+
                 {{-- Header --}}
-                <div class="sticky top-0 z-10 p-6 border-b border-slate-200 bg-gradient-to-br from-primary-50 to-white">
+                <div class="flex-shrink-0 p-6 border-b border-slate-200 bg-gradient-to-br from-primary-50 to-white">
                     <h2 id="teacher-modal-title" class="text-xl font-bold text-slate-900">
                         {{ $editingId ? 'Cập nhật giáo viên' : 'Thêm giáo viên mới' }}
                     </h2>
@@ -241,20 +225,86 @@
                     </p>
                 </div>
 
-                {{-- Body --}}
-                <div class="p-6 space-y-5">
-                    {{-- Tên giáo viên --}}
+                {{-- Body - SCROLLABLE --}}
+                <div class="flex-1 overflow-y-auto p-6 space-y-5">
+                    {{-- Error Summary --}}
+                    @if ($errors->any())
+                    <div class="bg-red-50 border-l-4 border-red-500 rounded-xl p-4">
+                        <div class="flex items-start gap-3">
+                            <svg class="w-5 h-5 text-red-500 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                            <div class="flex-1">
+                                <h4 class="text-sm font-semibold text-red-800 mb-2">
+                                    Vui lòng kiểm tra lại thông tin
+                                </h4>
+                                <ul class="space-y-1 text-sm text-red-700">
+                                    @foreach ($errors->all() as $error)
+                                    <li class="flex items-start gap-2">
+                                        <span class="text-red-400 font-bold">•</span>
+                                        <span>{{ $error }}</span>
+                                    </li>
+                                    @endforeach
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                    @endif
+
+                    {{-- Row: Tên thánh & Họ tên --}}
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                        {{-- Tên thánh (1/3 width) --}}
+                        <div>
+                            <label class="block text-sm font-semibold text-slate-700 mb-1">
+                                Tên thánh
+                            </label>
+                            <select
+                                wire:model.defer="holy_id"
+                                class="w-full px-3 py-2 rounded-xl border border-slate-300
+                                       focus:outline-none focus:ring-2 focus:ring-primary-500">
+                                <option value="">-- Chọn --</option>
+                                @foreach($holyNames as $id => $name)
+                                <option value="{{ $id }}">{{ $name }}</option>
+                                @endforeach
+                            </select>
+                            @error('holy_id')
+                            <p class="mt-1 text-sm text-red-500">{{ $message }}</p>
+                            @enderror
+                        </div>
+
+                        {{-- Họ tên (2/3 width) --}}
+                        <div class="sm:col-span-2">
+                            <label class="block text-sm font-semibold text-slate-700 mb-1">
+                                Họ tên <span class="text-red-500">*</span>
+                            </label>
+                            <input
+                                type="text"
+                                wire:model.defer="name"
+                                placeholder="Ví dụ: Nguyễn Văn A"
+                                class="w-full px-3 py-2 rounded-xl border border-slate-300
+                                       focus:outline-none focus:ring-2 focus:ring-primary-500">
+                            @error('name')
+                            <p class="mt-1 text-sm text-red-500">{{ $message }}</p>
+                            @enderror
+                        </div>
+                    </div>
+
+                    {{-- Giáo họ --}}
                     <div>
                         <label class="block text-sm font-semibold text-slate-700 mb-1">
-                            Họ tên <span class="text-red-500">*</span>
+                            Giáo họ
                         </label>
-                        <input
-                            type="text"
-                            wire:model.defer="name"
-                            placeholder="Ví dụ: Nguyễn Văn A"
+                        <select
+                            wire:model.defer="paid"
                             class="w-full px-3 py-2 rounded-xl border border-slate-300
                                    focus:outline-none focus:ring-2 focus:ring-primary-500">
-                        @error('name')
+                            <option value="">-- Chọn giáo họ --</option>
+                            @foreach($parishChildren as $id => $name)
+                            <option value="{{ $id }}">{{ $name }}</option>
+                            @endforeach
+                        </select>
+                        @error('paid')
                         <p class="mt-1 text-sm text-red-500">{{ $message }}</p>
                         @enderror
                     </div>
@@ -311,39 +361,6 @@
                         @enderror
                     </div>
 
-                    {{-- Optional Fields (có thể ẩn nếu không dùng) --}}
-                    <div class="pt-2 border-t border-slate-200">
-                        <details class="group">
-                            <summary class="cursor-pointer text-sm font-semibold text-slate-600 hover:text-slate-900">
-                                <span class="inline-flex items-center gap-1">
-                                    <svg class="w-4 h-4 transition-transform group-open:rotate-90" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
-                                    </svg>
-                                    Thông tin bổ sung (tùy chọn)
-                                </span>
-                            </summary>
-                            <div class="mt-4 space-y-4">
-                                {{-- Year --}}
-                                <div>
-                                    <label class="block text-sm font-semibold text-slate-700 mb-1">
-                                        Năm
-                                    </label>
-                                    <input
-                                        type="number"
-                                        wire:model.defer="year"
-                                        placeholder="2024"
-                                        min="1900"
-                                        max="2100"
-                                        class="w-full px-3 py-2 rounded-xl border border-slate-300
-                                               focus:outline-none focus:ring-2 focus:ring-primary-500">
-                                    @error('year')
-                                    <p class="mt-1 text-sm text-red-500">{{ $message }}</p>
-                                    @enderror
-                                </div>
-                            </div>
-                        </details>
-                    </div>
-
                     {{-- Trạng thái --}}
                     <div class="flex items-center gap-3 pt-1">
                         <input
@@ -359,25 +376,13 @@
                 </div>
 
                 {{-- Footer --}}
-                <div class="sticky bottom-0 px-6 py-4 border-t border-slate-200 bg-slate-50 flex justify-end gap-3">
-                    <button
-                        wire:click="cancel"
-                        class="px-4 py-2 rounded-xl bg-white border border-slate-300
-                               text-slate-700 font-semibold hover:bg-slate-100
-                               active:scale-95 transition-all">
+                <div class="flex-shrink-0 px-6 py-4 border-t border-slate-200 bg-slate-50 flex justify-end gap-3">
+                    <x-action-button wire="closeModal" variant="secondary">
                         Hủy
-                    </button>
-
-                    <button
-                        wire:click="save"
-                        wire:loading.attr="disabled"
-                        class="px-5 py-2 rounded-xl bg-primary-600 text-white
-                               font-semibold hover:bg-primary-700
-                               active:scale-95 transition-all
-                               disabled:opacity-60 disabled:cursor-not-allowed">
-                        <span wire:loading.remove wire:target="save">Lưu giáo viên</span>
-                        <span wire:loading wire:target="save">Đang lưu...</span>
-                    </button>
+                    </x-action-button>
+                    <x-action-button wire="save" icon="save" :loading="true">
+                        Lưu
+                    </x-action-button>
                 </div>
             </div>
         </div>
@@ -386,12 +391,12 @@
 </div>
 
 {{-- Loading Indicator --}}
-<div wire:loading.flex class="fixed inset-0 bg-gray-900 bg-opacity-50 items-center justify-center z-50">
-    <div class="bg-white rounded-lg p-6 flex items-center gap-3 shadow-xl">
+<div wire:loading class="fixed inset-0 bg-gray-900 bg-opacity-50 flex items-center justify-center z-50">
+    <div class="bg-white rounded-lg p-6 flex items-center gap-3">
         <svg class="animate-spin h-6 w-6 text-primary-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
             <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
             <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
         </svg>
-        <span class="text-gray-700 font-medium">Đang xử lý...</span>
+        <span class="text-gray-700">Đang xử lý...</span>
     </div>
 </div>

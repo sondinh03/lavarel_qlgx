@@ -17,11 +17,11 @@
         {{-- ===================== TOAST ===================== --}}
         <div role="status" aria-live="polite" aria-atomic="true">
             @foreach (['message' => 'success', 'error' => 'error', 'warning' => 'warning'] as $key => $type)
-                @if (session()->has($key))
-                    <x-toast-notification :type="$type" :duration="3500">
-                        {{ session($key) }}
-                    </x-toast-notification>
-                @endif
+            @if (session()->has($key))
+            <x-toast-notification :type="$type" :duration="3500">
+                {{ session($key) }}
+            </x-toast-notification>
+            @endif
             @endforeach
         </div>
 
@@ -36,7 +36,7 @@
                             <div class="w-12 h-12 bg-primary-500 rounded-xl flex items-center justify-center shadow-sm">
                                 <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                          d="M3 7a2 2 0 012-2h4l2 2h8a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V7z"/>
+                                        d="M3 7a2 2 0 012-2h4l2 2h8a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V7z" />
                                 </svg>
                             </div>
                             <div>
@@ -45,31 +45,31 @@
                                 </h1>
                                 <p class="text-sm text-slate-600 mt-1">
                                     @if($selectedNamHoc)
-                                        Quản lý {{ $lops?->total() ?? 0 }} lớp trong năm học
-                                        <span class="font-semibold text-slate-900">
-                                            {{ $namHocs[$selectedNamHoc] ?? '' }}
-                                        </span>
+                                    Quản lý {{ $lops?->total() ?? 0 }} lớp trong năm học
+                                    <span class="font-semibold text-slate-900">
+                                        {{ $namHocs[$selectedNamHoc] ?? '' }}
+                                    </span>
                                     @else
-                                        Chọn năm học để xem danh sách lớp
+                                    Chọn năm học để xem danh sách lớp
                                     @endif
                                 </p>
                             </div>
                         </div>
 
                         @if ($parish_id && $selectedNamHoc)
-                            <a href="{{ route('lop.create') }}"
-                               class="inline-flex items-center gap-2 px-5 py-2.5
+                        <a href="{{ route('lop.create') }}"
+                            class="inline-flex items-center gap-2 px-5 py-2.5
                                       bg-gradient-to-r from-primary-500 to-primary-600
                                       hover:from-primary-600 hover:to-primary-700
                                       text-white rounded-xl font-semibold
                                       active:scale-[0.98] transition-all shadow-sm"
-                               aria-label="Thêm lớp học mới">
-                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                          d="M12 4v16m8-8H4"/>
-                                </svg>
-                                <span class="hidden sm:inline">Thêm lớp học</span>
-                            </a>
+                            aria-label="Thêm lớp học mới">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M12 4v16m8-8H4" />
+                            </svg>
+                            <span class="hidden sm:inline">Thêm lớp học</span>
+                        </a>
                         @endif
                     </div>
                 </div>
@@ -77,17 +77,17 @@
 
             {{-- Filter --}}
             <div class="p-6 bg-slate-50">
-                @livewire('class-filter-selector', [
-                    'parish_id'      => $parish_id,
-                    'selectedNamHoc' => $selectedNamHoc,
-                    'selectedKhoi'   => $selectedKhoi,
-                    'showLop'        => false,
-                ])
+                <livewire:filters.filter-bar
+                    :show-nam-hoc="true"
+                    :show-khoi="true"
+                    :show-lop="false"
+                    :show-ky="false"
+                    :selected-nam-hoc="$selectedNamHoc"
+                    :selected-khoi="$selectedKhoi" />
 
                 <x-loading.overlay
                     wire-target="selectedNamHoc,selectedKhoi,resetFilters"
-                    mode="inline"
-                />
+                    mode="inline" />
             </div>
         </section>
 
@@ -102,7 +102,7 @@
 
             <div class="overflow-x-auto">
                 <table class="w-full border-separate border-spacing-0"
-                       aria-label="Danh sách lớp học">
+                    aria-label="Danh sách lớp học">
 
                     <thead class="bg-slate-50 border-b border-slate-200">
                         <tr>
@@ -118,37 +118,35 @@
 
                     <tbody class="divide-y divide-slate-100">
                         @forelse ($lops as $index => $lop)
-                            <x-lop.row
-                                :lop="$lop"
-                                :index="$index"
-                                :paginator="$lops"
-                            />
+                        <x-lop.row
+                            :lop="$lop"
+                            :index="$index"
+                            :paginator="$lops" />
                         @empty
-                            <x-empty-state
-                                icon="class"
-                                :colspan="7"
-                                :title="$selectedNamHoc ? 'Không tìm thấy lớp học' : 'Chưa chọn năm học'"
-                                :description="!$selectedNamHoc
+                        <x-empty-state
+                            icon="class"
+                            :colspan="7"
+                            :title="$selectedNamHoc ? 'Không tìm thấy lớp học' : 'Chưa chọn năm học'"
+                            :description="!$selectedNamHoc
                                     ? 'Vui lòng chọn năm học để xem danh sách lớp'
                                     : ($selectedKhoi
                                         ? 'Không có lớp nào trong khối này'
-                                        : 'Chưa có lớp học nào trong năm học này')"
-                            >
-                                @if($isAdmin && $selectedNamHoc)
-                                    <a href="{{ route('lop.create') }}"
-                                       class="inline-flex items-center gap-2 px-6 py-2.5
+                                        : 'Chưa có lớp học nào trong năm học này')">
+                            @if($selectedNamHoc)
+                            <a href="{{ route('lop.create') }}"
+                                class="inline-flex items-center gap-2 px-6 py-2.5
                                               bg-gradient-to-r from-primary-500 to-primary-600
                                               hover:from-primary-600 hover:to-primary-700
                                               text-white rounded-xl font-semibold
                                               active:scale-[0.98] transition-all shadow-sm">
-                                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                  d="M12 4v16m8-8H4"/>
-                                        </svg>
-                                        Tạo lớp học mới
-                                    </a>
-                                @endif
-                            </x-empty-state>
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M12 4v16m8-8H4" />
+                                </svg>
+                                Tạo lớp học mới
+                            </a>
+                            @endif
+                        </x-empty-state>
                         @endforelse
                     </tbody>
                 </table>
@@ -156,12 +154,11 @@
 
             {{-- Pagination --}}
             @if ($lops->hasPages())
-                <div class="border-t border-slate-200">
-                    <x-pagination
-                        :paginator="$lops"
-                        :per-page-options="[10, 15, 25, 50]"
-                    />
-                </div>
+            <div class="border-t border-slate-200">
+                <x-pagination
+                    :paginator="$lops"
+                    :per-page-options="[10, 15, 25, 50]" />
+            </div>
             @endif
         </section>
 

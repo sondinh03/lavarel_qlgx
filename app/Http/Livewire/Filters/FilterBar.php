@@ -46,9 +46,7 @@ class FilterBar extends Component
         $this->loadNamHocs();
 
         if ($this->namHocs->isNotEmpty()) {
-            $this->selectedNamHoc = $this->namHocs->keys()->first();
             $this->loadKhois();
-            $this->emitFilter();
         }
     }
 

@@ -122,7 +122,6 @@
                         <tr>
                             <x-table-header>STT</x-table-header>
                             <x-table-header>Tên khối</x-table-header>
-                            <x-table-header>Năm học</x-table-header>
                             <x-table-header class="text-center">Thứ tự</x-table-header>
                             <x-table-header class="text-center">Trạng thái</x-table-header>
                             <x-table-header class="text-center">Thao tác</x-table-header>
@@ -139,11 +138,6 @@
                             <td class="px-6 py-4 font-semibold text-slate-900">
                                 {{ $block->name }}
                             </td>
-
-                            <td class="px-6 py-4 text-sm text-slate-600">
-                                {{ $block->namHoc->name ?? 'N/A' }}
-                            </td>
-
                             <td class="px-6 py-4 text-center text-slate-600">
                                 {{ $block->weight }}
                             </td>

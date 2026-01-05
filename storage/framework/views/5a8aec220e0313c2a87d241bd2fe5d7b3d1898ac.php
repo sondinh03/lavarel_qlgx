@@ -214,17 +214,6 @@ echo $html;
 <?php unset($__componentOriginalc254754b9d5db91d5165876f9d051922ca0066f4); ?>
 <?php endif; ?>
                             <?php if (isset($component)) { $__componentOriginalc254754b9d5db91d5165876f9d051922ca0066f4 = $component; } ?>
-<?php $component = $__env->getContainer()->make(Illuminate\View\AnonymousComponent::class, ['view' => 'components.table-header','data' => []]); ?>
-<?php $component->withName('table-header'); ?>
-<?php if ($component->shouldRender()): ?>
-<?php $__env->startComponent($component->resolveView(), $component->data()); ?>
-<?php $component->withAttributes([]); ?>Năm học <?php echo $__env->renderComponent(); ?>
-<?php endif; ?>
-<?php if (isset($__componentOriginalc254754b9d5db91d5165876f9d051922ca0066f4)): ?>
-<?php $component = $__componentOriginalc254754b9d5db91d5165876f9d051922ca0066f4; ?>
-<?php unset($__componentOriginalc254754b9d5db91d5165876f9d051922ca0066f4); ?>
-<?php endif; ?>
-                            <?php if (isset($component)) { $__componentOriginalc254754b9d5db91d5165876f9d051922ca0066f4 = $component; } ?>
 <?php $component = $__env->getContainer()->make(Illuminate\View\AnonymousComponent::class, ['view' => 'components.table-header','data' => ['class' => 'text-center']]); ?>
 <?php $component->withName('table-header'); ?>
 <?php if ($component->shouldRender()): ?>
@@ -272,12 +261,6 @@ echo $html;
                                 <?php echo e($block->name); ?>
 
                             </td>
-
-                            <td class="px-6 py-4 text-sm text-slate-600">
-                                <?php echo e($block->namHoc->name ?? 'N/A'); ?>
-
-                            </td>
-
                             <td class="px-6 py-4 text-center text-slate-600">
                                 <?php echo e($block->weight); ?>
 

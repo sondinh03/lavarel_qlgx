@@ -5,12 +5,7 @@ namespace App\Http\Livewire\Block;
 use App\Http\Livewire\Base\BaseComponent;
 use App\Models\Block;
 use App\Models\NamHoc;
-use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
-use Illuminate\Validation\ValidationException;
-
-use function PHPSTORM_META\type;
 
 /**
  * Component quản lý Khối học (CRUD)
@@ -30,9 +25,6 @@ class BlockManager extends BaseComponent
 
     /** @var int|null Selected năm học ID */
     public $selectedNamHoc;
-
-    /** @var \Illuminate\Support\Collection Danh sách năm học */
-    public $namHocs = [];
 
     // ==================== FORM STATE ====================
 
@@ -70,6 +62,15 @@ class BlockManager extends BaseComponent
         'status' => 'required|boolean',
     ];
 
+    protected function validateUniqueName(): bool
+    {
+        return !Block::ofParish($this->parish_id)
+            ->where('namhoc', $this->selectedNamHoc)
+            ->where('name', $this->name)
+            ->when($this->editingId, fn($q) => $q->where('id', '!=', $this->editingId))
+            ->exists();
+    }
+
     /**
      * Custom validation messages
      */
@@ -99,7 +100,6 @@ class BlockManager extends BaseComponent
      * Listeners cho Livewire events
      */
     protected $listeners = [
-        'refresh' => 'handleRefresh',
         'blockCreated' => 'loadBlocks',
         'blockUpdated' => 'loadBlocks',
         'filterChanged' => 'handleFilterChanged',
@@ -110,13 +110,7 @@ class BlockManager extends BaseComponent
      */
     public function handleFilterChanged($filters)
     {
-        // Cập nhật selectedNamHoc từ FilterBar
-        // if (isset($filters['namHoc'])) {
-        //     $this->selectedNamHoc = $filters['namHoc'];
-        //     $this->loadBlocks();
-        // }
-
-        $this->selectedNamHoc = isset($filters['namHoc']) && is_numeric($filters['namHoc'])
+        $this->selectedNamHoc = is_numeric($filters['namHoc'] ?? null)
             ? (int) $filters['namHoc']
             : null;
 
@@ -148,13 +142,26 @@ class BlockManager extends BaseComponent
      */
     protected function loadInitialData(): void
     {
-        $this->loadNamHocs();
+        if (!$this->selectedNamHoc) {
+            $this->selectedNamHoc = $this->getDefaultNamHocId();
+        }
 
         // Nếu đã có selectedNamHoc, load blocks
         if ($this->selectedNamHoc) {
             $this->loadBlocks();
+        } else {
+            $this->blocks = collect();
         }
     }
+
+    protected function getDefaultNamHocId(): ?int
+    {
+        return NamHoc::ofParish($this->parish_id)
+            ->active()
+            ->orderByDesc('name')
+            ->value('id');
+    }
+
 
     /**
      * Override sanitizeQueryString để xử lý selectedNamHoc
@@ -163,35 +170,12 @@ class BlockManager extends BaseComponent
     {
         parent::sanitizeQueryString();
 
-        // selectedNamHoc: null or int
         if ($this->selectedNamHoc === '' || $this->selectedNamHoc === null) {
             $this->selectedNamHoc = null;
         } else {
             $this->selectedNamHoc = is_numeric($this->selectedNamHoc)
                 ? (int) $this->selectedNamHoc
                 : null;
-        }
-    }
-
-    /**
-     * Load danh sách năm học
-     */
-    public function loadNamHocs()
-    {
-        try {
-            $this->namHocs = NamHoc::ofParish($this->parish_id)
-                ->active()
-                ->orderByDesc('name')
-                ->get();
-
-            // Nếu chưa chọn năm học và có năm học available, chọn năm học mới nhất
-            if (!$this->selectedNamHoc && $this->namHocs->isNotEmpty()) {
-                $this->selectedNamHoc = $this->namHocs->first()->id;
-            }
-        } catch (\Exception $e) {
-            $this->logError($e, 'Error loading nam hocs');
-            session()->flash('error', 'Có lỗi khi tải danh sách năm học');
-            $this->namHocs = collect();
         }
     }
 
@@ -206,7 +190,8 @@ class BlockManager extends BaseComponent
         }
 
         try {
-            $query = Block::where('pid', $this->parish_id)
+            $query = Block::with('namHoc')
+                ->ofParish($this->parish_id)
                 ->where('namhoc', $this->selectedNamHoc)
                 ->orderBy('weight', 'asc');
 
@@ -225,32 +210,6 @@ class BlockManager extends BaseComponent
     }
 
     // ==================== PROPERTY UPDATERS ====================
-
-    /**
-     * Khi thay đổi năm học
-     */
-    // public function updatedSelectedNamHoc(): void
-    // {
-    //     // Sanitize and validate
-    //     $this->selectedNamHoc = is_numeric($this->selectedNamHoc)
-    //         ? (int) $this->selectedNamHoc
-    //         : null;
-
-    //     try {
-    //         $this->validateOnly('selectedNamHoc');
-    //     } catch (ValidationException $e) {
-    //         $this->selectedNamHoc = null;
-    //         session()->flash('warning', 'Năm học không hợp lệ, đã đặt lại lựa chọn.');
-    //     }
-
-    //     // Reset search và reload blocks
-    //     $this->search = '';
-    //     $this->resetPage();
-    //     $this->loadBlocks();
-
-    //     // Đóng form nếu đang mở
-    //     $this->resetForm();
-    // }
 
     /**
      * Khi search thay đổi, reload data
@@ -287,7 +246,7 @@ class BlockManager extends BaseComponent
         $this->requireManager();
 
         try {
-            $block = Block::where('pid', $this->parish_id)
+            $block = Block::ofParish($this->parish_id)
                 ->where('namhoc', $this->selectedNamHoc)
                 ->findOrFail($id);
 
@@ -319,24 +278,15 @@ class BlockManager extends BaseComponent
 
         $this->validate($this->formRules, $this->messages);
 
+        if (!$this->validateUniqueName()) {
+            session()->flash('error', 'Tên khối đã tồn tại');
+            return;
+        }
+
         // Save data
 
         try {
             DB::beginTransaction();
-
-            // Check trùng tên trong cùng năm học và xứ
-            $exists = Block::where('pid', $this->parish_id)
-                ->where('namhoc', $this->selectedNamHoc)
-                ->where('name', $this->name)
-                ->when($this->editingId, function ($q) {
-                    $q->where('id', '!=', $this->editingId);
-                })
-                ->exists();
-
-            if ($exists) {
-                session()->flash('error', 'Tên khối đã tồn tại trong năm học này');
-                return;
-            }
 
             Block::updateOrCreate(
                 ['id' => $this->editingId],
@@ -386,7 +336,7 @@ class BlockManager extends BaseComponent
         $this->requireManager();
 
         try {
-            $block = Block::where('pid', $this->parish_id)
+            $block = Block::ofParish($this->parish_id)
                 ->where('namhoc', $this->selectedNamHoc)
                 ->findOrFail($id);
 
@@ -418,7 +368,7 @@ class BlockManager extends BaseComponent
         try {
             DB::beginTransaction();
 
-            $block = Block::where('pid', $this->parish_id)
+            $block = Block::ofParish($this->parish_id)
                 ->where('namhoc', $this->selectedNamHoc)
                 ->findOrFail($id);
 
@@ -457,12 +407,12 @@ class BlockManager extends BaseComponent
         try {
             DB::beginTransaction();
 
-            $block = Block::where('pid', $this->parish_id)
+            $block = Block::ofParish($this->parish_id)
                 ->where('namhoc', $this->selectedNamHoc)
                 ->findOrFail($id);
 
             // Find block với weight nhỏ hơn gần nhất
-            $prevBlock = Block::where('pid', $this->parish_id)
+            $prevBlock = Block::ofParish($this->parish_id)
                 ->where('namhoc', $this->selectedNamHoc)
                 ->where('weight', '<', $block->weight)
                 ->orderBy('weight', 'desc')
@@ -498,12 +448,12 @@ class BlockManager extends BaseComponent
         try {
             DB::beginTransaction();
 
-            $block = Block::where('pid', $this->parish_id)
+            $block = Block::ofParish($this->parish_id)
                 ->where('namhoc', $this->selectedNamHoc)
                 ->findOrFail($id);
 
             // Find block với weight lớn hơn gần nhất
-            $nextBlock = Block::where('pid', $this->parish_id)
+            $nextBlock = Block::ofParish($this->parish_id)
                 ->where('namhoc', $this->selectedNamHoc)
                 ->where('weight', '>', $block->weight)
                 ->orderBy('weight', 'asc')

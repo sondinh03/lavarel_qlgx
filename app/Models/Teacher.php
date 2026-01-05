@@ -5,7 +5,6 @@ namespace App\Models;
 use Backpack\CRUD\app\Models\Traits\CrudTrait;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Support\Facades\DB;
 use Venturecraft\Revisionable\RevisionableTrait;
 
 class Teacher extends Model
@@ -27,7 +26,9 @@ class Teacher extends Model
         'deid',     // deanery ID (Giáo Hạt)
         'did',      // Diocese ID (Giáo phận)
         'paid',     // Giáo họ ID
+        'holy_id',  // ID tên thánh
         'name',
+        'position',
         'birthday',
         'year',     // Có thể bỏ sau này
         'phone',
@@ -57,26 +58,19 @@ class Teacher extends Model
     |--------------------------------------------------------------------------
     */
 
-    /** cos theer bor */
-    // public function getTeacherAttribute()
-    // {
-    //     $id = $this->id;
-    //     $teacher = DB::table('teacher')
-    //         ->where('id', $id)
-    //         ->orderBy('id', 'ASC')
-    //         ->first();
-    //     if (!empty($teacher)) {
-    //         $namhoc = NamHoc::where('id', $teacher->namhoc)->get()->first();
-    //         $this->attributes['name'] = $teacher->name . ' (' . $namhoc->name . ')';
-    //         return $this->attributes['name']; //some logic to return numbers
-    //     }
-    // }
-
     /*
     |--------------------------------------------------------------------------
     | RELATIONS
     |--------------------------------------------------------------------------
     */
+
+    /**
+     * Teacher thuộc về một Holy
+     */
+    public function holy(): BelongsTo
+    {
+        return $this->belongsTo(Holymanagement::class, 'holy_id', 'id');
+    }
 
     /**
      * Teacher thuộc về một Giáo ho (Parish)
@@ -155,6 +149,14 @@ class Teacher extends Model
     public function getParishChildNameAttribute(): ?string
     {
         return $this->parishChild?->name;
+    }
+
+    /**
+     * Lấy tên Holy
+     */
+    public function getHolyNameAttribute(): ?string
+    {
+        return $this->holy?->name;
     }
 
     /**

@@ -4,8 +4,9 @@ namespace App\Models;
 
 use Backpack\CRUD\app\Models\Traits\CrudTrait;
 use Illuminate\Database\Eloquent\Model;
-
+use Illuminate\Support\Str;
 use Venturecraft\Revisionable\RevisionableTrait;
+
 class Holymanagement extends Model
 {
     use CrudTrait;
@@ -18,12 +19,7 @@ class Holymanagement extends Model
     */
 
     protected $table = 'holymanagements';
-    // protected $primaryKey = 'id';
-    // public $timestamps = false;
     protected $guarded = ['id'];
-    // protected $fillable = [];
-    // protected $hidden = [];
-    // protected $dates = [];
 
     /*
     |--------------------------------------------------------------------------
@@ -54,4 +50,8 @@ class Holymanagement extends Model
     | MUTATORS
     |--------------------------------------------------------------------------
     */
+    public function setNameAttribute($value)
+    {
+        $this->attributes['name'] = Str::title(trim($value));
+    }
 }

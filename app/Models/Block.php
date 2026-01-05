@@ -4,12 +4,8 @@ namespace App\Models;
 
 use Backpack\CRUD\app\Models\Traits\CrudTrait;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\MorphOne;
-
 
 use Venturecraft\Revisionable\RevisionableTrait;
-use Illuminate\Support\Facades\Auth;
-use Aws\RolesAnywhere\Exception\RolesAnywhereException;
 
 class Block extends Model
 {
@@ -66,6 +62,11 @@ class Block extends Model
     public function scopeActive($q)
     {
         return $q->where('status', self::STATUS_ACTIVE);
+    }
+
+    public function scopeOfParish($q, int $parishId)
+    {
+        return $q->where('pid', $parishId);
     }
 
     /*

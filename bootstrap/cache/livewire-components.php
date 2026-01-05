@@ -3,6 +3,7 @@
   'block.block-manager' => 'App\\Http\\Livewire\\Block\\BlockManager',
   'class-filter-selector' => 'App\\Http\\Livewire\\ClassFilterSelector',
   'filters.filter-bar' => 'App\\Http\\Livewire\\Filters\\FilterBar',
+  'holy.holy-manager' => 'App\\Http\\Livewire\\Holy\\HolyManager',
   'home' => 'App\\Http\\Livewire\\Home',
   'lop.lop-detail' => 'App\\Http\\Livewire\\Lop\\LopDetail',
   'lop.lop-form' => 'App\\Http\\Livewire\\Lop\\LopForm',

@@ -50,6 +50,7 @@ use App\Http\Controllers\HonPhoiExportController;
 use App\Http\Livewire\AttendanceManager;
 use App\Http\Livewire\Block\Block;
 use App\Http\Livewire\Block\BlockManager;
+use App\Http\Livewire\Holy\HolyManager;
 use App\Http\Livewire\Home;
 use App\Http\Livewire\Lop\CreateEditClassForm;
 use App\Http\Livewire\Lop\LopDetail;
@@ -95,6 +96,7 @@ Route::get('/khoi-hoc', BlockManager::class)->name('khoi-hoc');
 Route::get('/ho-so-hoc-sinh/{id}', StudentDetail::class)->name('student.detail');
 Route::get('/teacher', TeacherManager::class)->name('teacher.show');
 Route::get('/parish-child', ParishChild::class)->name('parish-child.show');
+Route::get('/holies', HolyManager::class)->name('holies');
 
 Route::get('{slug}', [SlugController::class, 'make']);
 

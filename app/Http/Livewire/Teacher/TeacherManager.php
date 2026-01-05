@@ -3,7 +3,11 @@
 namespace App\Http\Livewire\Teacher;
 
 use App\Http\Livewire\Base\BaseComponent;
+use App\Models\Holymanagement;
 use App\Models\Teacher;
+use App\Models\HolyName;
+use App\Models\Parish;
+use App\Models\ParishChild;
 use Illuminate\Support\Facades\DB;
 
 /**
@@ -14,7 +18,7 @@ use Illuminate\Support\Facades\DB;
  * - Create/Edit/Delete giáo viên
  * - Toggle status
  * - Search theo tên và số điện thoại
- * - Filter theo giáo xứ
+ * - Select tên thánh và giáo họ
  */
 class TeacherManager extends BaseComponent
 {
@@ -28,8 +32,14 @@ class TeacherManager extends BaseComponent
 
     // ==================== FORM FIELDS ====================
 
+    /** @var int|null ID tên thánh */
+    public $holy_id;
+
     /** @var string Tên giáo viên */
     public $name;
+
+    /** @var int|null ID giáo họ */
+    public $paid;
 
     /** @var string|null Ngày sinh */
     public $birthday;
@@ -43,35 +53,38 @@ class TeacherManager extends BaseComponent
     /** @var int Trạng thái (1 = active, 0 = inactive) */
     public $status = 1;
 
-    /** @var int|null Năm (có thể bỏ sau) */
-    public $year;
+    // ==================== DATA ====================
 
-    /** @var int|null Năm học (có thể bỏ sau) */
-    public $namhoc;
+    /** @var \Illuminate\Pagination\LengthAwarePaginator Danh sách giáo viên */
+    protected $teachers;
+
+    /** @var \Illuminate\Support\Collection Danh sách tên thánh */
+    public $holyNames;
+
+    /** @var \Illuminate\Support\Collection Danh sách giáo họ */
+    public $parishChildren;
 
     // ==================== VALIDATION ====================
 
     protected $formRules = [
+        // 'holy_id' => 'nullable|integer|exists:holy_names,id',
         'name' => 'required|string|max:255',
+        // 'paid' => 'nullable|integer|exists:parish_child,id',
         'birthday' => 'nullable|date|before:today',
         'phoneNumber' => 'nullable|string|max:20',
         'note' => 'nullable|string|max:500',
         'status' => 'required|boolean',
-        'year' => 'nullable|integer|min:1900|max:2100',
-        'namhoc' => 'nullable|integer|exists:nam_hoc,id',
     ];
 
     protected $messages = [
+        // 'holy_id.exists' => 'Tên thánh không hợp lệ',
         'name.required' => 'Vui lòng nhập tên giáo viên',
         'name.max' => 'Tên giáo viên không được quá 255 ký tự',
+        // 'paid.exists' => 'Giáo họ không hợp lệ',
         'birthday.date' => 'Ngày sinh không hợp lệ',
         'birthday.before' => 'Ngày sinh phải trước ngày hôm nay',
         'phoneNumber.max' => 'Số điện thoại không được quá 20 ký tự',
         'note.max' => 'Ghi chú không được quá 500 ký tự',
-        'year.integer' => 'Năm phải là số nguyên',
-        'year.min' => 'Năm phải từ 1900 trở lên',
-        'year.max' => 'Năm không được quá 2100',
-        'namhoc.exists' => 'Năm học không hợp lệ',
     ];
 
     // ==================== QUERY STRING ====================
@@ -90,8 +103,8 @@ class TeacherManager extends BaseComponent
 
     protected $listeners = [
         'refresh' => 'handleRefresh',
-        'teacherCreated' => '$refresh',
-        'teacherUpdated' => '$refresh',
+        'teacherCreated' => 'loadTeachers',
+        'teacherUpdated' => 'loadTeachers',
     ];
 
     // ==================== LIFECYCLE ====================
@@ -107,10 +120,97 @@ class TeacherManager extends BaseComponent
         $this->requireParishId();
     }
 
+    /**
+     * Load dữ liệu ban đầu (implement từ BaseComponent)
+     */
     protected function loadInitialData(): void
     {
-        // Không cần load gì thêm
-        // Data sẽ được load trong render() với pagination
+        $this->loadHolyNames();
+        $this->loadParishChildren();
+        $this->loadTeachers();
+    }
+
+    /**
+     * Load danh sách tên thánh
+     */
+    protected function loadHolyNames(): void
+    {
+        try {
+            $this->holyNames = Holymanagement::query()
+                ->when($this->search, function ($q) {
+                    $q->where('name', 'like', '%' . trim($this->search) . '%');
+                })
+                ->orderBy('name')
+                ->pluck('name', 'id');
+        } catch (\Exception $e) {
+            $this->logError($e, 'Error loading holy names');
+            $this->holyNames = collect();
+        }
+    }
+
+    /**
+     * Load danh sách giáo họ thuộc giáo xứ
+     */
+    protected function loadParishChildren(): void
+    {
+        try {
+            $this->parishChildren = Parish::where('pid', $this->parish_id)
+                ->active()
+                ->orderBy('name')
+                ->pluck('name', 'id');
+        } catch (\Exception $e) {
+            $this->logError($e, 'Error loading parish children');
+            $this->parishChildren = collect();
+        }
+    }
+
+    /**
+     * Load danh sách giáo viên với pagination
+     */
+    public function loadTeachers(): void
+    {
+        try {
+            $query = Teacher::ofParish($this->parish_id)
+                ->with(['holy', 'parishChild'])
+                ->orderBy('name', 'asc');
+
+            // Apply search filter
+            if (!empty($this->search)) {
+                $query->search($this->search);
+            }
+
+            $this->teachers = $query->paginate($this->perPage);
+        } catch (\Exception $e) {
+            $this->logError($e, 'Error loading teachers');
+            session()->flash('error', 'Có lỗi khi tải danh sách giáo viên');
+
+            $this->teachers = new \Illuminate\Pagination\LengthAwarePaginator(
+                [],
+                0,
+                $this->perPage,
+                $this->page ?? 1
+            );
+        }
+    }
+
+    // ==================== PROPERTY UPDATERS ====================
+
+    /**
+     * Khi search thay đổi, reload data
+     */
+    public function updatedSearch(): void
+    {
+        parent::updatedSearch(); // Reset page
+        $this->loadTeachers();    // Reload data
+    }
+
+    /**
+     * Khi perPage thay đổi, reload data
+     */
+    public function updatedPerPage(): void
+    {
+        parent::updatedPerPage(); // Sanitize + validate + reset page
+        $this->loadTeachers();     // Reload data
     }
 
     // ==================== CRUD ACTIONS ====================
@@ -137,13 +237,13 @@ class TeacherManager extends BaseComponent
                 ->findOrFail($id);
 
             $this->editingId = $teacher->id;
+            $this->holy_id = $teacher->holy_id;
             $this->name = $teacher->name;
+            $this->paid = $teacher->paid;
             $this->birthday = $teacher->birthday?->format('Y-m-d');
             $this->phoneNumber = $teacher->phone_number;
             $this->note = $teacher->note;
             $this->status = $teacher->status;
-            $this->year = $teacher->year;
-            $this->namhoc = $teacher->namhoc;
 
             $this->showForm = true;
         } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
@@ -168,33 +268,35 @@ class TeacherManager extends BaseComponent
             DB::beginTransaction();
 
             // Check trùng tên và số điện thoại trong cùng xứ
-            $exists = Teacher::where('pid', $this->parish_id)
-                ->where('name', $this->name)
-                ->where('phone_number', $this->phoneNumber)
-                ->when($this->editingId, function ($q) {
-                    $q->where('id', '!=', $this->editingId);
-                })
-                ->exists();
+            if ($this->phoneNumber) {
+                $exists = Teacher::where('pid', $this->parish_id)
+                    ->where('name', $this->name)
+                    ->where('phone_number', $this->phoneNumber)
+                    ->when($this->editingId, function ($q) {
+                        $q->where('id', '!=', $this->editingId);
+                    })
+                    ->exists();
 
-            if ($exists) {
-                session()->flash('error', 'Giáo viên với tên và số điện thoại này đã tồn tại');
-                return;
+                if ($exists) {
+                    DB::rollBack();
+                    session()->flash('error', 'Giáo viên với tên và số điện thoại này đã tồn tại');
+                    return;
+                }
             }
 
             Teacher::updateOrCreate(
                 ['id' => $this->editingId],
                 [
+                    'holy_id' => $this->holy_id ?: null,
                     'name' => $this->name,
+                    'paid' => $this->paid ?: 0,
                     'birthday' => $this->birthday ?: null,
                     'phone_number' => $this->phoneNumber ?: null,
                     'note' => $this->note ?: null,
                     'status' => $this->status,
-                    'year' => $this->year ?: null,
-                    'namhoc' => $this->namhoc ?: null,
                     'pid' => $this->parish_id,
                     'did' => 0,  // Default value
                     'deid' => 0, // Default value
-                    'paid' => 0, // Default value
                 ]
             );
 
@@ -207,6 +309,9 @@ class TeacherManager extends BaseComponent
             session()->flash('message', $message);
 
             $this->resetForm();
+            $this->loadTeachers();
+
+            // Emit event
             $this->emit($this->editingId ? 'teacherUpdated' : 'teacherCreated');
         } catch (\Exception $e) {
             DB::rollBack();
@@ -238,6 +343,8 @@ class TeacherManager extends BaseComponent
                 : 'Đã vô hiệu hóa giáo viên';
 
             session()->flash('message', $message);
+
+            $this->loadTeachers();
         } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
             session()->flash('error', 'Không tìm thấy giáo viên này');
         } catch (\Exception $e) {
@@ -260,10 +367,13 @@ class TeacherManager extends BaseComponent
             $teacher = Teacher::where('pid', $this->parish_id)
                 ->findOrFail($id);
 
-            // TODO: Check nếu giáo viên đang được phân công dạy lớp
-            // $hasClasses = \App\Models\Assignment::where('teacher_id', $teacher->id)->exists();
-            // if ($hasClasses) {
-            //     session()->flash('error', 'Không thể xóa giáo viên đang phân công dạy');
+            // Check nếu giáo viên đang được phân công dạy lớp
+            // $hasAssignments = \App\Models\Assignment::where('teacher_id', $teacher->id)
+            //     ->exists();
+
+            // if ($hasAssignments) {
+            //     DB::rollBack();
+            //     session()->flash('error', 'Không thể xóa giáo viên đang phân công dạy lớp');
             //     return;
             // }
 
@@ -272,6 +382,8 @@ class TeacherManager extends BaseComponent
             DB::commit();
 
             session()->flash('message', 'Đã xóa giáo viên thành công');
+
+            $this->loadTeachers();
         } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
             DB::rollBack();
             session()->flash('error', 'Không tìm thấy giáo viên này');
@@ -285,18 +397,28 @@ class TeacherManager extends BaseComponent
     // ==================== FORM HELPERS ====================
 
     /**
+     * Đóng modal
+     */
+    public function closeModal(): void
+    {
+        $this->showForm = false;
+        $this->resetForm();
+        $this->resetValidation();
+    }
+
+    /**
      * Reset form về trạng thái mặc định
      */
     public function resetForm(): void
     {
         $this->reset([
             'editingId',
+            'holy_id',
             'name',
+            'paid',
             'birthday',
             'phoneNumber',
             'note',
-            'year',
-            'namhoc',
         ]);
 
         $this->status = 1; // Default active
@@ -314,23 +436,24 @@ class TeacherManager extends BaseComponent
         $this->resetForm();
     }
 
+    /**
+     * Override handleRefresh để reload data
+     */
+    public function handleRefresh(): void
+    {
+        $this->resetPage();
+        $this->loadTeachers();
+        session()->flash('message', 'Đã làm mới danh sách');
+    }
+
     // ==================== RENDER ====================
 
     public function render()
     {
-        $query = Teacher::where('pid', $this->parish_id)
-            ->with(['parish'])
-            ->orderBy('name', 'asc');
-
-        // Apply search filter
-        if (!empty($this->search)) {
-            $query->search($this->search);
-        }
-
-        $teachers = $query->paginate($this->perPage);
-
         return view('livewire.teacher.teacher-manager', [
-            'teachers' => $teachers,
+            'teachers' => $this->teachers,
+            'holyNames' => $this->holyNames,
+            'parishChildren' => $this->parishChildren,
         ])
             ->extends('frontend.layout.main')
             ->section('content');

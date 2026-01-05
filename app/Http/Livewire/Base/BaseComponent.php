@@ -45,7 +45,7 @@ abstract class BaseComponent extends Component
     public $search = '';
 
     /** @var int Items per page */
-    public $perPage = 15;
+    public int $perPage = 15;
 
     /** @var array Allowed per page options */
     protected $perPageOptions = [10, 15, 25, 50];
@@ -84,7 +84,7 @@ abstract class BaseComponent extends Component
      */
     protected $listeners = [
         'refresh' => '$refresh',
-        
+
     ];
 
     // ==================== LIFECYCLE HOOKS ====================
@@ -171,7 +171,7 @@ abstract class BaseComponent extends Component
         ];
 
         if ($this->usePagination) {
-            $params['perPage'] = ['except' => 10];
+            $params['perPage'] = ['except' => 15];
             $params['page'] = ['except' => 1];
         }
 
