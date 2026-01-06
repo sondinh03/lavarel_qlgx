@@ -48,7 +48,7 @@ class Block extends Model
     | RELATIONS
     |--------------------------------------------------------------------------
     */
-    public function namHoc()
+    public function namHocRelation()
     {
         return $this->belongsTo(NamHoc::class, 'namhoc');
     }

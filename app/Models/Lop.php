@@ -151,6 +151,12 @@ class Lop extends Model
             ->withTimestamps();
     }
 
+    public function activeStudents()
+    {
+        return $this->belongsToMany(Student::class, 'students_class', 'class_id', 'student_id')
+            ->wherePivot('status', 1); // Chỉ lấy học sinh đang học
+    }
+
     public function blockRelation()
     {
         return $this->belongsTo(Block::class, 'block', 'id');

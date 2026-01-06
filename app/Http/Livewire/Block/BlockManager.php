@@ -76,7 +76,7 @@ class BlockManager extends BaseComponent
      */
     protected $messages = [
         'selectedNamHoc.required' => 'Vui lòng chọn năm học',
-        'selectedNamHoc.exists' => 'Năm học không hợp lệ',
+        'selectedNamHocexists' => 'Năm học không hợp lệ',
         'name.required' => 'Vui lòng nhập tên khối',
         'name.max' => 'Tên khối không được quá 255 ký tự',
         'weight.numeric'  => 'Thứ tự phải là một số hợp lệ',
