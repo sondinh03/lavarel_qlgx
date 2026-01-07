@@ -176,4 +176,9 @@ class Lop extends Model
     {
         return $q->where('pid', $parishId);
     }
+
+    public function setNameAttribute($value): void
+    {
+        $this->attributes['name'] = ucwords(strtolower(trim($value)));
+    }
 }

@@ -190,7 +190,7 @@ class BlockManager extends BaseComponent
         }
 
         try {
-            $query = Block::with('namHoc')
+            $query = Block::with('namHocRelation')
                 ->ofParish($this->parish_id)
                 ->where('namhoc', $this->selectedNamHoc)
                 ->orderBy('weight', 'asc');

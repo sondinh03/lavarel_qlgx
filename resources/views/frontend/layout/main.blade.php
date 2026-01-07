@@ -82,6 +82,11 @@
                                 Giáo lý viên
                             </a>
 
+                            {{-- <a href="{{ route('lop.teachers') }}"
+                            class="block px-4 py-2 text-sm hover:bg-indigo-50">
+                            Phân công giáo lý viên
+                            </a> --}}
+
                             <a href="{{ route('holies') }}"
                                 class="block px-4 py-2 text-sm hover:bg-indigo-50">
                                 Tên thánh

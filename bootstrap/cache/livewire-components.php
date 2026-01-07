@@ -5,6 +5,7 @@
   'filters.filter-bar' => 'App\\Http\\Livewire\\Filters\\FilterBar',
   'holy.holy-manager' => 'App\\Http\\Livewire\\Holy\\HolyManager',
   'home' => 'App\\Http\\Livewire\\Home',
+  'lop.assign-teacher' => 'App\\Http\\Livewire\\Lop\\AssignTeacher',
   'lop.lop-detail' => 'App\\Http\\Livewire\\Lop\\LopDetail',
   'lop.lop-form' => 'App\\Http\\Livewire\\Lop\\LopForm',
   'lop.lop-list' => 'App\\Http\\Livewire\\Lop\\LopList',

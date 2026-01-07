@@ -65,7 +65,8 @@ class FilterBar extends Component
             return;
         }
 
-        $this->khois = Block::where('namhoc', $this->selectedNamHoc)
+        $this->khois = Block::ofParish($this->parish_id)
+            ->where('namhoc', $this->selectedNamHoc)
             ->active()
             ->orderBy('weight')
             ->pluck('name', 'id');

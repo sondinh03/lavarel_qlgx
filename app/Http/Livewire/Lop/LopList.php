@@ -15,11 +15,11 @@ use Illuminate\Validation\ValidationException;
  * 
  * Features:
  * - Phân trang với options
- * - Tìm kiếm theo tên
+ * - Tìm kiếm theo tên/mã lớp
  * - Lọc theo năm học, khối
  * - Query string support (URL sharing)
  * - Auto-select năm học mới nhất
- * - CRUD với modal form
+ * - CRUD với modal form (inline actions như Block/NamHoc)
  */
 
 class LopList extends BaseComponent
@@ -33,10 +33,11 @@ class LopList extends BaseComponent
     public $selectedKhoi = '';
 
     // ==================== FORM STATE ====================
-    /** @var bool */
+
+    /** @var bool Hiển thị modal form */
     public $showForm = false;
 
-    /** @var int|null */
+    /** @var int|null ID lớp đang edit (null = create) */
     public $editingId = null;
 
     // ==================== FORM FIELDS ====================
@@ -44,21 +45,18 @@ class LopList extends BaseComponent
     /** @var string Mã lớp */
     public $symbol;
 
-    /** @var string */
+    /** @var string Tên lớp */
     public $name;
 
-    /** @var int|null */
+    /** @var int|null ID khối */
     public $block;
 
-    /** @var string */
-    public $schoolyear;
-
-    /** @var int */
+    /** @var int Trạng thái */
     public $status = 1;
 
     // ==================== DATA ====================
 
-    /** @var \Illuminate\Support\Collection Danh sách khối để chọn trong form */
+    /** @var \Illuminate\Support\Collection Danh sách khối có thể chọn */
     public $availableBlocks;
 
     // ==================== VALIDATION ====================
@@ -97,6 +95,7 @@ class LopList extends BaseComponent
     ];
 
     // ==================== QUERY STRING ====================
+
     protected function queryString()
     {
         return array_merge([
@@ -117,7 +116,7 @@ class LopList extends BaseComponent
     // ==================== LIFECYCLE ====================
 
     /**
-     * Override mount để set perPage default
+     * Component initialization
      */
     public function mount()
     {
@@ -154,6 +153,7 @@ class LopList extends BaseComponent
     {
         parent::sanitizeQueryString();
 
+        // Sanitize selectedNamHoc
         if ($this->selectedNamHoc === '' || $this->selectedNamHoc === null) {
             $this->selectedNamHoc = null;
         } else {
@@ -183,9 +183,13 @@ class LopList extends BaseComponent
 
     // ==================== PROPERTY UPDATERS ====================
 
+    /**
+     * ✅ FIX: Khi search thay đổi - Livewire tự động re-render
+     */
     public function updatedSearch(): void
     {
-        parent::updatedSearch();
+        parent::updatedSearch(); // Reset page
+        // Livewire sẽ tự động gọi lại render() và getLopsPaginated()
     }
 
     /**
@@ -193,12 +197,10 @@ class LopList extends BaseComponent
      */
     public function updatedSelectedNamHoc(): void
     {
-        // Sanitize
         $this->selectedNamHoc = is_numeric($this->selectedNamHoc)
             ? (int) $this->selectedNamHoc
             : null;
 
-        // Validate
         try {
             $this->validateOnly('selectedNamHoc');
         } catch (ValidationException $e) {
@@ -220,7 +222,6 @@ class LopList extends BaseComponent
      */
     public function updatedSelectedKhoi(): void
     {
-        // Sanitize: allow empty string (all) or int
         if ($this->selectedKhoi === '' || $this->selectedKhoi === null) {
             $this->selectedKhoi = '';
         } else {
@@ -229,7 +230,6 @@ class LopList extends BaseComponent
                 : '';
         }
 
-        // Validate only if not empty
         if ($this->selectedKhoi !== '') {
             try {
                 $this->validateOnly('selectedKhoi');
@@ -258,7 +258,6 @@ class LopList extends BaseComponent
 
         // Load blocks cho form
         $this->loadAvailableBlocks();
-
 
         if ($this->availableBlocks->isEmpty()) {
             session()->flash('warning', 'Chưa có khối học nào. Vui lòng tạo khối học trước');
@@ -313,14 +312,20 @@ class LopList extends BaseComponent
 
         $this->validate($this->formRules, $this->messages);
 
+        if (!$this->validateUniqueSymbol()) {
+            session()->flash('error', 'Mã lớp đã tồn tại trong năm học này');
+            return;
+        }
 
+        // Validate tên lớp không trùng
         if (!$this->validateUniqueName()) {
-            session()->flash('error', 'Tên lớp đã tồn tại');
+            session()->flash('error', 'Tên lớp đã tồn tại trong năm học này');
             return;
         }
 
         try {
             DB::beginTransaction();
+
             Lop::updateOrCreate(
                 ['id' => $this->editingId],
                 [
@@ -362,7 +367,36 @@ class LopList extends BaseComponent
     }
 
     /**
-     * Load danh sách khối có thể chọn
+     * Toggle status lớp học
+     */
+    public function toggleStatus(int $id): void
+    {
+        $this->requireManager();
+
+        try {
+            $lop = Lop::ofParish($this->parish_id)
+                ->where('schoolyear', $this->selectedNamHoc)
+                ->findOrFail($id);
+
+            $lop->update(['status' => !$lop->status]);
+
+            $message = $lop->status
+                ? 'Đã kích hoạt lớp học'
+                : 'Đã tắt lớp học';
+
+            session()->flash('message', $message);
+        } catch (ModelNotFoundException $e) {
+            session()->flash('error', 'Không tìm thấy lớp học này');
+        } catch (\Exception $e) {
+            $this->logError($e, 'Error toggling class status', ['id' => $id]);
+            session()->flash('error', 'Có lỗi khi thay đổi trạng thái lớp học');
+        }
+    }
+
+    // ==================== DATA LOADING ====================
+
+    /**
+     * ✅ FIX: Load blocks theo năm học đã chọn
      */
     protected function loadAvailableBlocks(): void
     {
@@ -384,150 +418,10 @@ class LopList extends BaseComponent
     }
 
     /**
-     * Toggle status lớp học
-     */
-    public function toggleStatus(int $id): void
-    {
-        $this->requireManager();
-
-        try {
-            $lop = Lop::ofParish($this->parish_id)
-                ->where('schoolyear', $this->selectedNamHoc)
-                ->findOrFail($id);
-
-            $lop->update(['status' => !$lop->status]);
-
-            $message = $lop->status
-                ? 'Đã kích hoạt lớp học'
-                : 'Đã vô hiệu hóa lớp học';
-
-            session()->flash('message', $message);
-        } catch (ModelNotFoundException $e) {
-            session()->flash('error', 'Không tìm thấy lớp học này');
-        } catch (\Exception $e) {
-            $this->logError($e, 'Error toggling class status', ['id' => $id]);
-            session()->flash('error', 'Có lỗi khi thay đổi trạng thái lớp học');
-        }
-    }
-
-    // ==================== EVENT HANDLERS ====================
-
-    /**
-     * Handle filters changed event từ ClassFilterSelector
-     */
-    public function handleFilterChanged($filters)
-    {
-        if (!is_array($filters)) {
-            return;
-        }
-
-        $namHocChanged = false;
-
-        /** ===================== NĂM HỌC ===================== */
-        if (array_key_exists('namHoc', $filters)) {
-            $newNamHoc = is_numeric($filters['namHoc'])
-                ? (int) $filters['namHoc']
-                : null;
-
-            if ($newNamHoc !== $this->selectedNamHoc) {
-                $this->selectedNamHoc = $newNamHoc;
-                $namHocChanged = true;
-            }
-        }
-
-        /** ===================== KHỐI ===================== */
-        if (array_key_exists('khoi', $filters)) {
-            $this->selectedKhoi = is_numeric($filters['khoi'])
-                ? (int) $filters['khoi']
-                : '';
-        }
-
-        /** ===================== RESET PHỤ ===================== */
-        $this->search = '';
-        $this->resetPage();
-
-        /** ===================== LOAD LẠI KHỐI ===================== */
-        if ($namHocChanged) {
-            $this->selectedKhoi = '';
-            $this->loadAvailableBlocks();
-        }
-    }
-
-    /**
-     * Reset filters về giá trị mặc định
-     * Override từ BaseComponent để reset thêm filters
-     */
-    public function resetFilters(): void
-    {
-        $this->selectedKhoi = '';
-        $this->search = '';
-        $this->resetPage();
-
-        session()->flash('message', 'Đã đặt lại bộ lọc');
-    }
-
-
-
-    // ==================== FORM HELPERS ====================
-
-    public function closeModal()
-    {
-        $this->showForm = false;
-        $this->resetForm();
-        $this->resetValidation();
-    }
-
-    /**
-     * Reset form về trạng thái mặc định
-     */
-    public function resetForm(): void
-    {
-        $this->reset([
-            'editingId',
-            'symbol',
-            'name',
-            'block',
-            'status',
-        ]);
-
-        $this->status = 1; // Default active
-        // $this->showForm = false;
-
-        // Clear validation errors
-        $this->resetValidation();
-    }
-
-    // ==================== HELPER METHODS ====================
-
-    protected function validateUniqueName(): bool
-    {
-        return !Lop::ofParish($this->parish_id)
-            ->where('schoolyear', $this->selectedNamHoc)
-            ->where('block', $this->selectedKhoi)
-            ->where('name', $this->name)
-            ->when($this->editingId, fn($q) => $q->where('id', '!=', $this->editingId))
-            ->exists();
-    }
-
-    /**
-     * Get năm học mặc định (năm active đầu tiên)
-     */
-    protected function getDefaultNamHocId(): ?int
-    {
-        return NamHoc::ofParish($this->parish_id)
-            ->active()
-            ->orderByDesc('name')
-            ->value('id');
-    }
-
-    /**
-     * Get paginated lops using LopService
-     * 
-     * @return \Illuminate\Pagination\LengthAwarePaginator
+     * ✅ IMPROVED: Get paginated lops với better error handling
      */
     private function getLopsPaginated()
     {
-        // Nếu chưa chọn năm học, return empty paginator
         if (!$this->selectedNamHoc) {
             return new \Illuminate\Pagination\LengthAwarePaginator(
                 [],
@@ -548,7 +442,7 @@ class LopList extends BaseComponent
                 $query->where('block', $this->selectedKhoi);
             }
 
-            // Search
+            // ✅ IMPROVED: Search với trim và sanitize
             if (!empty(trim($this->search))) {
                 $searchTerm = '%' . trim($this->search) . '%';
                 $query->where(function ($q) use ($searchTerm) {
@@ -582,12 +476,133 @@ class LopList extends BaseComponent
         }
     }
 
+    // ==================== EVENT HANDLERS ====================
+
+    /**
+     * Handle filters changed event từ FilterBar
+     */
+    public function handleFilterChanged($filters)
+    {
+        if (!is_array($filters)) {
+            return;
+        }
+
+        $namHocChanged = false;
+
+        // Năm học
+        if (array_key_exists('namHoc', $filters)) {
+            $newNamHoc = is_numeric($filters['namHoc'])
+                ? (int) $filters['namHoc']
+                : null;
+
+            if ($newNamHoc !== $this->selectedNamHoc) {
+                $this->selectedNamHoc = $newNamHoc;
+                $namHocChanged = true;
+            }
+        }
+
+        // Khối
+        if (array_key_exists('khoi', $filters)) {
+            $this->selectedKhoi = is_numeric($filters['khoi'])
+                ? (int) $filters['khoi']
+                : '';
+        }
+
+        // Reset phụ
+        $this->search = '';
+        $this->resetPage();
+
+        // Load lại khối nếu năm học thay đổi
+        if ($namHocChanged) {
+            $this->selectedKhoi = '';
+            $this->loadAvailableBlocks();
+        }
+    }
+
+    /**
+     * Reset filters về giá trị mặc định
+     */
+    public function resetFilters(): void
+    {
+        $this->selectedKhoi = '';
+        $this->search = '';
+        $this->resetPage();
+
+        session()->flash('message', 'Đã đặt lại bộ lọc');
+    }
+
+    // ==================== FORM HELPERS ====================
+
+    /**
+     * Đóng modal
+     */
+    public function closeModal()
+    {
+        $this->showForm = false;
+        $this->resetForm();
+        $this->resetValidation();
+    }
+
+    /**
+     * Reset form về trạng thái mặc định
+     */
+    public function resetForm(): void
+    {
+        $this->reset([
+            'editingId',
+            'symbol',
+            'name',
+            'block',
+            'status',
+        ]);
+
+        $this->status = 1; // Default active
+        $this->resetValidation();
+    }
+
+    // ==================== HELPER METHODS ====================
+
+    /**
+     * Validate tên lớp không trùng trong cùng khối
+     */
+    protected function validateUniqueName(): bool
+    {
+        return !Lop::ofParish($this->parish_id)
+            ->where('schoolyear', $this->selectedNamHoc)
+            ->where('block', $this->block)
+            ->where('name', $this->name)
+            ->when($this->editingId, fn($q) => $q->where('id', '!=', $this->editingId))
+            ->exists();
+    }
+
+    protected function validateUniqueSymbol(): bool
+    {
+        return !Lop::ofParish($this->parish_id)
+            ->where('schoolyear', $this->selectedNamHoc)
+            ->where('symbol', $this->symbol)
+            ->when($this->editingId, fn($q) => $q->where('id', '!=', $this->editingId))
+            ->exists();
+    }
+
+    /**
+     * Get năm học mặc định (năm active mới nhất)
+     */
+    protected function getDefaultNamHocId(): ?int
+    {
+        return NamHoc::ofParish($this->parish_id)
+            ->active()
+            ->orderByDesc('name')
+            ->value('id');
+    }
+
+    // ==================== RENDER ====================
+
     /**
      * Render component
      */
     public function render()
     {
-        // Load lops using service
+        // Load lops using pagination
         $lops = $this->getLopsPaginated();
 
         return view('livewire.lop.lop-list', [

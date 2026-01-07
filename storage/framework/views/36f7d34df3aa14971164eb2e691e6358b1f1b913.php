@@ -133,41 +133,24 @@
             
             <div class="px-6 py-4 border-b border-slate-200 bg-slate-50/70">
                 <div class="flex items-center justify-between gap-4">
-
-
                     
                     <div class="flex items-center gap-3">
                         
-                        <div class="p-6 bg-slate-50">
-                            <?php
+                        <?php
 if (! isset($_instance)) {
-    $html = \Livewire\Livewire::mount('filters.filter-bar', ['showNamHoc' => true,'showKhoi' => true,'showLop' => false,'showKy' => false,'selectedNamHoc' => $selectedNamHoc,'selectedKhoi' => $selectedKhoi])->html();
+    $html = \Livewire\Livewire::mount('filters.filter-bar', ['showNamHoc' => true,'showKhoi' => true,'showLop' => false,'showKy' => false,'selectedNamHoc' => $selectedNamHoc])->html();
 } elseif ($_instance->childHasBeenRendered('l2412341171-0')) {
     $componentId = $_instance->getRenderedChildComponentId('l2412341171-0');
     $componentTag = $_instance->getRenderedChildComponentTagName('l2412341171-0');
     $html = \Livewire\Livewire::dummyMount($componentId, $componentTag);
     $_instance->preserveRenderedChild('l2412341171-0');
 } else {
-    $response = \Livewire\Livewire::mount('filters.filter-bar', ['showNamHoc' => true,'showKhoi' => true,'showLop' => false,'showKy' => false,'selectedNamHoc' => $selectedNamHoc,'selectedKhoi' => $selectedKhoi]);
+    $response = \Livewire\Livewire::mount('filters.filter-bar', ['showNamHoc' => true,'showKhoi' => true,'showLop' => false,'showKy' => false,'selectedNamHoc' => $selectedNamHoc]);
     $html = $response->html();
     $_instance->logRenderedChild('l2412341171-0', $response->id(), \Livewire\Livewire::getRootElementTagName($html));
 }
 echo $html;
 ?>
-
-                            <?php if (isset($component)) { $__componentOriginalc254754b9d5db91d5165876f9d051922ca0066f4 = $component; } ?>
-<?php $component = $__env->getContainer()->make(Illuminate\View\AnonymousComponent::class, ['view' => 'components.loading.overlay','data' => ['wireTarget' => 'selectedNamHoc,selectedKhoi,resetFilters','mode' => 'inline']]); ?>
-<?php $component->withName('loading.overlay'); ?>
-<?php if ($component->shouldRender()): ?>
-<?php $__env->startComponent($component->resolveView(), $component->data()); ?>
-<?php $component->withAttributes(['wire-target' => 'selectedNamHoc,selectedKhoi,resetFilters','mode' => 'inline']); ?>
-<?php echo $__env->renderComponent(); ?>
-<?php endif; ?>
-<?php if (isset($__componentOriginalc254754b9d5db91d5165876f9d051922ca0066f4)): ?>
-<?php $component = $__componentOriginalc254754b9d5db91d5165876f9d051922ca0066f4; ?>
-<?php unset($__componentOriginalc254754b9d5db91d5165876f9d051922ca0066f4); ?>
-<?php endif; ?>
-                        </div>
 
                         
                         <input
@@ -250,11 +233,11 @@ echo $html;
 <?php unset($__componentOriginalc254754b9d5db91d5165876f9d051922ca0066f4); ?>
 <?php endif; ?>
                             <?php if (isset($component)) { $__componentOriginalc254754b9d5db91d5165876f9d051922ca0066f4 = $component; } ?>
-<?php $component = $__env->getContainer()->make(Illuminate\View\AnonymousComponent::class, ['view' => 'components.table-header','data' => []]); ?>
+<?php $component = $__env->getContainer()->make(Illuminate\View\AnonymousComponent::class, ['view' => 'components.table-header','data' => ['class' => 'text-center']]); ?>
 <?php $component->withName('table-header'); ?>
 <?php if ($component->shouldRender()): ?>
 <?php $__env->startComponent($component->resolveView(), $component->data()); ?>
-<?php $component->withAttributes([]); ?>Sĩ số <?php echo $__env->renderComponent(); ?>
+<?php $component->withAttributes(['class' => 'text-center']); ?>Sĩ số <?php echo $__env->renderComponent(); ?>
 <?php endif; ?>
 <?php if (isset($__componentOriginalc254754b9d5db91d5165876f9d051922ca0066f4)): ?>
 <?php $component = $__componentOriginalc254754b9d5db91d5165876f9d051922ca0066f4; ?>
@@ -272,11 +255,22 @@ echo $html;
 <?php unset($__componentOriginalc254754b9d5db91d5165876f9d051922ca0066f4); ?>
 <?php endif; ?>
                             <?php if (isset($component)) { $__componentOriginalc254754b9d5db91d5165876f9d051922ca0066f4 = $component; } ?>
-<?php $component = $__env->getContainer()->make(Illuminate\View\AnonymousComponent::class, ['view' => 'components.table-header','data' => []]); ?>
+<?php $component = $__env->getContainer()->make(Illuminate\View\AnonymousComponent::class, ['view' => 'components.table-header','data' => ['class' => 'text-center']]); ?>
 <?php $component->withName('table-header'); ?>
 <?php if ($component->shouldRender()): ?>
 <?php $__env->startComponent($component->resolveView(), $component->data()); ?>
-<?php $component->withAttributes([]); ?>Thao tác <?php echo $__env->renderComponent(); ?>
+<?php $component->withAttributes(['class' => 'text-center']); ?>Trạng thái <?php echo $__env->renderComponent(); ?>
+<?php endif; ?>
+<?php if (isset($__componentOriginalc254754b9d5db91d5165876f9d051922ca0066f4)): ?>
+<?php $component = $__componentOriginalc254754b9d5db91d5165876f9d051922ca0066f4; ?>
+<?php unset($__componentOriginalc254754b9d5db91d5165876f9d051922ca0066f4); ?>
+<?php endif; ?>
+                            <?php if (isset($component)) { $__componentOriginalc254754b9d5db91d5165876f9d051922ca0066f4 = $component; } ?>
+<?php $component = $__env->getContainer()->make(Illuminate\View\AnonymousComponent::class, ['view' => 'components.table-header','data' => ['class' => 'text-center']]); ?>
+<?php $component->withName('table-header'); ?>
+<?php if ($component->shouldRender()): ?>
+<?php $__env->startComponent($component->resolveView(), $component->data()); ?>
+<?php $component->withAttributes(['class' => 'text-center']); ?>Thao tác <?php echo $__env->renderComponent(); ?>
 <?php endif; ?>
 <?php if (isset($__componentOriginalc254754b9d5db91d5165876f9d051922ca0066f4)): ?>
 <?php $component = $__componentOriginalc254754b9d5db91d5165876f9d051922ca0066f4; ?>
@@ -286,55 +280,175 @@ echo $html;
                     </thead>
 
                     <tbody class="divide-y divide-slate-100">
-                        <?php $__empty_1 = true; $__currentLoopData = $lops; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $index => $lop): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); $__empty_1 = false; ?>
-                        <?php if (isset($component)) { $__componentOriginalc254754b9d5db91d5165876f9d051922ca0066f4 = $component; } ?>
-<?php $component = $__env->getContainer()->make(Illuminate\View\AnonymousComponent::class, ['view' => 'components.lop.row','data' => ['lop' => $lop,'index' => $index,'paginator' => $lops]]); ?>
-<?php $component->withName('lop.row'); ?>
+                        <?php $__currentLoopData = $lops; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $index => $lop): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                        <tr class="hover:bg-slate-50 transition-colors" wire:key="lop-<?php echo e($lop->id); ?>">
+                            
+                            <td class="px-6 py-4 text-sm text-slate-500">
+                                <?php echo e(($lops->firstItem() ?? 0) + $index); ?>
+
+                            </td>
+
+                            
+                            <td class="px-6 py-4">
+                                <span class="font-mono text-sm font-semibold text-purple-600">
+                                    <?php echo e($lop->symbol ?? '-'); ?>
+
+                                </span>
+                            </td>
+
+                            
+                            <td class="px-6 py-4">
+                                <div class="font-semibold text-slate-900">
+                                    <?php echo e($lop->name); ?>
+
+                                </div>
+                            </td>
+
+                            
+                            <td class="px-6 py-4">
+                                <span class="inline-flex items-center px-3 py-1 rounded-full 
+                                             text-xs font-semibold bg-indigo-100 text-indigo-700">
+                                    <?php echo e($lop->blockRelation->name ?? 'N/A'); ?>
+
+                                </span>
+                            </td>
+
+                            
+                            <td class="px-6 py-4 text-center">
+                                <div class="inline-flex items-center gap-2 text-sm text-slate-700">
+                                    <svg class="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                                    </svg>
+                                    <span class="font-semibold"><?php echo e($lop->students_count ?? 0); ?></span>
+                                </div>
+                            </td>
+
+                            
+                            <td class="px-6 py-4">
+                                <?php if($lop->has_teacher): ?>
+                                <div x-data="{ open: false }" class="relative inline-block">
+                                    <button
+                                        @mouseenter="open = true"
+                                        @mouseleave="open = false"
+                                        class="flex items-center gap-2 text-sm font-medium text-slate-900 
+                                               hover:text-purple-600 transition-colors">
+                                        <span class="max-w-32 truncate">
+                                            <?php echo e($lop->teacher_names[0] ?? 'GLV'); ?>
+
+                                        </span>
+                                        <?php if(($lop->teacher_count ?? 0) > 1): ?>
+                                        <span class="inline-flex items-center justify-center w-5 h-5 
+                                                     text-xs font-semibold text-purple-700 bg-purple-100 rounded-full">
+                                            +<?php echo e($lop->teacher_count - 1); ?>
+
+                                        </span>
+                                        <?php endif; ?>
+                                    </button>
+
+                                    
+                                    <div x-show="open"
+                                        x-transition
+                                        x-cloak
+                                        class="absolute left-0 top-full mt-2 w-auto min-w-48 max-w-xs 
+                                                p-3 bg-white rounded-xl shadow-xl border border-slate-200 z-20">
+                                        <div class="space-y-2">
+                                            <?php $__currentLoopData = $lop->teacher_names ?? []; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $teacherName): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                                            <div class="flex items-center gap-2 text-sm">
+                                                <svg class="w-4 h-4 text-purple-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                        d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                                                </svg>
+                                                <span class="text-slate-700 font-medium"><?php echo e($teacherName); ?></span>
+                                            </div>
+                                            <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
+                                        </div>
+                                    </div>
+                                </div>
+                                <?php else: ?>
+                                <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full 
+                                             text-xs font-medium bg-amber-50 text-amber-700">
+                                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                                    </svg>
+                                    Chưa có GLV
+                                </span>
+                                <?php endif; ?>
+                            </td>
+
+                            
+                            <td class="px-6 py-4 text-center">
+                                <span class="inline-flex items-center px-2.5 py-1 text-xs font-semibold rounded-full
+                                             <?php echo e($lop->status ? 'bg-primary-100 text-primary-700' : 'bg-slate-200 text-slate-600'); ?>">
+                                    <?php echo e($lop->status ? 'Hoạt động' : 'Tắt'); ?>
+
+                                </span>
+                            </td>
+
+                            
+                            <td class="px-6 py-4 text-center">
+                                <div class="inline-flex items-center gap-3">
+                                    
+                                    <a href="<?php echo e($lop->slug_url); ?>"
+                                        class="text-green-600 hover:text-green-700 font-semibold text-sm inline-flex items-center gap-1"
+                                        title="Danh sách học sinh">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                                        </svg>
+                                        Học sinh
+                                    </a>
+
+                                    <span class="text-slate-300">|</span>
+
+                                    
+                                    <?php if (isset($component)) { $__componentOriginalc254754b9d5db91d5165876f9d051922ca0066f4 = $component; } ?>
+<?php $component = $__env->getContainer()->make(Illuminate\View\AnonymousComponent::class, ['view' => 'components.table-action','data' => ['wire' => 'edit('.e($lop->id).')','icon' => 'edit']]); ?>
+<?php $component->withName('table-action'); ?>
 <?php if ($component->shouldRender()): ?>
 <?php $__env->startComponent($component->resolveView(), $component->data()); ?>
-<?php $component->withAttributes(['lop' => \Illuminate\View\Compilers\BladeCompiler::sanitizeComponentAttribute($lop),'index' => \Illuminate\View\Compilers\BladeCompiler::sanitizeComponentAttribute($index),'paginator' => \Illuminate\View\Compilers\BladeCompiler::sanitizeComponentAttribute($lops)]); ?>
-<?php echo $__env->renderComponent(); ?>
+<?php $component->withAttributes(['wire' => 'edit('.e($lop->id).')','icon' => 'edit']); ?>
+                                        Sửa
+                                     <?php echo $__env->renderComponent(); ?>
 <?php endif; ?>
 <?php if (isset($__componentOriginalc254754b9d5db91d5165876f9d051922ca0066f4)): ?>
 <?php $component = $__componentOriginalc254754b9d5db91d5165876f9d051922ca0066f4; ?>
 <?php unset($__componentOriginalc254754b9d5db91d5165876f9d051922ca0066f4); ?>
 <?php endif; ?>
-                        <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); if ($__empty_1): ?>
-                        <?php if (isset($component)) { $__componentOriginalc254754b9d5db91d5165876f9d051922ca0066f4 = $component; } ?>
-<?php $component = $__env->getContainer()->make(Illuminate\View\AnonymousComponent::class, ['view' => 'components.empty-state','data' => ['icon' => 'class','colspan' => 7,'title' => $selectedNamHoc ? 'Không tìm thấy lớp học' : 'Chưa chọn năm học','description' => !$selectedNamHoc
-                                    ? 'Vui lòng chọn năm học để xem danh sách lớp'
-                                    : ($selectedKhoi
-                                        ? 'Không có lớp nào trong khối này'
-                                        : 'Chưa có lớp học nào trong năm học này')]]); ?>
-<?php $component->withName('empty-state'); ?>
+
+                                    <a href="<?php echo e(route('lop.teachers', ['lopId' => $lop->id])); ?>"
+                                        class="inline-flex items-center gap-1 text-purple-600 hover:text-purple-700 
+                                            font-semibold text-sm transition">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
+                                        </svg>
+                                        <!-- GLV -->
+                                        (<?php echo e($lop->teacher_count ?? 0); ?>)
+                                    </a>
+
+                                    <span class="text-slate-300">|</span>
+
+                                    
+                                    <?php if (isset($component)) { $__componentOriginalc254754b9d5db91d5165876f9d051922ca0066f4 = $component; } ?>
+<?php $component = $__env->getContainer()->make(Illuminate\View\AnonymousComponent::class, ['view' => 'components.table-action','data' => ['wire' => 'toggleStatus('.e($lop->id).')','icon' => $lop->status ? 'archive' : 'check','color' => $lop->status ? 'warning' : 'success','loading' => true,'debounce' => '500']]); ?>
+<?php $component->withName('table-action'); ?>
 <?php if ($component->shouldRender()): ?>
 <?php $__env->startComponent($component->resolveView(), $component->data()); ?>
-<?php $component->withAttributes(['icon' => 'class','colspan' => 7,'title' => \Illuminate\View\Compilers\BladeCompiler::sanitizeComponentAttribute($selectedNamHoc ? 'Không tìm thấy lớp học' : 'Chưa chọn năm học'),'description' => \Illuminate\View\Compilers\BladeCompiler::sanitizeComponentAttribute(!$selectedNamHoc
-                                    ? 'Vui lòng chọn năm học để xem danh sách lớp'
-                                    : ($selectedKhoi
-                                        ? 'Không có lớp nào trong khối này'
-                                        : 'Chưa có lớp học nào trong năm học này'))]); ?>
-                            <?php if($selectedNamHoc): ?>
-                            <a href="<?php echo e(route('lop.create')); ?>"
-                                class="inline-flex items-center gap-2 px-6 py-2.5
-                                              bg-gradient-to-r from-primary-500 to-primary-600
-                                              hover:from-primary-600 hover:to-primary-700
-                                              text-white rounded-xl font-semibold
-                                              active:scale-[0.98] transition-all shadow-sm">
-                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                        d="M12 4v16m8-8H4" />
-                                </svg>
-                                Tạo lớp học mới
-                            </a>
-                            <?php endif; ?>
-                         <?php echo $__env->renderComponent(); ?>
+<?php $component->withAttributes(['wire' => 'toggleStatus('.e($lop->id).')','icon' => \Illuminate\View\Compilers\BladeCompiler::sanitizeComponentAttribute($lop->status ? 'archive' : 'check'),'color' => \Illuminate\View\Compilers\BladeCompiler::sanitizeComponentAttribute($lop->status ? 'warning' : 'success'),'loading' => true,'debounce' => '500']); ?>
+                                        <?php echo e($lop->status ? 'Tắt' : 'Bật'); ?>
+
+                                     <?php echo $__env->renderComponent(); ?>
 <?php endif; ?>
 <?php if (isset($__componentOriginalc254754b9d5db91d5165876f9d051922ca0066f4)): ?>
 <?php $component = $__componentOriginalc254754b9d5db91d5165876f9d051922ca0066f4; ?>
 <?php unset($__componentOriginalc254754b9d5db91d5165876f9d051922ca0066f4); ?>
 <?php endif; ?>
-                        <?php endif; ?>
+                                </div>
+                            </td>
+                        </tr>
+                        <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                     </tbody>
                 </table>
             </div>
@@ -394,24 +508,25 @@ echo $html;
             aria-labelledby="lop-modal-title"
             wire:click="closeModal">
             <div
-                class="bg-white rounded-2xl shadow-xl w-full max-w-lg overflow-hidden"
+                class="bg-white rounded-2xl shadow-xl w-full max-w-lg max-h-[90vh] overflow-hidden flex flex-col"
                 wire:click.stop>
+
                 
-                <div class="p-6 border-b border-slate-200 bg-gradient-to-br from-primary-50 to-white">
+                <div class="flex-shrink-0 p-6 border-b border-slate-200 bg-gradient-to-br from-primary-50 to-white">
                     <h2 id="lop-modal-title" class="text-xl font-bold text-slate-900">
                         <?php echo e($editingId ? 'Cập nhật lớp học' : 'Thêm lớp học mới'); ?>
 
                     </h2>
                     <p class="text-sm text-slate-600 mt-1">
-                        Lớp học thuộc năm học đã chọn
+                        Thông tin cơ bản về lớp học
                     </p>
                 </div>
 
                 
-                <div class="p-6 space-y-5">
+                <div class="flex-1 overflow-y-auto p-6 space-y-5">
                     
                     <?php if($errors->any()): ?>
-                    <div class="bg-red-50 border-l-4 border-red-500 rounded-xl p-4">
+                    <div class="bg-red-50 border-l-4 border-red-500 rounded-xl p-4 animate-shake">
                         <div class="flex items-start gap-3">
                             <svg class="w-5 h-5 text-red-500 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -435,50 +550,32 @@ echo $html;
                     <?php endif; ?>
 
                     
-                    <div>
-                        <label class="block text-sm font-semibold text-slate-700 mb-1">
-                            Mã lớp <span class="text-red-500">*</span>
-                        </label>
-                        <input
-                            type="text"
-                            wire:model.defer="symbol"
-                            placeholder="Ví dụ: L01, L02..."
-                            class="w-full px-3 py-2 rounded-xl border border-slate-300
-                           focus:outline-none focus:ring-2 focus:ring-primary-500">
-                        <?php $__errorArgs = ['symbol'];
-$__bag = $errors->getBag($__errorArgs[1] ?? 'default');
-if ($__bag->has($__errorArgs[0])) :
-if (isset($message)) { $__messageOriginal = $message; }
-$message = $__bag->first($__errorArgs[0]); ?>
-                        <p class="mt-1 text-sm text-red-500"><?php echo e($message); ?></p>
-                        <?php unset($message);
-if (isset($__messageOriginal)) { $message = $__messageOriginal; }
-endif;
-unset($__errorArgs, $__bag); ?>
-                    </div>
+                    <?php if (isset($component)) { $__componentOriginalc254754b9d5db91d5165876f9d051922ca0066f4 = $component; } ?>
+<?php $component = $__env->getContainer()->make(Illuminate\View\AnonymousComponent::class, ['view' => 'components.form-input','data' => ['label' => 'Mã lớp','name' => 'symbol','wire:model.defer' => 'symbol','placeholder' => 'VD: L01, L02, A1...','required' => true,'helpText' => 'Mã định danh ngắn gọn của lớp']]); ?>
+<?php $component->withName('form-input'); ?>
+<?php if ($component->shouldRender()): ?>
+<?php $__env->startComponent($component->resolveView(), $component->data()); ?>
+<?php $component->withAttributes(['label' => 'Mã lớp','name' => 'symbol','wire:model.defer' => 'symbol','placeholder' => 'VD: L01, L02, A1...','required' => true,'help-text' => 'Mã định danh ngắn gọn của lớp']); ?>
+<?php echo $__env->renderComponent(); ?>
+<?php endif; ?>
+<?php if (isset($__componentOriginalc254754b9d5db91d5165876f9d051922ca0066f4)): ?>
+<?php $component = $__componentOriginalc254754b9d5db91d5165876f9d051922ca0066f4; ?>
+<?php unset($__componentOriginalc254754b9d5db91d5165876f9d051922ca0066f4); ?>
+<?php endif; ?>
 
                     
-                    <div>
-                        <label class="block text-sm font-semibold text-slate-700 mb-1">
-                            Tên lớp <span class="text-red-500">*</span>
-                        </label>
-                        <input
-                            type="text"
-                            wire:model.defer="name"
-                            placeholder="Ví dụ: Lớp 1A, Lớp 2B..."
-                            class="w-full px-3 py-2 rounded-xl border border-slate-300
-                           focus:outline-none focus:ring-2 focus:ring-primary-500">
-                        <?php $__errorArgs = ['name'];
-$__bag = $errors->getBag($__errorArgs[1] ?? 'default');
-if ($__bag->has($__errorArgs[0])) :
-if (isset($message)) { $__messageOriginal = $message; }
-$message = $__bag->first($__errorArgs[0]); ?>
-                        <p class="mt-1 text-sm text-red-500"><?php echo e($message); ?></p>
-                        <?php unset($message);
-if (isset($__messageOriginal)) { $message = $__messageOriginal; }
-endif;
-unset($__errorArgs, $__bag); ?>
-                    </div>
+                    <?php if (isset($component)) { $__componentOriginalc254754b9d5db91d5165876f9d051922ca0066f4 = $component; } ?>
+<?php $component = $__env->getContainer()->make(Illuminate\View\AnonymousComponent::class, ['view' => 'components.form-input','data' => ['label' => 'Tên lớp','name' => 'name','wire:model.defer' => 'name','placeholder' => 'VD: Lớp 1A, Lớp Thiếu Nhi A...','required' => true]]); ?>
+<?php $component->withName('form-input'); ?>
+<?php if ($component->shouldRender()): ?>
+<?php $__env->startComponent($component->resolveView(), $component->data()); ?>
+<?php $component->withAttributes(['label' => 'Tên lớp','name' => 'name','wire:model.defer' => 'name','placeholder' => 'VD: Lớp 1A, Lớp Thiếu Nhi A...','required' => true]); ?>
+<?php echo $__env->renderComponent(); ?>
+<?php endif; ?>
+<?php if (isset($__componentOriginalc254754b9d5db91d5165876f9d051922ca0066f4)): ?>
+<?php $component = $__componentOriginalc254754b9d5db91d5165876f9d051922ca0066f4; ?>
+<?php unset($__componentOriginalc254754b9d5db91d5165876f9d051922ca0066f4); ?>
+<?php endif; ?>
 
                     
                     <div>
@@ -488,12 +585,26 @@ unset($__errorArgs, $__bag); ?>
                         <select
                             wire:model.defer="block"
                             class="w-full px-3 py-2 rounded-xl border border-slate-300
-                           focus:outline-none focus:ring-2 focus:ring-primary-500">
+                                   focus:outline-none focus:ring-2 focus:ring-primary-500
+                                   <?php echo e($availableBlocks->isEmpty() ? 'bg-slate-100 cursor-not-allowed' : ''); ?>">
                             <option value="">-- Chọn khối --</option>
-                            <?php $__currentLoopData = $availableBlocks; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $blk): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                            <?php $__empty_1 = true; $__currentLoopData = $availableBlocks; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $blk): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); $__empty_1 = false; ?>
                             <option value="<?php echo e($blk->id); ?>"><?php echo e($blk->name); ?></option>
-                            <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
+                            <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); if ($__empty_1): ?>
+                            <option value="" disabled>Chưa có khối học nào</option>
+                            <?php endif; ?>
                         </select>
+
+                        <?php if($availableBlocks->isEmpty()): ?>
+                        <p class="mt-1 text-sm text-amber-600 flex items-center gap-1">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                            </svg>
+                            Vui lòng tạo khối học trước
+                        </p>
+                        <?php endif; ?>
+
                         <?php $__errorArgs = ['block'];
 $__bag = $errors->getBag($__errorArgs[1] ?? 'default');
 if ($__bag->has($__errorArgs[0])) :
@@ -507,38 +618,76 @@ unset($__errorArgs, $__bag); ?>
                     </div>
 
                     
-                    <div class="flex items-center gap-3 pt-1">
-                        <input
-                            id="lop-status"
-                            type="checkbox"
-                            wire:model.defer="status"
-                            class="w-4 h-4 rounded border-slate-300
-                           text-primary-600 focus:ring-primary-500">
-                        <label for="lop-status" class="text-sm text-slate-700">
-                            Hoạt động
-                        </label>
+                    <div class="border border-slate-200 rounded-xl p-4">
+                        <div class="flex items-start gap-3">
+                            <input
+                                id="lop-status"
+                                type="checkbox"
+                                wire:model.defer="status"
+                                class="mt-0.5 w-4 h-4 rounded border-slate-300
+                                       text-primary-600 focus:ring-primary-500">
+                            <div class="flex-1">
+                                <label for="lop-status" class="text-sm font-semibold text-slate-900 cursor-pointer">
+                                    Kích hoạt lớp học
+                                </label>
+                                <p class="text-xs text-slate-500 mt-0.5">
+                                    Lớp đang hoạt động và có thể nhận học sinh
+                                </p>
+                            </div>
+                        </div>
                     </div>
+
+                    
+                    <?php if($editingId): ?>
+                    <div class="bg-primary-50 border-l-4 border-primary-500 rounded-xl p-4">
+                        <div class="flex items-start gap-3">
+                            <svg class="w-5 h-5 text-primary-500 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                            <div class="flex-1">
+                                <h4 class="text-sm font-semibold text-primary-700">
+                                    Phân công Giáo lý viên
+                                </h4>
+                                <p class="text-sm text-primary-600 mt-1">
+                                    Sau khi lưu, bạn có thể phân công GLV trong trang chi tiết lớp
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                    <?php endif; ?>
                 </div>
 
                 
-                <div class="px-6 py-4 border-t border-slate-200 bg-slate-50 flex justify-end gap-3">
-                    <button
-                        wire:click="closeModal"
-                        class="px-4 py-2 rounded-xl bg-white border border-slate-300
-                       text-slate-700 font-semibold hover:bg-slate-100
-                       active:scale-95 transition-all">
+                <div class="flex-shrink-0 px-6 py-4 border-t border-slate-200 bg-slate-50 flex justify-end gap-3">
+                    <?php if (isset($component)) { $__componentOriginalc254754b9d5db91d5165876f9d051922ca0066f4 = $component; } ?>
+<?php $component = $__env->getContainer()->make(Illuminate\View\AnonymousComponent::class, ['view' => 'components.action-button','data' => ['wire' => 'closeModal','variant' => 'secondary']]); ?>
+<?php $component->withName('action-button'); ?>
+<?php if ($component->shouldRender()): ?>
+<?php $__env->startComponent($component->resolveView(), $component->data()); ?>
+<?php $component->withAttributes(['wire' => 'closeModal','variant' => 'secondary']); ?>
                         Hủy
-                    </button>
+                     <?php echo $__env->renderComponent(); ?>
+<?php endif; ?>
+<?php if (isset($__componentOriginalc254754b9d5db91d5165876f9d051922ca0066f4)): ?>
+<?php $component = $__componentOriginalc254754b9d5db91d5165876f9d051922ca0066f4; ?>
+<?php unset($__componentOriginalc254754b9d5db91d5165876f9d051922ca0066f4); ?>
+<?php endif; ?>
 
-                    <button
-                        wire:click="save"
-                        wire:loading.attr="disabled"
-                        class="px-5 py-2 rounded-xl bg-primary-600 text-white
-                       font-semibold hover:bg-primary-700
-                       active:scale-95 transition-all
-                       disabled:opacity-60">
-                        Lưu lớp
-                    </button>
+                    <?php if (isset($component)) { $__componentOriginalc254754b9d5db91d5165876f9d051922ca0066f4 = $component; } ?>
+<?php $component = $__env->getContainer()->make(Illuminate\View\AnonymousComponent::class, ['view' => 'components.action-button','data' => ['wire' => 'save','icon' => 'save','loading' => true,'disabled' => $availableBlocks->isEmpty()]]); ?>
+<?php $component->withName('action-button'); ?>
+<?php if ($component->shouldRender()): ?>
+<?php $__env->startComponent($component->resolveView(), $component->data()); ?>
+<?php $component->withAttributes(['wire' => 'save','icon' => 'save','loading' => true,'disabled' => \Illuminate\View\Compilers\BladeCompiler::sanitizeComponentAttribute($availableBlocks->isEmpty())]); ?>
+                        <?php echo e($editingId ? 'Cập nhật' : 'Tạo lớp'); ?>
+
+                     <?php echo $__env->renderComponent(); ?>
+<?php endif; ?>
+<?php if (isset($__componentOriginalc254754b9d5db91d5165876f9d051922ca0066f4)): ?>
+<?php $component = $__componentOriginalc254754b9d5db91d5165876f9d051922ca0066f4; ?>
+<?php unset($__componentOriginalc254754b9d5db91d5165876f9d051922ca0066f4); ?>
+<?php endif; ?>
                 </div>
             </div>
         </div>

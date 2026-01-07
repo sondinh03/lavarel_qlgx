@@ -95,6 +95,8 @@
                                 Giáo lý viên
                             </a>
 
+                            
+
                             <a href="<?php echo e(route('holies')); ?>"
                                 class="block px-4 py-2 text-sm hover:bg-indigo-50">
                                 Tên thánh
