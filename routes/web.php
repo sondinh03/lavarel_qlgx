@@ -61,44 +61,65 @@ use App\Http\Livewire\NamHoc\NamHocManager;
 use App\Http\Livewire\Parish\ParishChild;
 use App\Http\Livewire\Student\StudentDetail;
 use App\Http\Livewire\Teacher\TeacherManager;
+use Illuminate\Support\Facades\Auth;
+use PHPUnit\TextUI\XmlConfiguration\Group;
 
 Paginator::useBootstrap();
 
-/*
-|--------------------------------------------------------------------------
-| Web Routes
-|--------------------------------------------------------------------------
-|
-| Here is where you can register web routes for your application. These
-| routes are loaded by the RouteServiceProvider within a group which
-| contains the "web" middleware group. Now create something great!
-|
-*/
-
-/*
-Route::get('/', function () {
-    return view('welcome');
-});
-*/
+Route::get('/', Home::class)->name('home');
 Auth::routes();
 
-Route::get('/', Home::class)->name('home');
-Route::get('/dashboard', function () {
-    return view('frontend.dashboard');
-})->middleware('auth')->name('dashboard');
+/*
+|--------------------------------------------------------------------------
+| Authenticated (Admin / Decen)
+|--------------------------------------------------------------------------
+*/
+Route::middleware('auth')->group(function () {
+    Route::get('/dashboard', fn() => view('frontend.dashboard'))->name('dashboard');
 
-Route::get('/ds-lop', LopList::class)->name('ds-lop');
-Route::get('/lop/create', LopForm::class)->name('lop.create');
-Route::get('/lop/{id}', LopDetail::class)->name('lop.show');
-Route::get('/lop/{id}/edit', LopForm::class)->name('lop.edit');
-Route::get('/lop/{lopId}/teachers', AssignTeacher::class)->name('lop.teachers');
+    Route::prefix('classes')->name('classes.')->group(function () {
+        Route::get('/', LopList::class)->name('index');
+        // Route::get('/create', LopForm::class)->name('create');   // tạo
+        Route::get('/{id}', LopDetail::class)->name('show');     // chi tiết
+        // Route::get('/{id}/edit', LopForm::class)->name('edit');  // sửa
+        Route::get('/{lopId}/catechists', AssignTeacher::class)
+            ->name('catechists');                                  // phân công GV
+    });
+
+    /*
+    |--------------------------------------------------------------------------
+    | ĐIỂM DANH
+    |--------------------------------------------------------------------------
+    */
+    // Route::get('/attendance/{classId?}', AttendanceManager::class)
+    //     ->name('attendance.index');
+
+    Route::get('/school-years', NamHocManager::class)
+        ->name('school-years.index');
+
+    Route::get('/grades', BlockManager::class)
+        ->name('grades.index');
+
+    Route::get('/students/{id}', StudentDetail::class)
+        ->name('students.show');
+
+    Route::get('/catechists', TeacherManager::class)
+        ->name('catechists.index');
+
+    Route::get('/parish-children', ParishChild::class)
+        ->name('parish-children.index');
+
+    Route::get('/holy-names', HolyManager::class)
+        ->name('holy-names.index');
+});
+
 Route::get('/attendance/{classId?}', AttendanceManager::class)->name('attendance');
-Route::get('/nam-hoc', NamHocManager::class)->name('nam-hoc');
-Route::get('/khoi-hoc', BlockManager::class)->name('khoi-hoc');
-Route::get('/ho-so-hoc-sinh/{id}', StudentDetail::class)->name('student.detail');
-Route::get('/teacher', TeacherManager::class)->name('teacher.show');
-Route::get('/parish-child', ParishChild::class)->name('parish-child.show');
-Route::get('/holies', HolyManager::class)->name('holies');
+// Route::get('/nam-hoc', NamHocManager::class)->name('nam-hoc');
+// Route::get('/khoi-hoc', BlockManager::class)->name('khoi-hoc');
+// Route::get('/ho-so-hoc-sinh/{id}', StudentDetail::class)->name('student.detail');
+// Route::get('/teacher', TeacherManager::class)->name('teacher.show');
+// Route::get('/parish-child', ParishChild::class)->name('parish-child.show');
+// Route::get('/holies', HolyManager::class)->name('holies');
 
 Route::get('{slug}', [SlugController::class, 'make']);
 

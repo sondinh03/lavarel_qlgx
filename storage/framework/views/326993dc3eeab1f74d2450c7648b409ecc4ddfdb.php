@@ -10,7 +10,7 @@
             ],
             [
                 'label' => 'Quản lý lớp học',
-                'url' => route('ds-lop'),
+                'url' => route('classes.index'),
                 'icon' => '<svg class=\'w-4 h-4\' fill=\'none\' stroke=\'currentColor\' viewBox=\'0 0 24 24\'><path stroke-linecap=\'round\' stroke-linejoin=\'round\' stroke-width=\'2\' d=\'M3 7a2 2 0 012-2h4l2 2h8a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V7z\'/></svg>'
             ],
             [
@@ -27,7 +27,7 @@
             ],
             [
                 'label' => 'Quản lý lớp học',
-                'url' => route('ds-lop'),
+                'url' => route('classes.index'),
                 'icon' => '<svg class=\'w-4 h-4\' fill=\'none\' stroke=\'currentColor\' viewBox=\'0 0 24 24\'><path stroke-linecap=\'round\' stroke-linejoin=\'round\' stroke-width=\'2\' d=\'M3 7a2 2 0 012-2h4l2 2h8a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V7z\'/></svg>'
             ],
             [
@@ -115,7 +115,7 @@
 
                 
                 <div class="flex flex-wrap gap-2">
-                    <a href="<?php echo e(route('attendance', $lop->id)); ?>" class="flex items-center gap-2 px-4 py-2.5 bg-blue-500 text-white text-sm font-semibold rounded-xl hover:bg-blue-600 active:scale-95 transition-all shadow-sm">
+                    <a href="<?php echo e(route('attendance', $lop->id)); ?>" class="flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-primary-500 to-primary-600 text-white text-sm font-semibold rounded-xl hover:bg-primary-700 active:scale-95 transition-all shadow-sm">
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
                         </svg>
@@ -127,13 +127,13 @@
                         </svg>
                         Kết quả
                     </a>
-                    <a href="<?php echo e($lop->slug); ?>/khaokinh=<?php echo e($lop->id); ?>" class="flex items-center gap-2 px-4 py-2.5 bg-orange-500 text-white text-sm font-semibold rounded-xl hover:bg-orange-600 active:scale-95 transition-all shadow-sm">
+                    <a href="<?php echo e($lop->slug); ?>/khaokinh=<?php echo e($lop->id); ?>" class="flex items-center gap-2 px-4 py-2.5 bg-slate-100 text-slate-900 text-sm font-semibold rounded-xl hover:bg-slate-200 active:scale-95 transition-all shadow-sm">
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V9a2 2 0 012-2h2a2 2 0 012 2v10a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
                         </svg>
                         QR
                     </a>
-                    <button type="button" class="flex items-center gap-2 px-4 py-2.5 bg-purple-500 text-white text-sm font-semibold rounded-xl hover:bg-purple-600 active:scale-95 transition-all shadow-sm">
+                    <button type="button" class="flex items-center gap-2 px-4 py-2.5 bg-slate-100 text-slate-900 text-sm font-semibold rounded-xl hover:bg-slate-200 active:scale-95 transition-all shadow-sm">
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                         </svg>
@@ -343,7 +343,7 @@
                             <td class="px-6 py-4 whitespace-nowrap">
                                 <div class="flex items-center gap-2">
                                     
-                                    <a href="<?php echo e(route('student.detail', $hocsinh->id)); ?>" class="p-2 hover:bg-blue-50 text-blue-600 rounded-lg active:scale-95 transition-all" title="Xem chi tiết">
+                                    <a href="<?php echo e(route('students.show', $hocsinh->id)); ?>" class="p-2 hover:bg-blue-50 text-blue-600 rounded-lg active:scale-95 transition-all" title="Xem chi tiết">
                                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />

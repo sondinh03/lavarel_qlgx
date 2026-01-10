@@ -7,6 +7,17 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\MorphOne;
 use Venturecraft\Revisionable\RevisionableTrait;
 
+/**
+ * Model Lop
+ *
+ * PLANNED RENAME:
+ * - Lop -> Classroom
+ *
+ * Notes:
+ * - Giữ nguyên table & column tiếng Việt (legacy DB).
+ * - Refactor naming khi chuẩn hoá domain Classroom.
+ * ✔ Tạo classroom_years
+ */
 class Lop extends Model
 {
     use CrudTrait;
@@ -14,17 +25,29 @@ class Lop extends Model
 
     protected $table = 'lop';
     protected $guarded = ['id'];
+
+    /**
+     * NOTE (LEGACY FIELDS):
+     * - start_date_one / end_date_one
+     * - start_date_two / end_date_two
+     * - teacher (JSON)
+     * - schoolyear
+     *
+     * These fields are temporary and will be REMOVED.
+     */
     protected $fillable = ['id', 'did', 'deid', 'pid', 'block', 'start_date_one', 'end_date_one', 'start_date_two', 'end_date_two', 'name', 'symbol', 'teacher', 'schoolyear',  'note', 'status', 'created_at', 'updated_at'];
 
+    // TODO: rename accessor 'lop' -> 'display_name'
     protected $appends = ['lop'];
-    protected $casts = [
-        'teacher' => 'array',
-    ];
+    // protected $casts = [
+    //     'teacher' => 'array',
+    // ];
 
     // ===== STATUS CONSTANTS =====
     public const STATUS_ACTIVE = 1;
     public const STATUS_ARCHIVED = 0;
 
+    // TODO: move to Presenter / ViewHelper
     public function openLink(): string
     {
         $slug = slug($this) . config('settings.url_prefix');
@@ -33,6 +56,7 @@ class Lop extends Model
     }
 
     // Hiển thị: "Tên lớp - Năm học"
+    // TODO: rename accessor 'lop' -> 'display_name'
     public function getLopAttribute()
     {
         if ($this->schoolYear) {
@@ -67,6 +91,7 @@ class Lop extends Model
     {
         return $this->hasMany(ClassTeacher::class, 'class_id');
     }
+
 
     public function getTeacherNamesAttribute()
     {
@@ -131,16 +156,6 @@ class Lop extends Model
         return $this->hasOne(ClassTeacher::class, 'class_id')
             ->where('role', ClassTeacher::ROLE_CHU_NHIEM)
             ->where('status', 1);
-    }
-
-    public function getTeachersAttribute()
-    {
-        $ids = $this->teacher ?? [];
-
-        return Teacher::whereIn('id', $ids)
-            ->where('status', 1)
-            ->orderByRaw('FIELD(id, ' . implode(',', array_fill(0, count($ids), '?')) . ')', $ids)
-            ->get();
     }
 
     public function students()

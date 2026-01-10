@@ -32,18 +32,32 @@ class FilterBar extends Component
     /** @var Collection<int, string> */
     public $kys;
 
+    /** 
+     * Parish context
+     * - null  : admin tổng
+     * - int   : decen theo giáo xứ
+     */
     public int $parish_id;
 
-    public function mount()
+    /** 
+     * Parish context
+     * - null  : admin tổng
+     * - int   : decen theo giáo xứ
+     */
+    public function mount($parishId = null): void
     {
-        $this->parish_id = session('parish_id');
+        // $this->parish_id = session('parish_id');
+        $this->parish_id = $parishId;
 
         $this->namHocs = collect();
         $this->khois   = collect();
         $this->lops    = collect();
         $this->kys     = collect();
 
-        $this->loadNamHocs();
+
+        if ($this->parish_id !== null) {
+            $this->loadNamHocs();
+        }
 
         if ($this->namHocs->isNotEmpty()) {
             $this->loadKhois();

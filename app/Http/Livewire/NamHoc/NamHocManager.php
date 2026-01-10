@@ -116,7 +116,7 @@ class NamHocManager extends BaseComponent
         // Yêu cầu quyền quản trị (Admin hoặc Decen)
         $this->requireManager();
 
-        // Bắt buộc phải có parish_id
+        // Bắt buộc phải có parishId
         $this->requireParishId();
     }
 
@@ -134,7 +134,7 @@ class NamHocManager extends BaseComponent
     public function loadNamHocs(): void
     {
         try {
-            $query = NamHoc::ofParish($this->parish_id)
+            $query = NamHoc::ofParish($this->parishId)
                 ->orderByDesc('start_date_one');
 
             // Apply search filter
@@ -182,7 +182,7 @@ class NamHocManager extends BaseComponent
         $this->requireManager();
 
         try {
-            $namHoc = NamHoc::ofParish($this->parish_id)
+            $namHoc = NamHoc::ofParish($this->parishId)
                 ->findOrFail($id);
 
             $this->editingId = $namHoc->id;
@@ -222,7 +222,7 @@ class NamHocManager extends BaseComponent
             DB::beginTransaction();
 
             // Check trùng tên trong cùng xứ
-            $exists = NamHoc::ofParish($this->parish_id)
+            $exists = NamHoc::ofParish($this->parishId)
                 ->where('name', $this->name)
                 ->when($this->editingId, function ($q) {
                     $q->where('id', '!=', $this->editingId);
@@ -239,7 +239,7 @@ class NamHocManager extends BaseComponent
                 ['id' => $this->editingId],
                 [
                     'name' => $this->name,
-                    'parish_id' => $this->parish_id,
+                    'parish_id' => $this->parishId,
                     'start_date_one' => $this->start_date_one ?: null,
                     'end_date_one' => $this->end_date_one ?: null,
                     'start_date_two' => $this->start_date_two ?: null,
@@ -281,7 +281,7 @@ class NamHocManager extends BaseComponent
         $this->requireManager();
 
         try {
-            $namHoc = NamHoc::ofParish($this->parish_id)
+            $namHoc = NamHoc::ofParish($this->parishId)
                 ->findOrFail($id);
 
             $namHoc->update(['status' => !$namHoc->status]);
@@ -312,7 +312,7 @@ class NamHocManager extends BaseComponent
         try {
             DB::beginTransaction();
 
-            $namHoc = NamHoc::ofParish($this->parish_id)
+            $namHoc = NamHoc::ofParish($this->parishId)
                 ->findOrFail($id);
 
             // Check nếu năm học đang được sử dụng (có khối học hoặc lớp học)

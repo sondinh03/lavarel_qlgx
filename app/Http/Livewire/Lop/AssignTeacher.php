@@ -82,7 +82,7 @@ class AssignTeacher extends BaseComponent
         // 1️⃣ Validate input TRƯỚC
         if (empty($lopId)) {
             session()->flash('error', 'Thiếu ID lớp học.');
-            $this->redirectRoute('ds-lop');
+            $this->redirectRoute('classes.index');
             return;
         }
 
@@ -90,7 +90,7 @@ class AssignTeacher extends BaseComponent
 
         if ($this->lopId <= 0) {
             session()->flash('error', 'ID lớp học không hợp lệ.');
-            $this->redirectRoute('ds-lop');
+            $this->redirectRoute('classes.index');
             return;
         }
 
@@ -121,7 +121,7 @@ class AssignTeacher extends BaseComponent
     protected function loadLop(): void
     {
         try {
-            $this->lop = Lop::ofParish($this->parish_id)
+            $this->lop = Lop::ofParish($this->parishId)
                 ->with(['schoolYear', 'blockRelation'])
                 ->findOrFail($this->lopId);
 
@@ -129,7 +129,7 @@ class AssignTeacher extends BaseComponent
         } catch (\Exception $e) {
             $this->logError($e, 'Error loading lop', ['lop_id' => $this->lopId]);
             session()->flash('error', 'Không tìm thấy lớp học');
-            $this->redirectRoute('ds-lop');
+            $this->redirectRoute('classes.index');
         }
     }
 
@@ -180,7 +180,7 @@ class AssignTeacher extends BaseComponent
                 ->pluck('teacher_id')
                 ->toArray();
 
-            $query = Teacher::ofParish($this->parish_id)
+            $query = Teacher::ofParish($this->parishId)
                 ->active()
                 ->whereNotIn('id', $assignedTeacherIds);
 
@@ -264,7 +264,7 @@ class AssignTeacher extends BaseComponent
             }
 
             // Kiểm tra teacher thuộc parish
-            $teacher = Teacher::ofParish($this->parish_id)
+            $teacher = Teacher::ofParish($this->parishId)
                 ->active()
                 ->findOrFail($this->selectedTeacherId);
 

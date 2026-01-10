@@ -5,7 +5,7 @@
 
         {{-- Breadcrumb --}}
         <x-breadcrumb :items="[
-            ['label' => 'Danh sách lớp', 'url' => route('ds-lop')],
+            ['label' => 'Danh sách lớp', 'url' => route('lop.index')],
             ['label' => 'Hồ sơ học sinh']
         ]" separator="arrow" />
 
@@ -145,7 +145,7 @@
                     <x-info-row label="Giáo hạt" :value="$student['deanery']" />
                     <x-info-row label="Giáo xứ" :value="$student['parish']" />
                     <x-info-row label="Lớp học" :value="$student['lop']" />
-                    <x-info-row label="Bậc thánh" :value="$student['holy_label']" />
+                    <x-info-row label="Bậc thánh" :value="$student['holy_name']" />
                 </x-info-group>
                 @endif
 

@@ -10,6 +10,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
+use Laravel\Telescope\EntryUpdate;
 
 class User extends Authenticatable
 {
@@ -46,4 +47,29 @@ class User extends Authenticatable
     protected $casts = [
         'email_verified_at' => 'datetime',
     ];
+
+    public function admin()
+    {
+        return $this->hasOne(SetAdmin::class, 'use', 'id');
+    }
+
+    public function decen()
+    {
+        return $this->hasOne(Decen::class, 'use', 'id');
+    }
+
+    public function isAdmin(): bool
+    {
+        return $this->admin && $this->admin->status === 1;
+    }
+
+    public function isDecen(): bool
+    {
+        return $this->decen && $this->decen->status === 1;
+    }
+
+    public function parishId(): ?int
+    {
+        return $this->decen?->pid;
+    }
 }

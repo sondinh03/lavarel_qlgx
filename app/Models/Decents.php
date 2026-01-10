@@ -6,6 +6,14 @@ use Backpack\CRUD\app\Models\Traits\CrudTrait;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\DB;
 
+/**
+ * ⚠️ WARNING
+ *
+ * Model này CHỈ dùng cho Backpack / UI.
+ * KHÔNG dùng cho Authentication / Authorization / Policy.
+ *
+ * Auth model thật là: App\Models\User
+ */
 class Decents extends Model
 {
     use CrudTrait;
@@ -24,7 +32,7 @@ class Decents extends Model
     // protected $fillable = [];
     // protected $hidden = [];
     // protected $dates = [];
-    
+
     //protected $appends = ['use', 'user'];
     protected $appends = ['use'];
 
@@ -41,13 +49,13 @@ class Decents extends Model
             ->where('id', $id)
             ->orderBy('id', 'ASC')
             ->first();
-            
-        if(!empty($teacher)){
+
+        if (!empty($teacher)) {
             $this->attributes['name'] = $teacher->name . ' - ' . $teacher->email;
             return $this->attributes['name']; //some logic to return numbers
         }
     }
-    
+
     /*
     |--------------------------------------------------------------------------
     | RELATIONS

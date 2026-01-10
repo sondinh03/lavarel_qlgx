@@ -6,8 +6,8 @@
 
         {{-- Breadcrumb --}}
         <x-breadcrumb :items="[
-            ['label' => 'Trang chủ', 'url' => route('ds-lop')],
-            ['label' => 'Quản lý lớp học', 'url' => route('ds-lop')],
+            ['label' => 'Trang chủ', 'url' => route('lop.index')],
+            ['label' => 'Quản lý lớp học', 'url' => route('lop.index')],
             ['label' => $isEdit ? 'Chỉnh sửa lớp' : 'Tạo lớp mới']
         ]" />
 
@@ -192,7 +192,7 @@
                 {{-- ===== Footer ===== --}}
                 <div class="px-6 py-4 bg-slate-50 border-t border-slate-200">
                     <div class="flex flex-col sm:flex-row justify-end gap-3">
-                        <a href="{{ route('ds-lop') }}"
+                        <a href="{{ route('lop.index') }}"
                             class="px-6 py-2.5 bg-white border border-slate-300 rounded-xl
                                   text-slate-700 font-semibold hover:bg-slate-100
                                   active:scale-95 transition-all text-center">

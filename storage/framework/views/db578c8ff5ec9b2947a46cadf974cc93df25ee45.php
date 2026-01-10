@@ -12,7 +12,7 @@
             ],
             [
                 'label' => 'Quản lý Tên thánh',
-                'url' => route('holies'),
+                'url' => route('holy-names.index'),
                 'icon' => '<svg class=\'w-4 h-4\' fill=\'none\' stroke=\'currentColor\' viewBox=\'0 0 24 24\'><path stroke-linecap=\'round\' stroke-linejoin=\'round\' stroke-width=\'2\' d=\'M12 8c-1.657 0-3 1.343-3 3v2h6v-2c0-1.657-1.343-3-3-3z\'/></svg>'
             ],
         ],'separator' => 'arrow']]); ?>
@@ -26,7 +26,7 @@
             ],
             [
                 'label' => 'Quản lý Tên thánh',
-                'url' => route('holies'),
+                'url' => route('holy-names.index'),
                 'icon' => '<svg class=\'w-4 h-4\' fill=\'none\' stroke=\'currentColor\' viewBox=\'0 0 24 24\'><path stroke-linecap=\'round\' stroke-linejoin=\'round\' stroke-width=\'2\' d=\'M12 8c-1.657 0-3 1.343-3 3v2h6v-2c0-1.657-1.343-3-3-3z\'/></svg>'
             ],
         ]),'separator' => 'arrow']); ?>

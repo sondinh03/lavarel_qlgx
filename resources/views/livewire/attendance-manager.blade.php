@@ -3,7 +3,7 @@
 
         {{-- ✅ BREADCRUMB  --}}
         <x-breadcrumb :items="[
-            ['label' => 'Trang chủ', 'url' => route('ds-lop')],
+            ['label' => 'Trang chủ', 'url' => route('home')],
             ['label' => 'Điểm danh', 'url' => route('attendance')],
             ['label' => $this->selectedClassName]
         ]" />

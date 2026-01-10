@@ -56,7 +56,7 @@ class Student extends Model
     */
 
     const SEX_MALE = 1;
-    const SEX_FEMALE = 2;
+    const SEX_FEMALE = 0;
 
     const STATUS_STUDYING = 1;
     const STATUS_GRADUATED = 2;

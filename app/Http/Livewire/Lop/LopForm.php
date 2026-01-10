@@ -198,11 +198,11 @@ class LopForm extends BaseComponent
         } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
             session()->flash('error', 'Không tìm thấy lớp học này.');
             $this->logError($e, 'Class not found', ['class_id' => $this->classId]);
-            $this->redirectRoute('ds-lop');
+            $this->redirectRoute('classes.index');
         } catch (\Exception $e) {
             $this->logError($e, 'Error loading class data', ['class_id' => $this->classId]);
             session()->flash('error', 'Có lỗi khi tải thông tin lớp học.');
-            $this->redirectRoute('ds-lop');
+            $this->redirectRoute('classes.index');
         }
     }
 
@@ -378,7 +378,7 @@ class LopForm extends BaseComponent
             DB::commit();
 
             session()->flash('success', $message);
-            $this->redirectRoute('ds-lop');
+            $this->redirectRoute('classes.index');
         } catch (\Exception $e) {
             DB::rollBack();
 
@@ -535,7 +535,7 @@ class LopForm extends BaseComponent
      */
     public function cancel(): void
     {
-        $this->redirectRoute('ds-lop');
+        $this->redirectRoute('classes.index');
     }
 
     // ==================== RENDER ====================

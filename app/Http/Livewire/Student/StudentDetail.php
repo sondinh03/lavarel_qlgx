@@ -53,7 +53,7 @@ class StudentDetail extends BaseComponent
 
         if ($this->studentId <= 0) {
             session()->flash('error', 'ID học sinh không hợp lệ.');
-            $this->redirectRoute('ds-lop');
+            $this->redirectRoute('classes.index');
             return;
         }
 
@@ -81,7 +81,7 @@ class StudentDetail extends BaseComponent
             // DEBUG: Check student ID
             Log::info('🔍 StudentDetail: Loading data', [
                 'student_id' => $this->studentId,
-                'parish_id' => $this->parish_id,
+                'parish_id' => $this->parishId,
                 'is_admin' => $this->isAdmin,
                 'is_decen' => $this->isDecen,
             ]);
@@ -141,7 +141,7 @@ class StudentDetail extends BaseComponent
 
         // Decen can only view students in their parish
         if ($this->isDecen) {
-            if ($student->pid != $this->parish_id) {
+            if ($student->pid != $this->parishId) {
                 abort(403, 'Bạn không có quyền xem học sinh này');
             }
             return;
@@ -157,12 +157,12 @@ class StudentDetail extends BaseComponent
     {
         return [
             'id' => optional($student)->id,
-            'code' => optional($student)->mah ?? 'Chưa có',
+            'code' => optional($student)->mahv ?? 'Chưa có',
 
             // Basic Info
             'last_name' => optional($student)->last_name ?? '',
             'name' => optional($student)->name ?? '',
-            'full_name' => trim((optional($student)->last_name ?? '') . ' ' . (optional($student)->name ?? '')),
+            'full_name' => trim((optional($student)->holy_name ?? '') . ' ' . (optional($student)->last_name ?? '') . ' ' . (optional($student)->name ?? '')),
             'sex' => optional($student)->sex,
             'sex_label' => optional($student)->sex_label,
             'birthday' => optional($student)->birthday ?? '',
@@ -268,14 +268,14 @@ class StudentDetail extends BaseComponent
             }
 
             // Decen can only delete students in their parish
-            if ($this->isDecen && $student->pid != $this->parish_id) {
+            if ($this->isDecen && $student->pid != $this->parishId) {
                 abort(403, 'Bạn không có quyền xóa học sinh này');
             }
 
             $student->delete();
 
             session()->flash('success', 'Đã xóa học sinh thành công');
-            $this->redirect(route('ds-lop'));
+            $this->redirect(route('classes.index'));
         } catch (\Exception $e) {
             $this->logError($e, 'Failed to delete student', [
                 'student_id' => $this->studentId,

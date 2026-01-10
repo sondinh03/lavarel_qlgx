@@ -12,7 +12,7 @@
                 ],
                 [
                     'label' => 'Quản lý khối học',
-                    'url' => route('khoi-hoc'),
+                    'url' => route('grades.index'),
                     'icon' => '<svg class=\'w-4 h-4\' fill=\'none\' stroke=\'currentColor\' viewBox=\'0 0 24 24\'>
                                 <path stroke-linecap=\'round\' stroke-linejoin=\'round\' stroke-width=\'2\'
                                     d=\'M3 7h18M3 12h18M3 17h18\' />
@@ -68,6 +68,7 @@
 
                         {{-- Năm học --}}
                         <livewire:filters.filter-bar
+                        :parish-id="$parishId"
                             :show-nam-hoc="true"
                             :show-khoi="false"
                             :show-lop="false"

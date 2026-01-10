@@ -55,7 +55,7 @@ class ParishChild extends BaseComponent
     public function loadParishes(): void
     {
         try {
-            $this->parishes = Parish::ofParish($this->parish_id)
+            $this->parishes = Parish::ofParish($this->parishId)
                 ->orderBy('name')
                 ->get();
         } catch (\Exception $e) {
@@ -79,7 +79,7 @@ class ParishChild extends BaseComponent
         $this->requireManager();
 
         try {
-            $parish = Parish::where('pid', $this->parish_id)->findOrFail($id);
+            $parish = Parish::where('pid', $this->parishId)->findOrFail($id);
 
             $this->editingId = $parish->id;
             $this->name = $parish->name;
@@ -99,7 +99,7 @@ class ParishChild extends BaseComponent
         try {
             DB::beginTransaction();
 
-            $exists = Parish::where('pid', $this->parish_id)
+            $exists = Parish::where('pid', $this->parishId)
                 ->where('name', $this->name)
                 ->when($this->editingId, fn($q) => $q->where('id', '!=', $this->editingId))
                 ->exists();
@@ -114,7 +114,7 @@ class ParishChild extends BaseComponent
                 [
                     'name' => $this->name,
                     'status' => $this->status,
-                    'pid' => $this->parish_id,
+                    'pid' => $this->parishId,
                     'deid' => 0,
                     'did' => 0,
                 ]
@@ -143,7 +143,7 @@ class ParishChild extends BaseComponent
         $this->requireManager();
 
         try {
-            $parish = Parish::where('pid', $this->parish_id)->findOrFail($id);
+            $parish = Parish::where('pid', $this->parishId)->findOrFail($id);
             $parish->update(['status' => !$parish->status]);
 
             session()->flash('message', 'Đã cập nhật trạng thái giáo họ');
@@ -158,7 +158,7 @@ class ParishChild extends BaseComponent
         $this->requireAdmin();
 
         try {
-            Parish::where('pid', $this->parish_id)->findOrFail($id)->delete();
+            Parish::where('pid', $this->parishId)->findOrFail($id)->delete();
             session()->flash('message', 'Đã xóa giáo họ');
             $this->loadParishes();
         } catch (\Exception $e) {

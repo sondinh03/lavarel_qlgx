@@ -52,7 +52,7 @@
                         Điểm danh
                     </a>
 
-                    <a href="<?php echo e(route('ds-lop')); ?>" class="text-sm font-medium text-slate-600 hover:text-indigo-600 transition">
+                    <a href="<?php echo e(route('classes.index')); ?>" class="text-sm font-medium text-slate-600 hover:text-indigo-600 transition">
                         Danh sách lớp
                     </a>
 
@@ -72,17 +72,17 @@
                             class="absolute right-0 mt-2 w-56 bg-white border border-slate-200 rounded-xl shadow-lg overflow-hidden z-50">
 
                             
-                            <a href="<?php echo e(route('nam-hoc')); ?>"
+                            <a href="<?php echo e(route('school-years.index')); ?>"
                                 class="block px-4 py-2 text-sm hover:bg-indigo-50">
                                 Năm học
                             </a>
 
-                            <a href="<?php echo e(route('khoi-hoc')); ?>"
+                            <a href="<?php echo e(route('grades.index')); ?>"
                                 class="block px-4 py-2 text-sm hover:bg-indigo-50">
                                 Khối
                             </a>
 
-                            <a href="<?php echo e(route('ds-lop')); ?>"
+                            <a href="<?php echo e(route('classes.index')); ?>"
                                 class="block px-4 py-2 text-sm hover:bg-indigo-50">
                                 Lớp
                             </a>
@@ -90,25 +90,25 @@
                             <div class="border-t my-1"></div>
 
                             
-                            <a href="<?php echo e(route('teacher.show')); ?>"
+                            <a href="<?php echo e(route('catechists.index')); ?>"
                                 class="block px-4 py-2 text-sm hover:bg-indigo-50">
                                 Giáo lý viên
                             </a>
 
                             
 
-                            <a href="<?php echo e(route('holies')); ?>"
+                            <a href="<?php echo e(route('holy-names.index')); ?>"
                                 class="block px-4 py-2 text-sm hover:bg-indigo-50">
                                 Tên thánh
                             </a>
 
                             
-                            <a href="<?php echo e(route('parish-child.show')); ?>"
+                            <a href="<?php echo e(route('parish-children.index')); ?>"
                                 class="block px-4 py-2 text-sm hover:bg-indigo-50">
                                 Giáo họ
                             </a>
 
-                            <a href="<?php echo e(route('nam-hoc')); ?>"
+                            <a href="<?php echo e(route('classes.index')); ?>"
                                 class="block px-4 py-2 text-sm hover:bg-indigo-50">
                                 Học sinh
                             </a>

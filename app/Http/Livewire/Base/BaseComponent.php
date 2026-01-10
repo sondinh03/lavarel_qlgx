@@ -2,7 +2,9 @@
 
 namespace App\Http\Livewire\Base;
 
+use App\Support\AuthUser;
 use App\Traits\FilterTrait;
+use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\ValidationException;
 use Livewire\Component;
@@ -27,11 +29,15 @@ abstract class BaseComponent extends Component
 {
     use FilterTrait;
     use WithPagination;
+    use AuthorizesRequests;
 
     // ==================== AUTHENTICATION ====================
 
-    /** @var int|null Parish ID từ session */
-    public $parish_id;
+    // /** @var int|null Parish ID từ session */
+    // public $parish_id;
+
+    /** @var int|null Parish ID hiện tại */
+    public ?int $parishId = null;
 
     /** @var bool Quyền admin từ session */
     public $isAdmin = false;
@@ -107,9 +113,21 @@ abstract class BaseComponent extends Component
      */
     protected function initializeUser(): void
     {
-        $this->parish_id = session('parish_id');
-        $this->isAdmin = session('isAdmin', false);
-        $this->isDecen = session('isDecen', false);
+        $user = AuthUser::user();
+        if (!$user) {
+            abort(401, 'Chưa đăng nhập');
+        }
+        
+        $this->isAdmin = $user?->isAdmin() ?? false;
+        $this->isDecen = $user?->isDecen() ?? false;
+
+        $this->parishId = $this->isDecen
+            ? $user?->parishId()
+            : null;
+
+        // $this->parish_id = session('parish_id');
+        // $this->isAdmin = session('isAdmin', false);
+        // $this->isDecen = session('isDecen', false);
 
         // Validate user có quyền truy cập không
         $this->validateUserAccess();
@@ -126,9 +144,9 @@ abstract class BaseComponent extends Component
             return;
         }
 
-        // Decen (quản trị xứ): Phải có parish_id
+        // Decen (quản trị xứ): Phải có parishId
         if ($this->isDecen) {
-            if (!$this->parish_id) {
+            if (!$this->parishId) {
                 abort(403, 'Không xác định được giáo xứ của bạn.');
             }
             return;
@@ -139,12 +157,12 @@ abstract class BaseComponent extends Component
     }
 
     /**
-     * Yêu cầu phải có parish_id (cho cả Admin và Decen)
-     * Gọi method này trong child component nếu bắt buộc phải có parish_id
+     * Yêu cầu phải có parishId (cho cả Admin và Decen)
+     * Gọi method này trong child component nếu bắt buộc phải có parishId
      */
     protected function requireParishId(): void
     {
-        if (!$this->parish_id) {
+        if (!$this->parishId) {
             if ($this->isAdmin) {
                 // Redirect admin đến trang chọn xứ hoặc hiển thị thông báo
                 session()->flash('warning', 'Vui lòng chọn giáo xứ để tiếp tục');
@@ -208,7 +226,7 @@ abstract class BaseComponent extends Component
 
             Log::warning(static::class . ': Validation failed on mount', [
                 'errors' => $e->errors(),
-                'parish_id' => $this->parish_id,
+                'parishId' => $this->parishId,
             ]);
         }
     }
@@ -288,7 +306,7 @@ abstract class BaseComponent extends Component
         Log::error(static::class . ": {$context}", array_merge([
             'error' => $e->getMessage(),
             'trace' => $e->getTraceAsString(),
-            'parish_id' => $this->parish_id,
+            'parishId' => $this->parishId,
             'is_admin' => $this->isAdmin,
         ], $extra));
     }
@@ -322,7 +340,7 @@ abstract class BaseComponent extends Component
             abort(403, 'Chỉ quản trị xứ mới có quyền thực hiện thao tác này');
         }
 
-        if (!$this->parish_id) {
+        if (!$this->parishId) {
             abort(403, 'Không xác định được giáo xứ');
         }
     }

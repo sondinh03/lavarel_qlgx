@@ -64,7 +64,7 @@ class BlockManager extends BaseComponent
 
     protected function validateUniqueName(): bool
     {
-        return !Block::ofParish($this->parish_id)
+        return !Block::ofParish($this->parishId)
             ->where('namhoc', $this->selectedNamHoc)
             ->where('name', $this->name)
             ->when($this->editingId, fn($q) => $q->where('id', '!=', $this->editingId))
@@ -133,7 +133,7 @@ class BlockManager extends BaseComponent
         // Yêu cầu quyền quản trị (Admin hoặc Decen)
         $this->requireManager();
 
-        // Bắt buộc phải có parish_id
+        // Bắt buộc phải có parishId
         $this->requireParishId();
     }
 
@@ -156,7 +156,7 @@ class BlockManager extends BaseComponent
 
     protected function getDefaultNamHocId(): ?int
     {
-        return NamHoc::ofParish($this->parish_id)
+        return NamHoc::ofParish($this->parishId)
             ->active()
             ->orderByDesc('name')
             ->value('id');
@@ -191,7 +191,7 @@ class BlockManager extends BaseComponent
 
         try {
             $query = Block::with('namHocRelation')
-                ->ofParish($this->parish_id)
+                ->ofParish($this->parishId)
                 ->where('namhoc', $this->selectedNamHoc)
                 ->orderBy('weight', 'asc');
 
@@ -246,7 +246,7 @@ class BlockManager extends BaseComponent
         $this->requireManager();
 
         try {
-            $block = Block::ofParish($this->parish_id)
+            $block = Block::ofParish($this->parishId)
                 ->where('namhoc', $this->selectedNamHoc)
                 ->findOrFail($id);
 
@@ -295,7 +295,7 @@ class BlockManager extends BaseComponent
                     'weight' => $this->weight ?? 0,
                     'status' => $this->status,
                     'namhoc' => $this->selectedNamHoc,
-                    'pid' => $this->parish_id,
+                    'pid' => $this->parishId,
                     'did' => 0, // Default value
                     'deid' => 0, // Default value
                     'paid' => 0, // Default value
@@ -336,7 +336,7 @@ class BlockManager extends BaseComponent
         $this->requireManager();
 
         try {
-            $block = Block::ofParish($this->parish_id)
+            $block = Block::ofParish($this->parishId)
                 ->where('namhoc', $this->selectedNamHoc)
                 ->findOrFail($id);
 
@@ -368,7 +368,7 @@ class BlockManager extends BaseComponent
         try {
             DB::beginTransaction();
 
-            $block = Block::ofParish($this->parish_id)
+            $block = Block::ofParish($this->parishId)
                 ->where('namhoc', $this->selectedNamHoc)
                 ->findOrFail($id);
 
@@ -407,12 +407,12 @@ class BlockManager extends BaseComponent
         try {
             DB::beginTransaction();
 
-            $block = Block::ofParish($this->parish_id)
+            $block = Block::ofParish($this->parishId)
                 ->where('namhoc', $this->selectedNamHoc)
                 ->findOrFail($id);
 
             // Find block với weight nhỏ hơn gần nhất
-            $prevBlock = Block::ofParish($this->parish_id)
+            $prevBlock = Block::ofParish($this->parishId)
                 ->where('namhoc', $this->selectedNamHoc)
                 ->where('weight', '<', $block->weight)
                 ->orderBy('weight', 'desc')
@@ -448,12 +448,12 @@ class BlockManager extends BaseComponent
         try {
             DB::beginTransaction();
 
-            $block = Block::ofParish($this->parish_id)
+            $block = Block::ofParish($this->parishId)
                 ->where('namhoc', $this->selectedNamHoc)
                 ->findOrFail($id);
 
             // Find block với weight lớn hơn gần nhất
-            $nextBlock = Block::ofParish($this->parish_id)
+            $nextBlock = Block::ofParish($this->parishId)
                 ->where('namhoc', $this->selectedNamHoc)
                 ->where('weight', '>', $block->weight)
                 ->orderBy('weight', 'asc')

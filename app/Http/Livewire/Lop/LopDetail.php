@@ -62,13 +62,13 @@ class LopDetail extends BaseComponent
 
         if ($this->lopId <= 0) {
             session()->flash('error', 'ID lớp học không hợp lệ.');
-            $this->redirectRoute('ds-lop');
+            $this->redirectRoute('classes.index');
             return;
         }
 
         parent::mount();
         // Không cần requireManager vì đây là view public
-        // Nhưng vẫn validate parish_id nếu cần
+        // Nhưng vẫn validate parishId nếu cần
         // $this->requireParishId();
     }
 
@@ -80,7 +80,7 @@ class LopDetail extends BaseComponent
         $this->loadLopDetails();
 
         if (!$this->lopModel) {
-            $this->redirectRoute('ds-lop');
+            $this->redirectRoute('classes.index');
             return;
         }
 
@@ -94,7 +94,7 @@ class LopDetail extends BaseComponent
     {
         // Public view - không cần authorization
         // Hoặc nếu cần, có thể check:
-        // if (!$this->parish_id) {
+        // if (!$this->parishId) {
         //     abort(403, 'Không xác định được giáo xứ');
         // }
     }
@@ -272,7 +272,7 @@ class LopDetail extends BaseComponent
     {
         return view('livewire.lop.lop-detail', [
             // Pass protected data to view
-            'parishId' => $this->parish_id,
+            'parishId' => $this->parishId,
             'block' => $this->block,
             'namHoc' => $this->namHoc,
         ])

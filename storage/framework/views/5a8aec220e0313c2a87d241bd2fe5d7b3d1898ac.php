@@ -12,7 +12,7 @@
                 ],
                 [
                     'label' => 'Quản lý khối học',
-                    'url' => route('khoi-hoc'),
+                    'url' => route('grades.index'),
                     'icon' => '<svg class=\'w-4 h-4\' fill=\'none\' stroke=\'currentColor\' viewBox=\'0 0 24 24\'>
                                 <path stroke-linecap=\'round\' stroke-linejoin=\'round\' stroke-width=\'2\'
                                     d=\'M3 7h18M3 12h18M3 17h18\' />
@@ -29,7 +29,7 @@
                 ],
                 [
                     'label' => 'Quản lý khối học',
-                    'url' => route('khoi-hoc'),
+                    'url' => route('grades.index'),
                     'icon' => '<svg class=\'w-4 h-4\' fill=\'none\' stroke=\'currentColor\' viewBox=\'0 0 24 24\'>
                                 <path stroke-linecap=\'round\' stroke-linejoin=\'round\' stroke-width=\'2\'
                                     d=\'M3 7h18M3 12h18M3 17h18\' />
@@ -140,14 +140,14 @@
                         
                         <?php
 if (! isset($_instance)) {
-    $html = \Livewire\Livewire::mount('filters.filter-bar', ['showNamHoc' => true,'showKhoi' => false,'showLop' => false,'showKy' => false,'selectedNamHoc' => $selectedNamHoc])->html();
+    $html = \Livewire\Livewire::mount('filters.filter-bar', ['parishId' => $parishId,'showNamHoc' => true,'showKhoi' => false,'showLop' => false,'showKy' => false,'selectedNamHoc' => $selectedNamHoc])->html();
 } elseif ($_instance->childHasBeenRendered('l3699612363-0')) {
     $componentId = $_instance->getRenderedChildComponentId('l3699612363-0');
     $componentTag = $_instance->getRenderedChildComponentTagName('l3699612363-0');
     $html = \Livewire\Livewire::dummyMount($componentId, $componentTag);
     $_instance->preserveRenderedChild('l3699612363-0');
 } else {
-    $response = \Livewire\Livewire::mount('filters.filter-bar', ['showNamHoc' => true,'showKhoi' => false,'showLop' => false,'showKy' => false,'selectedNamHoc' => $selectedNamHoc]);
+    $response = \Livewire\Livewire::mount('filters.filter-bar', ['parishId' => $parishId,'showNamHoc' => true,'showKhoi' => false,'showLop' => false,'showKy' => false,'selectedNamHoc' => $selectedNamHoc]);
     $html = $response->html();
     $_instance->logRenderedChild('l3699612363-0', $response->id(), \Livewire\Livewire::getRootElementTagName($html));
 }

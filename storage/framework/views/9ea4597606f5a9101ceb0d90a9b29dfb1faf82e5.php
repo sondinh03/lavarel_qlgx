@@ -4,7 +4,7 @@
         
         <?php if (isset($component)) { $__componentOriginalc254754b9d5db91d5165876f9d051922ca0066f4 = $component; } ?>
 <?php $component = $__env->getContainer()->make(Illuminate\View\AnonymousComponent::class, ['view' => 'components.breadcrumb','data' => ['items' => [
-            ['label' => 'Trang chủ', 'url' => route('ds-lop')],
+            ['label' => 'Trang chủ', 'url' => route('home')],
             ['label' => 'Điểm danh', 'url' => route('attendance')],
             ['label' => $this->selectedClassName]
         ]]]); ?>
@@ -12,7 +12,7 @@
 <?php if ($component->shouldRender()): ?>
 <?php $__env->startComponent($component->resolveView(), $component->data()); ?>
 <?php $component->withAttributes(['items' => \Illuminate\View\Compilers\BladeCompiler::sanitizeComponentAttribute([
-            ['label' => 'Trang chủ', 'url' => route('ds-lop')],
+            ['label' => 'Trang chủ', 'url' => route('home')],
             ['label' => 'Điểm danh', 'url' => route('attendance')],
             ['label' => $this->selectedClassName]
         ])]); ?>

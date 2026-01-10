@@ -39,7 +39,7 @@
                         Điểm danh
                     </a>
 
-                    <a href="{{ route('ds-lop') }}" class="text-sm font-medium text-slate-600 hover:text-indigo-600 transition">
+                    <a href="{{ route('classes.index') }}" class="text-sm font-medium text-slate-600 hover:text-indigo-600 transition">
                         Danh sách lớp
                     </a>
 
@@ -59,17 +59,17 @@
                             class="absolute right-0 mt-2 w-56 bg-white border border-slate-200 rounded-xl shadow-lg overflow-hidden z-50">
 
                             {{-- Nghiệp vụ gốc --}}
-                            <a href="{{ route('nam-hoc') }}"
+                            <a href="{{ route('school-years.index') }}"
                                 class="block px-4 py-2 text-sm hover:bg-indigo-50">
                                 Năm học
                             </a>
 
-                            <a href="{{ route('khoi-hoc') }}"
+                            <a href="{{ route('grades.index') }}"
                                 class="block px-4 py-2 text-sm hover:bg-indigo-50">
                                 Khối
                             </a>
 
-                            <a href="{{ route('ds-lop') }}"
+                            <a href="{{ route('classes.index') }}"
                                 class="block px-4 py-2 text-sm hover:bg-indigo-50">
                                 Lớp
                             </a>
@@ -77,28 +77,28 @@
                             <div class="border-t my-1"></div>
 
                             {{-- Nhân sự --}}
-                            <a href="{{ route('teacher.show') }}"
+                            <a href="{{ route('catechists.index') }}"
                                 class="block px-4 py-2 text-sm hover:bg-indigo-50">
                                 Giáo lý viên
                             </a>
 
-                            {{-- <a href="{{ route('lop.teachers') }}"
+                            {{-- <a href="{{ route('classes.catechists') }}"
                             class="block px-4 py-2 text-sm hover:bg-indigo-50">
                             Phân công giáo lý viên
                             </a> --}}
 
-                            <a href="{{ route('holies') }}"
+                            <a href="{{ route('holy-names.index') }}"
                                 class="block px-4 py-2 text-sm hover:bg-indigo-50">
                                 Tên thánh
                             </a>
 
                             {{-- Hệ thống --}}
-                            <a href="{{ route('parish-child.show') }}"
+                            <a href="{{ route('parish-children.index') }}"
                                 class="block px-4 py-2 text-sm hover:bg-indigo-50">
                                 Giáo họ
                             </a>
 
-                            <a href="{{ route('nam-hoc') }}"
+                            <a href="{{ route('classes.index') }}"
                                 class="block px-4 py-2 text-sm hover:bg-indigo-50">
                                 Học sinh
                             </a>

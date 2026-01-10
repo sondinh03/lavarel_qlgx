@@ -6,11 +6,11 @@
         <x-breadcrumb :items="[
             [
                 'label' => 'Trang chủ',
-                'url' => route('ds-lop')
+                'url' => route('classes.index')
             ],
             [
                 'label' => 'Quản lý lớp học',
-                'url' => route('ds-lop'),
+                'url' => route('classes.index'),
                 'icon' => '<svg class=\'w-4 h-4\' fill=\'none\' stroke=\'currentColor\' viewBox=\'0 0 24 24\'><path stroke-linecap=\'round\' stroke-linejoin=\'round\' stroke-width=\'2\' d=\'M3 7a2 2 0 012-2h4l2 2h8a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V7z\'/></svg>'
             ],
             [
@@ -33,7 +33,7 @@
 
         {{-- Class Filter Selector --}}
         @livewire('class-filter-selector', [
-            'parish_id' => $parishId,
+            'parish-id' => $parishId,
             'showNamHoc' => true,
             'showKhoi' => true,
             'showLop' => true,
@@ -198,7 +198,7 @@
                     </div>
                     <div class="p-4 space-y-2">
                         {{-- Primary Action: Danh sách học sinh --}}
-                        <a href="{{ route('lop.show', $lopData['id'] ?? 0) }}"
+                        <a href="{{ route('classes.show', $lopData['id'] ?? 0) }}"
                             class="flex items-center justify-center gap-2 w-full px-4 py-3 bg-gradient-to-r from-primary-500 to-primary-600 text-white rounded-xl hover:from-primary-600 hover:to-primary-700 active:scale-[0.98] transition-all shadow-sm font-semibold">
                             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
@@ -223,7 +223,7 @@
                             <span>Kết quả học tập</span>
                         </a>
 
-                        <a href="{{ route('lop.edit', $lopData['id'] ?? 0) }}"
+                        <a href="{{ route('classes.edit', $lopData['id'] ?? 0) }}"
                             class="flex items-center gap-3 w-full px-4 py-2.5 bg-slate-50 hover:bg-slate-100 text-slate-900 rounded-xl transition-all font-medium">
                             <svg class="w-5 h-5 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />

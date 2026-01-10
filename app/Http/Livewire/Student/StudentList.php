@@ -101,8 +101,8 @@ class StudentList extends BaseComponent
     {
         parent::validateUserAccess();
 
-        // Component này BẮT BUỘC phải có parish_id
-        if (!$this->parish_id) {
+        // Component này BẮT BUỘC phải có parishId
+        if (!$this->parishId) {
             abort(403, 'Không xác định được giáo xứ');
         }
     }
@@ -123,11 +123,11 @@ class StudentList extends BaseComponent
         } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
             session()->flash('error', 'Không tìm thấy lớp học này.');
             $this->logError($e, 'Lop not found', ['lop_id' => $this->lopId]);
-            $this->redirectRoute('ds-lop');
+            $this->redirectRoute('classes.index');
         } catch (\Exception $e) {
             $this->logError($e, 'Error loading lop data', ['lop_id' => $this->lopId]);
             session()->flash('error', 'Có lỗi khi tải thông tin lớp học.');
-            $this->redirectRoute('ds-lop');
+            $this->redirectRoute('classes.index');
         }
     }
 
@@ -147,7 +147,7 @@ class StudentList extends BaseComponent
 
         // Decen chỉ xem lớp của parish mình
         if ($this->isDecen) {
-            if ($this->lopModel->pid != $this->parish_id) {
+            if ($this->lopModel->pid != $this->parishId) {
                 abort(403, 'Bạn không có quyền xem lớp học này.');
             }
             return;
@@ -484,7 +484,7 @@ class StudentList extends BaseComponent
             'total' => $stats['total'],
             'countnam' => $stats['countnam'],
             'countnu' => $stats['countnu'],
-            'parishId' => $this->parish_id,
+            'parishId' => $this->parishId,
         ])
             ->extends('frontend.layout.main')
             ->section('content');

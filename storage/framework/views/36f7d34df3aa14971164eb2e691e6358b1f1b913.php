@@ -12,7 +12,7 @@
                 ],
                 [
                     'label' => 'Quản lý lớp học',
-                    'url' => route('ds-lop'),
+                    'url' => route('classes.index'),
                     'icon' => '<svg class=\'w-4 h-4\' fill=\'none\' stroke=\'currentColor\' viewBox=\'0 0 24 24\'>
                                 <path stroke-linecap=\'round\' stroke-linejoin=\'round\' stroke-width=\'2\'
                                     d=\'M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4\' />
@@ -29,7 +29,7 @@
                 ],
                 [
                     'label' => 'Quản lý lớp học',
-                    'url' => route('ds-lop'),
+                    'url' => route('classes.index'),
                     'icon' => '<svg class=\'w-4 h-4\' fill=\'none\' stroke=\'currentColor\' viewBox=\'0 0 24 24\'>
                                 <path stroke-linecap=\'round\' stroke-linejoin=\'round\' stroke-width=\'2\'
                                     d=\'M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4\' />
@@ -138,14 +138,14 @@
                         
                         <?php
 if (! isset($_instance)) {
-    $html = \Livewire\Livewire::mount('filters.filter-bar', ['showNamHoc' => true,'showKhoi' => true,'showLop' => false,'showKy' => false,'selectedNamHoc' => $selectedNamHoc])->html();
+    $html = \Livewire\Livewire::mount('filters.filter-bar', ['parishId' => $parishId,'showNamHoc' => true,'showKhoi' => true,'showLop' => false,'showKy' => false,'selectedNamHoc' => $selectedNamHoc])->html();
 } elseif ($_instance->childHasBeenRendered('l2412341171-0')) {
     $componentId = $_instance->getRenderedChildComponentId('l2412341171-0');
     $componentTag = $_instance->getRenderedChildComponentTagName('l2412341171-0');
     $html = \Livewire\Livewire::dummyMount($componentId, $componentTag);
     $_instance->preserveRenderedChild('l2412341171-0');
 } else {
-    $response = \Livewire\Livewire::mount('filters.filter-bar', ['showNamHoc' => true,'showKhoi' => true,'showLop' => false,'showKy' => false,'selectedNamHoc' => $selectedNamHoc]);
+    $response = \Livewire\Livewire::mount('filters.filter-bar', ['parishId' => $parishId,'showNamHoc' => true,'showKhoi' => true,'showLop' => false,'showKy' => false,'selectedNamHoc' => $selectedNamHoc]);
     $html = $response->html();
     $_instance->logRenderedChild('l2412341171-0', $response->id(), \Livewire\Livewire::getRootElementTagName($html));
 }
@@ -417,7 +417,7 @@ echo $html;
 <?php unset($__componentOriginalc254754b9d5db91d5165876f9d051922ca0066f4); ?>
 <?php endif; ?>
 
-                                    <a href="<?php echo e(route('lop.teachers', ['lopId' => $lop->id])); ?>"
+                                    <a href="<?php echo e(route('classes.catechists', ['lopId' => $lop->id])); ?>"
                                         class="inline-flex items-center gap-1 text-purple-600 hover:text-purple-700 
                                             font-semibold text-sm transition">
                                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">

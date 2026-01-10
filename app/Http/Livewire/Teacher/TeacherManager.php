@@ -116,7 +116,7 @@ class TeacherManager extends BaseComponent
         // Yêu cầu quyền quản trị (Admin hoặc Decen)
         $this->requireManager();
 
-        // Bắt buộc phải có parish_id
+        // Bắt buộc phải có parishId
         $this->requireParishId();
     }
 
@@ -154,7 +154,7 @@ class TeacherManager extends BaseComponent
     protected function loadParishChildren(): void
     {
         try {
-            $this->parishChildren = Parish::where('pid', $this->parish_id)
+            $this->parishChildren = Parish::where('pid', $this->parishId)
                 ->active()
                 ->orderBy('name')
                 ->pluck('name', 'id');
@@ -170,7 +170,7 @@ class TeacherManager extends BaseComponent
     public function loadTeachers(): void
     {
         try {
-            $query = Teacher::ofParish($this->parish_id)
+            $query = Teacher::ofParish($this->parishId)
                 ->with(['holy', 'parishChild'])
                 ->orderBy('name', 'asc');
 
@@ -233,7 +233,7 @@ class TeacherManager extends BaseComponent
         $this->requireManager();
 
         try {
-            $teacher = Teacher::where('pid', $this->parish_id)
+            $teacher = Teacher::where('pid', $this->parishId)
                 ->findOrFail($id);
 
             $this->editingId = $teacher->id;
@@ -269,7 +269,7 @@ class TeacherManager extends BaseComponent
 
             // Check trùng tên và số điện thoại trong cùng xứ
             if ($this->phoneNumber) {
-                $exists = Teacher::where('pid', $this->parish_id)
+                $exists = Teacher::where('pid', $this->parishId)
                     ->where('name', $this->name)
                     ->where('phone_number', $this->phoneNumber)
                     ->when($this->editingId, function ($q) {
@@ -294,7 +294,7 @@ class TeacherManager extends BaseComponent
                     'phone_number' => $this->phoneNumber ?: null,
                     'note' => $this->note ?: null,
                     'status' => $this->status,
-                    'pid' => $this->parish_id,
+                    'pid' => $this->parishId,
                     'did' => 0,  // Default value
                     'deid' => 0, // Default value
                 ]
@@ -333,7 +333,7 @@ class TeacherManager extends BaseComponent
         $this->requireManager();
 
         try {
-            $teacher = Teacher::where('pid', $this->parish_id)
+            $teacher = Teacher::where('pid', $this->parishId)
                 ->findOrFail($id);
 
             $teacher->update(['status' => !$teacher->status]);
@@ -364,7 +364,7 @@ class TeacherManager extends BaseComponent
         try {
             DB::beginTransaction();
 
-            $teacher = Teacher::where('pid', $this->parish_id)
+            $teacher = Teacher::where('pid', $this->parishId)
                 ->findOrFail($id);
 
             // Check nếu giáo viên đang được phân công dạy lớp

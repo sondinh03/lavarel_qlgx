@@ -59,6 +59,8 @@ class LopList extends BaseComponent
     /** @var \Illuminate\Support\Collection Danh sách khối có thể chọn */
     public $availableBlocks;
 
+    // public ?int $parishId = null;
+
     // ==================== VALIDATION ====================
 
     protected $rules = [
@@ -120,13 +122,11 @@ class LopList extends BaseComponent
      */
     public function mount()
     {
+        $this->authorize('viewAny', Lop::class);
         parent::mount();
-
-        // Yêu cầu quyền quản trị (Admin hoặc Decen)
-        $this->requireManager();
-
+        
         // Bắt buộc phải có parish_id
-        $this->requireParishId();
+        // $this->requireParishId();
 
         // Initialize available blocks
         $this->availableBlocks = collect();
@@ -276,7 +276,7 @@ class LopList extends BaseComponent
         $this->requireManager();
 
         try {
-            $lop = Lop::ofParish($this->parish_id)
+            $lop = Lop::ofParish($this->parishId)
                 ->where('schoolyear', $this->selectedNamHoc)
                 ->findOrFail($id);
 
@@ -333,7 +333,7 @@ class LopList extends BaseComponent
                     'name' => $this->name,
                     'block' => $this->block,
                     'schoolyear' => $this->selectedNamHoc,
-                    'pid' => $this->parish_id,
+                    'pid' => $this->parishId,
                     'status' => $this->status,
                     'did' => 0, // Default value
                     'deid' => 0, // Default value
@@ -374,7 +374,7 @@ class LopList extends BaseComponent
         $this->requireManager();
 
         try {
-            $lop = Lop::ofParish($this->parish_id)
+            $lop = Lop::ofParish($this->parishId)
                 ->where('schoolyear', $this->selectedNamHoc)
                 ->findOrFail($id);
 
@@ -406,7 +406,7 @@ class LopList extends BaseComponent
         }
 
         try {
-            $this->availableBlocks = Block::ofParish($this->parish_id)
+            $this->availableBlocks = Block::ofParish($this->parishId)
                 ->where('namhoc', $this->selectedNamHoc)
                 ->active()
                 ->orderBy('weight')
@@ -433,7 +433,7 @@ class LopList extends BaseComponent
 
         try {
             $query = Lop::with(['blockRelation', 'schoolYear'])
-                ->where('lop.pid', $this->parish_id)
+                ->where('lop.pid', $this->parishId)
                 ->where('schoolyear', $this->selectedNamHoc)
                 ->withCount('activeStudents as students_count');
 
@@ -567,7 +567,7 @@ class LopList extends BaseComponent
      */
     protected function validateUniqueName(): bool
     {
-        return !Lop::ofParish($this->parish_id)
+        return !Lop::ofParish($this->parishId)
             ->where('schoolyear', $this->selectedNamHoc)
             ->where('block', $this->block)
             ->where('name', $this->name)
@@ -577,7 +577,7 @@ class LopList extends BaseComponent
 
     protected function validateUniqueSymbol(): bool
     {
-        return !Lop::ofParish($this->parish_id)
+        return !Lop::ofParish($this->parishId)
             ->where('schoolyear', $this->selectedNamHoc)
             ->where('symbol', $this->symbol)
             ->when($this->editingId, fn($q) => $q->where('id', '!=', $this->editingId))
@@ -589,7 +589,7 @@ class LopList extends BaseComponent
      */
     protected function getDefaultNamHocId(): ?int
     {
-        return NamHoc::ofParish($this->parish_id)
+        return NamHoc::ofParish($this->parishId)
             ->active()
             ->orderByDesc('name')
             ->value('id');
@@ -607,7 +607,7 @@ class LopList extends BaseComponent
 
         return view('livewire.lop.lop-list', [
             'lops' => $lops,
-            'parishId' => $this->parish_id,
+            'parishId' => $this->parishId,
         ])
             ->extends('frontend.layout.main')
             ->section('content');
