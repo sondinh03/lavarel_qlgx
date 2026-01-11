@@ -4,7 +4,7 @@
         {{-- ✅ BREADCRUMB  --}}
         <x-breadcrumb :items="[
             ['label' => 'Trang chủ', 'url' => route('home')],
-            ['label' => 'Điểm danh', 'url' => route('attendance')],
+            ['label' => 'Điểm danh', 'url' => route('attendance.show')],
             ['label' => $this->selectedClassName]
         ]" />
 
@@ -451,7 +451,7 @@
 
                 {{-- Action Buttons --}}
                 <div class="flex flex-col sm:flex-row gap-3 mt-6 sm:justify-end">
-                    <a href="{{ route('attendance') }}"
+                    <a href="{{ route('attendance.show') }}"
                         class="px-4 py-2 border border-blue-200 hover:bg-blue-50 bg-white rounded-lg text-center">
                         Hủy
                     </a>

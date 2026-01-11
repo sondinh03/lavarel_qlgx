@@ -2,23 +2,14 @@
 
 use Illuminate\Support\Facades\Route;
 
-use Illuminate\Support\Facades\App;
-use Illuminate\Support\Facades\URL;
-use Illuminate\Http\Request;
 use Illuminate\Pagination\Paginator;
 
 use App\Http\Controllers\SlugController;
-use App\Models\ParishManagement;
-use App\Http\Controllers\ParishManagementController;
 
-use App\Http\Controllers\HomeController;
-use App\Models\Page;
-use App\Http\Controllers\PageController;
 use App\Http\Controllers\GiaDinhController;
 use App\Http\Controllers\GiaoPhanController;
 use App\Http\Controllers\UsersImportController;
 use App\Http\Controllers\UsersExportController;
-use App\Http\Controllers\FamilyController;
 use App\Http\Controllers\BitichExportController;
 use App\Http\Controllers\LyLichCaNhanExportController;
 use App\Http\Controllers\GiayGioiThieuGiaoLyHonPhoiExportController;
@@ -34,9 +25,7 @@ use App\Http\Controllers\LopController;
 use App\Http\Controllers\LopHocController;
 use App\Http\Controllers\DiLeController;
 use App\Http\Controllers\KhaoKinhController;
-use App\Models\Lop;
 use App\Http\Controllers\KetQuaController;
-use App\Models\Student;
 use App\Http\Controllers\KQController;
 use App\Http\Controllers\KetQuaDiHocController;
 use App\Http\Controllers\KetQuaDiLeController;
@@ -48,21 +37,17 @@ use App\Http\Controllers\TeacherImportController;
 use App\Http\Controllers\KetQuaExportController;
 use App\Http\Controllers\HonPhoiExportController;
 use App\Http\Livewire\AttendanceManager;
-use App\Http\Livewire\Block\Block;
 use App\Http\Livewire\Block\BlockManager;
 use App\Http\Livewire\Holy\HolyManager;
 use App\Http\Livewire\Home;
 use App\Http\Livewire\Lop\AssignTeacher;
-use App\Http\Livewire\Lop\CreateEditClassForm;
 use App\Http\Livewire\Lop\LopDetail;
-use App\Http\Livewire\Lop\LopForm;
 use App\Http\Livewire\Lop\LopList;
 use App\Http\Livewire\NamHoc\NamHocManager;
 use App\Http\Livewire\Parish\ParishChild;
 use App\Http\Livewire\Student\StudentDetail;
 use App\Http\Livewire\Teacher\TeacherManager;
 use Illuminate\Support\Facades\Auth;
-use PHPUnit\TextUI\XmlConfiguration\Group;
 
 Paginator::useBootstrap();
 
@@ -91,8 +76,8 @@ Route::middleware('auth')->group(function () {
     | ĐIỂM DANH
     |--------------------------------------------------------------------------
     */
-    // Route::get('/attendance/{classId?}', AttendanceManager::class)
-    //     ->name('attendance.index');
+    Route::get('/attendance/{classId?}', AttendanceManager::class)
+        ->name('attendance.show');
 
     Route::get('/school-years', NamHocManager::class)
         ->name('school-years.index');
@@ -113,7 +98,7 @@ Route::middleware('auth')->group(function () {
         ->name('holy-names.index');
 });
 
-Route::get('/attendance/{classId?}', AttendanceManager::class)->name('attendance');
+
 // Route::get('/nam-hoc', NamHocManager::class)->name('nam-hoc');
 // Route::get('/khoi-hoc', BlockManager::class)->name('khoi-hoc');
 // Route::get('/ho-so-hoc-sinh/{id}', StudentDetail::class)->name('student.detail');

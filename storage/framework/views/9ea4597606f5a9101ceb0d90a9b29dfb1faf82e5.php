@@ -5,7 +5,7 @@
         <?php if (isset($component)) { $__componentOriginalc254754b9d5db91d5165876f9d051922ca0066f4 = $component; } ?>
 <?php $component = $__env->getContainer()->make(Illuminate\View\AnonymousComponent::class, ['view' => 'components.breadcrumb','data' => ['items' => [
             ['label' => 'Trang chủ', 'url' => route('home')],
-            ['label' => 'Điểm danh', 'url' => route('attendance')],
+            ['label' => 'Điểm danh', 'url' => route('attendance.show')],
             ['label' => $this->selectedClassName]
         ]]]); ?>
 <?php $component->withName('breadcrumb'); ?>
@@ -13,7 +13,7 @@
 <?php $__env->startComponent($component->resolveView(), $component->data()); ?>
 <?php $component->withAttributes(['items' => \Illuminate\View\Compilers\BladeCompiler::sanitizeComponentAttribute([
             ['label' => 'Trang chủ', 'url' => route('home')],
-            ['label' => 'Điểm danh', 'url' => route('attendance')],
+            ['label' => 'Điểm danh', 'url' => route('attendance.show')],
             ['label' => $this->selectedClassName]
         ])]); ?>
 <?php echo $__env->renderComponent(); ?>
@@ -494,7 +494,7 @@ echo $html;
 
                 
                 <div class="flex flex-col sm:flex-row gap-3 mt-6 sm:justify-end">
-                    <a href="<?php echo e(route('attendance')); ?>"
+                    <a href="<?php echo e(route('attendance.show')); ?>"
                         class="px-4 py-2 border border-blue-200 hover:bg-blue-50 bg-white rounded-lg text-center">
                         Hủy
                     </a>

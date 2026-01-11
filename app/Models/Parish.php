@@ -90,6 +90,16 @@ class Parish extends Model
         return $query->where('pid', $pid);
     }
 
+    public function scopeOfDeanery($query, int $pid)
+    {
+        return $query->where('deid', $pid);
+    }
+
+    public function scopeOfDiocese($query, int $pid)
+    {
+        return $query->where('did', $pid);
+    }
+
     /*
     |--------------------------------------------------------------------------
     | ACCESSORS

@@ -35,7 +35,7 @@
                         Kết quả học tập
                     </a>
 
-                    <a href="{{ route('attendance') }}" class="text-sm font-medium text-slate-600 hover:text-indigo-600 transition">
+                    <a href="{{ route('attendance.show') }}" class="text-sm font-medium text-slate-600 hover:text-indigo-600 transition">
                         Điểm danh
                     </a>
 

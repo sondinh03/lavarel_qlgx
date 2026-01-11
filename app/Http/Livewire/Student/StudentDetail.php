@@ -87,16 +87,29 @@ class StudentDetail extends BaseComponent
             ]);
 
             // $student = Student::with([
-            //     // ===== Quan hệ hành chính / tổ chức (nếu đã có bảng) =====
-            //     'parish:id,pname',              // students.pid → parishes.id
-            //     'diocese:id,dname',             // students.did → dioceses.id
-            //     'deanery:id,deanery_name',      // students.deid → deaneries.id
+            //     // Parish có đủ thông tin diocese và deanery
+            //     'parish:id,name,diocese,deanerys',
+            //     'parish.diocese:id,name',
+            //     'parish.deanery:id,name',
 
-            //     'lop:id,name',              // belongsToMany qua student_class
+            //     // 'holyRelation:id,name',
+            //     // 'lop:id,name',
+            //     // 'paidRelation:id,name', // Giáo họ
 
-            //     // ===== Quan hệ bậc thánh / trạng thái =====
-            //     'holyRelation:id,name',          // students.holy → holies.id
+            //     // // Baptism relationships
+            //     // 'baptismGiver:id,name',
+            //     // 'baptismSponsor:id,name',
+            //     // 'baptismParish:id,name,diocese,deanerys',
+            //     // 'baptismParish.diocese:id,name',
+            //     // 'baptismParish.deanery:id,name',
+
+            //     // // More Power relationships
+            //     // 'morePowerSponsor:id,name',
+            //     // 'morePowerParish:id,name,diocese,deanerys',
+            //     // 'morePowerParish.diocese:id,name',
+            //     // 'morePowerParish.deanery:id,name',
             // ])->findOrFail($this->studentId);
+
 
             $student = Student::findOrFail($this->studentId);
 

@@ -32,14 +32,10 @@ abstract class BaseComponent extends Component
     use AuthorizesRequests;
 
     // ==================== AUTHENTICATION ====================
-
-    // /** @var int|null Parish ID từ session */
-    // public $parish_id;
-
     /** @var int|null Parish ID hiện tại */
     public ?int $parishId = null;
 
-    /** @var bool Quyền admin từ session */
+    /** @var bool Quyền admin  */
     public $isAdmin = false;
 
     /** @var bool Kiểm tra quyền quản trị xứ */
@@ -124,37 +120,30 @@ abstract class BaseComponent extends Component
         $this->parishId = $this->isDecen
             ? $user?->parishId()
             : null;
-
-        // $this->parish_id = session('parish_id');
-        // $this->isAdmin = session('isAdmin', false);
-        // $this->isDecen = session('isDecen', false);
-
-        // Validate user có quyền truy cập không
-        $this->validateUserAccess();
     }
 
     /**
      * Validate user có quyền truy cập component này không
      * Override method này trong child class để custom authorization logic
      */
-    protected function validateUserAccess(): void
-    {
-        // Admin tổng: Có quyền trên toàn hệ thống
-        if ($this->isAdmin) {
-            return;
-        }
+    // protected function validateUserAccess(): void
+    // {
+    //     // Admin tổng: Có quyền trên toàn hệ thống
+    //     if ($this->isAdmin) {
+    //         return;
+    //     }
 
-        // Decen (quản trị xứ): Phải có parishId
-        if ($this->isDecen) {
-            if (!$this->parishId) {
-                abort(403, 'Không xác định được giáo xứ của bạn.');
-            }
-            return;
-        }
+    //     // Decen (quản trị xứ): Phải có parishId
+    //     if ($this->isDecen) {
+    //         if (!$this->parishId) {
+    //             abort(403, 'Không xác định được giáo xứ của bạn.');
+    //         }
+    //         return;
+    //     }
 
-        // Không phải admin cũng không phải decen
-        abort(403, 'Không có quyền truy cập');
-    }
+    //     // Không phải admin cũng không phải decen
+    //     abort(403, 'Không có quyền truy cập');
+    // }
 
     /**
      * Yêu cầu phải có parishId (cho cả Admin và Decen)
