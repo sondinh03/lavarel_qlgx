@@ -104,14 +104,8 @@ class AttendanceManager extends BaseComponent
 
     public function mount($classId = null)
     {
-        $this->authorize('viewAny', Lop::class);
+        // $this->authorize('viewAny', Lop::class);
         parent::mount();
-
-        // $this->students = collect();
-        // $this->sessions = [];
-        // $this->attendanceRecords = [];
-        // $this->draftAttendance = [];
-        // $this->selectedDate = null;
 
         // Require parish ID
         $this->requireParishId();

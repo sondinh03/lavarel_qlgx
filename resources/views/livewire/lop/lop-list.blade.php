@@ -71,7 +71,8 @@
                             :show-khoi="true"
                             :show-lop="false"
                             :show-ky="false"
-                            :selected-nam-hoc="$selectedNamHoc" />
+                            :selected-nam-hoc="$selectedNamHoc"
+                            :selected-khoi="$selectedKhoi" />
 
                         {{-- Search --}}
                         <input

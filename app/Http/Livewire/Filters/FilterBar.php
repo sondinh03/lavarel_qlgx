@@ -46,7 +46,6 @@ class FilterBar extends Component
      */
     public function mount($parishId = null): void
     {
-        // $this->parish_id = session('parish_id');
         $this->parish_id = $parishId;
 
         $this->namHocs = collect();
@@ -123,8 +122,8 @@ class FilterBar extends Component
             : null;
 
         $this->reset(['selectedLop']);
-
         $this->loadLops();
+
         $this->emitFilter();
     }
 

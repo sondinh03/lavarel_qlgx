@@ -187,6 +187,16 @@
         </div>
         @endif
 
+        @if (!$selectedClassId)
+        <div class="text-center text-gray-500 py-10">
+            Vui lòng chọn lớp để bắt đầu điểm danh
+        </div>
+        @else
+        @if ($students->isEmpty())
+        <div class="text-center text-gray-500 py-10">
+            Lớp chưa có học sinh
+        </div>
+        @else
         {{-- Table Section --}}
         @if($selectedClassId)
         <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
@@ -314,124 +324,199 @@
             </div>
 
             {{-- Mobile View --}}
-            <div class="lg:hidden p-6 space-y-4">
-                {{-- Date Selector --}}
-                <div class="space-y-2">
-                    <label class="block text-sm font-semibold text-slate-900">
-                        Chọn ngày {{ $attendanceType == 1 ? 'đi học' : 'đi lễ' }}
-                    </label>
-                    <select
-                        wire:model.live="selectedDate"
-                        class="w-full px-4 py-3 rounded-xl border border-slate-300
-                            bg-white text-slate-900 focus:outline-none focus:ring-2 focus:ring-primary-500">
-                        @foreach($sessions as $session)
-                        <option value="{{ $session['dateStr'] }}">
-                            {{ $session['dayName'] }} - {{ $session['fullDate'] }}
-                            {{ $session['locked'] ? '🔒' : '' }}
-                        </option>
-                        @endforeach
-                    </select>
-                </div>
+            <div class="lg:hidden">
+                {{-- Date Selector - Sticky --}}
+                <div class="sticky top-0 z-30 bg-white p-4 border-b border-slate-200 shadow-sm">
+                    <div class="space-y-3">
+                        <label class="block text-sm font-semibold text-slate-900">
+                            Chọn ngày {{ $attendanceType == 1 ? 'đi học' : 'đi lễ' }}
+                        </label>
+                        <select
+                            wire:model.live="selectedDate"
+                            class="w-full px-4 py-3 rounded-xl border border-slate-300
+                    bg-white text-slate-900 focus:outline-none focus:ring-2 focus:ring-primary-500">
+                            @foreach($sessions as $session)
+                            <option value="{{ $session['dateStr'] }}">
+                                {{ $session['dayName'] }} - {{ $session['fullDate'] }}
+                                {{ $session['locked'] ? '🔒' : '' }}
+                            </option>
+                            @endforeach
+                        </select>
 
-                @php
-                $currentSession = collect($sessions)->firstWhere('dateStr', $selectedDate);
-                $locked = $currentSession['locked'] ?? false;
-                $stats = $this->getDateStats($selectedDate);
-                @endphp
+                        @php
+                        $currentSession = collect($sessions)->firstWhere('dateStr', $selectedDate);
+                        $locked = $currentSession['locked'] ?? false;
+                        $stats = $this->getDateStats($selectedDate);
+                        @endphp
 
-                {{-- Stats --}}
-                <div class="grid grid-cols-3 gap-2 mb-4">
-                    <div class="bg-green-50 p-3 rounded-xl border border-green-200">
-                        <div class="text-xs text-green-700 font-semibold mb-1">Có mặt</div>
-                        <div class="text-xl font-bold text-green-600">{{ $stats['present'] }}</div>
-                    </div>
-                    <div class="bg-yellow-50 p-3 rounded-xl border border-yellow-200">
-                        <div class="text-xs text-yellow-700 font-semibold mb-1">Vắng CP</div>
-                        <div class="text-xl font-bold text-yellow-600">{{ $stats['absentPermitted'] }}</div>
-                    </div>
-                    <div class="bg-red-50 p-3 rounded-xl border border-red-200">
-                        <div class="text-xs text-red-700 font-semibold mb-1">Vắng KP</div>
-                        <div class="text-xl font-bold text-red-600">{{ $stats['absentNotPermitted'] }}</div>
-                    </div>
-                </div>
-
-                {{-- Mark All Button --}}
-                @if(!$locked)
-                <button
-                    wire:click="markAllPresent({{ $currentSession['id'] ?? 0 }})"
-                    class="w-full py-3 px-4 bg-green-500 hover:bg-green-600 text-white rounded-xl
-                        flex items-center justify-center gap-2 font-medium transition-colors">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
-                    </svg>
-                    Có mặt tất cả
-                </button>
-                @endif
-
-                {{-- Student Cards --}}
-                @foreach($students as $index => $student)
-                @php
-                $status = $this->getAttendanceStatus($student->id, $selectedDate);
-                @endphp
-                <div class="border border-slate-200 rounded-xl p-4" wire:key="mobile-student-{{ $student->id }}">
-                    <div class="flex items-start justify-between mb-3">
-                        <div class="flex-1">
-                            <div class="text-xs text-slate-500">#{{ $index + 1 }}</div>
-                            <div class="font-semibold text-slate-900 text-lg">{{ $student->saint_name }}</div>
-                            <div class="text-sm text-slate-600">{{ $student->last_name }} {{ $student->name }}</div>
+                        {{-- Quick Stats --}}
+                        <div class="grid grid-cols-3 gap-2">
+                            <div class="bg-green-50 p-2 rounded-lg border border-green-200 text-center">
+                                <div class="text-xs text-green-700 font-medium">Có mặt</div>
+                                <div class="text-lg font-bold text-green-600">{{ $stats['present'] }}</div>
+                            </div>
+                            <div class="bg-yellow-50 p-2 rounded-lg border border-yellow-200 text-center">
+                                <div class="text-xs text-yellow-700 font-medium">Vắng CP</div>
+                                <div class="text-lg font-bold text-yellow-600">{{ $stats['absentPermitted'] }}</div>
+                            </div>
+                            <div class="bg-red-50 p-2 rounded-lg border border-red-200 text-center">
+                                <div class="text-xs text-red-700 font-medium">Vắng KP</div>
+                                <div class="text-lg font-bold text-red-600">{{ $stats['absentNotPermitted'] }}</div>
+                            </div>
                         </div>
-                    </div>
 
-                    @if($locked)
-                    {{-- Locked view --}}
-                    <div class="flex items-center justify-center gap-4 py-4">
-                        @if($status == 1)
-                        <div class="flex flex-col items-center">
-                            <span class="inline-block w-7 h-7 rounded bg-green-500"></span>
-                            <span class="text-xs text-green-700 mt-1">Có mặt</span>
-                        </div>
-                        @elseif($status == 2)
-                        <div class="flex flex-col items-center">
-                            <span class="inline-block w-7 h-7 rounded bg-yellow-400"></span>
-                            <span class="text-xs text-yellow-700 mt-1">Vắng CP</span>
-                        </div>
-                        @elseif($status == 3)
-                        <div class="flex flex-col items-center">
-                            <span class="inline-block w-7 h-7 rounded bg-red-500"></span>
-                            <span class="text-xs text-red-700 mt-1">Vắng KP</span>
-                        </div>
-                        @else
-                        <div class="text-sm text-slate-400">Chưa có dữ liệu</div>
+                        {{-- Mark All Button --}}
+                        @if(!$locked)
+                        <button
+                            wire:click="markAllPresent({{ $currentSession['id'] ?? 0 }})"
+                            class="w-full py-2.5 px-4 bg-green-500 hover:bg-green-600 text-white rounded-xl
+                    flex items-center justify-center gap-2 font-medium transition-colors text-sm">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                            </svg>
+                            Có mặt tất cả
+                        </button>
                         @endif
                     </div>
-                    @else
-                    {{-- Interactive buttons --}}
-                    <div class="grid grid-cols-3 gap-2">
-                        <button
-                            wire:click="setAttendance({{ $student->id }}, {{ $currentSession['id'] ?? 0 }}, {{ $status == 1 ? 'null' : 1 }})"
-                            class="py-3 rounded-xl text-sm font-medium transition-all
-                                {{ $status == 1 ? 'bg-green-500 text-white shadow-md' : 'bg-green-50 text-green-700 border border-green-200' }}">
-                            <div class="text-lg mb-1">✓</div>
-                            <div class="text-xs">Có mặt</div>
-                        </button>
-                        <button
-                            wire:click="setAttendance({{ $student->id }}, {{ $currentSession['id'] ?? 0 }}, {{ $status == 2 ? 'null' : 2 }})"
-                            class="py-3 rounded-xl text-sm font-medium transition-all
-                                {{ $status == 2 ? 'bg-yellow-400 text-slate-900 shadow-md' : 'bg-yellow-50 text-yellow-700 border border-yellow-200' }}">
-                            <div class="text-lg mb-1">P</div>
-                            <div class="text-xs">Vắng CP</div>
-                        </button>
-                        <button
-                            wire:click="setAttendance({{ $student->id }}, {{ $currentSession['id'] ?? 0 }}, {{ $status == 3 ? 'null' : 3 }})"
-                            class="py-3 rounded-xl text-sm font-medium transition-all
-                                {{ $status == 3 ? 'bg-red-500 text-white shadow-md' : 'bg-red-50 text-red-700 border border-red-200' }}">
-                            <div class="text-lg mb-1">✕</div>
-                            <div class="text-xs">Vắng KP</div>
-                        </button>
-                    </div>
-                    @endif
                 </div>
-                @endforeach
+
+                {{-- Table View --}}
+                <div class="overflow-x-auto">
+                    <table class="w-full border-separate border-spacing-0">
+                        <thead class="bg-slate-50 border-b-2 border-slate-200 sticky top-[200px] z-20">
+                            <tr>
+                                <th class="w-12 px-2 py-3 text-left text-xs font-bold text-slate-900 uppercase tracking-wider border-r border-slate-200">
+                                    STT
+                                </th>
+                                <th class="w-32 px-2 py-3 text-left text-xs font-bold text-slate-900 uppercase tracking-wider border-r border-slate-200">
+                                    Họ và tên
+                                </th>
+                                <th class="px-3 py-3 text-center text-xs font-bold text-slate-900 uppercase tracking-wider">
+                                    <div class="flex flex-col gap-1">
+                                        <span class="{{ $locked ? 'text-slate-400' : '' }}">Điểm danh</span>
+                                        @if($locked)
+                                        <div class="flex items-center justify-center gap-1 text-slate-400">
+                                            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                    d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                                            </svg>
+                                            <span class="text-[10px]">Đã khóa</span>
+                                        </div>
+                                        @endif
+                                    </div>
+                                </th>
+                            </tr>
+                        </thead>
+
+                        <tbody class="divide-y divide-slate-100 bg-white">
+                            @foreach ($students as $index => $student)
+                            @php
+                            $status = $this->getAttendanceStatus($student->id, $selectedDate);
+                            @endphp
+                            <tr class="hover:bg-slate-50 transition-colors" wire:key="mobile-student-{{ $student->id }}">
+                                {{-- STT --}}
+                                <td class="w-12 px-2 py-3 text-sm text-slate-500 font-medium border-r border-slate-100">
+                                    {{ $index + 1 }}
+                                </td>
+
+                                {{-- Tên học sinh --}}
+                                <td class="w-32 px-2 py-3 border-r border-slate-100">
+                                    <div class="flex flex-col">
+                                        <span class="text-[10px] text-slate-500 leading-tight">{{ $student->saint_name }}</span>
+                                        <span class="font-semibold text-slate-900 text-xs leading-tight">
+                                            {{ $student->last_name }} {{ $student->name }}
+                                        </span>
+                                    </div>
+                                </td>
+
+                                {{-- Attendance Status --}}
+                                <td class="px-3 py-3">
+                                    @if($locked)
+                                    {{-- Locked: Show static status --}}
+                                    <div class="flex items-center justify-center">
+                                        @if($status == 1)
+                                        <div class="flex flex-col items-center gap-1">
+                                            <div class="w-8 h-8 bg-green-500 rounded-lg flex items-center justify-center shadow-sm">
+                                                <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7" />
+                                                </svg>
+                                            </div>
+                                            <span class="text-[9px] text-green-700 font-medium">Có mặt</span>
+                                        </div>
+                                        @elseif($status == 2)
+                                        <div class="flex flex-col items-center gap-1">
+                                            <div class="w-8 h-8 bg-yellow-400 rounded-lg flex items-center justify-center shadow-sm">
+                                                <span class="text-slate-900 font-bold text-sm">P</span>
+                                            </div>
+                                            <span class="text-[9px] text-yellow-700 font-medium">Vắng CP</span>
+                                        </div>
+                                        @elseif($status == 3)
+                                        <div class="flex flex-col items-center gap-1">
+                                            <div class="w-8 h-8 bg-red-500 rounded-lg flex items-center justify-center shadow-sm">
+                                                <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M6 18L18 6M6 6l12 12" />
+                                                </svg>
+                                            </div>
+                                            <span class="text-[9px] text-red-700 font-medium">Vắng KP</span>
+                                        </div>
+                                        @else
+                                        <span class="text-xs text-slate-400">-</span>
+                                        @endif
+                                    </div>
+                                    @else
+                                    {{-- Unlocked: Interactive buttons --}}
+                                    <div class="flex gap-1 justify-center">
+                                        <button
+                                            wire:click="setAttendance({{ $student->id }}, {{ $currentSession['id'] ?? 0 }}, {{ $status == 1 ? 'null' : 1 }})"
+                                            class="w-9 h-9 rounded-lg text-sm font-medium transition-all flex items-center justify-center
+                                    {{ $status == 1 ? 'bg-green-500 text-white shadow-md scale-105' : 'bg-green-50 text-green-700 border border-green-200 active:scale-95' }}"
+                                            wire:loading.attr="disabled">
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7" />
+                                            </svg>
+                                        </button>
+                                        <button
+                                            wire:click="setAttendance({{ $student->id }}, {{ $currentSession['id'] ?? 0 }}, {{ $status == 2 ? 'null' : 2 }})"
+                                            class="w-9 h-9 rounded-lg text-sm font-bold transition-all flex items-center justify-center
+                                    {{ $status == 2 ? 'bg-yellow-400 text-slate-900 shadow-md scale-105' : 'bg-yellow-50 text-yellow-700 border border-yellow-200 active:scale-95' }}"
+                                            wire:loading.attr="disabled">
+                                            P
+                                        </button>
+                                        <button
+                                            wire:click="setAttendance({{ $student->id }}, {{ $currentSession['id'] ?? 0 }}, {{ $status == 3 ? 'null' : 3 }})"
+                                            class="w-9 h-9 rounded-lg text-sm font-medium transition-all flex items-center justify-center
+                                    {{ $status == 3 ? 'bg-red-500 text-white shadow-md scale-105' : 'bg-red-50 text-red-700 border border-red-200 active:scale-95' }}"
+                                            wire:loading.attr="disabled">
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M6 18L18 6M6 6l12 12" />
+                                            </svg>
+                                        </button>
+                                    </div>
+                                    @endif
+                                </td>
+                            </tr>
+                            @endforeach
+                        </tbody>
+                    </table>
+                </div>
+
+                {{-- Legend - Sticky Bottom --}}
+                <div class="sticky bottom-0 bg-slate-50 border-t border-slate-200 p-3 shadow-lg">
+                    <div class="flex flex-wrap items-center justify-center gap-3 text-[10px] text-slate-600">
+                        <div class="flex items-center gap-1.5">
+                            <span class="inline-block w-3 h-3 rounded bg-green-500"></span>
+                            <span>Có mặt</span>
+                        </div>
+                        <div class="flex items-center gap-1.5">
+                            <span class="inline-block w-3 h-3 rounded bg-yellow-400"></span>
+                            <span>Vắng CP</span>
+                        </div>
+                        <div class="flex items-center gap-1.5">
+                            <span class="inline-block w-3 h-3 rounded bg-red-500"></span>
+                            <span>Vắng KP</span>
+                        </div>
+                    </div>
+                </div>
             </div>
 
             {{-- Legend --}}
@@ -486,6 +571,8 @@
             </svg>
             <p class="mt-4 text-lg text-slate-500">Vui lòng chọn lớp để điểm danh</p>
         </div>
+        @endif
+        @endif
         @endif
     </div>
 </div>

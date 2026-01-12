@@ -124,12 +124,12 @@ class LopList extends BaseComponent
     {
         $this->authorize('viewAny', Lop::class);
         parent::mount();
-        
+
         // Bắt buộc phải có parish_id
         // $this->requireParishId();
 
         // Initialize available blocks
-        $this->availableBlocks = collect();
+        // $this->availableBlocks = collect();
     }
 
     /**

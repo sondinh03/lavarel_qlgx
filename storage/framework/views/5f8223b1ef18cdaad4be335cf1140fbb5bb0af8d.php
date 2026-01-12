@@ -13,7 +13,7 @@
                        text-slate-900
                        focus:outline-none focus:ring-2 focus:ring-primary-500
                        disabled:bg-slate-100 disabled:text-slate-400">
-            <option value="">-- Chọn năm học --</option>
+            <!-- <option value="">-- Chọn năm học --</option> -->
 
             <?php $__currentLoopData = $namHocs; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $id => $name): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
             <option value="<?php echo e($id); ?>"><?php echo e($name); ?></option>

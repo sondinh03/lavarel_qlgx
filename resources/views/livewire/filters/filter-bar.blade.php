@@ -13,7 +13,7 @@
                        text-slate-900
                        focus:outline-none focus:ring-2 focus:ring-primary-500
                        disabled:bg-slate-100 disabled:text-slate-400">
-            <option value="">-- Chọn năm học --</option>
+            <!-- <option value="">-- Chọn năm học --</option> -->
 
             @foreach($namHocs as $id => $name)
             <option value="{{ $id }}">{{ $name }}</option>

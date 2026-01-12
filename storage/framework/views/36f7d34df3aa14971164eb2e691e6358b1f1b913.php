@@ -138,14 +138,14 @@
                         
                         <?php
 if (! isset($_instance)) {
-    $html = \Livewire\Livewire::mount('filters.filter-bar', ['parishId' => $parishId,'showNamHoc' => true,'showKhoi' => true,'showLop' => false,'showKy' => false,'selectedNamHoc' => $selectedNamHoc])->html();
+    $html = \Livewire\Livewire::mount('filters.filter-bar', ['parishId' => $parishId,'showNamHoc' => true,'showKhoi' => true,'showLop' => false,'showKy' => false,'selectedNamHoc' => $selectedNamHoc,'selectedKhoi' => $selectedKhoi])->html();
 } elseif ($_instance->childHasBeenRendered('l2412341171-0')) {
     $componentId = $_instance->getRenderedChildComponentId('l2412341171-0');
     $componentTag = $_instance->getRenderedChildComponentTagName('l2412341171-0');
     $html = \Livewire\Livewire::dummyMount($componentId, $componentTag);
     $_instance->preserveRenderedChild('l2412341171-0');
 } else {
-    $response = \Livewire\Livewire::mount('filters.filter-bar', ['parishId' => $parishId,'showNamHoc' => true,'showKhoi' => true,'showLop' => false,'showKy' => false,'selectedNamHoc' => $selectedNamHoc]);
+    $response = \Livewire\Livewire::mount('filters.filter-bar', ['parishId' => $parishId,'showNamHoc' => true,'showKhoi' => true,'showLop' => false,'showKy' => false,'selectedNamHoc' => $selectedNamHoc,'selectedKhoi' => $selectedKhoi]);
     $html = $response->html();
     $_instance->logRenderedChild('l2412341171-0', $response->id(), \Livewire\Livewire::getRootElementTagName($html));
 }
