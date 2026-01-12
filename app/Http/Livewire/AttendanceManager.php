@@ -2,87 +2,101 @@
 
 namespace App\Http\Livewire;
 
+use App\Http\Livewire\Base\BaseComponent;
 use App\Models\AttendanceRecord;
 use App\Models\AttendanceSession;
-use App\Models\Decen;
 use App\Models\Lop;
-use App\Models\SetAdmin;
 use App\Services\AttendanceService;
 use Carbon\Carbon;
-use Illuminate\Support\Facades\Log;
-use Livewire\Component;
+use Hamcrest\Type\IsNumeric;
 
-class AttendanceManager extends Component
+use function Aws\filter;
+
+class AttendanceManager extends BaseComponent
 {
-    // Inject Service
-    protected $attendanceService;
+    // ==================== FILTERS ====================
+    /** @var int|null Selected lớp ID */
+    public $selectedClassId = null;
 
-    // Properties
-    public $parish_id;
-    public $selectedClassId;
-    public $selectedNamHoc = '';
+    /** @var int|null Selected năm học ID */
+    public $selectedNamHoc = null;
+
+    /** @var int|string Selected khối ('' = all) */
     public $selectedKhoi = '';
+
+    /** @var int|string Selected lớp ('' = all) */
     public $selectedLop = '';
+
+    /** @var int|string Selected kỳ ('' = all) */
     public $selectedKy = '';
-    public $attendanceType = 1; // 1: học, 2: lễ
-    public $isAdmin = false;
 
-    public $classes = [];
-    public $students = [];
-    public $sessions = [];
-    public $attendanceRecords = [];
+    /** @var int Attendance type (1: học, 2: lễ) */
+    public $attendanceType = 1;
 
-    // View mode
-    public $viewMode = 'desktop'; // desktop hoặc mobile
-    public $selectedDate = null; // Cho mobile view
-
-    public $searchTerm = '';
+    /** @var string Filter by attendance status */
     public $filterStatus = 'all'; // all, present, absent
 
+    // ==================== VIEW STATE ====================
+
+    /** @var string View mode (desktop/mobile) */
+    public $viewMode = 'desktop';
+
+    /** @var string|null Selected date for mobile view */
+    public $selectedDate = null;
+    
+    // ==================== DATA ====================
+
+    /** @var \Illuminate\Support\Collection Students of selected class */
+    public $students;
+
+    /** @var array Attendance sessions */
+    public $sessions = [];
+
+    /** @var array Attendance records (indexed by student_id_date) */
+    public $attendanceRecords = [];
+
+    /** @var array Draft attendance (chưa lưu DB) */
     public $draftAttendance = [];
 
-    protected $queryString = [
-        'attendanceType' => ['as' => 'type', 'except' => 1],
-        'selectedDate'   => ['as' => 'date', 'except' => null],
+    /** @var AttendanceService */
+    protected $attendanceService;
+
+    // ==================== VALIDATION ====================
+
+    protected $rules = [
+        'selectedClassId' => 'nullable|integer|exists:lop,id',
+        'attendanceType' => 'required|integer|in:1,2',
+        'filterStatus' => 'required|string|in:all,present,absent',
+        'search' => 'nullable|string|max:255',
     ];
 
-    // protected $listeners = ['refreshAttendance' => '$refresh'];
+    protected $messages = [
+        'selectedClassId.exists' => 'Lớp không tồn tại',
+        'attendanceType.in' => 'Loại điểm danh không hợp lệ',
+        'filterStatus.in' => 'Trạng thái lọc không hợp lệ',
+    ];
+
+    // ==================== QUERY STRING ====================
+
+    protected function queryString()
+    {
+        return array_merge([
+            'selectedClassId' => ['as' => 'classId', 'except' => null],
+            'attendanceType' => ['as' => 'type', 'except' => 1],
+            'selectedDate' => ['as' => 'date', 'except' => null],
+            'filterStatus' => ['as' => 'status', 'except' => 'all'],
+        ], parent::queryString());
+    }
+
+    // ==================== LISTENERS ====================
+
     protected $listeners = [
-        'filtersChanged' => 'handleFiltersChanged'
+        'refresh' => 'handleRefresh',
+        'filterChanged' => 'handleFilterChanged',
     ];
 
-    public function handleFiltersChanged($filters)
-    {
-        $this->selectedClassId = $filters['lop'] ?? null;
+    // ==================== LIFECYCLE ====================
 
-        // Reload data based on filters
-        if ($this->selectedClassId) {
-            $this->loadStudents();
-            $this->loadSessions();
-        } else {
-            $this->students = [];
-            $this->sessions = [];
-            $this->attendanceRecords = [];
-        }
-
-        if (!empty($filters['lop'])) {
-            $this->changeClass($filters['lop']);
-        }
-    }
-
-    public function getSelectedClassNameProperty(): string
-    {
-        if (!$this->selectedClassId) {
-            return 'Chọn lớp';
-        }
-
-        return Lop::where('id', $this->selectedClassId)
-            ->value('name') ?? 'Chọn lớp';
-    }
-
-    /**
-     * Mount component
-     */
     public function boot(AttendanceService $attendanceService)
     {
         $this->attendanceService = $attendanceService;
@@ -90,106 +104,192 @@ class AttendanceManager extends Component
 
     public function mount($classId = null)
     {
-        $this->initializeUser();
+        $this->authorize('viewAny', Lop::class);
+        parent::mount();
 
-        $this->selectedClassId = $classId;
+        // $this->students = collect();
+        // $this->sessions = [];
+        // $this->attendanceRecords = [];
+        // $this->draftAttendance = [];
+        // $this->selectedDate = null;
 
+        // Require parish ID
+        $this->requireParishId();
+
+        // Initialize from route param
         if ($classId) {
-            $lop = Lop::with('blockRelation')->find($classId);
-
-            if ($lop) {
-                $this->selectedNamHoc = $lop->schoolyear;
-                $this->selectedKhoi   = $lop->block;
-            }
-
-            $this->loadStudents();
-            $this->loadSessions();
+            $this->selectedClassId = $classId;
+            $this->loadClassInfo();
         }
 
-        // Detect mobile
+        // Detect view mode
         $this->detectViewMode();
     }
 
-    private function initializeUser(): void
+    protected function loadInitialData(): void
     {
-        $user = backpack_user();
+        if ($this->selectedClassId) {
+            $this->loadStudents();
+            $this->loadSessions();
+        }
+    }
 
-        if (!$user) {
-            if (!$user) {
-                abort(403, 'Vui lòng đăng nhập');
-            }
+    protected function sanitizeQueryString(): void
+    {
+        parent::sanitizeQueryString();
+
+        // Sanitize selectedClassId
+        $this->selectedClassId = is_numeric($this->selectedClassId)
+            ? (int) $this->selectedClassId
+            : null;
+
+        // Sanitize attendanceType
+        $this->attendanceType = in_array($this->attendanceType, [1, 2])
+            ? (int) $this->attendanceType
+            : 1;
+
+        // Sanitize filterStatus
+        if (!in_array($this->filterStatus, ['all', 'present', 'absent'])) {
+            $this->filterStatus = 'all';
+        }
+    }
+
+    protected function resetToDefaults(): void
+    {
+        parent::resetToDefaults();
+        $this->filterStatus = 'all';
+        $this->attendanceType = 1;
+        $this->selectedDate = null;
+    }
+
+
+    public function updatedSearch(): void
+    {
+        parent::updatedSearch();
+        $this->loadStudents();
+    }
+
+    public function updatedSelectedClassId(): void
+    {
+        $this->selectedClassId = is_numeric($this->selectedClassId)
+            ? (int) $this->selectedClassId
+            : null;
+
+        if ($this->selectedClassId) {
+            $this->loadClassInfo();
+            $this->loadStudents();
+            $this->loadSessions();
+        } else {
+            $this->reset(['students', 'sessions', 'attendanceRecords', 'draftAttendance']);
         }
 
-        $userId = $user->id;
+        $this->resetPage();
+    }
 
-        $setadmin = SetAdmin::where('use', $userId)
-            ->where('status', 1)
-            ->first();
-
-        if ($setadmin) {
-            // Admin - lấy giáo xứ từ request
-            $this->isAdmin = true;
-            $this->parish_id = request()->get('giaoxu');
+    public function updatedAttendanceType(): void
+    {
+        if (!empty($this->draftAttendance)) {
+            session()->flash('warning', 'Bạn có dữ liệu chưa lưu');
             return;
         }
 
-        $decen = Decen::where('use', $userId)
-            ->where('status', 1)
-            ->where('student', 1)
-            ->first();
+        $this->attendanceType = in_array($this->attendanceType, [1, 2])
+            ? (int) $this->attendanceType
+            : 1;
 
-        if ($decen) {
-            $this->parish_id = $decen->pid;
-            $this->isAdmin = false;
+        $this->loadSessions();
+        $this->resetPage();
+    }
+
+    public function updatedFilterStatus(): void
+    {
+        if (!in_array($this->filterStatus, ['all', 'present', 'absent'])) {
+            $this->filterStatus = 'all';
+        }
+
+        $this->loadStudents();
+    }
+
+    /**
+     * Reset toàn bộ state điểm danh
+     * Dùng khi đổi Năm học / Khối
+     */
+    protected function clearAttendanceState(): void
+    {
+        $this->selectedClassId = null;
+
+        $this->students = collect();
+        $this->sessions = [];
+        $this->attendanceRecords = [];
+        $this->draftAttendance = [];
+        $this->selectedDate = null;
+    }
+
+    // ==================== DATA LOADING ====================
+
+    protected function loadClassInfo(): void
+    {
+        if (!$this->selectedClassId) {
+            return;
+        }
+
+        try {
+            $lop = Lop::with('blockRelation')
+                ->ofParish($this->parishId)
+                ->findOrFail($this->selectedClassId);
+
+            $this->selectedNamHoc = $lop->schoolyear;
+            $this->selectedKhoi = $lop->block;
+        } catch (\Exception $e) {
+            $this->logError($e, 'Error loading class info', [
+                'class_id' => $this->selectedClassId,
+            ]);
+            session()->flash('error', 'Không tìm thấy lớp học');
         }
     }
 
-    /**
-     * Detect view mode based on screen size
-     */
-    public function detectViewMode()
+    protected function loadStudents(): void
     {
-        // Bạn có thể dùng JavaScript để detect, hoặc mặc định desktop
-        // Ở đây mình để mặc định, sau này có thể thêm JS
-        $this->viewMode = 'desktop';
-    }
+        if (!$this->selectedClassId) {
+            $this->students = collect();
+            return;
+        }
 
-    /**
-     * Load students của lớp được chọn
-     */
-    public function loadStudents()
-    {
-        $lop = Lop::with(['students' => function ($q) {
-            // Search
-            if (!empty($this->searchTerm)) {
-                $search = '%' . $this->searchTerm . '%';
-                $q->where(function ($qq) use ($search) {
-                    $qq->where('saint_name', 'like', $search)
-                        ->orWhere('name', 'like', $search)
-                        ->orWhere('last_name', 'like', $search);
-                });
-            }
-
-            // Chỉ lấy học sinh đang học
-            $q->wherePivot('status', 1);
-
-            // Sắp xếp
-            $q->orderBy('name');
-        }])
-            ->find($this->selectedClassId);
-
-        $this->students = $lop ? $lop->students : collect();
-    }
-
-    public function loadSessions()
-    {
         try {
-            // Validate trước khi query
-            if (!$this->selectedClassId) {
-                $this->reset(['sessions', 'selectedDate', 'attendanceRecords']);
-                return;
-            }
+            $lop = Lop::with(['students' => function ($q) {
+                // Active students only
+                $q->wherePivot('status', 1);
 
+                // Apply search
+                if (!empty(trim($this->search))) {
+                    $search = '%' . trim($this->search) . '%';
+                    $q->where(function ($qq) use ($search) {
+                        $qq->where('saint_name', 'like', $search)
+                            ->orWhere('name', 'like', $search)
+                            ->orWhere('last_name', 'like', $search);
+                    });
+                }
+
+                // Order by name
+                $q->orderBy('name');
+            }])->find($this->selectedClassId);
+
+            $this->students = $lop ? $lop->students : collect();
+        } catch (\Exception $e) {
+            $this->logError($e, 'Error loading students');
+            $this->students = collect();
+            session()->flash('error', 'Không thể tải danh sách học sinh');
+        }
+    }
+
+    protected function loadSessions(): void
+    {
+        if (!$this->selectedClassId) {
+            $this->reset(['sessions', 'selectedDate', 'attendanceRecords']);
+            return;
+        }
+
+        try {
             $sessions = AttendanceSession::where('class_id', $this->selectedClassId)
                 ->when($this->attendanceType, function ($q) {
                     return $q->where('type', $this->attendanceType);
@@ -201,21 +301,21 @@ class AttendanceManager extends Component
                 $date = Carbon::parse($s->date);
 
                 return [
-                    'id'        => $s->id,
-                    'date'      => $date,
-                    'dateStr'   => $date->format('Y-m-d'),
-                    'fullDate'  => $date->format('d/m'),
-                    'dayName'   => $this->getVietnameseDayName($date),
-                    'type'      => $s->type,
-                    'status'    => $s->status,
-                    'locked'    => $s->status == AttendanceSession::STATUS_CLOSED,
+                    'id' => $s->id,
+                    'date' => $date,
+                    'dateStr' => $date->format('Y-m-d'),
+                    'fullDate' => $date->format('d/m'),
+                    'dayName' => $this->getVietnameseDayName($date),
+                    'type' => $s->type,
+                    'status' => $s->status,
+                    'locked' => $s->status == AttendanceSession::STATUS_CLOSED,
                 ];
             })->toArray();
 
             // Load attendance records
             $this->loadAttendanceRecords();
 
-            // Set selected date (cho mobile)
+            // Auto-select first unlocked date for mobile
             if (!$this->selectedDate && !empty($this->sessions)) {
                 $unlocked = collect($this->sessions)->first(fn($s) => !$s['locked']);
                 $this->selectedDate = $unlocked
@@ -227,290 +327,268 @@ class AttendanceManager extends Component
                 session()->flash('info', 'Chưa có buổi điểm danh nào');
             }
         } catch (\Exception $e) {
-            Log::error('Error loading sessions', [
+            $this->logError($e, 'Error loading sessions', [
                 'class_id' => $this->selectedClassId,
-                'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString()
             ]);
 
             $this->reset(['sessions', 'selectedDate', 'attendanceRecords']);
-
-            $this->dispatch('notify', [
-                'type' => 'error',
-                'message' => 'Không thể tải danh sách buổi học. Vui lòng thử lại.'
-            ]);
+            session()->flash('error', 'Không thể tải danh sách buổi học');
         }
     }
 
-    /**
-     * Get Vietnamese day name
-     */
-    private function getVietnameseDayName($date)
+    protected function loadAttendanceRecords(): void
     {
-        $days = ['CN', 'T2', 'T3', 'T4', 'T5', 'T6', 'T7'];
-        return $days[$date->dayOfWeek];
-    }
-
-    public function loadAttendanceRecords()
-    {
-        $sessionIds = collect($this->sessions)
-            ->pluck('id')
-            ->toArray();
+        $sessionIds = collect($this->sessions)->pluck('id')->toArray();
 
         if (empty($sessionIds)) {
             $this->attendanceRecords = [];
             return;
         }
 
-        $records = AttendanceRecord::whereIn('session_id', $sessionIds)
-            ->with('session')
-            ->get()
-            ->groupBy(function ($r) {
-                return $r->student_id . '_' . Carbon::parse($r->session->date)->format('Y-m-d');
-            });
+        try {
+            $records = AttendanceRecord::whereIn('session_id', $sessionIds)
+                ->with('session')
+                ->get()
+                ->groupBy(function ($r) {
+                    return $r->student_id . '_' . Carbon::parse($r->session->date)->format('Y-m-d');
+                });
 
-        $this->attendanceRecords = $records->map(fn($g) => $g->first())->toArray();
+            $this->attendanceRecords = $records->map(fn($g) => $g->first())->toArray();
+        } catch (\Exception $e) {
+            $this->logError($e, 'Error loading attendance records');
+            $this->attendanceRecords = [];
+        }
     }
 
-    /**
-     * Change class
-     */
-    public function changeClass($classId)
-    {
-        // $this->selectedClassId = $classId;
-        // $this->searchTerm = ''; // Reset search
-        // $this->filterStatus = 'all';
-        // $this->loadStudents();
-        // $this->loadSessions();
+    // ==================== EVENT HANDLERS ====================
 
-        return redirect()->route('attendance', [
-            'classId' => $classId,
-            'type'    => $this->attendanceType,
-            'date'    => $this->selectedDate,
-        ]);
-    }
-
-    /**
-     * Change attendance type
-     */
-    public function changeType($type)
+    public function handleFilterChanged($filters): void
     {
-        if (!empty($this->draftAttendance)) {
-            $this->dispatchBrowserEvent('show-alert', [
-                'type' => 'warning',
-                'message' => 'Bạn có dữ liệu chưa lưu'
-            ]);
+        if (!is_array($filters)) {
             return;
         }
 
-        $this->attendanceType = $type;
-        $this->loadSessions();
+        $namHocChanged = false;
+        $khoiChanged   = false;
+
+        if (array_key_exists('namHoc', $filters)) {
+            $newNamHoc = is_numeric($filters['namHoc'])
+                ? (int) $filters['namHoc']
+                : null;
+
+            if ($newNamHoc !== $this->selectedNamHoc) {
+                $this->selectedNamHoc = $newNamHoc;
+                $namHocChanged = true;
+            }
+        }
+
+        if (array_key_exists('khoi', $filters)) {
+            $newKhoi = is_numeric($filters['khoi'])
+                ? (int) $filters['khoi']
+                : null;
+
+            if ($newKhoi !== $this->selectedKhoi) {
+                $this->selectedKhoi = $newKhoi;
+                $khoiChanged = true;
+            }
+        }
+
+        if ($namHocChanged || $khoiChanged) {
+            $this->clearAttendanceState();
+        }
+
+        if (array_key_exists('lop', $filters)) {
+            $newClassId = is_numeric($filters['lop'])
+                ? (int) $filters['lop']
+                : null;
+
+            // ✅ Chỉ reload nếu lớp thay đổi
+            if ($newClassId !== $this->selectedClassId) {
+                $this->selectedClassId = $newClassId;
+
+                if ($this->selectedClassId) {
+                    $this->loadClassInfo();
+                    $this->loadStudents();
+                    $this->loadSessions();
+                } else {
+                    $this->reset(['students', 'sessions', 'attendanceRecords', 'draftAttendance']);
+                }
+            }
+        }
+
+        if (array_key_exists('ky', $filters)) {
+            $this->selectedKy = is_numeric($filters['ky'])
+                ? (int) $filters['ky']
+                : null;
+        }
+
+        $this->resetPage();
     }
 
-    /**
-     * Update search term
-     */
-    public function updatedSearchTerm()
-    {
-        $this->loadStudents();
-    }
+    // ==================== ATTENDANCE ACTIONS ====================
 
-    /**
-     * Set attendance for a student
-     * Sử dụng Service để xử lý logic
-     */
-    public function setAttendance($studentId, $sessionId, $status)
+    public function setAttendance($studentId, $sessionId, $status): void
     {
         $session = collect($this->sessions)->firstWhere('id', $sessionId);
 
         if (!$session || $session['locked']) {
+            session()->flash('warning', 'Không thể điểm danh cho buổi này');
             return;
         }
 
         $key = $studentId . '_' . $sessionId;
 
-        if ($status == null) {
+        if ($status === null) {
             unset($this->draftAttendance[$key]);
         } else {
             $this->draftAttendance[$key] = [
-                'student_id'     => $studentId,
-                'session_id'     => $sessionId,
-                'status'         => $status,
+                'student_id' => $studentId,
+                'session_id' => $sessionId,
+                'status' => $status,
                 'attendanceType' => $this->attendanceType,
             ];
         }
     }
 
-    /**
-     * Mark all present for a date
-     * Sử dụng Service
-     */
-    public function markAllPresent($sessionId)
+    public function markAllPresent($sessionId): void
     {
-        // Lấy session theo ID
         $session = collect($this->sessions)->firstWhere('id', $sessionId);
 
         if (!$session || $session['locked']) {
-            $this->dispatchBrowserEvent('show-alert', [
-                'type' => 'error',
-                'message' => 'Không thể điểm danh cho buổi này!'
-            ]);
+            session()->flash('error', 'Không thể điểm danh cho buổi này');
             return;
         }
 
         foreach ($this->students as $student) {
             $key = $student->id . '_' . $sessionId;
             $this->draftAttendance[$key] = [
-                'student_id'     => $student->id,
-                'session_id'     => $sessionId,
-                'status'         => AttendanceRecord::STATUS_PRESENT,
+                'student_id' => $student->id,
+                'session_id' => $sessionId,
+                'status' => AttendanceRecord::STATUS_PRESENT,
                 'attendanceType' => $this->attendanceType,
             ];
         }
 
-        $this->dispatchBrowserEvent('show-alert', [
-            'type' => 'success',
-            'message' => 'Đã đánh dấu tất cả có mặt (chỉ lưu tạm)'
-        ]);
+        session()->flash('success', 'Đã đánh dấu tất cả có mặt (lưu tạm)');
     }
 
-    /**
-     * Get attendance status for a student on a date
-     */
+    public function saveAttendance(): void
+    {
+        $this->requireManager();
+
+        $drafts = collect($this->draftAttendance)
+            ->where('attendanceType', $this->attendanceType);
+
+        if ($drafts->isEmpty()) {
+            session()->flash('warning', 'Không có dữ liệu để lưu');
+            return;
+        }
+
+        try {
+            $result = $this->attendanceService->saveBulkAttendance($drafts->values()->toArray());
+
+            if ($result['success']) {
+                // Clear saved drafts
+                foreach ($drafts as $key => $item) {
+                    unset($this->draftAttendance[$key]);
+                }
+
+                $this->loadAttendanceRecords();
+                session()->flash('message', 'Đã lưu điểm danh thành công');
+            } else {
+                session()->flash('error', $result['message']);
+            }
+        } catch (\Exception $e) {
+            $this->logError($e, 'Error saving attendance');
+            session()->flash('error', 'Có lỗi khi lưu điểm danh');
+        }
+    }
+
+    // ==================== HELPER METHODS ====================
+
+    protected function getVietnameseDayName($date): string
+    {
+        $days = ['CN', 'T2', 'T3', 'T4', 'T5', 'T6', 'T7'];
+        return $days[$date->dayOfWeek];
+    }
+
     public function getAttendanceStatus($studentId, $dateStr)
     {
-        // $key = $studentId . '_' . $dateStr;
-
-        // // Nếu có bản ghi điểm danh → trả về status
-        // if (isset($this->attendanceRecords[$key])) {
-        //     return $this->attendanceRecords[$key]['status'] ?? null;
-        // }
-
-        // return null;
-
-        // $session = collect($this->sessions)
-        //     ->first(fn($s) => $s['dateStr'] == $dateStr);
-
-        $session = collect($this->sessions)
-            ->firstWhere('dateStr', $dateStr);
+        $session = collect($this->sessions)->firstWhere('dateStr', $dateStr);
 
         if (!$session) {
             return null;
         }
 
+        // Check draft first
         $draftKey = $studentId . '_' . $session['id'];
-
         if (isset($this->draftAttendance[$draftKey])) {
             return $this->draftAttendance[$draftKey]['status'];
         }
 
+        // Check saved records
         $recordKey = $studentId . '_' . $dateStr;
         return $this->attendanceRecords[$recordKey]['status'] ?? null;
     }
 
-    /**
-     * Get stats for a date
-     */
-    public function getDateStats($dateStr)
+    public function getDateStats($dateStr): array
     {
-        $present = 0;
-        $absentPermitted = 0;
-        $absentNotPermitted = 0;
+        $stats = [
+            'present' => 0,
+            'absentPermitted' => 0,
+            'absentNotPermitted' => 0,
+        ];
 
         foreach ($this->students as $student) {
             $status = $this->getAttendanceStatus($student->id, $dateStr);
 
-            if ($status == AttendanceRecord::STATUS_PRESENT) {
-                $present++;
-            } elseif ($status == AttendanceRecord::STATUS_ABSENT_EXCUSED) {
-                $absentPermitted++;
-            } elseif ($status == AttendanceRecord::STATUS_ABSENT_UNEXCUSED) {
-                $absentNotPermitted++;
-            }
+            match ($status) {
+                AttendanceRecord::STATUS_PRESENT => $stats['present']++,
+                AttendanceRecord::STATUS_ABSENT_EXCUSED => $stats['absentPermitted']++,
+                AttendanceRecord::STATUS_ABSENT_UNEXCUSED => $stats['absentNotPermitted']++,
+                default => null,
+            };
         }
 
-        return [
-            'present' => $present,
-            'absentPermitted' => $absentPermitted,
-            'absentNotPermitted' => $absentNotPermitted,
-        ];
+        return $stats;
     }
 
-    public function saveAttendance()
+    protected function detectViewMode(): void
     {
-        $drafts = collect($this->draftAttendance)
-            ->where('attendanceType', $this->attendanceType);
-
-        if ($drafts->isEmpty()) {
-            $this->dispatchBrowserEvent('show-alert', [
-                'type' => 'warning',
-                'message' => 'Không có dữ liệu để lưu'
-            ]);
-            return;
-        }
-
-        $result = $this->attendanceService->saveBulkAttendance($drafts->values()->toArray());
-
-        if ($result['success']) {
-            // Xóa draft đã lưu
-            foreach ($drafts as $key => $item) {
-                unset($this->draftAttendance[$key]);
-            }
-
-            $this->loadAttendanceRecords();
-
-            $this->dispatchBrowserEvent('show-alert', [
-                'type' => 'success',
-                'message' => 'Đã lưu điểm danh'
-            ]);
-        } else {
-            $this->dispatchBrowserEvent('show-alert', [
-                'type' => 'error',
-                'message' => $result['message']
-            ]);
-        }
+        // Default to desktop, can be enhanced with JS detection
+        $this->viewMode = 'desktop';
     }
 
-    /**
-     * Save and close (optional)
-     */
-    public function saveAndClose()
+    // ==================== COMPUTED PROPERTIES ====================
+
+    public function getSelectedClassNameProperty(): string
     {
-        $sessionId = $this->selectedSession;
-
-        if (!$sessionId) {
-            $this->dispatchBrowserEvent('show-alert', [
-                'type' => 'error',
-                'message' => 'Chưa chọn buổi điểm danh!'
-            ]);
-            return;
+        if (!$this->selectedClassId) {
+            return 'Chọn lớp';
         }
 
-        // Lấy username
-        $username = auth()->user()->username ?? 'system';
-
-        // Gọi service với mảng studentId => status
-        $this->attendanceService->saveAttendance(
-            $sessionId,
-            $this->statuses,
-            $username
-        );
-
-        $this->dispatchBrowserEvent('show-alert', [
-            'type' => 'success',
-            'message' => 'Đã lưu điểm danh thành công!'
-        ]);
-
-        $this->loadAttendanceRecords(); // reload
+        return Lop::where('id', $this->selectedClassId)
+            ->value('name') ?? 'Chọn lớp';
     }
 
-    /**
-     * Render component
-     */
+    // ==================== RENDER ====================
+
     public function render()
     {
-        return view('livewire.attendance-manager')
+        return view('livewire.attendance-manager', [
+            'parishId' => $this->parishId,
+        ])
             ->extends('frontend.layout.main')
             ->section('content');
     }
 }
+
+    // /**
+    //  * Render component
+    //  */
+    // public function render()
+    // {
+    //     return view('livewire.attendance-manager')
+    //         ->extends('frontend.layout.main')
+    //         ->section('content');
+    // }
