@@ -52,4 +52,13 @@ class AttendanceRecord extends Model
     {
         return $this->belongsTo(Student::class, 'student_id');
     }
+
+    public static function isValidStatus($status): bool
+    {
+        return in_array($status, [
+            self::STATUS_PRESENT,
+            self::STATUS_ABSENT_EXCUSED,
+            self::STATUS_ABSENT_UNEXCUSED,
+        ]);
+    }
 }

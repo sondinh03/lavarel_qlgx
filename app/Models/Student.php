@@ -111,14 +111,6 @@ class Student extends Model
     }
 
     /**
-     * Lớp giáo lý
-     */
-    // public function giaolyClass(): BelongsTo
-    // {
-    //     return $this->belongsTo(GiaolyClass::class, 'magdcg');
-    // }
-
-    /**
      * Bậc thánh
      */
     public function holyRelation(): BelongsTo

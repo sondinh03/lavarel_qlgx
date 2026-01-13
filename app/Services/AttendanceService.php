@@ -6,6 +6,7 @@ use App\Models\AttendanceRecord;
 use App\Models\AttendanceSession;
 use App\Models\Student;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class AttendanceService
 {
@@ -191,36 +192,131 @@ class AttendanceService
         return true;
     }
 
-    public function saveBulkAttendance(array $draft) {
+    public function saveBulkAttendance(array $drafts): array
+    {
         DB::beginTransaction();
 
         try {
-            foreach ($draft as $item) {
-                $session = AttendanceSession::findOrFail($item['session_id']);
+            // foreach ($draft as $item) {
+            //     $session = AttendanceSession::findOrFail($item['session_id']);
 
-                // CHốt nghiệp vụ
-                if ($session->type != $item['attendanceType']) {
-                    throw new \Exception('Sai loại điểm danh');
+            //     // CHốt nghiệp vụ
+            //     if ($session->type != $item['attendanceType']) {
+            //         throw new \Exception('Sai loại điểm danh');
+            //     }
+
+            //     AttendanceRecord::updateOrCreate(
+            //         [
+            //             'session_id' => $item['session_id'],
+            //             'student_id' => $item['student_id'],
+            //         ],
+            //         [
+            //             'status' => $item['status'],
+            //             'updated_by' => auth()->id(),
+            //             'created_by' => auth()->id(),
+            //         ]
+            //     );
+            // }
+
+            // DB::commit();
+            // return ['success' => true];
+            $savedCount = 0;
+            $errors = [];
+
+            // 1️⃣ Group by session for efficiency
+            $groupedBySession = collect($drafts)->groupBy('session_id');
+
+            foreach ($groupedBySession as $sessionId => $records) {
+                // 2️⃣ Validate session once per group
+                $session = AttendanceSession::find($sessionId);
+
+                if (!$session) {
+                    $errors[] = "Session #{$sessionId} không tồn tại";
+                    continue;
                 }
 
-                AttendanceRecord::updateOrCreate(
-                    [
-                        'session_id' => $item['session_id'],
-                        'student_id' => $item['student_id'],
-                    ],
-                    [
-                        'status' => $item['status'],
-                        'updated_by' => auth()->id(),
-                        'created_by' => auth()->id(),
-                    ]
-                );
+                // 3️⃣ Check editable
+                $canEdit = $session->canEdit();
+                if (!$canEdit['can']) {
+                    $errors[] = "Buổi {$session->date->format('d/m')}: {$canEdit['reason']}";
+                    continue;
+                }
+
+                // 4️⃣ Validate type matches (if provided)
+                if (
+                    isset($records->first()['attendanceType'])
+                    && $session->type != $records->first()['attendanceType']
+                ) {
+                    $errors[] = "Buổi {$session->date->format('d/m')}: Sai loại điểm danh";
+                    continue;
+                }
+
+                // 5️⃣ Get valid students for this class
+                // $validStudentIds = Student::whereHas('lops', function ($q) use ($session) {
+                //     $q->where('class_id', $session->class_id)
+                //     ->wherePivot('status', 1);
+                // })
+                //     ->pluck('id')
+                //     ->toArray();
+
+                // 6️⃣ Process each record
+                foreach ($records as $record) {
+                    // Validate student
+                    // if (!in_array($record['student_id'], $validStudentIds)) {
+                    //     $errors[] = "Học sinh ID #{$record['student_id']} không thuộc lớp";
+                    //     continue;
+                    // }
+
+                    // Validate status
+                    if (!AttendanceRecord::isValidStatus($record['status'])) {
+                        $errors[] = "Học sinh ID #{$record['student_id']}: Trạng thái không hợp lệ";
+                        continue;
+                    }
+
+                    // Save record
+                    AttendanceRecord::updateOrCreate(
+                        [
+                            'session_id' => $sessionId,
+                            'student_id' => $record['student_id'],
+                        ],
+                        [
+                            'status' => $record['status'],
+                            'note' => $record['note'] ?? null,
+                            'updated_by' => auth()->id(),
+                            'created_by' => auth()->id(),
+                        ]
+                    );
+
+                    $savedCount++;
+                }
             }
 
             DB::commit();
-            return ['success' => true];
+
+            if ($savedCount === 0 && !empty($errors)) {
+                return [
+                    'success' => false,
+                    'message' => 'Không lưu được bản ghi nào. ' . implode('; ', array_slice($errors, 0, 3))
+                ];
+            }
+
+            $message = "Đã lưu {$savedCount} bản ghi điểm danh";
+            if (!empty($errors)) {
+                $message .= sprintf(' (có %d lỗi)', count($errors));
+            }
+
+            return ['success' => true, 'message' => $message];
         } catch (\Exception $e) {
             DB::rollBack();
-            return ['success' => false, 'message' => $e->getMessage()];
+            // return ['success' => false, 'message' => $e->getMessage()];
+
+            Log::error('AttendanceService::saveBulkAttendance failed', [
+                'drafts_count' => count($drafts),
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+            ]);
+
+            return ['success' => false, 'message' => 'Có lỗi khi lưu điểm danh. Vui lòng thử lại sau.'];
         }
     }
 

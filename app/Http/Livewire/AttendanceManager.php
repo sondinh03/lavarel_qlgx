@@ -497,34 +497,48 @@ class AttendanceManager extends BaseComponent
 
     public function saveAttendance(): void
     {
-        $this->requireManager();
-
         $drafts = collect($this->draftAttendance)
-            ->where('attendanceType', $this->attendanceType);
+            ->where('attendanceType', $this->attendanceType)
+            ->values()
+            ->toArray();
 
-        if ($drafts->isEmpty()) {
+        if (empty($drafts)) {
             session()->flash('warning', 'Không có dữ liệu để lưu');
             return;
         }
 
         try {
-            $result = $this->attendanceService->saveBulkAttendance($drafts->values()->toArray());
+            $result = $this->attendanceService->saveBulkAttendance($drafts);
 
             if ($result['success']) {
                 // Clear saved drafts
-                foreach ($drafts as $key => $item) {
-                    unset($this->draftAttendance[$key]);
-                }
+                $this->draftAttendance = collect($this->draftAttendance)
+                    ->where('attendanceType', '!=', $this->attendanceType)
+                    ->toArray();
 
                 $this->loadAttendanceRecords();
                 session()->flash('message', 'Đã lưu điểm danh thành công');
+
+                $this->dispatchBrowserEvent('attendanceSaved');
             } else {
                 session()->flash('error', $result['message']);
             }
         } catch (\Exception $e) {
-            $this->logError($e, 'Error saving attendance');
+            $$this->logError($e, 'Error saving attendance', [
+                'drafts_count' => count($drafts),
+            ]);
             session()->flash('error', 'Có lỗi khi lưu điểm danh');
         }
+    }
+
+    public function discardDrafts(): void
+    {
+        $count = count($this->draftAttendance);
+        $this->draftAttendance = [];
+
+        session()->flash('message', "Đã hủy {$count} thay đổi chưa lưu");
+
+        $this->dispatchBrowserEvent('draftsDiscarded');
     }
 
     // ==================== HELPER METHODS ====================
@@ -605,6 +619,22 @@ class AttendanceManager extends BaseComponent
 
         return Lop::where('id', $this->selectedClassId)
             ->value('name') ?? 'Chọn lớp';
+    }
+
+    /**
+     * ✅ NEW: Get count of pending changes
+     */
+    public function getPendingCountProperty(): int
+    {
+        return count($this->draftAttendance);
+    }
+
+    /**
+     * ✅ NEW: Check if has unsaved changes
+     */
+    public function getHasUnsavedChangesProperty(): bool
+    {
+        return !empty($this->draftAttendance);
     }
 
     // ==================== RENDER ====================

@@ -121,6 +121,28 @@ class AttendanceSession extends Model
     }
 
     /**
+     * ✅ Check if can edit with reason
+     */
+    public function canEdit(): array
+    {
+        if ($this->status === self::STATUS_CLOSED) {
+            return [
+                'can' => false,
+                'reason' => 'Buổi học đã khóa, không thể chỉnh sửa',
+            ];
+        }
+
+        if ($this->status === self::STATUS_CANCELLED) {
+            return [
+                'can' => false,
+                'reason' => 'Buổi học đã bị hủy',
+            ];
+        }
+
+        return ['can' => true, 'reason' => null];
+    }
+
+    /**
      * Đóng phiên điểm danh
      */
     public function close(): bool
