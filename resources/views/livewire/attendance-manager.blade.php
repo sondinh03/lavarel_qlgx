@@ -64,7 +64,8 @@
                             :show-ky="true"
                             :selected-nam-hoc="$selectedNamHoc"
                             :selected-khoi="$selectedKhoi"
-                            :selected-lop="$selectedClassId" />
+                            :selected-lop="$selectedClassId"
+                            :selected-ky="$selectedKy" />
 
                         {{-- Search --}}
                         <input
@@ -106,13 +107,13 @@
             {{-- Tabs --}}
             <div class="bg-primary-50 p-1 flex gap-1 border-b border-slate-200">
                 <button
-                    wire:click="updatedAttendanceType(1)"
+                    wire:click="$set('attendanceType', 1)"
                     class="flex-1 py-2 rounded-lg text-sm font-semibold transition-all
                         {{ $attendanceType == 1 ? 'bg-white text-primary-600 shadow-sm' : 'text-slate-600 hover:text-slate-900' }}">
                     Điểm danh đi học
                 </button>
                 <button
-                    wire:click="updatedAttendanceType(2)"
+                    wire:click="$set('attendanceType', 2)"
                     class="flex-1 py-2 rounded-lg text-sm font-semibold transition-all
                         {{ $attendanceType == 2 ? 'bg-white text-primary-600 shadow-sm' : 'text-slate-600 hover:text-slate-900' }}">
                     Điểm danh đi lễ
@@ -468,29 +469,40 @@
                                     <div class="flex gap-1 justify-center">
                                         <button
                                             wire:click="setAttendance({{ $student->id }}, {{ $currentSession['id'] ?? 0 }}, {{ $status == 1 ? 'null' : 1 }})"
-                                            class="w-9 h-9 rounded-lg text-sm font-medium transition-all flex items-center justify-center
-                                    {{ $status == 1 ? 'bg-green-500 text-white shadow-md scale-105' : 'bg-green-50 text-green-700 border border-green-200 active:scale-95' }}"
+                                            class="w-9 h-9 rounded-md flex items-center justify-center transition
+                                                {{ $status == 1
+                                                    ? 'bg-green-500 text-white shadow-sm'
+                                                    : 'bg-green-50 text-green-700 border border-green-100 hover:bg-green-100' }}"
                                             wire:loading.attr="disabled">
                                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7" />
                                             </svg>
                                         </button>
+
+
                                         <button
                                             wire:click="setAttendance({{ $student->id }}, {{ $currentSession['id'] ?? 0 }}, {{ $status == 2 ? 'null' : 2 }})"
-                                            class="w-9 h-9 rounded-lg text-sm font-bold transition-all flex items-center justify-center
-                                    {{ $status == 2 ? 'bg-yellow-400 text-slate-900 shadow-md scale-105' : 'bg-yellow-50 text-yellow-700 border border-yellow-200 active:scale-95' }}"
+                                            class="w-9 h-9 rounded-md flex items-center justify-center font-semibold transition
+                                                {{ $status == 2
+                                                    ? 'bg-yellow-400 text-slate-900 shadow-sm'
+                                                    : 'bg-yellow-50 text-yellow-700 border border-yellow-100 hover:bg-yellow-100' }}"
                                             wire:loading.attr="disabled">
                                             P
                                         </button>
+
+
                                         <button
                                             wire:click="setAttendance({{ $student->id }}, {{ $currentSession['id'] ?? 0 }}, {{ $status == 3 ? 'null' : 3 }})"
-                                            class="w-9 h-9 rounded-lg text-sm font-medium transition-all flex items-center justify-center
-                                    {{ $status == 3 ? 'bg-red-500 text-white shadow-md scale-105' : 'bg-red-50 text-red-700 border border-red-200 active:scale-95' }}"
+                                            class="w-9 h-9 rounded-md flex items-center justify-center transition
+                                                {{ $status == 3
+                                                    ? 'bg-red-500 text-white shadow-sm'
+                                                    : 'bg-red-50 text-red-700 border border-red-100 hover:bg-red-100' }}"
                                             wire:loading.attr="disabled">
                                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M6 18L18 6M6 6l12 12" />
                                             </svg>
                                         </button>
+
                                     </div>
                                     @endif
                                 </td>
@@ -590,13 +602,34 @@
 
 @push('scripts')
 <script>
-    // Keyboard shortcuts
-    window.addEventListener('keydown', function(e) {
-        // Ctrl/Cmd + S: Save attendance
-        if ((e.ctrlKey || e.metaKey) && e.key === 's') {
-            e.preventDefault();
-            @this.call('saveAttendance');
+    document.addEventListener('livewire:load', function() {
+        /* =============================
+         * 1️⃣ Detect View Mode (mobile / desktop)
+         * ============================= */
+        function detectViewMode() {
+            const isMobile = window.innerWidth < 1024; // Tailwind lg breakpoint
+            Livewire.emit('viewModeDetected', isMobile ? 'mobile' : 'desktop');
         }
+
+        detectViewMode();
+
+        // Debounce resize để tránh emit liên tục
+        let resizeTimer;
+        window.addEventListener('resize', function() {
+            clearTimeout(resizeTimer);
+            resizeTimer = setTimeout(detectViewMode, 200);
+        });
+
+        /* =============================
+         * 2️⃣ Keyboard shortcut: Ctrl / Cmd + S
+         * ============================= */
+        window.addEventListener('keydown', function(e) {
+            // Ctrl/Cmd + S: Save attendance
+            if ((e.ctrlKey || e.metaKey) && e.key === 's') {
+                e.preventDefault();
+                @this.call('saveAttendance');
+            }
+        });
     });
 </script>
 @endpush

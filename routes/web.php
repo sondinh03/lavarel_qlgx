@@ -76,7 +76,8 @@ Route::middleware('auth')->group(function () {
     | ĐIỂM DANH
     |--------------------------------------------------------------------------
     */
-    Route::get('/attendance/{classId?}', AttendanceManager::class)
+    // Route::get('/attendance/{classId?}', AttendanceManager::class)
+    Route::get('/attendance', AttendanceManager::class)
         ->name('attendance.show');
 
     Route::get('/school-years', NamHocManager::class)

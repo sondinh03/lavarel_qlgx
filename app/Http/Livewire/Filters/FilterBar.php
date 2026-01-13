@@ -30,7 +30,11 @@ class FilterBar extends Component
     public $lops;
 
     /** @var Collection<int, string> */
-    public $kys;
+    // public $kys;
+    public $kys = [
+        '1' => 'Kỳ 1',
+        '2' => 'Kỳ 2',
+    ];
 
     /** 
      * Parish context
@@ -60,6 +64,7 @@ class FilterBar extends Component
 
         if ($this->namHocs->isNotEmpty()) {
             $this->loadKhois();
+            $this->loadLops();
         }
     }
 
@@ -130,6 +135,10 @@ class FilterBar extends Component
 
     public function updatedSelectedLop()
     {
+        $this->selectedLop = $this->selectedLop
+            ? (int) $this->selectedLop
+            : null;
+
         $this->emitFilter();
     }
 

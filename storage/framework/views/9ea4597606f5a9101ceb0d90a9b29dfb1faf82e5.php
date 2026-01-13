@@ -120,14 +120,14 @@
                         
                         <?php
 if (! isset($_instance)) {
-    $html = \Livewire\Livewire::mount('filters.filter-bar', ['parishId' => $parishId,'showNamHoc' => true,'showKhoi' => true,'showLop' => true,'showKy' => true,'selectedNamHoc' => $selectedNamHoc,'selectedKhoi' => $selectedKhoi,'selectedLop' => $selectedClassId])->html();
+    $html = \Livewire\Livewire::mount('filters.filter-bar', ['parishId' => $parishId,'showNamHoc' => true,'showKhoi' => true,'showLop' => true,'showKy' => true,'selectedNamHoc' => $selectedNamHoc,'selectedKhoi' => $selectedKhoi,'selectedLop' => $selectedClassId,'selectedKy' => $selectedKy])->html();
 } elseif ($_instance->childHasBeenRendered('l342222745-0')) {
     $componentId = $_instance->getRenderedChildComponentId('l342222745-0');
     $componentTag = $_instance->getRenderedChildComponentTagName('l342222745-0');
     $html = \Livewire\Livewire::dummyMount($componentId, $componentTag);
     $_instance->preserveRenderedChild('l342222745-0');
 } else {
-    $response = \Livewire\Livewire::mount('filters.filter-bar', ['parishId' => $parishId,'showNamHoc' => true,'showKhoi' => true,'showLop' => true,'showKy' => true,'selectedNamHoc' => $selectedNamHoc,'selectedKhoi' => $selectedKhoi,'selectedLop' => $selectedClassId]);
+    $response = \Livewire\Livewire::mount('filters.filter-bar', ['parishId' => $parishId,'showNamHoc' => true,'showKhoi' => true,'showLop' => true,'showKy' => true,'selectedNamHoc' => $selectedNamHoc,'selectedKhoi' => $selectedKhoi,'selectedLop' => $selectedClassId,'selectedKy' => $selectedKy]);
     $html = $response->html();
     $_instance->logRenderedChild('l342222745-0', $response->id(), \Livewire\Livewire::getRootElementTagName($html));
 }
@@ -180,13 +180,13 @@ echo $html;
             
             <div class="bg-primary-50 p-1 flex gap-1 border-b border-slate-200">
                 <button
-                    wire:click="updatedAttendanceType(1)"
+                    wire:click="$set('attendanceType', 1)"
                     class="flex-1 py-2 rounded-lg text-sm font-semibold transition-all
                         <?php echo e($attendanceType == 1 ? 'bg-white text-primary-600 shadow-sm' : 'text-slate-600 hover:text-slate-900'); ?>">
                     Điểm danh đi học
                 </button>
                 <button
-                    wire:click="updatedAttendanceType(2)"
+                    wire:click="$set('attendanceType', 2)"
                     class="flex-1 py-2 rounded-lg text-sm font-semibold transition-all
                         <?php echo e($attendanceType == 2 ? 'bg-white text-primary-600 shadow-sm' : 'text-slate-600 hover:text-slate-900'); ?>">
                     Điểm danh đi lễ
@@ -432,7 +432,6 @@ echo $html;
             </div>
 
             
-            
             <div class="lg:hidden">
                 
                 <div class="sticky top-0 z-30 bg-white p-4 border-b border-slate-200 shadow-sm">
@@ -582,29 +581,40 @@ echo $html;
                                     <div class="flex gap-1 justify-center">
                                         <button
                                             wire:click="setAttendance(<?php echo e($student->id); ?>, <?php echo e($currentSession['id'] ?? 0); ?>, <?php echo e($status == 1 ? 'null' : 1); ?>)"
-                                            class="w-9 h-9 rounded-lg text-sm font-medium transition-all flex items-center justify-center
-                                    <?php echo e($status == 1 ? 'bg-green-500 text-white shadow-md scale-105' : 'bg-green-50 text-green-700 border border-green-200 active:scale-95'); ?>"
+                                            class="w-9 h-9 rounded-md flex items-center justify-center transition
+                                                <?php echo e($status == 1
+                                                    ? 'bg-green-500 text-white shadow-sm'
+                                                    : 'bg-green-50 text-green-700 border border-green-100 hover:bg-green-100'); ?>"
                                             wire:loading.attr="disabled">
                                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7" />
                                             </svg>
                                         </button>
+
+
                                         <button
                                             wire:click="setAttendance(<?php echo e($student->id); ?>, <?php echo e($currentSession['id'] ?? 0); ?>, <?php echo e($status == 2 ? 'null' : 2); ?>)"
-                                            class="w-9 h-9 rounded-lg text-sm font-bold transition-all flex items-center justify-center
-                                    <?php echo e($status == 2 ? 'bg-yellow-400 text-slate-900 shadow-md scale-105' : 'bg-yellow-50 text-yellow-700 border border-yellow-200 active:scale-95'); ?>"
+                                            class="w-9 h-9 rounded-md flex items-center justify-center font-semibold transition
+                                                <?php echo e($status == 2
+                                                    ? 'bg-yellow-400 text-slate-900 shadow-sm'
+                                                    : 'bg-yellow-50 text-yellow-700 border border-yellow-100 hover:bg-yellow-100'); ?>"
                                             wire:loading.attr="disabled">
                                             P
                                         </button>
+
+
                                         <button
                                             wire:click="setAttendance(<?php echo e($student->id); ?>, <?php echo e($currentSession['id'] ?? 0); ?>, <?php echo e($status == 3 ? 'null' : 3); ?>)"
-                                            class="w-9 h-9 rounded-lg text-sm font-medium transition-all flex items-center justify-center
-                                    <?php echo e($status == 3 ? 'bg-red-500 text-white shadow-md scale-105' : 'bg-red-50 text-red-700 border border-red-200 active:scale-95'); ?>"
+                                            class="w-9 h-9 rounded-md flex items-center justify-center transition
+                                                <?php echo e($status == 3
+                                                    ? 'bg-red-500 text-white shadow-sm'
+                                                    : 'bg-red-50 text-red-700 border border-red-100 hover:bg-red-100'); ?>"
                                             wire:loading.attr="disabled">
                                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M6 18L18 6M6 6l12 12" />
                                             </svg>
                                         </button>
+
                                     </div>
                                     <?php endif; ?>
                                 </td>
@@ -704,13 +714,34 @@ echo $html;
 
 <?php $__env->startPush('scripts'); ?>
 <script>
-    // Keyboard shortcuts
-    window.addEventListener('keydown', function(e) {
-        // Ctrl/Cmd + S: Save attendance
-        if ((e.ctrlKey || e.metaKey) && e.key === 's') {
-            e.preventDefault();
-            window.livewire.find('<?php echo e($_instance->id); ?>').call('saveAttendance');
+    document.addEventListener('livewire:load', function() {
+        /* =============================
+         * 1️⃣ Detect View Mode (mobile / desktop)
+         * ============================= */
+        function detectViewMode() {
+            const isMobile = window.innerWidth < 1024; // Tailwind lg breakpoint
+            Livewire.emit('viewModeDetected', isMobile ? 'mobile' : 'desktop');
         }
+
+        detectViewMode();
+
+        // Debounce resize để tránh emit liên tục
+        let resizeTimer;
+        window.addEventListener('resize', function() {
+            clearTimeout(resizeTimer);
+            resizeTimer = setTimeout(detectViewMode, 200);
+        });
+
+        /* =============================
+         * 2️⃣ Keyboard shortcut: Ctrl / Cmd + S
+         * ============================= */
+        window.addEventListener('keydown', function(e) {
+            // Ctrl/Cmd + S: Save attendance
+            if ((e.ctrlKey || e.metaKey) && e.key === 's') {
+                e.preventDefault();
+                window.livewire.find('<?php echo e($_instance->id); ?>').call('saveAttendance');
+            }
+        });
     });
 </script>
 <?php $__env->stopPush(); ?><?php /**PATH D:\Document\WORKING\lavarel_qlgx\resources\views/livewire/attendance-manager.blade.php ENDPATH**/ ?>

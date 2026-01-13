@@ -8,15 +8,13 @@ use App\Models\AttendanceSession;
 use App\Models\Lop;
 use App\Services\AttendanceService;
 use Carbon\Carbon;
-use Hamcrest\Type\IsNumeric;
 
-use function Aws\filter;
 
 class AttendanceManager extends BaseComponent
 {
     // ==================== FILTERS ====================
-    /** @var int|null Selected lớp ID */
-    public $selectedClassId = null;
+    // /** @var int|null Selected lớp ID */
+    // public $selectedClassId = null;
 
     /** @var int|null Selected năm học ID */
     public $selectedNamHoc = null;
@@ -25,7 +23,7 @@ class AttendanceManager extends BaseComponent
     public $selectedKhoi = '';
 
     /** @var int|string Selected lớp ('' = all) */
-    public $selectedLop = '';
+    public $selectedClassId = '';
 
     /** @var int|string Selected kỳ ('' = all) */
     public $selectedKy = '';
@@ -93,6 +91,7 @@ class AttendanceManager extends BaseComponent
     protected $listeners = [
         'refresh' => 'handleRefresh',
         'filterChanged' => 'handleFilterChanged',
+        'viewModeDetected' => 'setViewMode',
     ];
 
     // ==================== LIFECYCLE ====================
@@ -102,22 +101,20 @@ class AttendanceManager extends BaseComponent
         $this->attendanceService = $attendanceService;
     }
 
-    public function mount($classId = null)
+    public function mount()
     {
         // $this->authorize('viewAny', Lop::class);
         parent::mount();
 
+        // $this->detectViewMode();
+
         // Require parish ID
         $this->requireParishId();
 
-        // Initialize from route param
-        if ($classId) {
-            $this->selectedClassId = $classId;
+        if (request()->has('classId')) {
+            $this->selectedClassId = (int) request()->query('classId');
             $this->loadClassInfo();
         }
-
-        // Detect view mode
-        $this->detectViewMode();
     }
 
     protected function loadInitialData(): void
@@ -178,6 +175,13 @@ class AttendanceManager extends BaseComponent
         }
 
         $this->resetPage();
+    }
+
+    public function updatedSelectedDate()
+    {
+        if ($this->viewMode === 'mobile') {
+            $this->loadSessions();
+        }
     }
 
     public function updatedAttendanceType(): void
@@ -284,12 +288,15 @@ class AttendanceManager extends BaseComponent
         }
 
         try {
-            $sessions = AttendanceSession::where('class_id', $this->selectedClassId)
-                ->when($this->attendanceType, function ($q) {
-                    return $q->where('type', $this->attendanceType);
-                })
-                ->orderBy('date')
-                ->get();
+            $query = AttendanceSession::where('class_id', $this->selectedClassId)
+                ->where('type', $this->attendanceType)
+                ->orderBy('date');
+
+            if ($this->viewMode === 'mobile' && $this->selectedDate) {
+                $query->whereDate('date', $this->selectedDate);
+            }
+
+            $sessions = $query->get();
 
             $this->sessions = $sessions->map(function ($s) {
                 $date = Carbon::parse($s->date);
@@ -306,16 +313,38 @@ class AttendanceManager extends BaseComponent
                 ];
             })->toArray();
 
+            /**
+             * MOBILE:
+             * - Ưu tiên chọn ngày hôm nay
+             * - Nếu không có → chọn buổi đầu tiên chưa khóa
+             * - Nếu vẫn không có → chọn buổi đầu tiên
+             */
+            if (
+                $this->viewMode === 'mobile'
+                && !$this->selectedDate
+                && !empty($this->sessions)
+            ) {
+                $today = Carbon::today()->format('Y-m-d');
+
+                // 1️⃣ Ưu tiên buổi hôm nay
+                $todaySession = collect($this->sessions)
+                    ->firstWhere('dateStr', $today);
+
+                if ($todaySession) {
+                    $this->selectedDate = $todaySession['dateStr'];
+                } else {
+                    // 2️⃣ Buổi đầu tiên chưa khóa
+                    $unlocked = collect($this->sessions)
+                        ->first(fn($s) => !$s['locked']);
+
+                    $this->selectedDate = $unlocked
+                        ? $unlocked['dateStr']
+                        : $this->sessions[0]['dateStr']; // 3️⃣ fallback
+                }
+            }
+
             // Load attendance records
             $this->loadAttendanceRecords();
-
-            // Auto-select first unlocked date for mobile
-            if (!$this->selectedDate && !empty($this->sessions)) {
-                $unlocked = collect($this->sessions)->first(fn($s) => !$s['locked']);
-                $this->selectedDate = $unlocked
-                    ? $unlocked['dateStr']
-                    : $this->sessions[0]['dateStr'];
-            }
 
             if (empty($this->sessions)) {
                 session()->flash('info', 'Chưa có buổi điểm danh nào');
@@ -551,6 +580,19 @@ class AttendanceManager extends BaseComponent
     {
         // Default to desktop, can be enhanced with JS detection
         $this->viewMode = 'desktop';
+    }
+
+    public function setViewMode(string $mode): void
+    {
+        if ($this->viewMode !== $mode) {
+            $this->viewMode = $mode;
+
+            // ⚠️ QUAN TRỌNG: reload sessions
+            if ($this->selectedClassId) {
+                $this->selectedDate = null; // force re-pick date
+                $this->loadSessions();
+            }
+        }
     }
 
     // ==================== COMPUTED PROPERTIES ====================
