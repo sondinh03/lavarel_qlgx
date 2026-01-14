@@ -1,7 +1,6 @@
 <?php return array (
   'attendance-manager' => 'App\\Http\\Livewire\\AttendanceManager',
   'block.block-manager' => 'App\\Http\\Livewire\\Block\\BlockManager',
-  'class-filter-selector' => 'App\\Http\\Livewire\\ClassFilterSelector',
   'filters.filter-bar' => 'App\\Http\\Livewire\\Filters\\FilterBar',
   'holy.holy-manager' => 'App\\Http\\Livewire\\Holy\\HolyManager',
   'home' => 'App\\Http\\Livewire\\Home',
@@ -11,6 +10,7 @@
   'lop.lop-list' => 'App\\Http\\Livewire\\Lop\\LopList',
   'nam-hoc.nam-hoc-manager' => 'App\\Http\\Livewire\\NamHoc\\NamHocManager',
   'parish.parish-child' => 'App\\Http\\Livewire\\Parish\\ParishChild',
+  'score.score-manager' => 'App\\Http\\Livewire\\Score\\ScoreManager',
   'student.student-detail' => 'App\\Http\\Livewire\\Student\\StudentDetail',
   'student.student-list' => 'App\\Http\\Livewire\\Student\\StudentList',
   'teacher.teacher-manager' => 'App\\Http\\Livewire\\Teacher\\TeacherManager',

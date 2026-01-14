@@ -45,6 +45,7 @@ use App\Http\Livewire\Lop\LopDetail;
 use App\Http\Livewire\Lop\LopList;
 use App\Http\Livewire\NamHoc\NamHocManager;
 use App\Http\Livewire\Parish\ParishChild;
+use App\Http\Livewire\Score\ScoreManager;
 use App\Http\Livewire\Student\StudentDetail;
 use App\Http\Livewire\Teacher\TeacherManager;
 use Illuminate\Support\Facades\Auth;
@@ -64,21 +65,15 @@ Route::middleware('auth')->group(function () {
 
     Route::prefix('classes')->name('classes.')->group(function () {
         Route::get('/', LopList::class)->name('index');
-        // Route::get('/create', LopForm::class)->name('create');   // tạo
-        Route::get('/{id}', LopDetail::class)->name('show');     // chi tiết
-        // Route::get('/{id}/edit', LopForm::class)->name('edit');  // sửa
+        Route::get('/{id}', LopDetail::class)->name('show');
         Route::get('/{lopId}/catechists', AssignTeacher::class)
-            ->name('catechists');                                  // phân công GV
+            ->name('catechists');
     });
 
-    /*
-    |--------------------------------------------------------------------------
-    | ĐIỂM DANH
-    |--------------------------------------------------------------------------
-    */
-    // Route::get('/attendance/{classId?}', AttendanceManager::class)
     Route::get('/attendance', AttendanceManager::class)
         ->name('attendance.show');
+
+    Route::get('/scores', ScoreManager::class)->name('scores.index');
 
     Route::get('/school-years', NamHocManager::class)
         ->name('school-years.index');

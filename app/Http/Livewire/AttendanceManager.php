@@ -9,13 +9,9 @@ use App\Models\Lop;
 use App\Services\AttendanceService;
 use Carbon\Carbon;
 
-
 class AttendanceManager extends BaseComponent
 {
     // ==================== FILTERS ====================
-    // /** @var int|null Selected lớp ID */
-    // public $selectedClassId = null;
-
     /** @var int|null Selected năm học ID */
     public $selectedNamHoc = null;
 
@@ -41,6 +37,14 @@ class AttendanceManager extends BaseComponent
 
     /** @var string|null Selected date for mobile view */
     public $selectedDate = null;
+
+    // ==================== NOTE MODAL ====================
+    /** @var bool Show note modal */
+    public $showNoteModal = false;
+    public $currentStudentId = null;
+    public $currentSessionId = null;
+    public $currentStudentName = '';
+    public $attendanceNote = '';
     
     // ==================== DATA ====================
 
@@ -66,12 +70,14 @@ class AttendanceManager extends BaseComponent
         'attendanceType' => 'required|integer|in:1,2',
         'filterStatus' => 'required|string|in:all,present,absent',
         'search' => 'nullable|string|max:255',
+        'attendanceNote' => 'nullable|string|max:500',
     ];
 
     protected $messages = [
         'selectedClassId.exists' => 'Lớp không tồn tại',
         'attendanceType.in' => 'Loại điểm danh không hợp lệ',
         'filterStatus.in' => 'Trạng thái lọc không hợp lệ',
+        'attendanceNote.max' => 'Ghi chú không được vượt quá 500 ký tự',
     ];
 
     // ==================== QUERY STRING ====================
@@ -371,12 +377,17 @@ class AttendanceManager extends BaseComponent
         try {
             $records = AttendanceRecord::whereIn('session_id', $sessionIds)
                 ->with('session')
-                ->get()
-                ->groupBy(function ($r) {
-                    return $r->student_id . '_' . Carbon::parse($r->session->date)->format('Y-m-d');
-                });
+                ->get();
 
-            $this->attendanceRecords = $records->map(fn($g) => $g->first())->toArray();
+            $this->attendanceRecords = $records->groupBy(function ($r) {
+                return $r->student_id . '_' . Carbon::parse($r->session->date)->format('Y-m-d');
+            })->map(function ($group) {
+                $record = $group->first();
+                return [
+                    'status' => $record->status,
+                    'note' => $record->note, 
+                ];
+            })->toArray();
         } catch (\Exception $e) {
             $this->logError($e, 'Error loading attendance records');
             $this->attendanceRecords = [];
@@ -450,6 +461,76 @@ class AttendanceManager extends BaseComponent
 
     // ==================== ATTENDANCE ACTIONS ====================
 
+    public function openNoteModal($studentId, $sessionId): void
+    {
+        $session = collect($this->sessions)->firstWhere('id', $sessionId);
+
+        if (!$session || $session['locked']) {
+            session()->flash('warning', 'Không thể điểm danh cho buổi này');
+            return;
+        }
+
+        $student = $this->students->firstWhere('id', $studentId);
+
+        if (!$student) {
+            session()->flash('error', 'Không tìm thấy học sinh');
+            return;
+        }
+
+        $this->currentStudentId = $studentId;
+        $this->currentSessionId = $sessionId;
+        $this->currentStudentName = ($student->saint_name ? $student->saint_name . ' ' : '')
+            . $student->last_name . ' ' . $student->name;
+
+        // Load existing note if any
+        $key = $studentId . '_' . $sessionId;
+        $this->attendanceNote = $this->draftAttendance[$key]['note'] ?? '';
+
+        $this->showNoteModal = true;
+    }
+
+    /**
+     * ✅ NEW: Save attendance with note
+     */
+    public function saveAttendanceWithNote(): void
+    {
+        $this->validate([
+            'attendanceNote' => 'nullable|string|max:500',
+        ]);
+
+        if (!$this->currentStudentId || !$this->currentSessionId) {
+            session()->flash('error', 'Thiếu thông tin học sinh hoặc buổi học');
+            return;
+        }
+
+        $key = $this->currentStudentId . '_' . $this->currentSessionId;
+
+        $this->draftAttendance[$key] = [
+            'student_id' => $this->currentStudentId,
+            'session_id' => $this->currentSessionId,
+            'status' => AttendanceRecord::STATUS_ABSENT_EXCUSED,
+            'note' => trim($this->attendanceNote),
+            'attendanceType' => $this->attendanceType,
+        ];
+
+        session()->flash('success', 'Đã ghi nhận vắng có phép (chưa lưu vào CSDL)');
+
+        $this->closeNoteModal();
+    }
+
+    /**
+     * ✅ NEW: Close note modal
+     */
+    public function closeNoteModal(): void
+    {
+        $this->showNoteModal = false;
+        $this->currentStudentId = null;
+        $this->currentSessionId = null;
+        $this->currentStudentName = '';
+        $this->attendanceNote = '';
+        $this->resetValidation(['attendanceNote']);
+    }
+
     public function setAttendance($studentId, $sessionId, $status): void
     {
         $session = collect($this->sessions)->firstWhere('id', $sessionId);
@@ -458,6 +539,11 @@ class AttendanceManager extends BaseComponent
             session()->flash('warning', 'Không thể điểm danh cho buổi này');
             return;
         }
+
+        // if ($status === AttendanceRecord::STATUS_ABSENT_EXCUSED) {
+        //     $this->openNoteModal($studentId, $sessionId);
+        //     return;
+        // }
 
         $key = $studentId . '_' . $sessionId;
 
@@ -468,6 +554,7 @@ class AttendanceManager extends BaseComponent
                 'student_id' => $studentId,
                 'session_id' => $sessionId,
                 'status' => $status,
+                'note' => '', // No note for other statuses
                 'attendanceType' => $this->attendanceType,
             ];
         }
@@ -488,6 +575,7 @@ class AttendanceManager extends BaseComponent
                 'student_id' => $student->id,
                 'session_id' => $sessionId,
                 'status' => AttendanceRecord::STATUS_PRESENT,
+                'note' => '',
                 'attendanceType' => $this->attendanceType,
             ];
         }

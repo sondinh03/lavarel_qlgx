@@ -146,6 +146,17 @@ echo $html;
 
                     
                     <div class="flex items-center gap-3">
+                        <?php if($this->hasUnsavedChanges): ?>
+                        <button
+                            wire:click="discardDrafts"
+                            class="px-4 py-2 border border-red-300 text-red-700 rounded-xl hover:bg-red-50 transition-colors
+                                text-sm font-medium flex items-center gap-2">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                            Hủy (<?php echo e($this->pendingCount); ?>)
+                        </button>
+                        <?php endif; ?>
                         
                         <button
                             class="px-4 py-2 bg-white border border-slate-300 rounded-xl
@@ -363,18 +374,47 @@ echo $html;
                             </td>
 
                             
+                            
                             <?php $__currentLoopData = $sessions; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $session): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
                             <?php
                             $status = $this->getAttendanceStatus($student->id, $session['dateStr']);
+                            $key = $student->id . '_' . $session['id'];
+                            $note = $this->draftAttendance[$key]['note'] ?? ($this->attendanceRecords[$student->id . '_' . $session['dateStr']]['note'] ?? null);
                             ?>
                             <td class="px-3 py-3 text-center">
                                 <?php if($session['locked']): ?>
                                 
-                                <div class="flex items-center justify-center h-8">
+                                <div class="flex items-center justify-center h-8" x-data="{ open: false }">
                                     <?php if($status == 1): ?>
                                     <span class="text-green-700 font-medium">✓</span>
                                     <?php elseif($status == 2): ?>
-                                    <span class="text-yellow-700 font-medium">P</span>
+                                    <div class="relative inline-block">
+                                        <button
+                                            @mouseenter="open = true"
+                                            @mouseleave="open = false"
+                                            class="text-yellow-700 font-medium cursor-help flex items-center gap-0.5">
+                                            P
+                                            <?php if($note): ?>
+                                            <span class="w-1.5 h-1.5 bg-blue-500 rounded-full"></span>
+                                            <?php endif; ?>
+                                        </button>
+
+                                        <?php if($note): ?>
+                                        
+                                        <div x-show="open"
+                                            x-transition
+                                            x-cloak
+                                            class="absolute left-1/2 -translate-x-1/2 bottom-full mb-2 w-64
+                       p-3 bg-slate-900 text-white text-xs rounded-lg shadow-xl z-30">
+                                            <div class="font-semibold mb-1">Lý do vắng:</div>
+                                            <div class="text-slate-200"><?php echo e($note); ?></div>
+                                            
+                                            <div class="absolute left-1/2 -translate-x-1/2 top-full w-0 h-0
+                           border-l-4 border-r-4 border-t-4
+                           border-l-transparent border-r-transparent border-t-slate-900"></div>
+                                        </div>
+                                        <?php endif; ?>
+                                    </div>
                                     <?php elseif($status == 3): ?>
                                     <span class="text-red-700 font-medium">✕</span>
                                     <?php else: ?>
@@ -387,15 +427,41 @@ echo $html;
                                     <button
                                         wire:click="setAttendance(<?php echo e($student->id); ?>, <?php echo e($session['id']); ?>, <?php echo e($status == 1 ? 'null' : 1); ?>)"
                                         class="px-2 py-1 rounded text-xs font-medium transition-all
-                                            <?php echo e($status == 1 ? 'bg-green-500 text-white shadow-md scale-105' : 'bg-green-50 text-green-700 border border-green-200 hover:bg-green-100'); ?>">
+                <?php echo e($status == 1 ? 'bg-green-500 text-white shadow-md scale-105' : 'bg-green-50 text-green-700 border border-green-200 hover:bg-green-100'); ?>">
                                         ✓
                                     </button>
-                                    <button
-                                        wire:click="setAttendance(<?php echo e($student->id); ?>, <?php echo e($session['id']); ?>, <?php echo e($status == 2 ? 'null' : 2); ?>)"
-                                        class="px-2 py-1 rounded text-xs font-medium transition-all
-                                            <?php echo e($status == 2 ? 'bg-yellow-400 text-slate-900 shadow-md scale-105' : 'bg-amber-100 text-amber-800 border border-yellow-200 hover:bg-yellow-100'); ?>">
-                                        P
-                                    </button>
+
+                                    
+                                    <div class="relative inline-block" x-data="{ open: false }">
+                                        <button
+                                            wire:click="setAttendance(<?php echo e($student->id); ?>, <?php echo e($session['id']); ?>, <?php echo e($status == 2 ? 'null' : 2); ?>)"
+                                            @mouseenter="open = true"
+                                            @mouseleave="open = false"
+                                            class="px-2 py-1 rounded text-xs font-medium transition-all relative
+                                                <?php echo e($status == 2 ? 'bg-yellow-400 text-slate-900 shadow-md scale-105' : 'bg-amber-100 text-amber-800 border border-yellow-200 hover:bg-yellow-100'); ?>">
+                                            P
+                                            <?php if($note): ?>
+                                            
+                                            <span class="absolute -top-1 -right-1 w-2 h-2 bg-blue-500 rounded-full ring-2 ring-white"></span>
+                                            <?php endif; ?>
+                                        </button>
+
+                                        
+                                        <?php if($note && $status == 2): ?>
+                                        <div x-show="open"
+                                            x-transition
+                                            x-cloak
+                                            class="absolute left-1/2 -translate-x-1/2 bottom-full mb-2 w-48
+                                                p-2 bg-slate-900 text-white text-[10px] rounded-lg shadow-xl z-30">
+                                            <div class="font-semibold mb-1">Lý do:</div>
+                                            <div class="text-slate-200 line-clamp-2"><?php echo e($note); ?></div>
+                                            <div class="absolute left-1/2 -translate-x-1/2 top-full w-0 h-0
+                                                border-l-4 border-r-4 border-t-4
+                                                border-l-transparent border-r-transparent border-t-slate-900"></div>
+                                        </div>
+                                        <?php endif; ?>
+                                    </div>
+
                                     <button
                                         wire:click="setAttendance(<?php echo e($student->id); ?>, <?php echo e($session['id']); ?>, <?php echo e($status == 3 ? 'null' : 3); ?>)"
                                         class="px-2 py-1 rounded text-xs font-medium transition-all
@@ -702,6 +768,177 @@ echo $html;
 </div>
 
 
+<?php if($showNoteModal): ?>
+<div
+    class="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="note-modal-title"
+    wire:click="closeNoteModal">
+    <div
+        class="bg-white rounded-2xl shadow-xl w-full max-w-lg max-h-[90vh] overflow-hidden flex flex-col"
+        wire:click.stop>
+
+        
+        <div class="flex-shrink-0 p-6 border-b border-slate-200 bg-gradient-to-br from-yellow-50 to-white">
+            <div class="flex items-start justify-between">
+                <div class="flex-1">
+                    <h2 id="note-modal-title" class="text-xl font-bold text-slate-900">
+                        Vắng có phép
+                    </h2>
+                    <p class="text-sm text-slate-600 mt-1">
+                        Ghi chú lý do vắng mặt
+                    </p>
+                </div>
+                <button
+                    wire:click="closeNoteModal"
+                    class="text-slate-400 hover:text-slate-600 transition-colors">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                </button>
+            </div>
+        </div>
+
+        
+        <div class="flex-1 overflow-y-auto p-6 space-y-5">
+            
+            <div class="bg-slate-50 border border-slate-200 rounded-xl p-4">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 bg-primary-100 rounded-full flex items-center justify-center flex-shrink-0">
+                        <svg class="w-5 h-5 text-primary-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                        </svg>
+                    </div>
+                    <div class="flex-1">
+                        <div class="text-xs text-slate-500">Học sinh</div>
+                        <div class="font-semibold text-slate-900"><?php echo e($currentStudentName); ?></div>
+                    </div>
+                </div>
+            </div>
+
+            
+            <?php $__errorArgs = ['attendanceNote'];
+$__bag = $errors->getBag($__errorArgs[1] ?? 'default');
+if ($__bag->has($__errorArgs[0])) :
+if (isset($message)) { $__messageOriginal = $message; }
+$message = $__bag->first($__errorArgs[0]); ?>
+            <div class="bg-red-50 border-l-4 border-red-500 rounded-xl p-4">
+                <div class="flex items-start gap-3">
+                    <svg class="w-5 h-5 text-red-500 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    <p class="text-sm text-red-700"><?php echo e($message); ?></p>
+                </div>
+            </div>
+            <?php unset($message);
+if (isset($__messageOriginal)) { $message = $__messageOriginal; }
+endif;
+unset($__errorArgs, $__bag); ?>
+
+            
+            <div>
+                <label for="attendance-note" class="block text-sm font-semibold text-slate-700 mb-2">
+                    Lý do vắng <span class="text-slate-400 font-normal">(không bắt buộc)</span>
+                </label>
+                <textarea
+                    id="attendance-note"
+                    wire:model.defer="attendanceNote"
+                    rows="4"
+                    placeholder="Vd: Bệnh, về quê, đi học thêm, gia đình có việc..."
+                    class="w-full px-4 py-3 rounded-xl border border-slate-300
+                           focus:outline-none focus:ring-2 focus:ring-yellow-500
+                           resize-none text-sm"
+                    maxlength="500"></textarea>
+                <div class="mt-1 text-xs text-slate-500 flex items-center justify-between">
+                    <span>Tối đa 500 ký tự</span>
+                    <span><?php echo e(strlen($attendanceNote)); ?>/500</span>
+                </div>
+            </div>
+
+            
+            <div>
+                <div class="text-sm font-semibold text-slate-700 mb-2">
+                    Lý do phổ biến
+                </div>
+                <div class="grid grid-cols-2 gap-2">
+                    <?php
+                    $quickReasons = [
+                    'Bệnh',
+                    'Về quê',
+                    'Gia đình có việc',
+                    'Đi học thêm',
+                    'Dự lễ nơi khác',
+                    'Trời mưa',
+                    ];
+                    ?>
+                    <?php $__currentLoopData = $quickReasons; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $reason): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                    <button
+                        wire:click="$set('attendanceNote', '<?php echo e($reason); ?>')"
+                        class="px-3 py-2 bg-white border border-slate-200 rounded-lg
+                               text-sm text-slate-700 hover:bg-slate-50 hover:border-yellow-300
+                               transition-all text-left">
+                        <?php echo e($reason); ?>
+
+                    </button>
+                    <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
+                </div>
+            </div>
+
+            
+            <div class="bg-blue-50 border-l-4 border-blue-500 rounded-xl p-4">
+                <div class="flex items-start gap-3">
+                    <svg class="w-5 h-5 text-blue-500 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    <div class="flex-1">
+                        <h4 class="text-sm font-semibold text-blue-700">
+                            Lưu ý
+                        </h4>
+                        <p class="text-sm text-blue-600 mt-1">
+                            Thông tin này sẽ được lưu tạm. Nhấn "Lưu điểm danh" ở trên để lưu vào cơ sở dữ liệu.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        
+        <div class="flex-shrink-0 px-6 py-4 border-t border-slate-200 bg-slate-50 flex justify-end gap-3">
+            <button
+                wire:click="closeNoteModal"
+                class="px-4 py-2 bg-white border border-slate-300 rounded-xl
+                       text-sm font-medium text-slate-700
+                       hover:bg-slate-50 transition-colors">
+                Hủy
+            </button>
+
+            <button
+                wire:click="saveAttendanceWithNote"
+                wire:loading.attr="disabled"
+                class="px-4 py-2 bg-yellow-500 text-white rounded-xl
+                       text-sm font-medium hover:bg-yellow-600
+                       transition-colors disabled:opacity-50 disabled:cursor-not-allowed
+                       flex items-center gap-2">
+                <svg wire:loading.remove wire:target="saveAttendanceWithNote" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                </svg>
+                <svg wire:loading wire:target="saveAttendanceWithNote" class="animate-spin w-4 h-4" fill="none" viewBox="0 0 24 24">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                <span wire:loading.remove wire:target="saveAttendanceWithNote">Xác nhận</span>
+                <span wire:loading wire:target="saveAttendanceWithNote">Đang lưu...</span>
+            </button>
+        </div>
+    </div>
+</div>
+<?php endif; ?>
+
+
 <?php if($this->hasUnsavedChanges): ?>
 <div class="fixed bottom-4 right-4 bg-amber-500 text-white px-4 py-3 rounded-xl shadow-lg flex items-center gap-3 animate-pulse">
     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -711,14 +948,6 @@ echo $html;
     <span><?php echo e($this->pendingCount); ?> thay đổi chưa lưu</span>
 </div>
 <?php endif; ?>
-
-
-<button
-    wire:click="discardDrafts"
-    class="px-4 py-2 border border-red-300 text-red-700 rounded-xl hover:bg-red-50"
-    @disabled(!$this->hasUnsavedChanges)>
-    Hủy thay đổi
-</button>
 
 
 <div wire:loading class="fixed inset-0 bg-gray-900 bg-opacity-50 flex items-center justify-center z-50">
