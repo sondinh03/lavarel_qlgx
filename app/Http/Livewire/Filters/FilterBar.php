@@ -50,13 +50,17 @@ class FilterBar extends Component
      */
     public function mount($parishId = null): void
     {
+        if (!$parishId) {
+            session()->flash('warning', 'Vui lòng chọn giáo xứ');
+            return;
+        }
+
         $this->parish_id = $parishId;
 
         $this->namHocs = collect();
         $this->khois   = collect();
         $this->lops    = collect();
         $this->kys     = collect();
-
 
         if ($this->parish_id !== null) {
             $this->loadNamHocs();

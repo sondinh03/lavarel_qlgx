@@ -13,10 +13,11 @@ class StudentScore extends Model
     */
 
     protected $table = 'student_scores';
+
     protected $guarded = ['id'];
+
     protected $fillable = [
-        'student_id',
-        'class_id',
+        'student_class_id',
         'score_type_id',
         'score_value',
         'attempt',
@@ -24,11 +25,10 @@ class StudentScore extends Model
     ];
 
     protected $casts = [
-        'student_id' => 'integer',
-        'class_id' => 'integer',
-        'score_type_id' => 'integer',
-        'score_value' => 'decimal:2',
-        'attempt' => 'integer',
+        'student_class_id' => 'integer',
+        'score_type_id'    => 'integer',
+        'score_value'      => 'decimal:2',
+        'attempt'          => 'integer',
     ];
 
     /*
@@ -37,14 +37,42 @@ class StudentScore extends Model
     |--------------------------------------------------------------------------
     */
 
-    public function student()
+    /**
+     * Gắn với bảng trung gian học sinh - lớp (theo năm học)
+     */
+    public function studentClass()
     {
-        return $this->belongsTo(Student::class, 'student_id');
+        return $this->belongsTo(StudentsClass::class, 'student_class_id');
     }
 
+    /**
+     * Truy xuất nhanh học sinh (through student_class)
+     */
+    public function student()
+    {
+        return $this->hasOneThrough(
+            Student::class,
+            StudentsClass::class,
+            'id',          // Foreign key on students_class
+            'id',          // Foreign key on students
+            'student_class_id',
+            'student_id'
+        );
+    }
+
+    /**
+     * Truy xuất nhanh lớp (through student_class)
+     */
     public function lop()
     {
-        return $this->belongsTo(Lop::class, 'class_id');
+        return $this->hasOneThrough(
+            Lop::class,
+            StudentsClass::class,
+            'id',          // FK on students_class
+            'id',          // FK on lop
+            'student_class_id',
+            'class_id'
+        );
     }
 
     public function scoreType()
@@ -58,14 +86,9 @@ class StudentScore extends Model
     |--------------------------------------------------------------------------
     */
 
-    public function scopeOfStudent($query, $studentId)
+    public function scopeOfStudentClass($query, $studentClassId)
     {
-        return $query->where('student_id', $studentId);
-    }
-
-    public function scopeOfClass($query, $classId)
-    {
-        return $query->where('class_id', $classId);
+        return $query->where('student_class_id', $studentClassId);
     }
 
     public function scopeOfScoreType($query, $scoreTypeId)

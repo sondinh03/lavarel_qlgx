@@ -73,7 +73,8 @@ Route::middleware('auth')->group(function () {
     Route::get('/attendance', AttendanceManager::class)
         ->name('attendance.show');
 
-    Route::get('/scores', ScoreManager::class)->name('scores.index');
+    Route::get('/scores', ScoreManager::class)
+        ->name('scores.index');
 
     Route::get('/school-years', NamHocManager::class)
         ->name('school-years.index');

@@ -3,7 +3,6 @@
 namespace App\Models;
 
 use Backpack\CRUD\app\Models\Traits\CrudTrait;
-use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Relations\Pivot;
 use Venturecraft\Revisionable\RevisionableTrait;
 
@@ -20,7 +19,7 @@ class StudentsClass extends Pivot
     protected $table = 'students_class';
 
     public $incrementing = true;
-    protected $keyType = 'bigInteger';
+    // protected $keyType = 'bigInteger';
 
     protected $guarded = ['id'];
 

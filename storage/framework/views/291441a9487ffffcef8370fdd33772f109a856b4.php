@@ -82,7 +82,7 @@
                             x-transition:leave-end="opacity-0 scale-95"
                             class="absolute left-0 mt-2 w-64 bg-white border border-slate-200 rounded-2xl shadow-xl overflow-hidden z-50">
 
-                            <a href="https://mvqlgiaoxu.org/tim-kiem"
+                            <a href="<?php echo e(route('scores.index')); ?>"
                                 class="flex items-center gap-3 px-4 py-3 text-sm text-slate-700 hover:bg-primary-50 hover:text-primary-700 transition-all">
                                 <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"

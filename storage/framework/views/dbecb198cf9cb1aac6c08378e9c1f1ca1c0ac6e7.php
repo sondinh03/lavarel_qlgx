@@ -112,54 +112,21 @@
                 <div class="flex items-center justify-between gap-4">
                     
                     <div class="flex items-center gap-3 flex-wrap">
-                        
-                        <select
-                            wire:model="selectedNamHoc"
-                            class="px-3 py-2 rounded-xl border border-slate-300 text-sm 
-                                   focus:outline-none focus:ring-2 focus:ring-primary-500">
-                            <option value="">-- Chọn năm học --</option>
-                            <?php $__currentLoopData = $availableNamHocs; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $nh): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
-                            <option value="<?php echo e($nh->id); ?>"><?php echo e($nh->name); ?></option>
-                            <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
-                        </select>
-
-                        
-                        <select
-                            wire:model="selectedLop"
-                            class="px-3 py-2 rounded-xl border border-slate-300 text-sm 
-                                   focus:outline-none focus:ring-2 focus:ring-primary-500
-                                   <?php echo e($availableLops->isEmpty() ? 'bg-slate-100' : ''); ?>"
-                            @disabled($availableLops->isEmpty())>
-                            <option value="">-- Chọn lớp --</option>
-                            <?php $__currentLoopData = $availableLops; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $lop): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
-                            <option value="<?php echo e($lop['id']); ?>">
-                                <?php echo e($lop['name']); ?> (<?php echo e($lop['block_name']); ?>)
-                            </option>
-                            <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
-                        </select>
-
-                        
-                        <div class="flex items-center gap-2 bg-white px-3 py-2 rounded-xl border border-slate-300">
-                            <label class="inline-flex items-center gap-2 cursor-pointer">
-                                <input
-                                    type="radio"
-                                    wire:model="selectedSemester"
-                                    value="1"
-                                    class="w-4 h-4 text-primary-600 focus:ring-primary-500">
-                                <span class="text-sm font-medium text-slate-700">HK I</span>
-                            </label>
-
-                            <span class="text-slate-300">|</span>
-
-                            <label class="inline-flex items-center gap-2 cursor-pointer">
-                                <input
-                                    type="radio"
-                                    wire:model="selectedSemester"
-                                    value="2"
-                                    class="w-4 h-4 text-primary-600 focus:ring-primary-500">
-                                <span class="text-sm font-medium text-slate-700">HK II</span>
-                            </label>
-                        </div>
+                        <?php
+if (! isset($_instance)) {
+    $html = \Livewire\Livewire::mount('filters.filter-bar', ['parishId' => $parishId,'showNamHoc' => true,'showKhoi' => true,'showLop' => true,'showKy' => true,'selectedNamHoc' => $selectedNamHoc,'selectedKhoi' => $selectedKhoi,'selectedLop' => $selectedLop,'selectedKy' => $selectedSemester])->html();
+} elseif ($_instance->childHasBeenRendered('l1832002946-0')) {
+    $componentId = $_instance->getRenderedChildComponentId('l1832002946-0');
+    $componentTag = $_instance->getRenderedChildComponentTagName('l1832002946-0');
+    $html = \Livewire\Livewire::dummyMount($componentId, $componentTag);
+    $_instance->preserveRenderedChild('l1832002946-0');
+} else {
+    $response = \Livewire\Livewire::mount('filters.filter-bar', ['parishId' => $parishId,'showNamHoc' => true,'showKhoi' => true,'showLop' => true,'showKy' => true,'selectedNamHoc' => $selectedNamHoc,'selectedKhoi' => $selectedKhoi,'selectedLop' => $selectedLop,'selectedKy' => $selectedSemester]);
+    $html = $response->html();
+    $_instance->logRenderedChild('l1832002946-0', $response->id(), \Livewire\Livewire::getRootElementTagName($html));
+}
+echo $html;
+?>
                     </div>
 
                     
@@ -257,7 +224,7 @@
                             
                             <td class="px-4 py-3 sticky left-12 bg-white">
                                 <div class="font-semibold text-slate-900">
-                                    <?php echo e($student->name); ?>
+                                    <?php echo e($student->student->full_name); ?>
 
                                 </div>
                             </td>
@@ -308,6 +275,24 @@
                     </tbody>
                 </table>
             </div>
+
+            
+            <?php if($students->hasPages()): ?>
+            <div class="border-t border-slate-200">
+                <?php if (isset($component)) { $__componentOriginalc254754b9d5db91d5165876f9d051922ca0066f4 = $component; } ?>
+<?php $component = $__env->getContainer()->make(Illuminate\View\AnonymousComponent::class, ['view' => 'components.pagination','data' => ['paginator' => $students,'perPageOptions' => [10, 15, 25, 50]]]); ?>
+<?php $component->withName('pagination'); ?>
+<?php if ($component->shouldRender()): ?>
+<?php $__env->startComponent($component->resolveView(), $component->data()); ?>
+<?php $component->withAttributes(['paginator' => \Illuminate\View\Compilers\BladeCompiler::sanitizeComponentAttribute($students),'per-page-options' => \Illuminate\View\Compilers\BladeCompiler::sanitizeComponentAttribute([10, 15, 25, 50])]); ?>
+<?php echo $__env->renderComponent(); ?>
+<?php endif; ?>
+<?php if (isset($__componentOriginalc254754b9d5db91d5165876f9d051922ca0066f4)): ?>
+<?php $component = $__componentOriginalc254754b9d5db91d5165876f9d051922ca0066f4; ?>
+<?php unset($__componentOriginalc254754b9d5db91d5165876f9d051922ca0066f4); ?>
+<?php endif; ?>
+            </div>
+            <?php endif; ?>
         </div>
         <?php else: ?>
         <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-12 text-center">

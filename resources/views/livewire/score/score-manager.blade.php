@@ -55,54 +55,16 @@
                 <div class="flex items-center justify-between gap-4">
                     {{-- LEFT: Filters --}}
                     <div class="flex items-center gap-3 flex-wrap">
-                        {{-- Năm học --}}
-                        <select
-                            wire:model="selectedNamHoc"
-                            class="px-3 py-2 rounded-xl border border-slate-300 text-sm 
-                                   focus:outline-none focus:ring-2 focus:ring-primary-500">
-                            <option value="">-- Chọn năm học --</option>
-                            @foreach($availableNamHocs as $nh)
-                            <option value="{{ $nh->id }}">{{ $nh->name }}</option>
-                            @endforeach
-                        </select>
-
-                        {{-- Lớp --}}
-                        <select
-                            wire:model="selectedLop"
-                            class="px-3 py-2 rounded-xl border border-slate-300 text-sm 
-                                   focus:outline-none focus:ring-2 focus:ring-primary-500
-                                   {{ $availableLops->isEmpty() ? 'bg-slate-100' : '' }}"
-                            @disabled($availableLops->isEmpty())>
-                            <option value="">-- Chọn lớp --</option>
-                            @foreach($availableLops as $lop)
-                            <option value="{{ $lop['id'] }}">
-                                {{ $lop['name'] }} ({{ $lop['block_name'] }})
-                            </option>
-                            @endforeach
-                        </select>
-
-                        {{-- Học kỳ --}}
-                        <div class="flex items-center gap-2 bg-white px-3 py-2 rounded-xl border border-slate-300">
-                            <label class="inline-flex items-center gap-2 cursor-pointer">
-                                <input
-                                    type="radio"
-                                    wire:model="selectedSemester"
-                                    value="1"
-                                    class="w-4 h-4 text-primary-600 focus:ring-primary-500">
-                                <span class="text-sm font-medium text-slate-700">HK I</span>
-                            </label>
-
-                            <span class="text-slate-300">|</span>
-
-                            <label class="inline-flex items-center gap-2 cursor-pointer">
-                                <input
-                                    type="radio"
-                                    wire:model="selectedSemester"
-                                    value="2"
-                                    class="w-4 h-4 text-primary-600 focus:ring-primary-500">
-                                <span class="text-sm font-medium text-slate-700">HK II</span>
-                            </label>
-                        </div>
+                        <livewire:filters.filter-bar
+                            :parish-id="$parishId"
+                            :show-nam-hoc="true"
+                            :show-khoi="true"
+                            :show-lop="true"
+                            :show-ky="true"
+                            :selected-nam-hoc="$selectedNamHoc"
+                            :selected-khoi="$selectedKhoi"
+                            :selected-lop="$selectedLop"
+                            :selected-ky="$selectedSemester" />
                     </div>
 
                     {{-- RIGHT: Actions --}}
@@ -114,15 +76,6 @@
                     </x-action-button>
                 </div>
             </div>
-
-            <livewire:filters.filter-bar
-                :parish-id="$parishId"
-                :show-nam-hoc="true"
-                :show-khoi="true"
-                :show-lop="false"
-                :show-ky="false"
-                :selected-nam-hoc="$selectedNamHoc"
-                :selected-khoi="$selectedKhoi" />
         </div>
 
         {{-- Score Table Section --}}
@@ -161,7 +114,7 @@
                             {{-- Tên học sinh --}}
                             <td class="px-4 py-3 sticky left-12 bg-white">
                                 <div class="font-semibold text-slate-900">
-                                    {{ $student->name }}
+                                    {{ $student->student->full_name }}
                                 </div>
                             </td>
 
@@ -203,6 +156,15 @@
                     </tbody>
                 </table>
             </div>
+
+            {{-- Pagination --}}
+            @if ($students->hasPages())
+            <div class="border-t border-slate-200">
+                <x-pagination
+                    :paginator="$students"
+                    :per-page-options="[10, 15, 25, 50]" />
+            </div>
+            @endif
         </div>
         @else
         <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-12 text-center">
