@@ -33,6 +33,14 @@ class AttendanceSession extends Model
         'end_time'     => 'datetime:H:i',
     ];
 
+    protected $appends = [
+        'full_date',
+        'day_name',
+        'is_editable',
+        'checked_count',
+        'attendance_rate'
+    ];
+
     /**
      * ======================
      *  STATUS CONSTANTS
@@ -108,7 +116,7 @@ class AttendanceSession extends Model
      */
     public function getFullDateAttribute(): string
     {
-        return $this->date->format('d/m');
+        return $this->date->format('d/m/y');
     }
 
     /**

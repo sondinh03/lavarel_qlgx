@@ -100,11 +100,11 @@
         <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
             
             <?php if (isset($component)) { $__componentOriginalc254754b9d5db91d5165876f9d051922ca0066f4 = $component; } ?>
-<?php $component = $__env->getContainer()->make(Illuminate\View\AnonymousComponent::class, ['view' => 'components.page-header','data' => ['title' => 'Điểm danh - '.e($this->selectedClassName).'','description' => 'Điểm danh '.e($attendanceType == 1 ? 'đi học' : 'đi lễ').' cho '.e($students->count()).' học sinh • '.e(count($sessions)).' buổi','statValue' => $students->count(),'statLabel' => 'Học sinh','iconType' => 'attendance']]); ?>
+<?php $component = $__env->getContainer()->make(Illuminate\View\AnonymousComponent::class, ['view' => 'components.page-header','data' => ['title' => 'Điểm danh'.e($selectedClassId ? ' - ' . $this->selectedClassName : '').'','description' => 'Điểm danh '.e($attendanceType == 1 ? 'đi học' : 'đi lễ').''.e($selectedClassId ? ' • ' . $students->count() . ' học sinh • ' . count($sessions) . ' buổi' : '').'','statValue' => optional($students)->count() ?? 0,'statLabel' => 'Học sinh','iconType' => 'attendance']]); ?>
 <?php $component->withName('page-header'); ?>
 <?php if ($component->shouldRender()): ?>
 <?php $__env->startComponent($component->resolveView(), $component->data()); ?>
-<?php $component->withAttributes(['title' => 'Điểm danh - '.e($this->selectedClassName).'','description' => 'Điểm danh '.e($attendanceType == 1 ? 'đi học' : 'đi lễ').' cho '.e($students->count()).' học sinh • '.e(count($sessions)).' buổi','stat-value' => \Illuminate\View\Compilers\BladeCompiler::sanitizeComponentAttribute($students->count()),'stat-label' => 'Học sinh','icon-type' => 'attendance']); ?>
+<?php $component->withAttributes(['title' => 'Điểm danh'.e($selectedClassId ? ' - ' . $this->selectedClassName : '').'','description' => 'Điểm danh '.e($attendanceType == 1 ? 'đi học' : 'đi lễ').''.e($selectedClassId ? ' • ' . $students->count() . ' học sinh • ' . count($sessions) . ' buổi' : '').'','stat-value' => \Illuminate\View\Compilers\BladeCompiler::sanitizeComponentAttribute(optional($students)->count() ?? 0),'stat-label' => 'Học sinh','icon-type' => 'attendance']); ?>
              <?php echo $__env->renderComponent(); ?>
 <?php endif; ?>
 <?php if (isset($__componentOriginalc254754b9d5db91d5165876f9d051922ca0066f4)): ?>

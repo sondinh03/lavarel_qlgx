@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Traits\HasFormattedName;
 use Backpack\CRUD\app\Models\Traits\CrudTrait;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\MorphOne;
@@ -22,6 +23,7 @@ class Lop extends Model
 {
     use CrudTrait;
     use RevisionableTrait;
+    use HasFormattedName;
 
     protected $table = 'lop';
     protected $guarded = ['id'];
@@ -38,10 +40,7 @@ class Lop extends Model
     protected $fillable = ['id', 'did', 'deid', 'pid', 'block', 'start_date_one', 'end_date_one', 'start_date_two', 'end_date_two', 'name', 'symbol', 'teacher', 'schoolyear',  'note', 'status', 'created_at', 'updated_at'];
 
     // TODO: rename accessor 'lop' -> 'display_name'
-    protected $appends = ['lop'];
-    // protected $casts = [
-    //     'teacher' => 'array',
-    // ];
+    protected $appends = ['lop', 'active_students_count'];
 
     // ===== STATUS CONSTANTS =====
     public const STATUS_ACTIVE = 1;
@@ -82,16 +81,15 @@ class Lop extends Model
         return $this->morphOne(Slug::class, 'sluggable', 'model');
     }
 
-    // public function teachers()
-    // {
-    //     return Teacher::whereIn('id', $this->teacher ?? [])->get();
-    // }
-
     public function classTeachers()
     {
         return $this->hasMany(ClassTeacher::class, 'class_id');
     }
 
+    public function getActiveStudentsCountAttribute(): int
+    {
+        return $this->active_students_count ?? 0;
+    }
 
     public function getTeacherNamesAttribute()
     {
@@ -151,13 +149,6 @@ class Lop extends Model
             ->withTimestamps();
     }
 
-    public function chuNhiem()
-    {
-        return $this->hasOne(ClassTeacher::class, 'class_id')
-            ->where('role', ClassTeacher::ROLE_CHU_NHIEM)
-            ->where('status', 1);
-    }
-
     public function students()
     {
         return $this->belongsToMany(Student::class, 'students_class', 'class_id', 'student_id')
@@ -166,10 +157,19 @@ class Lop extends Model
             ->withTimestamps();
     }
 
+    public function chuNhiem()
+    {
+        return $this->hasOne(ClassTeacher::class, 'class_id')
+            ->where('role', ClassTeacher::ROLE_CHU_NHIEM)
+            ->where('status', 1);
+    }
+
     public function activeStudents()
     {
         return $this->belongsToMany(Student::class, 'students_class', 'class_id', 'student_id')
-            ->wherePivot('status', 1); // Chỉ lấy học sinh đang học
+            ->using(StudentsClass::class)
+            ->withPivot('status')
+            ->wherePivot('status', 1);
     }
 
     public function blockRelation()
@@ -192,8 +192,8 @@ class Lop extends Model
         return $q->where('pid', $parishId);
     }
 
-    public function setNameAttribute($value): void
-    {
-        $this->attributes['name'] = ucwords(strtolower(trim($value)));
-    }
+    // public function setNameAttribute($value): void
+    // {
+    //     $this->attributes['name'] = ucwords(strtolower(trim($value)));
+    // }
 }

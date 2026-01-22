@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Traits\HasFormattedName;
 use Backpack\CRUD\app\Models\Traits\CrudTrait;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -11,6 +12,7 @@ class Teacher extends Model
 {
     use CrudTrait;
     use RevisionableTrait;
+    use HasFormattedName;
 
     /*
     |--------------------------------------------------------------------------
@@ -157,14 +159,6 @@ class Teacher extends Model
     public function getHolyNameAttribute(): ?string
     {
         return $this->holy?->name;
-    }
-
-    /**
-     * Tự động format tên: Chữ hoa đầu mỗi từ
-     */
-    public function setNameAttribute($value): void
-    {
-        $this->attributes['name'] = ucwords(strtolower(trim($value)));
     }
 
     /**

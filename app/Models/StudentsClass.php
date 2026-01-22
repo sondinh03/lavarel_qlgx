@@ -19,7 +19,6 @@ class StudentsClass extends Pivot
     protected $table = 'students_class';
 
     public $incrementing = true;
-    // protected $keyType = 'bigInteger';
 
     protected $guarded = ['id'];
 
@@ -30,12 +29,22 @@ class StudentsClass extends Pivot
     ];
 
     protected $casts = [
-        'status' => 'boolean',
+        'status' => 'integer',
         'created_at' => 'datetime:d/m/Y H:i',
         'updated_at' => 'datetime:d/m/Y H:i',
     ];
 
     protected $appends = ['status_label'];
+
+    /*
+    |--------------------------------------------------------------------------
+    | CONSTANTS
+    |--------------------------------------------------------------------------
+    */
+    const STATUS_ENROLLED  = 1; // Đang học
+    const STATUS_COMPLETED = 2; // Hoàn thành
+    const STATUS_DROPPED  = 3; // Nghỉ
+
 
     /*
     |--------------------------------------------------------------------------
@@ -57,12 +66,23 @@ class StudentsClass extends Pivot
     | ACCESSORS
     |--------------------------------------------------------------------------
     */
-    public function getStatusLabelAttribute()
+    public function getStatusLabelAttribute(): string
     {
-        return $this->status
-            ? '<span class="badge badge-success">Đang học</span>'
-            : '<span class="badge badge-danger">Nghỉ học</span>';
+        return match ($this->status) {
+            self::STATUS_ENROLLED =>
+            '<span class="badge badge-success">Đang học</span>',
+
+            self::STATUS_COMPLETED =>
+            '<span class="badge badge-primary">Hoàn thành</span>',
+
+            self::STATUS_DROPPED =>
+            '<span class="badge badge-danger">Nghỉ</span>',
+
+            default =>
+            '<span class="badge badge-secondary">Không xác định</span>',
+        };
     }
+
 
     /*
     |--------------------------------------------------------------------------
@@ -87,6 +107,6 @@ class StudentsClass extends Pivot
 
     public function scopeActive($query)
     {
-        return $query->where('status', 1);
+        return $query->where('status', self::STATUS_ENROLLED);
     }
 }

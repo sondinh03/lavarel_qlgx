@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Traits\HasFormattedName;
 use Backpack\CRUD\app\Models\Traits\CrudTrait;
 use Illuminate\Database\Eloquent\Model;
 
@@ -11,6 +12,7 @@ class Block extends Model
 {
     use CrudTrait;
     use RevisionableTrait;
+    use HasFormattedName;
 
     /*
     |--------------------------------------------------------------------------
@@ -35,8 +37,8 @@ class Block extends Model
 
     public function getDisplayNameAttribute(): string
     {
-        if ($this->relationLoaded('namHoc') || $this->namHoc) {
-            return $this->name . ' (' . $this->namHoc->name . ')';
+        if ($this->relationLoaded('namHoc') && $this->namHoc) {
+            return "{$this->name} ({$this->namHoc->name})";
         }
 
         return $this->name;
@@ -83,8 +85,8 @@ class Block extends Model
     /**
      * Tự động format tên: Chữ hoa đầu mỗi từ
      */
-    public function setNameAttribute($value): void
-    {
-        $this->attributes['name'] = ucwords(strtolower(trim($value)));
-    }
+    // public function setNameAttribute($value): void
+    // {
+    //     $this->attributes['name'] = ucwords(strtolower(trim($value)));
+    // }
 }

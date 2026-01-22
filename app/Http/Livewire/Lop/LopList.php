@@ -59,8 +59,6 @@ class LopList extends BaseComponent
     /** @var \Illuminate\Support\Collection Danh sách khối có thể chọn */
     public $availableBlocks;
 
-    // public ?int $parishId = null;
-
     // ==================== VALIDATION ====================
 
     protected $rules = [
@@ -101,8 +99,8 @@ class LopList extends BaseComponent
     protected function queryString()
     {
         return array_merge([
-            'selectedNamHoc' => ['as' => 'namHoc', 'except' => null],
-            'selectedKhoi'   => ['as' => 'khoi', 'except' => ''],
+            'selectedNamHoc' => ['as' => 'school-year', 'except' => null],
+            'selectedKhoi'   => ['as' => 'grade', 'except' => ''],
         ], parent::queryString());
     }
 
@@ -127,9 +125,6 @@ class LopList extends BaseComponent
 
         // Bắt buộc phải có parish_id
         // $this->requireParishId();
-
-        // Initialize available blocks
-        // $this->availableBlocks = collect();
     }
 
     /**
@@ -435,7 +430,7 @@ class LopList extends BaseComponent
             $query = Lop::with(['blockRelation', 'schoolYear'])
                 ->where('lop.pid', $this->parishId)
                 ->where('schoolyear', $this->selectedNamHoc)
-                ->withCount('activeStudents as students_count');
+                ->withCount('students');
 
             // Filter by khối
             if ($this->selectedKhoi !== '') {
@@ -501,22 +496,19 @@ class LopList extends BaseComponent
             }
         }
 
-        // Khối
-        if (array_key_exists('khoi', $filters)) {
+        if (!$namHocChanged && array_key_exists('khoi', $filters)) {
             $this->selectedKhoi = is_numeric($filters['khoi'])
                 ? (int) $filters['khoi']
                 : '';
+        } else if ($namHocChanged) {
+            // Nếu năm học thay đổi, reset khối
+            $this->selectedKhoi = '';
+            $this->loadAvailableBlocks();
         }
 
         // Reset phụ
         $this->search = '';
         $this->resetPage();
-
-        // Load lại khối nếu năm học thay đổi
-        if ($namHocChanged) {
-            $this->selectedKhoi = '';
-            $this->loadAvailableBlocks();
-        }
     }
 
     /**

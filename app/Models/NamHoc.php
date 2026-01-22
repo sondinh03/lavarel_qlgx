@@ -28,7 +28,13 @@ class NamHoc extends Model
         'status',  //1 hoạt động, 0 lưu trữ
     ];
 
-    // protected $appends = ['display_name'];
+    protected $appends = [
+        'status_label',
+        'status_class',
+        'semester_1_display',
+        'semester_2_display',
+        'current_semester',
+    ];
 
     protected $casts = [
         'start_date_one' => 'date',
@@ -59,6 +65,21 @@ class NamHoc extends Model
     | FUNCTIONS
     |--------------------------------------------------------------------------
     */
+    public function getSemester1DisplayAttribute(): string
+    {
+        return $this->formatDateRange(
+            $this->start_date_one,
+            $this->end_date_one
+        );
+    }
+
+    public function getSemester2DisplayAttribute(): string
+    {
+        return $this->formatDateRange(
+            $this->start_date_two,
+            $this->end_date_two
+        );
+    }
 
     public function getCurrentSemesterAttribute(): ?int
     {
@@ -144,4 +165,19 @@ class NamHoc extends Model
     | MUTATORS
     |--------------------------------------------------------------------------
     */
+
+    /*
+|--------------------------------------------------------------------------
+| HELPERS
+|--------------------------------------------------------------------------
+*/
+
+    protected function formatDateRange($start, $end): string
+    {
+        if (!$start || !$end) {
+            return '-';
+        }
+
+        return $start->format('d/m/Y') . ' - ' . $end->format('d/m/Y');
+    }
 }

@@ -2,13 +2,12 @@
 
 namespace App\Models;
 
+use App\Traits\HasFormattedName;
 use Backpack\CRUD\app\Models\Traits\CrudTrait;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
-use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Relations\MorphOne;
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Venturecraft\Revisionable\RevisionableTrait;
 
 class Diocese extends Model
@@ -16,6 +15,7 @@ class Diocese extends Model
     use CrudTrait;
     use HasFactory;
     use RevisionableTrait;
+    use HasFormattedName;
 
     /*
     |--------------------------------------------------------------------------

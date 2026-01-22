@@ -43,9 +43,9 @@
         <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
             {{-- Header --}}
             <x-page-header
-                title="Điểm danh - {{ $this->selectedClassName }}"
-                description="Điểm danh {{ $attendanceType == 1 ? 'đi học' : 'đi lễ' }} cho {{ $students->count() }} học sinh • {{ count($sessions) }} buổi"
-                :stat-value="$students->count()"
+                title="Điểm danh{{ $selectedClassId ? ' - ' . $this->selectedClassName : '' }}"
+                description="Điểm danh {{ $attendanceType == 1 ? 'đi học' : 'đi lễ' }}{{ $selectedClassId ? ' • ' . $students->count() . ' học sinh • ' . count($sessions) . ' buổi' : '' }}"
+                :stat-value="optional($students)->count() ?? 0"
                 stat-label="Học sinh"
                 icon-type="attendance">
             </x-page-header>

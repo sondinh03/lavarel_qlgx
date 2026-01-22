@@ -2,19 +2,19 @@
 
 namespace App\Models;
 
+use App\Traits\HasFormattedName;
 use Backpack\CRUD\app\Models\Traits\CrudTrait;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\MorphToMany;
 use Illuminate\Database\Eloquent\Relations\MorphOne;
-use Illuminate\Database\Eloquent\Casts\Attribute;
 use Carbon\Carbon;
 
 class Student extends Model
 {
     use CrudTrait;
+    use HasFormattedName;
 
     /*
     |--------------------------------------------------------------------------
@@ -34,6 +34,7 @@ class Student extends Model
     ];
 
     protected $appends = [
+        'parish_children_name',
         'holy_name',
         'full_name',
         'sex_label',
@@ -58,10 +59,11 @@ class Student extends Model
     const SEX_MALE = 1;
     const SEX_FEMALE = 0;
 
-    const STATUS_STUDYING = 1;
-    const STATUS_GRADUATED = 2;
-    const STATUS_TRANSFERRED = 3;
-    const STATUS_DROPPED = 4;
+    const STATUS_STUDYING    = 1; // Hồ sơ đang hoạt động (đang theo học giáo lý)
+    const STATUS_GRADUATED   = 2; // Hồ sơ đã hoàn tất chương trình giáo lý
+    const STATUS_TRANSFERRED = 3; // Hồ sơ đã chuyển sang xứ/lớp khác
+    const STATUS_DROPPED     = 4; // Hồ sơ ngưng theo học / bỏ học
+
 
     const HOLY_BAPTISM = 1;
     const HOLY_CONFIRMATION = 2;
@@ -100,15 +102,15 @@ class Student extends Model
     /**
      * Lớp học (class)
      */
-    public function lop()
-    {
-        return $this->belongsToMany(
-            Lop::class,
-            'student_class',
-            'student_id',
-            'class_id'
-        )->withPivot('status');
-    }
+    // public function lop()
+    // {
+    //     return $this->belongsToMany(
+    //         Lop::class,
+    //         'student_class',
+    //         'student_id',
+    //         'class_id'
+    //     )->withPivot('status');
+    // }
 
     /**
      * Bậc thánh
@@ -273,6 +275,11 @@ class Student extends Model
         return $this->holyRelation ? $this->holyRelation->name : null;
     }
 
+    protected function getParishChildrenNameAttribute()
+    {
+        return $this->paidRelation ? $this->paidRelation->name : null;
+    }
+
     /**
      * Get sex label
      */
@@ -305,7 +312,9 @@ class Student extends Model
      */
     public function getBirthdayAttribute($value)
     {
-        return $value ? Carbon::parse($value)->format('d-m-Y') : '-';
+        return $value
+            ? Carbon::parse($value)->format('d/m/Y')
+            : '-';
     }
 
     /**
@@ -347,7 +356,7 @@ class Student extends Model
     /**
      * Scope: Students by parish
      */
-    public function scopeByParish($query, $parishId)
+    public function scopeOfParish($query, $parishId)
     {
         return $query->where('pid', $parishId);
     }

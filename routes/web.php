@@ -36,6 +36,8 @@ use App\Http\Controllers\LopImportController;
 use App\Http\Controllers\TeacherImportController;
 use App\Http\Controllers\KetQuaExportController;
 use App\Http\Controllers\HonPhoiExportController;
+use App\Http\Livewire\Attendance\CreateAttendanceSessions;
+use App\Http\Livewire\Attendance\SessionManager;
 use App\Http\Livewire\AttendanceManager;
 use App\Http\Livewire\Block\BlockManager;
 use App\Http\Livewire\Holy\HolyManager;
@@ -47,7 +49,9 @@ use App\Http\Livewire\NamHoc\NamHocManager;
 use App\Http\Livewire\Parish\ParishChild;
 use App\Http\Livewire\Score\ScoreManager;
 use App\Http\Livewire\Student\StudentDetail;
+use App\Http\Livewire\Student\StudentList;
 use App\Http\Livewire\Teacher\TeacherManager;
+use GuzzleHttp\Promise\Create;
 use Illuminate\Support\Facades\Auth;
 
 Paginator::useBootstrap();
@@ -69,6 +73,12 @@ Route::middleware('auth')->group(function () {
         Route::get('/{lopId}/catechists', AssignTeacher::class)
             ->name('catechists');
     });
+
+    Route::get('/students', StudentList::class)
+        ->name('students.index');
+
+    Route::get('/session', SessionManager::class)
+        ->name('session.index');
 
     Route::get('/attendance', AttendanceManager::class)
         ->name('attendance.show');

@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Traits\HasFormattedName;
 use Backpack\CRUD\app\Models\Traits\CrudTrait;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -11,6 +12,7 @@ class Parish extends Model
 {
     use CrudTrait;
     use RevisionableTrait;
+    use HasFormattedName;
 
     /*
     |--------------------------------------------------------------------------
@@ -105,17 +107,4 @@ class Parish extends Model
     | ACCESSORS
     |--------------------------------------------------------------------------
     */
-
-    /*
-    |--------------------------------------------------------------------------
-    | MUTATORS
-    |--------------------------------------------------------------------------
-    */
-    /**
-     * Chuẩn hoá tên giáo họ
-     */
-    public function setNameAttribute($value): void
-    {
-        $this->attributes['name'] = ucwords(strtolower(trim($value)));
-    }
 }

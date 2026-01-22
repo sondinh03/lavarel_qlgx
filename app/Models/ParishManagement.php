@@ -2,15 +2,14 @@
 
 namespace App\Models;
 
+use App\Traits\HasFormattedName;
 use Backpack\CRUD\app\Models\Traits\CrudTrait;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
-use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Relations\MorphOne;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-use Symfony\Component\CssSelector\Node\FunctionNode;
 use Venturecraft\Revisionable\RevisionableTrait;
 
 class ParishManagement extends Model
@@ -18,7 +17,7 @@ class ParishManagement extends Model
     use CrudTrait;
     use HasFactory;
     use RevisionableTrait;
-
+    use HasFormattedName;
     /*
     |--------------------------------------------------------------------------
     | GLOBAL VARIABLES

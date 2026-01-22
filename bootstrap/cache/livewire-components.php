@@ -1,5 +1,7 @@
 <?php return array (
   'attendance-manager' => 'App\\Http\\Livewire\\AttendanceManager',
+  'attendance.create-attendance-sessions' => 'App\\Http\\Livewire\\Attendance\\CreateAttendanceSessions',
+  'attendance.session-manager' => 'App\\Http\\Livewire\\Attendance\\SessionManager',
   'block.block-manager' => 'App\\Http\\Livewire\\Block\\BlockManager',
   'filters.filter-bar' => 'App\\Http\\Livewire\\Filters\\FilterBar',
   'holy.holy-manager' => 'App\\Http\\Livewire\\Holy\\HolyManager',

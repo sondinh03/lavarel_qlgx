@@ -109,10 +109,13 @@ class AttendanceManager extends BaseComponent
 
     public function mount()
     {
-        // $this->authorize('viewAny', Lop::class);
         parent::mount();
 
-        // $this->detectViewMode();
+        // ✅ Khởi tạo collections ngay từ đầu
+        $this->students = collect();
+        $this->sessions = [];
+        $this->attendanceRecords = [];
+        $this->draftAttendance = [];
 
         // Require parish ID
         $this->requireParishId();
@@ -385,7 +388,7 @@ class AttendanceManager extends BaseComponent
                 $record = $group->first();
                 return [
                     'status' => $record->status,
-                    'note' => $record->note, 
+                    'note' => $record->note,
                 ];
             })->toArray();
         } catch (\Exception $e) {

@@ -98,13 +98,22 @@
 
                             <div class="border-t border-slate-200"></div>
 
-                            <a href="{{ route('parish-children.index') }}"
+                            <a href="{{ route('students.index') }}"
                                 class="flex items-center gap-3 px-4 py-3 text-sm text-slate-700 hover:bg-primary-50 hover:text-primary-700 transition-all">
                                 <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                         d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
                                 </svg>
                                 <span class="font-medium">Quản lý học sinh</span>
+                            </a>
+
+                            <a href="{{ route('session.index') }}"
+                                class="flex items-center gap-3 px-4 py-3 text-sm text-slate-700 hover:bg-primary-50 hover:text-primary-700 transition-all">
+                                <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                                </svg>
+                                <span class="font-medium">Quản lý phiên điểm danh</span>
                             </a>
                         </div>
                     </div>
@@ -145,12 +154,12 @@
                             </a>
 
                             {{-- <a href="{{ route('classes.catechists') }}"
-                                class="flex items-center gap-3 px-4 py-3 text-sm text-slate-700 hover:bg-primary-50 hover:text-primary-700 transition-all">
-                                <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                        d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
-                                </svg>
-                                <span class="font-medium">Phân công giảng dạy</span>
+                            class="flex items-center gap-3 px-4 py-3 text-sm text-slate-700 hover:bg-primary-50 hover:text-primary-700 transition-all">
+                            <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+                            </svg>
+                            <span class="font-medium">Phân công giảng dạy</span>
                             </a> --}}
                         </div>
                     </div>
@@ -231,6 +240,60 @@
                         </div>
                     </div>
 
+                    {{-- Auth actions --}}
+                    @guest
+                    <a href="{{ route('login') }}"
+                        class="hidden md:inline-flex items-center gap-2 px-4 py-2 rounded-xl
+              text-sm font-semibold text-white
+              bg-primary-600 hover:bg-primary-700 transition">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M15 3h4a2 2 0 012 2v4m0 6v4a2 2 0 01-2 2h-4M10 17l5-5-5-5M15 12H3" />
+                        </svg>
+                        Đăng nhập
+                    </a>
+                    @endguest
+
+                    @auth
+                    <div class="relative" x-data="{ open: false }">
+                        <button @click="open = !open"
+                            @click.outside="open = false"
+                            class="flex items-center gap-2 px-3 py-2 rounded-xl
+                       text-sm font-semibold text-slate-700
+                       hover:bg-slate-100 transition">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M5.121 17.804A13.937 13.937 0 0112 16c2.5 0 4.847.655 6.879 1.804M15 10a3 3 0 11-6 0 3 3 0 016 0z" />
+                            </svg>
+                            {{ Auth::user()->name ?? 'Tài khoản' }}
+                            <svg class="w-4 h-4" :class="{ 'rotate-180': open }"
+                                fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M19 9l-7 7-7-7" />
+                            </svg>
+                        </button>
+
+                        <div x-show="open"
+                            x-transition
+                            class="absolute right-0 mt-2 w-48 bg-white border border-slate-200
+                    rounded-xl shadow-lg overflow-hidden z-50">
+
+                            <a href="{{ route('dashboard') }}"
+                                class="block px-4 py-3 text-sm hover:bg-slate-100">
+                                Trang quản trị
+                            </a>
+
+                            <form method="POST" action="{{ route('logout') }}">
+                                @csrf
+                                <button type="submit"
+                                    class="w-full text-left px-4 py-3 text-sm text-red-600 hover:bg-red-50">
+                                    Đăng xuất
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                    @endauth
+
                 </nav>
                 {{-- Actions --}}
                 <div class="flex items-center gap-3">
@@ -255,6 +318,24 @@
                 <a href="https://mvqlgiaoxu.org/tim-kiem" class="block px-3 py-2 rounded-lg text-slate-700 hover:bg-indigo-50 hover:text-indigo-700">
                     Kết quả học tập
                 </a>
+
+                @guest
+                <a href="{{ route('login') }}"
+                    class="block px-3 py-2 rounded-lg text-white bg-primary-600 hover:bg-primary-700">
+                    Đăng nhập
+                </a>
+                @endguest
+
+                @auth
+                <form method="POST" action="{{ route('logout') }}">
+                    @csrf 
+                    <button type="submit"
+                        class="block w-full text-left px-3 py-2 rounded-lg text-red-600 hover:bg-red-50">
+                        Đăng xuất
+                    </button>
+                </form>
+                @endauth
+
             </nav>
         </div>
     </header>
