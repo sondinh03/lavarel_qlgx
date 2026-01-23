@@ -7,7 +7,7 @@
         <x-breadcrumb :items="[
             [
                 'label' => 'Trang chủ',
-                'url' => route('home'),
+                'url' => route('dashboard'),
             ],
             [
                 'label' => 'Quản lý Tên thánh',

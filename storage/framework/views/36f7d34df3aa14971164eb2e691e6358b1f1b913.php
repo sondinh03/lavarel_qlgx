@@ -8,7 +8,7 @@
 <?php $component = $__env->getContainer()->make(Illuminate\View\AnonymousComponent::class, ['view' => 'components.breadcrumb','data' => ['items' => [
                 [
                     'label' => 'Trang chủ',
-                    'url' => route('home'),
+                    'url' => route('dashboard'),
                 ],
                 [
                     'label' => 'Quản lý lớp học',
@@ -25,7 +25,7 @@
 <?php $component->withAttributes(['items' => \Illuminate\View\Compilers\BladeCompiler::sanitizeComponentAttribute([
                 [
                     'label' => 'Trang chủ',
-                    'url' => route('home'),
+                    'url' => route('dashboard'),
                 ],
                 [
                     'label' => 'Quản lý lớp học',

@@ -305,18 +305,19 @@
                     </div>
 
                     {{-- Login Button --}}
-                    <div class="mt-6 space-y-3">
+                    <div class="mt-6 space-y-3 flex flex-col items-center">
                         <a href="{{ route('login') }}"
-                            class="inline-flex items-center gap-2 px-4 py-2.5 
-                          bg-white border-2 border-primary-600 text-primary-600
-                          rounded-xl hover:bg-primary-600 hover:text-white
-                          transition-all font-semibold shadow-sm hover:shadow-md">
+                            class="inline-flex items-center justify-center gap-2
+                                px-4 py-3 bg-primary-600 text-white rounded-xl
+                                hover:bg-primary-700 transition font-semibold
+                                shadow-sm hover:shadow-md">
                             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                     d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1" />
                             </svg>
-                            <span class="hidden sm:inline">Đăng nhập</span>
+                            <span>Đăng nhập</span>
                         </a>
+
 
                         <p class="text-xs text-center text-slate-500">
                             Dành cho Giáo lý viên và Ban quản lý
