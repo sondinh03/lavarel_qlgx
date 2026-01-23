@@ -1,11 +1,11 @@
 <?php return array (
   'attendance-manager' => 'App\\Http\\Livewire\\AttendanceManager',
-  'attendance.create-attendance-sessions' => 'App\\Http\\Livewire\\Attendance\\CreateAttendanceSessions',
   'attendance.session-manager' => 'App\\Http\\Livewire\\Attendance\\SessionManager',
   'block.block-manager' => 'App\\Http\\Livewire\\Block\\BlockManager',
   'filters.filter-bar' => 'App\\Http\\Livewire\\Filters\\FilterBar',
   'holy.holy-manager' => 'App\\Http\\Livewire\\Holy\\HolyManager',
   'home' => 'App\\Http\\Livewire\\Home',
+  'landing' => 'App\\Http\\Livewire\\Landing',
   'lop.assign-teacher' => 'App\\Http\\Livewire\\Lop\\AssignTeacher',
   'lop.lop-detail' => 'App\\Http\\Livewire\\Lop\\LopDetail',
   'lop.lop-form' => 'App\\Http\\Livewire\\Lop\\LopForm',

@@ -42,6 +42,7 @@ use App\Http\Livewire\AttendanceManager;
 use App\Http\Livewire\Block\BlockManager;
 use App\Http\Livewire\Holy\HolyManager;
 use App\Http\Livewire\Home;
+use App\Http\Livewire\Landing;
 use App\Http\Livewire\Lop\AssignTeacher;
 use App\Http\Livewire\Lop\LopDetail;
 use App\Http\Livewire\Lop\LopList;
@@ -51,13 +52,18 @@ use App\Http\Livewire\Score\ScoreManager;
 use App\Http\Livewire\Student\StudentDetail;
 use App\Http\Livewire\Student\StudentList;
 use App\Http\Livewire\Teacher\TeacherManager;
-use GuzzleHttp\Promise\Create;
 use Illuminate\Support\Facades\Auth;
 
 Paginator::useBootstrap();
 
-Route::get('/', Home::class)->name('home');
+// ========== GUEST ==========
+Route::middleware('redirect.auth.dashboard')->group(function () {
+    Route::get('/', \App\Http\Livewire\Landing::class)->name('landing');
+});
+
+// Route::get('/', Landing::class)->name('landing');
 Auth::routes();
+
 
 /*
 |--------------------------------------------------------------------------
@@ -65,7 +71,9 @@ Auth::routes();
 |--------------------------------------------------------------------------
 */
 Route::middleware('auth')->group(function () {
-    Route::get('/dashboard', fn() => view('frontend.dashboard'))->name('dashboard');
+    Route::get('/dashboard', Home::class)->name('dashboard');
+
+    // Route::get('/dashboard', fn() => view('frontend.dashboard'))->name('dashboard');
 
     Route::prefix('classes')->name('classes.')->group(function () {
         Route::get('/', LopList::class)->name('index');
