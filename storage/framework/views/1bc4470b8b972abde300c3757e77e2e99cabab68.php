@@ -1,1 +1,0 @@
-</<?php echo e($field['wrapper']['element'] ?? 'div'); ?>><?php /**PATH D:\Document\WORKING\lavarel_qlgx\resources\views/vendor/backpack/crud/fields/inc/wrapper_end.blade.php ENDPATH**/ ?>

@@ -1,3 +1,0 @@
-<?php if($crud->get('reorder.enabled') && $crud->hasAccess('reorder')): ?>
-  <a href="<?php echo e(url($crud->route.'/reorder')); ?>" class="btn btn-outline-primary" data-style="zoom-in"><span class="ladda-label"><i class="la la-arrows"></i> <?php echo e(trans('backpack::crud.reorder')); ?> <?php echo e($crud->entity_name_plural); ?></span></a>
-<?php endif; ?><?php /**PATH D:\Document\WORKING\lavarel_qlgx\resources\views/vendor/backpack/crud/buttons/reorder.blade.php ENDPATH**/ ?>

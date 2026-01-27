@@ -6,7 +6,7 @@
         {{-- Breadcrumb --}}
         <x-breadcrumb
             :items="[
-                ['label' => 'Trang chủ', 'url' => route('home')],
+                ['label' => 'Trang chủ', 'url' => route('dashboard')],
                 [
                     'label' => 'Quản lý giáo viên',
                     'url' => route('catechists.index'),
@@ -361,6 +361,147 @@
                         @enderror
                     </div>
 
+                    {{-- ✅ SECTION: Tạo tài khoản (chỉ hiện khi CREATE) --}}
+                    @if(!$editingId)
+                    <div class="border-t border-slate-200 pt-5">
+                        {{-- Checkbox tạo tài khoản --}}
+                        <div class="flex items-start gap-3 mb-4">
+                            <input
+                                id="create-account"
+                                type="checkbox"
+                                wire:model="createAccount"
+                                class="mt-1 w-4 h-4 rounded border-slate-300
+                       text-primary-600 focus:ring-primary-500">
+                            <div class="flex-1">
+                                <label for="create-account" class="text-sm font-semibold text-slate-900 cursor-pointer">
+                                    Tạo tài khoản đăng nhập
+                                </label>
+                                <p class="text-xs text-slate-500 mt-0.5">
+                                    Cấp quyền truy cập hệ thống cho giáo viên này
+                                </p>
+                            </div>
+                        </div>
+
+                        {{-- Account fields (hiện khi checkbox được chọn) --}}
+                        @if($createAccount)
+                        <div class="space-y-4 pl-7 animate-fade-in">
+                            {{-- Email --}}
+                            <div>
+                                <label class="block text-sm font-semibold text-slate-700 mb-1">
+                                    Email đăng nhập <span class="text-red-500">*</span>
+                                </label>
+                                <input
+                                    type="email"
+                                    wire:model.defer="accountEmail"
+                                    placeholder="email@giaoxu.com"
+                                    class="w-full px-3 py-2 rounded-xl border border-slate-300
+                           focus:outline-none focus:ring-2 focus:ring-primary-500">
+                                @error('accountEmail')
+                                <p class="mt-1 text-sm text-red-500">{{ $message }}</p>
+                                @enderror
+                            </div>
+
+                            {{-- Password với nút generate --}}
+                            <div>
+                                <label class="block text-sm font-semibold text-slate-700 mb-1">
+                                    Mật khẩu <span class="text-red-500">*</span>
+                                </label>
+
+                                {{-- Password Input --}}
+                                <div class="relative">
+                                    <input
+                                        type="text"
+                                        wire:model.defer="accountPassword"
+                                        class="w-full px-3 py-2 pr-24 rounded-xl border border-slate-300
+                           focus:outline-none focus:ring-2 focus:ring-primary-500
+                           font-mono text-sm {{ $birthday ? 'bg-green-50' : 'bg-slate-50' }}"
+                                        readonly>
+
+                                    {{-- Action buttons --}}
+                                    <div class="absolute right-2 top-1/2 -translate-y-1/2 flex gap-1">
+                                        {{-- Copy button --}}
+                                        <button
+                                            type="button"
+                                            onclick="navigator.clipboard.writeText('{{ $accountPassword }}'); 
+                                 this.querySelector('span').textContent = '✓';
+                                 setTimeout(() => this.querySelector('span').textContent = 'Copy', 1000)"
+                                            class="px-2 py-1 text-xs font-semibold text-slate-600
+                               hover:text-slate-800 border border-slate-300 rounded-lg
+                               hover:bg-slate-100 transition">
+                                            <span>Copy</span>
+                                        </button>
+
+                                        {{-- Regenerate button --}}
+                                        <button
+                                            type="button"
+                                            wire:click="regeneratePassword({{ $birthday ? 'true' : 'false' }})"
+                                            class="px-2 py-1 text-xs font-semibold text-primary-600
+                               hover:text-primary-700 border border-primary-300 rounded-lg
+                               hover:bg-primary-50 transition flex items-center gap-1"
+                                            title="Tạo mật khẩu mới">
+                                            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                    d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                                            </svg>
+                                        </button>
+                                    </div>
+                                </div>
+
+                                {{-- ✅ HELPER TEXT - NGAY DƯỚI INPUT PASSWORD --}}
+                                <div class="mt-2">
+                                    @if($birthday)
+                                    <div class="bg-green-50 border border-green-200 rounded-lg p-2.5">
+                                        <div class="flex items-start gap-2 text-xs text-green-700">
+                                            <svg class="w-4 h-4 text-green-500 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                    d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                            </svg>
+                                            <div>
+                                                <strong>Mật khẩu từ ngày sinh</strong><br>
+                                                Format: ddMMyy (VD: {{ $birthday ? \Carbon\Carbon::parse($birthday)->format('dmy') : '150890' }})
+                                                <br>Dễ nhớ cho giáo viên
+                                            </div>
+                                        </div>
+                                    </div>
+                                    @else
+                                    <div class="bg-amber-50 border border-amber-200 rounded-lg p-2.5">
+                                        <div class="flex items-start gap-2 text-xs text-amber-700">
+                                            <svg class="w-4 h-4 text-amber-500 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                    d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                            </svg>
+                                            <div>
+                                                <strong>Mật khẩu ngẫu nhiên</strong><br>
+                                                💡 Tip: Nhập ngày sinh trước khi tick checkbox để tạo mật khẩu dễ nhớ hơn
+                                            </div>
+                                        </div>
+                                    </div>
+                                    @endif
+                                </div>
+
+                                {{-- Error message --}}
+                                @error('accountPassword')
+                                <p class="mt-1 text-sm text-red-500">{{ $message }}</p>
+                                @enderror
+                            </div>
+
+                            {{-- Info box --}}
+                            <div class="bg-blue-50 border-l-4 border-blue-500 rounded-xl p-3">
+                                <div class="flex items-start gap-2">
+                                    <svg class="w-4 h-4 text-blue-500 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                    </svg>
+                                    <p class="text-xs text-blue-700">
+                                        Sau khi lưu, hãy gửi thông tin tài khoản cho giáo viên để họ có thể đăng nhập
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                        @endif
+                    </div>
+                    @endif
+
                     {{-- Trạng thái --}}
                     <div class="flex items-center gap-3 pt-1">
                         <input
@@ -400,3 +541,59 @@
         <span class="text-gray-700">Đang xử lý...</span>
     </div>
 </div>
+
+{{-- Toast hiển thị password mới tạo --}}
+@if (session()->has('new_password'))
+<div
+    x-data="{ show: true }"
+    x-show="show"
+    x-init="setTimeout(() => show = false, 30000)"
+    class="fixed top-4 right-4 z-50 bg-white rounded-xl shadow-2xl border-2 border-green-500 p-6 max-w-md">
+    <div class="flex items-start gap-3">
+        <svg class="w-6 h-6 text-green-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>
+        <div class="flex-1">
+            <h4 class="font-bold text-slate-900 mb-2">
+                🎉 Tài khoản đã được tạo!
+            </h4>
+
+            <div class="space-y-2">
+                <div>
+                    <p class="text-xs text-slate-600 mb-1">Email:</p>
+                    <div class="p-2 bg-slate-100 rounded-lg text-sm font-mono break-all">
+                        {{ session('account_email', 'N/A') }}
+                    </div>
+                </div>
+
+                <div>
+                    <p class="text-xs text-slate-600 mb-1">Mật khẩu:</p>
+                    <div class="p-2 bg-slate-100 rounded-lg text-sm font-mono break-all">
+                        {{ session('new_password') }}
+                    </div>
+                </div>
+            </div>
+
+            <div class="mt-3 flex items-start gap-2 p-2 bg-amber-50 rounded-lg">
+                <svg class="w-4 h-4 text-amber-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                </svg>
+                <p class="text-xs text-amber-700">
+                    <strong>Quan trọng:</strong> Hãy sao chép và gửi thông tin này cho giáo viên.
+                    Thông báo này sẽ tự động đóng sau 30 giây.
+                </p>
+            </div>
+        </div>
+
+        <button
+            @click="show = false"
+            class="text-slate-400 hover:text-slate-600 transition">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+        </button>
+    </div>
+</div>
+@endif

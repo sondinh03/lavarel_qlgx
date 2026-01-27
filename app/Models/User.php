@@ -57,6 +57,11 @@ class User extends Authenticatable
         return $this->hasOne(Decen::class, 'use', 'id');
     }
 
+    public function teacher()
+    {
+        return $this->hasOne(Teacher::class, 'user_id', 'id');
+    }
+
     public function isAdmin(): bool
     {
         return $this->admin && $this->admin->status === 1;
@@ -65,6 +70,11 @@ class User extends Authenticatable
     public function isDecen(): bool
     {
         return $this->decen && $this->decen->status === 1;
+    }
+
+    public function isCatechist(): bool
+    {
+        return $this->teacher && $this->teacher->status === 1;
     }
 
     public function parishId(): ?int

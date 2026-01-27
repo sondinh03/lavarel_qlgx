@@ -24,6 +24,7 @@ class Teacher extends Model
     protected $guarded = ['id'];
 
     protected $fillable = [
+        'user_id',  // ID người dùng (nếu có)
         'pid',      // Giáo xứ ID
         'deid',     // deanery ID (Giáo Hạt)
         'did',      // Diocese ID (Giáo phận)
@@ -65,6 +66,11 @@ class Teacher extends Model
     | RELATIONS
     |--------------------------------------------------------------------------
     */
+
+    public function user(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'user_id', 'id');
+    }
 
     /**
      * Teacher thuộc về một Holy

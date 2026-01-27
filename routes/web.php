@@ -58,12 +58,10 @@ Paginator::useBootstrap();
 
 // ========== GUEST ==========
 Route::middleware('redirect.auth.dashboard')->group(function () {
-    Route::get('/', \App\Http\Livewire\Landing::class)->name('landing');
+    Route::get('/', Landing::class)->name('landing');
 });
 
-// Route::get('/', Landing::class)->name('landing');
 Auth::routes();
-
 
 /*
 |--------------------------------------------------------------------------
@@ -71,6 +69,10 @@ Auth::routes();
 |--------------------------------------------------------------------------
 */
 Route::middleware('auth')->group(function () {
+    Route::get('/test-role', function () {
+        return 'OK - bạn đã đăng nhập và có role admin xứ';
+    })->middleware('role:parish_admin');
+
     Route::get('/dashboard', Home::class)->name('dashboard');
 
     // Route::get('/dashboard', fn() => view('frontend.dashboard'))->name('dashboard');
