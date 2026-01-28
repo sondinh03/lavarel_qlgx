@@ -6,7 +6,7 @@
         {{-- Breadcrumb --}}
         <x-breadcrumb
             :items="[
-                ['label' => 'Trang chủ', 'url' => route('home')],
+                ['label' => 'Trang chủ', 'url' => route('dashboard')],
                 ['label' => 'Quản lý phiên điểm danh', 'url' => route('session.index')],
                 ['label' => $this->selectedClassName]
             ]"

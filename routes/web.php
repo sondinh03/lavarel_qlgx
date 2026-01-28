@@ -51,6 +51,7 @@ use App\Http\Livewire\Parish\ParishChild;
 use App\Http\Livewire\Score\ScoreManager;
 use App\Http\Livewire\Student\StudentDetail;
 use App\Http\Livewire\Student\StudentList;
+use App\Http\Livewire\Teacher\TeacherImportPreview;
 use App\Http\Livewire\Teacher\TeacherManager;
 use Illuminate\Support\Facades\Auth;
 
@@ -63,57 +64,57 @@ Route::middleware('redirect.auth.dashboard')->group(function () {
 
 Auth::routes();
 
-/*
-|--------------------------------------------------------------------------
-| Authenticated (Admin / Decen)
-|--------------------------------------------------------------------------
-*/
 Route::middleware('auth')->group(function () {
-    Route::get('/test-role', function () {
-        return 'OK - bạn đã đăng nhập và có role admin xứ';
-    })->middleware('role:parish_admin');
-
     Route::get('/dashboard', Home::class)->name('dashboard');
 
-    // Route::get('/dashboard', fn() => view('frontend.dashboard'))->name('dashboard');
+    Route::middleware('role:parish_admin|catechist')->group(function () {
 
-    Route::prefix('classes')->name('classes.')->group(function () {
-        Route::get('/', LopList::class)->name('index');
-        Route::get('/{id}', LopDetail::class)->name('show');
-        Route::get('/{lopId}/catechists', AssignTeacher::class)
-            ->name('catechists');
+        Route::get('/attendance', AttendanceManager::class)
+            ->name('attendance.show');
+
+        Route::get('/students', StudentList::class)
+            ->name('students.index');
+
+        Route::get('/students/{id}', StudentDetail::class)
+            ->name('students.show');
     });
 
-    Route::get('/students', StudentList::class)
-        ->name('students.index');
+    Route::middleware('role:parish_admin')->group(function () {
+        Route::get('/classes', LopList::class)
+            ->name('classes.index');
 
-    Route::get('/session', SessionManager::class)
-        ->name('session.index');
+        Route::get('/classes/{id}', LopDetail::class)
+            ->name('classes.show');
 
-    Route::get('/attendance', AttendanceManager::class)
-        ->name('attendance.show');
+        Route::get('/classes/{lopId}/catechists', AssignTeacher::class)
+            ->name('classes.catechists');
 
-    Route::get('/scores', ScoreManager::class)
-        ->name('scores.index');
+        Route::get('/session', SessionManager::class)
+            ->name('session.index');
 
-    Route::get('/school-years', NamHocManager::class)
-        ->name('school-years.index');
+        Route::get('/scores', ScoreManager::class)
+            ->name('scores.index');
 
-    Route::get('/grades', BlockManager::class)
-        ->name('grades.index');
+        Route::get('/school-years', NamHocManager::class)
+            ->name('school-years.index');
 
-    Route::get('/students/{id}', StudentDetail::class)
-        ->name('students.show');
+        Route::get('/grades', BlockManager::class)
+            ->name('grades.index');
 
-    Route::get('/catechists', TeacherManager::class)
-        ->name('catechists.index');
+        Route::get('/catechists', TeacherManager::class)
+            ->name('catechists.index');
 
-    Route::get('/parish-children', ParishChild::class)
-        ->name('parish-children.index');
+        Route::get('/catechists/import', TeacherImportPreview::class)
+            ->name('catechists.import');
 
-    Route::get('/holy-names', HolyManager::class)
-        ->name('holy-names.index');
+        Route::get('/parish-children', ParishChild::class)
+            ->name('parish-children.index');
+
+        Route::get('/holy-names', HolyManager::class)
+            ->name('holy-names.index');
+    });
 });
+
 
 
 // Route::get('/nam-hoc', NamHocManager::class)->name('nam-hoc');

@@ -21,10 +21,10 @@
             {{-- Email --}}
             <div>
                 <label class="block text-sm font-semibold text-slate-700 mb-1">
-                    Email
+                    Email hoặc số điện thoại
                 </label>
                 <input
-                    type="email"
+                    type="text"
                     name="email"
                     value="{{ old('email') }}"
                     required

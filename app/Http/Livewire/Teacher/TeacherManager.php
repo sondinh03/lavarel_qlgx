@@ -95,7 +95,8 @@ class TeacherManager extends BaseComponent
 
         // Account fields (chỉ validate khi createAccount = true)
         'createAccount' => 'boolean',
-        'accountEmail' => 'required_if:createAccount,true|nullable|email|unique:users,email',
+        'accountEmail' => 'required_if:createAccount,true|nullable|unique:users,email',
+        // 'accountEmail' => 'required_if:createAccount,true|nullable|email|unique:users,email',
         'accountPassword' => 'required_if:createAccount,true|nullable|string|min:6',
     ];
 
@@ -110,7 +111,7 @@ class TeacherManager extends BaseComponent
         'note.max' => 'Ghi chú không được quá 500 ký tự',
 
         // Account validation messages
-        'accountEmail.required_if' => 'Vui lòng nhập email khi tạo tài khoản',
+        'accountEmail.required_if' => 'Vui lòng nhập email hoặc số điện thoại khi tạo tài khoản',
         'accountEmail.email' => 'Email không hợp lệ',
         'accountEmail.unique' => 'Email đã tồn tại trong hệ thống',
         'accountPassword.required_if' => 'Vui lòng nhập mật khẩu',
@@ -387,13 +388,13 @@ class TeacherManager extends BaseComponent
                     // Gán role cho user
                     $user->assignRole('catechist');
 
-                    \Log::info('Assigned catechist role to user', [
+                    Log::info('Assigned catechist role to user', [
                         'user_id' => $user->id,
                         'email' => $user->email,
                     ]);
                 } catch (\Exception $e) {
                     // Log lỗi nhưng không dừng process
-                    \Log::warning('Could not assign catechist role', [
+                    Log::warning('Could not assign catechist role', [
                         'user_id' => $user->id,
                         'error' => $e->getMessage(),
                     ]);
@@ -537,7 +538,7 @@ class TeacherManager extends BaseComponent
     {
         // Email: ưu tiên phone_number, fallback là tên
         if ($this->phoneNumber) {
-            $this->accountEmail = $this->phoneNumber . '@giaoxu.com';
+            $this->accountEmail = $this->phoneNumber;
         } elseif ($this->name) {
             $emailPrefix = $this->generateEmailFromName($this->name);
             $this->accountEmail = $emailPrefix . '@giaoxu.com';
@@ -545,7 +546,6 @@ class TeacherManager extends BaseComponent
             $this->accountEmail = 'glv' . rand(1000, 9999) . '@giaoxu.com';
         }
 
-        // Password: random 12 ký tự
         $this->accountPassword = $this->generatePasswordFromBirthday($this->birthday);
     }
 
@@ -728,16 +728,6 @@ class TeacherManager extends BaseComponent
 
             $teacher = Teacher::where('pid', $this->parishId)
                 ->findOrFail($id);
-
-            // Check nếu giáo viên đang được phân công dạy lớp
-            // $hasAssignments = \App\Models\Assignment::where('teacher_id', $teacher->id)
-            //     ->exists();
-
-            // if ($hasAssignments) {
-            //     DB::rollBack();
-            //     session()->flash('error', 'Không thể xóa giáo viên đang phân công dạy lớp');
-            //     return;
-            // }
 
             $teacher->delete();
 

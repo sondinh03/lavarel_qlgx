@@ -6,7 +6,7 @@
         {{-- Breadcrumb --}}
         <x-breadcrumb
             :items="[
-                ['label' => 'Trang chủ', 'url' => route('home')],
+                ['label' => 'Trang chủ', 'url' => route('dashboard')],
                 [
                     'label' => 'Quản lý điểm',
                     'url' => route('scores.index'),

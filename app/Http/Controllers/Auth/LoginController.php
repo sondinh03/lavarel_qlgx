@@ -5,8 +5,10 @@ namespace App\Http\Controllers\Auth;
 use App\Http\Controllers\Controller;
 use App\Models\Decen;
 use App\Models\SetAdmin;
+use App\Models\Teacher;
 use App\Providers\RouteServiceProvider;
 use Illuminate\Foundation\Auth\AuthenticatesUsers;
+use Illuminate\Support\Facades\Auth;
 
 class LoginController extends Controller
 {
@@ -40,29 +42,108 @@ class LoginController extends Controller
         $this->middleware('guest')->except('logout');
     }
 
+    // protected function authenticated($request, $user)
+    // {
+    //     // Custom logic after user is authenticated
+    //     // For example, log the login time or redirect based on role
+
+    //     // Xác định parish_id và isAdmin
+    //     $setadmin = SetAdmin::where('use', $user->id)->where('status', 1)->first();
+
+    //     if ($setadmin) {
+    //         session([
+    //             'parish_id' => $request->get('giaoxu'),
+    //             'isAdmin' => true,
+    //             'isDecen' => false
+    //         ]);
+    //     } else {
+    //         $decen = Decen::where('use', $user->id)
+    //             ->where('status', 1)
+    //             ->where('student', 1)->first();
+
+    //             dd($decen);
+    //         session([
+    //             'parish_id' => $decen->pid,
+    //             'isAdmin' => false,
+    //             'isDecen' => true
+    //         ]);
+    //     }
+    // }
+
+    /**
+     * ✅ Xử lý sau khi đăng nhập thành công
+     * 
+     * Logic:
+     * 1. Xác định role từ Spatie Permission
+     * 2. Lưu session (backward compatibility)
+     * 3. Redirect theo role
+     */
     protected function authenticated($request, $user)
     {
-        // Custom logic after user is authenticated
-        // For example, log the login time or redirect based on role
-
-        // Xác định parish_id và isAdmin
-        $setadmin = SetAdmin::where('use', $user->id)->where('status', 1)->first();
-
-        if ($setadmin) {
+        // ===== ADMIN (Administrator) =====
+        if ($user->hasRole('Administrator')) {
             session([
-                'parish_id' => $request->get('giaoxu'),
+                'parish_id' => $request->get('giaoxu'), // Admin chọn xứ
                 'isAdmin' => true,
-                'isDecen' => false
+                'isDecen' => false,
+                'isTeacher' => false,
             ]);
-        } else {
+            
+            return redirect()->intended('/admin/dashboard');
+        }
+
+        // ===== PARISH ADMIN (Quản lý xứ) =====
+        if ($user->hasRole('parish_admin')) {
             $decen = Decen::where('use', $user->id)
                 ->where('status', 1)
-                ->where('student', 1)->first();
+                ->first();
+
+            if (!$decen || !$decen->pid) {
+                return $this->logoutWithError('Tài khoản quản lý xứ chưa được gán giáo xứ. Vui lòng liên hệ admin.');
+            }
+
             session([
                 'parish_id' => $decen->pid,
                 'isAdmin' => false,
-                'isDecen' => true
+                'isDecen' => true,
+                'isTeacher' => false,
             ]);
+            
+            return redirect()->intended('/dashboard');
         }
+
+        // ===== CATECHIST (Giáo lý viên) =====
+        if ($user->hasRole('catechist')) {
+            $teacher = Teacher::where('user_id', $user->id)
+                ->where('status', 1)
+                ->first();
+
+            if (!$teacher || !$teacher->pid) {
+                return $this->logoutWithError('Tài khoản giáo lý viên chưa được gán giáo xứ. Vui lòng liên hệ admin.');
+            }
+
+            session([
+                'parish_id' => $teacher->pid,
+                'isAdmin' => false,
+                'isDecen' => false,
+                'isTeacher' => true,
+            ]);
+            
+            return redirect()->intended('/dashboard');
+        }
+
+        // ===== KHÔNG CÓ ROLE HỢP LỆ =====
+        return $this->logoutWithError('Tài khoản không có quyền truy cập hệ thống. Vui lòng liên hệ admin.');
+    }
+
+    /**
+     * ✅ Helper: Logout và trả về error
+     */
+    private function logoutWithError(string $message)
+    {
+        Auth::logout();
+        
+        return redirect()->route('login')
+            ->withErrors(['email' => $message]);
     }
 }

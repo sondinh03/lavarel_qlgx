@@ -41,6 +41,9 @@ abstract class BaseComponent extends Component
     /** @var bool Kiểm tra quyền quản trị xứ */
     public $isDecen = false;
 
+    /** @var bool Kiểm tra quyền GLV */
+    public $isCatechist = false;
+
     // ==================== PAGINATION & SEARCH ====================
 
     /** @var string Search query */
@@ -113,37 +116,14 @@ abstract class BaseComponent extends Component
         if (!$user) {
             abort(401, 'Chưa đăng nhập');
         }
-        
+
         $this->isAdmin = $user?->isAdmin() ?? false;
         $this->isDecen = $user?->isDecen() ?? false;
+        $this->isCatechist = $user?->isCatechist() ?? false;
 
-        $this->parishId = $this->isDecen
-            ? $user?->parishId()
-            : null;
+        $this->parishId = $user->parishId();
     }
 
-    /**
-     * Validate user có quyền truy cập component này không
-     * Override method này trong child class để custom authorization logic
-     */
-    // protected function validateUserAccess(): void
-    // {
-    //     // Admin tổng: Có quyền trên toàn hệ thống
-    //     if ($this->isAdmin) {
-    //         return;
-    //     }
-
-    //     // Decen (quản trị xứ): Phải có parishId
-    //     if ($this->isDecen) {
-    //         if (!$this->parishId) {
-    //             abort(403, 'Không xác định được giáo xứ của bạn.');
-    //         }
-    //         return;
-    //     }
-
-    //     // Không phải admin cũng không phải decen
-    //     abort(403, 'Không có quyền truy cập');
-    // }
 
     /**
      * Yêu cầu phải có parishId (cho cả Admin và Decen)

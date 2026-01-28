@@ -79,6 +79,14 @@ class User extends Authenticatable
 
     public function parishId(): ?int
     {
-        return $this->decen?->pid;
+        if ($this->isDecen()) {
+            return $this->decen?->pid;
+        }
+
+        if ($this->isCatechist()) {
+            return $this->teacher?->pid;
+        }
+
+        return null;
     }
 }
