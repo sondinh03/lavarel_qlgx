@@ -1010,9 +1010,6 @@ video {
 .min-w-\[200px\] {
   min-width: 200px;
 }
-.min-w-full {
-  min-width: 100%;
-}
 .max-w-2xl {
   max-width: 42rem;
 }
@@ -1607,6 +1604,10 @@ video {
   --tw-bg-opacity: 1;
   background-color: rgb(226 232 240 / var(--tw-bg-opacity));
 }
+.bg-slate-300 {
+  --tw-bg-opacity: 1;
+  background-color: rgb(203 213 225 / var(--tw-bg-opacity));
+}
 .bg-slate-400 {
   --tw-bg-opacity: 1;
   background-color: rgb(148 163 184 / var(--tw-bg-opacity));
@@ -1955,6 +1956,9 @@ video {
 }
 .pt-5 {
   padding-top: 1.25rem;
+}
+.pt-6 {
+  padding-top: 1.5rem;
 }
 .pt-8 {
   padding-top: 2rem;
@@ -2337,6 +2341,9 @@ video {
 .opacity-50 {
   opacity: 0.5;
 }
+.opacity-60 {
+  opacity: 0.6;
+}
 .opacity-75 {
   opacity: 0.75;
 }
@@ -2471,8 +2478,12 @@ video {
   margin-right: 1rem;
 }
 
-.file\:rounded-lg::file-selector-button {
-  border-radius: 0.5rem;
+.file\:cursor-pointer::file-selector-button {
+  cursor: pointer;
+}
+
+.file\:rounded-xl::file-selector-button {
+  border-radius: 0.75rem;
 }
 
 .file\:border-0::file-selector-button {
@@ -2489,14 +2500,30 @@ video {
   padding-right: 1rem;
 }
 
-.file\:py-2::file-selector-button {
-  padding-top: 0.5rem;
-  padding-bottom: 0.5rem;
+.file\:py-2\.5::file-selector-button {
+  padding-top: 0.625rem;
+  padding-bottom: 0.625rem;
+}
+
+.file\:font-semibold::file-selector-button {
+  font-weight: 600;
 }
 
 .file\:text-white::file-selector-button {
   --tw-text-opacity: 1;
   color: rgb(255 255 255 / var(--tw-text-opacity));
+}
+
+.file\:shadow-sm::file-selector-button {
+  --tw-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+  --tw-shadow-colored: 0 1px 2px 0 var(--tw-shadow-color);
+  box-shadow: var(--tw-ring-offset-shadow, 0 0 #0000), var(--tw-ring-shadow, 0 0 #0000), var(--tw-shadow);
+}
+
+.file\:transition-all::file-selector-button {
+  transition-property: all;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  transition-duration: 150ms;
 }
 
 .hover\:scale-110:hover {
