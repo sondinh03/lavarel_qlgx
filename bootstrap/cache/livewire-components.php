@@ -14,6 +14,7 @@
   'parish.parish-child' => 'App\\Http\\Livewire\\Parish\\ParishChild',
   'score.score-manager' => 'App\\Http\\Livewire\\Score\\ScoreManager',
   'student.student-detail' => 'App\\Http\\Livewire\\Student\\StudentDetail',
+  'student.student-edit' => 'App\\Http\\Livewire\\Student\\StudentEdit',
   'student.student-list' => 'App\\Http\\Livewire\\Student\\StudentList',
   'teacher.teacher-import-preview' => 'App\\Http\\Livewire\\Teacher\\TeacherImportPreview',
   'teacher.teacher-manager' => 'App\\Http\\Livewire\\Teacher\\TeacherManager',

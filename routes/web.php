@@ -50,6 +50,7 @@ use App\Http\Livewire\NamHoc\NamHocManager;
 use App\Http\Livewire\Parish\ParishChild;
 use App\Http\Livewire\Score\ScoreManager;
 use App\Http\Livewire\Student\StudentDetail;
+use App\Http\Livewire\Student\StudentEdit;
 use App\Http\Livewire\Student\StudentList;
 use App\Http\Livewire\Teacher\TeacherImportPreview;
 use App\Http\Livewire\Teacher\TeacherManager;
@@ -89,6 +90,12 @@ Route::middleware('auth')->group(function () {
         Route::get('/classes/{lopId}/catechists', AssignTeacher::class)
             ->name('classes.catechists');
 
+        Route::get('/students/create', StudentEdit::class)
+            ->name('students.create');
+
+        Route::get('/students/{id}/edit', StudentEdit::class)
+            ->name('students.edit');
+
         Route::get('/session', SessionManager::class)
             ->name('session.index');
 
@@ -115,14 +122,6 @@ Route::middleware('auth')->group(function () {
     });
 });
 
-
-
-// Route::get('/nam-hoc', NamHocManager::class)->name('nam-hoc');
-// Route::get('/khoi-hoc', BlockManager::class)->name('khoi-hoc');
-// Route::get('/ho-so-hoc-sinh/{id}', StudentDetail::class)->name('student.detail');
-// Route::get('/teacher', TeacherManager::class)->name('teacher.show');
-// Route::get('/parish-child', ParishChild::class)->name('parish-child.show');
-// Route::get('/holies', HolyManager::class)->name('holies');
 
 Route::get('{slug}', [SlugController::class, 'make']);
 

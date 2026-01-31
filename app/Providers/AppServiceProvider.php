@@ -7,6 +7,8 @@ use App\Models\Lop;
 use App\Models\ClassTeacher;
 use App\Observers\LopObserver;
 use App\Observers\ClassTeacherObserver;
+use Illuminate\Support\Facades\Route;
+use Livewire\Livewire;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -27,14 +29,6 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot()
     {
-        //        
-        /*try {
-            View::share([
-                'url_prefix' => config('settings.url_prefix'),
-            ]);
-        } catch (Throwable $e) {
-            report($e);
-        }*/
         $this->overrideConfigValues();
         require_once app_path('Helpers/AttendanceHelper.php');
 

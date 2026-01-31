@@ -210,7 +210,7 @@
                                         </svg>
                                     </a>
 
-                                    <a href="{{ $hocsinh->edit ?? '#' }}"
+                                    <a href="{{ route('students.edit', $hocsinh->id) }}"
                                         class="p-2 hover:bg-orange-50 text-orange-600 rounded-lg active:scale-95 transition-all"
                                         title="Chỉnh sửa">
                                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">

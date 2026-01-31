@@ -28,7 +28,10 @@ class Student extends Model
     protected $dates = [
         'baptism_date',
         'more_power_date',
+        'communion_date',
+        'anoint_date',
         'promise_day',
+        'die_time',
         'created_at',
         'updated_at',
     ];
@@ -47,7 +50,10 @@ class Student extends Model
         'holy' => 'integer',
         'baptism_date' => 'date',
         'more_power_date' => 'date',
+        'communion_date' => 'date',
+        'anoint_date' => 'date',
         'promise_day' => 'date',
+        'die_time' => 'date',
     ];
 
     /*
@@ -64,10 +70,12 @@ class Student extends Model
     const STATUS_TRANSFERRED = 3; // Hồ sơ đã chuyển sang xứ/lớp khác
     const STATUS_DROPPED     = 4; // Hồ sơ ngưng theo học / bỏ học
 
-
     const HOLY_BAPTISM = 1;
     const HOLY_CONFIRMATION = 2;
     const HOLY_MARRIAGE = 3;
+    
+    const ANOINT_STATUS_CRITICAL = 1; // Nguy tử
+    const ANOINT_STATUS_NORMAL = 2;   // Thông thường
 
     /*
     |--------------------------------------------------------------------------
@@ -80,7 +88,7 @@ class Student extends Model
      */
     public function parish(): BelongsTo
     {
-        return $this->belongsTo(Parish::class, 'pid');
+        return $this->belongsTo(ParishManagement::class, 'pid');
     }
 
     /**
@@ -100,19 +108,6 @@ class Student extends Model
     }
 
     /**
-     * Lớp học (class)
-     */
-    // public function lop()
-    // {
-    //     return $this->belongsToMany(
-    //         Lop::class,
-    //         'student_class',
-    //         'student_id',
-    //         'class_id'
-    //     )->withPivot('status');
-    // }
-
-    /**
      * Bậc thánh
      */
     public function holyRelation(): BelongsTo
@@ -121,11 +116,51 @@ class Student extends Model
     }
 
     /**
-     * Giáo xứ thanh toán
+     * Giáo họ (Parish children)
      */
     public function paidRelation(): BelongsTo
     {
         return $this->belongsTo(Parish::class, 'paid');
+    }
+    
+    /**
+     * Dân tộc
+     */
+    public function ethnicRelation(): BelongsTo
+    {
+        return $this->belongsTo(Ethnicmanagement::class, 'ethnic');
+    }
+    
+    /**
+     * Nghề nghiệp
+     */
+    public function careerRelation(): BelongsTo
+    {
+        return $this->belongsTo(Careermanagement::class, 'career');
+    }
+    
+    /**
+     * Trình độ
+     */
+    public function levelRelation(): BelongsTo
+    {
+        return $this->belongsTo(Levelmanagement::class, 'level');
+    }
+    
+    /**
+     * Chức vụ
+     */
+    public function positionRelation(): BelongsTo
+    {
+        return $this->belongsTo(Positionmanagement::class, 'position');
+    }
+    
+    /**
+     * Ngôn ngữ
+     */
+    public function languageRelation(): BelongsTo
+    {
+        return $this->belongsTo(Languagemanagement::class, 'language');
     }
 
     /*
@@ -181,12 +216,12 @@ class Student extends Model
     */
 
     /**
-     * Đức cha ban phép thêm sức
+     * Cha/Đức cha ban phép thêm sức
      */
-    // public function morePowerGiver(): BelongsTo
-    // {
-    //     return $this->belongsTo(Bishop::class, 'more_power_giver');
-    // }
+    public function morePowerGiver(): BelongsTo
+    {
+        return $this->belongsTo(Priest::class, 'more_power_giver');
+    }
 
     /**
      * Cha/Mẹ đỡ đầu thêm sức
@@ -218,6 +253,58 @@ class Student extends Model
     public function morePowerParish(): BelongsTo
     {
         return $this->belongsTo(Parish::class, 'more_power_parish');
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | COMMUNION RELATIONSHIPS
+    |--------------------------------------------------------------------------
+    */
+
+    /**
+     * Cha ban bí tích rước lễ
+     */
+    public function communionGiver(): BelongsTo
+    {
+        return $this->belongsTo(Priest::class, 'communion_giver');
+    }
+
+    /**
+     * Giáo phận nơi rước lễ
+     */
+    public function communionDiocese(): BelongsTo
+    {
+        return $this->belongsTo(Diocese::class, 'communion_dioceses');
+    }
+
+    /**
+     * Giáo hạt nơi rước lễ
+     */
+    public function communionDeanery(): BelongsTo
+    {
+        return $this->belongsTo(Deanery::class, 'communion_deanerys');
+    }
+
+    /**
+     * Giáo xứ nơi rước lễ
+     */
+    public function communionParish(): BelongsTo
+    {
+        return $this->belongsTo(Parish::class, 'communion_parish');
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | ANOINT RELATIONSHIPS
+    |--------------------------------------------------------------------------
+    */
+
+    /**
+     * Cha ban bí tích xức dầu
+     */
+    public function anointGiver(): BelongsTo
+    {
+        return $this->belongsTo(Priest::class, 'anoint_giver');
     }
 
     /*
@@ -317,36 +404,6 @@ class Student extends Model
             : '-';
     }
 
-    /**
-     * Format baptism date for display
-     */
-    // protected function baptismDateFormatted(): Attribute
-    // {
-    //     return Attribute::make(
-    //         get: fn() => $this->baptism_date ? $this->baptism_date->format('d/m/Y') : null
-    //     );
-    // }
-
-    // /**
-    //  * Format more power date for display
-    //  */
-    // protected function morePowerDateFormatted(): Attribute
-    // {
-    //     return Attribute::make(
-    //         get: fn() => $this->more_power_date ? $this->more_power_date->format('d/m/Y') : null
-    //     );
-    // }
-
-    // /**
-    //  * Format promise day for display
-    //  */
-    // protected function promiseDayFormatted(): Attribute
-    // {
-    //     return Attribute::make(
-    //         get: fn() => $this->promise_day ? $this->promise_day->format('d/m/Y') : null
-    //     );
-    // }
-
     /*
     |--------------------------------------------------------------------------
     | SCOPES
@@ -401,7 +458,7 @@ class Student extends Model
         return $query->where(function ($q) use ($search) {
             $q->where('name', 'like', "%{$search}%")
                 ->orWhere('last_name', 'like', "%{$search}%")
-                ->orWhere('mah', 'like', "%{$search}%")
+                ->orWhere('mahv', 'like', "%{$search}%")
                 ->orWhereRaw("CONCAT(last_name, ' ', name) like ?", ["%{$search}%"]);
         });
     }
@@ -478,9 +535,9 @@ class Student extends Model
         }
 
         try {
-            // Birthday is already formatted as 'd-m-Y' by accessor
+            // Birthday is already formatted as 'd/m/Y' by accessor
             // Need to parse it back to calculate age
-            $birthDate = Carbon::createFromFormat('d-m-Y', $this->birthday);
+            $birthDate = Carbon::createFromFormat('d/m/Y', $this->birthday);
             return $birthDate->age;
         } catch (\Exception $e) {
             return null;
@@ -508,6 +565,31 @@ class Student extends Model
     {
         $slug = slug($this) . config('settings.url_prefix', '');
         return '<a target="_blank" href="' . url($slug) . '"><i class="las la-link"></i>Liên kết</a>';
+    }
+    
+    /**
+     * Get anoint status label
+     */
+    public function getAnointStatusLabel(): string
+    {
+        return match ($this->anoint_status) {
+            self::ANOINT_STATUS_CRITICAL => 'Nguy tử',
+            self::ANOINT_STATUS_NORMAL => 'Thông thường',
+            default => '',
+        };
+    }
+    
+    /**
+     * Get study status label
+     */
+    public function getStudyLabel(): string
+    {
+        return match ($this->study) {
+            1 => 'Đang học',
+            2 => 'Đã học xong',
+            3 => 'Nghỉ học',
+            default => '',
+        };
     }
 
     /*
@@ -549,6 +631,17 @@ class Student extends Model
             self::HOLY_BAPTISM => 'Rửa tội',
             self::HOLY_CONFIRMATION => 'Thêm sức',
             self::HOLY_MARRIAGE => 'Hôn phối',
+        ];
+    }
+    
+    /**
+     * Get anoint status options for select
+     */
+    public static function getAnointStatusOptions(): array
+    {
+        return [
+            self::ANOINT_STATUS_CRITICAL => 'Nguy tử',
+            self::ANOINT_STATUS_NORMAL => 'Thông thường',
         ];
     }
 }

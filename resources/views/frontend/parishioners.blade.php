@@ -4,7 +4,8 @@
 @section('title', Str::title(optional($parishioners->metas)->meta_title ?? $parishioners->name))
 <meta name="robots" content="noindex"/>
 
-@section('main')
+{{-- @section('main') --}}
+@section('content')
 <div class="bg-body-tertiary py-4">
 	<div class="container-fluid">
 		<div class="shadow bg-white mb-4 border rounded-4">

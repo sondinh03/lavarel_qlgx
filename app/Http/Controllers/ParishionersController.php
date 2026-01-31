@@ -361,10 +361,11 @@ class ParishionersController extends Controller
                 
                 $this->data['parishioners'] = $parishioners;
                 
-                return view()->first([
-                    'frontend.parishioners',
-                    'frontend.layout.main',
-                ], $this->data);
+                // return view()->first([
+                //     'frontend.parishioners',
+                //     'frontend.layout.main',
+                // ], $this->data);
+                return view('frontend.parishioners', $this->data);
             }else{
                 return view()->first([
                     'errors.403',
