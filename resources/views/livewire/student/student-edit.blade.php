@@ -49,7 +49,7 @@
                             {{ $isEdit ? 'Chỉnh sửa học sinh' : 'Thêm học sinh mới' }}
                         </h1>
                         <p class="text-sm text-slate-600 mt-1">
-                            {{ $isEdit ? 'Cập nhật thông tin học sinh' : 'Điền đầy đủ thông tin để thêm học sinh mới' }}
+                            {{ $isEdit ? 'Cập nhật thông tin học sinh giáo lý' : 'Điền đầy đủ thông tin để thêm học sinh giáo lý' }}
                         </p>
                     </div>
 
@@ -62,15 +62,13 @@
                 </div>
             </div>
 
-            {{-- TABS --}}
+            {{-- ✅ TABS - CHỈ 4 TAB --}}
             <div class="px-6 py-4 border-b border-slate-200 bg-slate-50 overflow-x-auto">
                 <div class="inline-flex rounded-xl bg-slate-200 p-1 text-sm font-medium whitespace-nowrap">
                     @foreach([
                     'basic' => ['label' => 'Cơ bản', 'icon' => 'M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z'],
                     'baptism' => ['label' => 'Rửa tội', 'icon' => 'M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253'],
                     'more_power' => ['label' => 'Thêm sức', 'icon' => 'M13 10V3L4 14h7v7l9-11h-7z'],
-                    'communion' => ['label' => 'Rước lễ', 'icon' => 'M12 8v13m0-13V6a2 2 0 112 2h-2zm0 0V5.5A2.5 2.5 0 109.5 8H12zm-7 4h14M5 12a2 2 0 110-4h14a2 2 0 110 4M5 12v7a2 2 0 002 2h10a2 2 0 002-2v-7'],
-                    'anoint' => ['label' => 'Xức dầu', 'icon' => 'M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z'],
                     'other' => ['label' => 'Khác', 'icon' => 'M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z']
                     ] as $key => $tab)
                     <button wire:click="switchTab('{{ $key }}')"
@@ -248,7 +246,7 @@
                             </div>
                         </div>
 
-                        {{-- Địa chỉ --}}
+                        {{-- ✅ Địa chỉ - CHỈ NGUYÊN QUÁN --}}
                         <div class="bg-slate-50 rounded-xl p-5 border border-slate-200">
                             <h3 class="text-lg font-bold text-slate-900 mb-4 flex items-center gap-2">
                                 <svg class="w-5 h-5 text-primary-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -257,62 +255,30 @@
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                         d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
                                 </svg>
-                                Địa chỉ
+                                Nguyên quán
                             </h3>
 
-                            {{-- Nguyên quán --}}
-                            <div class="mb-4">
-                                <h4 class="text-sm font-semibold text-slate-700 mb-3">Nguyên quán</h4>
-                                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                                    <div>
-                                        <label class="block text-sm text-slate-600 mb-1">Địa chỉ</label>
-                                        <input type="text" wire:model.defer="origin"
-                                            class="w-full px-3 py-2 rounded-xl border border-slate-300
-                                                   focus:outline-none focus:ring-2 focus:ring-primary-500"
-                                            placeholder="Số nhà, tên đường">
-                                    </div>
-                                    <div>
-                                        <label class="block text-sm text-slate-600 mb-1">Phường/Xã</label>
-                                        <input type="text" wire:model.defer="ward"
-                                            class="w-full px-3 py-2 rounded-xl border border-slate-300
-                                                   focus:outline-none focus:ring-2 focus:ring-primary-500"
-                                            placeholder="Phường/Xã">
-                                    </div>
-                                    <div>
-                                        <label class="block text-sm text-slate-600 mb-1">Tỉnh/TP</label>
-                                        <input type="text" wire:model.defer="province"
-                                            class="w-full px-3 py-2 rounded-xl border border-slate-300
-                                                   focus:outline-none focus:ring-2 focus:ring-primary-500"
-                                            placeholder="Tỉnh/Thành phố">
-                                    </div>
+                            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                <div>
+                                    <label class="block text-sm text-slate-600 mb-1">Địa chỉ</label>
+                                    <input type="text" wire:model.defer="origin"
+                                        class="w-full px-3 py-2 rounded-xl border border-slate-300
+                                               focus:outline-none focus:ring-2 focus:ring-primary-500"
+                                        placeholder="Số nhà, tên đường">
                                 </div>
-                            </div>
-
-                            {{-- Trú quán --}}
-                            <div>
-                                <h4 class="text-sm font-semibold text-slate-700 mb-3">Trú quán</h4>
-                                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                                    <div>
-                                        <label class="block text-sm text-slate-600 mb-1">Địa chỉ</label>
-                                        <input type="text" wire:model.defer="residence"
-                                            class="w-full px-3 py-2 rounded-xl border border-slate-300
-                                                   focus:outline-none focus:ring-2 focus:ring-primary-500"
-                                            placeholder="Số nhà, tên đường">
-                                    </div>
-                                    <div>
-                                        <label class="block text-sm text-slate-600 mb-1">Phường/Xã</label>
-                                        <input type="text" wire:model.defer="resi_ward"
-                                            class="w-full px-3 py-2 rounded-xl border border-slate-300
-                                                   focus:outline-none focus:ring-2 focus:ring-primary-500"
-                                            placeholder="Phường/Xã">
-                                    </div>
-                                    <div>
-                                        <label class="block text-sm text-slate-600 mb-1">Tỉnh/TP</label>
-                                        <input type="text" wire:model.defer="resi_province"
-                                            class="w-full px-3 py-2 rounded-xl border border-slate-300
-                                                   focus:outline-none focus:ring-2 focus:ring-primary-500"
-                                            placeholder="Tỉnh/Thành phố">
-                                    </div>
+                                <div>
+                                    <label class="block text-sm text-slate-600 mb-1">Phường/Xã</label>
+                                    <input type="text" wire:model.defer="ward"
+                                        class="w-full px-3 py-2 rounded-xl border border-slate-300
+                                               focus:outline-none focus:ring-2 focus:ring-primary-500"
+                                        placeholder="Phường/Xã">
+                                </div>
+                                <div>
+                                    <label class="block text-sm text-slate-600 mb-1">Tỉnh/TP</label>
+                                    <input type="text" wire:model.defer="province"
+                                        class="w-full px-3 py-2 rounded-xl border border-slate-300
+                                               focus:outline-none focus:ring-2 focus:ring-primary-500"
+                                        placeholder="Tỉnh/Thành phố">
                                 </div>
                             </div>
                         </div>
@@ -356,7 +322,7 @@
                                         class="w-full px-3 py-2 rounded-xl border border-slate-300
                                                focus:outline-none focus:ring-2 focus:ring-primary-500
                                                @error('deanery_id') border-red-500 @enderror"
-                                        :disabled="!diocese_id">
+                                        @disabled(!$diocese_id)>
                                         <option value="">-- Chọn giáo hạt --</option>
                                         @foreach($deaneries as $deanery)
                                         <option value="{{ $deanery->id }}">{{ $deanery->name }}</option>
@@ -376,7 +342,7 @@
                                         class="w-full px-3 py-2 rounded-xl border border-slate-300
                                                focus:outline-none focus:ring-2 focus:ring-primary-500
                                                @error('parish_id') border-red-500 @enderror"
-                                        :disabled="!deanery_id">
+                                        @disabled(!$deanery_id)>
                                         <option value="">-- Chọn giáo xứ --</option>
                                         @foreach($parishes as $parish)
                                         <option value="{{ $parish->id }}">{{ $parish->name }}</option>
@@ -395,7 +361,7 @@
                                     <select wire:model.defer="paid"
                                         class="w-full px-3 py-2 rounded-xl border border-slate-300
                                                focus:outline-none focus:ring-2 focus:ring-primary-500"
-                                        :disabled="!parish_id">
+                                        @disabled(!$parish_id)>
                                         <option value="">-- Chọn giáo họ --</option>
                                         @foreach($parishChildren as $pc)
                                         <option value="{{ $pc->id }}">{{ $pc->name }}</option>
@@ -581,7 +547,7 @@
                                         <select wire:model="baptism_deanery_id"
                                             class="w-full px-3 py-2 rounded-xl border border-slate-300
                                                    focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                            :disabled="!baptism_diocese_id">
+                                            @disabled(!$baptism_diocese_id)>
                                             <option value="">-- Chọn giáo hạt --</option>
                                             @foreach($baptismDeaneries as $deanery)
                                             <option value="{{ $deanery->id }}">{{ $deanery->name }}</option>
@@ -594,7 +560,7 @@
                                         <select wire:model.defer="baptism_parish_id"
                                             class="w-full px-3 py-2 rounded-xl border border-slate-300
                                                    focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                            :disabled="!baptism_deanery_id">
+                                            @disabled(!$baptism_deanery_id)>
                                             <option value="">-- Chọn giáo xứ --</option>
                                             @foreach($baptismParishes as $parish)
                                             <option value="{{ $parish->id }}">{{ $parish->name }}</option>
@@ -684,7 +650,7 @@
                                         <select wire:model="more_power_deanery_id"
                                             class="w-full px-3 py-2 rounded-xl border border-slate-300
                                                    focus:outline-none focus:ring-2 focus:ring-yellow-500"
-                                            :disabled="!more_power_diocese_id">
+                                            @disabled(!$more_power_diocese_id)>
                                             <option value="">-- Chọn giáo hạt --</option>
                                             @foreach($morePowerDeaneries as $deanery)
                                             <option value="{{ $deanery->id }}">{{ $deanery->name }}</option>
@@ -697,7 +663,7 @@
                                         <select wire:model.defer="more_power_parish_id"
                                             class="w-full px-3 py-2 rounded-xl border border-slate-300
                                                    focus:outline-none focus:ring-2 focus:ring-yellow-500"
-                                            :disabled="!more_power_deanery_id">
+                                            @disabled(!$more_power_deanery_id)>
                                             <option value="">-- Chọn giáo xứ --</option>
                                             @foreach($morePowerParishes as $parish)
                                             <option value="{{ $parish->id }}">{{ $parish->name }}</option>
@@ -710,188 +676,21 @@
                     </div>
                     @endif
 
-                    {{-- TAB: Rước lễ --}}
-                    @if($activeTab === 'communion')
-                    <div class="bg-gradient-to-br from-green-50 to-white rounded-xl p-6 border border-green-200">
-                        <div class="flex items-center gap-3 mb-6">
-                            <div class="w-12 h-12 rounded-xl bg-green-500 text-white flex items-center justify-center">
-                                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                        d="M12 8v13m0-13V6a2 2 0 112 2h-2zm0 0V5.5A2.5 2.5 0 109.5 8H12zm-7 4h14M5 12a2 2 0 110-4h14a2 2 0 110 4M5 12v7a2 2 0 002 2h10a2 2 0 002-2v-7" />
-                                </svg>
-                            </div>
-                            <div>
-                                <h3 class="text-xl font-bold text-slate-900">Bí tích Rước lễ</h3>
-                                <p class="text-sm text-slate-600">Thông tin về bí tích Rước lễ lần đầu</p>
-                            </div>
-                        </div>
-
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div>
-                                <label class="block text-sm font-semibold text-slate-700 mb-1">Ngày rước lễ</label>
-                                <input type="date" wire:model.defer="communion_date"
-                                    class="w-full px-3 py-2 rounded-xl border border-slate-300
-                                           focus:outline-none focus:ring-2 focus:ring-green-500">
-                            </div>
-
-                            <div>
-                                <label class="block text-sm font-semibold text-slate-700 mb-1">Số sổ</label>
-                                <input type="text" wire:model.defer="communion_number"
-                                    class="w-full px-3 py-2 rounded-xl border border-slate-300
-                                           focus:outline-none focus:ring-2 focus:ring-green-500"
-                                    placeholder="Số sổ rước lễ">
-                            </div>
-
-                            <div class="md:col-span-2">
-                                <label class="block text-sm font-semibold text-slate-700 mb-1">Cha ban bí tích</label>
-                                <select wire:model.defer="communion_giver_id"
-                                    class="w-full px-3 py-2 rounded-xl border border-slate-300
-                                           focus:outline-none focus:ring-2 focus:ring-green-500">
-                                    <option value="">-- Chọn linh mục --</option>
-                                    @foreach($catechists as $catechist)
-                                    <option value="{{ $catechist->id }}">{{ $catechist->name }}</option>
-                                    @endforeach
-                                </select>
-                            </div>
-
-                            {{-- Nơi rước lễ --}}
-                            <div class="md:col-span-2">
-                                <h4 class="text-sm font-semibold text-slate-700 mb-3">Nơi rước lễ</h4>
-                                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                                    <div>
-                                        <label class="block text-sm text-slate-600 mb-1">Giáo phận</label>
-                                        <select wire:model="communion_diocese_id"
-                                            class="w-full px-3 py-2 rounded-xl border border-slate-300
-                                                   focus:outline-none focus:ring-2 focus:ring-green-500">
-                                            <option value="">-- Chọn giáo phận --</option>
-                                            @foreach($dioceses as $diocese)
-                                            <option value="{{ $diocese->id }}">{{ $diocese->name }}</option>
-                                            @endforeach
-                                        </select>
-                                    </div>
-
-                                    <div>
-                                        <label class="block text-sm text-slate-600 mb-1">Giáo hạt</label>
-                                        <select wire:model="communion_deanery_id"
-                                            class="w-full px-3 py-2 rounded-xl border border-slate-300
-                                                   focus:outline-none focus:ring-2 focus:ring-green-500"
-                                            :disabled="!communion_diocese_id">
-                                            <option value="">-- Chọn giáo hạt --</option>
-                                            @foreach($communionDeaneries as $deanery)
-                                            <option value="{{ $deanery->id }}">{{ $deanery->name }}</option>
-                                            @endforeach
-                                        </select>
-                                    </div>
-
-                                    <div>
-                                        <label class="block text-sm text-slate-600 mb-1">Giáo xứ</label>
-                                        <select wire:model.defer="communion_parish_id"
-                                            class="w-full px-3 py-2 rounded-xl border border-slate-300
-                                                   focus:outline-none focus:ring-2 focus:ring-green-500"
-                                            :disabled="!communion_deanery_id">
-                                            <option value="">-- Chọn giáo xứ --</option>
-                                            @foreach($communionParishes as $parish)
-                                            <option value="{{ $parish->id }}">{{ $parish->name }}</option>
-                                            @endforeach
-                                        </select>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    @endif
-
-                    {{-- TAB: Xức dầu --}}
-                    @if($activeTab === 'anoint')
-                    <div class="bg-gradient-to-br from-red-50 to-white rounded-xl p-6 border border-red-200">
-                        <div class="flex items-center gap-3 mb-6">
-                            <div class="w-12 h-12 rounded-xl bg-red-500 text-white flex items-center justify-center">
-                                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                        d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
-                                </svg>
-                            </div>
-                            <div>
-                                <h3 class="text-xl font-bold text-slate-900">Bí tích Xức dầu</h3>
-                                <p class="text-sm text-slate-600">Thông tin về bí tích Xức dầu bệnh nhân</p>
-                            </div>
-                        </div>
-
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div>
-                                <label class="block text-sm font-semibold text-slate-700 mb-1">Ngày xức dầu</label>
-                                <input type="date" wire:model.defer="anoint_date"
-                                    class="w-full px-3 py-2 rounded-xl border border-slate-300
-                                           focus:outline-none focus:ring-2 focus:ring-red-500">
-                            </div>
-
-                            <div>
-                                <label class="block text-sm font-semibold text-slate-700 mb-1">Tình trạng</label>
-                                <select wire:model.defer="anoint_status"
-                                    class="w-full px-3 py-2 rounded-xl border border-slate-300
-                                           focus:outline-none focus:ring-2 focus:ring-red-500">
-                                    <option value="0">Chưa xức dầu</option>
-                                    <option value="1">Đã xức dầu</option>
-                                    <option value="2">Khỏi bệnh</option>
-                                </select>
-                            </div>
-
-                            <div class="md:col-span-2">
-                                <label class="block text-sm font-semibold text-slate-700 mb-1">Cha ban bí tích</label>
-                                <select wire:model.defer="anoint_giver_id"
-                                    class="w-full px-3 py-2 rounded-xl border border-slate-300
-                                           focus:outline-none focus:ring-2 focus:ring-red-500">
-                                    <option value="">-- Chọn linh mục --</option>
-                                    @foreach($catechists as $catechist)
-                                    <option value="{{ $catechist->id }}">{{ $catechist->name }}</option>
-                                    @endforeach
-                                </select>
-                            </div>
-
-                            <div class="md:col-span-2">
-                                <label class="block text-sm font-semibold text-slate-700 mb-1">Ghi chú</label>
-                                <textarea wire:model.defer="anoint_note"
-                                    rows="3"
-                                    class="w-full px-3 py-2 rounded-xl border border-slate-300
-                                           focus:outline-none focus:ring-2 focus:ring-red-500"
-                                    placeholder="Ghi chú thêm về bí tích xức dầu"></textarea>
-                            </div>
-                        </div>
-                    </div>
-                    @endif
-
                     {{-- TAB: Thông tin khác --}}
                     @if($activeTab === 'other')
                     <div class="space-y-6">
 
-                        {{-- Trạng thái học tập --}}
+                        {{-- Thông tin bổ sung --}}
                         <div class="bg-slate-50 rounded-xl p-5 border border-slate-200">
                             <h3 class="text-lg font-bold text-slate-900 mb-4 flex items-center gap-2">
                                 <svg class="w-5 h-5 text-primary-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                         d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
                                 </svg>
-                                Trạng thái
+                                Thông tin bổ sung
                             </h3>
 
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                <div>
-                                    <label class="block text-sm font-semibold text-slate-700 mb-1">
-                                        Trình độ học giáo lý
-                                    </label>
-                                    <select wire:model.defer="study"
-                                        class="w-full px-3 py-2 rounded-xl border border-slate-300
-                                               focus:outline-none focus:ring-2 focus:ring-primary-500">
-                                        <option value="0">Chưa học</option>
-                                        <option value="1">Đang học</option>
-                                        <option value="2">Đã tốt nghiệp</option>
-                                        <option value="3">Tạm dừng</option>
-                                        <option value="4">Bỏ học</option>
-                                        <option value="5">Chuyển đi</option>
-                                        <option value="6">Khác</option>
-                                    </select>
-                                </div>
-
                                 <div>
                                     <label class="block text-sm font-semibold text-slate-700 mb-1">
                                         Ngày hứa
@@ -901,32 +700,8 @@
                                                focus:outline-none focus:ring-2 focus:ring-primary-500">
                                 </div>
 
-                                <div class="md:col-span-2 space-y-3">
-                                    <label class="flex items-center gap-2">
-                                        <input type="checkbox"
-                                            wire:model.defer="new_convert"
-                                            class="w-4 h-4 rounded border-slate-300
-                                                   text-primary-600 focus:ring-primary-500">
-                                        <span class="text-sm font-medium text-slate-700">Tân tòng</span>
-                                    </label>
-
-                                    <label class="flex items-center gap-2">
-                                        <input type="checkbox"
-                                            wire:model.defer="married"
-                                            class="w-4 h-4 rounded border-slate-300
-                                                   text-primary-600 focus:ring-primary-500">
-                                        <span class="text-sm font-medium text-slate-700">Đã lập gia đình</span>
-                                    </label>
-
-                                    <label class="flex items-center gap-2">
-                                        <input type="checkbox"
-                                            wire:model.defer="statistical"
-                                            class="w-4 h-4 rounded border-slate-300
-                                                   text-primary-600 focus:ring-primary-500">
-                                        <span class="text-sm font-medium text-slate-700">Thống kê</span>
-                                    </label>
-
-                                    <label class="flex items-center gap-2">
+                                <div>
+                                    <label class="flex items-center gap-2 p-3 bg-white rounded-xl border border-slate-200">
                                         <input type="checkbox"
                                             wire:model.defer="status"
                                             class="w-4 h-4 rounded border-slate-300
@@ -934,62 +709,6 @@
                                         <span class="text-sm font-medium text-slate-700">Trạng thái hoạt động</span>
                                     </label>
                                 </div>
-                            </div>
-                        </div>
-
-                        {{-- Thông tin qua đời --}}
-                        <div class="bg-slate-50 rounded-xl p-5 border border-slate-200">
-                            <h3 class="text-lg font-bold text-slate-900 mb-4 flex items-center gap-2">
-                                <svg class="w-5 h-5 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                        d="M6 18L18 6M6 6l12 12" />
-                                </svg>
-                                Thông tin qua đời (nếu có)
-                            </h3>
-
-                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                <div class="md:col-span-2">
-                                    <label class="flex items-center gap-2">
-                                        <input type="checkbox"
-                                            wire:model.defer="die_status"
-                                            class="w-4 h-4 rounded border-slate-300
-                                                   text-red-600 focus:ring-red-500">
-                                        <span class="text-sm font-medium text-slate-700">Đã qua đời</span>
-                                    </label>
-                                </div>
-
-                                @if($die_status)
-                                <div>
-                                    <label class="block text-sm text-slate-600 mb-1">Thời gian</label>
-                                    <input type="date" wire:model.defer="die_time"
-                                        class="w-full px-3 py-2 rounded-xl border border-slate-300
-                                               focus:outline-none focus:ring-2 focus:ring-primary-500">
-                                </div>
-
-                                <div>
-                                    <label class="block text-sm text-slate-600 mb-1">Số xổ mất</label>
-                                    <input type="text" wire:model.defer="die_lottery"
-                                        class="w-full px-3 py-2 rounded-xl border border-slate-300
-                                               focus:outline-none focus:ring-2 focus:ring-primary-500"
-                                        placeholder="Số xổ mất">
-                                </div>
-
-                                <div>
-                                    <label class="block text-sm text-slate-600 mb-1">Nơi qua đời</label>
-                                    <input type="text" wire:model.defer="die_death"
-                                        class="w-full px-3 py-2 rounded-xl border border-slate-300
-                                               focus:outline-none focus:ring-2 focus:ring-primary-500"
-                                        placeholder="Địa điểm qua đời">
-                                </div>
-
-                                <div>
-                                    <label class="block text-sm text-slate-600 mb-1">Nơi an táng</label>
-                                    <input type="text" wire:model.defer="die_burial"
-                                        class="w-full px-3 py-2 rounded-xl border border-slate-300
-                                               focus:outline-none focus:ring-2 focus:ring-primary-500"
-                                        placeholder="Địa điểm an táng">
-                                </div>
-                                @endif
                             </div>
                         </div>
 
@@ -1057,4 +776,11 @@
 {{-- Alpine.js for interactions --}}
 @push('scripts')
 <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+<script>
+    document.addEventListener('livewire:init', () => {
+        Livewire.on('print-profile', () => {
+            window.print();
+        });
+    });
+</script>
 @endpush

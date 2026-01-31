@@ -7,34 +7,26 @@ use App\Models\Student;
 use App\Models\Diocese;
 use App\Models\Deanery;
 use App\Models\Parish;
-use App\Models\ParishChildren;
-use App\Models\Holy;
-use App\Models\Ethnic;
-use App\Models\Career;
-use App\Models\Careermanagement;
-use App\Models\Level;
-use App\Models\Position;
-use App\Models\Language;
-use App\Models\Catechist;
-use App\Models\Ethnicmanagement;
 use App\Models\Holymanagement;
-use App\Models\Languagemanagement;
+use App\Models\Ethnicmanagement;
+use App\Models\Careermanagement;
 use App\Models\Levelmanagement;
 use App\Models\Positionmanagement;
+use App\Models\Languagemanagement;
+use App\Models\ParishManagement;
 use App\Models\Teacher;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Validation\Rule;
 
 /**
- * Student Edit/Create Component
- * Form chỉnh sửa/tạo mới học sinh với đầy đủ thông tin
+ * Student Edit/Create Component - Optimized for Catechism Students
+ * 
+ * ✅ CHỈ CÁC TRƯỜNG CÓ TRONG BẢNG STUDENT (học sinh giáo lý)
+ * ❌ ĐÃ LOẠI BỎ: Rước lễ, Xức dầu, Qua đời, Trú quán
  * 
  * Features:
- * - Create/Edit student with all information
- * - Multi-tab form (basic, baptism, more_power, communion, anoint, other)
+ * - Create/Edit student with 4 tabs: basic, baptism, more_power, other
  * - Dynamic dropdowns for locations and relationships
  * - Real-time validation
- * - Auto-save support
  */
 class StudentEdit extends BaseComponent
 {
@@ -49,45 +41,40 @@ class StudentEdit extends BaseComponent
     /** @var bool Loading state */
     public $isLoading = true;
 
-    /** @var string Active tab */
-    public $activeTab = 'basic';
+    /** @var string Active tab - CHỈ 4 TAB */
+    public $activeTab = 'basic'; // basic, baptism, more_power, other
 
     /** @var bool Disable pagination */
     protected $usePagination = false;
 
     // ==================== FORM DATA ====================
 
-    // Basic Info
+    // ========== BASIC INFO ==========
     public $last_name = '';
     public $name = '';
     public $sex = 1;
-    public $birthday = null;
+    public $birthday = '';
     public $phone = '';
     public $email = '';
-    public $cccd = 0;
+    public $cccd = '';
 
-    // Address - Nguyên quán
+    // ✅ Address - CHỈ NGUYÊN QUÁN (student table only)
     public $origin = '';
     public $ward = '';
     public $province = '';
-
-    // Address - Trú quán
-    public $residence = '';
-    public $resi_ward = '';
-    public $resi_province = '';
 
     // Family
     public $father = '';
     public $mother = '';
 
-    // Parish & Class
+    // ========== PARISH & CLASS ==========
     public $diocese_id = null;
     public $deanery_id = null;
     public $parish_id = null;
     public $paid = null; // Parish Children (Giáo họ)
     public $holy = null;
 
-    // Education & Career
+    // ========== EDUCATION & CAREER ==========
     public $ethnic_id = null;
     public $career_id = null;
     public $level_id = null;
@@ -95,53 +82,28 @@ class StudentEdit extends BaseComponent
     public $language_id = null;
     public $professional_level = '';
 
-    // Baptism (Rửa tội)
+    // ========== BAPTISM (Rửa tội) - CÓ TRONG STUDENT ==========
     public $baptism_date = null;
-    public $baptism_number = null;
+    public $baptism_number = '';
     public $baptism_giver_id = null;
     public $baptism_sponsor_id = null;
     public $baptism_diocese_id = null;
     public $baptism_deanery_id = null;
     public $baptism_parish_id = null;
 
-    // More Power (Thêm sức)
+    // ========== MORE POWER (Thêm sức) - CÓ TRONG STUDENT ==========
     public $more_power_date = null;
-    public $more_power_number = null;
+    public $more_power_number = '';
     public $more_power_giver_id = null;
     public $more_power_sponsor_id = null;
     public $more_power_diocese_id = null;
     public $more_power_deanery_id = null;
     public $more_power_parish_id = null;
 
-    // Communion (Rước lễ)
-    public $communion_date = null;
-    public $communion_number = '';
-    public $communion_giver_id = null;
-    public $communion_diocese_id = null;
-    public $communion_deanery_id = null;
-    public $communion_parish_id = null;
-
-    // Anoint (Xức dầu)
-    public $anoint_date = null;
-    public $anoint_status = 0;
-    public $anoint_giver_id = null;
-    public $anoint_note = '';
-
-    // Other Info
-    public $study = 0;
-    public $new_convert = false;
-    public $married = false;
-    public $statistical = false;
+    // ========== OTHER INFO ==========
     public $promise_day = null;
     public $note = '';
     public $status = 1;
-
-    // Die Status
-    public $die_status = 0;
-    public $die_time = null;
-    public $die_lottery = '';
-    public $die_death = '';
-    public $die_burial = '';
 
     // ==================== DROPDOWN DATA ====================
 
@@ -162,111 +124,78 @@ class StudentEdit extends BaseComponent
     public $baptismParishes = [];
     public $morePowerDeaneries = [];
     public $morePowerParishes = [];
-    public $communionDeaneries = [];
-    public $communionParishes = [];
 
     // ==================== VALIDATION ====================
 
     protected function rules()
     {
-        $rules = [
+        return [
             // Basic - Required
-            // 'last_name' => 'required|string|max:255',
-            // 'name' => 'required|string|max:255',
-            'sex' => 'required|in:0,1',
+            'last_name' => 'required|string|max:255',
+            'name' => 'required|string|max:255',
+            'sex' => 'required|in:1,2',
 
             // Basic - Optional
-            'birthday' => 'nullable|date|before:today',
+            'birthday' => 'nullable|string|max:10',
             'phone' => 'nullable|string|max:15',
             'email' => 'nullable|email|max:255',
-            // 'cccd' => 'nullable|string|max:20',
+            'cccd' => 'nullable|integer',
 
-            // Address
-            // 'origin' => 'nullable|string|max:255',
-            // 'ward' => 'nullable|string|max:255',
-            // 'province' => 'nullable|string|max:255',
-            // 'residence' => 'nullable|string|max:255',
-            // 'resi_ward' => 'nullable|string|max:255',
-            // 'resi_province' => 'nullable|string|max:255',
+            // ✅ Address - CHỈ NGUYÊN QUÁN
+            'origin' => 'nullable|string|max:255',
+            'ward' => 'nullable|integer',
+            'province' => 'nullable|string|max:255',
 
             // Family
-            // 'father' => 'nullable|string|max:255',
-            // 'mother' => 'nullable|string|max:255',
+            'father' => 'nullable|string|max:255',
+            'mother' => 'nullable|string|max:255',
 
             // Parish - Required
-            // 'diocese_id' => 'required|exists:diocese,id',
-            // 'deanery_id' => 'required|exists:deanerys,id',
-            // 'parish_id' => 'required|exists:parish,id',
+            'diocese_id' => 'required|exists:dioceses,id',
+            'deanery_id' => 'required|exists:deanerys,id',
+            'parish_id' => 'required|exists:parish_managements,id',
 
             // Parish - Optional
-            // 'paid' => 'nullable|exists:parishs,id',
-            // 'holy' => 'nullable|exists:holymanagements,id',
+            'paid' => 'nullable|exists:parishs,id',
+            'holy' => 'nullable|exists:holymanagements,id',
 
             // Education & Career
-            // 'ethnic_id' => 'nullable|exists:ethnic,id',
-            // 'career_id' => 'nullable|exists:career,id',
-            // 'level_id' => 'nullable|exists:level,id',
-            // 'position_id' => 'nullable|exists:position,id',
-            // 'language_id' => 'nullable|exists:language,id',
-            // 'professional_level' => 'nullable|string|max:255',
+            'ethnic_id' => 'nullable|exists:ethnicmanagements,id',
+            'career_id' => 'nullable|exists:careermanagements,id',
+            'level_id' => 'nullable|exists:levelmanagements,id',
+            'position_id' => 'nullable|exists:positionmanagements,id',
+            'language_id' => 'nullable|exists:languagemanagements,id',
+            'professional_level' => 'nullable|string|max:255',
 
-            // Baptism
+            // ✅ Baptism - CÓ TRONG STUDENT
             'baptism_date' => 'nullable|date',
-            // 'baptism_number' => 'nullable|string|max:50',
-            'baptism_giver_id' => 'nullable|exists:catechist,id',
-            'baptism_sponsor_id' => 'nullable|exists:catechist,id',
-            'baptism_diocese_id' => 'nullable|exists:diocese,id',
+            'baptism_number' => 'nullable|integer',
+            'baptism_giver_id' => 'nullable|exists:teacher,id',
+            'baptism_sponsor_id' => 'nullable|exists:teacher,id',
+            'baptism_diocese_id' => 'nullable|exists:dioceses,id',
             'baptism_deanery_id' => 'nullable|exists:deanerys,id',
-            'baptism_parish_id' => 'nullable|exists:parish,id',
+            'baptism_parish_id' => 'nullable|exists:parish_managements,id',
 
-            // More Power
+            // ✅ More Power - CÓ TRONG STUDENT
             'more_power_date' => 'nullable|date',
-            // 'more_power_number' => 'nullable|string|max:50',
-            'more_power_giver_id' => 'nullable|exists:catechist,id',
-            'more_power_sponsor_id' => 'nullable|exists:catechist,id',
-            'more_power_diocese_id' => 'nullable|exists:diocese,id',
+            'more_power_number' => 'nullable|integer',
+            'more_power_giver_id' => 'nullable|exists:teacher,id',
+            'more_power_sponsor_id' => 'nullable|exists:teacher,id',
+            'more_power_diocese_id' => 'nullable|exists:dioceses,id',
             'more_power_deanery_id' => 'nullable|exists:deanerys,id',
-            'more_power_parish_id' => 'nullable|exists:parish,id',
-
-            // Communion
-            'communion_date' => 'nullable|date',
-            'communion_number' => 'nullable|string|max:50',
-            'communion_giver_id' => 'nullable|exists:catechist,id',
-            'communion_diocese_id' => 'nullable|exists:diocese,id',
-            'communion_deanery_id' => 'nullable|exists:deanerys,id',
-            'communion_parish_id' => 'nullable|exists:parish,id',
-
-            // Anoint
-            'anoint_date' => 'nullable|date',
-            'anoint_status' => 'nullable|integer|in:0,1,2',
-            'anoint_giver_id' => 'nullable|exists:catechist,id',
-            'anoint_note' => 'nullable|string|max:500',
+            'more_power_parish_id' => 'nullable|exists:parish_managements,id',
 
             // Other
-            'study' => 'nullable|integer|in:0,1,2,3,4,5,6',
-            'new_convert' => 'boolean',
-            'married' => 'boolean',
-            'statistical' => 'boolean',
             'promise_day' => 'nullable|date',
-            'note' => 'nullable|string|max:1000',
+            'note' => 'nullable|string|max:255',
             'status' => 'required|boolean',
-
-            // Die Status
-            'die_status' => 'required|boolean',
-            'die_time' => 'nullable|date',
-            'die_lottery' => 'nullable|string|max:50',
-            'die_death' => 'nullable|string|max:255',
-            'die_burial' => 'nullable|string|max:255',
         ];
-
-        return $rules;
     }
 
     protected $messages = [
         'last_name.required' => 'Vui lòng nhập họ',
         'name.required' => 'Vui lòng nhập tên',
         'sex.required' => 'Vui lòng chọn giới tính',
-        'birthday.before' => 'Ngày sinh phải trước ngày hôm nay',
         'email.email' => 'Email không hợp lệ',
         'diocese_id.required' => 'Vui lòng chọn giáo phận',
         'deanery_id.required' => 'Vui lòng chọn giáo hạt',
@@ -284,9 +213,6 @@ class StudentEdit extends BaseComponent
 
     // ==================== LIFECYCLE ====================
 
-    /**
-     * Mount component
-     */
     public function mount($id = null): void
     {
         $this->studentId = $id ? (int) $id : null;
@@ -298,9 +224,6 @@ class StudentEdit extends BaseComponent
         $this->requireManager();
     }
 
-    /**
-     * Load initial data
-     */
     protected function loadInitialData(): void
     {
         try {
@@ -323,11 +246,12 @@ class StudentEdit extends BaseComponent
     // ==================== DATA LOADING ====================
 
     /**
-     * Load all dropdown data
+     * ✅ Load only necessary dropdown data
      */
     protected function loadDropdownData(): void
     {
         $this->dioceses = Diocese::orderBy('name')->get(['id', 'name']);
+        // $this->deaneries = Deanery::orderBy('name')->get(['id', 'name']);
         $this->holies = Holymanagement::orderBy('name')->get(['id', 'name']);
         $this->ethnics = Ethnicmanagement::orderBy('name')->get(['id', 'name']);
         $this->careers = Careermanagement::orderBy('name')->get(['id', 'name']);
@@ -338,7 +262,7 @@ class StudentEdit extends BaseComponent
     }
 
     /**
-     * Load student data for editing
+     * ✅ Load student data - CHỈ CÁC TRƯỜNG CÓ TRONG STUDENT TABLE
      */
     protected function loadStudent(): void
     {
@@ -353,21 +277,18 @@ class StudentEdit extends BaseComponent
             'levelRelation',
             'positionRelation',
             'languageRelation',
+            // ✅ Baptism relationships
             'baptismGiver',
             'baptismSponsor',
             'baptismDiocese',
             'baptismDeanery',
             'baptismParish',
+            // ✅ More Power relationships
             'morePowerGiver',
             'morePowerSponsor',
             'morePowerDiocese',
             'morePowerDeanery',
             'morePowerParish',
-            'communionGiver',
-            'communionDiocese',
-            'communionDeanery',
-            'communionParish',
-            'anointGiver',
         ])->findOrFail($this->studentId);
 
         // Check permission
@@ -375,12 +296,11 @@ class StudentEdit extends BaseComponent
             abort(403, 'Bạn không có quyền chỉnh sửa học sinh này');
         }
 
-        // Map data to properties
         $this->mapStudentToForm($student);
     }
 
     /**
-     * Map student model to form properties
+     * ✅ Map ONLY fields that exist in student table
      */
     protected function mapStudentToForm(Student $student): void
     {
@@ -388,107 +308,115 @@ class StudentEdit extends BaseComponent
         $this->last_name = $student->last_name ?? '';
         $this->name = $student->name ?? '';
         $this->sex = $student->sex ?? 1;
-        // $this->birthday = $student->birthday ? $student->birthday->format('Y-m-d') : null;
         $this->birthday = $student->birthday ?? '';
-        $this->phone = $student->phone ?? '';
+        $this->phone = $student->phone_number ?? '';
         $this->email = $student->email ?? '';
-        $this->cccd = $student->cccd ?? 0;
+        $this->cccd = $student->cccd ?? '';
 
-        // Address
+        // ✅ Address - CHỈ NGUYÊN QUÁN
         $this->origin = $student->origin ?? '';
         $this->ward = $student->ward ?? '';
         $this->province = $student->province ?? '';
-        $this->residence = $student->residence ?? '';
-        $this->resi_ward = $student->resi_ward ?? '';
-        $this->resi_province = $student->resi_province ?? '';
 
         // Family
         $this->father = $student->father ?? '';
         $this->mother = $student->mother ?? '';
 
         // Parish & Class
-        $this->diocese_id = $student->diocese_id;
-        $this->deanery_id = $student->deanery_id;
+        $this->diocese_id = $student->did;
+        $this->deanery_id = $student->deid;
         $this->parish_id = $student->pid;
         $this->paid = $student->paid;
         $this->holy = $student->holy;
 
         // Load dependent dropdowns
+
         if ($this->diocese_id) {
-            $this->updatedDioceseId();
+            $this->loadDeaneries();
         }
+
         if ($this->deanery_id) {
-            $this->updatedDeaneryId();
+            $this->loadParishes();
         }
+
         if ($this->parish_id) {
-            $this->updatedParishId();
+            $this->loadParishChildren();
         }
 
         // Education & Career
-        $this->ethnic_id = $student->ethnic_id;
-        $this->career_id = $student->career_id;
-        $this->level_id = $student->level_id;
-        $this->position_id = $student->position_id;
-        $this->language_id = $student->language_id;
+        $this->ethnic_id = $student->ethnic;
+        $this->career_id = $student->career;
+        $this->level_id = $student->level;
+        $this->position_id = $student->position;
+        $this->language_id = $student->language;
         $this->professional_level = $student->professional_level ?? '';
 
-        // Baptism
+        // ✅ Baptism - CÓ TRONG STUDENT
         $this->baptism_date = $student->baptism_date ? $student->baptism_date->format('Y-m-d') : null;
-        $this->baptism_number = $student->baptism_number ?? null;
-        $this->baptism_giver_id = $student->baptism_giver_id;
-        $this->baptism_sponsor_id = $student->baptism_sponsor_id;
-        $this->baptism_diocese_id = $student->baptism_diocese_id;
-        $this->baptism_deanery_id = $student->baptism_deanery_id;
-        $this->baptism_parish_id = $student->baptism_parish_id;
+        $this->baptism_number = $student->baptism_number ?? '';
+        $this->baptism_giver_id = $student->baptism_giver;
+        $this->baptism_sponsor_id = $student->baptism_sponsor;
+        $this->baptism_diocese_id = $student->baptism_dioceses;
+        $this->baptism_deanery_id = $student->baptism_deanerys;
+        $this->baptism_parish_id = $student->baptism_parish;
 
-        // More Power
+        // Load baptism dropdowns
+        // if ($this->baptism_diocese_id) {
+        //     $this->updatedBaptismDioceseId();
+        // }
+        // if ($this->baptism_deanery_id) {
+        //     $this->updatedBaptismDeaneryId();
+        // }
+
+        if ($this->baptism_diocese_id) {
+            $this->loadBaptismDeaneries();
+        }
+
+        if ($this->baptism_deanery_id) {
+            $this->loadBaptismParishes();
+        }
+
+        // ✅ More Power - CÓ TRONG STUDENT
         $this->more_power_date = $student->more_power_date ? $student->more_power_date->format('Y-m-d') : null;
-        $this->more_power_number = $student->more_power_number ?? null;
-        $this->more_power_giver_id = $student->more_power_giver_id;
-        $this->more_power_sponsor_id = $student->more_power_sponsor_id;
-        $this->more_power_diocese_id = $student->more_power_diocese_id;
-        $this->more_power_deanery_id = $student->more_power_deanery_id;
-        $this->more_power_parish_id = $student->more_power_parish_id;
+        $this->more_power_number = $student->more_power_number ?? '';
+        $this->more_power_giver_id = $student->more_power_giver;
+        $this->more_power_sponsor_id = $student->more_power_sponsor;
+        $this->more_power_diocese_id = $student->more_power_dioceses;
+        $this->more_power_deanery_id = $student->more_power_deanerys;
+        $this->more_power_parish_id = $student->more_power_parish;
 
-        // Communion
-        $this->communion_date = $student->communion_date ? $student->communion_date->format('Y-m-d') : null;
-        $this->communion_number = $student->communion_number ?? '';
-        $this->communion_giver_id = $student->communion_giver_id;
-        $this->communion_diocese_id = $student->communion_diocese_id;
-        $this->communion_deanery_id = $student->communion_deanery_id;
-        $this->communion_parish_id = $student->communion_parish_id;
+        // Load more power dropdowns
+        // if ($this->more_power_diocese_id) {
+        //     $this->updatedMorePowerDioceseId();
+        // }
+        // if ($this->more_power_deanery_id) {
+        //     $this->updatedMorePowerDeaneryId();
+        // }
 
-        // Anoint
-        $this->anoint_date = $student->anoint_date ? $student->anoint_date->format('Y-m-d') : null;
-        $this->anoint_status = $student->anoint_status ?? 0;
-        $this->anoint_giver_id = $student->anoint_giver_id;
-        $this->anoint_note = $student->anoint_note ?? '';
+        if ($this->more_power_diocese_id) {
+            $this->loadMorePowerDeaneries();
+        }
+
+        if ($this->more_power_deanery_id) {
+            $this->loadMorePowerParishes();
+        }
 
         // Other
-        $this->study = $student->study ?? 0;
-        $this->new_convert = (bool) $student->new_convert;
-        $this->married = (bool) $student->married;
-        $this->statistical = (bool) $student->statistical;
         $this->promise_day = $student->promise_day ? $student->promise_day->format('Y-m-d') : null;
         $this->note = $student->note ?? '';
         $this->status = $student->status ?? 1;
 
-        // Die Status
-        $this->die_status = $student->die_status ?? 0;
-        $this->die_time = $student->die_time ? $student->die_time->format('Y-m-d') : null;
-        $this->die_lottery = $student->die_lottery ?? '';
-        $this->die_death = $student->die_death ?? '';
-        $this->die_burial = $student->die_burial ?? '';
+        // dd($this->deanery_id);
     }
 
     /**
-     * Initialize form for new student
+     * ✅ Initialize form for new student
      */
     protected function initializeNewStudent(): void
     {
         // Set default parish from session if available
         if ($this->parishId) {
-            $parish = Parish::with('diocese', 'deanery')->find($this->parishId);
+            $parish = ParishManagement::with('diocese', 'deanery')->find($this->parishId);
 
             if ($parish) {
                 $this->diocese_id = $parish->diocese;
@@ -505,39 +433,28 @@ class StudentEdit extends BaseComponent
 
     // ==================== PROPERTY UPDATERS ====================
 
-    /**
-     * When diocese changes, reload deaneries
-     */
     public function updatedDioceseId(): void
     {
         $this->deaneries = $this->diocese_id
-            ? Deanery::where('diocese', $this->diocese_id)->orderBy('name')->get(['id', 'name'])
+            ? Deanery::where('did', $this->diocese_id)->orderBy('name')->get(['id', 'name'])
             : [];
 
-        // Reset dependent fields
         $this->deanery_id = null;
         $this->parish_id = null;
         $this->parishes = [];
         $this->parishChildren = [];
     }
 
-    /**
-     * When deanery changes, reload parishes
-     */
     public function updatedDeaneryId(): void
     {
         $this->parishes = $this->deanery_id
-            ? Parish::where('deanerys', $this->deanery_id)->orderBy('name')->get(['id', 'name'])
+            ? ParishManagement::where('deanerys', $this->deanery_id)->orderBy('name')->get(['id', 'name'])
             : [];
 
-        // Reset dependent fields
         $this->parish_id = null;
         $this->parishChildren = [];
     }
 
-    /**
-     * When parish changes, reload parish children
-     */
     public function updatedParishId(): void
     {
         $this->parishChildren = $this->parish_id
@@ -545,13 +462,37 @@ class StudentEdit extends BaseComponent
             : [];
     }
 
-    /**
-     * When baptism diocese changes
-     */
+    protected function loadDeaneries(): void
+    {
+        $this->deaneries = $this->diocese_id
+            ? Deanery::where('did', $this->diocese_id)
+            ->orderBy('name')
+            ->get(['id', 'name'])
+            : [];
+    }
+
+    protected function loadParishes(): void
+    {
+        $this->parishes = $this->deanery_id
+            ? ParishManagement::where('deanerys', $this->deanery_id)
+            ->orderBy('name')
+            ->get(['id', 'name'])
+            : [];
+    }
+
+    protected function loadParishChildren(): void
+    {
+        $this->parishChildren = $this->parish_id
+            ? Parish::where('pid', $this->parish_id)
+            ->orderBy('name')
+            ->get(['id', 'name'])
+            : [];
+    }
+
     public function updatedBaptismDioceseId(): void
     {
         $this->baptismDeaneries = $this->baptism_diocese_id
-            ? Deanery::where('diocese', $this->baptism_diocese_id)->orderBy('name')->get(['id', 'name'])
+            ? Deanery::where('did', $this->baptism_diocese_id)->orderBy('name')->get(['id', 'name'])
             : [];
 
         $this->baptism_deanery_id = null;
@@ -559,25 +500,38 @@ class StudentEdit extends BaseComponent
         $this->baptismParishes = [];
     }
 
-    /**
-     * When baptism deanery changes
-     */
     public function updatedBaptismDeaneryId(): void
     {
         $this->baptismParishes = $this->baptism_deanery_id
-            ? Parish::where('deanerys', $this->baptism_deanery_id)->orderBy('name')->get(['id', 'name'])
+            ? ParishManagement::where('deanerys', $this->baptism_deanery_id)->orderBy('name')->get(['id', 'name'])
             : [];
 
         $this->baptism_parish_id = null;
     }
 
-    /**
-     * When more power diocese changes
-     */
+    protected function loadBaptismDeaneries(): void
+    {
+        $this->baptismDeaneries = $this->baptism_diocese_id
+            ? Deanery::where('did', $this->baptism_diocese_id)
+            ->orderBy('name')
+            ->get(['id', 'name'])
+            : [];
+    }
+
+    protected function loadBaptismParishes(): void
+    {
+        $this->baptismParishes = $this->baptism_deanery_id
+            ? ParishManagement::where('deanerys', $this->baptism_deanery_id)
+            ->orderBy('name')
+            ->get(['id', 'name'])
+            : [];
+    }
+
+
     public function updatedMorePowerDioceseId(): void
     {
         $this->morePowerDeaneries = $this->more_power_diocese_id
-            ? Deanery::where('diocese', $this->more_power_diocese_id)->orderBy('name')->get(['id', 'name'])
+            ? Deanery::where('did', $this->more_power_diocese_id)->orderBy('name')->get(['id', 'name'])
             : [];
 
         $this->more_power_deanery_id = null;
@@ -585,52 +539,41 @@ class StudentEdit extends BaseComponent
         $this->morePowerParishes = [];
     }
 
-    /**
-     * When more power deanery changes
-     */
     public function updatedMorePowerDeaneryId(): void
     {
         $this->morePowerParishes = $this->more_power_deanery_id
-            ? Parish::where('deanerys', $this->more_power_deanery_id)->orderBy('name')->get(['id', 'name'])
+            ? ParishManagement::where('deanerys', $this->more_power_deanery_id)->orderBy('name')->get(['id', 'name'])
             : [];
 
         $this->more_power_parish_id = null;
     }
 
-    /**
-     * When communion diocese changes
-     */
-    public function updatedCommunionDioceseId(): void
+    protected function loadMorePowerDeaneries(): void
     {
-        $this->communionDeaneries = $this->communion_diocese_id
-            ? Deanery::where('diocese', $this->communion_diocese_id)->orderBy('name')->get(['id', 'name'])
+        $this->morePowerDeaneries = $this->more_power_diocese_id
+            ? Deanery::where('did', $this->more_power_diocese_id)
+            ->orderBy('name')
+            ->get(['id', 'name'])
             : [];
-
-        $this->communion_deanery_id = null;
-        $this->communion_parish_id = null;
-        $this->communionParishes = [];
     }
 
-    /**
-     * When communion deanery changes
-     */
-    public function updatedCommunionDeaneryId(): void
+    protected function loadMorePowerParishes(): void
     {
-        $this->communionParishes = $this->communion_deanery_id
-            ? Parish::where('deanerys', $this->communion_deanery_id)->orderBy('name')->get(['id', 'name'])
+        $this->morePowerParishes = $this->more_power_deanery_id
+            ? ParishManagement::where('deanerys', $this->more_power_deanery_id)
+            ->orderBy('name')
+            ->get(['id', 'name'])
             : [];
-
-        $this->communion_parish_id = null;
     }
 
     // ==================== TAB NAVIGATION ====================
 
     /**
-     * Switch active tab
+     * ✅ Switch tab - CHỈ 4 TAB
      */
     public function switchTab(string $tab): void
     {
-        $allowedTabs = ['basic', 'baptism', 'more_power', 'communion', 'anoint', 'other'];
+        $allowedTabs = ['basic', 'baptism', 'more_power', 'other'];
 
         if (in_array($tab, $allowedTabs)) {
             $this->activeTab = $tab;
@@ -640,97 +583,78 @@ class StudentEdit extends BaseComponent
     // ==================== ACTIONS ====================
 
     /**
-     * Save student data
+     * ✅ Save student - CHỈ CÁC TRƯỜNG CÓ TRONG STUDENT TABLE
      */
     public function save(): void
     {
         $this->requireManager();
 
-        // Validate current tab or all data
         $this->validate();
 
         try {
             DB::beginTransaction();
 
-            // Create or update student
             $student = $this->isEdit
                 ? Student::findOrFail($this->studentId)
                 : new Student();
 
-            // Fill basic data
+            // ✅ Fill ONLY fields that exist in student table
             $student->fill([
+                // Basic
                 'last_name' => $this->last_name,
                 'name' => $this->name,
                 'sex' => $this->sex,
                 'birthday' => $this->birthday,
-                'phone' => $this->phone,
+                'phone_number' => $this->phone,
                 'email' => $this->email,
-                'cccd' => $this->cccd,
+                'cccd' => $this->cccd ? (int) $this->cccd : null,
 
+                // ✅ Address - CHỈ NGUYÊN QUÁN
                 'origin' => $this->origin,
-                'ward' => $this->ward,
+                'ward' => $this->ward ? (int) $this->ward : null,
                 'province' => $this->province,
-                'residence' => $this->residence,
-                'resi_ward' => $this->resi_ward,
-                'resi_province' => $this->resi_province,
 
+                // Family
                 'father' => $this->father,
                 'mother' => $this->mother,
 
-                'diocese_id' => $this->diocese_id,
-                'deanery_id' => $this->deanery_id,
+                // Parish
+                'did' => $this->diocese_id,
+                'deid' => $this->deanery_id,
                 'pid' => $this->parish_id,
                 'paid' => $this->paid,
                 'holy' => $this->holy,
 
-                'ethnic_id' => $this->ethnic_id,
-                'career_id' => $this->career_id,
-                'level_id' => $this->level_id,
-                'position_id' => $this->position_id,
-                'language_id' => $this->language_id,
+                // Education & Career
+                'ethnic' => $this->ethnic_id,
+                'career' => $this->career_id,
+                'level' => $this->level_id,
+                'position' => $this->position_id,
+                'language' => $this->language_id,
                 'professional_level' => $this->professional_level,
 
+                // ✅ Baptism
                 'baptism_date' => $this->baptism_date,
-                'baptism_number' => $this->baptism_number,
-                'baptism_giver_id' => $this->baptism_giver_id,
-                'baptism_sponsor_id' => $this->baptism_sponsor_id,
-                'baptism_diocese_id' => $this->baptism_diocese_id,
-                'baptism_deanery_id' => $this->baptism_deanery_id,
-                'baptism_parish_id' => $this->baptism_parish_id,
+                'baptism_number' => $this->baptism_number ? (int) $this->baptism_number : null,
+                'baptism_giver' => $this->baptism_giver_id,
+                'baptism_sponsor' => $this->baptism_sponsor_id,
+                'baptism_dioceses' => $this->baptism_diocese_id,
+                'baptism_deanerys' => $this->baptism_deanery_id,
+                'baptism_parish' => $this->baptism_parish_id,
 
+                // ✅ More Power
                 'more_power_date' => $this->more_power_date,
-                'more_power_number' => $this->more_power_number,
-                'more_power_giver_id' => $this->more_power_giver_id,
-                'more_power_sponsor_id' => $this->more_power_sponsor_id,
-                'more_power_diocese_id' => $this->more_power_diocese_id,
-                'more_power_deanery_id' => $this->more_power_deanery_id,
-                'more_power_parish_id' => $this->more_power_parish_id,
+                'more_power_number' => $this->more_power_number ? (int) $this->more_power_number : null,
+                'more_power_giver' => $this->more_power_giver_id,
+                'more_power_sponsor' => $this->more_power_sponsor_id,
+                'more_power_dioceses' => $this->more_power_diocese_id,
+                'more_power_deanerys' => $this->more_power_deanery_id,
+                'more_power_parish' => $this->more_power_parish_id,
 
-                'communion_date' => $this->communion_date,
-                'communion_number' => $this->communion_number,
-                'communion_giver_id' => $this->communion_giver_id,
-                'communion_diocese_id' => $this->communion_diocese_id,
-                'communion_deanery_id' => $this->communion_deanery_id,
-                'communion_parish_id' => $this->communion_parish_id,
-
-                'anoint_date' => $this->anoint_date,
-                'anoint_status' => $this->anoint_status,
-                'anoint_giver_id' => $this->anoint_giver_id,
-                'anoint_note' => $this->anoint_note,
-
-                'study' => $this->study,
-                'new_convert' => $this->new_convert,
-                'married' => $this->married,
-                'statistical' => $this->statistical,
+                // Other
                 'promise_day' => $this->promise_day,
                 'note' => $this->note,
                 'status' => $this->status,
-
-                'die_status' => $this->die_status,
-                'die_time' => $this->die_time,
-                'die_lottery' => $this->die_lottery,
-                'die_death' => $this->die_death,
-                'die_burial' => $this->die_burial,
             ]);
 
             $student->save();
@@ -757,23 +681,17 @@ class StudentEdit extends BaseComponent
         }
     }
 
-    /**
-     * Cancel and go back
-     */
     public function cancel(): void
     {
         if ($this->isEdit) {
             $this->redirect(route('students.show', $this->studentId));
         } else {
-            $this->redirect(route('students.idnex'));
+            $this->redirect(route('classes.index'));
         }
     }
 
     // ==================== RENDER ====================
 
-    /**
-     * Render component
-     */
     public function render()
     {
         return view('livewire.student.student-edit', [

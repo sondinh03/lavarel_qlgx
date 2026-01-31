@@ -73,7 +73,7 @@ class Student extends Model
     const HOLY_BAPTISM = 1;
     const HOLY_CONFIRMATION = 2;
     const HOLY_MARRIAGE = 3;
-    
+
     const ANOINT_STATUS_CRITICAL = 1; // Nguy tử
     const ANOINT_STATUS_NORMAL = 2;   // Thông thường
 
@@ -122,7 +122,7 @@ class Student extends Model
     {
         return $this->belongsTo(Parish::class, 'paid');
     }
-    
+
     /**
      * Dân tộc
      */
@@ -130,7 +130,7 @@ class Student extends Model
     {
         return $this->belongsTo(Ethnicmanagement::class, 'ethnic');
     }
-    
+
     /**
      * Nghề nghiệp
      */
@@ -138,7 +138,7 @@ class Student extends Model
     {
         return $this->belongsTo(Careermanagement::class, 'career');
     }
-    
+
     /**
      * Trình độ
      */
@@ -146,7 +146,7 @@ class Student extends Model
     {
         return $this->belongsTo(Levelmanagement::class, 'level');
     }
-    
+
     /**
      * Chức vụ
      */
@@ -154,7 +154,7 @@ class Student extends Model
     {
         return $this->belongsTo(Positionmanagement::class, 'position');
     }
-    
+
     /**
      * Ngôn ngữ
      */
@@ -206,7 +206,7 @@ class Student extends Model
      */
     public function baptismParish(): BelongsTo
     {
-        return $this->belongsTo(Parish::class, 'baptism_parish');
+        return $this->belongsTo(ParishManagement::class, 'baptism_parish');
     }
 
     /*
@@ -252,7 +252,7 @@ class Student extends Model
      */
     public function morePowerParish(): BelongsTo
     {
-        return $this->belongsTo(Parish::class, 'more_power_parish');
+        return $this->belongsTo(ParishManagement::class, 'more_power_parish');
     }
 
     /*
@@ -399,9 +399,30 @@ class Student extends Model
      */
     public function getBirthdayAttribute($value)
     {
-        return $value
-            ? Carbon::parse($value)->format('d/m/Y')
-            : '-';
+        // return $value
+        //     ? Carbon::parse($value)->format('d/m/Y')
+        //     : '-';
+        return $value ?: null;
+    }
+
+    public function getBirthdayTextAttribute()
+    {
+        if (!$this->birthday) return '-';
+
+        return Carbon::parse($this->birthday)->format('d/m/Y');
+    }
+
+
+    // Khi set vào DB
+    public function setBirthdayAttribute($value)
+    {
+        if (!$value) {
+            $this->attributes['birthday'] = null;
+            return;
+        }
+
+        $this->attributes['birthday'] = Carbon::parse($value)
+            ->format('Y-m-d');
     }
 
     /*
@@ -566,7 +587,7 @@ class Student extends Model
         $slug = slug($this) . config('settings.url_prefix', '');
         return '<a target="_blank" href="' . url($slug) . '"><i class="las la-link"></i>Liên kết</a>';
     }
-    
+
     /**
      * Get anoint status label
      */
@@ -578,7 +599,7 @@ class Student extends Model
             default => '',
         };
     }
-    
+
     /**
      * Get study status label
      */
@@ -633,7 +654,7 @@ class Student extends Model
             self::HOLY_MARRIAGE => 'Hôn phối',
         ];
     }
-    
+
     /**
      * Get anoint status options for select
      */

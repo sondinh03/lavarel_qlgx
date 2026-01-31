@@ -88,7 +88,6 @@
                                     shadow-lg ring-4 ring-primary-50 flex-shrink-0">
                             <?php echo e(mb_substr($student['full_name'], 0, 1, 'UTF-8')); ?>
 
-
                         </div>
 
                         <div class="flex-1 min-w-0">
@@ -117,7 +116,6 @@
 
                     
                     <div class="flex items-center gap-2 flex-shrink-0">
-                        
                         <?php if($isAdmin || $isDecen): ?>
                         <button wire:click="edit"
                             class="inline-flex items-center gap-2 px-4 py-2 rounded-xl 
@@ -147,10 +145,7 @@
                                 </svg>
                             </button>
 
-                            <div x-show="open"
-                                x-cloak
-                                @click.away="open = false"
-                                x-transition
+                            <div x-show="open" x-cloak @click.away="open = false" x-transition
                                 class="absolute right-0 mt-2 w-56 bg-white rounded-xl shadow-xl border border-slate-200 py-2 z-10">
                                 <button wire:click="printProfile"
                                     class="w-full flex items-center gap-3 px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 transition-colors">
@@ -175,7 +170,7 @@
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                             d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                                     </svg>
-                                    Lý lịch cá nhân (Word)
+                                    Lý lịch học sinh (Word)
                                 </button>
                                 <button wire:click="exportBiTich"
                                     class="w-full flex items-center gap-3 px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 transition-colors">
@@ -198,8 +193,6 @@
                     'basic' => ['label' => 'Cơ bản', 'icon' => 'M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z'],
                     'baptism' => ['label' => 'Rửa tội', 'icon' => 'M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253'],
                     'more_power' => ['label' => 'Thêm sức', 'icon' => 'M13 10V3L4 14h7v7l9-11h-7z'],
-                    'communion' => ['label' => 'Rước lễ', 'icon' => 'M12 8v13m0-13V6a2 2 0 112 2h-2zm0 0V5.5A2.5 2.5 0 109.5 8H12zm-7 4h14M5 12a2 2 0 110-4h14a2 2 0 110 4M5 12v7a2 2 0 002 2h10a2 2 0 002-2v-7'],
-                    'anoint' => ['label' => 'Xức dầu', 'icon' => 'M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z'],
                     'other' => ['label' => 'Khác', 'icon' => 'M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z']
                     ]; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $key => $tab): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
                     <button wire:click="switchTab('<?php echo e($key); ?>')"
@@ -315,7 +308,7 @@
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                     d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
                             </svg>
-                            Gia đình
+                            Gia đình & Nguyên quán
                         </h3>
                         <div class="space-y-3">
                             <?php if (isset($component)) { $__componentOriginalc254754b9d5db91d5165876f9d051922ca0066f4 = $component; } ?>
@@ -388,7 +381,7 @@
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                     d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
                             </svg>
-                            Giáo xứ & lớp học
+                            Giáo xứ & Giáo họ
                         </h3>
                         <div class="space-y-3">
                             <?php if (isset($component)) { $__componentOriginalc254754b9d5db91d5165876f9d051922ca0066f4 = $component; } ?>
@@ -440,18 +433,6 @@
 <?php unset($__componentOriginalc254754b9d5db91d5165876f9d051922ca0066f4); ?>
 <?php endif; ?>
                             <?php if (isset($component)) { $__componentOriginalc254754b9d5db91d5165876f9d051922ca0066f4 = $component; } ?>
-<?php $component = $__env->getContainer()->make(Illuminate\View\AnonymousComponent::class, ['view' => 'components.info-row','data' => ['label' => 'Lớp học','value' => $student['lop_name']]]); ?>
-<?php $component->withName('info-row'); ?>
-<?php if ($component->shouldRender()): ?>
-<?php $__env->startComponent($component->resolveView(), $component->data()); ?>
-<?php $component->withAttributes(['label' => 'Lớp học','value' => \Illuminate\View\Compilers\BladeCompiler::sanitizeComponentAttribute($student['lop_name'])]); ?>
-<?php echo $__env->renderComponent(); ?>
-<?php endif; ?>
-<?php if (isset($__componentOriginalc254754b9d5db91d5165876f9d051922ca0066f4)): ?>
-<?php $component = $__componentOriginalc254754b9d5db91d5165876f9d051922ca0066f4; ?>
-<?php unset($__componentOriginalc254754b9d5db91d5165876f9d051922ca0066f4); ?>
-<?php endif; ?>
-                            <?php if (isset($component)) { $__componentOriginalc254754b9d5db91d5165876f9d051922ca0066f4 = $component; } ?>
 <?php $component = $__env->getContainer()->make(Illuminate\View\AnonymousComponent::class, ['view' => 'components.info-row','data' => ['label' => 'Bậc thánh','value' => $student['holy_name']]]); ?>
 <?php $component->withName('info-row'); ?>
 <?php if ($component->shouldRender()): ?>
@@ -466,6 +447,214 @@
                         </div>
                     </div>
 
+                    
+                    <div class="bg-slate-50 rounded-xl p-5 border border-slate-200">
+                        <h3 class="text-lg font-bold text-slate-900 mb-4 flex items-center gap-2">
+                            <svg class="w-5 h-5 text-primary-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+                            </svg>
+                            Quá trình học tập
+                        </h3>
+
+                        <?php if(isset($student['class_history']) && count($student['class_history']) > 0): ?>
+                        <div class="space-y-2">
+                            <?php $__currentLoopData = $student['class_history']; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $class): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                            <div class="flex items-center justify-between p-3 bg-white rounded-lg border border-slate-200">
+                                <div class="flex-1">
+                                    <div class="font-semibold text-slate-900"><?php echo e($class['class_name']); ?></div>
+                                    <div class="text-xs text-slate-500 mt-0.5">
+                                        <?php echo e($class['school_year']); ?> • Tham gia: <?php echo e($class['joined_at']); ?>
+
+                                    </div>
+                                </div>
+                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold <?php echo e($class['status_class']); ?>">
+                                    <?php echo e($class['status_label']); ?>
+
+                                </span>
+                            </div>
+                            <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
+                        </div>
+                        <?php else: ?>
+                        <p class="text-sm text-slate-500 italic">Chưa có lịch sử học tập</p>
+                        <?php endif; ?>
+                    </div>
+                </div>
+                <?php endif; ?>
+
+                
+                <?php if($activeTab === 'baptism'): ?>
+                <div class="max-w-3xl mx-auto">
+                    <div class="bg-gradient-to-br from-blue-50 to-white rounded-xl p-6 border border-blue-200">
+                        <div class="flex items-center gap-3 mb-6">
+                            <div class="w-12 h-12 rounded-xl bg-blue-500 text-white flex items-center justify-center">
+                                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+                                </svg>
+                            </div>
+                            <div>
+                                <h3 class="text-xl font-bold text-slate-900">Bí tích Rửa tội</h3>
+                                <p class="text-sm text-slate-600">Thông tin về bí tích Rửa tội</p>
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <?php if (isset($component)) { $__componentOriginalc254754b9d5db91d5165876f9d051922ca0066f4 = $component; } ?>
+<?php $component = $__env->getContainer()->make(Illuminate\View\AnonymousComponent::class, ['view' => 'components.info-row','data' => ['label' => 'Ngày rửa tội','value' => $student['baptism_date']]]); ?>
+<?php $component->withName('info-row'); ?>
+<?php if ($component->shouldRender()): ?>
+<?php $__env->startComponent($component->resolveView(), $component->data()); ?>
+<?php $component->withAttributes(['label' => 'Ngày rửa tội','value' => \Illuminate\View\Compilers\BladeCompiler::sanitizeComponentAttribute($student['baptism_date'])]); ?>
+<?php echo $__env->renderComponent(); ?>
+<?php endif; ?>
+<?php if (isset($__componentOriginalc254754b9d5db91d5165876f9d051922ca0066f4)): ?>
+<?php $component = $__componentOriginalc254754b9d5db91d5165876f9d051922ca0066f4; ?>
+<?php unset($__componentOriginalc254754b9d5db91d5165876f9d051922ca0066f4); ?>
+<?php endif; ?>
+                            <?php if (isset($component)) { $__componentOriginalc254754b9d5db91d5165876f9d051922ca0066f4 = $component; } ?>
+<?php $component = $__env->getContainer()->make(Illuminate\View\AnonymousComponent::class, ['view' => 'components.info-row','data' => ['label' => 'Số sổ','value' => $student['baptism_number']]]); ?>
+<?php $component->withName('info-row'); ?>
+<?php if ($component->shouldRender()): ?>
+<?php $__env->startComponent($component->resolveView(), $component->data()); ?>
+<?php $component->withAttributes(['label' => 'Số sổ','value' => \Illuminate\View\Compilers\BladeCompiler::sanitizeComponentAttribute($student['baptism_number'])]); ?>
+<?php echo $__env->renderComponent(); ?>
+<?php endif; ?>
+<?php if (isset($__componentOriginalc254754b9d5db91d5165876f9d051922ca0066f4)): ?>
+<?php $component = $__componentOriginalc254754b9d5db91d5165876f9d051922ca0066f4; ?>
+<?php unset($__componentOriginalc254754b9d5db91d5165876f9d051922ca0066f4); ?>
+<?php endif; ?>
+                            <?php if (isset($component)) { $__componentOriginalc254754b9d5db91d5165876f9d051922ca0066f4 = $component; } ?>
+<?php $component = $__env->getContainer()->make(Illuminate\View\AnonymousComponent::class, ['view' => 'components.info-row','data' => ['label' => 'Cha ban bí tích','value' => $student['baptism_giver']]]); ?>
+<?php $component->withName('info-row'); ?>
+<?php if ($component->shouldRender()): ?>
+<?php $__env->startComponent($component->resolveView(), $component->data()); ?>
+<?php $component->withAttributes(['label' => 'Cha ban bí tích','value' => \Illuminate\View\Compilers\BladeCompiler::sanitizeComponentAttribute($student['baptism_giver'])]); ?>
+<?php echo $__env->renderComponent(); ?>
+<?php endif; ?>
+<?php if (isset($__componentOriginalc254754b9d5db91d5165876f9d051922ca0066f4)): ?>
+<?php $component = $__componentOriginalc254754b9d5db91d5165876f9d051922ca0066f4; ?>
+<?php unset($__componentOriginalc254754b9d5db91d5165876f9d051922ca0066f4); ?>
+<?php endif; ?>
+                            <?php if (isset($component)) { $__componentOriginalc254754b9d5db91d5165876f9d051922ca0066f4 = $component; } ?>
+<?php $component = $__env->getContainer()->make(Illuminate\View\AnonymousComponent::class, ['view' => 'components.info-row','data' => ['label' => 'Người đỡ đầu','value' => $student['baptism_sponsor']]]); ?>
+<?php $component->withName('info-row'); ?>
+<?php if ($component->shouldRender()): ?>
+<?php $__env->startComponent($component->resolveView(), $component->data()); ?>
+<?php $component->withAttributes(['label' => 'Người đỡ đầu','value' => \Illuminate\View\Compilers\BladeCompiler::sanitizeComponentAttribute($student['baptism_sponsor'])]); ?>
+<?php echo $__env->renderComponent(); ?>
+<?php endif; ?>
+<?php if (isset($__componentOriginalc254754b9d5db91d5165876f9d051922ca0066f4)): ?>
+<?php $component = $__componentOriginalc254754b9d5db91d5165876f9d051922ca0066f4; ?>
+<?php unset($__componentOriginalc254754b9d5db91d5165876f9d051922ca0066f4); ?>
+<?php endif; ?>
+                            <div class="md:col-span-2">
+                                <?php if (isset($component)) { $__componentOriginalc254754b9d5db91d5165876f9d051922ca0066f4 = $component; } ?>
+<?php $component = $__env->getContainer()->make(Illuminate\View\AnonymousComponent::class, ['view' => 'components.info-row','data' => ['label' => 'Nơi rửa tội','value' => $student['baptism_full_location']]]); ?>
+<?php $component->withName('info-row'); ?>
+<?php if ($component->shouldRender()): ?>
+<?php $__env->startComponent($component->resolveView(), $component->data()); ?>
+<?php $component->withAttributes(['label' => 'Nơi rửa tội','value' => \Illuminate\View\Compilers\BladeCompiler::sanitizeComponentAttribute($student['baptism_full_location'])]); ?>
+<?php echo $__env->renderComponent(); ?>
+<?php endif; ?>
+<?php if (isset($__componentOriginalc254754b9d5db91d5165876f9d051922ca0066f4)): ?>
+<?php $component = $__componentOriginalc254754b9d5db91d5165876f9d051922ca0066f4; ?>
+<?php unset($__componentOriginalc254754b9d5db91d5165876f9d051922ca0066f4); ?>
+<?php endif; ?>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <?php endif; ?>
+
+                
+                <?php if($activeTab === 'more_power'): ?>
+                <div class="max-w-3xl mx-auto">
+                    <div class="bg-gradient-to-br from-yellow-50 to-white rounded-xl p-6 border border-yellow-200">
+                        <div class="flex items-center gap-3 mb-6">
+                            <div class="w-12 h-12 rounded-xl bg-yellow-500 text-white flex items-center justify-center">
+                                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M13 10V3L4 14h7v7l9-11h-7z" />
+                                </svg>
+                            </div>
+                            <div>
+                                <h3 class="text-xl font-bold text-slate-900">Bí tích Thêm sức</h3>
+                                <p class="text-sm text-slate-600">Thông tin về bí tích Thêm sức</p>
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <?php if (isset($component)) { $__componentOriginalc254754b9d5db91d5165876f9d051922ca0066f4 = $component; } ?>
+<?php $component = $__env->getContainer()->make(Illuminate\View\AnonymousComponent::class, ['view' => 'components.info-row','data' => ['label' => 'Ngày thêm sức','value' => $student['more_power_date']]]); ?>
+<?php $component->withName('info-row'); ?>
+<?php if ($component->shouldRender()): ?>
+<?php $__env->startComponent($component->resolveView(), $component->data()); ?>
+<?php $component->withAttributes(['label' => 'Ngày thêm sức','value' => \Illuminate\View\Compilers\BladeCompiler::sanitizeComponentAttribute($student['more_power_date'])]); ?>
+<?php echo $__env->renderComponent(); ?>
+<?php endif; ?>
+<?php if (isset($__componentOriginalc254754b9d5db91d5165876f9d051922ca0066f4)): ?>
+<?php $component = $__componentOriginalc254754b9d5db91d5165876f9d051922ca0066f4; ?>
+<?php unset($__componentOriginalc254754b9d5db91d5165876f9d051922ca0066f4); ?>
+<?php endif; ?>
+                            <?php if (isset($component)) { $__componentOriginalc254754b9d5db91d5165876f9d051922ca0066f4 = $component; } ?>
+<?php $component = $__env->getContainer()->make(Illuminate\View\AnonymousComponent::class, ['view' => 'components.info-row','data' => ['label' => 'Số sổ','value' => $student['more_power_number']]]); ?>
+<?php $component->withName('info-row'); ?>
+<?php if ($component->shouldRender()): ?>
+<?php $__env->startComponent($component->resolveView(), $component->data()); ?>
+<?php $component->withAttributes(['label' => 'Số sổ','value' => \Illuminate\View\Compilers\BladeCompiler::sanitizeComponentAttribute($student['more_power_number'])]); ?>
+<?php echo $__env->renderComponent(); ?>
+<?php endif; ?>
+<?php if (isset($__componentOriginalc254754b9d5db91d5165876f9d051922ca0066f4)): ?>
+<?php $component = $__componentOriginalc254754b9d5db91d5165876f9d051922ca0066f4; ?>
+<?php unset($__componentOriginalc254754b9d5db91d5165876f9d051922ca0066f4); ?>
+<?php endif; ?>
+                            <?php if (isset($component)) { $__componentOriginalc254754b9d5db91d5165876f9d051922ca0066f4 = $component; } ?>
+<?php $component = $__env->getContainer()->make(Illuminate\View\AnonymousComponent::class, ['view' => 'components.info-row','data' => ['label' => 'Đức cha ban bí tích','value' => $student['more_power_giver']]]); ?>
+<?php $component->withName('info-row'); ?>
+<?php if ($component->shouldRender()): ?>
+<?php $__env->startComponent($component->resolveView(), $component->data()); ?>
+<?php $component->withAttributes(['label' => 'Đức cha ban bí tích','value' => \Illuminate\View\Compilers\BladeCompiler::sanitizeComponentAttribute($student['more_power_giver'])]); ?>
+<?php echo $__env->renderComponent(); ?>
+<?php endif; ?>
+<?php if (isset($__componentOriginalc254754b9d5db91d5165876f9d051922ca0066f4)): ?>
+<?php $component = $__componentOriginalc254754b9d5db91d5165876f9d051922ca0066f4; ?>
+<?php unset($__componentOriginalc254754b9d5db91d5165876f9d051922ca0066f4); ?>
+<?php endif; ?>
+                            <?php if (isset($component)) { $__componentOriginalc254754b9d5db91d5165876f9d051922ca0066f4 = $component; } ?>
+<?php $component = $__env->getContainer()->make(Illuminate\View\AnonymousComponent::class, ['view' => 'components.info-row','data' => ['label' => 'Người đỡ đầu','value' => $student['more_power_sponsor']]]); ?>
+<?php $component->withName('info-row'); ?>
+<?php if ($component->shouldRender()): ?>
+<?php $__env->startComponent($component->resolveView(), $component->data()); ?>
+<?php $component->withAttributes(['label' => 'Người đỡ đầu','value' => \Illuminate\View\Compilers\BladeCompiler::sanitizeComponentAttribute($student['more_power_sponsor'])]); ?>
+<?php echo $__env->renderComponent(); ?>
+<?php endif; ?>
+<?php if (isset($__componentOriginalc254754b9d5db91d5165876f9d051922ca0066f4)): ?>
+<?php $component = $__componentOriginalc254754b9d5db91d5165876f9d051922ca0066f4; ?>
+<?php unset($__componentOriginalc254754b9d5db91d5165876f9d051922ca0066f4); ?>
+<?php endif; ?>
+                            <div class="md:col-span-2">
+                                <?php if (isset($component)) { $__componentOriginalc254754b9d5db91d5165876f9d051922ca0066f4 = $component; } ?>
+<?php $component = $__env->getContainer()->make(Illuminate\View\AnonymousComponent::class, ['view' => 'components.info-row','data' => ['label' => 'Nơi thêm sức','value' => $student['more_power_full_location']]]); ?>
+<?php $component->withName('info-row'); ?>
+<?php if ($component->shouldRender()): ?>
+<?php $__env->startComponent($component->resolveView(), $component->data()); ?>
+<?php $component->withAttributes(['label' => 'Nơi thêm sức','value' => \Illuminate\View\Compilers\BladeCompiler::sanitizeComponentAttribute($student['more_power_full_location'])]); ?>
+<?php echo $__env->renderComponent(); ?>
+<?php endif; ?>
+<?php if (isset($__componentOriginalc254754b9d5db91d5165876f9d051922ca0066f4)): ?>
+<?php $component = $__componentOriginalc254754b9d5db91d5165876f9d051922ca0066f4; ?>
+<?php unset($__componentOriginalc254754b9d5db91d5165876f9d051922ca0066f4); ?>
+<?php endif; ?>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <?php endif; ?>
+
+                
+                <?php if($activeTab === 'other'): ?>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                     
                     <div class="bg-slate-50 rounded-xl p-5 border border-slate-200">
                         <h3 class="text-lg font-bold text-slate-900 mb-4 flex items-center gap-2">
@@ -550,386 +739,17 @@
 <?php endif; ?>
                         </div>
                     </div>
-                </div>
-                <?php endif; ?>
 
-                
-                <?php if($activeTab === 'baptism'): ?>
-                <div class="max-w-3xl mx-auto">
-                    <div class="bg-gradient-to-br from-blue-50 to-white rounded-xl p-6 border border-blue-200">
-                        <div class="flex items-center gap-3 mb-6">
-                            <div class="w-12 h-12 rounded-xl bg-blue-500 text-white flex items-center justify-center">
-                                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                        d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
-                                </svg>
-                            </div>
-                            <div>
-                                <h3 class="text-xl font-bold text-slate-900">Bí tích Rửa tội</h3>
-                                <p class="text-sm text-slate-600">Thông tin về bí tích Rửa tội</p>
-                            </div>
-                        </div>
-
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <?php if (isset($component)) { $__componentOriginalc254754b9d5db91d5165876f9d051922ca0066f4 = $component; } ?>
-<?php $component = $__env->getContainer()->make(Illuminate\View\AnonymousComponent::class, ['view' => 'components.info-row','data' => ['label' => 'Ngày rửa tội','value' => $student['baptism_date'],'icon' => 'calendar']]); ?>
-<?php $component->withName('info-row'); ?>
-<?php if ($component->shouldRender()): ?>
-<?php $__env->startComponent($component->resolveView(), $component->data()); ?>
-<?php $component->withAttributes(['label' => 'Ngày rửa tội','value' => \Illuminate\View\Compilers\BladeCompiler::sanitizeComponentAttribute($student['baptism_date']),'icon' => 'calendar']); ?>
-<?php echo $__env->renderComponent(); ?>
-<?php endif; ?>
-<?php if (isset($__componentOriginalc254754b9d5db91d5165876f9d051922ca0066f4)): ?>
-<?php $component = $__componentOriginalc254754b9d5db91d5165876f9d051922ca0066f4; ?>
-<?php unset($__componentOriginalc254754b9d5db91d5165876f9d051922ca0066f4); ?>
-<?php endif; ?>
-                            <?php if (isset($component)) { $__componentOriginalc254754b9d5db91d5165876f9d051922ca0066f4 = $component; } ?>
-<?php $component = $__env->getContainer()->make(Illuminate\View\AnonymousComponent::class, ['view' => 'components.info-row','data' => ['label' => 'Số sổ','value' => $student['baptism_number'],'icon' => 'hash']]); ?>
-<?php $component->withName('info-row'); ?>
-<?php if ($component->shouldRender()): ?>
-<?php $__env->startComponent($component->resolveView(), $component->data()); ?>
-<?php $component->withAttributes(['label' => 'Số sổ','value' => \Illuminate\View\Compilers\BladeCompiler::sanitizeComponentAttribute($student['baptism_number']),'icon' => 'hash']); ?>
-<?php echo $__env->renderComponent(); ?>
-<?php endif; ?>
-<?php if (isset($__componentOriginalc254754b9d5db91d5165876f9d051922ca0066f4)): ?>
-<?php $component = $__componentOriginalc254754b9d5db91d5165876f9d051922ca0066f4; ?>
-<?php unset($__componentOriginalc254754b9d5db91d5165876f9d051922ca0066f4); ?>
-<?php endif; ?>
-                            <?php if (isset($component)) { $__componentOriginalc254754b9d5db91d5165876f9d051922ca0066f4 = $component; } ?>
-<?php $component = $__env->getContainer()->make(Illuminate\View\AnonymousComponent::class, ['view' => 'components.info-row','data' => ['label' => 'Cha ban bí tích','value' => $student['baptism_giver'],'icon' => 'user']]); ?>
-<?php $component->withName('info-row'); ?>
-<?php if ($component->shouldRender()): ?>
-<?php $__env->startComponent($component->resolveView(), $component->data()); ?>
-<?php $component->withAttributes(['label' => 'Cha ban bí tích','value' => \Illuminate\View\Compilers\BladeCompiler::sanitizeComponentAttribute($student['baptism_giver']),'icon' => 'user']); ?>
-<?php echo $__env->renderComponent(); ?>
-<?php endif; ?>
-<?php if (isset($__componentOriginalc254754b9d5db91d5165876f9d051922ca0066f4)): ?>
-<?php $component = $__componentOriginalc254754b9d5db91d5165876f9d051922ca0066f4; ?>
-<?php unset($__componentOriginalc254754b9d5db91d5165876f9d051922ca0066f4); ?>
-<?php endif; ?>
-                            <?php if (isset($component)) { $__componentOriginalc254754b9d5db91d5165876f9d051922ca0066f4 = $component; } ?>
-<?php $component = $__env->getContainer()->make(Illuminate\View\AnonymousComponent::class, ['view' => 'components.info-row','data' => ['label' => 'Người đỡ đầu','value' => $student['baptism_sponsor'],'icon' => 'user-group']]); ?>
-<?php $component->withName('info-row'); ?>
-<?php if ($component->shouldRender()): ?>
-<?php $__env->startComponent($component->resolveView(), $component->data()); ?>
-<?php $component->withAttributes(['label' => 'Người đỡ đầu','value' => \Illuminate\View\Compilers\BladeCompiler::sanitizeComponentAttribute($student['baptism_sponsor']),'icon' => 'user-group']); ?>
-<?php echo $__env->renderComponent(); ?>
-<?php endif; ?>
-<?php if (isset($__componentOriginalc254754b9d5db91d5165876f9d051922ca0066f4)): ?>
-<?php $component = $__componentOriginalc254754b9d5db91d5165876f9d051922ca0066f4; ?>
-<?php unset($__componentOriginalc254754b9d5db91d5165876f9d051922ca0066f4); ?>
-<?php endif; ?>
-                            <div class="md:col-span-2">
-                                <?php if (isset($component)) { $__componentOriginalc254754b9d5db91d5165876f9d051922ca0066f4 = $component; } ?>
-<?php $component = $__env->getContainer()->make(Illuminate\View\AnonymousComponent::class, ['view' => 'components.info-row','data' => ['label' => 'Nơi rửa tội','value' => $student['baptism_full_location'],'icon' => 'location']]); ?>
-<?php $component->withName('info-row'); ?>
-<?php if ($component->shouldRender()): ?>
-<?php $__env->startComponent($component->resolveView(), $component->data()); ?>
-<?php $component->withAttributes(['label' => 'Nơi rửa tội','value' => \Illuminate\View\Compilers\BladeCompiler::sanitizeComponentAttribute($student['baptism_full_location']),'icon' => 'location']); ?>
-<?php echo $__env->renderComponent(); ?>
-<?php endif; ?>
-<?php if (isset($__componentOriginalc254754b9d5db91d5165876f9d051922ca0066f4)): ?>
-<?php $component = $__componentOriginalc254754b9d5db91d5165876f9d051922ca0066f4; ?>
-<?php unset($__componentOriginalc254754b9d5db91d5165876f9d051922ca0066f4); ?>
-<?php endif; ?>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <?php endif; ?>
-
-                
-                <?php if($activeTab === 'more_power'): ?>
-                <div class="max-w-3xl mx-auto">
-                    <div class="bg-gradient-to-br from-yellow-50 to-white rounded-xl p-6 border border-yellow-200">
-                        <div class="flex items-center gap-3 mb-6">
-                            <div class="w-12 h-12 rounded-xl bg-yellow-500 text-white flex items-center justify-center">
-                                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                        d="M13 10V3L4 14h7v7l9-11h-7z" />
-                                </svg>
-                            </div>
-                            <div>
-                                <h3 class="text-xl font-bold text-slate-900">Bí tích Thêm sức</h3>
-                                <p class="text-sm text-slate-600">Thông tin về bí tích Thêm sức</p>
-                            </div>
-                        </div>
-
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <?php if (isset($component)) { $__componentOriginalc254754b9d5db91d5165876f9d051922ca0066f4 = $component; } ?>
-<?php $component = $__env->getContainer()->make(Illuminate\View\AnonymousComponent::class, ['view' => 'components.info-row','data' => ['label' => 'Ngày thêm sức','value' => $student['more_power_date'],'icon' => 'calendar']]); ?>
-<?php $component->withName('info-row'); ?>
-<?php if ($component->shouldRender()): ?>
-<?php $__env->startComponent($component->resolveView(), $component->data()); ?>
-<?php $component->withAttributes(['label' => 'Ngày thêm sức','value' => \Illuminate\View\Compilers\BladeCompiler::sanitizeComponentAttribute($student['more_power_date']),'icon' => 'calendar']); ?>
-<?php echo $__env->renderComponent(); ?>
-<?php endif; ?>
-<?php if (isset($__componentOriginalc254754b9d5db91d5165876f9d051922ca0066f4)): ?>
-<?php $component = $__componentOriginalc254754b9d5db91d5165876f9d051922ca0066f4; ?>
-<?php unset($__componentOriginalc254754b9d5db91d5165876f9d051922ca0066f4); ?>
-<?php endif; ?>
-                            <?php if (isset($component)) { $__componentOriginalc254754b9d5db91d5165876f9d051922ca0066f4 = $component; } ?>
-<?php $component = $__env->getContainer()->make(Illuminate\View\AnonymousComponent::class, ['view' => 'components.info-row','data' => ['label' => 'Số sổ','value' => $student['more_power_number'],'icon' => 'hash']]); ?>
-<?php $component->withName('info-row'); ?>
-<?php if ($component->shouldRender()): ?>
-<?php $__env->startComponent($component->resolveView(), $component->data()); ?>
-<?php $component->withAttributes(['label' => 'Số sổ','value' => \Illuminate\View\Compilers\BladeCompiler::sanitizeComponentAttribute($student['more_power_number']),'icon' => 'hash']); ?>
-<?php echo $__env->renderComponent(); ?>
-<?php endif; ?>
-<?php if (isset($__componentOriginalc254754b9d5db91d5165876f9d051922ca0066f4)): ?>
-<?php $component = $__componentOriginalc254754b9d5db91d5165876f9d051922ca0066f4; ?>
-<?php unset($__componentOriginalc254754b9d5db91d5165876f9d051922ca0066f4); ?>
-<?php endif; ?>
-                            <?php if (isset($component)) { $__componentOriginalc254754b9d5db91d5165876f9d051922ca0066f4 = $component; } ?>
-<?php $component = $__env->getContainer()->make(Illuminate\View\AnonymousComponent::class, ['view' => 'components.info-row','data' => ['label' => 'Đức cha ban bí tích','value' => $student['more_power_giver'],'icon' => 'user']]); ?>
-<?php $component->withName('info-row'); ?>
-<?php if ($component->shouldRender()): ?>
-<?php $__env->startComponent($component->resolveView(), $component->data()); ?>
-<?php $component->withAttributes(['label' => 'Đức cha ban bí tích','value' => \Illuminate\View\Compilers\BladeCompiler::sanitizeComponentAttribute($student['more_power_giver']),'icon' => 'user']); ?>
-<?php echo $__env->renderComponent(); ?>
-<?php endif; ?>
-<?php if (isset($__componentOriginalc254754b9d5db91d5165876f9d051922ca0066f4)): ?>
-<?php $component = $__componentOriginalc254754b9d5db91d5165876f9d051922ca0066f4; ?>
-<?php unset($__componentOriginalc254754b9d5db91d5165876f9d051922ca0066f4); ?>
-<?php endif; ?>
-                            <?php if (isset($component)) { $__componentOriginalc254754b9d5db91d5165876f9d051922ca0066f4 = $component; } ?>
-<?php $component = $__env->getContainer()->make(Illuminate\View\AnonymousComponent::class, ['view' => 'components.info-row','data' => ['label' => 'Người đỡ đầu','value' => $student['more_power_sponsor'],'icon' => 'user-group']]); ?>
-<?php $component->withName('info-row'); ?>
-<?php if ($component->shouldRender()): ?>
-<?php $__env->startComponent($component->resolveView(), $component->data()); ?>
-<?php $component->withAttributes(['label' => 'Người đỡ đầu','value' => \Illuminate\View\Compilers\BladeCompiler::sanitizeComponentAttribute($student['more_power_sponsor']),'icon' => 'user-group']); ?>
-<?php echo $__env->renderComponent(); ?>
-<?php endif; ?>
-<?php if (isset($__componentOriginalc254754b9d5db91d5165876f9d051922ca0066f4)): ?>
-<?php $component = $__componentOriginalc254754b9d5db91d5165876f9d051922ca0066f4; ?>
-<?php unset($__componentOriginalc254754b9d5db91d5165876f9d051922ca0066f4); ?>
-<?php endif; ?>
-                            <div class="md:col-span-2">
-                                <?php if (isset($component)) { $__componentOriginalc254754b9d5db91d5165876f9d051922ca0066f4 = $component; } ?>
-<?php $component = $__env->getContainer()->make(Illuminate\View\AnonymousComponent::class, ['view' => 'components.info-row','data' => ['label' => 'Nơi thêm sức','value' => $student['more_power_full_location'],'icon' => 'location']]); ?>
-<?php $component->withName('info-row'); ?>
-<?php if ($component->shouldRender()): ?>
-<?php $__env->startComponent($component->resolveView(), $component->data()); ?>
-<?php $component->withAttributes(['label' => 'Nơi thêm sức','value' => \Illuminate\View\Compilers\BladeCompiler::sanitizeComponentAttribute($student['more_power_full_location']),'icon' => 'location']); ?>
-<?php echo $__env->renderComponent(); ?>
-<?php endif; ?>
-<?php if (isset($__componentOriginalc254754b9d5db91d5165876f9d051922ca0066f4)): ?>
-<?php $component = $__componentOriginalc254754b9d5db91d5165876f9d051922ca0066f4; ?>
-<?php unset($__componentOriginalc254754b9d5db91d5165876f9d051922ca0066f4); ?>
-<?php endif; ?>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <?php endif; ?>
-
-                
-                <?php if($activeTab === 'communion'): ?>
-                <div class="max-w-3xl mx-auto">
-                    <div class="bg-gradient-to-br from-green-50 to-white rounded-xl p-6 border border-green-200">
-                        <div class="flex items-center gap-3 mb-6">
-                            <div class="w-12 h-12 rounded-xl bg-green-500 text-white flex items-center justify-center">
-                                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                        d="M12 8v13m0-13V6a2 2 0 112 2h-2zm0 0V5.5A2.5 2.5 0 109.5 8H12zm-7 4h14M5 12a2 2 0 110-4h14a2 2 0 110 4M5 12v7a2 2 0 002 2h10a2 2 0 002-2v-7" />
-                                </svg>
-                            </div>
-                            <div>
-                                <h3 class="text-xl font-bold text-slate-900">Bí tích Rước lễ</h3>
-                                <p class="text-sm text-slate-600">Thông tin về bí tích Rước lễ lần đầu</p>
-                            </div>
-                        </div>
-
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <?php if (isset($component)) { $__componentOriginalc254754b9d5db91d5165876f9d051922ca0066f4 = $component; } ?>
-<?php $component = $__env->getContainer()->make(Illuminate\View\AnonymousComponent::class, ['view' => 'components.info-row','data' => ['label' => 'Ngày rước lễ','value' => $student['communion_date'],'icon' => 'calendar']]); ?>
-<?php $component->withName('info-row'); ?>
-<?php if ($component->shouldRender()): ?>
-<?php $__env->startComponent($component->resolveView(), $component->data()); ?>
-<?php $component->withAttributes(['label' => 'Ngày rước lễ','value' => \Illuminate\View\Compilers\BladeCompiler::sanitizeComponentAttribute($student['communion_date']),'icon' => 'calendar']); ?>
-<?php echo $__env->renderComponent(); ?>
-<?php endif; ?>
-<?php if (isset($__componentOriginalc254754b9d5db91d5165876f9d051922ca0066f4)): ?>
-<?php $component = $__componentOriginalc254754b9d5db91d5165876f9d051922ca0066f4; ?>
-<?php unset($__componentOriginalc254754b9d5db91d5165876f9d051922ca0066f4); ?>
-<?php endif; ?>
-                            <?php if (isset($component)) { $__componentOriginalc254754b9d5db91d5165876f9d051922ca0066f4 = $component; } ?>
-<?php $component = $__env->getContainer()->make(Illuminate\View\AnonymousComponent::class, ['view' => 'components.info-row','data' => ['label' => 'Số sổ','value' => $student['communion_number'],'icon' => 'hash']]); ?>
-<?php $component->withName('info-row'); ?>
-<?php if ($component->shouldRender()): ?>
-<?php $__env->startComponent($component->resolveView(), $component->data()); ?>
-<?php $component->withAttributes(['label' => 'Số sổ','value' => \Illuminate\View\Compilers\BladeCompiler::sanitizeComponentAttribute($student['communion_number']),'icon' => 'hash']); ?>
-<?php echo $__env->renderComponent(); ?>
-<?php endif; ?>
-<?php if (isset($__componentOriginalc254754b9d5db91d5165876f9d051922ca0066f4)): ?>
-<?php $component = $__componentOriginalc254754b9d5db91d5165876f9d051922ca0066f4; ?>
-<?php unset($__componentOriginalc254754b9d5db91d5165876f9d051922ca0066f4); ?>
-<?php endif; ?>
-                            <?php if (isset($component)) { $__componentOriginalc254754b9d5db91d5165876f9d051922ca0066f4 = $component; } ?>
-<?php $component = $__env->getContainer()->make(Illuminate\View\AnonymousComponent::class, ['view' => 'components.info-row','data' => ['label' => 'Cha ban bí tích','value' => $student['communion_giver'],'icon' => 'user']]); ?>
-<?php $component->withName('info-row'); ?>
-<?php if ($component->shouldRender()): ?>
-<?php $__env->startComponent($component->resolveView(), $component->data()); ?>
-<?php $component->withAttributes(['label' => 'Cha ban bí tích','value' => \Illuminate\View\Compilers\BladeCompiler::sanitizeComponentAttribute($student['communion_giver']),'icon' => 'user']); ?>
-<?php echo $__env->renderComponent(); ?>
-<?php endif; ?>
-<?php if (isset($__componentOriginalc254754b9d5db91d5165876f9d051922ca0066f4)): ?>
-<?php $component = $__componentOriginalc254754b9d5db91d5165876f9d051922ca0066f4; ?>
-<?php unset($__componentOriginalc254754b9d5db91d5165876f9d051922ca0066f4); ?>
-<?php endif; ?>
-                            <div class="md:col-span-2">
-                                <?php if (isset($component)) { $__componentOriginalc254754b9d5db91d5165876f9d051922ca0066f4 = $component; } ?>
-<?php $component = $__env->getContainer()->make(Illuminate\View\AnonymousComponent::class, ['view' => 'components.info-row','data' => ['label' => 'Nơi rước lễ','value' => $student['communion_full_location'],'icon' => 'location']]); ?>
-<?php $component->withName('info-row'); ?>
-<?php if ($component->shouldRender()): ?>
-<?php $__env->startComponent($component->resolveView(), $component->data()); ?>
-<?php $component->withAttributes(['label' => 'Nơi rước lễ','value' => \Illuminate\View\Compilers\BladeCompiler::sanitizeComponentAttribute($student['communion_full_location']),'icon' => 'location']); ?>
-<?php echo $__env->renderComponent(); ?>
-<?php endif; ?>
-<?php if (isset($__componentOriginalc254754b9d5db91d5165876f9d051922ca0066f4)): ?>
-<?php $component = $__componentOriginalc254754b9d5db91d5165876f9d051922ca0066f4; ?>
-<?php unset($__componentOriginalc254754b9d5db91d5165876f9d051922ca0066f4); ?>
-<?php endif; ?>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <?php endif; ?>
-
-                
-                <?php if($activeTab === 'anoint'): ?>
-                <div class="max-w-3xl mx-auto">
-                    <div class="bg-gradient-to-br from-red-50 to-white rounded-xl p-6 border border-red-200">
-                        <div class="flex items-center gap-3 mb-6">
-                            <div class="w-12 h-12 rounded-xl bg-red-500 text-white flex items-center justify-center">
-                                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                        d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
-                                </svg>
-                            </div>
-                            <div>
-                                <h3 class="text-xl font-bold text-slate-900">Bí tích Xức dầu</h3>
-                                <p class="text-sm text-slate-600">Thông tin về bí tích Xức dầu bệnh nhân</p>
-                            </div>
-                        </div>
-
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <?php if (isset($component)) { $__componentOriginalc254754b9d5db91d5165876f9d051922ca0066f4 = $component; } ?>
-<?php $component = $__env->getContainer()->make(Illuminate\View\AnonymousComponent::class, ['view' => 'components.info-row','data' => ['label' => 'Ngày xức dầu','value' => $student['anoint_date'],'icon' => 'calendar']]); ?>
-<?php $component->withName('info-row'); ?>
-<?php if ($component->shouldRender()): ?>
-<?php $__env->startComponent($component->resolveView(), $component->data()); ?>
-<?php $component->withAttributes(['label' => 'Ngày xức dầu','value' => \Illuminate\View\Compilers\BladeCompiler::sanitizeComponentAttribute($student['anoint_date']),'icon' => 'calendar']); ?>
-<?php echo $__env->renderComponent(); ?>
-<?php endif; ?>
-<?php if (isset($__componentOriginalc254754b9d5db91d5165876f9d051922ca0066f4)): ?>
-<?php $component = $__componentOriginalc254754b9d5db91d5165876f9d051922ca0066f4; ?>
-<?php unset($__componentOriginalc254754b9d5db91d5165876f9d051922ca0066f4); ?>
-<?php endif; ?>
-                            <?php if (isset($component)) { $__componentOriginalc254754b9d5db91d5165876f9d051922ca0066f4 = $component; } ?>
-<?php $component = $__env->getContainer()->make(Illuminate\View\AnonymousComponent::class, ['view' => 'components.info-row','data' => ['label' => 'Tình trạng','value' => $student['anoint_status'],'icon' => 'status']]); ?>
-<?php $component->withName('info-row'); ?>
-<?php if ($component->shouldRender()): ?>
-<?php $__env->startComponent($component->resolveView(), $component->data()); ?>
-<?php $component->withAttributes(['label' => 'Tình trạng','value' => \Illuminate\View\Compilers\BladeCompiler::sanitizeComponentAttribute($student['anoint_status']),'icon' => 'status']); ?>
-<?php echo $__env->renderComponent(); ?>
-<?php endif; ?>
-<?php if (isset($__componentOriginalc254754b9d5db91d5165876f9d051922ca0066f4)): ?>
-<?php $component = $__componentOriginalc254754b9d5db91d5165876f9d051922ca0066f4; ?>
-<?php unset($__componentOriginalc254754b9d5db91d5165876f9d051922ca0066f4); ?>
-<?php endif; ?>
-                            <?php if (isset($component)) { $__componentOriginalc254754b9d5db91d5165876f9d051922ca0066f4 = $component; } ?>
-<?php $component = $__env->getContainer()->make(Illuminate\View\AnonymousComponent::class, ['view' => 'components.info-row','data' => ['label' => 'Cha ban bí tích','value' => $student['anoint_giver'],'icon' => 'user']]); ?>
-<?php $component->withName('info-row'); ?>
-<?php if ($component->shouldRender()): ?>
-<?php $__env->startComponent($component->resolveView(), $component->data()); ?>
-<?php $component->withAttributes(['label' => 'Cha ban bí tích','value' => \Illuminate\View\Compilers\BladeCompiler::sanitizeComponentAttribute($student['anoint_giver']),'icon' => 'user']); ?>
-<?php echo $__env->renderComponent(); ?>
-<?php endif; ?>
-<?php if (isset($__componentOriginalc254754b9d5db91d5165876f9d051922ca0066f4)): ?>
-<?php $component = $__componentOriginalc254754b9d5db91d5165876f9d051922ca0066f4; ?>
-<?php unset($__componentOriginalc254754b9d5db91d5165876f9d051922ca0066f4); ?>
-<?php endif; ?>
-                            <div class="md:col-span-2">
-                                <?php if (isset($component)) { $__componentOriginalc254754b9d5db91d5165876f9d051922ca0066f4 = $component; } ?>
-<?php $component = $__env->getContainer()->make(Illuminate\View\AnonymousComponent::class, ['view' => 'components.info-row','data' => ['label' => 'Ghi chú','value' => $student['anoint_note'],'icon' => 'note']]); ?>
-<?php $component->withName('info-row'); ?>
-<?php if ($component->shouldRender()): ?>
-<?php $__env->startComponent($component->resolveView(), $component->data()); ?>
-<?php $component->withAttributes(['label' => 'Ghi chú','value' => \Illuminate\View\Compilers\BladeCompiler::sanitizeComponentAttribute($student['anoint_note']),'icon' => 'note']); ?>
-<?php echo $__env->renderComponent(); ?>
-<?php endif; ?>
-<?php if (isset($__componentOriginalc254754b9d5db91d5165876f9d051922ca0066f4)): ?>
-<?php $component = $__componentOriginalc254754b9d5db91d5165876f9d051922ca0066f4; ?>
-<?php unset($__componentOriginalc254754b9d5db91d5165876f9d051922ca0066f4); ?>
-<?php endif; ?>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <?php endif; ?>
-
-                
-                <?php if($activeTab === 'other'): ?>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                     
                     <div class="bg-slate-50 rounded-xl p-5 border border-slate-200">
                         <h3 class="text-lg font-bold text-slate-900 mb-4 flex items-center gap-2">
                             <svg class="w-5 h-5 text-primary-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                    d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                             </svg>
-                            Trạng thái
+                            Thông tin bổ sung
                         </h3>
                         <div class="space-y-3">
-                            <?php if (isset($component)) { $__componentOriginalc254754b9d5db91d5165876f9d051922ca0066f4 = $component; } ?>
-<?php $component = $__env->getContainer()->make(Illuminate\View\AnonymousComponent::class, ['view' => 'components.info-row','data' => ['label' => 'Trình độ học giáo lý','value' => $student['study']]]); ?>
-<?php $component->withName('info-row'); ?>
-<?php if ($component->shouldRender()): ?>
-<?php $__env->startComponent($component->resolveView(), $component->data()); ?>
-<?php $component->withAttributes(['label' => 'Trình độ học giáo lý','value' => \Illuminate\View\Compilers\BladeCompiler::sanitizeComponentAttribute($student['study'])]); ?>
-<?php echo $__env->renderComponent(); ?>
-<?php endif; ?>
-<?php if (isset($__componentOriginalc254754b9d5db91d5165876f9d051922ca0066f4)): ?>
-<?php $component = $__componentOriginalc254754b9d5db91d5165876f9d051922ca0066f4; ?>
-<?php unset($__componentOriginalc254754b9d5db91d5165876f9d051922ca0066f4); ?>
-<?php endif; ?>
-                            <?php if (isset($component)) { $__componentOriginalc254754b9d5db91d5165876f9d051922ca0066f4 = $component; } ?>
-<?php $component = $__env->getContainer()->make(Illuminate\View\AnonymousComponent::class, ['view' => 'components.info-row','data' => ['label' => 'Tân tòng','value' => $student['new_convert']]]); ?>
-<?php $component->withName('info-row'); ?>
-<?php if ($component->shouldRender()): ?>
-<?php $__env->startComponent($component->resolveView(), $component->data()); ?>
-<?php $component->withAttributes(['label' => 'Tân tòng','value' => \Illuminate\View\Compilers\BladeCompiler::sanitizeComponentAttribute($student['new_convert'])]); ?>
-<?php echo $__env->renderComponent(); ?>
-<?php endif; ?>
-<?php if (isset($__componentOriginalc254754b9d5db91d5165876f9d051922ca0066f4)): ?>
-<?php $component = $__componentOriginalc254754b9d5db91d5165876f9d051922ca0066f4; ?>
-<?php unset($__componentOriginalc254754b9d5db91d5165876f9d051922ca0066f4); ?>
-<?php endif; ?>
-                            <?php if (isset($component)) { $__componentOriginalc254754b9d5db91d5165876f9d051922ca0066f4 = $component; } ?>
-<?php $component = $__env->getContainer()->make(Illuminate\View\AnonymousComponent::class, ['view' => 'components.info-row','data' => ['label' => 'Đã lập gia đình','value' => $student['married']]]); ?>
-<?php $component->withName('info-row'); ?>
-<?php if ($component->shouldRender()): ?>
-<?php $__env->startComponent($component->resolveView(), $component->data()); ?>
-<?php $component->withAttributes(['label' => 'Đã lập gia đình','value' => \Illuminate\View\Compilers\BladeCompiler::sanitizeComponentAttribute($student['married'])]); ?>
-<?php echo $__env->renderComponent(); ?>
-<?php endif; ?>
-<?php if (isset($__componentOriginalc254754b9d5db91d5165876f9d051922ca0066f4)): ?>
-<?php $component = $__componentOriginalc254754b9d5db91d5165876f9d051922ca0066f4; ?>
-<?php unset($__componentOriginalc254754b9d5db91d5165876f9d051922ca0066f4); ?>
-<?php endif; ?>
-                            <?php if (isset($component)) { $__componentOriginalc254754b9d5db91d5165876f9d051922ca0066f4 = $component; } ?>
-<?php $component = $__env->getContainer()->make(Illuminate\View\AnonymousComponent::class, ['view' => 'components.info-row','data' => ['label' => 'Thống kê','value' => $student['statistical']]]); ?>
-<?php $component->withName('info-row'); ?>
-<?php if ($component->shouldRender()): ?>
-<?php $__env->startComponent($component->resolveView(), $component->data()); ?>
-<?php $component->withAttributes(['label' => 'Thống kê','value' => \Illuminate\View\Compilers\BladeCompiler::sanitizeComponentAttribute($student['statistical'])]); ?>
-<?php echo $__env->renderComponent(); ?>
-<?php endif; ?>
-<?php if (isset($__componentOriginalc254754b9d5db91d5165876f9d051922ca0066f4)): ?>
-<?php $component = $__componentOriginalc254754b9d5db91d5165876f9d051922ca0066f4; ?>
-<?php unset($__componentOriginalc254754b9d5db91d5165876f9d051922ca0066f4); ?>
-<?php endif; ?>
                             <?php if (isset($component)) { $__componentOriginalc254754b9d5db91d5165876f9d051922ca0066f4 = $component; } ?>
 <?php $component = $__env->getContainer()->make(Illuminate\View\AnonymousComponent::class, ['view' => 'components.info-row','data' => ['label' => 'Ngày hứa','value' => $student['promise_day']]]); ?>
 <?php $component->withName('info-row'); ?>
@@ -942,98 +762,15 @@
 <?php $component = $__componentOriginalc254754b9d5db91d5165876f9d051922ca0066f4; ?>
 <?php unset($__componentOriginalc254754b9d5db91d5165876f9d051922ca0066f4); ?>
 <?php endif; ?>
-                        </div>
-                    </div>
+                            <div class="pt-2">
+                                <label class="block text-sm font-medium text-slate-600 mb-1">Ghi chú</label>
+                                <div class="text-sm text-slate-700 bg-white rounded-lg p-3 border border-slate-200">
+                                    <?php echo e($student['note'] ?: 'Không có ghi chú'); ?>
 
-                    
-                    <?php if($student['die_status'] == 1): ?>
-                    <div class="bg-slate-50 rounded-xl p-5 border border-slate-200">
-                        <h3 class="text-lg font-bold text-slate-900 mb-4 flex items-center gap-2">
-                            <svg class="w-5 h-5 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M6 18L18 6M6 6l12 12" />
-                            </svg>
-                            Thông tin qua đời
-                        </h3>
-                        <div class="space-y-3">
-                            <?php if (isset($component)) { $__componentOriginalc254754b9d5db91d5165876f9d051922ca0066f4 = $component; } ?>
-<?php $component = $__env->getContainer()->make(Illuminate\View\AnonymousComponent::class, ['view' => 'components.info-row','data' => ['label' => 'Trạng thái','value' => $student['die_status_label']]]); ?>
-<?php $component->withName('info-row'); ?>
-<?php if ($component->shouldRender()): ?>
-<?php $__env->startComponent($component->resolveView(), $component->data()); ?>
-<?php $component->withAttributes(['label' => 'Trạng thái','value' => \Illuminate\View\Compilers\BladeCompiler::sanitizeComponentAttribute($student['die_status_label'])]); ?>
-<?php echo $__env->renderComponent(); ?>
-<?php endif; ?>
-<?php if (isset($__componentOriginalc254754b9d5db91d5165876f9d051922ca0066f4)): ?>
-<?php $component = $__componentOriginalc254754b9d5db91d5165876f9d051922ca0066f4; ?>
-<?php unset($__componentOriginalc254754b9d5db91d5165876f9d051922ca0066f4); ?>
-<?php endif; ?>
-                            <?php if (isset($component)) { $__componentOriginalc254754b9d5db91d5165876f9d051922ca0066f4 = $component; } ?>
-<?php $component = $__env->getContainer()->make(Illuminate\View\AnonymousComponent::class, ['view' => 'components.info-row','data' => ['label' => 'Thời gian','value' => $student['die_time']]]); ?>
-<?php $component->withName('info-row'); ?>
-<?php if ($component->shouldRender()): ?>
-<?php $__env->startComponent($component->resolveView(), $component->data()); ?>
-<?php $component->withAttributes(['label' => 'Thời gian','value' => \Illuminate\View\Compilers\BladeCompiler::sanitizeComponentAttribute($student['die_time'])]); ?>
-<?php echo $__env->renderComponent(); ?>
-<?php endif; ?>
-<?php if (isset($__componentOriginalc254754b9d5db91d5165876f9d051922ca0066f4)): ?>
-<?php $component = $__componentOriginalc254754b9d5db91d5165876f9d051922ca0066f4; ?>
-<?php unset($__componentOriginalc254754b9d5db91d5165876f9d051922ca0066f4); ?>
-<?php endif; ?>
-                            <?php if (isset($component)) { $__componentOriginalc254754b9d5db91d5165876f9d051922ca0066f4 = $component; } ?>
-<?php $component = $__env->getContainer()->make(Illuminate\View\AnonymousComponent::class, ['view' => 'components.info-row','data' => ['label' => 'Số xổ mất','value' => $student['die_lottery']]]); ?>
-<?php $component->withName('info-row'); ?>
-<?php if ($component->shouldRender()): ?>
-<?php $__env->startComponent($component->resolveView(), $component->data()); ?>
-<?php $component->withAttributes(['label' => 'Số xổ mất','value' => \Illuminate\View\Compilers\BladeCompiler::sanitizeComponentAttribute($student['die_lottery'])]); ?>
-<?php echo $__env->renderComponent(); ?>
-<?php endif; ?>
-<?php if (isset($__componentOriginalc254754b9d5db91d5165876f9d051922ca0066f4)): ?>
-<?php $component = $__componentOriginalc254754b9d5db91d5165876f9d051922ca0066f4; ?>
-<?php unset($__componentOriginalc254754b9d5db91d5165876f9d051922ca0066f4); ?>
-<?php endif; ?>
-                            <?php if (isset($component)) { $__componentOriginalc254754b9d5db91d5165876f9d051922ca0066f4 = $component; } ?>
-<?php $component = $__env->getContainer()->make(Illuminate\View\AnonymousComponent::class, ['view' => 'components.info-row','data' => ['label' => 'Nơi qua đời','value' => $student['die_death']]]); ?>
-<?php $component->withName('info-row'); ?>
-<?php if ($component->shouldRender()): ?>
-<?php $__env->startComponent($component->resolveView(), $component->data()); ?>
-<?php $component->withAttributes(['label' => 'Nơi qua đời','value' => \Illuminate\View\Compilers\BladeCompiler::sanitizeComponentAttribute($student['die_death'])]); ?>
-<?php echo $__env->renderComponent(); ?>
-<?php endif; ?>
-<?php if (isset($__componentOriginalc254754b9d5db91d5165876f9d051922ca0066f4)): ?>
-<?php $component = $__componentOriginalc254754b9d5db91d5165876f9d051922ca0066f4; ?>
-<?php unset($__componentOriginalc254754b9d5db91d5165876f9d051922ca0066f4); ?>
-<?php endif; ?>
-                            <?php if (isset($component)) { $__componentOriginalc254754b9d5db91d5165876f9d051922ca0066f4 = $component; } ?>
-<?php $component = $__env->getContainer()->make(Illuminate\View\AnonymousComponent::class, ['view' => 'components.info-row','data' => ['label' => 'Nơi an táng','value' => $student['die_burial']]]); ?>
-<?php $component->withName('info-row'); ?>
-<?php if ($component->shouldRender()): ?>
-<?php $__env->startComponent($component->resolveView(), $component->data()); ?>
-<?php $component->withAttributes(['label' => 'Nơi an táng','value' => \Illuminate\View\Compilers\BladeCompiler::sanitizeComponentAttribute($student['die_burial'])]); ?>
-<?php echo $__env->renderComponent(); ?>
-<?php endif; ?>
-<?php if (isset($__componentOriginalc254754b9d5db91d5165876f9d051922ca0066f4)): ?>
-<?php $component = $__componentOriginalc254754b9d5db91d5165876f9d051922ca0066f4; ?>
-<?php unset($__componentOriginalc254754b9d5db91d5165876f9d051922ca0066f4); ?>
-<?php endif; ?>
+                                </div>
+                            </div>
                         </div>
                     </div>
-                    <?php else: ?>
-                    
-                    <div class="bg-slate-50 rounded-xl p-5 border border-slate-200">
-                        <h3 class="text-lg font-bold text-slate-900 mb-4 flex items-center gap-2">
-                            <svg class="w-5 h-5 text-primary-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                            </svg>
-                            Ghi chú
-                        </h3>
-                        <div class="text-sm text-slate-700">
-                            <?php echo e($student['note'] ?: 'Không có ghi chú'); ?>
-
-                        </div>
-                    </div>
-                    <?php endif; ?>
 
                     
                     <div class="bg-slate-50 rounded-xl p-5 border border-slate-200">
@@ -1100,7 +837,6 @@
 <?php $__env->startPush('scripts'); ?>
 <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
 <script>
-    // Print profile handler
     document.addEventListener('livewire:init', () => {
         Livewire.on('print-profile', () => {
             window.print();
