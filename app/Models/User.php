@@ -5,7 +5,6 @@ namespace App\Models;
 use Backpack\CRUD\app\Models\Traits\CrudTrait;
 use Spatie\Permission\Traits\HasRoles;
 
-use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
@@ -85,6 +84,19 @@ class User extends Authenticatable
 
         if ($this->isCatechist()) {
             return $this->teacher?->pid;
+        }
+
+        return null;
+    }
+
+    public function parishName(): ?string
+    {
+        if ($this->isDecen()) {
+            return $this->decen?->parish?->name;
+        }
+
+        if ($this->isCatechist()) {
+            return $this->teacher?->parish?->name;
         }
 
         return null;

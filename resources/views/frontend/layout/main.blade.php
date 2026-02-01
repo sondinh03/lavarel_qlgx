@@ -43,6 +43,8 @@
             transform: scale(0.97);
             opacity: 0.8;
         }
+
+        [x-cloak] { display: none !important; }
     </style>
     @endif
 </head>
@@ -55,50 +57,38 @@
     <x-loading-indicator target="selectedNamHoc,selectedKhoi,resetFilters" />
 
     @if(\App\Support\AuthUser::user()?->isCatechist())
-    {{-- ====================================== --}}
-    {{-- CATECHIST MOBILE LAYOUT --}}
-    {{-- ====================================== --}}
-
     {{-- COMPACT MOBILE HEADER --}}
-    <header class="sticky top-0 z-40 bg-gradient-to-r from-primary-500 to-primary-600 shadow-lg">
-        <div class="px-4 py-3">
-            <div class="flex items-center justify-between">
-                {{-- Logo & Title --}}
-                <div class="flex items-center gap-3">
-                    <img src="{{ url(config('settings.logo')) }}" class="h-9 w-auto" alt="Logo">
-                    <div class="text-white">
-                        <h1 class="text-base font-bold leading-tight">
-                            {{ config('settings.web_name') }}
-                        </h1>
-                        <p class="text-xs text-primary-100">{{ Auth::user()->name }}</p>
-                    </div>
-                </div>
+    <header class="sticky top-0 z-40 bg-gradient-to-r from-primary-500 to-primary-600 shadow-sm">
+        <div class="flex items-center justify-between px-4 h-14">
+            {{-- Logo & Title --}}
+            <div class="flex items-center gap-2.5">
+                <img src="{{ url(config('settings.logo')) }}" class="h-7 w-auto" alt="Logo">
+                {{-- <h1 class="text-sm font-semibold text-white leading-none">
+                    {{ \App\Support\AuthUser::user()?->parishName() }}
+                </h1> --}}
+            </div>
 
-                {{-- Actions --}}
-                <div class="flex items-center gap-2">
-                    {{-- Notification --}}
-                    <button class="relative p-2 rounded-full text-white hover:bg-white/20 active:bg-white/30 transition touch-feedback">
-                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
-                        </svg>
-                    </button>
+            {{-- Actions --}}
+            <div class="flex items-center gap-1">
+                {{-- Notification --}}
+                <button class="relative p-2 rounded-full text-white hover:bg-white/20 active:bg-white/30 transition touch-feedback">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+                    </svg>
+                </button>
 
-                    {{-- Menu Toggle --}}
-                    <button @click="showMenu = !showMenu"
-                        class="p-2 rounded-full text-white hover:bg-white/20 active:bg-white/30 transition touch-feedback">
-                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M4 6h16M4 12h16M4 18h16" />
-                        </svg>
-                    </button>
-                </div>
+                {{-- Profile Avatar --}}
+                <button @click="showMenu = !showMenu"
+                    class="w-7 h-7 rounded-full bg-white/20 border border-white/30 flex items-center justify-center text-white text-xs font-semibold hover:bg-white/30 active:bg-white/40 transition touch-feedback">
+                    {{ strtoupper(substr(Auth::user()->name, 0, 1)) }}
+                </button>
             </div>
         </div>
     </header>
 
     {{-- MOBILE DRAWER MENU --}}
-    <div x-show="showMenu"
+    <div x-cloak x-show="showMenu"
         x-transition:enter="transition ease-out duration-300"
         x-transition:enter-start="opacity-0"
         x-transition:enter-end="opacity-100"
@@ -188,52 +178,52 @@
     </div>
 
     {{-- BOTTOM NAVIGATION (iOS Style) --}}
-    <nav class="fixed bottom-0 left-0 right-0 z-30 bg-white border-t border-slate-200 shadow-2xl bottom-nav-safe">
-        <div class="grid grid-cols-4 gap-1 px-2 pt-2 pb-1">
+    <nav class="fixed bottom-0 left-0 right-0 z-30 bg-white border-t border-slate-200 shadow-lg bottom-nav-safe">
+        <div class="grid grid-cols-4 gap-0 px-1 pt-1.5 pb-1">
             {{-- Home --}}
             <a href="{{ route('dashboard') }}"
-                class="flex flex-col items-center gap-1 py-2 rounded-lg text-slate-600 hover:text-primary-600 active:bg-slate-100 transition touch-feedback
-                          {{ request()->routeIs('dashboard') ? 'text-primary-600 bg-primary-50' : '' }}">
-                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                class="flex flex-col items-center gap-0.5 py-1 rounded-lg text-slate-400 hover:text-primary-600 active:bg-slate-100 transition touch-feedback
+                      {{ request()->routeIs('dashboard') ? 'text-primary-600' : '' }}">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                         d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
                 </svg>
-                <span class="text-xs font-medium">Trang chủ</span>
+                <span class="text-[10px] font-medium leading-none">Trang chủ</span>
             </a>
 
             {{-- Students --}}
             <a href="{{ route('students.index') }}"
-                class="flex flex-col items-center gap-1 py-2 rounded-lg text-slate-600 hover:text-primary-600 active:bg-slate-100 transition touch-feedback
-                          {{ request()->routeIs('students.*') ? 'text-primary-600 bg-primary-50' : '' }}">
-                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                class="flex flex-col items-center gap-0.5 py-1 rounded-lg text-slate-400 hover:text-primary-600 active:bg-slate-100 transition touch-feedback
+                      {{ request()->routeIs('students.*') ? 'text-primary-600' : '' }}">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                         d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
                 </svg>
-                <span class="text-xs font-medium">Học sinh</span>
+                <span class="text-[10px] font-medium leading-none">Học sinh</span>
             </a>
 
-            {{-- Attendance (Main CTA) --}}
+            {{-- Attendance--}}
             <a href="{{ route('attendance.show') }}"
-                class="flex flex-col items-center gap-1 -mt-6 touch-feedback">
-                <div class="w-14 h-14 rounded-full bg-gradient-to-r from-primary-500 to-primary-600 shadow-lg flex items-center justify-center text-white
-                               hover:from-primary-600 hover:to-primary-700 active:scale-95 transition-all">
-                    <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                class="flex flex-col items-center gap-0.5 -mt-4 touch-feedback">
+                <div class="w-11 h-11 rounded-full bg-gradient-to-r from-primary-500 to-primary-600 shadow-md flex items-center justify-center text-white
+                           hover:from-primary-600 hover:to-primary-700 active:scale-95 transition-all">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                             d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
                     </svg>
                 </div>
-                <span class="text-xs font-medium text-primary-600 mt-1">Điểm danh</span>
+                <span class="text-[10px] font-medium text-primary-600 leading-none">Điểm danh</span>
             </a>
 
             {{-- History --}}
             <a href="{{ route('attendance.show') }}"
-                class="flex flex-col items-center gap-1 py-2 rounded-lg text-slate-600 hover:text-primary-600 active:bg-slate-100 transition touch-feedback
-                          {{ request()->routeIs('session.*') ? 'text-primary-600 bg-primary-50' : '' }}">
-                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                class="flex flex-col items-center gap-0.5 py-1 rounded-lg text-slate-400 hover:text-primary-600 active:bg-slate-100 transition touch-feedback
+                      {{ request()->routeIs('session.*') ? 'text-primary-600' : '' }}">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                         d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
-                <span class="text-xs font-medium">Lịch sử</span>
+                <span class="text-[10px] font-medium leading-none">Lịch sử</span>
             </a>
         </div>
     </nav>
@@ -570,25 +560,6 @@
             </nav>
         </div>
     </header>
-    @endif
-
-    {{-- MAIN --}}
-    <main class="flex-1">
-        <div class="w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
-            @yield('content_top')
-            <div class="w-full">
-                <section>
-                    <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-4 sm:p-6">
-                        @yield('content')
-                    </div>
-                </section>
-            </div>
-            @yield('content_bottom')
-        </div>
-    </main>
-
-    {{-- FOOTER --}}
-    @include('frontend.layout.footer')
 
     {{-- Back to Top Button --}}
     <button
@@ -606,6 +577,44 @@
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 10l7-7m0 0l7 7m-7-7v18" />
         </svg>
     </button>
+    @endif
+
+    {{-- MAIN --}}
+    <main class="flex-1">
+        <div class="w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
+            @yield('content_top')
+            <div class="w-full">
+                <section>
+                    <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-4 sm:p-6">
+                        @yield('content')
+                    </div>
+                </section>
+            </div>
+            @yield('content_bottom')
+        </div>
+    </main>
+
+
+
+    {{-- FOOTER --}}
+    @include('frontend.layout.footer')
+
+    {{-- Back to Top Button 
+    <button
+        onclick="window.scrollTo({ top: 0, behavior: 'smooth' })"
+        class="fixed bottom-6 right-6 z-40 w-12 h-12 
+               bg-gradient-to-r from-primary-500 to-primary-600 
+               hover:from-primary-600 hover:to-primary-700
+               text-white rounded-full shadow-lg
+               flex items-center justify-center
+               transition-all hover:scale-110 active:scale-95
+               focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2
+               @if(\App\Support\AuthUser::user()?->isCatechist()) bottom-24 @endif"
+        aria-label="Scroll to top">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 10l7-7m0 0l7 7m-7-7v18" />
+        </svg>
+    </button> --}}
 
     {{-- Scripts --}}
     <script src="{{ mix('js/manifest.js') }}"></script>
