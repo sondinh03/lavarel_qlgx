@@ -6,6 +6,7 @@ use App\Http\Livewire\Base\BaseComponent;
 use App\Models\AttendanceRecord;
 use App\Models\AttendanceSession;
 use App\Models\Lop;
+use App\Models\NamHoc;
 use App\Services\AttendanceService;
 use Carbon\Carbon;
 
@@ -128,11 +129,24 @@ class AttendanceManager extends BaseComponent
 
     protected function loadInitialData(): void
     {
+        if (!$this->selectedNamHoc) {
+            $this->selectedNamHoc = $this->getDefaultNamHocId();
+        }
+
         if ($this->selectedClassId) {
             $this->loadStudents();
             $this->loadSessions();
         }
     }
+
+    protected function getDefaultNamHocId(): ?int
+    {
+        return NamHoc::ofParish($this->parishId)
+            ->active()
+            ->orderByDesc('name')
+            ->value('id');
+    }
+
 
     protected function sanitizeQueryString(): void
     {

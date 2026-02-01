@@ -235,7 +235,6 @@
         </nav>
     </div>
 
-
     @else
     {{-- ====================================== --}}
     {{-- PARISH ADMIN DESKTOP LAYOUT --}}
@@ -589,11 +588,11 @@
 
     {{-- MAIN --}}
     <main class="flex-1">
-        <div class="w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
+        <div class="w-full mx-auto px-0 sm:px-6 lg:px-8 py-2 space-y-6">
             @yield('content_top')
             <div class="w-full">
                 <section>
-                    <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-4 sm:p-6">
+                    <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-0 sm:p-6">
                         @yield('content')
                     </div>
                 </section>
