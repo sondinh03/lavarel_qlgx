@@ -44,7 +44,9 @@
             opacity: 0.8;
         }
 
-        [x-cloak] { display: none !important; }
+        [x-cloak] {
+            display: none !important;
+        }
     </style>
     @endif
 </head>
@@ -178,55 +180,61 @@
     </div>
 
     {{-- BOTTOM NAVIGATION (iOS Style) --}}
-    <nav class="fixed bottom-0 left-0 right-0 z-30 bg-white border-t border-slate-200 shadow-lg bottom-nav-safe">
-        <div class="grid grid-cols-4 gap-0 px-1 pt-1.5 pb-1">
-            {{-- Home --}}
-            <a href="{{ route('dashboard') }}"
-                class="flex flex-col items-center gap-0.5 py-1 rounded-lg text-slate-400 hover:text-primary-600 active:bg-slate-100 transition touch-feedback
-                      {{ request()->routeIs('dashboard') ? 'text-primary-600' : '' }}">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                        d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
-                </svg>
-                <span class="text-[10px] font-medium leading-none">Trang chủ</span>
-            </a>
+    <div>
+        <nav class="fixed bottom-0 left-0 right-0 z-30 bg-white border-t border-slate-200 shadow-lg bottom-nav-safe">
+            <div class="grid grid-cols-4 gap-0 px-1 pt-1.5 pb-1">
+                {{-- Home --}}
+                <a href="{{ route('dashboard') }}"
+                    class="flex flex-col items-center gap-0.5 py-1 rounded-lg transition touch-feedback
+                        {{ request()->routeIs('dashboard')
+                            ? 'text-primary-600 bg-primary-50'
+                            : 'text-slate-400 hover:text-primary-600 active:bg-slate-100 active:scale-95' }}">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+                    </svg>
+                    <span class="text-[10px] font-medium leading-none">Trang chủ</span>
+                </a>
 
-            {{-- Students --}}
-            <a href="{{ route('students.index') }}"
-                class="flex flex-col items-center gap-0.5 py-1 rounded-lg text-slate-400 hover:text-primary-600 active:bg-slate-100 transition touch-feedback
-                      {{ request()->routeIs('students.*') ? 'text-primary-600' : '' }}">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                        d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
-                </svg>
-                <span class="text-[10px] font-medium leading-none">Học sinh</span>
-            </a>
+                {{-- Students --}}
+                <a href="{{ route('students.index') }}"
+                    class="flex flex-col items-center gap-0.5 py-1 rounded-lg transition touch-feedback
+                        {{ request()->routeIs('students.*') ? 'text-primary-600 bg-primary-50'
+                            : 'text-slate-400 hover:text-primary-600 active:bg-slate-100 active:scale-95' }}">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
+                    </svg>
+                    <span class="text-[10px] font-medium leading-none">Học sinh</span>
+                </a>
 
-            {{-- Attendance--}}
-            <a href="{{ route('attendance.show') }}"
-                class="flex flex-col items-center gap-0.5 -mt-4 touch-feedback">
-                <div class="w-11 h-11 rounded-full bg-gradient-to-r from-primary-500 to-primary-600 shadow-md flex items-center justify-center text-white
-                           hover:from-primary-600 hover:to-primary-700 active:scale-95 transition-all">
+                {{-- Attendance --}}
+                <a href="{{ route('attendance.show') }}"
+                    class="flex flex-col items-center gap-0.5 py-1 rounded-lg transition touch-feedback
+                        {{ request()->routeIs('attendance.*') ? 'text-primary-600 bg-primary-50'
+                            : 'text-slate-400 hover:text-primary-600 active:bg-slate-100 active:scale-95' }}">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                             d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
                     </svg>
-                </div>
-                <span class="text-[10px] font-medium text-primary-600 leading-none">Điểm danh</span>
-            </a>
+                    <span class="text-[10px] font-medium leading-none">Điểm danh</span>
+                </a>
 
-            {{-- History --}}
-            <a href="{{ route('attendance.show') }}"
-                class="flex flex-col items-center gap-0.5 py-1 rounded-lg text-slate-400 hover:text-primary-600 active:bg-slate-100 transition touch-feedback
-                      {{ request()->routeIs('session.*') ? 'text-primary-600' : '' }}">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                        d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-                <span class="text-[10px] font-medium leading-none">Lịch sử</span>
-            </a>
-        </div>
-    </nav>
+                {{-- History --}}
+                <a href="{{ route('attendance.show') }}"
+                    class="flex flex-col items-center gap-0.5 py-1 rounded-lg transition touch-feedback
+                        {{ request()->routeIs('session.*') ? 'text-primary-600 bg-primary-50'
+                            : 'text-slate-400 hover:text-primary-600 active:bg-slate-100 active:scale-95' }}">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    <span class="text-[10px] font-medium leading-none">Lịch sử</span>
+                </a>
+            </div>
+        </nav>
+    </div>
+
 
     @else
     {{-- ====================================== --}}
