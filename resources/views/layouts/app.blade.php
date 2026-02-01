@@ -19,6 +19,7 @@
 
     <!-- Styles -->
     <link href="{{ asset('css/app.css') }}" rel="stylesheet">
+    <link rel="manifest" href="/site.webmanifest" />
 </head>
 
 <body>
@@ -92,4 +93,3 @@
 </body>
 
 </html>
-

@@ -3,11 +3,14 @@
 <meta http-equiv="X-UA-Compatible" content="ie=edge">
 <meta http-equiv='Content-Type' content='text/html; charset=utf-8'/>
 <meta http-equiv='content-language' content="<?php echo e(str_replace('_', '-', app()->getLocale())); ?>"/>
-<link rel="apple-touch-icon" sizes="76x76" href="/favicon/apple-touch-icon.png">
-<link rel="icon" type="image/png" sizes="32x32" href="/favicon/favicon-32x32.png">
-<link rel="icon" type="image/png" sizes="16x16" href="/favicon/favicon-16x16.png">
-<link rel="manifest" href="/favicon/site.webmanifest">
-<link rel="mask-icon" href="/favicon/safari-pinned-tab.svg" color="#ed4238">
+
+<link rel="icon" type="image/png" href="/favicon-96x96.png" sizes="96x96" />
+<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+<link rel="shortcut icon" href="/favicon.ico" />
+<link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
+<meta name="apple-mobile-web-app-title" content="MVGX" />
+<link rel="manifest" href="/site.webmanifest" />
+
 <meta name="msapplication-TileColor" content="#ed4238">
 <meta name="theme-color" content="#ffffff">
 <meta name="csrf-token" content="<?php echo e(csrf_token()); ?>">
