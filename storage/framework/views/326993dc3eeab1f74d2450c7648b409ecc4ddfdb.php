@@ -364,8 +364,8 @@ echo $html;
                             </td>
                             <td class="px-6 py-4">
                                 <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold
-                                    <?php echo e(($hocsinh->paid ?? '') === 'Nhà xứ' ? 'bg-green-100 text-green-700' : 'bg-amber-100 text-amber-700'); ?>">
-                                    <?php echo e($hocsinh->paid ?? 'Chưa xác định'); ?>
+                                    <?php echo e(($hocsinh->parish_children_name ?? '') === 'Nhà xứ' ? 'bg-green-100 text-green-700' : 'bg-amber-100 text-amber-700'); ?>">
+                                    <?php echo e($hocsinh->parish_children_name ?? 'Chưa xác định'); ?>
 
                                 </span>
                             </td>

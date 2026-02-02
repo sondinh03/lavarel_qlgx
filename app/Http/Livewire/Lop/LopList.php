@@ -503,7 +503,7 @@ class LopList extends BaseComponent
         } else if ($namHocChanged) {
             // Nếu năm học thay đổi, reset khối
             $this->selectedKhoi = '';
-            $this->loadAvailableBlocks();
+            // $this->loadAvailableBlocks();
         }
 
         // Reset phụ

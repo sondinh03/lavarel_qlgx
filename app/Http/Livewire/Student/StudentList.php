@@ -37,6 +37,8 @@ class StudentList extends BaseComponent
     // ==================== PROTECTED DATA ====================
     protected $lopModel = null;
 
+    protected $lopCache = null;
+
     // ==================== PROPERTIES ====================
 
     /** @var string|null Năm sinh để lọc (VD: 2015) */
@@ -197,6 +199,8 @@ class StudentList extends BaseComponent
 
     public function updatedSelectedLop(): void
     {
+        $this->lopCache = null;
+
         $this->selectedLop = $this->selectedLop && is_numeric($this->selectedLop)
             ? (int) $this->selectedLop
             : null;
@@ -367,7 +371,8 @@ class StudentList extends BaseComponent
      */
     private function getCurrentStudentsQuery()
     {
-        $query = Student::ofParish($this->parishId);
+        $query = Student::with(['holyRelation', 'paidRelation'])
+            ->ofParish($this->parishId);
 
         if ($this->selectedNamHoc) {
             $query->whereHas('lops', function ($q) {
@@ -522,11 +527,11 @@ class StudentList extends BaseComponent
         $student->thugioithieu = url($baseSlug . '/thugioithieu=' . $student->id);
         $student->edit = config('app.url') . '/admin/student/' . $student->id . '/edit';
 
-        $student->holy = $student->holyRelation->name ?? '';
-        $student->paid = $student->paidRelation->name ?? '';
+        // $student->holy = $student->holyRelation->name ?? '';
+        // $student->paid = $student->paidRelation->name ?? '';
 
-        $student->ward = $this->getXaPhuongName($student->ward);
-        $student->province = $this->getTinhThanhName($student->province);
+        // $student->ward = $this->getXaPhuongName($student->ward);
+        // $student->province = $this->getTinhThanhName($student->province);
 
         return $student;
     }
@@ -563,6 +568,10 @@ class StudentList extends BaseComponent
             return null;
         }
 
+        if ($this->lopCache && $this->lopCache->id === $this->selectedLop) {
+            return $this->lopCache;
+        }
+
         try {
             $lop = Lop::with(['blockRelation', 'schoolYear', 'classTeachers.teacher'])
                 ->findOrFail($this->selectedLop);
@@ -571,33 +580,33 @@ class StudentList extends BaseComponent
             $lop->block = $lop->blockRelation->name ?? '';
             $lop->schoolyear = $lop->schoolYear->name ?? '';
 
+            $this->lopCache = $lop;
             return $lop;
         } catch (\Exception $e) {
-            $this->logError($e, 'Error loading lop info', ['lop_id' => $this->selectedLop]);
+            $this->logError($e, 'Error loading lop info');
             return null;
         }
     }
 
     // ==================== ADDRESS HELPERS ====================
+    private function getAllTinhThanh(): array
+    {
+        return Cache::remember('all_tinh_thanh', 3600, function () {
+            $filePath = resource_path('cities/tinh_thanhpho.php');
+            if (!file_exists($filePath)) {
+                return [];
+            }
+            include $filePath;
+            return $tinh_thanhpho ?? [];
+        });
+    }
+
     private function getTinhThanhName($provinceId): string
     {
-        if (!$provinceId) {
-            return '';
-        }
+        if (!$provinceId) return '';
 
-        return Cache::remember("tinh_thanh_{$provinceId}", 3600, function () use ($provinceId) {
-            $filePath = resource_path('cities/tinh_thanhpho.php');
-
-            if (!file_exists($filePath)) {
-                return '';
-            }
-
-            include $filePath;
-
-            return isset($tinh_thanhpho[$provinceId])
-                ? ', ' . $tinh_thanhpho[$provinceId]
-                : '';
-        });
+        $all = $this->getAllTinhThanh();
+        return isset($all[$provinceId]) ? ', ' . $all[$provinceId] : '';
     }
 
     private function getXaPhuongName($wardId): string

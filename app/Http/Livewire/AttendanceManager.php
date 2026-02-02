@@ -50,7 +50,7 @@ class AttendanceManager extends BaseComponent
     // ==================== DATA ====================
 
     /** @var \Illuminate\Support\Collection Students of selected class */
-    public $students;
+    public $students = null;
 
     /** @var array Attendance sessions */
     public $sessions = [];
@@ -113,17 +113,39 @@ class AttendanceManager extends BaseComponent
         parent::mount();
 
         // ✅ Khởi tạo collections ngay từ đầu
-        $this->students = collect();
-        $this->sessions = [];
-        $this->attendanceRecords = [];
-        $this->draftAttendance = [];
+        if ($this->students === null) {
+            $this->students = collect();
+        }
+
+        // if (!is_array($this->sessions)) {
+        //     $this->sessions = [];
+        // }
+
+        // if (!is_array($this->attendanceRecords)) {
+        //     $this->attendanceRecords = [];
+        // }
+
+        // if (!is_array($this->draftAttendance)) {
+        //     $this->draftAttendance = [];
+        // }
 
         // Require parish ID
         $this->requireParishId();
 
         if (request()->has('classId')) {
             $this->selectedClassId = (int) request()->query('classId');
-            $this->loadClassInfo();
+
+            $lop = Lop::ofParish($this->parishId)
+                ->select('schoolyear', 'block')
+                ->find($this->selectedClassId);
+
+            if ($lop) {
+                $this->selectedNamHoc = $lop->schoolyear;
+                $this->selectedKhoi  = $lop->block;
+            } else {
+                $this->selectedClassId = null;
+                session()->flash('warning', 'Lớp học không tồn tại hoặc không có quyền truy cập');
+            }
         }
     }
 
@@ -136,6 +158,7 @@ class AttendanceManager extends BaseComponent
         if ($this->selectedClassId) {
             $this->loadStudents();
             $this->loadSessions();
+            $this->loadAttendanceRecords();
         }
     }
 
@@ -143,7 +166,7 @@ class AttendanceManager extends BaseComponent
     {
         return NamHoc::ofParish($this->parishId)
             ->active()
-            ->orderByDesc('name')
+            ->orderByDesc('id')
             ->value('id');
     }
 
@@ -190,9 +213,9 @@ class AttendanceManager extends BaseComponent
             : null;
 
         if ($this->selectedClassId) {
-            $this->loadClassInfo();
             $this->loadStudents();
             $this->loadSessions();
+            $this->loadAttendanceRecords();
         } else {
             $this->reset(['students', 'sessions', 'attendanceRecords', 'draftAttendance']);
         }
@@ -202,8 +225,8 @@ class AttendanceManager extends BaseComponent
 
     public function updatedSelectedDate()
     {
-        if ($this->viewMode === 'mobile') {
-            $this->loadSessions();
+        if ($this->viewMode === 'mobile' && $this->selectedDate) {
+            $this->loadAttendanceRecords();
         }
     }
 
@@ -248,27 +271,6 @@ class AttendanceManager extends BaseComponent
 
     // ==================== DATA LOADING ====================
 
-    protected function loadClassInfo(): void
-    {
-        if (!$this->selectedClassId) {
-            return;
-        }
-
-        try {
-            $lop = Lop::with('blockRelation')
-                ->ofParish($this->parishId)
-                ->findOrFail($this->selectedClassId);
-
-            $this->selectedNamHoc = $lop->schoolyear;
-            $this->selectedKhoi = $lop->block;
-        } catch (\Exception $e) {
-            $this->logError($e, 'Error loading class info', [
-                'class_id' => $this->selectedClassId,
-            ]);
-            session()->flash('error', 'Không tìm thấy lớp học');
-        }
-    }
-
     protected function loadStudents(): void
     {
         if (!$this->selectedClassId) {
@@ -306,20 +308,15 @@ class AttendanceManager extends BaseComponent
     protected function loadSessions(): void
     {
         if (!$this->selectedClassId) {
-            $this->reset(['sessions', 'selectedDate', 'attendanceRecords']);
+            $this->reset(['sessions', 'selectedDate']);
             return;
         }
 
         try {
-            $query = AttendanceSession::where('class_id', $this->selectedClassId)
+            $sessions = AttendanceSession::where('class_id', $this->selectedClassId)
                 ->where('type', $this->attendanceType)
-                ->orderBy('date');
-
-            if ($this->viewMode === 'mobile' && $this->selectedDate) {
-                $query->whereDate('date', $this->selectedDate);
-            }
-
-            $sessions = $query->get();
+                ->orderBy('date')
+                ->get();
 
             $this->sessions = $sessions->map(function ($s) {
                 $date = Carbon::parse($s->date);
@@ -343,31 +340,10 @@ class AttendanceManager extends BaseComponent
              * - Nếu vẫn không có → chọn buổi đầu tiên
              */
             if (
-                $this->viewMode === 'mobile'
-                && !$this->selectedDate
-                && !empty($this->sessions)
+                $this->viewMode === 'mobile' && !$this->selectedDate
             ) {
-                $today = Carbon::today()->format('Y-m-d');
-
-                // 1️⃣ Ưu tiên buổi hôm nay
-                $todaySession = collect($this->sessions)
-                    ->firstWhere('dateStr', $today);
-
-                if ($todaySession) {
-                    $this->selectedDate = $todaySession['dateStr'];
-                } else {
-                    // 2️⃣ Buổi đầu tiên chưa khóa
-                    $unlocked = collect($this->sessions)
-                        ->first(fn($s) => !$s['locked']);
-
-                    $this->selectedDate = $unlocked
-                        ? $unlocked['dateStr']
-                        : $this->sessions[0]['dateStr']; // 3️⃣ fallback
-                }
+                $this->autoSelectDateForMobile();
             }
-
-            // Load attendance records
-            $this->loadAttendanceRecords();
 
             if (empty($this->sessions)) {
                 session()->flash('info', 'Chưa có buổi điểm danh nào');
@@ -384,17 +360,23 @@ class AttendanceManager extends BaseComponent
 
     protected function loadAttendanceRecords(): void
     {
-        $sessionIds = collect($this->sessions)->pluck('id')->toArray();
-
-        if (empty($sessionIds)) {
+        if (!$this->selectedClassId) {
             $this->attendanceRecords = [];
             return;
         }
 
         try {
-            $records = AttendanceRecord::whereIn('session_id', $sessionIds)
-                ->with('session')
-                ->get();
+            $query = AttendanceRecord::whereHas('session', function ($q) {
+                $q->where('class_id', $this->selectedClassId)
+                    ->where('type', $this->attendanceType);
+
+                // Mobile: chỉ fetch records của ngày đang chọn
+                if ($this->viewMode === 'mobile' && $this->selectedDate) {
+                    $q->whereDate('date', $this->selectedDate);
+                }
+            })->with('session');
+
+            $records = $query->get();
 
             $this->attendanceRecords = $records->groupBy(function ($r) {
                 return $r->student_id . '_' . Carbon::parse($r->session->date)->format('Y-m-d');
@@ -402,7 +384,7 @@ class AttendanceManager extends BaseComponent
                 $record = $group->first();
                 return [
                     'status' => $record->status,
-                    'note' => $record->note,
+                    'note'   => $record->note,
                 ];
             })->toArray();
         } catch (\Exception $e) {
@@ -458,9 +440,9 @@ class AttendanceManager extends BaseComponent
                 $this->selectedClassId = $newClassId;
 
                 if ($this->selectedClassId) {
-                    $this->loadClassInfo();
                     $this->loadStudents();
                     $this->loadSessions();
+                    $this->loadAttendanceRecords();
                 } else {
                     $this->reset(['students', 'sessions', 'attendanceRecords', 'draftAttendance']);
                 }
@@ -647,6 +629,38 @@ class AttendanceManager extends BaseComponent
     }
 
     // ==================== HELPER METHODS ====================
+
+    protected function autoSelectDateForMobile(): void
+    {
+        // Cần fetch ALL sessions để tìm ngày hợp lệ
+        // (lần này $this->sessions chứa all sessions vì selectedDate == null)
+        if (empty($this->sessions)) {
+            return;
+        }
+
+        $today = Carbon::today()->format('Y-m-d');
+
+        // 1. Ưu tiên hôm nay
+        $todaySession = collect($this->sessions)
+            ->firstWhere('dateStr', $today);
+
+        if ($todaySession) {
+            $this->selectedDate = $todaySession['dateStr'];
+        } else {
+            // 2. Buổi đầu tiên chưa khóa
+            $unlocked = collect($this->sessions)
+                ->first(fn($s) => !$s['locked']);
+
+            // 3. Fallback buổi đầu tiên
+            $this->selectedDate = $unlocked
+                ? $unlocked['dateStr']
+                : $this->sessions[0]['dateStr'];
+        }
+
+        // Re-fetch chỉ 1 ngày đã chọn
+        $this->loadSessions();
+        $this->loadAttendanceRecords();
+    }
 
     protected function getVietnameseDayName($date): string
     {
