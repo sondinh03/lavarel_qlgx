@@ -7,6 +7,7 @@ use App\Models\Lop;
 use App\Models\ClassTeacher;
 use App\Observers\LopObserver;
 use App\Observers\ClassTeacherObserver;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Route;
 use Livewire\Livewire;
 
@@ -35,6 +36,18 @@ class AppServiceProvider extends ServiceProvider
         // register observers to keep cache versioning in sync
         Lop::observe(LopObserver::class);
         ClassTeacher::observe(ClassTeacherObserver::class);
+
+        if (
+            app()->environment('local') &&
+            config('app.sql_debug', false)
+        ) {
+            DB::listen(function ($query) {
+                logger()->debug(
+                    $query->sql,
+                    $query->bindings
+                );
+            });
+        }
     }
 
     protected function overrideConfigValues()

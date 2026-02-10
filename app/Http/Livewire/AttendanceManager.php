@@ -279,25 +279,43 @@ class AttendanceManager extends BaseComponent
         }
 
         try {
-            $lop = Lop::with(['students' => function ($q) {
-                // Active students only
-                $q->wherePivot('status', 1);
+            // $lop = Lop::with(['students' => function ($q) {
+            //     $q->wherePivot('status', 1);
 
-                // Apply search
-                if (!empty(trim($this->search))) {
-                    $search = '%' . trim($this->search) . '%';
-                    $q->where(function ($qq) use ($search) {
-                        $qq->where('saint_name', 'like', $search)
-                            ->orWhere('name', 'like', $search)
-                            ->orWhere('last_name', 'like', $search);
-                    });
-                }
+            //     // Apply search
+            //     if (!empty(trim($this->search))) {
+            //         $search = '%' . trim($this->search) . '%';
+            //         $q->where(function ($qq) use ($search) {
+            //             $qq->where('saint_name', 'like', $search)
+            //                 ->orWhere('name', 'like', $search)
+            //                 ->orWhere('last_name', 'like', $search);
+            //         });
+            //     }
 
-                // Order by name
-                $q->orderBy('name');
-            }])->find($this->selectedClassId);
+            //     // Order by name
+            //     $q->orderBy('name');
+            // }])->find($this->selectedClassId);
+
+            $lop = Lop::with([
+                'students' => function ($q) {
+                    $q->wherePivot('status', 1)
+                        ->orderBy('name');
+                },
+
+                // 🔥 BẮT BUỘC
+                'students.holyRelation',
+                'students.paidRelation',
+            ])->find($this->selectedClassId);
+
 
             $this->students = $lop ? $lop->students : collect();
+
+            $this->students->makeHidden([
+                // 'parish_children_name',
+                // 'holy_name',
+                'sex_label',
+                'status_label',
+            ]);
         } catch (\Exception $e) {
             $this->logError($e, 'Error loading students');
             $this->students = collect();

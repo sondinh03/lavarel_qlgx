@@ -28,48 +28,78 @@
 
             
             <?php if($paginator->onFirstPage()): ?>
-                <span class="px-3 py-2 text-sm text-slate-400 bg-slate-100 rounded-lg cursor-not-allowed">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                              d="M15 19l-7-7 7-7" />
-                    </svg>
-                </span>
+            <span class="px-3 py-2 text-sm text-slate-400 bg-slate-50 border border-slate-200 rounded-lg cursor-not-allowed">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M15 19l-7-7 7-7" />
+                </svg>
+            </span>
             <?php else: ?>
-                <button
-                    wire:click="previousPage"
-                    wire:loading.attr="disabled"
-                    class="px-3 py-2 bg-white border border-slate-300 rounded-lg
+            <button
+                wire:click="previousPage"
+                wire:loading.attr="disabled"
+                class="px-3 py-2 bg-white border border-slate-300 rounded-lg
                            hover:bg-slate-50 active:scale-95 transition-all
                            disabled:opacity-50">
-                    <svg class="w-4 h-4 text-slate-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                              d="M15 19l-7-7 7-7" />
-                    </svg>
-                </button>
+                <svg class="w-4 h-4 text-slate-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M15 19l-7-7 7-7" />
+                </svg>
+            </button>
             <?php endif; ?>
 
             
             <div class="hidden sm:flex items-center gap-1">
-                <?php $__currentLoopData = $paginator->getUrlRange(1, $paginator->lastPage()); $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $page => $url): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
-                    <?php if($page == $paginator->currentPage()): ?>
-                        <span class="px-3 py-2 text-sm font-bold text-white
-                                     bg-primary-600 rounded-lg shadow-sm">
-                            <?php echo e($page); ?>
+                <?php
+                $current = $paginator->currentPage();
+                $last = $paginator->lastPage();
+                $delta = 2; // Số trang hiển thị mỗi bên
 
-                        </span>
-                    <?php else: ?>
-                        <button
-                            wire:click="gotoPage(<?php echo e($page); ?>)"
-                            wire:loading.attr="disabled"
-                            class="px-3 py-2 text-sm font-medium text-slate-700
-                                   bg-white border border-slate-300 rounded-lg
-                                   hover:bg-slate-50 active:scale-95 transition-all
-                                   disabled:opacity-50">
-                            <?php echo e($page); ?>
+                $range = [];
 
-                        </button>
+                // Luôn hiện trang đầu
+                $range[] = 1;
+
+                // Tính range quanh current page
+                for ($i = max(2, $current - $delta); $i <= min($last - 1, $current + $delta); $i++) {
+                    $range[]=$i;
+                    }
+
+                    // Luôn hiện trang cuối (nếu> 1)
+                    if ($last > 1) {
+                    $range[] = $last;
+                    }
+
+                    $range = array_unique($range);
+                    sort($range);
+                    ?>
+
+                    <?php $__currentLoopData = $range; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $i => $page): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                    
+                    <?php if($i > 0 && $page - $range[$i-1] > 1): ?>
+                    <span class="px-2 text-slate-400">...</span>
                     <?php endif; ?>
-                <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
+
+                    <?php if($page == $current): ?>
+                    <span class="px-3 py-2 text-sm font-bold text-white
+                         bg-gradient-to-r from-primary-500 to-primary-600 
+                         rounded-lg shadow-md">
+                        <?php echo e($page); ?>
+
+                    </span>
+                    <?php else: ?>
+                    <button
+                        wire:click="gotoPage(<?php echo e($page); ?>)"
+                        wire:loading.attr="disabled"
+                        class="px-3 py-2 text-sm font-medium text-slate-700
+                       bg-white border border-slate-300 rounded-lg
+                       hover:bg-slate-50 active:scale-95 transition-all
+                       disabled:opacity-50">
+                        <?php echo e($page); ?>
+
+                    </button>
+                    <?php endif; ?>
+                    <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
             </div>
 
             
@@ -81,24 +111,24 @@
 
             
             <?php if($paginator->hasMorePages()): ?>
-                <button
-                    wire:click="nextPage"
-                    wire:loading.attr="disabled"
-                    class="px-3 py-2 bg-white border border-slate-300 rounded-lg
+            <button
+                wire:click="nextPage"
+                wire:loading.attr="disabled"
+                class="px-3 py-2 bg-white border border-slate-300 rounded-lg
                            hover:bg-slate-50 active:scale-95 transition-all
                            disabled:opacity-50">
-                    <svg class="w-4 h-4 text-slate-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                              d="M9 5l7 7-7 7" />
-                    </svg>
-                </button>
+                <svg class="w-4 h-4 text-slate-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M9 5l7 7-7 7" />
+                </svg>
+            </button>
             <?php else: ?>
-                <span class="px-3 py-2 text-sm text-slate-400 bg-slate-100 rounded-lg cursor-not-allowed">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                              d="M9 5l7 7-7 7" />
-                    </svg>
-                </span>
+            <span class="px-3 py-2 text-sm text-slate-400 bg-slate-50 border border-slate-200 rounded-lg cursor-not-allowed">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M9 5l7 7-7 7" />
+                </svg>
+            </span>
             <?php endif; ?>
         </nav>
 
@@ -111,12 +141,10 @@
                        focus:ring-2 focus:ring-primary-500
                        focus:border-transparent transition-all">
                 <?php $__currentLoopData = $perPageOptions; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $option): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
-                    <option value="<?php echo e($option); ?>"><?php echo e($option); ?></option>
+                <option value="<?php echo e($option); ?>"><?php echo e($option); ?></option>
                 <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
             </select>
         </div>
-
     </div>
 </div>
-<?php endif; ?>
-<?php /**PATH D:\Document\WORKING\lavarel_qlgx\resources\views/components/pagination.blade.php ENDPATH**/ ?>
+<?php endif; ?><?php /**PATH D:\Document\WORKING\lavarel_qlgx\resources\views/components/pagination.blade.php ENDPATH**/ ?>

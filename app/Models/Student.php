@@ -36,13 +36,15 @@ class Student extends Model
         'updated_at',
     ];
 
-    protected $appends = [
-        'parish_children_name',
-        'holy_name',
-        'full_name',
-        'sex_label',
-        'status_label',
-    ];
+    // protected $appends = [
+    //     'parish_children_name',
+    //     'holy_name',
+    //     'full_name',
+    //     'sex_label',
+    //     'status_label',
+    // ];
+
+    protected $append = [];
 
     protected $casts = [
         'sex' => 'integer',
@@ -359,7 +361,10 @@ class Student extends Model
      */
     protected function getHolyNameAttribute()
     {
-        return $this->holyRelation ? $this->holyRelation->name : null;
+        // return $this->holyRelation ? $this->holyRelation->name : null;
+        return $this->relationLoaded('holyRelation')
+            ? $this->holyRelation?->name
+            : null;
     }
 
     protected function getParishChildrenNameAttribute()

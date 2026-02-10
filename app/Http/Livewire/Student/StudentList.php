@@ -39,6 +39,8 @@ class StudentList extends BaseComponent
 
     protected $lopCache = null;
 
+    protected $studentsBaseQuery = null;
+
     // ==================== PROPERTIES ====================
 
     /** @var string|null Năm sinh để lọc (VD: 2015) */
@@ -371,7 +373,11 @@ class StudentList extends BaseComponent
      */
     private function getCurrentStudentsQuery()
     {
-        $query = Student::with(['holyRelation', 'paidRelation'])
+        if ($this->studentsBaseQuery) {
+            return clone $this->studentsBaseQuery;
+        }
+
+        $query = Student::with(['holyRelation', 'paidRelation', 'slug'])
             ->ofParish($this->parishId);
 
         if ($this->selectedNamHoc) {
@@ -392,17 +398,22 @@ class StudentList extends BaseComponent
             });
         }
 
-        if (!empty(trim($this->search))) {
-            $search = trim($this->search);
-            $query->where(function ($q) use ($search) {
-                $q->where('name', 'like', "%{$search}%")
-                    ->orWhere('last_name', 'like', "%{$search}%")
-                    ->orWhere('holy', 'like', "%{$search}%")
-                    ->orWhere('mahv', 'like', "%{$search}%");
-            });
+        // if (!empty(trim($this->search))) {
+        //     $search = trim($this->search);
+        //     $query->where(function ($q) use ($search) {
+        //         $q->where('name', 'like', "%{$search}%")
+        //             ->orWhere('last_name', 'like', "%{$search}%")
+        //             ->orWhere('holy', 'like', "%{$search}%")
+        //             ->orWhere('mahv', 'like', "%{$search}%");
+        //     });
+        // }
+
+        if ($this->search) {
+            $query->search($this->search);
         }
 
-        return $query->orderBy('name', 'asc');
+        // return $query->orderBy('name', 'asc');
+        return $this->studentsBaseQuery = clone $query;
     }
 
     /**
@@ -522,9 +533,17 @@ class StudentList extends BaseComponent
     {
         $student->stt = $stt;
 
-        $baseSlug = slug($student) . config('app.url_prefix', '');
-        $student->slug = url($baseSlug);
-        $student->thugioithieu = url($baseSlug . '/thugioithieu=' . $student->id);
+        $slug = optional($student->slug)->slug;
+
+        if ($slug) {
+            $baseSlug = $slug . config('app.url_prefix', '');
+            $student->slug = url($baseSlug);
+            $student->thugioithieu = url($baseSlug . '/thugioithieu=' . $student->id);
+        } else {
+            $student->slug = null;
+            $student->thugioithieu = null;
+        }
+
         $student->edit = config('app.url') . '/admin/student/' . $student->id . '/edit';
 
         // $student->holy = $student->holyRelation->name ?? '';
@@ -542,8 +561,16 @@ class StudentList extends BaseComponent
         try {
             $query = clone $this->getCurrentStudentsQuery();
 
-            $countnam = (clone $query)->where('sex', 1)->count();
-            $countnu = (clone $query)->where('sex', 0)->count();
+            // $countnam = (clone $query)->where('sex', 1)->count();
+            // $countnu = (clone $query)->where('sex', 0)->count();
+
+            $stats = $query
+                ->selectRaw('sex, COUNT(*) total')
+                ->groupBy('sex')
+                ->pluck('total', 'sex');
+
+            $countnam = $stats[1] ?? 0;
+            $countnu  = $stats[0] ?? 0;
 
             return [
                 'total' => $countnam + $countnu,

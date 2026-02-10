@@ -48,6 +48,7 @@ use App\Http\Livewire\Lop\LopDetail;
 use App\Http\Livewire\Lop\LopList;
 use App\Http\Livewire\NamHoc\NamHocManager;
 use App\Http\Livewire\Parish\ParishChild;
+use App\Http\Livewire\Parishioners\ParishionersManager;
 use App\Http\Livewire\Score\ScoreManager;
 use App\Http\Livewire\Student\StudentDetail;
 use App\Http\Livewire\Student\StudentEdit;
@@ -67,6 +68,9 @@ Auth::routes();
 
 Route::middleware('auth')->group(function () {
     Route::get('/dashboard', Home::class)->name('dashboard');
+
+    Route::get('/parishioners', ParishionersManager::class)
+        ->name('parishioners.index');
 
     Route::middleware('role:parish_admin|catechist')->group(function () {
 
@@ -119,6 +123,9 @@ Route::middleware('auth')->group(function () {
 
         Route::get('/holy-names', HolyManager::class)
             ->name('holy-names.index');
+
+        Route::get('/parishioners', ParishionersManager::class)
+            ->name('parishioners.index');
     });
 });
 

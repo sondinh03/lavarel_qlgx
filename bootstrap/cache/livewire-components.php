@@ -12,6 +12,7 @@
   'lop.lop-list' => 'App\\Http\\Livewire\\Lop\\LopList',
   'nam-hoc.nam-hoc-manager' => 'App\\Http\\Livewire\\NamHoc\\NamHocManager',
   'parish.parish-child' => 'App\\Http\\Livewire\\Parish\\ParishChild',
+  'parishioners.parishioners-manager' => 'App\\Http\\Livewire\\Parishioners\\ParishionersManager',
   'score.score-manager' => 'App\\Http\\Livewire\\Score\\ScoreManager',
   'student.student-detail' => 'App\\Http\\Livewire\\Student\\StudentDetail',
   'student.student-edit' => 'App\\Http\\Livewire\\Student\\StudentEdit',
