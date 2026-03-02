@@ -9,6 +9,7 @@ use Illuminate\Database\Eloquent\Relations\MorphOne;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Support\Facades\DB;
 use Venturecraft\Revisionable\RevisionableTrait;
 
@@ -119,14 +120,20 @@ class Parishioners extends Model
         return $this->belongsTo(Parish::class, 'pid');
     }
 
+    public function student(): HasOne
+    {
+        return $this->hasOne(Student::class, 'parishioner_id');
+    }
+
+
     /**
      * Học sinh liên kết với giáo dân
      * Giả sử bảng students có cột parishioner_id
      */
-    public function students(): HasMany
-    {
-        return $this->hasMany(Student::class, 'parishioner_id');
-    }
+    // public function students(): HasMany
+    // {
+    //     return $this->hasMany(Student::class, 'parishioner_id');
+    // }
 
     /**
      * Học sinh đang hoạt động

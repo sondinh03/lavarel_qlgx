@@ -334,6 +334,15 @@ class Student extends Model
             ->withTimestamps();
     }
 
+    public function students()
+    {
+        return $this->belongsToMany(Lop::class, 'students_class', 'student_id', 'class_id')
+            ->using(StudentsClass::class)
+            ->withPivot('status')
+            ->withTimestamps();
+    }
+
+
     /**
      * Slug relationship
      */

@@ -40,7 +40,7 @@ class Lop extends Model
     protected $fillable = ['id', 'did', 'deid', 'pid', 'block', 'start_date_one', 'end_date_one', 'start_date_two', 'end_date_two', 'name', 'symbol', 'teacher', 'schoolyear',  'note', 'status', 'created_at', 'updated_at'];
 
     // TODO: rename accessor 'lop' -> 'display_name'
-    protected $appends = ['lop', 'active_students_count'];
+    protected $appends = ['active_students_count'];
 
     // ===== STATUS CONSTANTS =====
     public const STATUS_ACTIVE = 1;
@@ -56,13 +56,29 @@ class Lop extends Model
 
     // Hiển thị: "Tên lớp - Năm học"
     // TODO: rename accessor 'lop' -> 'display_name'
-    public function getLopAttribute()
+    public function getLopAttribute(): string
     {
-        if ($this->schoolYear) {
-            return $this->name . ' - ' . $this->schoolYear->display_name;
+        // Nếu chưa có FK thì thôi
+        if (!$this->schoolyear) {
+            return $this->name;
         }
 
-        return $this->name;
+        // Nếu relation CHƯA load → không tự ý query
+        if (!$this->relationLoaded('schoolYear')) {
+            return $this->name;
+        }
+
+        // Relation load rồi nhưng null
+        if (!$this->schoolYear) {
+            return $this->name;
+        }
+
+        return $this->name . ' - ' . $this->schoolYear->display_name;
+    }
+
+    public function scopeWithBaseRelations($q)
+    {
+        return $q->with(['blockRelation', 'schoolYear']);
     }
 
     public function getSlugUrlAttribute()

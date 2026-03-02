@@ -46,6 +46,28 @@ class StudentList extends BaseComponent
     /** @var string|null Năm sinh để lọc (VD: 2015) */
     public $birthYear = null;
 
+    // ==================== IMPORT FROM PARISHIONERS ====================
+
+    /** @var bool Hiển thị modal import từ giáo dân */
+    public $showImportFromParishioners = false;
+
+    /** @var array Danh sách ID giáo dân được chọn */
+    public $selectedParishioners = [];
+
+    /** @var bool Select all */
+    public $selectAllParishioners = false;
+
+    /** @var string Search trong modal import */
+    public $parishionerSearch = '';
+
+    /** @var int|null Năm sinh để lọc giáo dân */
+    public $parishionerBirthYear = null;
+
+    public ?int $ageFrom = null;
+
+    public ?int $ageTo = null;
+
+
     // ==================== VALIDATION ====================
     protected $rules = [
         'selectedNamHoc' => 'nullable|integer|exists:nam_hoc,id',
@@ -274,6 +296,255 @@ class StudentList extends BaseComponent
         $totalCount = count($availableIds);
 
         $this->selectAllInModal = $totalCount > 0 && $selectedCount === $totalCount;
+    }
+
+    /**
+     * Mở modal import từ giáo dân
+     */
+    public function openImportFromParishioners(): void
+    {
+        $this->requireManager();
+
+        if (!$this->selectedLop) {
+            session()->flash('warning', 'Vui lòng chọn lớp trước');
+            return;
+        }
+
+        $this->selectedParishioners = [];
+        $this->selectAllParishioners = false;
+        $this->parishionerSearch = '';
+        $this->parishionerBirthYear = null;
+
+        $this->showImportFromParishioners = true;
+    }
+
+    /**
+     * Đóng modal
+     */
+    public function closeImportFromParishioners(): void
+    {
+        $this->showImportFromParishioners = false;
+        $this->selectedParishioners = [];
+        $this->selectAllParishioners = false;
+        $this->parishionerSearch = '';
+        $this->parishionerBirthYear = null;
+    }
+
+    /**
+     * Get danh sách giáo dân có thể import
+     */
+    private function getAvailableParishionersQuery()
+    {
+        if (!$this->selectedNamHoc) {
+            return \App\Models\Parishioners::whereRaw('1 = 0');
+        }
+
+        return \App\Models\Parishioners::query()
+            ->where('pid', $this->parishId)
+            ->active()
+            ->whereDoesntHave('student')
+            ->when($this->parishionerBirthYear, function ($q) {
+                $q->whereYear('birthday', $this->parishionerBirthYear);
+            })
+            ->when(trim($this->parishionerSearch), function ($q, $search) {
+                $q->where(function ($q2) use ($search) {
+                    $q2->where('last_name', 'like', "%{$search}%")
+                        ->orWhere('name', 'like', "%{$search}%")
+                        ->orWhere('cccd', 'like', "%{$search}%")
+                        ->orWhere('phone', 'like', "%{$search}%")
+                        ->orWhereRaw("CONCAT(last_name, ' ', name) like ?", ["%{$search}%"]);
+                });
+            })
+            ->when($this->ageFrom || $this->ageTo, function ($q) {
+                $from = $this->ageTo
+                    ? now()->subYears($this->ageTo)->startOfDay()
+                    : null;
+
+                $to = $this->ageFrom
+                    ? now()->subYears($this->ageFrom)->endOfDay()
+                    : null;
+
+                if ($from && $to) {
+                    $q->whereBetween('birthday', [$from, $to]);
+                } elseif ($from) {
+                    $q->where('birthday', '<=', $from);
+                } elseif ($to) {
+                    $q->where('birthday', '>=', $to);
+                }
+            })
+            ->orderBy('last_name')
+            ->orderBy('name');
+    }
+
+    /**
+     * Get paginated parishioners
+     */
+    private function getAvailableParishionersPaginated()
+    {
+        return $this->getAvailableParishionersQuery()
+            ->paginate(15, ['*'], 'parishioner_page');
+    }
+
+    /**
+     * Import giáo dân thành học sinh
+     */
+    public function importParishionersToStudents(): void
+    {
+        $this->requireManager();
+
+        if (empty($this->selectedParishioners)) {
+            session()->flash('warning', 'Vui lòng chọn ít nhất 1 giáo dân');
+            return;
+        }
+
+        try {
+            DB::beginTransaction();
+
+            $lop = \App\Models\Lop::findOrFail($this->selectedLop);
+            $successCount = 0;
+            $errorCount = 0;
+            $errors = [];
+
+            // Lấy giáo dân đã chọn
+            $parishioners = \App\Models\Parishioners::whereIn('id', $this->selectedParishioners)
+                ->where('pid', $this->parishId)
+                ->get();
+
+            foreach ($parishioners as $p) {
+                try {
+                    // ✅ Tạo học sinh với ĐẦY ĐỦ các trường
+                    $student = \App\Models\Student::create([
+                        // Thông tin cơ bản
+                        'last_name' => $p->last_name,
+                        'name' => $p->name,
+                        'holy' => $p->holy,
+                        'sex' => $p->sex,
+                        'birthday' => $p->birthday?->format('Y-m-d'),
+                        'phone' => $p->phone,
+                        'phone_number' => $p->phone, // Có cả phone_number
+                        'email' => $p->email,
+                        'cccd' => $p->cccd,
+
+                        // Địa chỉ
+                        'origin' => $p->origin,
+                        'ward' => $p->ward,
+                        'province' => $p->province,
+
+                        // Gia đình
+                        'father' => $p->father,
+                        'mother' => $p->mother,
+
+                        // Thánh sự - Rửa tội
+                        'baptism_date' => $p->baptism_date,
+                        'baptism_number' => $p->baptism_number,
+                        'baptism_giver' => $p->baptism_giver,
+                        'baptism_sponsor' => $p->baptism_sponsor,
+                        'baptism_dioceses' => $p->baptism_dioceses,
+                        'baptism_deanerys' => $p->baptism_deanerys,
+                        'baptism_parish' => $p->baptism_parish,
+
+                        // Thánh sự - Thêm sức
+                        'more_power_date' => $p->more_power_date,
+                        'more_power_number' => $p->more_power_number,
+                        'more_power_giver' => $p->more_power_giver,
+                        'more_power_sponsor' => $p->more_power_sponsor,
+                        'more_power_address' => $p->more_power_address ?? null,
+                        'more_power_dioceses' => $p->more_power_dioceses,
+                        'more_power_deanerys' => $p->more_power_deanerys,
+                        'more_power_parish' => $p->more_power_parish,
+
+                        // Thánh sự - Rước lễ (nếu có)
+                        'communion_date' => $p->communion_date ?? null,
+                        // 'communion_number' => $p->communion_number ?? null,
+                        // 'communion_giver' => $p->communion_giver ?? null,
+
+                        // Ghi chú
+                        'note' => $p->note ?? null,
+
+                        // ✅ Liên kết giáo dân
+                        'parishioner_id' => $p->id,
+
+                        // ✅ Context - BẮT BUỘC
+                        'pid' => $this->parishId,
+                        'did' => $p->did ?? 0,
+                        'deid' => $p->deid ?? 0,
+                        'paid' => $p->paid ?? 0,
+
+                        // ✅ Lớp (có thể để null vì sẽ thêm vào bảng trung gian)
+                        // 'lop' => $lop->id,
+
+                        // ✅ Mã học viên (để null, sẽ generate sau hoặc auto)
+                        'mahv' => null,
+                        'magd' => null,
+                        'magdcg' => null,
+
+                        // ✅ Trạng thái
+                        'status' => \App\Models\Student::STATUS_STUDYING,
+                    ]);
+
+                    // ✅ Thêm vào lớp qua bảng trung gian students_class
+                    $student->lops()->attach($lop->id, [
+                        'status' => \App\Models\StudentsClass::STATUS_ENROLLED ?? 1,
+                        'created_at' => now(),
+                        'updated_at' => now(),
+                    ]);
+
+                    $successCount++;
+                } catch (\Exception $e) {
+                    $errors[] = "{$p->last_name} {$p->name}: {$e->getMessage()}";
+                    $errorCount++;
+
+                    // ✅ Log chi tiết để debug
+                    $this->logError($e, 'Error creating student from parishioner', [
+                        'parishioner_id' => $p->id,
+                        'parishioner_name' => "{$p->last_name} {$p->name}",
+                    ]);
+                }
+            }
+
+            DB::commit();
+
+            $message = "✅ Đã import {$successCount} học sinh thành công";
+            if ($errorCount > 0) {
+                $message .= " | ❌ {$errorCount} lỗi";
+            }
+
+            session()->flash('message', $message);
+
+            if (!empty($errors)) {
+                $errorMessage = '<strong>Chi tiết lỗi:</strong><br>' . implode('<br>', array_slice($errors, 0, 5));
+                if (count($errors) > 5) {
+                    $errorMessage .= '<br><em>... và ' . (count($errors) - 5) . ' lỗi khác</em>';
+                }
+                session()->flash('warning', $errorMessage);
+            }
+
+            $this->closeImportFromParishioners();
+            $this->emit('refreshStudents');
+        } catch (\Exception $e) {
+            DB::rollBack();
+
+            $this->logError($e, 'Error importing parishioners to students', [
+                'selected_count' => count($this->selectedParishioners),
+                'lop_id' => $this->selectedLop,
+            ]);
+
+            session()->flash('error', 'Có lỗi khi import học sinh: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Update khi select all thay đổi
+     */
+    public function updatedSelectAllParishioners($value): void
+    {
+        if ($value) {
+            $this->selectedParishioners = $this->getAvailableParishionersQuery()
+                ->pluck('id')
+                ->toArray();
+        } else {
+            $this->selectedParishioners = [];
+        }
     }
 
     // ==================== ADD STUDENTS ACTIONS ====================
@@ -768,8 +1039,14 @@ class StudentList extends BaseComponent
         $stats = $this->getGenderStats();
         $lop = $this->getCurrentLopInfo();
 
+        // Modal 1: Thêm học sinh có sẵn
         $availableStudents = $this->showAddStudentsModal
             ? $this->getAvailableStudentsPaginated()
+            : null;
+
+        // ✅ Modal 2: Import từ giáo dân - THÊM DÒNG NÀY
+        $availableParishioners = $this->showImportFromParishioners
+            ? $this->getAvailableParishionersPaginated()
             : null;
 
         return view('livewire.student.student-list', [
@@ -780,6 +1057,7 @@ class StudentList extends BaseComponent
             'countnu' => $stats['countnu'],
             'parishId' => $this->parishId,
             'availableStudents' => $availableStudents,
+            'availableParishioners' => $availableParishioners, // ✅ THÊM
         ])
             ->extends('frontend.layout.main')
             ->section('content');

@@ -93,7 +93,24 @@
 
                         {{-- Action Buttons --}}
                         <div class="flex items-center gap-2">
-                            {{-- Thêm học sinh vào lớp --}}
+
+                            {{-- NÚT MỚI: Import từ giáo dân --}}
+                            @if($selectedLop)
+                            <button type="button"
+                                wire:click="openImportFromParishioners"
+                                class="inline-flex items-center gap-2 px-4 py-2.5 
+               bg-gradient-to-r from-purple-500 to-purple-600 
+               text-white text-sm font-semibold rounded-xl 
+               hover:bg-purple-700 active:scale-95 transition-all shadow-sm">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                                </svg>
+                                Import từ giáo dân
+                            </button>
+                            @endif
+
+                            {{-- Thêm học sinh --}}
                             @if($selectedLop)
                             <button type="button"
                                 wire:click="openAddStudentsModal"
@@ -475,6 +492,208 @@
         </div>
         @endif
     </div>
+
+    {{-- Modal Import từ Giáo dân --}}
+    @if ($showImportFromParishioners)
+    <div class="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4"
+        role="dialog"
+        wire:click="closeImportFromParishioners">
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-5xl max-h-[90vh] 
+                overflow-hidden flex flex-col"
+            wire:click.stop>
+
+            {{-- Header --}}
+            <div class="flex-shrink-0 p-6 border-b border-slate-200 
+                    bg-gradient-to-br from-purple-50 to-white">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <h2 class="text-2xl font-bold text-slate-900 flex items-center gap-2">
+                            <svg class="w-7 h-7 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                            </svg>
+                            Import giáo dân thành học sinh
+                        </h2>
+                        <p class="text-sm text-slate-600 mt-1">
+                            Chọn giáo dân để tạo hồ sơ học sinh
+                        </p>
+                    </div>
+
+                    <button wire:click="closeImportFromParishioners"
+                        class="text-slate-400 hover:text-slate-600 transition">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                    </button>
+                </div>
+
+                {{-- Search & Filters --}}
+                <div class="mt-4 space-y-3">
+                    <input wire:model.debounce.300ms="parishionerSearch"
+                        type="text"
+                        placeholder="Tìm kiếm giáo dân..."
+                        class="w-full px-4 py-2.5 rounded-xl border border-slate-300
+                              focus:outline-none focus:ring-2 focus:ring-purple-500">
+
+                    <div class="flex items-center gap-2">
+                        <select wire:model="parishionerBirthYear"
+                            class="flex-1 px-3 py-2 rounded-xl border border-slate-300
+                                   focus:outline-none focus:ring-2 focus:ring-purple-500">
+                            <option value="">-- Tất cả năm sinh --</option>
+                            @foreach($this->getQuickYearOptions() as $year)
+                            <option value="{{ $year }}">{{ $year }}</option>
+                            @endforeach
+                        </select>
+
+                        @if($parishionerBirthYear)
+                        <button wire:click="$set('parishionerBirthYear', null)"
+                            class="px-3 py-2 text-slate-600 hover:bg-slate-100 rounded-xl">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                        </button>
+                        @endif
+
+                        <input type="number"
+                            wire:model.lazy="ageFrom"
+                            placeholder="Tuổi từ"
+                            class="w-28 px-3 py-2 rounded-xl border border-slate-300
+               focus:outline-none focus:ring-2 focus:ring-purple-500">
+
+                        <input type="number"
+                            wire:model.lazy="ageTo"
+                            placeholder="đến"
+                            class="w-28 px-3 py-2 rounded-xl border border-slate-300
+               focus:outline-none focus:ring-2 focus:ring-purple-500">
+
+                        @if($ageFrom || $ageTo)
+                        <button wire:click="
+        $set('ageFrom', null);
+        $set('ageTo', null);
+    "
+                            class="px-3 py-2 text-slate-600 hover:bg-slate-100 rounded-xl">
+                            ✕
+                        </button>
+                        @endif
+                    </div>
+                </div>
+            </div>
+
+            {{-- Body --}}
+            <div class="flex-1 overflow-y-auto p-6">
+                @if($availableParishioners && $availableParishioners->count() > 0)
+                <table class="w-full">
+                    <thead class="bg-slate-50 sticky top-0">
+                        <tr>
+                            <th class="px-4 py-3 text-left">
+                                <input type="checkbox"
+                                    wire:model="selectAllParishioners"
+                                    class="w-4 h-4 rounded border-slate-300 
+                                          text-purple-600 focus:ring-purple-500">
+                            </th>
+                            <th class="px-4 py-3 text-left text-xs font-semibold 
+                                   text-slate-700 uppercase">Họ tên</th>
+                            <th class="px-4 py-3 text-left text-xs font-semibold 
+                                   text-slate-700 uppercase">Ngày sinh</th>
+                            <th class="px-4 py-3 text-left text-xs font-semibold 
+                                   text-slate-700 uppercase">Tuổi</th>
+                            <th class="px-4 py-3 text-left text-xs font-semibold 
+                                   text-slate-700 uppercase">Giới tính</th>
+                            <th class="px-4 py-3 text-left text-xs font-semibold 
+                                   text-slate-700 uppercase">Điện thoại</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-slate-100">
+                        @foreach($availableParishioners as $p)
+                        <tr class="hover:bg-slate-50">
+                            <td class="px-4 py-3">
+                                <input type="checkbox"
+                                    wire:model="selectedParishioners"
+                                    value="{{ $p->id }}"
+                                    class="w-4 h-4 rounded border-slate-300 
+                                          text-purple-600 focus:ring-purple-500">
+                            </td>
+                            <td class="px-4 py-3 text-sm font-semibold text-slate-900">
+                                {{ $p->last_name }} {{ $p->name }}
+                            </td>
+                            <td class="px-4 py-3 text-sm text-slate-600">
+                                {{ $p->birthday?->format('d/m/Y') }}
+                            </td>
+                            <td class="px-4 py-3 text-sm text-slate-600">
+                                {{ \Carbon\Carbon::parse($p->birthday)->age }} tuổi
+                            </td>
+                            <td class="px-4 py-3 text-sm">
+                                <span class="inline-flex items-center px-2 py-1 rounded-full text-xs
+                                         {{ $p->sex == 1 ? 'bg-blue-100 text-blue-700' : 'bg-pink-100 text-pink-700' }}">
+                                    {{ $p->sex == 1 ? 'Nam' : 'Nữ' }}
+                                </span>
+                            </td>
+                            <td class="px-4 py-3 text-sm text-slate-600">
+                                {{ $p->phone ?? '-' }}
+                            </td>
+                        </tr>
+                        @endforeach
+                    </tbody>
+                </table>
+
+                {{-- Pagination --}}
+                @if($availableParishioners->hasPages())
+                <div class="mt-4">
+                    {{ $availableParishioners->links() }}
+                </div>
+                @endif
+                @else
+                <div class="text-center py-12">
+                    <svg class="mx-auto w-16 h-16 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                    </svg>
+                    <p class="mt-4 text-lg text-slate-500">Không có giáo dân nào phù hợp</p>
+                    <p class="mt-1 text-sm text-slate-400">
+                        Chỉ hiển thị giáo dân 6-18 tuổi chưa có hồ sơ học sinh
+                    </p>
+                </div>
+                @endif
+            </div>
+
+            {{-- Footer --}}
+            <div class="flex-shrink-0 px-6 py-4 border-t border-slate-200 bg-slate-50">
+                <div class="flex items-center justify-between">
+                    <div class="text-sm text-slate-600">
+                        Đã chọn: <span class="font-semibold text-purple-600">
+                            {{ count($selectedParishioners) }}
+                        </span> giáo dân
+                    </div>
+
+                    <div class="flex gap-3">
+                        <button wire:click="closeImportFromParishioners"
+                            class="px-4 py-2.5 bg-slate-100 text-slate-900 text-sm 
+                                   font-semibold rounded-xl hover:bg-slate-200 
+                                   active:scale-95 transition-all">
+                            Hủy
+                        </button>
+
+                        <button wire:click="importParishionersToStudents"
+                            @disabled(empty($selectedParishioners))
+                            class="px-4 py-2.5 bg-gradient-to-r from-purple-500 to-purple-600 
+                                   text-white text-sm font-semibold rounded-xl 
+                                   hover:bg-purple-700 active:scale-95 transition-all
+                                   disabled:opacity-50 disabled:cursor-not-allowed 
+                                   flex items-center gap-2">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M12 4v16m8-8H4" />
+                            </svg>
+                            Import {{ count($selectedParishioners) }} học sinh
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    @endif
 </div>
 
 {{-- Loading Indicator --}}

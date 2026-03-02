@@ -7,6 +7,7 @@ use App\Models\Parishioners;
 use App\Models\NamHoc;
 use App\Models\Lop;
 use App\Models\Student;
+use App\Models\StudentsClass;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
@@ -263,6 +264,9 @@ class ParishionersManager extends BaseComponent
         $this->requireParishId();
 
         $this->linkedStudents = collect();
+
+        $this->bulkAvailableNamHocs = collect();
+        $this->bulkAvailableLops = collect();
     }
 
     /**
