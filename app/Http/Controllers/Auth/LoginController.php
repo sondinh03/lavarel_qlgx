@@ -80,8 +80,8 @@ class LoginController extends Controller
      */
     protected function authenticated($request, $user)
     {
-        // ===== ADMIN (Administrator) =====
-        if ($user->hasRole('Administrator')) {
+        // ===== SUPER_ADMIN (super_admin) =====
+        if ($user->hasRole('super_admin')) {
             session([
                 'parish_id' => $request->get('giaoxu'), // Admin chọn xứ
                 'isAdmin' => true,
