@@ -639,8 +639,6 @@
     <?php echo $__env->make('frontend.layout.footer', \Illuminate\Support\Arr::except(get_defined_vars(), ['__data', '__path']))->render(); ?>
 
     
-
-    
     <script src="<?php echo e(mix('js/manifest.js')); ?>"></script>
     <script src="<?php echo e(mix('js/vendor.js')); ?>"></script>
     <script src="<?php echo e(mix('js/app.js')); ?>"></script>
