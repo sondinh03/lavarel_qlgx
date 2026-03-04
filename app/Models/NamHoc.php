@@ -2,13 +2,15 @@
 
 namespace App\Models;
 
+use App\Traits\BelongsToParish;
 use Backpack\CRUD\app\Models\Traits\CrudTrait;
 use Illuminate\Database\Eloquent\Model;
-use phpDocumentor\Reflection\Types\This;
 
 class NamHoc extends Model
 {
+    use BelongsToParish;
     use CrudTrait;
+    use BelongsToParish;
 
     /*
     |--------------------------------------------------------------------------

@@ -88,6 +88,10 @@ Route::middleware('auth')->group(function () {
         Route::get('/classes', LopList::class)
             ->name('classes.index');
 
+        Route::get('/test-class', function () {
+            return \App\Models\Teacher::count();;
+        });
+
         Route::get('/classes/{id}', LopDetail::class)
             ->name('classes.show');
 

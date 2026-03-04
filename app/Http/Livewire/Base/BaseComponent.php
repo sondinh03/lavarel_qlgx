@@ -135,7 +135,7 @@ abstract class BaseComponent extends Component
             if ($this->isAdmin) {
                 // Redirect admin đến trang chọn xứ hoặc hiển thị thông báo
                 session()->flash('warning', 'Vui lòng chọn giáo xứ để tiếp tục');
-                $this->redirectRoute('admin.select-parish'); // Hoặc route phù hợp
+                // $this->redirectRoute('admin.select-parish'); // Hoặc route phù hợp
             } else {
                 abort(403, 'Không xác định được giáo xứ');
             }

@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Traits\BelongsToParish;
 use App\Traits\HasFormattedName;
 use Backpack\CRUD\app\Models\Traits\CrudTrait;
 use Illuminate\Database\Eloquent\Model;
@@ -13,6 +14,7 @@ class Teacher extends Model
     use CrudTrait;
     use RevisionableTrait;
     use HasFormattedName;
+    use BelongsToParish;
 
     /*
     |--------------------------------------------------------------------------
@@ -24,6 +26,7 @@ class Teacher extends Model
     protected $guarded = ['id'];
 
     protected $fillable = [
+        'parish_id', // ID giáo xứ (Parishes))
         'user_id',  // ID người dùng (nếu có)
         'pid',      // Giáo xứ ID
         'deid',     // deanery ID (Giáo Hạt)
@@ -42,8 +45,7 @@ class Teacher extends Model
 
     protected $casts = [
         'birthday' => 'date',
-        'status' => 'integer',
-        'year' => 'integer',
+        'status' => 'boolean',
     ];
 
     // protected $appends = ['teacher'];
@@ -85,15 +87,20 @@ class Teacher extends Model
      */
     public function parishChild(): BelongsTo
     {
-        return $this->belongsTo(Parish::class, 'paid', 'id');
+        return $this->belongsTo(ParishGroup::class, 'paid', 'id');
     }
 
     /**
      * Teacher thuộc về một Giáo xứ (ParishManagement)
      */
+    // public function parish(): BelongsTo
+    // {
+    //     return $this->belongsTo(ParishManagement::class, 'pid', 'id');
+    // }
+
     public function parish(): BelongsTo
     {
-        return $this->belongsTo(ParishManagement::class, 'pid', 'id');
+        return $this->belongsTo(ParishNew::class, 'parish_id');
     }
 
     /**
