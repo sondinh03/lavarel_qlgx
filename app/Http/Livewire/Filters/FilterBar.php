@@ -3,6 +3,8 @@
 namespace App\Http\Livewire\Filters;
 
 use App\Models\Block;
+use App\Models\CatechismClass;
+use App\Models\GradeLevel;
 use App\Models\Lop;
 use App\Models\NamHoc;
 use Livewire\Component;
@@ -87,10 +89,8 @@ class FilterBar extends Component
             return;
         }
 
-        $this->khois = Block::ofParish($this->parish_id)
-            ->where('namhoc', $this->selectedNamHoc)
-            ->active()
-            ->orderBy('weight')
+        $this->khois = GradeLevel::active()
+            ->orderBy('sort_order')
             ->pluck('name', 'id');
     }
 
@@ -101,10 +101,10 @@ class FilterBar extends Component
             return;
         }
 
-        $this->lops = Lop::where('schoolyear', $this->selectedNamHoc)
+        $this->lops = CatechismClass::where('school_year_id', $this->selectedNamHoc)
             ->when(
                 $this->selectedKhoi,
-                fn($q) => $q->where('block', $this->selectedKhoi)
+                fn($q) => $q->where('grade_level_id', $this->selectedKhoi)
             )
             ->active()
             ->pluck('name', 'id');

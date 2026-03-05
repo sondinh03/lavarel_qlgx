@@ -2,6 +2,8 @@
   'attendance-manager' => 'App\\Http\\Livewire\\AttendanceManager',
   'attendance.session-manager' => 'App\\Http\\Livewire\\Attendance\\SessionManager',
   'block.block-manager' => 'App\\Http\\Livewire\\Block\\BlockManager',
+  'catechism-class.catechism-class-list' => 'App\\Http\\Livewire\\CatechismClass\\CatechismClassList',
+  'class-student-manager' => 'App\\Http\\Livewire\\ClassStudentManager',
   'filters.filter-bar' => 'App\\Http\\Livewire\\Filters\\FilterBar',
   'holy.holy-manager' => 'App\\Http\\Livewire\\Holy\\HolyManager',
   'home' => 'App\\Http\\Livewire\\Home',
@@ -17,6 +19,7 @@
   'student.student-detail' => 'App\\Http\\Livewire\\Student\\StudentDetail',
   'student.student-edit' => 'App\\Http\\Livewire\\Student\\StudentEdit',
   'student.student-list' => 'App\\Http\\Livewire\\Student\\StudentList',
+  'student.student-list-new' => 'App\\Http\\Livewire\\Student\\StudentListNew',
   'teacher.teacher-import-preview' => 'App\\Http\\Livewire\\Teacher\\TeacherImportPreview',
   'teacher.teacher-manager' => 'App\\Http\\Livewire\\Teacher\\TeacherManager',
 );

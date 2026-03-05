@@ -47,7 +47,7 @@ class ParishionersPolicy
 
         // Decen: chỉ xem giáo dân trong xứ mình
         if ($user->isDecen()) {
-            return $parishioner->pid === $user->parishId();
+            return $parishioner->pid === $user->parish_id;
         }
 
         // User thường: không có quyền
@@ -82,7 +82,7 @@ class ParishionersPolicy
 
         // Decen: chỉ sửa giáo dân trong xứ mình
         if ($user->isDecen()) {
-            return $parishioner->pid === $user->parishId();
+            return $parishioner->pid === $user->parish_id;
         }
 
         return false;
@@ -144,7 +144,7 @@ class ParishionersPolicy
 
         // Decen: chỉ thay đổi giáo dân trong xứ mình
         if ($user->isDecen()) {
-            return $parishioner->pid === $user->parishId();
+            return $parishioner->pid === $user->parish_id;
         }
 
         return false;
@@ -178,7 +178,7 @@ class ParishionersPolicy
         }
 
         if ($user->isDecen()) {
-            return $parishioner->pid === $user->parishId();
+            return $parishioner->pid === $user->parish_id;
         }
 
         return false;
@@ -248,7 +248,7 @@ class ParishionersPolicy
         }
 
         if ($user->isDecen()) {
-            return $parishioner->pid === $user->parishId();
+            return $parishioner->pid === $user->parish_id;
         }
 
         return false;

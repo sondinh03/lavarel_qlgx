@@ -63,15 +63,14 @@ class StudentNew extends Model
         return $this->belongsTo(Holymanagement::class);
     }
 
-    public function students()
+    public function classes()
     {
         return $this->belongsToMany(
-            StudentNew::class,
+            \App\Models\CatechismClass::class,
             'students_class',
-            'class_id',
-            'student_id'
-        )
-            ->withTimestamps();
+            'student_id',
+            'class_id'
+        )->withTimestamps();
     }
 
     /*

@@ -2,7 +2,6 @@
 
 namespace App\Http\Livewire\Base;
 
-use App\Support\AuthUser;
 use App\Traits\FilterTrait;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Support\Facades\Log;
@@ -34,15 +33,6 @@ abstract class BaseComponent extends Component
     // ==================== AUTHENTICATION ====================
     /** @var int|null Parish ID hiện tại */
     public ?int $parishId = null;
-
-    /** @var bool Quyền admin  */
-    public $isAdmin = false;
-
-    /** @var bool Kiểm tra quyền quản trị xứ */
-    public $isDecen = false;
-
-    /** @var bool Kiểm tra quyền GLV */
-    public $isCatechist = false;
 
     // ==================== PAGINATION & SEARCH ====================
 
@@ -112,16 +102,8 @@ abstract class BaseComponent extends Component
      */
     protected function initializeUser(): void
     {
-        $user = AuthUser::user();
-        if (!$user) {
-            abort(401, 'Chưa đăng nhập');
-        }
-
-        $this->isAdmin = $user?->isAdmin() ?? false;
-        $this->isDecen = $user?->isDecen() ?? false;
-        $this->isCatechist = $user?->isCatechist() ?? false;
-
-        $this->parishId = $user->parishId();
+        $user = auth()->user() ?? abort(401, 'Chưa đăng nhập');
+        $this->parishId = $user->parish_id;
     }
 
 
@@ -132,13 +114,7 @@ abstract class BaseComponent extends Component
     protected function requireParishId(): void
     {
         if (!$this->parishId) {
-            if ($this->isAdmin) {
-                // Redirect admin đến trang chọn xứ hoặc hiển thị thông báo
-                session()->flash('warning', 'Vui lòng chọn giáo xứ để tiếp tục');
-                // $this->redirectRoute('admin.select-parish'); // Hoặc route phù hợp
-            } else {
-                abort(403, 'Không xác định được giáo xứ');
-            }
+            abort(403, 'Không xác định được giáo xứ');
         }
     }
 
@@ -273,10 +249,11 @@ abstract class BaseComponent extends Component
     protected function logError(\Exception $e, string $context, array $extra = []): void
     {
         Log::error(static::class . ": {$context}", array_merge([
-            'error' => $e->getMessage(),
-            'trace' => $e->getTraceAsString(),
-            'parishId' => $this->parishId,
-            'is_admin' => $this->isAdmin,
+            'error'     => $e->getMessage(),
+            'trace'     => $e->getTraceAsString(),
+            'parishId'  => $this->parishId,
+            'user_id'   => auth()->id(),        // thay is_admin
+            'roles'     => auth()->user()?->getRoleNames(), // log roles thực tế
         ], $extra));
     }
 
@@ -285,19 +262,17 @@ abstract class BaseComponent extends Component
      */
     protected function requireAdmin(): void
     {
-        if (!$this->isAdmin) {
-            abort(403, 'Chỉ quản trị tổng mới có quyền thực hiện thao tác này');
-        }
+        auth()->user()?->hasRole('super_admin')
+            || abort(403, 'Chỉ super admin mới có quyền');
     }
 
     /**
-     * Check quyền quản trị (Admin hoặc Decen), throw 403 nếu không phải
+     * Check quyền quản trị (Super Admin hoặc Parish Admin), throw 403 nếu không phải
      */
     protected function requireManager(): void
     {
-        if (!$this->isAdmin && !$this->isDecen) {
-            abort(403, 'Chỉ quản trị viên mới có quyền thực hiện thao tác này');
-        }
+        auth()->user()?->hasAnyRole(['super_admin', 'parish_admin'])
+            || abort(403, 'Chỉ quản trị viên mới có quyền');
     }
 
     /**
@@ -305,13 +280,11 @@ abstract class BaseComponent extends Component
      */
     protected function requireDecenOfParish(): void
     {
-        if (!$this->isDecen) {
-            abort(403, 'Chỉ quản trị xứ mới có quyền thực hiện thao tác này');
-        }
+        auth()->user()?->hasRole('parish_admin')
+            || abort(403, 'Chỉ quản trị xứ mới có quyền');
 
-        if (!$this->parishId) {
-            abort(403, 'Không xác định được giáo xứ');
-        }
+        $this->parishId
+            || abort(403, 'Không xác định được giáo xứ');
     }
 
     /**

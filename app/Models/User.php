@@ -6,6 +6,7 @@ use Backpack\CRUD\app\Models\Traits\CrudTrait;
 use Spatie\Permission\Traits\HasRoles;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
@@ -46,6 +47,33 @@ class User extends Authenticatable
         'email_verified_at' => 'datetime',
     ];
 
+    public function parish(): BelongsTo
+    {
+        return $this->belongsTo(ParishNew::class, 'parish_id', 'id');
+    }
+
+    public function isSuperAdmin(): bool
+    {
+        return $this->hasRole('super_admin');
+    }
+
+    public function isParishAdmin(): bool
+    {
+        return $this->hasRole('parish_admin');
+    }
+
+    public function isCatechist(): bool
+    {
+        return $this->hasRole('catechist');
+    }
+
+    public function canManage(): bool
+    {
+        // return $this->isSuperAdmin() || $this->isParishAdmin();
+        return $this->hasAnyRole(['super_admin', 'parish_admin']);
+    }
+
+    /*
     public function admin()
     {
         return $this->hasOne(SetAdmin::class, 'use', 'id');
@@ -71,34 +99,15 @@ class User extends Authenticatable
         return $this->decen && $this->decen->status === 1;
     }
 
-    public function isCatechist(): bool
-    {
-        return $this->teacher && $this->teacher->status === 1;
-    }
+    // public function isCatechist(): bool
+    // {
+    //     return $this->teacher && $this->teacher->status === 1;
+    // }
 
-    public function parishId(): ?int
-    {
-        if ($this->isDecen()) {
-            return $this->decen?->pid;
-        }
-
-        if ($this->isCatechist()) {
-            return $this->teacher?->pid;
-        }
-
-        return null;
-    }
+    */
 
     public function parishName(): ?string
     {
-        if ($this->isDecen()) {
-            return $this->decen?->parish?->name;
-        }
-
-        if ($this->isCatechist()) {
-            return $this->teacher?->parish?->name;
-        }
-
-        return null;
+        return $this->parish?->name ?? null;
     }
 }

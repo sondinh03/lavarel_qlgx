@@ -34,7 +34,7 @@ class LopPolicy
      */
     public function before(User $user)
     {
-        if ($user->isAdmin()) {
+        if ($user->isSuperAdmin()) {
             return true;
         }
     }
@@ -71,7 +71,7 @@ class LopPolicy
     public function view(User $user, Lop $lop): bool
     {
         return $user->isDecen()
-            && $user->parishId() === $lop->pid;
+            && $user->parish_id === $lop->pid;
     }
 
     /**
@@ -106,7 +106,7 @@ class LopPolicy
     public function update(User $user, Lop $lop): bool
     {
         return $user->isDecen()
-            && $user->parishId() === $lop->pid;
+            && $user->parish_id === $lop->pid;
     }
 
     /**

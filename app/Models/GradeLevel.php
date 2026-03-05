@@ -3,12 +3,9 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
-use App\Traits\BelongsToParish;
 
 class GradeLevel extends Model
 {
-    use BelongsToParish;
-
     protected $table = 'grade_levels';
 
     protected $fillable = [

@@ -40,6 +40,8 @@ use App\Http\Livewire\Attendance\CreateAttendanceSessions;
 use App\Http\Livewire\Attendance\SessionManager;
 use App\Http\Livewire\AttendanceManager;
 use App\Http\Livewire\Block\BlockManager;
+use App\Http\Livewire\CatechismClass\CatechismClassList;
+use App\Http\Livewire\ClassStudentManager;
 use App\Http\Livewire\Holy\HolyManager;
 use App\Http\Livewire\Home;
 use App\Http\Livewire\Landing;
@@ -53,6 +55,7 @@ use App\Http\Livewire\Score\ScoreManager;
 use App\Http\Livewire\Student\StudentDetail;
 use App\Http\Livewire\Student\StudentEdit;
 use App\Http\Livewire\Student\StudentList;
+use App\Http\Livewire\Student\StudentListNew;
 use App\Http\Livewire\Teacher\TeacherImportPreview;
 use App\Http\Livewire\Teacher\TeacherManager;
 use Illuminate\Support\Facades\Auth;
@@ -77,7 +80,7 @@ Route::middleware('auth')->group(function () {
         Route::get('/attendance', AttendanceManager::class)
             ->name('attendance.show');
 
-        Route::get('/students', StudentList::class)
+        Route::get('/students', StudentListNew::class)
             ->name('students.index');
 
         Route::get('/students/{id}', StudentDetail::class)
@@ -85,15 +88,17 @@ Route::middleware('auth')->group(function () {
     });
 
     Route::middleware('role:parish_admin')->group(function () {
-        Route::get('/classes', LopList::class)
-            ->name('classes.index');
+        Route::get('/catechism-classes', CatechismClassList::class)
+            ->name('catechism-classes.index');
 
-        Route::get('/test-class', function () {
-            return \App\Models\Teacher::count();;
-        });
+        Route::get('/classes', CatechismClassList::class)
+            ->name('classes.index');
 
         Route::get('/classes/{id}', LopDetail::class)
             ->name('classes.show');
+
+        Route::get('/classes/{id}/students', ClassStudentManager::class)
+            ->name('classes.students');
 
         Route::get('/classes/{lopId}/catechists', AssignTeacher::class)
             ->name('classes.catechists');
