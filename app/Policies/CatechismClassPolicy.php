@@ -51,7 +51,7 @@ class CatechismClassPolicy
             && $user->parish_id === $class->parish_id;
     }
 
-    public function delete(User $user, CatechismClass $class): bool
+    public function delete(): bool
     {
         // khuyến nghị: vẫn không cho delete thật
         return false;

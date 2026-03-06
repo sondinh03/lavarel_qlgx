@@ -112,6 +112,18 @@
                             </button>
                             @endif
 
+                            <p>{{ $selectedLop }}</p>
+
+                            @if($selectedLop)
+                            <a href="{{ route('students.import') }}?classId={{ $selectedLop }}"
+                                class="inline-flex items-center gap-2 px-4 py-2.5
+                                    bg-gradient-to-r from-indigo-500 to-indigo-600
+                                    text-white text-sm font-semibold rounded-xl ...">
+                                <svg ...> {{-- icon upload --}} </svg>
+                                Import Excel
+                            </a>
+                            @endif
+
                             {{-- Điểm danh --}}
                             @if($lop)
                             <a href="{{ route('attendance.show', ['classId' => $lop->id]) }}"
@@ -127,6 +139,19 @@
                                 Điểm danh
                             </a>
                             @endif
+
+                            <a href="{{ route('students.import') }}"
+                                class="inline-flex items-center gap-2 px-4 py-2.5
+           bg-gradient-to-r from-indigo-500 to-indigo-600
+           text-white text-sm font-semibold rounded-xl
+           hover:from-indigo-600 hover:to-indigo-700
+           active:scale-95 transition-all shadow-sm">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                                </svg>
+                                Import Excel
+                            </a>
 
                             {{-- Đặt lại --}}
                             <button type="button"

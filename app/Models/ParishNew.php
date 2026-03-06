@@ -13,6 +13,7 @@ class ParishNew extends Model
 
     protected $fillable = [
         'name',
+        'code',
         'deanery_id',
         'diocese_id',
         'ward',

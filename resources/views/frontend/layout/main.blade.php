@@ -257,7 +257,7 @@
                 <nav class="hidden lg:flex items-center gap-2 flex-1 justify-center">
 
                     {{-- 🏠 Trang chủ --}}
-                    <a href="/"
+                    <a href="{{ route('dashboard') }}"
                         class="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold text-slate-700 
                                   hover:bg-primary-50 hover:text-primary-700 transition-all whitespace-nowrap">
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -558,7 +558,7 @@
         {{-- Mobile drawer for admin --}}
         <div x-show="open" x-transition @click.outside="open=false" class="md:hidden bg-white border-t border-slate-200">
             <nav class="px-4 py-4 space-y-2">
-                <a href="/" class="block px-3 py-2 rounded-lg text-slate-700 hover:bg-primary-50 hover:text-primary-700">
+                <a href="{{ route('dashboard') }}" class="block px-3 py-2 rounded-lg text-slate-700 hover:bg-primary-50 hover:text-primary-700">
                     Trang chủ
                 </a>
                 <a href="{{ route('students.index') }}" class="block px-3 py-2 rounded-lg text-slate-700 hover:bg-primary-50 hover:text-primary-700">

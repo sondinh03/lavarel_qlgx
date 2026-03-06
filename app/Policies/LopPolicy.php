@@ -53,7 +53,7 @@ class LopPolicy
      */
     public function viewAny(User $user): bool
     {
-        return $user->isDecen();
+        return $user->canManage();
     }
 
     /**

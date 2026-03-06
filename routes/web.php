@@ -36,7 +36,8 @@ use App\Http\Controllers\LopImportController;
 use App\Http\Controllers\TeacherImportController;
 use App\Http\Controllers\KetQuaExportController;
 use App\Http\Controllers\HonPhoiExportController;
-use App\Http\Livewire\Attendance\CreateAttendanceSessions;
+use App\Http\Controllers\Student\StudentsImportController;
+use App\Http\Controllers\StudentImportController;
 use App\Http\Livewire\Attendance\SessionManager;
 use App\Http\Livewire\AttendanceManager;
 use App\Http\Livewire\Block\BlockManager;
@@ -47,14 +48,13 @@ use App\Http\Livewire\Home;
 use App\Http\Livewire\Landing;
 use App\Http\Livewire\Lop\AssignTeacher;
 use App\Http\Livewire\Lop\LopDetail;
-use App\Http\Livewire\Lop\LopList;
 use App\Http\Livewire\NamHoc\NamHocManager;
 use App\Http\Livewire\Parish\ParishChild;
 use App\Http\Livewire\Parishioners\ParishionersManager;
 use App\Http\Livewire\Score\ScoreManager;
 use App\Http\Livewire\Student\StudentDetail;
 use App\Http\Livewire\Student\StudentEdit;
-use App\Http\Livewire\Student\StudentList;
+use App\Http\Livewire\Student\StudentImportPreview;
 use App\Http\Livewire\Student\StudentListNew;
 use App\Http\Livewire\Teacher\TeacherImportPreview;
 use App\Http\Livewire\Teacher\TeacherManager;
@@ -106,8 +106,19 @@ Route::middleware('auth')->group(function () {
         Route::get('/students/create', StudentEdit::class)
             ->name('students.create');
 
+        Route::get('/studentss/import', StudentImportPreview::class)
+            ->name('students.import');
+
         Route::get('/students/{id}/edit', StudentEdit::class)
             ->name('students.edit');
+
+        // Import page — truyền classId qua query string
+        // Route::get('/students/import', StudentImportPreview::class)
+        //     ->name('students.import');  
+
+        // Download template Excel
+        Route::get('/studentss/import/template', [StudentImportController::class, 'template'])
+            ->name('students.import.template');
 
         Route::get('/session', SessionManager::class)
             ->name('session.index');

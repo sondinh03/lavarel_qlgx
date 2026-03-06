@@ -4,7 +4,6 @@ namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
 use App\Models\Decen;
-use App\Models\SetAdmin;
 use App\Models\Teacher;
 use App\Providers\RouteServiceProvider;
 use Illuminate\Foundation\Auth\AuthenticatesUsers;
@@ -42,34 +41,6 @@ class LoginController extends Controller
         $this->middleware('guest')->except('logout');
     }
 
-    // protected function authenticated($request, $user)
-    // {
-    //     // Custom logic after user is authenticated
-    //     // For example, log the login time or redirect based on role
-
-    //     // Xác định parish_id và isAdmin
-    //     $setadmin = SetAdmin::where('use', $user->id)->where('status', 1)->first();
-
-    //     if ($setadmin) {
-    //         session([
-    //             'parish_id' => $request->get('giaoxu'),
-    //             'isAdmin' => true,
-    //             'isDecen' => false
-    //         ]);
-    //     } else {
-    //         $decen = Decen::where('use', $user->id)
-    //             ->where('status', 1)
-    //             ->where('student', 1)->first();
-
-    //             dd($decen);
-    //         session([
-    //             'parish_id' => $decen->pid,
-    //             'isAdmin' => false,
-    //             'isDecen' => true
-    //         ]);
-    //     }
-    // }
-
     /**
      * ✅ Xử lý sau khi đăng nhập thành công
      * 
@@ -85,7 +56,7 @@ class LoginController extends Controller
             session([
                 'parish_id' => $request->get('giaoxu'), // Admin chọn xứ
                 'isAdmin' => true,
-                'isDecen' => false,
+                // 'isDecen' => false,
                 'isTeacher' => false,
             ]);
             
@@ -105,7 +76,7 @@ class LoginController extends Controller
             session([
                 'parish_id' => $decen->pid,
                 'isAdmin' => false,
-                'isDecen' => true,
+                // 'isDecen' => true,
                 'isTeacher' => false,
             ]);
             

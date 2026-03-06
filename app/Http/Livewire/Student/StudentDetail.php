@@ -3,20 +3,24 @@
 namespace App\Http\Livewire\Student;
 
 use App\Http\Livewire\Base\BaseComponent;
-use App\Models\Student;
+use App\Models\StudentNew;
 
 /**
- * Student Detail Component - Optimized for Catechism Students
- * 
- * ✅ CHỈ HIỂN THỊ THÔNG TIN HỌC SINH GIÁO LÝ (bảng student)
- * ❌ KHÔNG bao gồm: Rước lễ, Xức dầu, Qua đời, Trú quán (thuộc parishioners)
- * 
+ * Student Detail Component - Dùng model StudentNew
+ *
+ * Fields thực tế từ StudentNew:
+ * - student_code, qr_token, avatar_path
+ * - parishioner_id, parish_id, parish_group_id, saint_id
+ * - first_name, last_name, father_name, mother_name
+ * - birthday, gender, phone, email, is_active, note
+ *
+ * Relationships: parish, parishioner, parishGroup, saint, classes (many-to-many → CatechismClass)
+ *
  * Features:
- * - View student profile with 4 tabs: Basic, Baptism, More Power, Other
- * - Display learning history from students_class table
- * - Export to PDF and Word
- * - Print profile
- * - Edit and delete actions (authorized users)
+ * - Xem hồ sơ với 2 tab: Cơ bản, Lịch sử học tập
+ * - Export PDF / Word
+ * - In hồ sơ
+ * - Chỉnh sửa & xóa (có phân quyền)
  */
 class StudentDetail extends BaseComponent
 {
@@ -31,10 +35,10 @@ class StudentDetail extends BaseComponent
     /** @var bool Loading state */
     public $isLoading = true;
 
-    /** @var string Active tab - CHỈ 4 TAB */
-    public $activeTab = 'basic'; // basic, baptism, more_power, other
+    /** @var string Active tab */
+    public $activeTab = 'basic'; // basic | history
 
-    /** @var bool Disable pagination */
+    /** @var bool Tắt pagination */
     protected $usePagination = false;
 
     // ==================== QUERY STRING ====================
@@ -49,14 +53,15 @@ class StudentDetail extends BaseComponent
     // ==================== LISTENERS ====================
 
     protected $listeners = [
-        'refresh' => 'loadStudentData',
+        'refresh'        => 'loadStudentData',
         'studentUpdated' => 'loadStudentData',
     ];
 
-    // ==================== LIFECYCLE HOOKS ====================
+    // ==================== LIFECYCLE ====================
 
     public function mount($id = null): void
     {
+        dd($id);
         $this->studentId = (int) $id;
 
         if ($this->studentId <= 0) {
@@ -72,76 +77,55 @@ class StudentDetail extends BaseComponent
     {
         $this->loadStudentData();
     }
-    
+
     // ==================== DATA LOADING ====================
 
-    /**
-     * ✅ Load ONLY student data (catechism student info)
-     */
     public function loadStudentData(): void
     {
         try {
             $this->isLoading = true;
 
-            $student = Student::with([
-                // Parish structure
-                'diocese:id,name',
-                'deanery:id,name',
+            $student = StudentNew::with([
                 'parish:id,name',
-                'paidRelation:id,name',
+                'parishGroup:id,name',
+                'saint:id,name',
+                'parishioner',
 
-                // Basic references
-                'holyRelation:id,name',
-                'ethnicRelation:id,name',
-                'careerRelation:id,name',
-                'levelRelation:id,name',
-                'positionRelation:id,name',
-                'languageRelation:id,name',
-
-                // ✅ Classes history (many-to-many với pivot data)
-                'lops' => function ($query) {
-                    $query->select('lop.id', 'lop.name', 'lop.symbol', 'lop.schoolyear')
+                // Lịch sử lớp học (many-to-many qua students_class)
+                'classes' => function ($query) {
+                    $query->select(
+                        'catechism_classes.id',
+                        'catechism_classes.name',
+                        'catechism_classes.symbol',
+                        'catechism_classes.schoolyear'
+                    )
                         ->with('schoolYear:id,name')
                         ->orderByDesc('students_class.created_at');
                 },
-
-                // ✅ BAPTISM - Student có đầy đủ
-                'baptismGiver:id,name',
-                'baptismSponsor:id,name',
-                'baptismDiocese:id,name',
-                'baptismDeanery:id,name',
-                'baptismParish:id,name',
-
-                // ✅ MORE POWER - Student có đầy đủ
-                'morePowerGiver:id,name',
-                'morePowerSponsor:id,name',
-                'morePowerDiocese:id,name',
-                'morePowerDeanery:id,name',
-                'morePowerParish:id,name',
             ])->findOrFail($this->studentId);
 
             $this->checkViewPermission($student);
             $this->studentData = $this->mapStudentData($student);
         } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
-            $this->logError($e, 'Student not found', ['student_id' => $this->studentId]);
+            $this->logError($e, 'StudentNew not found', ['student_id' => $this->studentId]);
             session()->flash('error', 'Không tìm thấy học sinh');
             $this->redirectRoute('classes.index');
         } catch (\Exception $e) {
-            $this->logError($e, 'Failed to load student data', ['student_id' => $this->studentId]);
+            $this->logError($e, 'Failed to load StudentNew data', ['student_id' => $this->studentId]);
             session()->flash('error', 'Có lỗi xảy ra khi tải thông tin học sinh');
         } finally {
             $this->isLoading = false;
         }
     }
 
-    protected function checkViewPermission(Student $student): void
+    protected function checkViewPermission(StudentNew $student): void
     {
         if ($this->isAdmin) {
             return;
         }
 
         if ($this->isDecen) {
-            if ($student->pid != $this->parishId) {
+            if ($student->parish_id != $this->parishId) {
                 abort(403, 'Bạn không có quyền xem học sinh này');
             }
             return;
@@ -151,157 +135,103 @@ class StudentDetail extends BaseComponent
     }
 
     /**
-     * ✅ Map ONLY fields that exist in student table
+     * Map StudentNew sang array dùng cho blade
      */
-    protected function mapStudentData(Student $student): array
+    protected function mapStudentData(StudentNew $student): array
     {
         return [
-            // ========== BASIC INFO ==========
-            'id' => $student->id,
-            'code' => $student->mahv ?? 'Chưa có mã',
+            // ========== ĐỊNH DANH ==========
+            'id'           => $student->id,
+            'student_code' => $student->student_code ?? 'Chưa có mã',
+            'qr_token'     => $student->qr_token ?? '',
+            'avatar_path'  => $student->avatar_path ?? '',
 
-            // Personal Info
-            'last_name' => $student->last_name ?? '',
-            'name' => $student->name ?? '',
-            'full_name' => $student->full_name,
-            'sex' => $student->sex,
-            'sex_label' => $student->sex_label,
-            'birthday' => $student->birthday_text,
-            // 'phone' => $student->phone ? '0' . $student->phone : '',
-            'phone' => $student->phone_number ?? '',
-            'email' => $student->email ?? '',
-            'cccd' => $student->cccd ?? '',
+            // ========== THÔNG TIN CÁ NHÂN ==========
+            'first_name'   => $student->first_name ?? '',
+            'last_name'    => $student->last_name ?? '',
+            'full_name'    => $student->full_name,  // accessor: last_name + first_name
+            'gender'       => $student->gender,
+            'gender_label' => match ((string) $student->gender) {
+                '1', 'male', 'nam' => 'Nam',
+                '0', 'female', 'nu' => 'Nữ',
+                default => 'Chưa xác định',
+            },
+            'birthday' => $student->birthday?->format('d/m/Y') ?? '',
+            'phone'    => $student->phone ?? '',
+            'email'    => $student->email ?? '',
 
-            // ✅ Address - CHỈ NGUYÊN QUÁN (student table only has origin)
-            'origin' => $student->origin ?? '',
-            'ward' => $student->ward ?? '',
-            'province' => $student->province ?? '',
+            // ========== GIA ĐÌNH ==========
+            'father_name' => $student->father_name ?? '',
+            'mother_name' => $student->mother_name ?? '',
 
-            // Family
-            'father' => $student->father ?? '',
-            'mother' => $student->mother ?? '',
+            // ========== GIÁO XỨ ==========
+            'parish'       => $student->parish->name ?? '',
+            'parish_group' => $student->parishGroup->name ?? '',  // Giáo họ
+            'saint_name'   => $student->saint->name ?? '',         // Thánh bổn mạng / Bậc thánh
 
-            // ========== PARISH & CLASS ==========
-            'diocese' => $student->diocese->name ?? '',
-            'deanery' => $student->deanery->name ?? '',
-            'parish' => $student->parish->name ?? '',
-            'paid' => $student->paidRelation->name ?? '',
+            // ========== THÔNG TIN TỪ PARISHIONER (nếu có liên kết) ==========
+            // Các thông tin bổ sung như địa chỉ, CCCD lấy từ parishioner
+            'cccd'    => $student->parishioner?->cccd ?? '',
+            'address' => $student->parishioner?->address ?? '',
 
-            // Current class
-            'lop_name' => $this->getCurrentClassName($student),
-
-            // ✅ Class history (từ students_class table)
+            // ========== LỚP HỌC ==========
+            'current_class' => $this->getCurrentClassName($student),
             'class_history' => $this->getClassHistory($student),
 
-            // ========== EDUCATION ==========
-            'holy' => $student->holy,
-            'holy_name' => $student->holyRelation->name ?? '',
+            // ========== TRẠNG THÁI ==========
+            'is_active'          => $student->is_active,
+            'status_label'       => $student->is_active ? 'Đang học' : 'Ngừng học',
+            'status_badge_class' => $student->is_active
+                ? 'bg-green-100 text-green-700'
+                : 'bg-slate-200 text-slate-600',
 
-            // Career & Education
-            'ethnic' => $student->ethnicRelation->name ?? '',
-            'career' => $student->careerRelation->name ?? '',
-            'level' => $student->levelRelation->name ?? '',
-            'position' => $student->positionRelation->name ?? '',
-            'language' => $student->languageRelation->name ?? '',
-            'professional_level' => $student->professional_level ?? '',
-
-            // ========== BAPTISM (Rửa tội) ==========
-            'baptism_date' => $student->baptism_date ? $student->baptism_date->format('d/m/Y') : '',
-            'baptism_number' => $student->baptism_number ?? '',
-            'baptism_giver' => $student->baptismGiver->name ?? '',
-            'baptism_sponsor' => $student->baptismSponsor->name ?? '',
-            'baptism_diocese' => $student->baptismDiocese->name ?? '',
-            'baptism_deanery' => $student->baptismDeanery->name ?? '',
-            'baptism_parish' => $student->baptismParish->name ?? '',
-            'baptism_full_location' => $this->buildFullLocation(
-                $student->baptismParish->name ?? '',
-                $student->baptismDeanery->name ?? '',
-                $student->baptismDiocese->name ?? ''
-            ),
-
-            // ========== MORE POWER (Thêm Sức) ==========
-            'more_power_date' => $student->more_power_date ? $student->more_power_date->format('d/m/Y') : '',
-            'more_power_number' => $student->more_power_number ?? '',
-            'more_power_giver' => $student->morePowerGiver->name ?? '',
-            'more_power_sponsor' => $student->morePowerSponsor->name ?? '',
-            'more_power_diocese' => $student->morePowerDiocese->name ?? '',
-            'more_power_deanery' => $student->morePowerDeanery->name ?? '',
-            'more_power_parish' => $student->morePowerParish->name ?? '',
-            'more_power_full_location' => $this->buildFullLocation(
-                $student->morePowerParish->name ?? '',
-                $student->morePowerDeanery->name ?? '',
-                $student->morePowerDiocese->name ?? ''
-            ),
-
-            // ========== OTHER INFO ==========
-            'promise_day' => $student->promise_day ? $student->promise_day->format('d/m/Y') : '',
+            // ========== GHI CHÚ ==========
             'note' => $student->note ?? '',
 
-            // Status
-            'status' => $student->status,
-            'status_label' => $student->status_label,
-            'status_badge_class' => $student->getStatusBadgeClass(),
-
-            // Timestamps
-            'created_at' => $student->created_at ? $student->created_at->format('d/m/Y H:i') : '',
-            'updated_at' => $student->updated_at ? $student->updated_at->format('d/m/Y H:i') : '',
+            // ========== TIMESTAMPS ==========
+            'created_at' => $student->created_at?->format('d/m/Y H:i') ?? '',
+            'updated_at' => $student->updated_at?->format('d/m/Y H:i') ?? '',
         ];
     }
 
     /**
-     * ✅ Get current active class name
+     * Lấy tên lớp hiện tại (lớp mới nhất)
      */
-    protected function getCurrentClassName(Student $student): string
+    protected function getCurrentClassName(StudentNew $student): string
     {
-        if ($student->relationLoaded('lops') && $student->lops->isNotEmpty()) {
-            // Lấy lớp có status active trong pivot table
-            $activeLop = $student->lops->first(function ($lop) {
-                return $lop->pivot->status == 1;
-            });
-
-            return $activeLop ? $activeLop->name : ($student->lops->first()->name ?? '');
+        if ($student->relationLoaded('classes') && $student->classes->isNotEmpty()) {
+            return $student->classes->first()->name ?? '';
         }
 
         return '';
     }
 
     /**
-     * ✅ NEW: Get class learning history
      * Lấy lịch sử học tập từ bảng students_class
      */
-    protected function getClassHistory(Student $student): array
+    protected function getClassHistory(StudentNew $student): array
     {
-        if (!$student->relationLoaded('lops') || $student->lops->isEmpty()) {
+        if (!$student->relationLoaded('classes') || $student->classes->isEmpty()) {
             return [];
         }
 
-        return $student->lops->map(function ($lop) {
+        return $student->classes->map(function ($class) {
             return [
-                'class_name' => $lop->name,
-                'class_symbol' => $lop->symbol,
-                'school_year' => $lop->schoolYear->name ?? '',
-                'status' => $lop->pivot->status,
-                'status_label' => $lop->pivot->status == 1 ? 'Đang học' : 'Đã hoàn thành',
-                'status_class' => $lop->pivot->status == 1
-                    ? 'bg-green-100 text-green-700'
-                    : 'bg-slate-100 text-slate-600',
-                'joined_at' => $lop->pivot->created_at
-                    ? $lop->pivot->created_at->format('d/m/Y')
+                'class_name'   => $class->name ?? '',
+                'class_symbol' => $class->symbol ?? '',
+                'school_year'  => $class->schoolYear->name ?? '',
+                'joined_at'    => $class->pivot->created_at
+                    ? $class->pivot->created_at->format('d/m/Y')
                     : '',
             ];
         })->toArray();
     }
-    
+
     // ==================== TAB NAVIGATION ====================
 
-    /**
-     * ✅ Switch tab - CHỈ 4 TAB
-     */
     public function switchTab(string $tab): void
     {
-        $allowedTabs = ['basic', 'baptism', 'more_power', 'other'];
-
-        if (in_array($tab, $allowedTabs)) {
+        if (in_array($tab, ['basic', 'history'])) {
             $this->activeTab = $tab;
         }
     }
@@ -323,14 +253,14 @@ class StudentDetail extends BaseComponent
         try {
             $this->requireManager();
 
-            $student = Student::find($this->studentId);
+            $student = StudentNew::find($this->studentId);
 
             if (!$student) {
                 session()->flash('error', 'Không tìm thấy học sinh');
                 return;
             }
 
-            if ($this->isDecen && $student->pid != $this->parishId) {
+            if ($this->isDecen && $student->parish_id != $this->parishId) {
                 abort(403, 'Bạn không có quyền xóa học sinh này');
             }
 
@@ -379,20 +309,12 @@ class StudentDetail extends BaseComponent
         }
     }
 
-    // ==================== HELPER METHODS ====================
-
-    protected function buildFullLocation(string $parish, string $deanery, string $diocese): string
-    {
-        $parts = array_filter([$parish, $deanery, $diocese]);
-        return implode(', ', $parts);
-    }
-
     // ==================== RENDER ====================
 
     public function render()
     {
         return view('livewire.student.student-detail', [
-            'student' => $this->studentData,
+            'student'   => $this->studentData,
             'isLoading' => $this->isLoading,
         ])
             ->extends('frontend.layout.main')

@@ -119,7 +119,7 @@ class FilterBar extends Component
         $this->reset(['selectedKhoi', 'selectedLop', 'selectedKy']);
 
         $this->loadKhois();
-        $this->lops = collect();
+        $this->loadLops();
 
         $this->emitFilter();
     }

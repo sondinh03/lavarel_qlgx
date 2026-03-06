@@ -18,6 +18,7 @@
   'score.score-manager' => 'App\\Http\\Livewire\\Score\\ScoreManager',
   'student.student-detail' => 'App\\Http\\Livewire\\Student\\StudentDetail',
   'student.student-edit' => 'App\\Http\\Livewire\\Student\\StudentEdit',
+  'student.student-import-preview' => 'App\\Http\\Livewire\\Student\\StudentImportPreview',
   'student.student-list' => 'App\\Http\\Livewire\\Student\\StudentList',
   'student.student-list-new' => 'App\\Http\\Livewire\\Student\\StudentListNew',
   'teacher.teacher-import-preview' => 'App\\Http\\Livewire\\Teacher\\TeacherImportPreview',

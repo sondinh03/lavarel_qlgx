@@ -489,8 +489,6 @@ class CatechismClassList extends BaseComponent
     {
         $classes = $this->getClassesPaginated();
 
-        dd($classes->toArray());
-
         return view('livewire.catechism-class.catechism-class-list', [
             'classes'  => $classes,
             'parishId' => $this->parishId,

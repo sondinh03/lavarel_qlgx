@@ -94,10 +94,7 @@ class User extends Authenticatable
         return $this->admin && $this->admin->status === 1;
     }
 
-    public function isDecen(): bool
-    {
-        return $this->decen && $this->decen->status === 1;
-    }
+
 
     // public function isCatechist(): bool
     // {
@@ -105,6 +102,11 @@ class User extends Authenticatable
     // }
 
     */
+
+    public function isDecen(): bool
+    {
+        return $this->decen && $this->decen->status === 1;
+    }
 
     public function parishName(): ?string
     {
