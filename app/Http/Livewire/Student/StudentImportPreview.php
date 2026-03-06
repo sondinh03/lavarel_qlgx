@@ -9,8 +9,10 @@ use App\Models\CatechismClass;
 use App\Models\Holymanagement;
 use App\Models\NamHoc;
 use App\Models\ParishGroup;
+use App\Models\StudentNew;
 use App\Support\ExcelDateParser;
 use Livewire\WithFileUploads;
+use Maatwebsite\Excel\Concerns\ToArray;
 use Maatwebsite\Excel\Facades\Excel;
 
 /**
@@ -180,6 +182,11 @@ class StudentImportPreview extends BaseComponent
                 ->map(fn($n) => strtolower(trim($n)))
                 ->toArray();
 
+            $existingStudents = StudentNew::get(['first_name', 'last_name', 'birthday'])
+                ->map(fn($s) => strtolower(trim($s->last_name . ' ' . $s->first_name))
+                    . '_' . ($s->birthday?->format('Y-m-d') ?? ''))
+                ->toArray();
+
             foreach ($data as $index => $row) {
                 $rowNumber = $index + 6;
 
@@ -202,17 +209,18 @@ class StudentImportPreview extends BaseComponent
                 }
 
                 if (!empty($ngaySinh)) {
-                    // try {
-                    //     is_numeric($ngaySinh)
-                    //         ? \PhpOffice\PhpSpreadsheet\Shared\Date::excelToDateTimeObject($ngaySinh)
-                    //         : \Carbon\Carbon::parse($ngaySinh);
-                    // } catch (\Exception) {
-                    //     $rowWarnings[] = "Ngày sinh \"{$ngaySinh}\" không hợp lệ";
-                    // }
                     $parsedDate = ExcelDateParser::parse($ngaySinh);
                     if ($parsedDate == null) {
                         $rowWarnings[] = "Ngày sinh \"{$ngaySinh}\" không hợp lệ (định dạng: dd/MM/yyyy)";
                     }
+                }
+
+                $fullName  = strtolower(trim(($row['ho_ten_dem'] ?? '') . ' ' . ($row['ten'] ?? '')));
+                $parsedDate = ExcelDateParser::parse($ngaySinh);
+                $key = $fullName . '_' . ($parsedDate ?? '');
+
+                if (in_array($key, $existingStudents)) {
+                    $rowWarnings[] = "Học sinh \"{$row['ten_thanh']} {$row['ho_ten_dem']} {$row['ten']}\" đã tồn tại trong hệ thống";
                 }
 
                 if (!empty($rowWarnings)) {

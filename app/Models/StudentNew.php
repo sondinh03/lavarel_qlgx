@@ -37,6 +37,51 @@ class StudentNew extends Model
         'is_active' => 'boolean',
     ];
 
+    protected static function boot()
+    {
+        parent::boot();
+
+        static::creating(function (self $student) {
+            if (empty($student->student_code)) {
+                $student->student_code = static::generateCode($student->parish_id);
+            }
+
+            if (empty($student->qr_token)) {
+                $student->qr_token = (string) \Illuminate\Support\Str::uuid();
+            }
+        });
+
+        static::updating(function (self $student) {
+            if (empty($student->student_code)) {
+                $student->student_code = static::generateCode($student->parish_id);
+            }
+
+            if (empty($student->qr_token)) {
+                $student->qr_token = (string) \Illuminate\Support\Str::uuid();
+            }
+        });
+    }
+
+    private static  function generateCode(int $parishId): string
+    {
+        $parishCode = ParishNew::find($parishId)?->code ?? 'GXU';
+
+        $year = substr(now()->year, -2); // 2025 → "25"
+        $prefix = "{$parishCode}-{$year}-";
+
+        $last = static::where('parish_id', $parishId)
+            ->where('student_code', 'like', "{$prefix}%")
+            ->max('student_code'); // VD: "HDO-25-0012"
+
+        $lastNumber = $last
+            ? (int) substr($last, strlen($prefix)) // "0012" → 12
+            : 0;
+
+        $sequence = str_pad($lastNumber + 1, 4, '0', STR_PAD_LEFT);
+
+        return "{$prefix}{$sequence}";
+    }
+
     /*
     |--------------------------------------------------------------------------
     | Relationships
@@ -45,7 +90,7 @@ class StudentNew extends Model
 
     public function parish()
     {
-        return $this->belongsTo(Parish::class);
+        return $this->belongsTo(ParishNew::class);
     }
 
     public function parishioner()

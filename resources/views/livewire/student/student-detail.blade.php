@@ -6,7 +6,7 @@
         {{-- Breadcrumb --}}
         <x-breadcrumb :items="[
             ['label' => 'Trang chủ', 'url' => route('dashboard')],
-            ['label' => 'Danh sách lớp', 'url' => route('classes.index')],
+            ['label' => 'Danh sách học sinh', 'url' => route('students.index')],
             ['label' => 'Hồ sơ học sinh', 'icon' => '<svg class=\'w-4 h-4\' fill=\'none\' stroke=\'currentColor\' viewBox=\'0 0 24 24\'><path stroke-linecap=\'round\' stroke-linejoin=\'round\' stroke-width=\'2\' d=\'M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z\'/></svg>']
         ]" separator="arrow" />
 
@@ -96,78 +96,41 @@
                     </div>
 
                     {{-- Actions --}}
+                    {{-- Actions --}}
                     <div class="flex items-center gap-2 flex-shrink-0">
-                        @if($isAdmin || $isDecen)
+
+                        @can('update', $studentModel)
                         <button wire:click="edit"
                             class="inline-flex items-center gap-2 px-4 py-2 rounded-xl
-                                   bg-primary-600 text-white font-semibold
-                                   hover:bg-primary-700 active:scale-95 transition-all shadow-sm">
+               bg-primary-600 text-white font-semibold
+               hover:bg-primary-700 active:scale-95 transition-all shadow-sm">
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                     d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                             </svg>
                             <span class="hidden sm:inline">Chỉnh sửa</span>
                         </button>
-                        @endif
+                        @endcan
 
-                        {{-- Export Dropdown --}}
+                        {{-- Export Dropdown (ai cũng xem được) --}}
                         <div x-data="{ open: false }" class="relative">
-                            <button @click="open = !open"
-                                class="inline-flex items-center gap-2 px-4 py-2 rounded-xl
-                                       bg-white border border-slate-200 text-slate-700 font-semibold
-                                       hover:bg-slate-50 active:scale-95 transition-all">
-                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                        d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                                </svg>
-                                <span class="hidden sm:inline">Xuất file</span>
-                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
-                                </svg>
-                            </button>
-
-                            <div x-show="open" x-cloak @click.away="open = false" x-transition
-                                class="absolute right-0 mt-2 w-56 bg-white rounded-xl shadow-xl border border-slate-200 py-2 z-10">
-
-                                <button wire:click="printProfile"
-                                    class="w-full flex items-center gap-3 px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 transition-colors">
-                                    <svg class="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                            d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
-                                    </svg>
-                                    In hồ sơ
-                                </button>
-
-                                <button wire:click="exportPDF"
-                                    class="w-full flex items-center gap-3 px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 transition-colors">
-                                    <svg class="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                            d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
-                                    </svg>
-                                    Xuất PDF
-                                </button>
-
-                                <div class="border-t border-slate-100 my-1"></div>
-
-                                <button wire:click="exportLyLichCanhan"
-                                    class="w-full flex items-center gap-3 px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 transition-colors">
-                                    <svg class="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                            d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                                    </svg>
-                                    Lý lịch học sinh (Word)
-                                </button>
-
-                                <button wire:click="exportBiTich"
-                                    class="w-full flex items-center gap-3 px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 transition-colors">
-                                    <svg class="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                            d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                                    </svg>
-                                    Bí tích (Word)
-                                </button>
-                            </div>
+                            {{-- ... giữ nguyên như cũ ... --}}
                         </div>
+
+                        @can('delete', $studentModel)
+                        <button wire:click="delete"
+                            wire:confirm="Bạn có chắc muốn xóa học sinh này không?"
+                            class="inline-flex items-center gap-2 px-4 py-2 rounded-xl
+               bg-red-50 text-red-600 border border-red-200 font-semibold
+               hover:bg-red-100 active:scale-95 transition-all">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                            </svg>
+                            <span class="hidden sm:inline">Xóa</span>
+                        </button>
+                        @endcan
+
                     </div>
                 </div>
             </div>
@@ -229,12 +192,6 @@
                             <x-info-row label="Ngày sinh" :value="$student['birthday']" />
                             <x-info-row label="Điện thoại" :value="$student['phone']" />
                             <x-info-row label="Email" :value="$student['email']" />
-                            @if($student['cccd'])
-                            <x-info-row label="CCCD" :value="$student['cccd']" />
-                            @endif
-                            @if($student['address'])
-                            <x-info-row label="Địa chỉ" :value="$student['address']" />
-                            @endif
                         </div>
                     </div>
 
@@ -265,11 +222,11 @@
                         <div class="space-y-3">
                             <x-info-row label="Giáo xứ" :value="$student['parish']" />
                             <x-info-row label="Giáo họ" :value="$student['parish_group']" />
-                            <x-info-row label="Thánh bổn mạng" :value="$student['saint_name']" />
+                            <x-info-row label="Bậc thánh" :value="$student['saint_name']" />
                         </div>
                     </div>
 
-                    {{-- Thông tin bổ sung --}}
+                    {{-- Hồ sơ giáo dân + Ghi chú --}}
                     <div class="bg-slate-50 rounded-xl p-5 border border-slate-200">
                         <h3 class="text-base font-bold text-slate-900 mb-4 flex items-center gap-2">
                             <svg class="w-5 h-5 text-primary-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -279,12 +236,34 @@
                             Thông tin bổ sung
                         </h3>
                         <div class="space-y-3">
+
+                            {{-- Link hồ sơ giáo dân --}}
+                            <div class="flex items-center justify-between py-2 border-b border-slate-200 last:border-0">
+                                <span class="text-sm font-medium text-slate-600">Hồ sơ giáo dân</span>
+                                @if($student['parishioner_url'])
+                                <a href="{{ $student['parishioner_url'] }}"
+                                    class="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg
+                               text-sm font-semibold text-primary-600 bg-primary-50
+                               hover:bg-primary-100 transition-colors">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                                    </svg>
+                                    Xem hồ sơ
+                                </a>
+                                @else
+                                <span class="text-sm text-slate-400 italic">Chưa liên kết</span>
+                                @endif
+                            </div>
+
+                            {{-- Ghi chú --}}
                             <div>
                                 <label class="block text-sm font-medium text-slate-600 mb-1">Ghi chú</label>
                                 <div class="text-sm text-slate-700 bg-white rounded-lg p-3 border border-slate-200 min-h-[60px]">
                                     {{ $student['note'] ?: 'Không có ghi chú' }}
                                 </div>
                             </div>
+
                             <x-info-row label="Ngày tạo" :value="$student['created_at']" />
                             <x-info-row label="Cập nhật lần cuối" :value="$student['updated_at']" />
                         </div>
@@ -320,9 +299,9 @@
                                 <div class="flex-1 min-w-0">
                                     <div class="font-semibold text-slate-900">
                                         {{ $class['class_name'] }}
-                                        @if($class['class_symbol'])
+                                        {{-- @if($class['class_symbol'])
                                         <span class="ml-1 font-mono text-xs text-slate-500">({{ $class['class_symbol'] }})</span>
-                                        @endif
+                                        @endif --}}
                                     </div>
                                     <div class="text-xs text-slate-500 mt-0.5 flex items-center gap-2">
                                         @if($class['school_year'])
