@@ -90,10 +90,10 @@ class StudentDetail extends BaseComponent
             'full_name'    => $student->full_name,
             'first_name'   => $student->first_name ?? '',
             'last_name'    => $student->last_name ?? '',
-            'gender_label' => match ((int) $student->gender) {
-                1       => 'Nam',
-                0       => 'Nữ',
-                default => 'Chưa xác định',
+            'gender_label' => match ($student->gender) {
+                'male'  => 'Nam',
+                'female' => 'Nữ',
+                default  => 'Chưa xác định',
             },
             'birthday' => $student->birthday?->format('d/m/Y') ?? '',
             'phone'    => $student->phone ?? '',

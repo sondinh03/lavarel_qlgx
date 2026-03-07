@@ -165,8 +165,8 @@
                                     <select wire:model.defer="gender"
                                         class="w-full px-3 py-2 rounded-xl border border-slate-300
                                                focus:outline-none focus:ring-2 focus:ring-primary-500">
-                                        <option value="1">Nam</option>
-                                        <option value="0">Nữ</option>
+                                        <option value="male">Nam</option>
+                                        <option value="female">Nữ</option>
                                     </select>
                                     @error('gender')
                                     <p class="mt-1 text-sm text-red-500">{{ $message }}</p>

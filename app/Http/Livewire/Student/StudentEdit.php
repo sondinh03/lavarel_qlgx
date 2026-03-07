@@ -22,7 +22,7 @@ class StudentEdit extends BaseComponent
     public $student_code = '';
     public $first_name = '';
     public $last_name = '';
-    public $gender = 1;
+    public $gender = 'male';
     public $birthday = '';
     public $phone = '';
     public $email = '';
@@ -47,7 +47,7 @@ class StudentEdit extends BaseComponent
         return [
             'first_name'      => 'required|string|max:255',
             'last_name'       => 'required|string|max:255',
-            'gender'          => 'required|in:1,0',
+            'gender'          => 'required|in:male,female',
             'birthday'        => 'nullable|date',
             'phone'           => 'nullable|string|max:15',
             'email'           => 'nullable|email|max:255',
@@ -93,9 +93,9 @@ class StudentEdit extends BaseComponent
             // Kiểm tra quyền tạo/sửa ngay từ đầu
             if ($this->isEdit) {
                 $student = StudentNew::findOrFail($this->studentId);
-                // $this->authorize('update', $student);
+                $this->authorize('update', $student);
             } else {
-                // $this->authorize('create', StudentNew::class);
+                $this->authorize('create', StudentNew::class);
             }
 
             $this->loadDropdownData();
@@ -134,7 +134,7 @@ class StudentEdit extends BaseComponent
         $this->student_code     = $student->student_code ?? '';
         $this->first_name      = $student->first_name ?? '';
         $this->last_name       = $student->last_name ?? '';
-        $this->gender          = $student->gender ?? 1;
+        $this->gender          = $student->gender ?? 'male';
         $this->birthday        = $student->birthday?->format('Y-m-d') ?? '';
         $this->phone           = $student->phone ?? '';
         $this->email           = $student->email ?? '';
@@ -189,10 +189,10 @@ class StudentEdit extends BaseComponent
 
             if ($this->isEdit) {
                 $student = StudentNew::findOrFail($this->studentId);
-                // $this->authorize('update', $student);
+                $this->authorize('update', $student);
             } else {
                 $student = new StudentNew();
-                // $this->authorize('create', StudentNew::class);
+                $this->authorize('create', StudentNew::class);
             }
 
             $student->fill([
@@ -207,6 +207,8 @@ class StudentEdit extends BaseComponent
                 'parish_id'       => $this->parish_id,
                 'parish_group_id' => $this->parish_group_id,
                 'saint_id'        => $this->saint_id,
+                'father_name'     => $this->father_name,
+                'mother_name'     => $this->mother_name,
             ]);
 
             $student->save();

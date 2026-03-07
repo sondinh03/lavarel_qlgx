@@ -4,8 +4,10 @@ namespace App\Http\Livewire\Student;
 
 use App\Http\Livewire\Base\BaseComponent;
 use App\Models\CatechismClass;
+use App\Models\Parishioner;
 use App\Models\StudentNew;
 use App\Models\Parishioners;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
@@ -78,6 +80,17 @@ class StudentListNew extends BaseComponent
 
     // ==================== CACHE ====================
     protected $lopCache = null;
+
+    // ==================== PARISHIONER LINKING ====================
+
+    /** @var \Illuminate\Support\Collection Danh sách gợi ý giáo dân */
+    public $suggestedParishioners;
+
+    /** @var int|null ID student đang xử lý liên kết */
+    public $linkingStudentId = null;
+
+    /** @var bool Hiển thị modal liên kết */
+    public $showLinkModal = false;
 
     // ==================== VALIDATION ====================
     protected $rules = [
@@ -347,6 +360,130 @@ class StudentListNew extends BaseComponent
         }
     }
 
+    // ==================== PARISHIONER LINKING ====================
+
+    /**
+     * Mở modal liên kết giáo dân cho student
+     */
+    public function openLinkParishioner(int $studentId): void
+    {
+        $this->requireManager();
+
+        try {
+            $student = StudentNew::findOrFail($studentId);
+
+            $this->linkingStudentId = $studentId;
+
+            // Đã có liên kết → redirect luôn
+            // if ($student->parishioner_id) {
+            //     return $this->redirectRoute('parishioners.show', $student->parishioner_id);
+            // }
+
+            // Chưa có → tìm gợi ý
+            $this->suggestedParishioners = $this->findSuggestedParishioners($student);
+            $this->showLinkModal = true;
+        } catch (ModelNotFoundException $e) {
+            session()->flash('error', 'Không tìm thấy học sinh này');
+        }
+    }
+
+    /**
+     * Tìm giáo dân có khả năng trùng với học sinh
+     * Tiêu chí: khớp tên  + cùng giáo xứ
+     */
+    protected function findSuggestedParishioners(StudentNew $student): \Illuminate\Support\Collection
+    {
+        // Lấy danh sách parishioner_id đã được liên kết
+        $linkedIds = StudentNew::whereNotNull('parishioner_id')
+            ->pluck('parishioner_id');
+
+        // Query theo tên (last_name + first_name)
+        // saint_id không query DB được → filter thêm bằng PHP sau
+        $candidates = Parishioner::ofParish($this->parishId)
+            ->whereNotIn('id', $linkedIds)
+            ->where(function ($q) use ($student) {
+                $q->whereRaw(
+                    "LOWER(CONCAT(last_name, ' ', first_name)) LIKE ?",
+                    ['%' . strtolower(trim($student->last_name . ' ' . $student->name)) . '%']
+                );
+            })
+            ->with('saint') // Eager load để dùng accessor
+            ->limit(20)     // Lấy nhiều hơn vì còn filter thêm
+            ->get(['id', 'last_name', 'first_name', 'saint_id', 'gender', 'birthday', 'avatar_path', 'cccd', 'phone']);
+
+        // Filter thêm bằng PHP: so sánh full_name_with_saint
+        return $candidates->filter(function ($p) use ($student) {
+            return strtolower($p->full_name_with_saint) === strtolower($student->full_name_with_saint);
+        })->take(5)->values();
+    }
+
+    /**
+     * Xác nhận liên kết student với giáo dân
+     */
+    public function confirmLink(int $parishionerId): void
+    {
+        $this->requireManager();
+
+        try {
+            DB::beginTransaction();
+
+            $student = StudentNew::findOrFail($this->linkingStudentId);
+
+            // Kiểm tra giáo dân có thuộc giáo xứ không
+            $parishioner = Parishioner::ofParish($this->parishId)
+                ->findOrFail($parishionerId);
+
+            $student->update(['parishioner_id' => $parishioner->id]);
+
+            DB::commit();
+
+            session()->flash('message', "Đã liên kết {$student->name} với giáo dân {$parishioner->full_name}");
+            $this->closeLinkModal();
+        } catch (ModelNotFoundException $e) {
+            DB::rollBack();
+            session()->flash('error', 'Không tìm thấy dữ liệu');
+        } catch (\Exception $e) {
+            DB::rollBack();
+            $this->logError($e, 'Error linking parishioner to student');
+            session()->flash('error', 'Có lỗi khi liên kết');
+        }
+    }
+
+    /**
+     * Bỏ qua liên kết
+     */
+    public function skipLink(): void
+    {
+        session()->flash('info', 'Đã bỏ qua liên kết giáo dân');
+        $this->closeLinkModal();
+    }
+
+    /**
+     * Hủy liên kết hiện tại
+     */
+    public function unlinkParishioner(int $studentId): void
+    {
+        $this->requireManager();
+
+        try {
+            $student = StudentNew::findOrFail($studentId);
+
+            $student->update(['parishioner_id' => null]);
+
+            session()->flash('message', 'Đã hủy liên kết giáo dân');
+        } catch (\Exception $e) {
+            $this->logError($e, 'Error unlinking parishioner');
+            session()->flash('error', 'Có lỗi khi hủy liên kết');
+        }
+    }
+
+    public function closeLinkModal(): void
+    {
+        $this->showLinkModal         = false;
+        $this->linkingStudentId      = null;
+        $this->suggestedParishioners = collect();
+    }
+
     // ==================== IMPORT FROM PARISHIONERS ====================
 
     public function openImportFromParishioners(): void
@@ -362,10 +499,10 @@ class StudentListNew extends BaseComponent
     private function getAvailableParishionersQuery()
     {
         if (!$this->selectedNamHoc) {
-            return Parishioners::whereRaw('1 = 0');
+            return Parishioner::whereRaw('1 = 0');
         }
 
-        return Parishioners::query()
+        return Parishioner::query()
             ->active()
             // Chỉ lấy giáo dân chưa được tạo StudentNew
             ->whereDoesntHave('studentNew')
@@ -424,7 +561,7 @@ class StudentListNew extends BaseComponent
             $errorCount   = 0;
             $errors       = [];
 
-            $parishioners = Parishioners::whereIn('id', $this->selectedParishioners)
+            $parishioners = Parishioner::whereIn('id', $this->selectedParishioners)
                 ->get();
 
             foreach ($parishioners as $p) {

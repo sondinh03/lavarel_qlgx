@@ -95,7 +95,7 @@ class StudentNew extends Model
 
     public function parishioner()
     {
-        return $this->belongsTo(Parishioners::class);
+        return $this->belongsTo(Parishioner::class);
     }
 
     public function parishGroup()
@@ -124,11 +124,6 @@ class StudentNew extends Model
     |--------------------------------------------------------------------------
     */
 
-    public function getFullNameAttribute()
-    {
-        return trim($this->last_name . ' ' . $this->first_name);
-    }
-
     public function getGenderTextAttribute()
     {
         return match ($this->gender) {
@@ -137,5 +132,17 @@ class StudentNew extends Model
             null => '—',
             default => '—',
         };
+    }
+
+    public function getFullNameAttribute(): string
+    {
+        return trim($this->last_name . ' ' . $this->first_name);
+    }
+
+    public function getFullNameWithSaintAttribute(): string
+    {
+        $saintName = $this->saint?->name ?? '';
+
+        return trim($saintName . ' ' . $this->full_name);
     }
 }

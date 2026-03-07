@@ -207,6 +207,7 @@
                             <x-table-header>Giới tính</x-table-header>
                             <x-table-header>Bố</x-table-header>
                             <x-table-header>Giáo họ</x-table-header>
+                            <x-table-header>Hồ sơ giáo dân</x-table-header>
                             <x-table-header class="text-center">Thao tác</x-table-header>
                         </tr>
                     </thead>
@@ -272,6 +273,37 @@
                                 </span>
                                 @else
                                 <span class="text-slate-400 text-xs">Chưa xác định</span>
+                                @endif
+                            </td>
+
+                            {{-- Cột Giáo dân --}}
+                            <td class="px-6 py-4">
+                                @if($student->parishioner_id)
+                                {{-- Đã liên kết --}}
+                                <a href="{{ route('parishioners.show', $student->parishioner_id) }}"
+                                    class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full
+                   text-xs font-semibold bg-green-100 text-green-700
+                   hover:bg-green-200 transition-colors">
+                                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                                    </svg>
+                                    Xem hồ sơ
+                                </a>
+                                @else
+                                {{-- Chưa liên kết --}}
+                                <button wire:click="openLinkParishioner({{ $student->id }})"
+                                    class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full
+                   text-xs font-semibold bg-amber-50 text-amber-700
+                   hover:bg-amber-100 transition-colors">
+                                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101" />
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M14.828 14.828a4 4 0 015.656 0l4-4a4 4 0 01-5.656-5.656l-1.102 1.101" />
+                                    </svg>
+                                    Chưa liên kết
+                                </button>
                                 @endif
                             </td>
 
@@ -386,6 +418,95 @@
         </div>
         @endif
 
+
+        @if($showLinkModal)
+        <div class="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4"
+            role="dialog" aria-modal="true" wire:click="closeLinkModal">
+            <div class="bg-white rounded-2xl shadow-xl w-full max-w-lg max-h-[80vh] overflow-hidden flex flex-col"
+                wire:click.stop>
+
+                {{-- Header --}}
+                <div class="flex-shrink-0 p-6 border-b border-slate-200 bg-gradient-to-br from-amber-50 to-white">
+                    <h2 class="text-xl font-bold text-slate-900">Liên kết hồ sơ giáo dân</h2>
+                    <p class="text-sm text-slate-600 mt-1">
+                        Tìm thấy {{ $suggestedParishioners->count() }} giáo dân có thể trùng khớp
+                    </p>
+                </div>
+
+                {{-- Body --}}
+                <div class="flex-1 overflow-y-auto p-6">
+                    @if($suggestedParishioners->count() > 0)
+                    <div class="space-y-3">
+                        @foreach($suggestedParishioners as $p)
+                        <div class="border border-slate-200 rounded-xl p-4 hover:border-primary-300
+                            hover:bg-primary-50/30 transition-all">
+                            <div class="flex items-center justify-between gap-4">
+                                {{-- Thông tin giáo dân --}}
+                                <div class="flex items-center gap-3">
+                                    {{-- Avatar --}}
+                                    <div class="w-10 h-10 rounded-full overflow-hidden bg-slate-100 flex-shrink-0">
+                                        @if($p->avatar_path)
+                                        <img src="{{ asset('storage/' . $p->avatar_path) }}"
+                                            class="w-full h-full object-cover" />
+                                        @else
+                                        <div class="w-full h-full flex items-center justify-center">
+                                            <svg class="w-5 h-5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                    d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                                            </svg>
+                                        </div>
+                                        @endif
+                                    </div>
+
+                                    <div>
+                                        <div class="font-semibold text-slate-900">{{ $p->full_name_with_saint }}</div>
+                                        <div class="flex items-center gap-3 mt-0.5 text-xs text-slate-500">
+                                            <span>{{ $p->gender === 'male' ? 'Nam' : 'Nữ' }}</span>
+                                            @if($p->birthday)
+                                            <span>{{ $p->birthday->format('d/m/Y') }}</span>
+                                            @endif
+                                            @if($p->cccd)
+                                            <span>CCCD: {{ $p->cccd }}</span>
+                                            @endif
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {{-- Nút liên kết --}}
+                                <button wire:click="confirmLink({{ $p->id }})"
+                                    class="flex-shrink-0 px-4 py-2 bg-primary-600 text-white text-sm
+                                   font-semibold rounded-xl hover:bg-primary-700 transition-colors">
+                                    Liên kết
+                                </button>
+                            </div>
+                        </div>
+                        @endforeach
+                    </div>
+
+                    @else
+                    {{-- Không tìm thấy gợi ý --}}
+                    <div class="text-center py-6">
+                        <svg class="mx-auto w-12 h-12 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        <p class="mt-3 text-slate-600 font-medium">Không tìm thấy giáo dân phù hợp</p>
+                        <p class="mt-1 text-sm text-slate-400">
+                            Không có giáo dân nào khớp họ tên và ngày sinh
+                        </p>
+                    </div>
+                    @endif
+                </div>
+
+                {{-- Footer --}}
+                <div class="flex-shrink-0 px-6 py-4 border-t border-slate-200 bg-slate-50 flex justify-end">
+                    <x-action-button wire="skipLink" variant="secondary">
+                        Bỏ qua
+                    </x-action-button>
+                </div>
+            </div>
+        </div>
+        @endif
 
         {{-- ===================== MODAL GHI DANH — 3 TABS ===================== --}}
         @if($showEnrollNewModal)
