@@ -1,6 +1,8 @@
 <div class="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 p-4 sm:p-6">
     <a href="#main-content" class="sr-only focus:not-sr-only">Bỏ qua tới nội dung</a>
 
+    @php $selectedClassName = $this->selectedClassName; @endphp
+
     <div class="mx-auto max-w-7xl space-y-5">
 
         {{-- Breadcrumb --}}
@@ -8,34 +10,23 @@
             :items="[
                 ['label' => 'Trang chủ', 'url' => route('dashboard')],
                 ['label' => 'Quản lý phiên điểm danh', 'url' => route('session.index')],
-                ['label' => $this->selectedClassName]
+                ['label' => $selectedClassName]
             ]"
             separator="arrow" />
 
         {{-- Toast Notifications --}}
         <div role="status" aria-live="polite">
             @if (session()->has('message'))
-            <x-toast-notification type="success" :duration="3500">
-                {{ session('message') }}
-            </x-toast-notification>
+            <x-toast-notification type="success" :duration="3500">{{ session('message') }}</x-toast-notification>
             @endif
-
             @if (session()->has('error'))
-            <x-toast-notification type="error" :duration="4000">
-                {{ session('error') }}
-            </x-toast-notification>
+            <x-toast-notification type="error" :duration="4000">{{ session('error') }}</x-toast-notification>
             @endif
-
             @if (session()->has('warning'))
-            <x-toast-notification type="warning" :duration="4000">
-                {{ session('warning') }}
-            </x-toast-notification>
+            <x-toast-notification type="warning" :duration="4000">{{ session('warning') }}</x-toast-notification>
             @endif
-
             @if (session()->has('info'))
-            <x-toast-notification type="info" :duration="3500">
-                {{ session('info') }}
-            </x-toast-notification>
+            <x-toast-notification type="info" :duration="3500">{{ session('info') }}</x-toast-notification>
             @endif
         </div>
 
@@ -43,9 +34,9 @@
         <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
             {{-- Header --}}
             <x-page-header
-                title="Quản lý phiên điểm danh - {{ $this->selectedClassName }}"
+                title="Quản lý phiên điểm danh - {{ $selectedClassName }}"
                 description="Tạo và quản lý các phiên điểm danh cho lớp học"
-                :stat-value="$sessions?->count()"
+                :stat-value="$sessions->count()"
                 stat-label="Phiên điểm danh"
                 icon-type="calendar">
             </x-page-header>
@@ -55,7 +46,6 @@
                 <div class="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4">
                     {{-- LEFT: Filters --}}
                     <div class="flex items-center gap-3 flex-1 w-full lg:w-auto">
-                        {{-- Filter Bar --}}
                         <livewire:filters.filter-bar
                             :parish-id="$parishId"
                             :show-nam-hoc="true"
@@ -66,14 +56,11 @@
                             :selected-khoi="$selectedKhoi"
                             :selected-lop="$selectedClassId" />
 
-                        {{-- Search --}}
                         <input
                             wire:model.live.debounce.500ms="search"
                             placeholder="Tìm phiên..."
-                            class="w-56 px-3 py-2 rounded-xl
-                                border border-slate-300
-                                text-sm focus:outline-none
-                                focus:ring-2 focus:ring-primary-500" />
+                            class="w-56 px-3 py-2 rounded-xl border border-slate-300
+                                text-sm focus:outline-none focus:ring-2 focus:ring-primary-500" />
                     </div>
 
                     {{-- RIGHT: Actions --}}
@@ -99,12 +86,12 @@
                     <span class="font-medium">{{ $currentNamHoc->name }}</span>
                     @if($currentNamHoc->start_date_one && $currentNamHoc->end_date_one)
                     <span class="text-blue-600">
-                        • HK1: {{ $currentNamHoc->semester_1_display }}
+                        • HK1: {{ $currentNamHoc->start_date_one->format('d/m/Y') }} - {{ $currentNamHoc->end_date_one->format('d/m/Y') }}
                     </span>
                     @endif
                     @if($currentNamHoc->start_date_two && $currentNamHoc->end_date_two)
                     <span class="text-blue-600">
-                        • HK2: {{ $currentNamHoc->semester_2_display }}
+                        • HK2: {{ $currentNamHoc->start_date_two->format('d/m/Y') }} - {{ $currentNamHoc->end_date_two->format('d/m/Y') }}
                     </span>
                     @endif
                 </div>
@@ -115,7 +102,7 @@
         {{-- Sessions Table --}}
         @if($selectedClassId)
         <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
-            @if($sessions && $sessions->count() > 0)
+            @if($sessions->count() > 0)
             <div class="overflow-x-auto">
                 <table class="w-full border-separate border-spacing-0">
                     <thead class="bg-slate-50 border-b border-slate-200">
@@ -145,11 +132,6 @@
                                     <span class="font-semibold text-slate-900">
                                         {{ $session['dayName'] }} - {{ $session['fullDate'] }}
                                     </span>
-                                    <span class="text-xs text-slate-500">
-                                        {{-- {{ $session['date']->format('l') }} --}}
-                                        {{ $session['date'] }}
-
-                                    </span>
                                 </div>
                             </td>
 
@@ -163,9 +145,7 @@
 
                             {{-- Tiêu đề --}}
                             <td class="px-6 py-4">
-                                <span class="text-sm text-slate-700">
-                                    {{ $session['title'] ?: '-' }}
-                                </span>
+                                <span class="text-sm text-slate-700">{{ $session['title'] ?: '-' }}</span>
                             </td>
 
                             {{-- Thời gian --}}
@@ -220,7 +200,7 @@
                                 <div class="flex items-center justify-center gap-3">
                                     {{-- Điểm danh --}}
                                     <a href="{{ route('attendance.show', ['classId' => $selectedClassId, 'type' => $session['type'], 'date' => $session['dateStr']]) }}"
-                                        class="inline-flex items-center gap-1 text-primary-600 hover:text-primary-700 
+                                        class="inline-flex items-center gap-1 text-primary-600 hover:text-primary-700
                                                font-semibold text-sm transition">
                                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -327,13 +307,9 @@
                             <h2 id="session-modal-title" class="text-xl font-bold text-slate-900">
                                 Tạo phiên điểm danh
                             </h2>
-                            <p class="text-sm text-slate-600 mt-1">
-                                Thiết lập thông tin cho các phiên điểm danh
-                            </p>
+                            <p class="text-sm text-slate-600 mt-1">Thiết lập thông tin cho các phiên điểm danh</p>
                         </div>
-                        <button
-                            wire:click="closeModal"
-                            class="text-slate-400 hover:text-slate-600 transition-colors">
+                        <button wire:click="closeModal" class="text-slate-400 hover:text-slate-600 transition-colors">
                             <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
                             </svg>
@@ -352,9 +328,7 @@
                                     d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                             </svg>
                             <div class="flex-1">
-                                <h4 class="text-sm font-semibold text-red-800 mb-2">
-                                    Vui lòng kiểm tra lại thông tin
-                                </h4>
+                                <h4 class="text-sm font-semibold text-red-800 mb-2">Vui lòng kiểm tra lại thông tin</h4>
                                 <ul class="space-y-1 text-sm text-red-700">
                                     @foreach ($errors->all() as $error)
                                     <li>• {{ $error }}</li>
@@ -371,39 +345,26 @@
                             Loại điểm danh <span class="text-red-500">*</span>
                         </label>
                         <div class="grid grid-cols-2 gap-3">
-                            <button
-                                type="button"
-                                wire:click="$set('type', 1)"
+                            <button type="button" wire:click="$set('type', 1)"
                                 class="px-4 py-3 rounded-xl border-2 transition-all text-left
                                     {{ $type == 1 ? 'border-blue-500 bg-blue-50' : 'border-slate-200 hover:border-slate-300' }}">
                                 <div class="flex items-center gap-2">
                                     <div class="w-4 h-4 rounded-full border-2 flex items-center justify-center
                                         {{ $type == 1 ? 'border-blue-500' : 'border-slate-300' }}">
-                                        @if($type == 1)
-                                        <div class="w-2 h-2 rounded-full bg-blue-500"></div>
-                                        @endif
+                                        @if($type == 1)<div class="w-2 h-2 rounded-full bg-blue-500"></div>@endif
                                     </div>
-                                    <span class="font-semibold {{ $type == 1 ? 'text-blue-700' : 'text-slate-700' }}">
-                                        Điểm danh đi học
-                                    </span>
+                                    <span class="font-semibold {{ $type == 1 ? 'text-blue-700' : 'text-slate-700' }}">Điểm danh đi học</span>
                                 </div>
                             </button>
-
-                            <button
-                                type="button"
-                                wire:click="$set('type', 2)"
+                            <button type="button" wire:click="$set('type', 2)"
                                 class="px-4 py-3 rounded-xl border-2 transition-all text-left
                                     {{ $type == 2 ? 'border-purple-500 bg-purple-50' : 'border-slate-200 hover:border-slate-300' }}">
                                 <div class="flex items-center gap-2">
                                     <div class="w-4 h-4 rounded-full border-2 flex items-center justify-center
                                         {{ $type == 2 ? 'border-purple-500' : 'border-slate-300' }}">
-                                        @if($type == 2)
-                                        <div class="w-2 h-2 rounded-full bg-purple-500"></div>
-                                        @endif
+                                        @if($type == 2)<div class="w-2 h-2 rounded-full bg-purple-500"></div>@endif
                                     </div>
-                                    <span class="font-semibold {{ $type == 2 ? 'text-purple-700' : 'text-slate-700' }}">
-                                        Điểm danh đi lễ
-                                    </span>
+                                    <span class="font-semibold {{ $type == 2 ? 'text-purple-700' : 'text-slate-700' }}">Điểm danh đi lễ</span>
                                 </div>
                             </button>
                         </div>
@@ -415,83 +376,42 @@
                             Chế độ tạo <span class="text-red-500">*</span>
                         </label>
                         <div class="grid grid-cols-3 gap-3">
-                            <button
-                                type="button"
-                                @click="mode = 'single'"
+                            @foreach([['single', 'Ngày đơn'], ['weekly', 'Theo tuần'], ['custom', 'Tùy chọn']] as [$val, $label])
+                            <button type="button" @click="mode = '{{ $val }}'; $wire.set('createMode', '{{ $val }}')"
                                 class="px-3 py-2 rounded-lg border-2 transition-all text-sm font-medium
-                                    {{ $createMode == 'single' ? 'border-primary-500 bg-primary-50 text-primary-700' : 'border-slate-200 hover:border-slate-300 text-slate-700' }}">
-                                Ngày đơn
+                                    {{ $createMode == $val ? 'border-primary-500 bg-primary-50 text-primary-700' : 'border-slate-200 hover:border-slate-300 text-slate-700' }}">
+                                {{ $label }}
                             </button>
-                            <button
-                                type="button"
-                                @click="mode = 'weekly'"
-                                class="px-3 py-2 rounded-lg border-2 transition-all text-sm font-medium
-                                    {{ $createMode == 'weekly' ? 'border-primary-500 bg-primary-50 text-primary-700' : 'border-slate-200 hover:border-slate-300 text-slate-700' }}">
-                                Theo tuần
-                            </button>
-                            <button
-                                type="button"
-                                @click="mode = 'custom'"
-                                class="px-3 py-2 rounded-lg border-2 transition-all text-sm font-medium
-                                    {{ $createMode == 'custom' ? 'border-primary-500 bg-primary-50 text-primary-700' : 'border-slate-200 hover:border-slate-300 text-slate-700' }}">
-                                Tùy chọn
-                            </button>
+                            @endforeach
                         </div>
                     </div>
 
                     {{-- Single Mode --}}
                     <div x-show="mode === 'single'">
-                        <x-form-input
-                            label="Ngày điểm danh"
-                            name="startDate"
-                            type="date"
-                            wire:model.defer="startDate"
-                            required />
+                        <x-form-input label="Ngày điểm danh" name="startDate" type="date"
+                            wire:model.defer="startDate" required />
                     </div>
 
                     {{-- Weekly Mode --}}
                     <div x-show="mode === 'weekly'" class="space-y-4">
                         <div class="grid grid-cols-2 gap-4">
-                            <x-form-input
-                                label="Từ ngày"
-                                name="startDate"
-                                type="date"
-                                wire:model.defer="startDate"
-                                required />
-
-                            <x-form-input
-                                label="Đến ngày"
-                                name="endDate"
-                                type="date"
+                            <x-form-input label="Từ ngày" name="startDate" type="date"
+                                wire:model.defer="startDate" required />
+                            <x-form-input label="Đến ngày" name="endDate" type="date"
                                 wire:model.defer="endDate" />
                         </div>
-
                         <div>
                             <label class="block text-sm font-semibold text-slate-700 mb-2">
                                 Chọn các ngày trong tuần <span class="text-red-500">*</span>
                             </label>
                             <div class="grid grid-cols-4 gap-2">
-                                @php
-                                $days = [
-                                ['value' => 0, 'label' => 'CN'],
-                                ['value' => 1, 'label' => 'T2'],
-                                ['value' => 2, 'label' => 'T3'],
-                                ['value' => 3, 'label' => 'T4'],
-                                ['value' => 4, 'label' => 'T5'],
-                                ['value' => 5, 'label' => 'T6'],
-                                ['value' => 6, 'label' => 'T7'],
-                                ];
-                                @endphp
-                                @foreach($days as $day)
+                                @foreach([['0','CN'],['1','T2'],['2','T3'],['3','T4'],['4','T5'],['5','T6'],['6','T7']] as [$val, $label])
                                 <label class="flex items-center gap-2 px-3 py-2 rounded-lg border cursor-pointer
-                                    {{ in_array($day['value'], $weekDays) ? 'border-primary-500 bg-primary-50' : 'border-slate-200 hover:border-slate-300' }}">
-                                    <input
-                                        type="checkbox"
-                                        wire:model="weekDays"
-                                        value="{{ $day['value'] }}"
+                                    {{ in_array($val, $weekDays) ? 'border-primary-500 bg-primary-50' : 'border-slate-200 hover:border-slate-300' }}">
+                                    <input type="checkbox" wire:model="weekDays" value="{{ $val }}"
                                         class="w-4 h-4 rounded border-slate-300 text-primary-600 focus:ring-primary-500">
-                                    <span class="text-sm font-medium {{ in_array($day['value'], $weekDays) ? 'text-primary-700' : 'text-slate-700' }}">
-                                        {{ $day['label'] }}
+                                    <span class="text-sm font-medium {{ in_array($val, $weekDays) ? 'text-primary-700' : 'text-slate-700' }}">
+                                        {{ $label }}
                                     </span>
                                 </label>
                                 @endforeach
@@ -505,9 +425,7 @@
                             Chọn các ngày cụ thể <span class="text-red-500">*</span>
                         </label>
                         <div class="border border-slate-300 rounded-xl p-4 bg-slate-50">
-                            <input
-                                type="date"
-                                wire:model.defer="startDate"
+                            <input type="date" wire:model.defer="startDate"
                                 class="w-full px-3 py-2 rounded-lg border border-slate-300
                                     focus:outline-none focus:ring-2 focus:ring-primary-500">
                             <p class="mt-2 text-xs text-slate-500">
@@ -516,26 +434,17 @@
                         </div>
                     </div>
 
-                    {{-- Tiêu đề (optional) --}}
+                    {{-- Tiêu đề --}}
                     <x-form-input
                         label="Tiêu đề (không bắt buộc)"
                         name="title"
                         wire:model.defer="title"
                         placeholder="VD: Tuần lễ Phục sinh, Thánh lễ khai giảng..." />
 
-                    {{-- Thời gian (optional) --}}
+                    {{-- Thời gian --}}
                     <div class="grid grid-cols-2 gap-4">
-                        <x-form-input
-                            label="Giờ bắt đầu"
-                            name="startTime"
-                            type="time"
-                            wire:model.defer="startTime" />
-
-                        <x-form-input
-                            label="Giờ kết thúc"
-                            name="endTime"
-                            type="time"
-                            wire:model.defer="endTime" />
+                        <x-form-input label="Giờ bắt đầu" name="startTime" type="time" wire:model.defer="startTime" />
+                        <x-form-input label="Giờ kết thúc" name="endTime" type="time" wire:model.defer="endTime" />
                     </div>
 
                     {{-- Info notice --}}
@@ -545,30 +454,19 @@
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                     d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                             </svg>
-                            <div class="flex-1">
-                                <h4 class="text-sm font-semibold text-blue-700">Lưu ý</h4>
-                                <ul class="text-sm text-blue-600 mt-1 space-y-1">
-                                    <li>• Chỉ tạo phiên trong khoảng thời gian năm học</li>
-                                    <li>• Phiên đã tồn tại sẽ bị bỏ qua</li>
-                                    <li>• Có thể tạo nhiều phiên cùng lúc ở chế độ "Theo tuần"</li>
-                                </ul>
-                            </div>
+                            <ul class="text-sm text-blue-600 space-y-1">
+                                <li>• Chỉ tạo phiên trong khoảng thời gian năm học</li>
+                                <li>• Phiên đã tồn tại sẽ bị bỏ qua</li>
+                                <li>• Có thể tạo nhiều phiên cùng lúc ở chế độ "Theo tuần"</li>
+                            </ul>
                         </div>
                     </div>
                 </div>
 
                 {{-- Footer --}}
                 <div class="flex-shrink-0 px-6 py-4 border-t border-slate-200 bg-slate-50 flex justify-end gap-3">
-                    <x-action-button wire="closeModal" variant="secondary">
-                        Hủy
-                    </x-action-button>
-
-                    <x-action-button
-                        wire="save"
-                        icon="save"
-                        :loading="true">
-                        Tạo phiên
-                    </x-action-button>
+                    <x-action-button wire="closeModal" variant="secondary">Hủy</x-action-button>
+                    <x-action-button wire="save" icon="save" :loading="true">Tạo phiên</x-action-button>
                 </div>
             </div>
         </div>

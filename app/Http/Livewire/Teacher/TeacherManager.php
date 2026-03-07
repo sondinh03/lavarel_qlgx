@@ -271,6 +271,7 @@ class TeacherManager extends BaseComponent
             throw new \Exception('Email hoặc số điện thoại đã được dùng cho tài khoản khác');
         }
 
+        dd($this->parishId);
         // Tạo user account
         $user = User::create([
             'name'      => trim($this->last_name . ' ' . $this->first_name),
@@ -301,8 +302,7 @@ class TeacherManager extends BaseComponent
 
     private function updateTeacher(): void
     {
-        $teacher = Teacher::where('parish_id', $this->parishId)
-            ->findOrFail($this->editingId);
+        $teacher = Teacher::findOrFail($this->editingId);
 
         $teacher->update([
             'last_name'        => $this->last_name,
@@ -321,6 +321,7 @@ class TeacherManager extends BaseComponent
         // Sync tên trên user account
         $teacher->user?->update([
             'name' => trim($this->last_name . ' ' . $this->first_name),
+            'parish_id' => $this->parishId, // đảm bảo đồng bộ giáo xứ nếu có thay đổi
         ]);
     }
 

@@ -103,7 +103,9 @@ abstract class BaseComponent extends Component
     protected function initializeUser(): void
     {
         $user = auth()->user() ?? abort(401, 'Chưa đăng nhập');
-        $this->parishId = $user->parish_id;
+        if (!$user->hasRole('super_admin')) {
+            $this->parishId = $user->parish_id;
+        }
     }
 
 

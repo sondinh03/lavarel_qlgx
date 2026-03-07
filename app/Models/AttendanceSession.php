@@ -2,8 +2,8 @@
 
 namespace App\Models;
 
+use App\Traits\BelongsToParish;
 use Backpack\CRUD\app\Models\Traits\CrudTrait;
-use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Venturecraft\Revisionable\RevisionableTrait;
 
@@ -11,26 +11,26 @@ class AttendanceSession extends Model
 {
     use CrudTrait;
     use RevisionableTrait;
+    use BelongsToParish;
 
     protected $table = 'attendance_sessions';
     protected $guarded = ['id'];
 
     protected $fillable = [
-        'parish_id',
         'class_id',
-        'teacher_id',
         'date',
-        'type',          // 1: học, 2: lễ
-        'title',
-        'status',        // 1: chờ xử lý, 2: đang hoạt động, 3: đã đóng, 4: vô hiệu hóa, 5: đã hủy
+        'semester',
+        'type',      // 1: học, 2: lễ
+        'status',    // 1: đang mở, 2: đã đóng, 3: đã hủy
         'start_time',
         'end_time',
+        'note',
     ];
 
     protected $casts = [
-        'date' => 'date',
-        'start_time'   => 'datetime:H:i',
-        'end_time'     => 'datetime:H:i',
+        'date'       => 'date',
+        'start_time' => 'datetime:H:i',
+        'end_time'   => 'datetime:H:i',
     ];
 
     protected $appends = [
@@ -38,7 +38,7 @@ class AttendanceSession extends Model
         'day_name',
         'is_editable',
         'checked_count',
-        'attendance_rate'
+        'attendance_rate',
     ];
 
     /**
@@ -55,7 +55,7 @@ class AttendanceSession extends Model
      *  SESSION TYPE CONSTANTS
      * ======================
      */
-    const TYPE_CLASS = 1; // Buổi học giáo lý
+    const TYPE_CLASS    = 1; // Buổi học giáo lý
     const TYPE_CEREMONY = 2; // Thánh lễ
 
     /**
@@ -83,17 +83,19 @@ class AttendanceSession extends Model
         return $this->hasMany(AttendanceRecord::class, 'session_id');
     }
 
-    public function getCheckedCountAttribute()
+    /**
+     * ======================
+     *  ACCESSORS
+     * ======================
+     */
+    public function getCheckedCountAttribute(): int
     {
         return $this->records()->whereNotNull('status')->count();
     }
 
-    /**
-     * Tỷ lệ có mặt (%)
-     */
     public function getAttendanceRateAttribute(): float
     {
-        $total = $this->total_students;
+        $total = $this->records()->count();
         if ($total === 0) return 0;
 
         $present = $this->records()
@@ -103,25 +105,16 @@ class AttendanceSession extends Model
         return round(($present / $total) * 100, 1);
     }
 
-    /**
-     * Có thể chỉnh sửa không?
-     */
     public function getIsEditableAttribute(): bool
     {
         return $this->status === self::STATUS_OPENING;
     }
 
-    /**
-     * ✅ Get full date display
-     */
     public function getFullDateAttribute(): string
     {
-        return $this->date->format('d/m/y');
+        return $this->date->format('d/m/Y');
     }
 
-    /**
-     * ✅ Get Vietnamese day name
-     */
     public function getDayNameAttribute(): string
     {
         $days = ['CN', 'T2', 'T3', 'T4', 'T5', 'T6', 'T7'];
@@ -129,30 +122,23 @@ class AttendanceSession extends Model
     }
 
     /**
-     * ✅ Check if can edit with reason
+     * ======================
+     *  METHODS
+     * ======================
      */
     public function canEdit(): array
     {
         if ($this->status === self::STATUS_CLOSED) {
-            return [
-                'can' => false,
-                'reason' => 'Buổi học đã khóa, không thể chỉnh sửa',
-            ];
+            return ['can' => false, 'reason' => 'Buổi học đã khóa, không thể chỉnh sửa'];
         }
 
         if ($this->status === self::STATUS_CANCELLED) {
-            return [
-                'can' => false,
-                'reason' => 'Buổi học đã bị hủy',
-            ];
+            return ['can' => false, 'reason' => 'Buổi học đã bị hủy'];
         }
 
         return ['can' => true, 'reason' => null];
     }
 
-    /**
-     * Đóng phiên điểm danh
-     */
     public function close(): bool
     {
         if ($this->status !== self::STATUS_OPENING) {
@@ -162,9 +148,6 @@ class AttendanceSession extends Model
         return $this->update(['status' => self::STATUS_CLOSED]);
     }
 
-    /**
-     * Mở lại phiên điểm danh
-     */
     public function reopen(): bool
     {
         if ($this->status !== self::STATUS_CLOSED) {
@@ -174,37 +157,25 @@ class AttendanceSession extends Model
         return $this->update(['status' => self::STATUS_OPENING]);
     }
 
-    /**
-     * Hủy phiên điểm danh
-     */
     public function cancel(): bool
     {
         return $this->update(['status' => self::STATUS_CANCELLED]);
     }
 
-    /**
-     * Kiểm tra có phải buổi học không
-     */
     public function isClass(): bool
     {
         return $this->type === self::TYPE_CLASS;
     }
 
-    /**
-     * Kiểm tra có phải buổi lễ không
-     */
     public function isCeremony(): bool
     {
         return $this->type === self::TYPE_CEREMONY;
     }
 
-    /**
-     * Thống kê điểm danh
-     */
     public function getStatistics(): array
     {
         $records = $this->records;
-        $total = $records->count();
+        $total   = $records->count();
 
         if ($total === 0) {
             return [
@@ -217,10 +188,10 @@ class AttendanceSession extends Model
             ];
         }
 
-        $present = $records->where('status', AttendanceRecord::STATUS_PRESENT)->count();
-        $absentExcused = $records->where('status', AttendanceRecord::STATUS_ABSENT_EXCUSED)->count();
+        $present         = $records->where('status', AttendanceRecord::STATUS_PRESENT)->count();
+        $absentExcused   = $records->where('status', AttendanceRecord::STATUS_ABSENT_EXCUSED)->count();
         $absentUnexcused = $records->where('status', AttendanceRecord::STATUS_ABSENT_UNEXCUSED)->count();
-        $notChecked = $records->whereNull('status')->count();
+        $notChecked      = $records->whereNull('status')->count();
 
         return [
             'total'            => $total,
