@@ -4,175 +4,191 @@
     <div id="main-content" class="mx-auto max-w-7xl space-y-5">
 
         {{-- Breadcrumb --}}
-        <x-breadcrumb
-            :items="[
-                ['label' => 'Trang chủ', 'url' => route('dashboard')],
-                [
-                    'label' => 'Quản lý giáo viên',
-                    'url' => route('catechists.index'),
-                    'icon' => '<svg class=\'w-4 h-4\' fill=\'none\' stroke=\'currentColor\' viewBox=\'0 0 24 24\'>
-                                <path stroke-linecap=\'round\' stroke-linejoin=\'round\' stroke-width=\'2\'
-                                    d=\'M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z\' />
-                            </svg>',
-                ],
-            ]"
-            separator="arrow" />
+        <x-breadcrumb :items="[
+            ['label' => 'Trang chủ', 'url' => route('dashboard')],
+            ['label' => 'Giáo lý viên', 'url' => route('catechists.index')],
+        ]" separator="arrow" />
 
-        {{-- Toast Notifications --}}
+        {{-- Toast --}}
         <div role="status" aria-live="polite">
             @if (session()->has('message'))
-            <x-toast-notification type="success" :duration="3500">
-                {{ session('message') }}
-            </x-toast-notification>
+            <x-toast-notification type="success" :duration="3500">{{ session('message') }}</x-toast-notification>
             @endif
-
             @if (session()->has('error'))
-            <x-toast-notification type="error" :duration="4000">
-                {{ session('error') }}
-            </x-toast-notification>
+            <x-toast-notification type="error" :duration="4000">{{ session('error') }}</x-toast-notification>
             @endif
-
             @if (session()->has('warning'))
-            <x-toast-notification type="warning" :duration="4000">
-                {{ session('warning') }}
-            </x-toast-notification>
-            @endif
-
-            @if (session()->has('info'))
-            <x-toast-notification type="info" :duration="3500">
-                {{ session('info') }}
-            </x-toast-notification>
+            <x-toast-notification type="warning" :duration="4000">{{ session('warning') }}</x-toast-notification>
             @endif
         </div>
 
         {{-- Main Card --}}
         <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
-            {{-- Header --}}
             <x-page-header
-                title="Quản lý giáo viên"
-                description="Danh sách giáo viên giáo lý"
-                :stat-value="$teachers?->total()"
-                stat-label="Giáo viên"
-                icon-type="teacher">
-            </x-page-header>
+                title="Quản lý Giáo lý viên"
+                description="Danh sách giáo lý viên trong giáo xứ"
+                :stat-value="$teachers->total()"
+                stat-label="Giáo lý viên"
+                icon-type="teacher" />
 
             {{-- Actions Bar --}}
             <div class="px-6 py-4 border-b border-slate-200 bg-slate-50/70">
-                <div class="flex items-center justify-between gap-4">
+                <div class="flex flex-wrap items-center justify-between gap-3">
+                    {{-- LEFT: Filters --}}
+                    <div class="flex flex-wrap items-center gap-3">
 
-                    {{-- LEFT: Search --}}
-                    <div class="flex items-center gap-3">
+                        {{-- Search --}}
                         <input
                             wire:model.debounce.500ms="search"
-                            placeholder="Tìm theo tên hoặc SĐT"
-                            class="w-64 px-3 py-2 rounded-xl
-                                   border border-slate-300
-                                   text-sm focus:outline-none
-                                   focus:ring-2 focus:ring-primary-500" />
+                            placeholder="Tìm tên, SĐT, email..."
+                            class="w-56 px-3 py-2 rounded-xl border border-slate-300
+                                   text-sm focus:outline-none focus:ring-2 focus:ring-primary-500" />
+
+                        {{-- Filter giáo họ --}}
+                        <select wire:model="filterParishGroup"
+                            class="px-3 py-2 rounded-xl border border-slate-300 text-sm
+                                   focus:outline-none focus:ring-2 focus:ring-primary-500">
+                            <option value="">-- Tất cả giáo họ --</option>
+                            @foreach($parishGroups as $pg)
+                            <option value="{{ $pg->id }}">{{ $pg->name }}</option>
+                            @endforeach
+                        </select>
+
+                        {{-- Filter giới tính --}}
+                        <select wire:model="filterGender"
+                            class="px-3 py-2 rounded-xl border border-slate-300 text-sm
+                                   focus:outline-none focus:ring-2 focus:ring-primary-500">
+                            <option value="">-- Tất cả giới tính --</option>
+                            <option value="male">Nam</option>
+                            <option value="female">Nữ</option>
+                        </select>
+
+                        {{-- Filter trạng thái --}}
+                        <select wire:model="filterActive"
+                            class="px-3 py-2 rounded-xl border border-slate-300 text-sm
+                                   focus:outline-none focus:ring-2 focus:ring-primary-500">
+                            <option value="">-- Tất cả trạng thái --</option>
+                            <option value="1">Đang hoạt động</option>
+                            <option value="0">Đã nghỉ</option>
+                        </select>
                     </div>
 
-                    {{-- RIGHT: Primary Action --}}
+                    {{-- RIGHT: Add button --}}
                     <x-action-button wire="create" icon="plus">
-                        Thêm giáo viên
+                        Thêm giáo lý viên
                     </x-action-button>
                 </div>
             </div>
         </div>
 
-        {{-- Table Section --}}
+        {{-- Table --}}
         <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
-            @if($teachers && $teachers->count() > 0)
+            @if($teachers->count() > 0)
             <div class="overflow-x-auto">
                 <table class="w-full border-separate border-spacing-0">
                     <thead class="bg-slate-50 border-b border-slate-200">
                         <tr>
                             <x-table-header>STT</x-table-header>
-                            <x-table-header>Tên thánh</x-table-header>
                             <x-table-header>Họ tên</x-table-header>
+                            <x-table-header>Giới tính</x-table-header>
                             <x-table-header>Ngày sinh</x-table-header>
-                            <x-table-header>Số điện thoại</x-table-header>
+                            <x-table-header>Liên hệ</x-table-header>
                             <x-table-header>Giáo họ</x-table-header>
                             <x-table-header class="text-center">Trạng thái</x-table-header>
                             <x-table-header class="text-center">Thao tác</x-table-header>
                         </tr>
                     </thead>
-
                     <tbody class="divide-y divide-slate-100">
-                        @foreach($teachers as $i => $teacher)
-                        <tr class="hover:bg-slate-50 transition-colors">
+                        @foreach($teachers as $index => $teacher)
+                        <tr class="hover:bg-slate-50 transition-colors" wire:key="teacher-{{ $teacher->id }}">
+
+                            {{-- STT --}}
                             <td class="px-6 py-4 text-sm text-slate-500">
-                                {{ $teachers->firstItem() + $i }}
+                                {{ ($teachers->firstItem() ?? 0) + $index }}
                             </td>
 
-                            <td class="px-6 py-4 text-sm text-slate-600">
-                                @if($teacher->holyName)
-                                <span class="font-medium text-primary-600">
-                                    {{ $teacher->holyName }}
-                                </span>
-                                @else
-                                <span class="text-slate-400">—</span>
-                                @endif
-                            </td>
+                            {{-- Họ tên --}}
+                            <td class="px-6 py-4">
+                                <div class="flex items-center gap-3">
+                                    {{-- Avatar placeholder --}}
+                                    <div class="w-9 h-9 rounded-full bg-primary-100 flex items-center justify-center
+                                                text-primary-700 font-bold text-sm flex-shrink-0">
+                                        {{ mb_substr($teacher->first_name, 0, 1) }}
+                                    </div>
+                                    <div>
+                                        @if($teacher->saint)
+                                        <div class="text-xs text-slate-500">
+                                            {{ $teacher->saint->name }}
+                                        </div>
+                                        @endif
+                                        <div class="font-semibold text-slate-900">
 
-                            <td class="px-6 py-4 font-semibold text-slate-900">
-                                {{ $teacher->name }}
-                            </td>
+                                            {{ $teacher->full_name }}
+                                        </div>
 
-                            <td class="px-6 py-4 text-sm text-slate-600">
-                                @if($teacher->birthday)
-                                {{ $teacher->birthday->format('d/m/Y') }}
-                                <span class="text-xs text-slate-400 ml-1">
-                                    ({{ $teacher->birthday->age }} tuổi)
-                                </span>
-                                @else
-                                <span class="text-slate-400">—</span>
-                                @endif
-                            </td>
-
-                            <td class="px-6 py-4 text-sm text-slate-600">
-                                @if($teacher->phone_number)
-                                <a href="tel:{{ $teacher->phone_number }}"
-                                    class="hover:text-primary-600 transition-colors">
-                                    {{ $teacher->phone_number }}
-                                </a>
-                                @else
-                                <span class="text-slate-400">—</span>
-                                @endif
-                            </td>
-
-                            <td class="px-6 py-4 text-sm text-slate-600">
-                                @if($teacher->parishChild)
-                                <div class="truncate max-w-xs" title="{{ $teacher->parishChild->name }}">
-                                    {{ $teacher->parishChild->name }}
+                                    </div>
                                 </div>
+                            </td>
+
+                            {{-- Giới tính --}}
+                            <td class="px-6 py-4 text-sm text-slate-600">
+                                {{ $teacher->gender_text }}
+                            </td>
+
+                            {{-- Ngày sinh --}}
+                            <td class="px-6 py-4 text-sm text-slate-600">
+                                {{ $teacher->birthday?->format('d/m/Y') ?? '—' }}
+                            </td>
+
+                            {{-- Liên hệ --}}
+                            <td class="px-6 py-4">
+                                <div class="space-y-1">
+                                    @if($teacher->phone_number)
+                                    <div class="text-sm text-slate-700">📞 {{ $teacher->phone_number }}</div>
+                                    @endif
+                                    @if($teacher->email)
+                                    <div class="text-xs text-slate-500 truncate max-w-40">✉ {{ $teacher->email }}</div>
+                                    @endif
+                                </div>
+                            </td>
+
+                            {{-- Giáo họ --}}
+                            <td class="px-6 py-4">
+                                @if($teacher->parishGroup)
+                                <span class="inline-flex items-center px-2.5 py-1 rounded-full
+                                             text-xs font-semibold bg-indigo-100 text-indigo-700">
+                                    {{ $teacher->parishGroup->name }}
+                                </span>
                                 @else
-                                <span class="text-slate-400">—</span>
+                                <span class="text-slate-400 text-sm">—</span>
                                 @endif
                             </td>
 
+                            {{-- Trạng thái --}}
                             <td class="px-6 py-4 text-center">
-                                <span class="px-2.5 py-1 text-xs font-semibold rounded-full
-                                    {{ $teacher->status ? 'bg-primary-100 text-primary-700' : 'bg-slate-200 text-slate-600' }}">
-                                    {{ $teacher->status ? 'Hoạt động' : 'Tắt' }}
+                                <span class="inline-flex items-center px-2.5 py-1 text-xs font-semibold rounded-full
+                                             {{ $teacher->is_active ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-200 text-slate-600' }}">
+                                    {{ $teacher->is_active ? 'Hoạt động' : 'Đã nghỉ' }}
                                 </span>
                             </td>
 
+                            {{-- Thao tác --}}
                             <td class="px-6 py-4 text-center">
-                                <div class="inline-flex gap-3">
-                                    <button
-                                        wire:click="edit({{ $teacher->id }})"
-                                        class="text-primary-600 hover:text-primary-800">
+                                <div class="inline-flex items-center gap-3">
+                                    <x-table-action wire="edit({{ $teacher->id }})" icon="edit">
                                         Sửa
-                                    </button>
+                                    </x-table-action>
 
-                                    @if($isAdmin)
-                                    <button
-                                        wire:click="delete({{ $teacher->id }})"
-                                        onclick="return confirm('Xác nhận xóa giáo viên {{ $teacher->name }}?')"
-                                        class="text-red-600 hover:text-red-800">
+                                    <span class="text-slate-300">|</span>
+
+                                    <x-table-action
+                                        wire="delete({{ $teacher->id }})"
+                                        icon="trash"
+                                        color="danger"
+                                        :loading="true"
+                                        confirm="Xóa giáo lý viên này sẽ xóa luôn tài khoản đăng nhập. Bạn chắc chắn?">
                                         Xóa
-                                    </button>
-                                    @endif
+                                    </x-table-action>
                                 </div>
                             </td>
                         </tr>
@@ -182,418 +198,177 @@
             </div>
 
             {{-- Pagination --}}
-            @if ($teachers->hasPages())
+            @if($teachers->hasPages())
             <div class="px-6 py-4 border-t border-slate-200">
-                {{ $teachers->links() }}
+                <x-pagination :paginator="$teachers" :per-page-options="[10, 15, 25, 50]" />
             </div>
             @endif
+
             @else
-            <div class="text-center py-12">
-                <svg class="mx-auto w-16 h-16 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                        d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
-                </svg>
-                <p class="mt-2 text-gray-500">Chưa có giáo viên nào</p>
-                <button
-                    wire:click="create"
-                    class="mt-4 px-4 py-2 bg-primary-600 text-white rounded-md hover:bg-primary-700">
-                    <i class="las la-plus mr-1"></i> Thêm giáo viên đầu tiên
+            <div class="text-center py-16">
+                <div class="text-5xl mb-4">👨‍🏫</div>
+                <p class="text-lg text-slate-500">Chưa có giáo lý viên nào</p>
+                <button wire:click="create"
+                    class="mt-4 px-4 py-2 bg-primary-600 text-white rounded-xl hover:bg-primary-700 transition-all">
+                    Thêm giáo lý viên đầu tiên
                 </button>
             </div>
             @endif
         </div>
 
-        {{-- Form Modal --}}
-        @if ($showForm)
-        <div
-            class="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4"
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="teacher-modal-title"
-            wire:click="closeModal">
-            <div
-                class="bg-white rounded-2xl shadow-xl w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col"
+        {{-- Modal Form --}}
+        @if($showForm)
+        <div class="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4"
+            role="dialog" aria-modal="true" wire:click="closeModal">
+            <div class="bg-white rounded-2xl shadow-xl w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col"
                 wire:click.stop>
 
                 {{-- Header --}}
                 <div class="flex-shrink-0 p-6 border-b border-slate-200 bg-gradient-to-br from-primary-50 to-white">
-                    <h2 id="teacher-modal-title" class="text-xl font-bold text-slate-900">
-                        {{ $editingId ? 'Cập nhật giáo viên' : 'Thêm giáo viên mới' }}
+                    <h2 class="text-xl font-bold text-slate-900">
+                        {{ $editingId ? 'Cập nhật giáo lý viên' : 'Thêm giáo lý viên mới' }}
                     </h2>
-                    <p class="text-sm text-slate-600 mt-1">
-                        Nhập thông tin giáo viên giáo lý
+                    <p class="text-sm text-slate-500 mt-1">
+                        {{ $editingId ? 'Chỉnh sửa thông tin' : 'Tạo tài khoản đăng nhập tự động' }}
                     </p>
                 </div>
 
-                {{-- Body - SCROLLABLE --}}
+                {{-- Body --}}
                 <div class="flex-1 overflow-y-auto p-6 space-y-5">
-                    {{-- Error Summary --}}
-                    @if ($errors->any())
+
+                    {{-- Errors --}}
+                    @if($errors->any())
                     <div class="bg-red-50 border-l-4 border-red-500 rounded-xl p-4">
-                        <div class="flex items-start gap-3">
-                            <svg class="w-5 h-5 text-red-500 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                            </svg>
-                            <div class="flex-1">
-                                <h4 class="text-sm font-semibold text-red-800 mb-2">
-                                    Vui lòng kiểm tra lại thông tin
-                                </h4>
-                                <ul class="space-y-1 text-sm text-red-700">
-                                    @foreach ($errors->all() as $error)
-                                    <li class="flex items-start gap-2">
-                                        <span class="text-red-400 font-bold">•</span>
-                                        <span>{{ $error }}</span>
-                                    </li>
-                                    @endforeach
-                                </ul>
-                            </div>
-                        </div>
+                        <ul class="space-y-1 text-sm text-red-700">
+                            @foreach($errors->all() as $error)
+                            <li>• {{ $error }}</li>
+                            @endforeach
+                        </ul>
                     </div>
                     @endif
 
-                    {{-- Row: Tên thánh & Họ tên --}}
-                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                        {{-- Tên thánh (1/3 width) --}}
+                    {{-- Họ & Tên --}}
+                    <div class="grid grid-cols-2 gap-4">
+                        <x-form-input label="Họ (và tên đệm)" name="last_name"
+                            wire:model.defer="last_name"
+                            placeholder="VD: Nguyễn Văn" required />
+
+                        <x-form-input label="Tên" name="first_name"
+                            wire:model.defer="first_name"
+                            placeholder="VD: An" required />
+                    </div>
+
+                    {{-- Giới tính & Ngày sinh --}}
+                    <div class="grid grid-cols-2 gap-4">
                         <div>
-                            <label class="block text-sm font-semibold text-slate-700 mb-1">
-                                Tên thánh
-                            </label>
-                            <select
-                                wire:model.defer="holy_id"
+                            <label class="block text-sm font-semibold text-slate-700 mb-1">Giới tính</label>
+                            <select wire:model.defer="gender"
                                 class="w-full px-3 py-2 rounded-xl border border-slate-300
                                        focus:outline-none focus:ring-2 focus:ring-primary-500">
                                 <option value="">-- Chọn --</option>
-                                @foreach($holyNames as $id => $name)
-                                <option value="{{ $id }}">{{ $name }}</option>
+                                <option value="male">Nam</option>
+                                <option value="female">Nữ</option>
+                            </select>
+                        </div>
+
+                        <x-form-input label="Ngày sinh" name="birthday"
+                            type="date" wire:model.defer="birthday" />
+                    </div>
+
+                    {{-- SĐT & Email --}}
+                    <div class="grid grid-cols-2 gap-4">
+                        <x-form-input label="Số điện thoại" name="phone_number"
+                            wire:model.defer="phone_number"
+                            placeholder="0901234567" />
+
+                        <x-form-input label="Email" name="email"
+                            type="email" wire:model.defer="email"
+                            placeholder="example@gmail.com" />
+                    </div>
+
+                    {{-- Địa chỉ --}}
+                    <x-form-input label="Địa chỉ" name="address"
+                        wire:model.defer="address"
+                        placeholder="Địa chỉ cư trú" />
+
+                    {{-- Giáo họ & Tên thánh --}}
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-semibold text-slate-700 mb-1">Giáo họ</label>
+                            <select wire:model.defer="parish_group_id"
+                                class="w-full px-3 py-2 rounded-xl border border-slate-300
+                                       focus:outline-none focus:ring-2 focus:ring-primary-500">
+                                <option value="">-- Chọn giáo họ --</option>
+                                @foreach($parishGroups as $pg)
+                                <option value="{{ $pg->id }}">{{ $pg->name }}</option>
                                 @endforeach
                             </select>
-                            @error('holy_id')
-                            <p class="mt-1 text-sm text-red-500">{{ $message }}</p>
-                            @enderror
                         </div>
 
-                        {{-- Họ tên (2/3 width) --}}
-                        <div class="sm:col-span-2">
-                            <label class="block text-sm font-semibold text-slate-700 mb-1">
-                                Họ tên <span class="text-red-500">*</span>
-                            </label>
-                            <input
-                                type="text"
-                                wire:model.defer="name"
-                                placeholder="Ví dụ: Nguyễn Văn A"
-                                class="w-full px-3 py-2 rounded-xl border border-slate-300
-                                       focus:outline-none focus:ring-2 focus:ring-primary-500">
-                            @error('name')
-                            <p class="mt-1 text-sm text-red-500">{{ $message }}</p>
-                            @enderror
-                        </div>
-                    </div>
-
-                    {{-- Giáo họ --}}
-                    <div>
-                        <label class="block text-sm font-semibold text-slate-700 mb-1">
-                            Giáo họ
-                        </label>
-                        <select
-                            wire:model.defer="paid"
-                            class="w-full px-3 py-2 rounded-xl border border-slate-300
-                                   focus:outline-none focus:ring-2 focus:ring-primary-500">
-                            <option value="">-- Chọn giáo họ --</option>
-                            @foreach($parishChildren as $id => $name)
-                            <option value="{{ $id }}">{{ $name }}</option>
-                            @endforeach
-                        </select>
-                        @error('paid')
-                        <p class="mt-1 text-sm text-red-500">{{ $message }}</p>
-                        @enderror
-                    </div>
-
-                    {{-- Row: Ngày sinh & Số điện thoại --}}
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        {{-- Ngày sinh --}}
                         <div>
-                            <label class="block text-sm font-semibold text-slate-700 mb-1">
-                                Ngày sinh
-                            </label>
-                            <input
-                                type="date"
-                                wire:model.defer="birthday"
-                                max="{{ date('Y-m-d') }}"
+                            <label class="block text-sm font-semibold text-slate-700 mb-1">Tên thánh</label>
+                            <select wire:model.defer="saint_id"
                                 class="w-full px-3 py-2 rounded-xl border border-slate-300
                                        focus:outline-none focus:ring-2 focus:ring-primary-500">
-                            @error('birthday')
-                            <p class="mt-1 text-sm text-red-500">{{ $message }}</p>
-                            @enderror
-                        </div>
-
-                        {{-- Số điện thoại --}}
-                        <div>
-                            <label class="block text-sm font-semibold text-slate-700 mb-1">
-                                Số điện thoại
-                            </label>
-                            <input
-                                type="tel"
-                                wire:model.defer="phoneNumber"
-                                placeholder="0123456789"
-                                class="w-full px-3 py-2 rounded-xl border border-slate-300
-                                       focus:outline-none focus:ring-2 focus:ring-primary-500">
-                            @error('phoneNumber')
-                            <p class="mt-1 text-sm text-red-500">{{ $message }}</p>
-                            @enderror
+                                <option value="">-- Chọn tên thánh --</option>
+                                @foreach($saints as $saint)
+                                <option value="{{ $saint->id }}">{{ $saint->name }}</option>
+                                @endforeach
+                            </select>
                         </div>
                     </div>
 
                     {{-- Ghi chú --}}
                     <div>
-                        <label class="block text-sm font-semibold text-slate-700 mb-1">
-                            Ghi chú
-                        </label>
-                        <textarea
-                            wire:model.defer="note"
-                            rows="3"
-                            placeholder="Thông tin bổ sung về giáo viên..."
+                        <label class="block text-sm font-semibold text-slate-700 mb-1">Ghi chú</label>
+                        <textarea wire:model.defer="note" rows="2"
                             class="w-full px-3 py-2 rounded-xl border border-slate-300
-                                   focus:outline-none focus:ring-2 focus:ring-primary-500
-                                   resize-none"></textarea>
-                        @error('note')
-                        <p class="mt-1 text-sm text-red-500">{{ $message }}</p>
-                        @enderror
+                                   focus:outline-none focus:ring-2 focus:ring-primary-500 text-sm"
+                            placeholder="Ghi chú thêm..."></textarea>
                     </div>
-
-                    {{-- ✅ SECTION: Tạo tài khoản (chỉ hiện khi CREATE) --}}
-                    @if(!$editingId)
-                    <div class="border-t border-slate-200 pt-5">
-                        {{-- Checkbox tạo tài khoản --}}
-                        <div class="flex items-start gap-3 mb-4">
-                            <input
-                                id="create-account"
-                                type="checkbox"
-                                wire:model="createAccount"
-                                class="mt-1 w-4 h-4 rounded border-slate-300
-                       text-primary-600 focus:ring-primary-500">
-                            <div class="flex-1">
-                                <label for="create-account" class="text-sm font-semibold text-slate-900 cursor-pointer">
-                                    Tạo tài khoản đăng nhập
-                                </label>
-                                <p class="text-xs text-slate-500 mt-0.5">
-                                    Cấp quyền truy cập hệ thống cho giáo viên này
-                                </p>
-                            </div>
-                        </div>
-
-                        {{-- Account fields (hiện khi checkbox được chọn) --}}
-                        @if($createAccount)
-                        <div class="space-y-4 pl-7 animate-fade-in">
-                            {{-- Email --}}
-                            <div>
-                                <label class="block text-sm font-semibold text-slate-700 mb-1">
-                                    Email đăng nhập <span class="text-red-500">*</span>
-                                </label>
-                                <input
-                                    type="email"
-                                    wire:model.defer="accountEmail"
-                                    placeholder="email@giaoxu.com"
-                                    class="w-full px-3 py-2 rounded-xl border border-slate-300
-                           focus:outline-none focus:ring-2 focus:ring-primary-500">
-                                @error('accountEmail')
-                                <p class="mt-1 text-sm text-red-500">{{ $message }}</p>
-                                @enderror
-                            </div>
-
-                            {{-- Password với nút generate --}}
-                            <div>
-                                <label class="block text-sm font-semibold text-slate-700 mb-1">
-                                    Mật khẩu <span class="text-red-500">*</span>
-                                </label>
-
-                                {{-- Password Input --}}
-                                <div class="relative">
-                                    <input
-                                        type="text"
-                                        wire:model.defer="accountPassword"
-                                        class="w-full px-3 py-2 pr-24 rounded-xl border border-slate-300
-                           focus:outline-none focus:ring-2 focus:ring-primary-500
-                           font-mono text-sm {{ $birthday ? 'bg-green-50' : 'bg-slate-50' }}"
-                                        readonly>
-
-                                    {{-- Action buttons --}}
-                                    <div class="absolute right-2 top-1/2 -translate-y-1/2 flex gap-1">
-                                        {{-- Copy button --}}
-                                        <button
-                                            type="button"
-                                            onclick="navigator.clipboard.writeText('{{ $accountPassword }}'); 
-                                 this.querySelector('span').textContent = '✓';
-                                 setTimeout(() => this.querySelector('span').textContent = 'Copy', 1000)"
-                                            class="px-2 py-1 text-xs font-semibold text-slate-600
-                               hover:text-slate-800 border border-slate-300 rounded-lg
-                               hover:bg-slate-100 transition">
-                                            <span>Copy</span>
-                                        </button>
-
-                                        {{-- Regenerate button --}}
-                                        <button
-                                            type="button"
-                                            wire:click="regeneratePassword({{ $birthday ? 'true' : 'false' }})"
-                                            class="px-2 py-1 text-xs font-semibold text-primary-600
-                               hover:text-primary-700 border border-primary-300 rounded-lg
-                               hover:bg-primary-50 transition flex items-center gap-1"
-                                            title="Tạo mật khẩu mới">
-                                            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                    d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                                            </svg>
-                                        </button>
-                                    </div>
-                                </div>
-
-                                {{-- ✅ HELPER TEXT - NGAY DƯỚI INPUT PASSWORD --}}
-                                <div class="mt-2">
-                                    @if($birthday)
-                                    <div class="bg-green-50 border border-green-200 rounded-lg p-2.5">
-                                        <div class="flex items-start gap-2 text-xs text-green-700">
-                                            <svg class="w-4 h-4 text-green-500 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                    d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                            </svg>
-                                            <div>
-                                                <strong>Mật khẩu từ ngày sinh</strong><br>
-                                                Format: ddMMyy (VD: {{ $birthday ? \Carbon\Carbon::parse($birthday)->format('dmy') : '150890' }})
-                                                <br>Dễ nhớ cho giáo viên
-                                            </div>
-                                        </div>
-                                    </div>
-                                    @else
-                                    <div class="bg-amber-50 border border-amber-200 rounded-lg p-2.5">
-                                        <div class="flex items-start gap-2 text-xs text-amber-700">
-                                            <svg class="w-4 h-4 text-amber-500 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                    d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                            </svg>
-                                            <div>
-                                                <strong>Mật khẩu ngẫu nhiên</strong><br>
-                                                💡 Tip: Nhập ngày sinh trước khi tick checkbox để tạo mật khẩu dễ nhớ hơn
-                                            </div>
-                                        </div>
-                                    </div>
-                                    @endif
-                                </div>
-
-                                {{-- Error message --}}
-                                @error('accountPassword')
-                                <p class="mt-1 text-sm text-red-500">{{ $message }}</p>
-                                @enderror
-                            </div>
-
-                            {{-- Info box --}}
-                            <div class="bg-blue-50 border-l-4 border-blue-500 rounded-xl p-3">
-                                <div class="flex items-start gap-2">
-                                    <svg class="w-4 h-4 text-blue-500 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                            d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                    </svg>
-                                    <p class="text-xs text-blue-700">
-                                        Sau khi lưu, hãy gửi thông tin tài khoản cho giáo viên để họ có thể đăng nhập
-                                    </p>
-                                </div>
-                            </div>
-                        </div>
-                        @endif
-                    </div>
-                    @endif
 
                     {{-- Trạng thái --}}
-                    <div class="flex items-center gap-3 pt-1">
-                        <input
-                            id="teacher-status"
-                            type="checkbox"
-                            wire:model.defer="status"
-                            class="w-4 h-4 rounded border-slate-300
-                                   text-primary-600 focus:ring-primary-500">
-                        <label for="teacher-status" class="text-sm text-slate-700">
-                            Hoạt động
-                        </label>
+                    <div class="border border-slate-200 rounded-xl p-4">
+                        <div class="flex items-center gap-3">
+                            <input id="teacher-active" type="checkbox"
+                                wire:model.defer="is_active"
+                                class="w-4 h-4 rounded border-slate-300 text-primary-600 focus:ring-primary-500">
+                            <label for="teacher-active" class="text-sm font-semibold text-slate-900 cursor-pointer">
+                                Giáo lý viên đang hoạt động (bỏ chọn nếu đã nghỉ hoặc không còn giảng dạy)
+                            </label>
+                        </div>
                     </div>
+
+                    {{-- Info tạo tài khoản --}}
+                    @if(!$editingId)
+                    <div class="bg-blue-50 border-l-4 border-blue-400 rounded-xl p-4 text-sm text-blue-700">
+                        <strong>Tài khoản tự động:</strong> Email đăng nhập sẽ dùng email thật (nếu có),
+                        hoặc <code>SĐT@giaoly.local</code>. Mật khẩu mặc định là số điện thoại.
+                    </div>
+                    @endif
                 </div>
 
                 {{-- Footer --}}
                 <div class="flex-shrink-0 px-6 py-4 border-t border-slate-200 bg-slate-50 flex justify-end gap-3">
-                    <x-action-button wire="closeModal" variant="secondary">
-                        Hủy
-                    </x-action-button>
+                    <x-action-button wire="closeModal" variant="secondary">Hủy</x-action-button>
                     <x-action-button wire="save" icon="save" :loading="true">
-                        Lưu
+                        {{ $editingId ? 'Cập nhật' : 'Thêm giáo lý viên' }}
                     </x-action-button>
                 </div>
             </div>
         </div>
         @endif
+
     </div>
 </div>
 
-{{-- Loading Indicator --}}
-<div wire:loading class="fixed inset-0 bg-gray-900 bg-opacity-50 flex items-center justify-center z-50">
+{{-- Loading --}}
+<div wire:loading class="fixed inset-0 bg-gray-900/50 flex items-center justify-center z-50">
     <div class="bg-white rounded-lg p-6 flex items-center gap-3">
-        <svg class="animate-spin h-6 w-6 text-primary-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+        <svg class="animate-spin h-6 w-6 text-primary-600" fill="none" viewBox="0 0 24 24">
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
+            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
         </svg>
         <span class="text-gray-700">Đang xử lý...</span>
     </div>
 </div>
-
-{{-- Toast hiển thị password mới tạo --}}
-@if (session()->has('new_password'))
-<div
-    x-data="{ show: true }"
-    x-show="show"
-    x-init="setTimeout(() => show = false, 30000)"
-    class="fixed top-4 right-4 z-50 bg-white rounded-xl shadow-2xl border-2 border-green-500 p-6 max-w-md">
-    <div class="flex items-start gap-3">
-        <svg class="w-6 h-6 text-green-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-        </svg>
-        <div class="flex-1">
-            <h4 class="font-bold text-slate-900 mb-2">
-                🎉 Tài khoản đã được tạo!
-            </h4>
-
-            <div class="space-y-2">
-                <div>
-                    <p class="text-xs text-slate-600 mb-1">Email:</p>
-                    <div class="p-2 bg-slate-100 rounded-lg text-sm font-mono break-all">
-                        {{ session('account_email', 'N/A') }}
-                    </div>
-                </div>
-
-                <div>
-                    <p class="text-xs text-slate-600 mb-1">Mật khẩu:</p>
-                    <div class="p-2 bg-slate-100 rounded-lg text-sm font-mono break-all">
-                        {{ session('new_password') }}
-                    </div>
-                </div>
-            </div>
-
-            <div class="mt-3 flex items-start gap-2 p-2 bg-amber-50 rounded-lg">
-                <svg class="w-4 h-4 text-amber-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                        d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-                </svg>
-                <p class="text-xs text-amber-700">
-                    <strong>Quan trọng:</strong> Hãy sao chép và gửi thông tin này cho giáo viên.
-                    Thông báo này sẽ tự động đóng sau 30 giây.
-                </p>
-            </div>
-        </div>
-
-        <button
-            @click="show = false"
-            class="text-slate-400 hover:text-slate-600 transition">
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-            </svg>
-        </button>
-    </div>
-</div>
-@endif

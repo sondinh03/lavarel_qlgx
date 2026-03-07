@@ -88,9 +88,6 @@ Route::middleware('auth')->group(function () {
     });
 
     Route::middleware('role:parish_admin')->group(function () {
-        Route::get('/catechism-classes', CatechismClassList::class)
-            ->name('catechism-classes.index');
-
         Route::get('/classes', CatechismClassList::class)
             ->name('classes.index');
 
@@ -100,8 +97,21 @@ Route::middleware('auth')->group(function () {
         Route::get('/classes/{id}/students', ClassStudentManager::class)
             ->name('classes.students');
 
-        Route::get('/classes/{lopId}/catechists', AssignTeacher::class)
+        Route::get('/classes/{id}/catechists', AssignTeacher::class)
             ->name('classes.catechists');
+
+        // Route::get('/students/create', StudentEdit::class)
+        //     ->name('students.create');
+
+        // Route::get('/studentss/import', StudentImportPreview::class)
+        //     ->name('students.import');
+
+        // Route::get('/students/{id}/edit', StudentEdit::class)
+        //     ->name('students.edit');
+
+        // // Download template Excel
+        // Route::get('/studentss/import/template', [StudentImportController::class, 'template'])
+        //     ->name('students.import.template');
 
         Route::get('/students/create', StudentEdit::class)
             ->name('students.create');
@@ -109,17 +119,46 @@ Route::middleware('auth')->group(function () {
         Route::get('/studentss/import', StudentImportPreview::class)
             ->name('students.import');
 
-        Route::get('/students/{id}/edit', StudentEdit::class)
-            ->name('students.edit');
-
-        // Import page — truyền classId qua query string
-        // Route::get('/students/import', StudentImportPreview::class)
-        //     ->name('students.import');  
-
-        // Download template Excel
         Route::get('/studentss/import/template', [StudentImportController::class, 'template'])
             ->name('students.import.template');
 
+        Route::get('/students/{id}/edit', StudentEdit::class)
+            ->name('students.edit');
+
+        // Route::get('/session', SessionManager::class)
+        //     ->name('session.index');
+
+        // Route::get('/scores', ScoreManager::class)
+        //     ->name('scores.index');
+
+        // Route::get('/school-years', NamHocManager::class)
+        //     ->name('school-years.index');
+
+        // Route::get('/grades', BlockManager::class)
+        //     ->name('grades.index');
+
+        // Route::get('/catechists', TeacherManager::class)
+        //     ->name('catechists.index');
+
+        // Route::get('/catechists/import', TeacherImportPreview::class)
+        //     ->name('catechists.import');
+
+        // Route::get('/parish-children', ParishChild::class)
+        //     ->name('parish-children.index');
+
+        // Route::get('/holy-names', HolyManager::class)
+        //     ->name('holy-names.index');
+
+        // Route::get('/parishioners', ParishionersManager::class)
+        //     ->name('parishioners.index');
+
+        Route::get('/catechists/import', TeacherImportPreview::class)
+            ->name('catechists.import');
+
+        Route::get('/catechists', TeacherManager::class)
+            ->name('catechists.index');
+
+        // ── Others ────────────────────────────────────────────
         Route::get('/session', SessionManager::class)
             ->name('session.index');
 
@@ -132,20 +171,11 @@ Route::middleware('auth')->group(function () {
         Route::get('/grades', BlockManager::class)
             ->name('grades.index');
 
-        Route::get('/catechists', TeacherManager::class)
-            ->name('catechists.index');
-
-        Route::get('/catechists/import', TeacherImportPreview::class)
-            ->name('catechists.import');
-
-        Route::get('/parish-children', ParishChild::class)
-            ->name('parish-children.index');
-
         Route::get('/holy-names', HolyManager::class)
             ->name('holy-names.index');
 
-        Route::get('/parishioners', ParishionersManager::class)
-            ->name('parishioners.index');
+        Route::get('/parish-children', ParishChild::class)
+            ->name('parish-children.index');
     });
 });
 

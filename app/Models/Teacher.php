@@ -2,190 +2,107 @@
 
 namespace App\Models;
 
-use App\Traits\BelongsToParish;
-use App\Traits\HasFormattedName;
-use Backpack\CRUD\app\Models\Traits\CrudTrait;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Venturecraft\Revisionable\RevisionableTrait;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use App\Traits\BelongsToParish;
 
 class Teacher extends Model
 {
-    use CrudTrait;
-    use RevisionableTrait;
-    use HasFormattedName;
-    use BelongsToParish;
+    use HasFactory, BelongsToParish;
 
-    /*
-    |--------------------------------------------------------------------------
-    | GLOBAL VARIABLES
-    |--------------------------------------------------------------------------
-    */
-
-    protected $table = 'teacher';
-    protected $guarded = ['id'];
+    protected $table = 'teachers';
 
     protected $fillable = [
-        'parish_id', // ID giáo xứ (Parishes))
-        'user_id',  // ID người dùng (nếu có)
-        'pid',      // Giáo xứ ID
-        'deid',     // deanery ID (Giáo Hạt)
-        'did',      // Diocese ID (Giáo phận)
-        'paid',     // Giáo họ ID
-        'holy_id',  // ID tên thánh
-        'name',
-        'position',
+        'parish_id',
+        'parish_group_id',
+        'user_id',
+        'saint_id',
+        'last_name',
+        'first_name',
+        'gender',
         'birthday',
-        'year',     // Có thể bỏ sau này
-        'phone',
         'phone_number',
-        'note',     // Có thể bỏ sau này
-        'status',   // 1: active, 0: inactive
+        'email',
+        'address',
+        'avatar_path',
+        'is_active',
+        'note',
     ];
 
     protected $casts = [
-        'birthday' => 'date',
-        'status' => 'boolean',
+        'birthday'  => 'date',
+        'is_active' => 'boolean',
     ];
 
-    // protected $appends = ['teacher'];
-
-    /**
-     * Attributes to track for revisions
-     * @var bool
-     */
-    protected $revisionEnabled = true;
-    protected $revisionCreationsEnabled = true;
-
     /*
     |--------------------------------------------------------------------------
-    | FUNCTIONS
+    | Relationships
     |--------------------------------------------------------------------------
     */
 
-    /*
-    |--------------------------------------------------------------------------
-    | RELATIONS
-    |--------------------------------------------------------------------------
-    */
-
-    public function user(): BelongsTo
-    {
-        return $this->belongsTo(User::class, 'user_id', 'id');
-    }
-
-    /**
-     * Teacher thuộc về một Holy
-     */
-    public function holy(): BelongsTo
-    {
-        return $this->belongsTo(Holymanagement::class, 'holy_id', 'id');
-    }
-
-    /**
-     * Teacher thuộc về một Giáo ho (Parish)
-     */
-    public function parishChild(): BelongsTo
-    {
-        return $this->belongsTo(ParishGroup::class, 'paid', 'id');
-    }
-
-    /**
-     * Teacher thuộc về một Giáo xứ (ParishManagement)
-     */
-    // public function parish(): BelongsTo
-    // {
-    //     return $this->belongsTo(ParishManagement::class, 'pid', 'id');
-    // }
-
-    public function parish(): BelongsTo
+    public function parish()
     {
         return $this->belongsTo(ParishNew::class, 'parish_id');
     }
 
-    /**
-     * Teacher có thể thuộc về một Decen (Giáo Hạt)
-     */
-    public function deanery(): BelongsTo
+    public function parishGroup()
     {
-        return $this->belongsTo(Deanery::class, 'deid', 'id');
+        return $this->belongsTo(ParishGroup::class, 'parish_group_id');
     }
 
-    /**
-     * Teacher thuộc về một Giáo phận (Diocese)
-     */
-    public function diocese(): BelongsTo
+    public function user()
     {
-        return $this->belongsTo(Diocese::class, 'did', 'id');
+        return $this->belongsTo(User::class, 'user_id');
+    }
+
+    public function saint()
+    {
+        return $this->belongsTo(Holymanagement::class, 'saint_id');
+    }
+
+    public function classes()
+    {
+        return $this->belongsToMany(
+            CatechismClass::class,
+            'class_teachers',
+            'teacher_id',
+            'class_id'
+        )->withTimestamps();
     }
 
     /*
     |--------------------------------------------------------------------------
-    | SCOPES
+    | Accessors
     |--------------------------------------------------------------------------
     */
 
-    /**
-     * Chỉ lấy giáo viên đang hoạt động
-     */
+    public function getFullNameAttribute(): string
+    {
+        return trim($this->last_name . ' ' . $this->first_name);
+    }
+
+    public function getGenderTextAttribute(): string
+    {
+        return match ($this->gender) {
+            'male'   => 'Nam',
+            'female' => 'Nữ',
+            default  => '—',
+        };
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | Scopes
+    |--------------------------------------------------------------------------
+    */
+
     public function scopeActive($query)
     {
-        return $query->where('status', 1);
+        return $query->where('is_active', true);
     }
 
-    /**
-     * Lọc theo giáo xứ
-     */
-    public function scopeOfParish($query, int $parishId)
+    public function scopeOfParish($query, $parishId)
     {
-        return $query->where('pid', $parishId);
-    }
-
-    /**
-     * Tìm kiếm theo tên hoặc số điện thoại
-     */
-    public function scopeSearch($query, string $search)
-    {
-        return $query->where(function ($q) use ($search) {
-            $q->where('name', 'like', "%{$search}%")
-                ->orWhere('phone_number', 'like', "%{$search}%");
-        });
-    }
-
-    /*
-    |--------------------------------------------------------------------------
-    | MUTATORS
-    |--------------------------------------------------------------------------
-    */
-
-    /**
-     * Lấy tên Giáo họ (Parish Child)
-     */
-    public function getParishChildNameAttribute(): ?string
-    {
-        return $this->parishChild?->name;
-    }
-
-    /**
-     * Lấy tên Holy
-     */
-    public function getHolyNameAttribute(): ?string
-    {
-        return $this->holy?->name;
-    }
-
-    /**
-     * Sanitize số điện thoại: chỉ lưu số
-     */
-    public function setPhoneNumberAttribute($value): void
-    {
-        if (empty($value)) {
-            $this->attributes['phone_number'] = null;
-            return;
-        }
-
-        // Loại bỏ tất cả ký tự không phải số
-        $phoneNumber = preg_replace('/[^0-9]/', '', $value);
-        $this->attributes['phone_number'] = $phoneNumber ?: null;
+        return $query->where('parish_id', $parishId);
     }
 }

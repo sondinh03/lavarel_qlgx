@@ -314,29 +314,30 @@ class CatechismClassList extends BaseComponent
         }
     }
 
-    public function toggleStatus(int $id): void
-    {
-        $this->requireManager();
+    // public function toggleStatus(int $id): void
+    // {
+    //     $this->requireManager();
 
-        try {
-            $class = CatechismClass::where('school_year_id', $this->selectedNamHoc)
-                ->findOrFail($id);
+    //     try {
+    //         $class = CatechismClass::where('school_year_id', $this->selectedNamHoc)
+    //             ->findOrFail($id);
 
-            $class->update(['is_active' => !$class->is_active]);
+    //         $class->update(['is_active' => !$class->is_active]);
 
-            session()->flash(
-                'message',
-                $class->is_active
-                    ? 'Đã kích hoạt lớp học'
-                    : 'Đã tắt lớp học'
-            );
-        } catch (ModelNotFoundException $e) {
-            session()->flash('error', 'Không tìm thấy lớp học này');
-        } catch (\Exception $e) {
-            $this->logError($e, 'Error toggling class status', ['id' => $id]);
-            session()->flash('error', 'Có lỗi khi thay đổi trạng thái lớp học');
-        }
-    }
+    //         session()->flash(
+    //             'message',
+    //             $class->is_active
+    //                 ? 'Đã kích hoạt lớp học'
+    //                 : 'Đã tắt lớp học'
+    //         );
+    //     } catch (ModelNotFoundException $e) {
+    //         session()->flash('error', 'Không tìm thấy lớp học này');
+    //     } catch (\Exception $e) {
+    //         $this->logError($e, 'Error toggling class status', ['id' => $id]);
+    //         session()->flash('error', 'Có lỗi khi thay đổi trạng thái lớp học');
+    //     }
+    // }
+
 
     // ==================== DATA LOADING ====================
 
@@ -365,9 +366,10 @@ class CatechismClassList extends BaseComponent
         try {
 
             // BelongsToParish global scope đã filter parish_id tự động
-            $query = CatechismClass::with(['gradeLevel', 'schoolYear'])
+            $query = CatechismClass::with(['gradeLevel', 'schoolYear', 'teachers'])
                 ->where('school_year_id', $this->selectedNamHoc)
-                ->withCount('students');
+                ->withCount('students')
+                ->withCount('teachers');
 
             if ($this->selectedGradeLevel !== '') {
                 $query->where('grade_level_id', $this->selectedGradeLevel);

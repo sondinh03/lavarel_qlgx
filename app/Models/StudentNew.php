@@ -128,4 +128,14 @@ class StudentNew extends Model
     {
         return trim($this->last_name . ' ' . $this->first_name);
     }
+
+    public function getGenderTextAttribute()
+    {
+        return match ($this->gender) {
+            'male' => 'Nam',
+            'female' => 'Nữ',
+            null => '—',
+            default => '—',
+        };
+    }
 }

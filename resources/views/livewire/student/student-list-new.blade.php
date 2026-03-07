@@ -204,6 +204,7 @@
                             <x-table-header>Họ & Tên đệm</x-table-header>
                             <x-table-header>Tên</x-table-header>
                             <x-table-header>Ngày sinh</x-table-header>
+                            <x-table-header>Giới tính</x-table-header>
                             <x-table-header>Bố</x-table-header>
                             <x-table-header>Giáo họ</x-table-header>
                             <x-table-header class="text-center">Thao tác</x-table-header>
@@ -250,6 +251,11 @@
                             {{-- Ngày sinh --}}
                             <td class="px-4 py-4 text-sm text-slate-600">
                                 {{ $student->birthday?->format('d/m/Y') ?? '—' }}
+                            </td>
+
+                            {{-- Giới tính --}}
+                            <td class="px-4 py-4 text-sm text-slate-600">
+                                {{ $student->gender_text }}
                             </td>
 
                             {{-- Bố --}}
@@ -316,8 +322,9 @@
                                             class="absolute right-0 mt-2 w-48 bg-white rounded-xl
                                                    border border-slate-200 shadow-lg overflow-hidden z-20">
                                             <button type="button"
+                                                @click="if(confirm('Bạn chắc chắn muốn xóa học sinh này?')) $wire.delete({{ $student->id }}); open = false"
                                                 class="w-full px-4 py-3 text-left hover:bg-red-50 transition-colors
-                                                       flex items-center gap-3">
+                                                    flex items-center gap-3">
                                                 <svg class="w-4 h-4 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                                         d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />

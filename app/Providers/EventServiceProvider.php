@@ -33,7 +33,9 @@ use App\Observers\LopObserver;
 use App\Models\Student;
 use App\Observers\StudentObserver;
 use App\Models\Block;
+use App\Models\Parishioner;
 use App\Observers\BlockObserver;
+use App\Observers\ParishionerObserver;
 
 class EventServiceProvider extends ServiceProvider
 {
@@ -59,7 +61,7 @@ class EventServiceProvider extends ServiceProvider
         ParishManagement::observe(ParishManagementObserver::class);
         Deanery::observe(DeaneryObserver::class);
         Diocese::observe(DioceseObserver::class);
-        Parishioners::observe(ParishionersObserver::class);
+        Parishioner::observe(ParishionerObserver::class);
         Family::observe(FamilyObserver::class);
         Children::observe(ChildrenObserver::class);
         Marriage::observe(MarriageObserver::class);

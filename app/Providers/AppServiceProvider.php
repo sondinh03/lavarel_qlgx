@@ -5,8 +5,11 @@ namespace App\Providers;
 use Illuminate\Support\ServiceProvider;
 use App\Models\Lop;
 use App\Models\ClassTeacher;
+use App\Models\Parish;
+use App\Models\Parishioner;
 use App\Observers\LopObserver;
 use App\Observers\ClassTeacherObserver;
+use App\Observers\ParishionerObserver;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Route;
 use Livewire\Livewire;
@@ -36,6 +39,7 @@ class AppServiceProvider extends ServiceProvider
         // register observers to keep cache versioning in sync
         Lop::observe(LopObserver::class);
         ClassTeacher::observe(ClassTeacherObserver::class);
+        Parishioner::observe(ParishionerObserver::class);
 
         if (
             app()->environment('local') &&

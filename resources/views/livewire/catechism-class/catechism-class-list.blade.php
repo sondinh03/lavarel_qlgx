@@ -139,7 +139,7 @@
 
                             {{-- Giáo lý viên --}}
                             <td class="px-6 py-4">
-                                @if(($class->teacher_count ?? 0) > 0)
+                                @if(($class->teachers_count ?? 0) > 0)
                                 <div x-data="{ open: false }" class="relative inline-block">
                                     <button
                                         @mouseenter="open = true"
@@ -149,10 +149,10 @@
                                         <span class="max-w-32 truncate">
                                             {{ $class->teacher_names[0] ?? 'GLV' }}
                                         </span>
-                                        @if($class->teacher_count > 1)
+                                        @if($class->teachers_count > 1)
                                         <span class="inline-flex items-center justify-center w-5 h-5
                                                      text-xs font-semibold text-purple-700 bg-purple-100 rounded-full">
-                                            +{{ $class->teacher_count - 1 }}
+                                            +{{ $class->teachers_count - 1 }}
                                         </span>
                                         @endif
                                     </button>
@@ -213,28 +213,21 @@
                                         Sửa
                                     </x-table-action>
 
+                                    <span class="text-slate-300">|</span>
+
                                     {{-- Phân công GLV --}}
-                                    <a href="{{ route('classes.catechists', ['lopId' => $class->id]) }}"
+                                    <p>{{ $class->id }}</p>
+                                    <a href="{{ route('classes.catechists', ['id' => $class->id]) }}"
                                         class="inline-flex items-center gap-1 text-purple-600 hover:text-purple-700
                                                font-semibold text-sm transition">
                                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                                 d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
                                         </svg>
-                                        ({{ $class->teacher_count ?? 0 }})
+                                        Giáo lý viên
                                     </a>
 
                                     <span class="text-slate-300">|</span>
-
-                                    {{-- Toggle Status --}}
-                                    <x-table-action
-                                        wire="toggleStatus({{ $class->id }})"
-                                        :icon="$class->is_active ? 'archive' : 'check'"
-                                        :color="$class->is_active ? 'warning' : 'success'"
-                                        :loading="true"
-                                        debounce="500">
-                                        {{ $class->is_active ? 'Tắt' : 'Bật' }}
-                                    </x-table-action>
                                 </div>
                             </td>
                         </tr>
