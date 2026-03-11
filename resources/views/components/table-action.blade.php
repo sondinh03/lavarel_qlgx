@@ -30,7 +30,7 @@ if ($debounce && $wire) {
     @if($wire)
         @if($confirm)
             x-data
-            @click="if(confirm('{{ $confirm }}')) $wire.{{ $wire }}"
+            @click="if(confirm('{{ json_encode($confirm) }}')) $wire.{{ $wire }}"
         @else
             {{ $wireClickAttr }}="{{ $wire }}"
         @endif

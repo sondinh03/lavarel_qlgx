@@ -335,6 +335,14 @@
                                         </svg>
                                     </a>
 
+                                    <x-table-action
+                                        wire="delete({{ $student->id }})"
+                                        icon="trash"
+                                        color="danger"
+                                        confirm="Bạn có chắc chắn muốn xóa học sinh {{ $student->name }} khỏi lớp?">
+                                        Xóa
+                                    </x-table-action>
+
                                     {{-- More actions --}}
                                     <div class="relative" x-data="{ open: false }">
                                         <button @click="open = !open"
@@ -346,6 +354,8 @@
                                                     d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z" />
                                             </svg>
                                         </button>
+
+
 
                                         <div x-show="open"
                                             @click.outside="open = false"
@@ -363,6 +373,13 @@
                                                 </svg>
                                                 <span class="text-sm font-medium text-red-600">Xóa học sinh</span>
                                             </button>
+                                            <x-table-action
+                                                wire="delete({{ $student->id }})"
+                                                icon="trash"
+                                                color="danger"
+                                                confirm="Bạn có chắc chắn muốn xóa học sinh {{ $student->name }} khỏi lớp?">
+                                                Xóa
+                                            </x-table-action>
                                         </div>
                                     </div>
 

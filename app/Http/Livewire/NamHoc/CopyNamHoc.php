@@ -17,6 +17,9 @@ use Illuminate\Support\Facades\DB;
  * Bước 2: Xác nhận — preview danh sách lớp
  * Bước 3: Hoàn tất copy cấu trúc
  * Bước 4: Xếp học sinh — chọn lớp đích → chọn lớp nguồn → tick học sinh → lưu
+ *
+ * Hỗ trợ vào thẳng bước 4 qua URL:
+ * /school-years/copy?source=1&target=2
  */
 class CopyNamHoc extends BaseComponent
 {
@@ -35,41 +38,68 @@ class CopyNamHoc extends BaseComponent
 
     // ==================== BƯỚC 4: Xếp học sinh ====================
 
-    /** @var int|null Lớp đích đang chọn để xếp */
-    public $targetClassId = null;
-
-    /** @var int|null Lớp nguồn để lấy danh sách học sinh */
-    public $sourceClassId = null;
-
-    /** @var array IDs học sinh được tick */
+    public $targetClassId    = null;
+    public $sourceClassId    = null;
     public $selectedStudents = [];
-
-    /** @var bool Đang lưu xếp lớp */
     public $savingAssignment = false;
 
-    // Data bước 4
-    public $targetClasses;     // Lớp trong năm đích (vừa tạo)
-    public $sourceClassList;   // Lớp trong năm nguồn (để chọn lấy HS)
-    public $availableStudents; // HS chưa có lớp trong năm đích
+    public $targetClasses;
+    public $sourceClassList;
+    public $sourceScoreTypesList;
+    public $availableStudents;
+
+    // ==================== QUERY STRING ====================
+
+    /**
+     * Hỗ trợ bookmark / share URL bước 4:
+     * /school-years/copy?source=1&target=2
+     */
+    protected function queryString()
+    {
+        return [
+            'sourceNamHocId' => ['as' => 'source', 'except' => null],
+            'targetNamHocId' => ['as' => 'target', 'except' => null],
+        ];
+    }
 
     // ==================== LIFECYCLE ====================
 
     public function mount()
     {
-        $this->requireManager();
+        $this->authorize('viewAny', NamHoc::class);
         parent::mount();
     }
 
     protected function loadInitialData(): void
     {
-        $this->namHocs          = NamHoc::ofParish($this->parishId)
+        $this->namHocs = NamHoc::ofParish($this->parishId)
             ->orderByDesc('name')
             ->get(['id', 'name']);
 
-        $this->sourceClasses    = collect();
-        $this->targetClasses    = collect();
-        $this->sourceClassList  = collect();
+        $this->sourceClasses     = collect();
+        $this->targetClasses     = collect();
+        $this->sourceClassList   = collect();
         $this->availableStudents = collect();
+
+        // Nếu có ?source=X&target=Y trên URL → nhảy thẳng bước 4
+        if ($this->sourceNamHocId && $this->targetNamHocId) {
+            $this->sourceNamHocId = (int) $this->sourceNamHocId;
+            $this->targetNamHocId = (int) $this->targetNamHocId;
+
+            $validSource = $this->namHocs->contains('id', $this->sourceNamHocId);
+            $validTarget = $this->namHocs->contains('id', $this->targetNamHocId);
+            $different   = $this->sourceNamHocId !== $this->targetNamHocId;
+
+            if ($validSource && $validTarget && $different) {
+                $this->result = [
+                    'source_name' => $this->namHocs->find($this->sourceNamHocId)?->name,
+                    'target_name' => $this->namHocs->find($this->targetNamHocId)?->name,
+                ];
+
+                $this->loadStep4Data();
+                $this->step = 4;
+            }
+        }
     }
 
     // ==================== BƯỚC 1: Watchers ====================
@@ -118,7 +148,7 @@ class CopyNamHoc extends BaseComponent
 
     public function confirmCopy(): void
     {
-        $this->requireManager();
+        $this->authorize('create', CatechismClass::class);
         $this->processing = true;
 
         $createdClasses   = 0;
@@ -129,7 +159,6 @@ class CopyNamHoc extends BaseComponent
             DB::beginTransaction();
 
             foreach ($this->sourceClasses as $sourceClass) {
-                // Bỏ qua nếu trùng tên trong năm đích
                 $alreadyExists = CatechismClass::where('school_year_id', $this->targetNamHocId)
                     ->where('name', $sourceClass->name)
                     ->exists();
@@ -139,7 +168,6 @@ class CopyNamHoc extends BaseComponent
                     continue;
                 }
 
-                // Tạo lớp mới
                 $newClass = CatechismClass::create([
                     'parish_id'      => $this->parishId,
                     'school_year_id' => $this->targetNamHocId,
@@ -151,7 +179,6 @@ class CopyNamHoc extends BaseComponent
 
                 $createdClasses++;
 
-                // Copy score_types nếu chọn
                 if ($this->copyScoreTypes) {
                     $scoreTypes = ScoreType::ofClass($sourceClass->id)->get();
                     foreach ($scoreTypes as $st) {
@@ -180,9 +207,7 @@ class CopyNamHoc extends BaseComponent
                 'copied_score_types' => $copiedScoreTypes,
             ];
 
-            // Load data cho bước 4
             $this->loadStep4Data();
-
             $this->step = 3;
         } catch (\Exception $e) {
             DB::rollBack();
@@ -200,14 +225,12 @@ class CopyNamHoc extends BaseComponent
 
     protected function loadStep4Data(): void
     {
-        // Lớp trong năm đích
         $this->targetClasses = CatechismClass::with('gradeLevel')
             ->where('school_year_id', $this->targetNamHocId)
             ->active()
             ->orderBy('name')
             ->get(['id', 'name', 'grade_level_id']);
 
-        // Lớp trong năm nguồn (để chọn lấy danh sách HS)
         $this->sourceClassList = CatechismClass::with('gradeLevel')
             ->where('school_year_id', $this->sourceNamHocId)
             ->active()
@@ -221,9 +244,6 @@ class CopyNamHoc extends BaseComponent
         $this->step = 4;
     }
 
-    /**
-     * Khi chọn lớp nguồn → load học sinh chưa có lớp trong năm đích
-     */
     public function updatedSourceClassId(): void
     {
         $this->selectedStudents  = [];
@@ -231,13 +251,11 @@ class CopyNamHoc extends BaseComponent
 
         if (!$this->sourceClassId || !$this->targetNamHocId) return;
 
-        // Lấy IDs học sinh đã có lớp trong năm đích
         $assignedStudentIds = StudentsClass::whereIn(
             'class_id',
             CatechismClass::where('school_year_id', $this->targetNamHocId)->pluck('id')
         )->pluck('student_id');
 
-        // Học sinh active trong lớp nguồn, chưa có lớp trong năm đích
         $this->availableStudents = StudentNew::whereHas('studentsClass', function ($q) {
             $q->where('class_id', $this->sourceClassId)
                 ->where('status', StudentsClass::STATUS_ENROLLED);
@@ -248,24 +266,21 @@ class CopyNamHoc extends BaseComponent
             ->get(['id', 'first_name', 'last_name', 'saint_id']);
     }
 
-    /**
-     * Toggle chọn tất cả
-     */
     public function toggleSelectAll(): void
     {
         if (count($this->selectedStudents) === $this->availableStudents->count()) {
             $this->selectedStudents = [];
         } else {
-            $this->selectedStudents = $this->availableStudents->pluck('id')->map(fn($id) => (string) $id)->toArray();
+            $this->selectedStudents = $this->availableStudents
+                ->pluck('id')
+                ->map(fn($id) => (string) $id)
+                ->toArray();
         }
     }
 
-    /**
-     * Lưu xếp lớp
-     */
     public function saveAssignment(): void
     {
-        $this->requireManager();
+        $this->authorize('create', CatechismClass::class);
 
         if (!$this->targetClassId) {
             session()->flash('error', 'Vui lòng chọn lớp đích');
@@ -305,12 +320,10 @@ class CopyNamHoc extends BaseComponent
 
             session()->flash('message', "Đã xếp {$inserted} học sinh vào lớp");
 
-            // Reset để xếp lớp tiếp
             $this->selectedStudents  = [];
             $this->sourceClassId     = null;
             $this->availableStudents = collect();
 
-            // Reload để cập nhật danh sách
             $this->loadStep4Data();
         } catch (\Exception $e) {
             DB::rollBack();

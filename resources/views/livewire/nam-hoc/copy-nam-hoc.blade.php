@@ -138,7 +138,7 @@
                             </span>
                         </div>
                         @if($copyScoreTypes && ($class->score_types_count ?? 0) > 0)
-                        <span class="text-xs text-slate-400">{{ $class->score_types_count }} loại điểm</span>
+                        <span class="text-xs text-slate-400">{{ $sourceClasses->sum('score_types_count') }} loại điểm</span>
                         @endif
                     </div>
                     @endforeach
@@ -195,7 +195,7 @@
                     <div class="text-sm text-slate-500 mt-1">Lớp sẽ được tạo</div>
                 </div>
                 <div class="border border-slate-200 rounded-xl p-4 text-center {{ $copyScoreTypes ? '' : 'opacity-40' }}">
-                    <div class="text-3xl font-bold text-indigo-600">{{ $totalScoreTypes }}</div>
+                    <div class="text-3xl font-bold text-indigo-600">{{ $sourceClasses->sum('score_types_count') }}</div>
                     <div class="text-sm text-slate-500 mt-1">
                         Loại điểm
                         @if(!$copyScoreTypes)<span class="block text-xs text-amber-500">(không copy)</span>@endif
@@ -267,9 +267,15 @@
                            text-slate-600 rounded-xl hover:bg-slate-50 transition text-sm font-semibold">
                     Bỏ qua, về năm học
                 </a>
-                <x-action-button wire="proceedToAssign" icon="arrow-right">
+                <a href="{{ route('school-years.copy', ['source' => $sourceNamHocId, 'target' => $targetNamHocId]) }}"
+                    class="inline-flex items-center gap-2 px-4 py-2 bg-primary-600 text-white
+                           rounded-xl hover:bg-primary-700 transition text-sm font-semibold">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" />
+                    </svg>
                     Xếp học sinh ngay
-                </x-action-button>
+                </a>
             </div>
         </div>
         @endif

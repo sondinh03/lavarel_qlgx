@@ -628,7 +628,7 @@ class ScoreManager extends BaseComponent
         };
     }
 
-    public function deleteScoreType(int $id): void
+    public function delete(int $id): void
     {
         $this->authorize('delete', ScoreType::class);
 

@@ -282,21 +282,24 @@
                                 <span class="text-slate-300">|</span>
 
                                 <x-table-action
-                                    wire="toggleScoreTypeStatus({{ $st->id }})"
-                                    :icon="$st->is_active ? 'archive' : 'check'"
-                                    :color="$st->is_active ? 'warning' : 'success'">
-                                    {{ $st->is_active ? 'Tắt' : 'Bật' }}
-                                </x-table-action>
-
-                                <span class="text-slate-300">|</span>
-
-                                <x-table-action
-                                    wire="deleteScoreType({{ $st->id }})"
+                                    wire="delete({{ $st->id }})"
                                     icon="trash"
                                     color="danger"
-                                    confirm="Xác nhận xoá loại điểm '{{ $st->name }}'? Không thể hoàn tác nếu đã có dữ liệu điểm.">
-                                    Xoá
+                                    confirm="Bạn có chắc chắn muốn xóa loại điểm '{{ $st->name }}'?">
+                                    Xóa
                                 </x-table-action>
+
+                                <a x-data
+                                    @click="if(confirm({{ json_encode('Bạn có chắc chắn muốn xóa loại điểm \'' . $st->name . '\'?') }})) $wire.delete({{ $st->id }})"
+                                    class="inline-flex items-center gap-1 text-sm font-medium text-red-600 hover:text-red-800 cursor-pointer transition-colors">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                    </svg>
+                                    Xóa
+                                </a>
+
+                                </a>
                             </div>
                         </td>
                     </tr>

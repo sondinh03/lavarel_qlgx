@@ -57,12 +57,6 @@
                     </x-action-button>
                 </div>
             </div>
-
-            <a href="{{ route('school-years.copy') }}"
-                class="inline-flex items-center gap-2 px-4 py-2 border border-primary-600
-          text-primary-600 rounded-xl hover:bg-primary-50 text-sm font-semibold">
-                Copy từ năm cũ
-            </a>
         </div>
 
         <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
@@ -159,6 +153,20 @@
                                         debounce="500">
                                         {{ $nh->status ? 'Lưu trữ' : 'Kích hoạt' }}
                                     </x-table-action>
+
+                                    <span class="text-slate-300">|</span>
+
+                                    {{-- Xếp học sinh --}}
+                                    <a href="{{ route('school-years.copy', ['target' => $nh->id]) }}"
+                                        class="inline-flex items-center gap-1 text-indigo-600 hover:text-indigo-800
+                                               text-sm font-medium transition-colors"
+                                        title="Xếp học sinh năm {{ $nh->name }}">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" />
+                                        </svg>
+                                        Xếp HS
+                                    </a>
                                 </div>
                             </td>
                         </tr>

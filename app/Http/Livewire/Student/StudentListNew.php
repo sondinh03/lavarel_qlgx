@@ -24,47 +24,25 @@ class StudentListNew extends BaseComponent
     public $selectAll = false;
 
     // ==================== MODAL GHI DANH (3 tabs) ====================
-    /** @var array Danh sách ID học sinh được chọn để thêm (tab existing) */
     public $studentsToAdd = [];
-
-    /** @var bool Select all trong tab existing */
     public $selectAllInModal = false;
-
-    /** @var string Search trong tab existing */
     public $modalSearch = '';
 
     // ==================== BIRTH YEAR FILTER ====================
-    /** @var int|null Năm sinh để lọc */
     public $birthYear = null;
 
     // ==================== IMPORT FROM PARISHIONERS ====================
-
-    /** @var array Danh sách ID giáo dân được chọn */
     public $selectedParishioners = [];
-
-    /** @var bool Select all giáo dân */
     public $selectAllParishioners = false;
-
-    /** @var string Search trong modal import */
     public $parishionerSearch = '';
-
-    /** @var int|null Năm sinh để lọc giáo dân */
     public $parishionerBirthYear = null;
-
-    /** @var int|null Tuổi từ */
     public ?int $ageFrom = null;
-
-    /** @var int|null Tuổi đến */
     public ?int $ageTo = null;
 
     // ==================== ENROLL NEW STUDENT ====================
-    /** @var bool Hiển thị modal ghi danh mới */
     public $showEnrollNewModal = false;
+    public $enrollTab = 'existing';
 
-    /** @var string|null Tab đang active trong modal ghi danh */
-    public $enrollTab = 'existing'; // 'existing' | 'new' | 'parishioner'
-
-    // Form fields - ghi danh mới
     public $enrollLastName    = '';
     public $enrollFirstName   = '';
     public $enrollSaintId     = null;
@@ -74,7 +52,6 @@ class StudentListNew extends BaseComponent
     public $enrollMotherName  = '';
     public $enrollParishGroup = null;
 
-    // Data cho dropdowns
     public $availableSaints       = [];
     public $availableParishGroups = [];
 
@@ -82,55 +59,49 @@ class StudentListNew extends BaseComponent
     protected $lopCache = null;
 
     // ==================== PARISHIONER LINKING ====================
-
-    /** @var \Illuminate\Support\Collection Danh sách gợi ý giáo dân */
     public $suggestedParishioners;
-
-    /** @var int|null ID student đang xử lý liên kết */
     public $linkingStudentId = null;
-
-    /** @var bool Hiển thị modal liên kết */
     public $showLinkModal = false;
 
     // ==================== VALIDATION ====================
     protected $rules = [
-        'selectedNamHoc'    => 'nullable|integer|exists:nam_hoc,id',
-        'selectedKhoi'      => 'nullable|integer|exists:classes,grade_level_id',
-        'selectedLop'       => 'nullable|integer|exists:classes,id',
-        'search'            => 'nullable|string|max:255',
-        'perPage'           => 'required|integer|in:10,15,25,50,100',
-        'selectedStudents'  => 'nullable|array',
+        'selectedNamHoc'     => 'nullable|integer|exists:nam_hoc,id',
+        'selectedKhoi'       => 'nullable|integer|exists:classes,grade_level_id',
+        'selectedLop'        => 'nullable|integer|exists:classes,id',
+        'search'             => 'nullable|string|max:255',
+        'perPage'            => 'required|integer|in:10,15,25,50,100',
+        'selectedStudents'   => 'nullable|array',
         'selectedStudents.*' => 'integer',
-        'studentsToAdd'     => 'nullable|array',
-        'studentsToAdd.*'   => 'integer|exists:students,id',
-        'modalSearch'       => 'nullable|string|max:255',
-        'enrollLastName'    => 'nullable|string|max:100',
-        'enrollFirstName'   => 'nullable|string|max:100',
-        'enrollSaintId'     => 'nullable|integer|exists:holymanagements,id',
-        'enrollGender'      => 'nullable|in:male,female',
-        'enrollBirthday'    => 'nullable|date',
-        'enrollFatherName'  => 'nullable|string|max:100',
-        'enrollMotherName'  => 'nullable|string|max:100',
-        'enrollParishGroup' => 'nullable|integer|exists:parish_groups,id',
-        'birthYear'         => 'nullable|integer|min:1900|max:' . PHP_INT_MAX,
+        'studentsToAdd'      => 'nullable|array',
+        'studentsToAdd.*'    => 'integer|exists:students,id',
+        'modalSearch'        => 'nullable|string|max:255',
+        'enrollLastName'     => 'nullable|string|max:100',
+        'enrollFirstName'    => 'nullable|string|max:100',
+        'enrollSaintId'      => 'nullable|integer|exists:holymanagements,id',
+        'enrollGender'       => 'nullable|in:male,female',
+        'enrollBirthday'     => 'nullable|date',
+        'enrollFatherName'   => 'nullable|string|max:100',
+        'enrollMotherName'   => 'nullable|string|max:100',
+        'enrollParishGroup'  => 'nullable|integer|exists:parish_groups,id',
+        'birthYear'          => 'nullable|integer|min:1900|max:' . PHP_INT_MAX,
     ];
 
     protected $messages = [
-        'selectedNamHoc.exists'   => 'Năm học không tồn tại',
-        'selectedKhoi.exists'     => 'Khối không tồn tại',
-        'selectedLop.exists'      => 'Lớp không tồn tại',
-        'search.max'              => 'Tìm kiếm không được quá 255 ký tự',
-        'perPage.in'              => 'Số mục trên trang không hợp lệ',
-        'studentsToAdd.*.exists'  => 'Học sinh không tồn tại',
-        'modalSearch.max'         => 'Tìm kiếm không được quá 255 ký tự',
-        'birthYear.integer'       => 'Năm sinh phải là số',
-        'birthYear.min'           => 'Năm sinh không hợp lệ',
-        'enrollLastName.required' => 'Vui lòng nhập họ',
+        'selectedNamHoc.exists'    => 'Năm học không tồn tại',
+        'selectedKhoi.exists'      => 'Khối không tồn tại',
+        'selectedLop.exists'       => 'Lớp không tồn tại',
+        'search.max'               => 'Tìm kiếm không được quá 255 ký tự',
+        'perPage.in'               => 'Số mục trên trang không hợp lệ',
+        'studentsToAdd.*.exists'   => 'Học sinh không tồn tại',
+        'modalSearch.max'          => 'Tìm kiếm không được quá 255 ký tự',
+        'birthYear.integer'        => 'Năm sinh phải là số',
+        'birthYear.min'            => 'Năm sinh không hợp lệ',
+        'enrollLastName.required'  => 'Vui lòng nhập họ',
         'enrollFirstName.required' => 'Vui lòng nhập tên',
-        'enrollGender.required'   => 'Vui lòng chọn giới tính',
-        'enrollBirthday.required' => 'Vui lòng nhập ngày sinh',
-        'enrollBirthday.date'     => 'Ngày sinh không hợp lệ',
-        'enrollSaintId.exists'    => 'Tên thánh không tồn tại',
+        'enrollGender.required'    => 'Vui lòng chọn giới tính',
+        'enrollBirthday.required'  => 'Vui lòng nhập ngày sinh',
+        'enrollBirthday.date'      => 'Ngày sinh không hợp lệ',
+        'enrollSaintId.exists'     => 'Tên thánh không tồn tại',
         'enrollParishGroup.exists' => 'Giáo họ không tồn tại',
     ];
 
@@ -154,6 +125,7 @@ class StudentListNew extends BaseComponent
     // ==================== LIFECYCLE ====================
     public function mount(): void
     {
+        $this->authorize('viewAny', StudentNew::class);
         parent::mount();
         $this->requireParishId();
     }
@@ -362,43 +334,25 @@ class StudentListNew extends BaseComponent
 
     // ==================== PARISHIONER LINKING ====================
 
-    /**
-     * Mở modal liên kết giáo dân cho student
-     */
     public function openLinkParishioner(int $studentId): void
     {
-        $this->requireManager();
+        $this->authorize('update', StudentNew::findOrFail($studentId));
 
         try {
             $student = StudentNew::findOrFail($studentId);
-
-            $this->linkingStudentId = $studentId;
-
-            // Đã có liên kết → redirect luôn
-            // if ($student->parishioner_id) {
-            //     return $this->redirectRoute('parishioners.show', $student->parishioner_id);
-            // }
-
-            // Chưa có → tìm gợi ý
+            $this->linkingStudentId      = $studentId;
             $this->suggestedParishioners = $this->findSuggestedParishioners($student);
-            $this->showLinkModal = true;
+            $this->showLinkModal         = true;
         } catch (ModelNotFoundException $e) {
             session()->flash('error', 'Không tìm thấy học sinh này');
         }
     }
 
-    /**
-     * Tìm giáo dân có khả năng trùng với học sinh
-     * Tiêu chí: khớp tên  + cùng giáo xứ
-     */
     protected function findSuggestedParishioners(StudentNew $student): \Illuminate\Support\Collection
     {
-        // Lấy danh sách parishioner_id đã được liên kết
         $linkedIds = StudentNew::whereNotNull('parishioner_id')
             ->pluck('parishioner_id');
 
-        // Query theo tên (last_name + first_name)
-        // saint_id không query DB được → filter thêm bằng PHP sau
         $candidates = Parishioner::ofParish($this->parishId)
             ->whereNotIn('id', $linkedIds)
             ->where(function ($q) use ($student) {
@@ -407,31 +361,24 @@ class StudentListNew extends BaseComponent
                     ['%' . strtolower(trim($student->last_name . ' ' . $student->name)) . '%']
                 );
             })
-            ->with('saint') // Eager load để dùng accessor
-            ->limit(20)     // Lấy nhiều hơn vì còn filter thêm
+            ->with('saint')
+            ->limit(20)
             ->get(['id', 'last_name', 'first_name', 'saint_id', 'gender', 'birthday', 'avatar_path', 'cccd', 'phone']);
 
-        // Filter thêm bằng PHP: so sánh full_name_with_saint
         return $candidates->filter(function ($p) use ($student) {
             return strtolower($p->full_name_with_saint) === strtolower($student->full_name_with_saint);
         })->take(5)->values();
     }
 
-    /**
-     * Xác nhận liên kết student với giáo dân
-     */
     public function confirmLink(int $parishionerId): void
     {
-        $this->requireManager();
+        $this->authorize('update', StudentNew::findOrFail($this->linkingStudentId));
 
         try {
             DB::beginTransaction();
 
-            $student = StudentNew::findOrFail($this->linkingStudentId);
-
-            // Kiểm tra giáo dân có thuộc giáo xứ không
-            $parishioner = Parishioner::ofParish($this->parishId)
-                ->findOrFail($parishionerId);
+            $student     = StudentNew::findOrFail($this->linkingStudentId);
+            $parishioner = Parishioner::ofParish($this->parishId)->findOrFail($parishionerId);
 
             $student->update(['parishioner_id' => $parishioner->id]);
 
@@ -449,27 +396,18 @@ class StudentListNew extends BaseComponent
         }
     }
 
-    /**
-     * Bỏ qua liên kết
-     */
     public function skipLink(): void
     {
         session()->flash('info', 'Đã bỏ qua liên kết giáo dân');
         $this->closeLinkModal();
     }
 
-    /**
-     * Hủy liên kết hiện tại
-     */
     public function unlinkParishioner(int $studentId): void
     {
-        $this->requireManager();
+        $this->authorize('update', StudentNew::findOrFail($studentId));
 
         try {
-            $student = StudentNew::findOrFail($studentId);
-
-            $student->update(['parishioner_id' => null]);
-
+            StudentNew::findOrFail($studentId)->update(['parishioner_id' => null]);
             session()->flash('message', 'Đã hủy liên kết giáo dân');
         } catch (\Exception $e) {
             $this->logError($e, 'Error unlinking parishioner');
@@ -504,7 +442,6 @@ class StudentListNew extends BaseComponent
 
         return Parishioner::query()
             ->active()
-            // Chỉ lấy giáo dân chưa được tạo StudentNew
             ->whereDoesntHave('studentNew')
             ->when($this->parishionerBirthYear, function ($q) {
                 $q->whereYear('birthday', $this->parishionerBirthYear);
@@ -519,12 +456,8 @@ class StudentListNew extends BaseComponent
                 });
             })
             ->when($this->ageFrom || $this->ageTo, function ($q) {
-                $from = $this->ageTo
-                    ? now()->subYears($this->ageTo)->startOfDay()
-                    : null;
-                $to = $this->ageFrom
-                    ? now()->subYears($this->ageFrom)->endOfDay()
-                    : null;
+                $from = $this->ageTo   ? now()->subYears($this->ageTo)->startOfDay()   : null;
+                $to   = $this->ageFrom ? now()->subYears($this->ageFrom)->endOfDay()   : null;
 
                 if ($from && $to) {
                     $q->whereBetween('birthday', [$from, $to]);
@@ -546,7 +479,7 @@ class StudentListNew extends BaseComponent
 
     public function importParishionersToStudents(): void
     {
-        $this->requireManager();
+        $this->authorize('create', StudentNew::class);
 
         if (empty($this->selectedParishioners)) {
             session()->flash('warning', 'Vui lòng chọn ít nhất 1 giáo dân');
@@ -556,18 +489,14 @@ class StudentListNew extends BaseComponent
         try {
             DB::beginTransaction();
 
-            $catechismClass = \App\Models\CatechismClass::findOrFail($this->selectedLop);
-            $successCount = 0;
-            $errorCount   = 0;
-            $errors       = [];
+            $catechismClass = CatechismClass::findOrFail($this->selectedLop);
+            $successCount   = 0;
+            $errorCount     = 0;
+            $errors         = [];
 
-            $parishioners = Parishioner::whereIn('id', $this->selectedParishioners)
-                ->get();
-
-            foreach ($parishioners as $p) {
+            foreach (Parishioner::whereIn('id', $this->selectedParishioners)->get() as $p) {
                 try {
                     $student = StudentNew::create([
-                        // Thông tin cơ bản
                         'first_name'      => $p->name,
                         'last_name'       => $p->last_name,
                         'saint_id'        => $p->holy ?? null,
@@ -575,26 +504,15 @@ class StudentListNew extends BaseComponent
                         'birthday'        => $p->birthday?->format('Y-m-d'),
                         'phone'           => $p->phone,
                         'email'           => $p->email,
-
-                        // Gia đình
                         'father_name'     => $p->father ?? null,
                         'mother_name'     => $p->mother ?? null,
-
-                        // Liên kết giáo dân
                         'parishioner_id'  => $p->id,
-
-                        // parish_id set explicitly vì create() không qua scope
                         'parish_id'       => $this->parishId,
                         'parish_group_id' => $p->paid ?? null,
-
-                        // Ghi chú
                         'note'            => $p->note ?? null,
-
-                        // Trạng thái
                         'is_active'       => true,
                     ]);
 
-                    // Thêm vào lớp qua bảng trung gian students_class
                     $student->classes()->attach($catechismClass->id, [
                         'enrolled_at' => now(),
                         'created_at'  => now(),
@@ -603,12 +521,10 @@ class StudentListNew extends BaseComponent
 
                     $successCount++;
                 } catch (\Exception $e) {
-                    $errors[]   = "{$p->last_name} {$p->name}: {$e->getMessage()}";
+                    $errors[] = "{$p->last_name} {$p->name}: {$e->getMessage()}";
                     $errorCount++;
-
                     $this->logError($e, 'Error creating StudentNew from parishioner', [
-                        'parishioner_id'   => $p->id,
-                        'parishioner_name' => "{$p->last_name} {$p->name}",
+                        'parishioner_id' => $p->id,
                     ]);
                 }
             }
@@ -619,27 +535,24 @@ class StudentListNew extends BaseComponent
             if ($errorCount > 0) {
                 $message .= " | ❌ {$errorCount} lỗi";
             }
-
             session()->flash('message', $message);
 
             if (!empty($errors)) {
-                $errorMessage = '<strong>Chi tiết lỗi:</strong><br>' . implode('<br>', array_slice($errors, 0, 5));
+                $detail = '<strong>Chi tiết lỗi:</strong><br>' . implode('<br>', array_slice($errors, 0, 5));
                 if (count($errors) > 5) {
-                    $errorMessage .= '<br><em>... và ' . (count($errors) - 5) . ' lỗi khác</em>';
+                    $detail .= '<br><em>... và ' . (count($errors) - 5) . ' lỗi khác</em>';
                 }
-                session()->flash('warning', $errorMessage);
+                session()->flash('warning', $detail);
             }
 
             $this->closeImportFromParishioners();
             $this->emit('refreshStudents');
         } catch (\Exception $e) {
             DB::rollBack();
-
             $this->logError($e, 'Error importing parishioners to StudentNew', [
                 'selected_count' => count($this->selectedParishioners),
                 'lop_id'         => $this->selectedLop,
             ]);
-
             session()->flash('error', 'Có lỗi khi import học sinh: ' . $e->getMessage());
         }
     }
@@ -648,7 +561,7 @@ class StudentListNew extends BaseComponent
 
     public function openEnrollModal(string $tab = 'existing'): void
     {
-        $this->requireManager();
+        $this->authorize('create', StudentNew::class);
 
         if (!$this->selectedLop) {
             session()->flash('warning', 'Vui lòng chọn lớp trước khi ghi danh');
@@ -674,12 +587,9 @@ class StudentListNew extends BaseComponent
         $this->resetValidation();
     }
 
-    /**
-     * Tạo học sinh mới và xếp vào lớp luôn
-     */
     public function enrollNewStudent(): void
     {
-        $this->requireManager();
+        $this->authorize('create', StudentNew::class);
 
         $this->validate([
             'enrollLastName'    => 'required|string|max:100',
@@ -743,12 +653,10 @@ class StudentListNew extends BaseComponent
         $this->enrollFatherName  = '';
         $this->enrollMotherName  = '';
         $this->enrollParishGroup = null;
-
-        // Reset tab học sinh có sẵn
-        $this->studentsToAdd    = [];
-        $this->selectAllInModal = false;
-        $this->modalSearch      = '';
-        $this->birthYear        = null;
+        $this->studentsToAdd     = [];
+        $this->selectAllInModal  = false;
+        $this->modalSearch       = '';
+        $this->birthYear         = null;
     }
 
     // ==================== ADD STUDENTS MODAL ====================
@@ -765,7 +673,7 @@ class StudentListNew extends BaseComponent
 
     public function addStudentsToClass(): void
     {
-        $this->requireManager();
+        $this->authorize('create', StudentNew::class);
 
         if (empty($this->studentsToAdd)) {
             session()->flash('warning', 'Vui lòng chọn ít nhất một học sinh');
@@ -780,8 +688,7 @@ class StudentListNew extends BaseComponent
         try {
             DB::beginTransaction();
 
-            $catechismClass = \App\Models\CatechismClass::findOrFail($this->selectedLop);
-
+            $catechismClass     = CatechismClass::findOrFail($this->selectedLop);
             $existingStudentIds = $catechismClass->students()->pluck('students.id')->toArray();
             $newStudentIds      = array_diff($this->studentsToAdd, $existingStudentIds);
 
@@ -798,28 +705,67 @@ class StudentListNew extends BaseComponent
 
             DB::commit();
 
-            $count = count($newStudentIds);
-            session()->flash('message', "Đã thêm {$count} học sinh vào lớp thành công");
+            session()->flash('message', 'Đã thêm ' . count($newStudentIds) . ' học sinh vào lớp thành công');
 
             $this->closeAddStudentsModal();
             $this->emit('refreshStudents');
         } catch (\Exception $e) {
             DB::rollBack();
-
             $this->logError($e, 'Error adding StudentNew to class', [
                 'lop_id'      => $this->selectedLop,
                 'student_ids' => $this->studentsToAdd,
             ]);
-
             session()->flash('error', 'Có lỗi khi thêm học sinh vào lớp. Vui lòng thử lại.');
+        }
+    }
+
+    public function delete(int $studentId): void
+    {
+        try {
+            $student = StudentNew::findOrFail($studentId);
+
+            $this->authorize('delete', $student);
+
+            DB::beginTransaction();
+
+            if ($this->selectedLop) {
+                // Đã chọn lớp cụ thể → xóa khỏi lớp đó
+                CatechismClass::findOrFail($this->selectedLop)
+                    ->students()
+                    ->detach($studentId);
+            } elseif ($this->selectedNamHoc) {
+                // Chỉ có năm học → xóa khỏi tất cả lớp trong năm đó
+                $classIds = CatechismClass::where('school_year_id', $this->selectedNamHoc)
+                    ->pluck('id');
+
+                \App\Models\StudentsClass::where('student_id', $studentId)
+                    ->whereIn('class_id', $classIds)
+                    ->delete();
+            } else {
+                session()->flash('error', 'Vui lòng chọn năm học trước khi xóa');
+                return;
+            }
+
+            DB::commit();
+
+            session()->flash('message', 'Đã xóa học sinh khỏi lớp thành công');
+            $this->emit('refreshStudents');
+        } catch (\Illuminate\Auth\Access\AuthorizationException $e) {
+            session()->flash('error', 'Bạn không có quyền xóa học sinh này');
+        } catch (ModelNotFoundException $e) {
+            session()->flash('error', 'Không tìm thấy học sinh hoặc lớp học');
+        } catch (\Exception $e) {
+            DB::rollBack();
+            $this->logError($e, 'Error deleting StudentNew from class', [
+                'lop_id'     => $this->selectedLop,
+                'student_id' => $studentId,
+            ]);
+            session()->flash('error', 'Có lỗi khi xóa học sinh khỏi lớp. Vui lòng thử lại.');
         }
     }
 
     // ==================== QUERY HELPERS ====================
 
-    /**
-     * Query danh sách học sinh hiện tại (theo filters)
-     */
     protected function getCurrentStudentsQuery()
     {
         $query = StudentNew::with(['saint', 'parishGroup']);
@@ -857,9 +803,6 @@ class StudentListNew extends BaseComponent
         return $query;
     }
 
-    /**
-     * Query học sinh có thể thêm vào lớp (chưa có trong lớp này năm học hiện tại)
-     */
     protected function getAvailableStudentsQuery()
     {
         if (!$this->selectedLop) {
@@ -868,7 +811,6 @@ class StudentListNew extends BaseComponent
 
         $query = StudentNew::with(['saint'])
             ->where('is_active', true)
-            // Chưa có trong lớp thuộc năm học này
             ->whereDoesntHave('classes', function ($q) {
                 $q->where('classes.school_year_id', $this->selectedNamHoc);
             });
@@ -922,7 +864,6 @@ class StudentListNew extends BaseComponent
                 'lop'    => $this->selectedLop,
                 'search' => $this->search,
             ]);
-
             session()->flash('error', 'Có lỗi khi tải danh sách học viên.');
             return new LengthAwarePaginator([], 0, $this->perPage, $this->page ?? 1);
         }
@@ -938,13 +879,10 @@ class StudentListNew extends BaseComponent
                 ->groupBy('gender')
                 ->pluck('total', 'gender');
 
-            $countnam = $stats['male'] ?? 0;
-            $countnu  = $stats['female'] ?? 0;
-
             return [
-                'total'    => $countnam + $countnu,
-                'countnam' => $countnam,
-                'countnu'  => $countnu,
+                'total'    => ($stats['male'] ?? 0) + ($stats['female'] ?? 0),
+                'countnam' => $stats['male'] ?? 0,
+                'countnu'  => $stats['female'] ?? 0,
             ];
         } catch (\Exception $e) {
             $this->logError($e, 'Error calculating gender stats');
@@ -965,11 +903,10 @@ class StudentListNew extends BaseComponent
         }
 
         try {
-            $lop = \App\Models\CatechismClass::with(['schoolYear', 'gradeLevel', 'teachers'])
+            $this->lopCache = CatechismClass::with(['schoolYear', 'gradeLevel', 'teachers'])
                 ->findOrFail($this->selectedLop);
 
-            $this->lopCache = $lop;
-            return $lop;
+            return $this->lopCache;
         } catch (\Exception $e) {
             $this->logError($e, 'Error loading class info');
             return null;
@@ -985,10 +922,7 @@ class StudentListNew extends BaseComponent
         }
 
         if (array_key_exists('namHoc', $filters)) {
-            $newNamHoc = is_numeric($filters['namHoc'])
-                ? (int) $filters['namHoc']
-                : null;
-
+            $newNamHoc = is_numeric($filters['namHoc']) ? (int) $filters['namHoc'] : null;
             if ($newNamHoc !== $this->selectedNamHoc) {
                 $this->selectedNamHoc = $newNamHoc;
                 $this->selectedKhoi   = null;
@@ -997,10 +931,7 @@ class StudentListNew extends BaseComponent
         }
 
         if (array_key_exists('khoi', $filters)) {
-            $newKhoi = is_numeric($filters['khoi'])
-                ? (int) $filters['khoi']
-                : null;
-
+            $newKhoi = is_numeric($filters['khoi']) ? (int) $filters['khoi'] : null;
             if ($newKhoi !== $this->selectedKhoi) {
                 $this->selectedKhoi = $newKhoi;
                 $this->selectedLop  = null;
@@ -1008,9 +939,7 @@ class StudentListNew extends BaseComponent
         }
 
         if (array_key_exists('lop', $filters)) {
-            $this->selectedLop = is_numeric($filters['lop'])
-                ? (int) $filters['lop']
-                : null;
+            $this->selectedLop = is_numeric($filters['lop']) ? (int) $filters['lop'] : null;
         }
 
         $this->search = '';
@@ -1025,7 +954,6 @@ class StudentListNew extends BaseComponent
         $this->search       = '';
         $this->resetPage();
         $this->resetSelection();
-
         session()->flash('message', 'Đã đặt lại bộ lọc');
     }
 
@@ -1063,12 +991,10 @@ class StudentListNew extends BaseComponent
     {
         $currentYear = now()->year;
         $years       = [];
-
         for ($i = 0; $i < 15; $i++) {
-            $year          = $currentYear - 5 - $i;
-            $years[$year]  = $year;
+            $year         = $currentYear - 5 - $i;
+            $years[$year] = $year;
         }
-
         return $years;
     }
 
