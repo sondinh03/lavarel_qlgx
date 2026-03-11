@@ -98,7 +98,7 @@ class Parishioner extends Model
 
     public function saint(): BelongsTo
     {
-        return $this->belongsTo(HolyManagement::class, 'saint_id');
+        return $this->belongsTo(Holymanagement::class, 'saint_id');
     }
 
     public function student(): HasOne
