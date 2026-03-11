@@ -86,7 +86,7 @@ class LoginController extends Controller
         // ===== CATECHIST (Giáo lý viên) =====
         if ($user->hasRole('catechist')) {
             $teacher = Teacher::where('user_id', $user->id)
-                ->where('status', 1)
+                ->active()
                 ->first();
 
             if (!$teacher || !$teacher->pid) {

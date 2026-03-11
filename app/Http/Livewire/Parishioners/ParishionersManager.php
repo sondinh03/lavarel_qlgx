@@ -454,7 +454,7 @@ class ParishionersManager extends BaseComponent
 
     public function delete(int $id): void
     {
-        $this->requireAdmin();
+        // $this->requireAdmin();
 
         try {
             DB::beginTransaction();

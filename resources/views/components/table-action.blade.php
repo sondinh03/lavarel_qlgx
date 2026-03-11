@@ -10,11 +10,11 @@
 @php
 $colorClass = match($color) {
     'primary' => 'text-primary-600 hover:text-primary-700',
-    'danger' => 'text-red-600 hover:text-red-800',
+    'danger'  => 'text-red-600 hover:text-red-800',
     'warning' => 'text-orange-600 hover:text-orange-700',
     'success' => 'text-emerald-600 hover:text-emerald-700',
-    'info' => 'text-blue-600 hover:text-blue-700',
-    default => 'text-slate-600 hover:text-slate-700',
+    'info'    => 'text-blue-600 hover:text-blue-700',
+    default   => 'text-slate-600 hover:text-slate-700',
 };
 
 $wireClickAttr = 'wire:click';
@@ -27,9 +27,15 @@ if ($debounce && $wire) {
     {{ $attributes->merge([
         'class' => "inline-flex items-center gap-1 text-sm font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed $colorClass"
     ]) }}
-    @if($wire) {{ $wireClickAttr }}="{{ $wire }}" @endif
+    @if($wire)
+        @if($confirm)
+            x-data
+            @click="if(confirm('{{ $confirm }}')) $wire.{{ $wire }}"
+        @else
+            {{ $wireClickAttr }}="{{ $wire }}"
+        @endif
+    @endif
     @if($loading && $wire) wire:loading.attr="disabled" wire:target="{{ $wire }}" @endif
-    @if($confirm) onclick="return confirm('{{ $confirm }}')" @endif
     type="button">
 
     {{-- Loading Spinner --}}
@@ -40,13 +46,13 @@ if ($debounce && $wire) {
     </svg>
     @endif
 
-    {{-- Icon - CHỈ ẨN KHI loading=true --}}
+    {{-- Icon --}}
     @if($icon)
-    <svg 
+    <svg
         @if($loading && $wire) wire:loading.remove wire:target="{{ $wire }}" @endif
-        class="w-4 h-4" 
-        fill="none" 
-        stroke="currentColor" 
+        class="w-4 h-4"
+        fill="none"
+        stroke="currentColor"
         viewBox="0 0 24 24">
         @switch($icon)
             @case('edit')

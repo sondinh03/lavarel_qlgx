@@ -48,8 +48,11 @@ use App\Http\Livewire\Home;
 use App\Http\Livewire\Landing;
 use App\Http\Livewire\Lop\AssignTeacher;
 use App\Http\Livewire\Lop\LopDetail;
+use App\Http\Livewire\NamHoc\CopyNamHoc;
 use App\Http\Livewire\NamHoc\NamHocManager;
 use App\Http\Livewire\Parish\ParishChild;
+use App\Http\Livewire\Parish\ParishGroup;
+use App\Http\Livewire\Parish\ParishGroupManager;
 use App\Http\Livewire\Parishioners\ParishionersManager;
 use App\Http\Livewire\Score\ScoreManager;
 use App\Http\Livewire\Student\StudentDetail;
@@ -168,14 +171,17 @@ Route::middleware('auth')->group(function () {
         Route::get('/school-years', NamHocManager::class)
             ->name('school-years.index');
 
-        Route::get('/grades', BlockManager::class)
-            ->name('grades.index');
+            Route::get('/school-years/copy', CopyNamHoc::class)
+                ->name('school-years.copy');
+
+        // Route::get('/grades', BlockManager::class)
+        //     ->name('grades.index');
 
         Route::get('/holy-names', HolyManager::class)
             ->name('holy-names.index');
 
-        Route::get('/parish-children', ParishChild::class)
-            ->name('parish-children.index');
+        Route::get('/parish-group', ParishGroupManager::class)
+            ->name('parish-group.index');
     });
 });
 

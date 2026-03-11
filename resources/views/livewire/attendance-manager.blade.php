@@ -60,7 +60,7 @@
             <div class="px-6 py-4 border-b border-slate-200 bg-slate-50/70">
                 <div class="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4">
                     {{-- LEFT: Filters --}}
-                    <div class="flex items-center gap-3 flex-1 w-full lg:w-auto">
+                    <div class="flex flex-col gap-3 w-full lg:flex-row lg:items-center">
                         {{-- Filter Bar --}}
                         <livewire:filters.filter-bar
                             :parish-id="$parishId"
@@ -331,6 +331,7 @@
                                             wire:click="setAttendance({{ $student->id }}, {{ $session['id'] }}, {{ $status == 2 ? 'null' : 2 }})"
                                             @mouseenter="open = true"
                                             @mouseleave="open = false"
+                                            @click.stop="open = !open"
                                             class="px-2 py-1 rounded text-xs font-medium transition-all relative
                                                 {{ $status == 2 ? 'bg-yellow-400 text-slate-900 shadow-md scale-105' : 'bg-amber-100 text-amber-800 border border-yellow-200 hover:bg-yellow-100' }}">
                                             P
@@ -340,6 +341,7 @@
                                         </button>
                                         @if($note && $status == 2)
                                         <div x-show="open"
+                                            @click.away="open = false"
                                             x-transition
                                             x-cloak
                                             class="absolute left-1/2 -translate-x-1/2 bottom-full mb-2 w-48
@@ -446,7 +448,7 @@
                 {{-- Table View --}}
                 <div class="overflow-x-auto">
                     <table class="w-full border-separate border-spacing-0">
-                        <thead class="bg-slate-50 border-b-2 border-slate-200 sticky top-[200px] z-20">
+                        <thead class="bg-slate-50 border-b-2 border-slate-200">
                             <tr>
                                 <th class="w-12 px-2 py-3 text-left text-xs font-bold text-slate-900 uppercase tracking-wider border-r border-slate-200">
                                     STT
@@ -750,7 +752,7 @@
 
 {{-- Unsaved Changes Indicator --}}
 @if($hasUnsavedChanges)
-<div class="fixed bottom-4 right-4 bg-amber-500 text-white px-4 py-3 rounded-xl shadow-lg flex items-center gap-3 animate-pulse">
+<div class="fixed top-4 right-4 bg-amber-500 text-white px-4 py-3 rounded-xl shadow-lg flex items-center gap-3 animate-pulse">
     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
             d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />

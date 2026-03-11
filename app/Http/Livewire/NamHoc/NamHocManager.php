@@ -111,10 +111,8 @@ class NamHocManager extends BaseComponent
      */
     public function mount()
     {
+        $this->authorize('viewAny', NamHoc::class);
         parent::mount();
-
-        // Yêu cầu quyền quản trị (Admin hoặc Decen)
-        $this->requireManager();
 
         // Bắt buộc phải có parishId
         $this->requireParishId();
@@ -168,7 +166,7 @@ class NamHocManager extends BaseComponent
      */
     public function create(): void
     {
-        $this->requireManager();
+        $this->authorize('create', NamHoc::class);
 
         $this->resetForm();
         $this->showForm = true;
@@ -179,12 +177,10 @@ class NamHocManager extends BaseComponent
      */
     public function edit(int $id): void
     {
-        $this->requireManager();
+        $namHoc = NamHoc::find($id);
+        $this->authorize('update', $namHoc);
 
         try {
-            $namHoc = NamHoc::ofParish($this->parishId)
-                ->findOrFail($id);
-
             $this->editingId = $namHoc->id;
             $this->name = $namHoc->name;
             $this->start_date_one = $namHoc->start_date_one?->format('Y-m-d');
@@ -207,7 +203,13 @@ class NamHocManager extends BaseComponent
      */
     public function save(): void
     {
-        $this->requireManager();
+        if ($this->editingId) {
+            $namHoc = NamHoc::find($this->editingId);
+            $this->authorize('update', $namHoc);
+        } else {
+            $this->authorize('create', NamHoc::class);
+        }
+
         $this->validate($this->formRules, $this->messages);
 
         // Custom validation: Kỳ 2 phải sau kỳ 1
@@ -307,7 +309,7 @@ class NamHocManager extends BaseComponent
     public function delete(int $id): void
     {
         // Chỉ Admin mới được xóa
-        $this->requireAdmin();
+        $this->authorize('delete', NamHoc::class);
 
         try {
             DB::beginTransaction();

@@ -3,27 +3,26 @@
 namespace App\Http\Livewire\Score;
 
 use App\Http\Livewire\Base\BaseComponent;
-use App\Models\Lop;
+use App\Models\CatechismClass;
+use App\Models\GradeLevel;
 use App\Models\NamHoc;
 use App\Models\ScoreType;
-use App\Models\Student;
 use App\Models\StudentsClass;
 use App\Models\StudentScore;
-use Illuminate\Database\Eloquent\ModelNotFoundException;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Validation\ValidationException;
 
 /**
  * Component quản lý điểm học sinh
- * 
+ *
  * Features:
- * - Xem bảng điểm theo lớp & học kỳ
- * - Nhập/sửa điểm từng học sinh
- * - Cấu hình loại điểm (ScoreType)
- * - Tính điểm trung bình tự động
- * - Export/Import điểm (future)
+ * - Bảng điểm: xem & nhập điểm từng học sinh
+ * - Cấu hình loại điểm (thêm/sửa/xoá cột điểm)
+ * - Apply nhanh cấu hình cho nhiều lớp (cùng khối hoặc toàn xứ)
+ * - Tính điểm trung bình học kỳ tự động (weighted average)
  */
-
 class ScoreManager extends BaseComponent
 {
     // ==================== FILTERS ====================
@@ -40,20 +39,17 @@ class ScoreManager extends BaseComponent
     /** @var int Selected học kỳ (1 hoặc 2) */
     public $selectedSemester = 1;
 
-    // ==================== FORM STATE ====================
+    // ==================== TABS ====================
+
+    /** @var string Tab hiện tại: 'scores' | 'config' */
+    public $activeTab = 'scores';
+
+    // ==================== SCORE ENTRY FORM ====================
 
     /** @var bool Hiển thị modal nhập điểm */
     public $showScoreForm = false;
 
-    /** @var bool Hiển thị modal cấu hình loại điểm */
-    public $showScoreTypeForm = false;
-
-    /** @var int|null ID ScoreType đang edit */
-    public $editingScoreTypeId = null;
-
-    // ==================== FORM FIELDS - Score Entry ====================
-
-    /** @var int|null Student ID đang nhập điểm */
+    /** @var int|null StudentsClass ID đang nhập */
     public $currentStudentClassId = null;
 
     /** @var int|null ScoreType ID đang nhập */
@@ -68,15 +64,21 @@ class ScoreManager extends BaseComponent
     /** @var string|null Ghi chú */
     public $scoreNote = null;
 
-    // ==================== FORM FIELDS - ScoreType Config ====================
+    // ==================== SCORE TYPE CONFIG FORM ====================
+
+    /** @var bool Hiển thị modal cấu hình loại điểm */
+    public $showScoreTypeForm = false;
+
+    /** @var int|null ID ScoreType đang edit (null = create) */
+    public $editingScoreTypeId = null;
 
     /** @var string Tên loại điểm */
-    public $typeName;
+    public $typeName = '';
 
-    /** @var int Loại điểm (1-5) */
-    public $scoreTypeType;
+    /** @var int|null Loại (1-5) */
+    public $scoreTypeType = null;
 
-    /** @var int Thứ tự */
+    /** @var int Thứ tự hiển thị */
     public $typeOrder = 0;
 
     /** @var float Hệ số */
@@ -88,115 +90,125 @@ class ScoreManager extends BaseComponent
     /** @var bool Trạng thái */
     public $typeIsActive = true;
 
+    // ==================== APPLY CONFIG FORM ====================
+
+    /** @var bool Hiển thị modal apply cấu hình */
+    public $showApplyForm = false;
+
+    /** @var string Phạm vi apply: 'class' | 'grade' | 'parish' */
+    public $applyScope = 'class';
+
+    /** @var int|null ID khối khi applyScope = 'grade' */
+    public $applyScopeGradeId = null;
+
+    /** @var bool Ghi đè nếu lớp đã có cấu hình */
+    public $applyOverwrite = false;
+
+    // ==================== CREATE SCOPE (trong form tạo loại điểm) ====================
+
+    /** @var string Phạm vi tạo mới: 'class' | 'grade' | 'parish' */
+    public $createScope = 'class';
+
+    /** @var int|null Khối khi createScope = 'grade' */
+    public $createScopeGradeId = null;
+
     // ==================== DATA ====================
 
-    /** @var \Illuminate\Support\Collection Danh sách năm học */
+    /** @var Collection Danh sách năm học */
     public $availableNamHocs;
 
-    /** @var \Illuminate\Support\Collection Danh sách lớp */
+    /** @var Collection Danh sách khối */
+    public $availableGrades;
+
+    /** @var Collection Danh sách lớp */
     public $availableLops;
 
-    /** @var \Illuminate\Support\Collection Danh sách loại điểm */
+    /** @var Collection Loại điểm của lớp hiện tại */
     public $scoreTypes;
 
-    /** @var array Điểm của các học sinh [student_id => [score_type_id => score]] */
+    /** @var array Ma trận điểm [student_class_id => [score_type_id => [...]] ] */
     public $scoresMatrix = [];
+
+    /** @var array Điểm trung bình [student_class_id => float|null] */
+    public $averages = [];
 
     /** @var bool Enable pagination */
     protected $usePagination = true;
 
-    // ==================== VALIDATION ====================
+    // ==================== VALIDATION RULES ====================
 
     protected $rules = [
-        'selectedNamHoc' => 'nullable|integer|exists:nam_hoc,id',
-        'selectedLop' => 'nullable|integer|exists:lop,id',
+        'selectedNamHoc'   => 'nullable|integer',
+        'selectedLop'      => 'nullable|integer',
         'selectedSemester' => 'required|integer|in:1,2',
-        'perPage' => 'required|integer|in:10,15,25,50',
+        'perPage'          => 'required|integer|in:10,15,25,50',
     ];
 
-    /**
-     * Rules riêng cho form nhập điểm
-     */
     protected $scoreRules = [
         'scoreValue' => 'required|numeric|min:0|max:10',
-        'attempt' => 'required|integer|min:1',
-        'scoreNote' => 'nullable|string|max:500',
+        'attempt'    => 'required|integer|min:1|max:9',
+        'scoreNote'  => 'nullable|string|max:500',
     ];
 
-    /**
-     * Rules riêng cho form cấu hình loại điểm
-     */
     protected $scoreTypeRules = [
-        'typeName' => 'required|string|max:100',
-        'scoreTypeType' => 'required|integer|in:1,2,3,4,5',
-        'typeOrder' => 'required|integer|min:0',
+        'typeName'        => 'required|string|max:100',
+        'scoreTypeType'   => 'required|integer|in:1,2,3,4,5',
+        'typeOrder'       => 'required|integer|min:0|max:99',
         'typeCoefficient' => 'required|numeric|min:0.1|max:10',
-        'typeMaxScore' => 'required|numeric|min:1|max:100',
-        'typeIsActive' => 'required|boolean',
+        'typeMaxScore'    => 'required|numeric|min:1|max:100',
+        'typeIsActive'    => 'required|boolean',
     ];
 
-    /**
-     * Custom validation messages
-     */
     protected $messages = [
-        'selectedNamHoc.exists' => 'Năm học không tồn tại',
-        'selectedLop.exists' => 'Lớp không tồn tại',
-        'selectedSemester.in' => 'Học kỳ không hợp lệ',
-        'scoreValue.required' => 'Vui lòng nhập điểm',
-        'scoreValue.max' => 'Điểm không được quá 10',
-        'attempt.min' => 'Lần thi phải lớn hơn 0',
-        'typeName.required' => 'Vui lòng nhập tên loại điểm',
-        'scoreTypeType.required' => 'Vui lòng chọn loại điểm',
-        'typeCoefficient.min' => 'Hệ số phải lớn hơn 0',
-        'perPage.in' => 'Số mục trên trang không hợp lệ',
+        'scoreValue.required'      => 'Vui lòng nhập điểm',
+        'scoreValue.max'           => 'Điểm không được quá 10',
+        'scoreValue.min'           => 'Điểm không được âm',
+        'attempt.min'              => 'Lần thi tối thiểu là 1',
+        'typeName.required'        => 'Vui lòng nhập tên loại điểm',
+        'scoreTypeType.required'   => 'Vui lòng chọn loại điểm',
+        'scoreTypeType.in'         => 'Loại điểm không hợp lệ',
+        'typeCoefficient.min'      => 'Hệ số phải lớn hơn 0',
+        'typeMaxScore.min'         => 'Điểm tối đa tối thiểu là 1',
     ];
 
     // ==================== QUERY STRING ====================
 
-    protected function queryString()
+    protected function queryString(): array
     {
         return array_merge([
-            'selectedNamHoc' => ['as' => 'namHoc', 'except' => null],
-            'selectedLop' => ['as' => 'lop', 'except' => null],
+            'selectedNamHoc'   => ['as' => 'namHoc',   'except' => null],
+            'selectedKhoi'     => ['as' => 'khoi',     'except' => null],
+            'selectedLop'      => ['as' => 'lop',      'except' => null],
             'selectedSemester' => ['as' => 'semester', 'except' => 1],
-            'showScoreForm' => ['except' => false],
-            'showScoreTypeForm' => ['except' => false],
+            'activeTab'        => ['as' => 'tab',      'except' => 'scores'],
         ], parent::queryString());
     }
 
     // ==================== LISTENERS ====================
 
     protected $listeners = [
-        'refresh' => 'handleRefresh',
+        'refresh'       => 'handleRefresh',
         'filterChanged' => 'handleFilterChanged',
-        'scoreUpdated' => 'loadScoresData',
-        'scoreTypeUpdated' => 'loadScoresData',
     ];
 
     // ==================== LIFECYCLE ====================
 
-    public function mount()
+    public function mount(): void
     {
-        parent::mount();
 
-        // Yêu cầu quyền quản trị
-        $this->requireManager();
-
-        // Bắt buộc phải có parishId
-        $this->requireParishId();
-
-        // Initialize collections
         $this->availableNamHocs = collect();
-        $this->availableLops = collect();
-        $this->scoreTypes = collect();
+        $this->availableGrades  = collect();
+        $this->availableLops    = collect();
+        $this->scoreTypes       = collect();
+
+        // Không authorize ở đây — guest cũng xem được (phụ huynh tra cứu)
+        parent::mount();
     }
 
-    /**
-     * Load dữ liệu ban đầu (required by BaseComponent)
-     */
     protected function loadInitialData(): void
     {
         $this->loadNamHocs();
+        $this->loadGrades();
 
         if (!$this->selectedNamHoc) {
             $this->selectedNamHoc = $this->getDefaultNamHocId();
@@ -206,54 +218,29 @@ class ScoreManager extends BaseComponent
             $this->loadLops();
         }
 
-        if ($this->selectedLop && $this->selectedSemester) {
+        if ($this->selectedLop) {
             $this->loadScoreTypes();
         }
     }
 
-    /**
-     * Override sanitizeQueryString để xử lý thêm filters
-     */
     protected function sanitizeQueryString(): void
     {
         parent::sanitizeQueryString();
 
-        // Sanitize selectedNamHoc
-        $this->selectedNamHoc = $this->sanitizeInteger($this->selectedNamHoc);
+        $this->selectedNamHoc = $this->toInt($this->selectedNamHoc);
+        $this->selectedKhoi   = $this->toInt($this->selectedKhoi);
+        $this->selectedLop    = $this->toInt($this->selectedLop);
 
-        // Sanitize selectedLop
-        $this->selectedLop = $this->sanitizeInteger($this->selectedLop);
+        $sem = (int) $this->selectedSemester;
+        $this->selectedSemester = in_array($sem, [1, 2]) ? $sem : 1;
 
-        // Sanitize selectedSemester (default to 1)
-        if ($this->selectedSemester === '' || $this->selectedSemester === null) {
-            $this->selectedSemester = 1;
-        } else {
-            $this->selectedSemester = is_numeric($this->selectedSemester)
-                ? (int) $this->selectedSemester
-                : 1;
+        if (!in_array($this->activeTab, ['scores', 'config'])) {
+            $this->activeTab = 'scores';
         }
-
-        // Validate semester is 1 or 2
-        if (!in_array($this->selectedSemester, [1, 2])) {
-            $this->selectedSemester = 1;
-        }
-    }
-
-    /**
-     * Override resetToDefaults để reset thêm filters
-     */
-    protected function resetToDefaults(): void
-    {
-        parent::resetToDefaults();
-        $this->selectedLop = null;
-        $this->selectedSemester = 1;
     }
 
     // ==================== DATA LOADING ====================
 
-    /**
-     * Load danh sách năm học
-     */
     protected function loadNamHocs(): void
     {
         try {
@@ -264,13 +251,21 @@ class ScoreManager extends BaseComponent
         } catch (\Exception $e) {
             $this->logError($e, 'Error loading nam hocs');
             $this->availableNamHocs = collect();
-            session()->flash('error', 'Có lỗi khi tải danh sách năm học');
         }
     }
 
-    /**
-     * Load danh sách lớp theo năm học
-     */
+    protected function loadGrades(): void
+    {
+        try {
+            $this->availableGrades = GradeLevel::active()
+                ->orderBy('sort_order')
+                ->get(['id', 'name']);
+        } catch (\Exception $e) {
+            $this->logError($e, 'Error loading grades');
+            $this->availableGrades = collect();
+        }
+    }
+
     protected function loadLops(): void
     {
         if (!$this->selectedNamHoc) {
@@ -279,33 +274,25 @@ class ScoreManager extends BaseComponent
         }
 
         try {
-            $this->availableLops = Lop::with('blockRelation')
-                ->where('pid', $this->parishId)
-                ->where('schoolyear', $this->selectedNamHoc)
-                ->active()
-                ->get(['id', 'name', 'block'])
-                ->map(function ($lop) {
-                    return [
-                        'id' => $lop->id,
-                        'name' => $lop->name,
-                        'block_name' => $lop->blockRelation->name ?? 'N/A',
-                    ];
-                })
-                ->sortBy('name')
-                ->values();
+            $query = CatechismClass::with('gradeLevel')
+                ->where('school_year_id', $this->selectedNamHoc)
+                ->where('parish_id', $this->parishId)
+                ->active();
+
+            if ($this->selectedKhoi) {
+                $query->where('grade_level_id', $this->selectedKhoi);
+            }
+
+            $this->availableLops = $query->orderBy('name')->get(['id', 'name', 'grade_level_id']);
         } catch (\Exception $e) {
             $this->logError($e, 'Error loading lops');
             $this->availableLops = collect();
-            session()->flash('error', 'Có lỗi khi tải danh sách lớp');
         }
     }
 
-    /**
-     * Load danh sách ScoreTypes cho lớp và học kỳ
-     */
     protected function loadScoreTypes(): void
     {
-        if (!$this->selectedLop || !$this->selectedSemester) {
+        if (!$this->selectedLop) {
             $this->scoreTypes = collect();
             return;
         }
@@ -318,111 +305,641 @@ class ScoreManager extends BaseComponent
                 ->orderBy('type')
                 ->get();
         } catch (\Exception $e) {
-            $this->logError($e, 'Error loading score types', [
-                'lop_id' => $this->selectedLop,
-                'semester' => $this->selectedSemester,
-            ]);
-
+            $this->logError($e, 'Error loading score types');
             $this->scoreTypes = collect();
-            session()->flash('error', 'Có lỗi khi tải danh sách loại điểm');
         }
     }
 
-    /**
-     * Load toàn bộ dữ liệu điểm
-     */
-    // protected function loadScoresData(): void
-    public function loadScoresData(): void
+    // ==================== PROPERTY UPDATERS ====================
+
+    public function updatedSelectedNamHoc(): void
     {
-        $this->loadScoreTypes();
-        $this->resetPage(); // Reset về trang 1 khi load lại data
+        $this->selectedNamHoc = $this->toInt($this->selectedNamHoc);
+        $this->selectedKhoi   = null;
+        $this->selectedLop    = null;
+        $this->scoreTypes     = collect();
+        $this->scoresMatrix   = [];
+        $this->averages       = [];
+        $this->resetPage();
+        $this->loadLops();
     }
 
-    /**
-     * Get paginated students với điểm
-     */
-    private function getStudentsPaginated()
+    public function updatedSelectedKhoi(): void
     {
-        if (!$this->selectedLop) {
-            return new \Illuminate\Pagination\LengthAwarePaginator(
-                [],
-                0,
-                $this->perPage,
-                $this->page ?? 1
+        $this->selectedKhoi = $this->toInt($this->selectedKhoi);
+        $this->selectedLop  = null;
+        $this->scoreTypes   = collect();
+        $this->scoresMatrix = [];
+        $this->averages     = [];
+        $this->resetPage();
+        $this->loadLops();
+    }
+
+    public function updatedSelectedLop(): void
+    {
+        $this->selectedLop  = $this->toInt($this->selectedLop);
+        $this->scoresMatrix = [];
+        $this->averages     = [];
+        $this->resetPage();
+        $this->loadScoreTypes();
+    }
+
+    public function updatedSelectedSemester(): void
+    {
+        $sem = (int) $this->selectedSemester;
+        $this->selectedSemester = in_array($sem, [1, 2]) ? $sem : 1;
+        $this->scoresMatrix = [];
+        $this->averages     = [];
+        $this->resetPage();
+        $this->loadScoreTypes();
+    }
+
+    // ==================== TABS ====================
+
+    public function switchTab(string $tab): void
+    {
+        if (!in_array($tab, ['scores', 'config'])) {
+            return;
+        }
+
+        $this->activeTab = $tab;
+    }
+
+    // ==================== SCORE ENTRY ====================
+
+    public function openScoreForm(int $studentClassId, int $scoreTypeId): void
+    {
+        $this->currentStudentClassId = $studentClassId;
+        $this->currentScoreTypeId    = $scoreTypeId;
+
+        // Load existing score if any
+        $existing = $this->scoresMatrix[$studentClassId][$scoreTypeId] ?? null;
+
+        if ($existing) {
+            $this->scoreValue = $existing['value'];
+            $this->attempt    = $existing['attempt'];
+            $this->scoreNote  = $existing['note'];
+        } else {
+            $this->scoreValue = null;
+            $this->attempt    = 1;
+            $this->scoreNote  = null;
+        }
+
+        $this->resetValidation();
+        $this->showScoreForm = true;
+    }
+
+    public function saveScore(): void
+    {
+        $this->authorize('update', ScoreType::class);
+        $this->validate($this->scoreRules, $this->messages);
+
+        try {
+            DB::beginTransaction();
+
+            StudentScore::updateOrCreate(
+                [
+                    'student_class_id' => $this->currentStudentClassId,
+                    'score_type_id'    => $this->currentScoreTypeId,
+                    'attempt'          => $this->attempt,
+                ],
+                [
+                    'score_value' => $this->scoreValue,
+                    'note'        => $this->scoreNote,
+                ]
             );
+
+            DB::commit();
+
+            // Cập nhật matrix local — không cần reload toàn bộ
+            $this->scoresMatrix[$this->currentStudentClassId][$this->currentScoreTypeId] = [
+                'value'   => (float) $this->scoreValue,
+                'attempt' => $this->attempt,
+                'note'    => $this->scoreNote,
+            ];
+
+            // Recalculate average cho student này
+            $this->recalculateAverage($this->currentStudentClassId);
+
+            session()->flash('message', 'Lưu điểm thành công');
+            $this->closeScoreForm();
+        } catch (\Exception $e) {
+            DB::rollBack();
+            $this->logError($e, 'Error saving score');
+            session()->flash('error', 'Có lỗi khi lưu điểm');
+        }
+    }
+
+    public function deleteScore(int $studentClassId, int $scoreTypeId): void
+    {
+        $this->authorize('update', ScoreType::class);
+
+        try {
+            StudentScore::where('student_class_id', $studentClassId)
+                ->where('score_type_id', $scoreTypeId)
+                ->delete();
+
+            unset($this->scoresMatrix[$studentClassId][$scoreTypeId]);
+            $this->recalculateAverage($studentClassId);
+
+            session()->flash('message', 'Đã xoá điểm');
+        } catch (\Exception $e) {
+            $this->logError($e, 'Error deleting score');
+            session()->flash('error', 'Có lỗi khi xoá điểm');
+        }
+    }
+
+    public function closeScoreForm(): void
+    {
+        $this->showScoreForm         = false;
+        $this->currentStudentClassId = null;
+        $this->currentScoreTypeId    = null;
+        $this->scoreValue            = null;
+        $this->attempt               = 1;
+        $this->scoreNote             = null;
+        $this->resetValidation();
+    }
+
+    // ==================== SCORE TYPE CONFIG ====================
+
+    public function createScoreType(): void
+    {
+        $this->authorize('create', ScoreType::class);
+
+        if (!$this->selectedNamHoc) {
+            session()->flash('warning', 'Vui lòng chọn năm học trước');
+            return;
+        }
+
+        $this->resetScoreTypeForm();
+
+        // Pre-fill scope dựa vào filter đang chọn
+        if ($this->selectedLop) {
+            $this->createScope        = 'class';
+            $this->createScopeGradeId = $this->selectedKhoi;
+        } elseif ($this->selectedKhoi) {
+            $this->createScope        = 'grade';
+            $this->createScopeGradeId = $this->selectedKhoi;
+        } else {
+            $this->createScope        = 'parish';
+            $this->createScopeGradeId = null;
+        }
+
+        $this->showScoreTypeForm = true;
+    }
+
+    public function editScoreType(int $id): void
+    {
+        $this->authorize('update', ScoreType::class);
+
+        try {
+            $st = ScoreType::findOrFail($id);
+
+            $this->editingScoreTypeId = $st->id;
+            $this->typeName           = $st->name;
+            $this->scoreTypeType      = $st->type;
+            $this->typeOrder          = $st->order;
+            $this->typeCoefficient    = $st->coefficient;
+            $this->typeMaxScore       = $st->max_score;
+            $this->typeIsActive       = $st->is_active;
+
+            $this->resetValidation();
+            $this->showScoreTypeForm = true;
+        } catch (ModelNotFoundException $e) {
+            session()->flash('error', 'Không tìm thấy loại điểm này');
+        }
+    }
+
+    public function saveScoreType(): void
+    {
+        $this->authorize('create', ScoreType::class);
+        $this->validate($this->scoreTypeRules, $this->messages);
+
+        // Edit mode → chỉ update record cụ thể, không cần scope
+        if ($this->editingScoreTypeId) {
+            $duplicate = ScoreType::where(
+                'class_id',
+                ScoreType::find($this->editingScoreTypeId)?->class_id
+            )
+                ->where('semester', $this->selectedSemester)
+                ->where('type', $this->scoreTypeType)
+                ->where('id', '!=', $this->editingScoreTypeId)
+                ->exists();
+
+            if ($duplicate) {
+                $this->addError('scoreTypeType', 'Loại điểm này đã tồn tại trong học kỳ');
+                return;
+            }
+
+            try {
+                ScoreType::where('id', $this->editingScoreTypeId)->update([
+                    'type'        => $this->scoreTypeType,
+                    'name'        => $this->typeName,
+                    'order'       => $this->typeOrder,
+                    'coefficient' => $this->typeCoefficient,
+                    'max_score'   => $this->typeMaxScore,
+                    'is_active'   => $this->typeIsActive,
+                ]);
+
+                session()->flash('message', 'Cập nhật loại điểm thành công');
+                $this->closeScoreTypeForm();
+                $this->loadScoreTypes();
+                return;
+            } catch (\Exception $e) {
+                $this->logError($e, 'Error updating score type');
+                session()->flash('error', 'Có lỗi khi cập nhật loại điểm');
+                return;
+            }
+        }
+
+        // Create mode → resolve danh sách lớp theo scope
+        $classIds = $this->resolveCreateTargetClassIds();
+
+        if ($classIds->isEmpty()) {
+            session()->flash('warning', 'Không tìm thấy lớp nào để áp dụng');
+            return;
         }
 
         try {
-            $query = StudentsClass::with('student')
-                ->where('class_id', $this->selectedLop);
-            // ->active();
+            DB::beginTransaction();
 
-            // Apply search filter
-            if (!empty(trim($this->search))) {
-                $searchTerm = '%' . trim($this->search) . '%';
-                $query->whereHas('student', function ($q) use ($searchTerm) {
-                    $q->where('name', 'like', $searchTerm);
-                });
+            $created = 0;
+            $skipped = 0;
+
+            foreach ($classIds as $classId) {
+                $duplicate = ScoreType::where('class_id', $classId)
+                    ->where('semester', $this->selectedSemester)
+                    ->where('type', $this->scoreTypeType)
+                    ->exists();
+
+                if ($duplicate) {
+                    $skipped++;
+                    continue;
+                }
+
+                ScoreType::create([
+                    'class_id'    => $classId,
+                    'semester'    => $this->selectedSemester,
+                    'type'        => $this->scoreTypeType,
+                    'name'        => $this->typeName,
+                    'order'       => $this->typeOrder,
+                    'coefficient' => $this->typeCoefficient,
+                    'max_score'   => $this->typeMaxScore,
+                    'is_active'   => $this->typeIsActive,
+                ]);
+
+                $created++;
             }
 
-            // Order by student name
-            $query->join('student', 'students_class.student_id', '=', 'student.id')
-                ->orderBy('student.name', 'asc')
-                ->select('students_class.*');
+            DB::commit();
 
-            $students = $query->paginate($this->perPage);
+            $msg = "Đã tạo cho {$created} lớp";
+            if ($skipped > 0) {
+                $msg .= ", bỏ qua {$skipped} lớp đã tồn tại loại điểm này";
+            }
 
-            // Load scores matrix cho students trong trang hiện tại
-            $this->loadScoresMatrixForPage($students);
-
-            return $students;
+            session()->flash('message', $msg);
+            $this->closeScoreTypeForm();
+            $this->loadScoreTypes();
         } catch (\Exception $e) {
-            $this->logError($e, 'Error loading students', [
-                'lop_id' => $this->selectedLop,
-                'search' => $this->search,
-            ]);
-
-            session()->flash('error', 'Có lỗi khi tải danh sách học sinh');
-
-            return new \Illuminate\Pagination\LengthAwarePaginator(
-                [],
-                0,
-                $this->perPage,
-                $this->page ?? 1
-            );
+            DB::rollBack();
+            $this->logError($e, 'Error saving score type');
+            session()->flash('error', 'Có lỗi khi lưu loại điểm');
         }
     }
 
     /**
-     * Load ma trận điểm cho students trong trang hiện tại
+     * Resolve danh sách class_id cho create mode
      */
-    protected function loadScoresMatrixForPage($students): void
+    protected function resolveCreateTargetClassIds(): Collection
     {
-        if ($students->isEmpty() || $this->scoreTypes->isEmpty()) {
+        if ($this->createScope === 'class' && $this->selectedLop) {
+            return collect([$this->selectedLop]);
+        }
+
+        $query = CatechismClass::where('school_year_id', $this->selectedNamHoc)
+            ->where('parish_id', $this->parishId)
+            ->active();
+
+        return match ($this->createScope) {
+            'grade'  => $query->where('grade_level_id', $this->createScopeGradeId)->pluck('id'),
+            'parish' => $query->pluck('id'),
+            default  => collect(),
+        };
+    }
+
+    public function deleteScoreType(int $id): void
+    {
+        $this->authorize('delete', ScoreType::class);
+
+        try {
+            DB::beginTransaction();
+
+            $hasScores = StudentScore::where('score_type_id', $id)->exists();
+
+            if ($hasScores) {
+                session()->flash('error', 'Không thể xoá loại điểm đã có dữ liệu điểm');
+                return;
+            }
+
+            ScoreType::findOrFail($id)->delete();
+
+            DB::commit();
+
+            session()->flash('message', 'Đã xoá loại điểm');
+            $this->loadScoreTypes();
+        } catch (ModelNotFoundException $e) {
+            DB::rollBack();
+            session()->flash('error', 'Không tìm thấy loại điểm');
+        } catch (\Exception $e) {
+            DB::rollBack();
+            $this->logError($e, 'Error deleting score type');
+            session()->flash('error', 'Có lỗi khi xoá loại điểm');
+        }
+    }
+
+    public function toggleScoreTypeStatus(int $id): void
+    {
+        $this->authorize('update', ScoreType::class);
+
+        try {
+            $st = ScoreType::findOrFail($id);
+            $st->update(['is_active' => !$st->is_active]);
+
+            session()->flash('message', $st->is_active ? 'Đã kích hoạt' : 'Đã tắt loại điểm');
+            $this->loadScoreTypes();
+        } catch (\Exception $e) {
+            $this->logError($e, 'Error toggling score type');
+            session()->flash('error', 'Có lỗi khi thay đổi trạng thái');
+        }
+    }
+
+    public function closeScoreTypeForm(): void
+    {
+        $this->showScoreTypeForm = false;
+        $this->resetScoreTypeForm();
+        $this->resetValidation();
+    }
+
+    protected function resetScoreTypeForm(): void
+    {
+        $this->editingScoreTypeId = null;
+        $this->typeName           = '';
+        $this->scoreTypeType      = null;
+        $this->typeOrder          = 0;
+        $this->typeCoefficient    = 1.0;
+        $this->typeMaxScore       = 10.0;
+        $this->typeIsActive       = true;
+        $this->createScope        = 'class';
+        $this->createScopeGradeId = null;
+    }
+
+    // ==================== APPLY CONFIG ====================
+
+    /**
+     * Mở modal apply cấu hình lớp hiện tại sang lớp/khối/toàn xứ khác
+     */
+    public function openApplyForm(): void
+    {
+        $this->authorize('create', ScoreType::class);
+
+        if (!$this->selectedLop) {
+            session()->flash('warning', 'Vui lòng chọn lớp nguồn trước');
+            return;
+        }
+
+        if ($this->scoreTypes->isEmpty()) {
+            session()->flash('warning', 'Lớp này chưa có cấu hình loại điểm nào');
+            return;
+        }
+
+        $this->applyScope        = 'class';
+        $this->applyScopeGradeId = null;
+        $this->applyOverwrite    = false;
+
+        $this->showApplyForm = true;
+    }
+
+    /**
+     * Thực hiện apply cấu hình từ lớp hiện tại sang lớp/khối/toàn xứ
+     */
+    public function applyConfig(): void
+    {
+        $this->authorize('create', ScoreType::class);
+
+        if (!$this->selectedLop || $this->scoreTypes->isEmpty()) {
+            session()->flash('error', 'Không có cấu hình để apply');
+            return;
+        }
+
+        // Resolve danh sách class_id đích
+        $targetClassIds = $this->resolveTargetClassIds();
+
+        if ($targetClassIds->isEmpty()) {
+            session()->flash('warning', 'Không tìm thấy lớp nào phù hợp');
+            return;
+        }
+
+        // Loại bỏ lớp nguồn khỏi danh sách đích
+        $targetClassIds = $targetClassIds->reject(fn($id) => $id === (int) $this->selectedLop)->values();
+
+        if ($targetClassIds->isEmpty()) {
+            session()->flash('warning', 'Không có lớp nào khác để apply');
+            return;
+        }
+
+        try {
+            DB::beginTransaction();
+
+            $applied  = 0;
+            $skipped  = 0;
+
+            foreach ($targetClassIds as $classId) {
+                foreach ($this->scoreTypes as $st) {
+                    $exists = ScoreType::where('class_id', $classId)
+                        ->where('semester', $this->selectedSemester)
+                        ->where('type', $st->type)
+                        ->exists();
+
+                    if ($exists && !$this->applyOverwrite) {
+                        $skipped++;
+                        continue;
+                    }
+
+                    ScoreType::updateOrCreate(
+                        [
+                            'class_id' => $classId,
+                            'semester' => $this->selectedSemester,
+                            'type'     => $st->type,
+                        ],
+                        [
+                            'name'        => $st->name,
+                            'order'       => $st->order,
+                            'coefficient' => $st->coefficient,
+                            'max_score'   => $st->max_score,
+                            'is_active'   => $st->is_active,
+                        ]
+                    );
+
+                    $applied++;
+                }
+            }
+
+            DB::commit();
+
+            $msg = "Đã apply cho {$targetClassIds->count()} lớp ({$applied} cấu hình).";
+            if ($skipped > 0) {
+                $msg .= " Bỏ qua {$skipped} cấu hình đã tồn tại.";
+            }
+
+            session()->flash('message', $msg);
+            $this->showApplyForm = false;
+        } catch (\Exception $e) {
+            DB::rollBack();
+            $this->logError($e, 'Error applying score config');
+            session()->flash('error', 'Có lỗi khi apply cấu hình');
+        }
+    }
+
+    /**
+     * Resolve danh sách class_id dựa theo applyScope
+     */
+    protected function resolveTargetClassIds(): Collection
+    {
+        $query = CatechismClass::where('school_year_id', $this->selectedNamHoc)
+            ->where('parish_id', $this->parishId)
+            ->active();
+
+        return match ($this->applyScope) {
+            'grade'  => $query->where('grade_level_id', $this->applyScopeGradeId)->pluck('id'),
+            'parish' => $query->pluck('id'),
+            default  => collect([$this->selectedLop]), // 'class' = chỉ lớp hiện tại (edge case)
+        };
+    }
+
+    public function closeApplyForm(): void
+    {
+        $this->showApplyForm     = false;
+        $this->applyScope        = 'class';
+        $this->applyScopeGradeId = null;
+        $this->applyOverwrite    = false;
+    }
+
+    // ==================== AVERAGE CALCULATION ====================
+
+    /**
+     * Tính điểm trung bình học kỳ cho 1 học sinh
+     * Công thức: Σ(score × coefficient) / Σ(coefficient)
+     */
+    protected function recalculateAverage(int $studentClassId): void
+    {
+        if ($this->scoreTypes->isEmpty()) {
+            $this->averages[$studentClassId] = null;
+            return;
+        }
+
+        $totalWeight = 0.0;
+        $totalScore  = 0.0;
+
+        foreach ($this->scoreTypes as $st) {
+            $score = $this->scoresMatrix[$studentClassId][$st->id]['value'] ?? null;
+
+            if ($score === null) {
+                // Nếu thiếu điểm cuối kỳ/giữa kỳ thì chưa tính được TB
+                if (in_array($st->type, [ScoreType::TYPE_GIUA_KY, ScoreType::TYPE_CUOI_KY])) {
+                    $this->averages[$studentClassId] = null;
+                    return;
+                }
+                continue;
+            }
+
+            $totalScore  += $score * $st->coefficient;
+            $totalWeight += $st->coefficient;
+        }
+
+        $this->averages[$studentClassId] = $totalWeight > 0
+            ? round($totalScore / $totalWeight, 1)
+            : null;
+    }
+
+    /**
+     * Tính lại TB cho tất cả học sinh trong trang
+     */
+    protected function recalculateAllAverages(array $studentClassIds): void
+    {
+        foreach ($studentClassIds as $id) {
+            $this->recalculateAverage($id);
+        }
+    }
+
+    // ==================== PAGINATED DATA ====================
+
+    private function getStudentsPaginated()
+    {
+        if (!$this->selectedLop) {
+            return new \Illuminate\Pagination\LengthAwarePaginator([], 0, $this->perPage, 1);
+        }
+
+        try {
+            // Dùng bảng pivot trực tiếp, join sang bảng students
+            $query = \App\Models\StudentNew::query()
+                ->with('saint')
+                ->join('students_class', 'students.id', '=', 'students_class.student_id')
+                ->where('students_class.class_id', $this->selectedLop)
+                ->select(
+                    'students_class.id as pivot_id',
+                    'students_class.student_id',
+                    'students.*',
+                );
+
+            if (!empty(trim($this->search ?? ''))) {
+                $term = '%' . trim($this->search) . '%';
+                $query->where(function ($q) use ($term) {
+                    $q->where('students.first_name', 'like', $term)
+                        ->orWhere('students.last_name', 'like', $term)
+                        ->orWhere('students.student_code', 'like', $term);
+                });
+            }
+
+            $query->orderByRaw("CONCAT(students.last_name, ' ', students.first_name)");
+
+            $students = $query->paginate($this->perPage);
+
+            // pivot_id là students_class.id — dùng cho score matrix
+            $this->loadScoresMatrix($students->pluck('pivot_id')->toArray());
+            $this->recalculateAllAverages($students->pluck('pivot_id')->toArray());
+
+            return $students;
+        } catch (\Exception $e) {
+            $this->logError($e, 'Error loading students');
+            session()->flash('error', 'Có lỗi khi tải danh sách học sinh');
+
+            return new \Illuminate\Pagination\LengthAwarePaginator([], 0, $this->perPage, 1);
+        }
+    }
+
+    protected function loadScoresMatrix(array $studentClassIds): void
+    {
+        if (empty($studentClassIds) || $this->scoreTypes->isEmpty()) {
             $this->scoresMatrix = [];
             return;
         }
 
         try {
-            $studentClassIds = $students->pluck('id')->toArray();
             $scoreTypeIds = $this->scoreTypes->pluck('id')->toArray();
 
-            $scores = StudentScore::with(['studentClass', 'scoreType'])
-                ->whereIn('student_class_id', $studentClassIds)
+            $scores = StudentScore::whereIn('student_class_id', $studentClassIds)
                 ->whereIn('score_type_id', $scoreTypeIds)
-                ->get()
-                ->groupBy('student_class_id');
+                ->get();
 
             $matrix = [];
-            foreach ($scores as $studentClassId => $studentScores) {
-                foreach ($studentScores as $score) {
-                    $matrix[$studentClassId][$score->score_type_id] = [
-                        'id' => $score->id,
-                        'value' => $score->score_value,
-                        'attempt' => $score->attempt,
-                        'note' => $score->note,
-                    ];
-                }
+            foreach ($scores as $score) {
+                $matrix[$score->student_class_id][$score->score_type_id] = [
+                    'id'      => $score->id,
+                    'value'   => (float) $score->score_value,
+                    'attempt' => $score->attempt,
+                    'note'    => $score->note,
+                ];
             }
 
             $this->scoresMatrix = $matrix;
@@ -432,425 +949,62 @@ class ScoreManager extends BaseComponent
         }
     }
 
-    // ==================== PROPERTY UPDATERS ====================
-
-    /**
-     * Khi thay đổi năm học
-     */
-    public function updatedSelectedNamHoc(): void
-    {
-        $this->selectedNamHoc = $this->sanitizeInteger($this->selectedNamHoc);
-
-        try {
-            $this->validateOnly('selectedNamHoc');
-        } catch (ValidationException $e) {
-            $this->selectedNamHoc = null;
-            session()->flash('warning', 'Năm học không hợp lệ');
-            $this->logError($e, 'Invalid selectedNamHoc');
-        }
-
-        // Reset dependent filters
-        $this->selectedLop = null;
-        $this->scoreTypes = collect();
-        $this->scoresMatrix = [];
-        $this->resetPage();
-
-        $this->loadLops();
-    }
-
-    /**
-     * Khi thay đổi lớp
-     */
-    public function updatedSelectedLop(): void
-    {
-        $this->selectedLop = $this->sanitizeInteger($this->selectedLop);
-
-        if ($this->selectedLop !== null) {
-            try {
-                $this->validateOnly('selectedLop');
-            } catch (ValidationException $e) {
-                $this->selectedLop = null;
-                session()->flash('warning', 'Lớp không hợp lệ');
-            }
-        }
-
-        $this->resetPage();
-        $this->loadScoresData();
-    }
-
-    /**
-     * Khi thay đổi học kỳ
-     */
-    public function updatedSelectedSemester(): void
-    {
-        $this->selectedSemester = is_numeric($this->selectedSemester)
-            ? (int) $this->selectedSemester
-            : 1;
-
-        if (!in_array($this->selectedSemester, [1, 2])) {
-            $this->selectedSemester = 1;
-        }
-
-        $this->resetPage();
-        $this->loadScoresData();
-    }
-
-    // ==================== SCORE ENTRY ACTIONS ====================
-
-    /**
-     * Mở modal nhập điểm
-     */
-    public function openScoreForm(int $studentClassId, int $scoreTypeId)
-    {
-        $this->currentStudentClassId = $studentClassId;
-        $this->currentScoreTypeId = $scoreTypeId;
-
-        $existing = $this->getScoreData($studentClassId, $scoreTypeId);
-
-        if ($existing) {
-            $this->scoreValue = $existing['value'];
-            $this->attempt = $existing['attempt'];
-            $this->scoreNote = $existing['note'];
-        } else {
-            $this->resetScoreForm();
-        }
-
-        $this->showScoreForm = true;
-    }
-
-    /**
-     * Lưu điểm
-     */
-    public function saveScore(): void
-    {
-        $this->requireManager();
-
-        $this->validate($this->scoreRules, $this->messages);
-
-        try {
-            DB::beginTransaction();
-
-            StudentScore::updateOrCreate(
-                [
-                    'student_class_id' => $this->currentStudentClassId,
-                    'score_type_id' => $this->currentScoreTypeId,
-                    'attempt' => $this->attempt,
-                ],
-                [
-                    'score_value' => $this->scoreValue,
-                    'note' => $this->scoreNote,
-                ]
-            );
-
-            DB::commit();
-
-            session()->flash('message', 'Lưu điểm thành công');
-
-            $this->closeScoreForm();
-
-            $this->emit('scoreUpdated');
-        } catch (\Exception $e) {
-            DB::rollBack();
-            $this->logError($e, 'Error saving score', [
-                'student_class_id' => $this->currentStudentClassId,
-                'score_type_id' => $this->currentScoreTypeId,
-            ]);
-            session()->flash('error', 'Có lỗi khi lưu điểm');
-        }
-    }
-
-    /**
-     * Đóng modal nhập điểm
-     */
-    public function closeScoreForm(): void
-    {
-        $this->showScoreForm = false;
-        $this->resetScoreForm();
-        $this->resetValidation();
-    }
-
-    /**
-     * Reset form nhập điểm
-     */
-    protected function resetScoreForm(): void
-    {
-        $this->reset([
-            // 'currentStudentClassId',
-            // 'currentScoreTypeId',
-            'scoreValue',
-            'attempt',
-            'scoreNote',
-        ]);
-
-        $this->attempt = 1;
-    }
-
-    // ==================== SCORE TYPE CONFIG ACTIONS ====================
-
-    /**
-     * Mở form tạo mới loại điểm
-     */
-    public function createScoreType(): void
-    {
-        $this->requireManager();
-
-        if (!$this->selectedLop || !$this->selectedSemester) {
-            session()->flash('warning', 'Vui lòng chọn lớp và học kỳ');
-            return;
-        }
-
-        $this->resetScoreTypeForm();
-        $this->showScoreTypeForm = true;
-    }
-
-    /**
-     * Mở form edit loại điểm
-     */
-    public function editScoreType(int $id): void
-    {
-        $this->requireManager();
-
-        try {
-            $scoreType = ScoreType::findOrFail($id);
-
-            $this->editingScoreTypeId = $scoreType->id;
-            $this->typeName = $scoreType->name;
-            $this->scoreTypeType = $scoreType->type;
-            $this->typeOrder = $scoreType->order;
-            $this->typeCoefficient = $scoreType->coefficient;
-            $this->typeMaxScore = $scoreType->max_score;
-            $this->typeIsActive = $scoreType->is_active;
-
-            $this->showScoreTypeForm = true;
-        } catch (ModelNotFoundException $e) {
-            session()->flash('error', 'Không tìm thấy loại điểm này');
-        } catch (\Exception $e) {
-            $this->logError($e, 'Error loading score type for edit', ['id' => $id]);
-            session()->flash('error', 'Có lỗi khi tải thông tin loại điểm');
-        }
-    }
-
-    /**
-     * Lưu loại điểm
-     */
-    public function saveScoreType(): void
-    {
-        $this->requireManager();
-
-        $this->validate($this->scoreTypeRules, $this->messages);
-
-        try {
-            DB::beginTransaction();
-
-            // Check unique: class + semester + type
-            $exists = ScoreType::where('class_id', $this->selectedLop)
-                ->where('semester', $this->selectedSemester)
-                ->where('type', $this->scoreTypeType)
-                ->when($this->editingScoreTypeId, fn($q) => $q->where('id', '!=', $this->editingScoreTypeId))
-                ->exists();
-
-            if ($exists) {
-                DB::rollBack();
-                session()->flash('error', 'Loại điểm này đã tồn tại trong học kỳ');
-                return;
-            }
-
-            ScoreType::updateOrCreate(
-                ['id' => $this->editingScoreTypeId],
-                [
-                    'class_id' => $this->selectedLop,
-                    'semester' => $this->selectedSemester,
-                    'type' => $this->scoreTypeType,
-                    'name' => $this->typeName,
-                    'order' => $this->typeOrder,
-                    'coefficient' => $this->typeCoefficient,
-                    'max_score' => $this->typeMaxScore,
-                    'is_active' => $this->typeIsActive,
-                ]
-            );
-
-            DB::commit();
-
-            $message = $this->editingScoreTypeId
-                ? 'Cập nhật loại điểm thành công'
-                : 'Tạo loại điểm mới thành công';
-
-            session()->flash('message', $message);
-
-            $this->closeScoreTypeForm();
-            $this->loadScoresData();
-
-            $this->emit('scoreTypeUpdated');
-        } catch (\Exception $e) {
-            DB::rollBack();
-            $this->logError($e, 'Error saving score type', [
-                'editing_id' => $this->editingScoreTypeId,
-                'type' => $this->scoreTypeType,
-            ]);
-            session()->flash('error', 'Có lỗi khi lưu loại điểm. Vui lòng thử lại.');
-        }
-    }
-
-    /**
-     * Xóa loại điểm
-     */
-    public function deleteScoreType(int $id): void
-    {
-        $this->requireAdmin(); // Chỉ Admin mới được xóa
-
-        try {
-            DB::beginTransaction();
-
-            $scoreType = ScoreType::findOrFail($id);
-
-            // Check if has scores
-            $hasScores = StudentScore::where('score_type_id', $id)->exists();
-
-            if ($hasScores) {
-                DB::rollBack();
-                session()->flash('error', 'Không thể xóa loại điểm đã có dữ liệu');
-                return;
-            }
-
-            $scoreType->delete();
-
-            DB::commit();
-
-            session()->flash('message', 'Đã xóa loại điểm thành công');
-            $this->loadScoresData();
-        } catch (ModelNotFoundException $e) {
-            DB::rollBack();
-            session()->flash('error', 'Không tìm thấy loại điểm này');
-        } catch (\Exception $e) {
-            DB::rollBack();
-            $this->logError($e, 'Error deleting score type', ['id' => $id]);
-            session()->flash('error', 'Có lỗi khi xóa loại điểm');
-        }
-    }
-
-    /**
-     * Toggle trạng thái loại điểm
-     */
-    public function toggleScoreTypeStatus(int $id): void
-    {
-        $this->requireManager();
-
-        try {
-            $scoreType = ScoreType::findOrFail($id);
-
-            $scoreType->update(['is_active' => !$scoreType->is_active]);
-
-            $message = $scoreType->is_active
-                ? 'Đã kích hoạt loại điểm'
-                : 'Đã tắt loại điểm';
-
-            session()->flash('message', $message);
-
-            $this->loadScoresData();
-        } catch (ModelNotFoundException $e) {
-            session()->flash('error', 'Không tìm thấy loại điểm này');
-        } catch (\Exception $e) {
-            $this->logError($e, 'Error toggling score type status', ['id' => $id]);
-            session()->flash('error', 'Có lỗi khi thay đổi trạng thái loại điểm');
-        }
-    }
-
-    /**
-     * Đóng modal cấu hình loại điểm
-     */
-    public function closeScoreTypeForm(): void
-    {
-        $this->showScoreTypeForm = false;
-        $this->resetScoreTypeForm();
-        $this->resetValidation();
-    }
-
-    /**
-     * Reset form loại điểm
-     */
-    protected function resetScoreTypeForm(): void
-    {
-        $this->reset([
-            'editingScoreTypeId',
-            'typeName',
-            'scoreTypeType',
-            'typeOrder',
-            'typeCoefficient',
-            'typeMaxScore',
-            'typeIsActive',
-        ]);
-
-        // Set defaults
-        $this->typeOrder = 0;
-        $this->typeCoefficient = 1.0;
-        $this->typeMaxScore = 10.0;
-        $this->typeIsActive = true;
-    }
-
     // ==================== EVENT HANDLERS ====================
 
-    /**
-     * Handle filters changed event từ FilterBar
-     */
-    public function handleFilterChanged($filters)
+    public function handleFilterChanged(array $filters): void
     {
         if (!is_array($filters)) {
             return;
         }
 
-        // Năm học
+        $namHocChanged = false;
+
         if (array_key_exists('namHoc', $filters)) {
-            $newNamHoc = $this->sanitizeInteger($filters['namHoc']);
-
-            if ($newNamHoc !== $this->selectedNamHoc) {
-                $this->selectedNamHoc = $newNamHoc;
-                $this->selectedLop = null;
-                $this->resetPage();
-                $this->loadLops();
+            $new = $this->toInt($filters['namHoc']);
+            if ($new !== $this->selectedNamHoc) {
+                $this->selectedNamHoc = $new;
+                $this->selectedKhoi   = null;
+                $this->selectedLop    = null;
+                $namHocChanged        = true;
             }
         }
 
-        // Lớp
+        if (array_key_exists('khoi', $filters)) {
+            $new = $this->toInt($filters['khoi']);
+            if ($new !== $this->selectedKhoi) {
+                $this->selectedKhoi = $new;
+                $this->selectedLop  = null;
+            }
+        }
+
         if (array_key_exists('lop', $filters)) {
-            $this->selectedLop = $this->sanitizeInteger($filters['lop']);
-            $this->resetPage();
-            $this->loadScoresData();
+            $this->selectedLop = $this->toInt($filters['lop']);
         }
 
-        // Học kỳ
-        if (array_key_exists('semester', $filters)) {
-            $newSemester = is_numeric($filters['semester'])
-                ? (int) $filters['semester']
-                : 1;
-
-            if (in_array($newSemester, [1, 2])) {
-                $this->selectedSemester = $newSemester;
-                $this->resetPage();
-                $this->loadScoresData();
-            }
+        if (array_key_exists('ky', $filters)) {
+            $sem = (int) $filters['ky'];
+            $this->selectedSemester = in_array($sem, [1, 2]) ? $sem : 1;
         }
-    }
 
-    /**
-     * Reset filters
-     */
-    public function resetFilters(): void
-    {
-        $this->selectedLop = null;
-        $this->selectedSemester = 1;
-        $this->scoreTypes = collect();
+        $this->scoreTypes   = collect();
         $this->scoresMatrix = [];
+        $this->averages     = [];
         $this->resetPage();
 
-        session()->flash('message', 'Đã đặt lại bộ lọc');
+        if ($namHocChanged) {
+            $this->loadLops();
+        } elseif (array_key_exists('khoi', $filters)) {
+            $this->loadLops();
+        }
+
+        if ($this->selectedLop) {
+            $this->loadScoreTypes();
+        }
     }
 
-    // ==================== HELPER METHODS ====================
+    // ==================== HELPERS ====================
 
-    /**
-     * Sanitize integer value
-     */
-    private function sanitizeInteger($value): ?int
+    private function toInt($value): ?int
     {
         if ($value === '' || $value === null) {
             return null;
@@ -859,9 +1013,6 @@ class ScoreManager extends BaseComponent
         return is_numeric($value) ? (int) $value : null;
     }
 
-    /**
-     * Get năm học mặc định (năm active mới nhất)
-     */
     protected function getDefaultNamHocId(): ?int
     {
         return NamHoc::ofParish($this->parishId)
@@ -870,43 +1021,25 @@ class ScoreManager extends BaseComponent
             ->value('id');
     }
 
-    /**
-     * Get điểm của học sinh theo loại điểm
-     */
     public function getScoreValue(int $studentClassId, int $scoreTypeId): ?float
     {
         return $this->scoresMatrix[$studentClassId][$scoreTypeId]['value'] ?? null;
     }
 
-    /**
-     * Get score data (bao gồm cả attempt, note)
-     */
-    public function getScoreData(int $studentClassId, int $scoreTypeId): ?array
+    public function getAverage(int $studentClassId): ?float
     {
-        return $this->scoresMatrix[$studentClassId][$scoreTypeId] ?? null;
-    }
-
-    /**
-     * Tính điểm trung bình học kỳ của học sinh
-     * TODO: Implement weighted average calculation
-     */
-    public function calculateStudentAverage(int $studentClassId): ?float
-    {
-        // Placeholder for future implementation
-        return null;
+        return $this->averages[$studentClassId] ?? null;
     }
 
     // ==================== RENDER ====================
 
-    /**
-     * Render component
-     */
     public function render()
     {
-        $studentsPaginated = $this->getStudentsPaginated();
+        $students = $this->getStudentsPaginated();
 
         return view('livewire.score.score-manager', [
-            'students' => $studentsPaginated,
+            'students'       => $students,
+            'parishId'       => $this->parishId,
         ])
             ->extends('frontend.layout.main')
             ->section('content');

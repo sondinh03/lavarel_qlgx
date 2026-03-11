@@ -10,6 +10,9 @@ class CatechismClassPolicy
 {
     use HandlesAuthorization;
 
+    /**
+     * Super Admin bỏ qua tất cả checks
+     */
     public function before(User $user)
     {
         if ($user->isSuperAdmin()) {
@@ -17,12 +20,18 @@ class CatechismClassPolicy
         }
     }
 
+    /**
+     * Xem danh sách lớp
+     */
     public function viewAny(User $user): bool
     {
         return $user->hasRole('parish_admin')
             || $user->hasRole('catechist');
     }
 
+    /**
+     * Xem chi tiết 
+     */
     public function view(User $user, CatechismClass $class): bool
     {
         // parish_admin xem mọi lớp trong xứ
@@ -51,9 +60,9 @@ class CatechismClassPolicy
             && $user->parish_id === $class->parish_id;
     }
 
-    public function delete(): bool
+    public function delete(User $user, CatechismClass $class): bool
     {
-        // khuyến nghị: vẫn không cho delete thật
-        return false;
+        return $user->hasRole('parish_admin')
+            && $user->parish_id === $class->parish_id;
     }
 }

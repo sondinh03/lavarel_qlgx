@@ -2,11 +2,11 @@
 
 namespace App\Policies;
 
-use App\Models\StudentNew;
+use App\Models\NamHoc;
 use App\Models\User;
 use Illuminate\Auth\Access\HandlesAuthorization;
 
-class StudentPolicy
+class SchoolYearPolicy
 {
     use HandlesAuthorization;
 
@@ -29,7 +29,7 @@ class StudentPolicy
      */
     public function viewAny(User $user): bool
     {
-        return $user->hasRole('parish_admin')
+        return $user->hasRole('parish_admin') 
             || $user->hasRole('catechist');
     }
 
@@ -37,18 +37,11 @@ class StudentPolicy
      * Xem chi tiết 1 học sinh
      * parish_admin và catechist có thể xem chi tiết học sinh trong xứ mình
      */
-    public function view(User $user, StudentNew $student): bool
+    public function view(User $user, NamHoc $namHoc): bool
     {
         if ($user->hasRole('parish_admin') || $user->hasRole('catechist')) {
-            return $user->parish_id === $student->parish_id;
+            return $user->parish_id === $namHoc->parish_id;
         }
-
-        // catechist chỉ xem học sinh trong lớp mình dạy
-        // if ($user->hasRole('catechist')) {
-        //     return $student->classes()
-        //         ->whereHas('teachers', fn($q) => $q->where('user_id', $user->id))
-        //         ->exists();
-        // }
 
         return false;
     }
@@ -64,19 +57,19 @@ class StudentPolicy
     /**
      * Sửa học sinh - parish_admin trong cùng xứ
      */
-    public function update(User $user, StudentNew $student): bool
+    public function update(User $user, NamHoc $namHoc): bool
     {
         return $user->hasRole('parish_admin')
-            && $user->parish_id === $student->parish_id;
+            && $user->parish_id === $namHoc->parish_id;
     }
 
     /**
      * Xóa học sinh - parish_admin trong cùng xứ
      * Cân nhắc: có thể set false nếu không muốn cho xóa thật
      */
-    public function delete(User $user, StudentNew $student): bool
+    public function delete(User $user, NamHoc $namHoc): bool
     {
         return $user->hasRole('parish_admin')
-            && $user->parish_id === $student->parish_id;
+            && $user->parish_id === $namHoc->parish_id;
     }
 }

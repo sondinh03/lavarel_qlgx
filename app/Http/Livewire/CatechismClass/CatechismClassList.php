@@ -167,10 +167,10 @@ class CatechismClassList extends BaseComponent
 
     // ==================== PROPERTY UPDATERS ====================
 
-    public function updatedSearch(): void
-    {
-        parent::updatedSearch();
-    }
+    // public function updatedSearch(): void
+    // {
+    //     parent::updatedSearch();
+    // }
 
     public function updatedSelectedNamHoc(): void
     {
@@ -215,7 +215,7 @@ class CatechismClassList extends BaseComponent
 
     public function create(): void
     {
-        $this->requireManager();
+        $this->authorize('create', CatechismClass::class);
 
         if (!$this->selectedNamHoc) {
             session()->flash('warning', 'Vui lòng chọn năm học trước');
@@ -235,13 +235,12 @@ class CatechismClassList extends BaseComponent
 
     public function edit(int $id): void
     {
-        $this->requireManager();
+        $class = CatechismClass::where('school_year_id', $this->selectedNamHoc)
+            ->findOrFail($id);
+
+        $this->authorize('update', $class);
 
         try {
-            // BelongsToParish global scope tự filter parish_id
-            $class = CatechismClass::where('school_year_id', $this->selectedNamHoc)
-                ->findOrFail($id);
-
             $this->loadAvailableGradeLevels();
 
             $this->editingId       = $class->id;
@@ -261,7 +260,16 @@ class CatechismClassList extends BaseComponent
 
     public function save(): void
     {
-        $this->requireManager();
+        if ($this->editingId) {
+            $class = CatechismClass::find($this->editingId);
+            if (!$class) {
+                session()->flash('error', 'Không tìm thấy lớp học này');
+                return;
+            }
+            $this->authorize('update', $class);
+        } else {
+            $this->authorize('create', CatechismClass::class);
+        }
 
         if (!$this->selectedNamHoc) {
             session()->flash('error', 'Vui lòng chọn năm học');
@@ -314,30 +322,33 @@ class CatechismClassList extends BaseComponent
         }
     }
 
-    // public function toggleStatus(int $id): void
-    // {
-    //     $this->requireManager();
+    public function delete(int $id): void
+    {
+        $class = CatechismClass::where('school_year_id', $this->selectedNamHoc)
+            ->findOrFail($id);
 
-    //     try {
-    //         $class = CatechismClass::where('school_year_id', $this->selectedNamHoc)
-    //             ->findOrFail($id);
+        $this->authorize('delete', $class);
 
-    //         $class->update(['is_active' => !$class->is_active]);
+        try {
+            if ($class->students()->exists()) {
+                session()->flash('error', 'Không thể xóa lớp còn học sinh. Vui lòng chuyển học sinh trước.');
+                return;
+            }
 
-    //         session()->flash(
-    //             'message',
-    //             $class->is_active
-    //                 ? 'Đã kích hoạt lớp học'
-    //                 : 'Đã tắt lớp học'
-    //         );
-    //     } catch (ModelNotFoundException $e) {
-    //         session()->flash('error', 'Không tìm thấy lớp học này');
-    //     } catch (\Exception $e) {
-    //         $this->logError($e, 'Error toggling class status', ['id' => $id]);
-    //         session()->flash('error', 'Có lỗi khi thay đổi trạng thái lớp học');
-    //     }
-    // }
+            DB::beginTransaction();
+            $class->delete();
+            DB::commit();
 
+            session()->flash('message', 'Xóa lớp học thành công');
+            $this->emit('classDeleted');
+        } catch (ModelNotFoundException $e) {
+            session()->flash('error', 'Không tìm thấy lớp học này');
+        } catch (\Exception $e) {
+            DB::rollBack();
+            $this->logError($e, 'Error deleting class', ['id' => $id]);
+            session()->flash('error', 'Có lỗi khi xóa lớp học');
+        }
+    }
 
     // ==================== DATA LOADING ====================
 

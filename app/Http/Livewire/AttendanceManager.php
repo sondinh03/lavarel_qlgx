@@ -91,6 +91,7 @@ class AttendanceManager extends BaseComponent
             'selectedClassId' => ['as' => 'classId', 'except' => null],
             'attendanceType'  => ['as' => 'type', 'except' => 1],
             'selectedDate'    => ['as' => 'date', 'except' => null],
+            'selectedKy' => ['as' => 'ky', 'except' => null],
             'filterStatus'    => ['as' => 'status', 'except' => 'all'],
         ], parent::queryString());
     }
@@ -161,6 +162,11 @@ class AttendanceManager extends BaseComponent
             ? (int) $this->attendanceType
             : 1;
 
+        $this->selectedKy = is_numeric($this->selectedKy)
+            && in_array((int) $this->selectedKy, [1, 2])
+            ? (int) $this->selectedKy
+            : null;
+
         if (!in_array($this->filterStatus, ['all', 'present', 'absent'])) {
             $this->filterStatus = 'all';
         }
@@ -208,16 +214,24 @@ class AttendanceManager extends BaseComponent
 
     public function updatedAttendanceType(): void
     {
-        if (!empty($this->draftAttendance)) {
-            session()->flash('warning', 'Bạn có dữ liệu chưa lưu');
-            return;
-        }
-
         $this->attendanceType = in_array((int) $this->attendanceType, [1, 2])
             ? (int) $this->attendanceType
             : 1;
 
+        // Kiểm tra draft của type HIỆN TẠI (trước khi đổi)
+        // Không dùng empty($this->draftAttendance) vì draft có thể thuộc type khác
+        $pendingForCurrentType = collect($this->draftAttendance)
+            ->where('attendanceType', $this->attendanceType)
+            ->isNotEmpty();
+
+        if ($pendingForCurrentType) {
+            session()->flash('warning', 'Bạn có dữ liệu chưa lưu ở tab này');
+            // Không return — vẫn load data của tab mới
+        }
+
+        // Load đủ cả sessions lẫn records cho type mới
         $this->loadSessions();
+        $this->loadAttendanceRecords(); // ← thiếu dòng này
         $this->resetPage();
     }
 
@@ -293,6 +307,10 @@ class AttendanceManager extends BaseComponent
         try {
             $query = AttendanceSession::where('class_id', $this->selectedClassId)
                 ->where('type', $this->attendanceType)
+                ->when(
+                    $this->selectedKy,
+                    fn($q) => $q->where('semester', $this->selectedKy) // ← thêm dòng này
+                )
                 ->orderBy('date');
 
             // Mobile: chỉ load session của ngày đang chọn (sau khi đã chọn ngày)
@@ -416,7 +434,16 @@ class AttendanceManager extends BaseComponent
         }
 
         if (array_key_exists('ky', $filters)) {
-            $this->selectedKy = is_numeric($filters['ky']) ? (int) $filters['ky'] : null;
+            $newKy = is_numeric($filters['ky']) ? (int) $filters['ky'] : null;
+
+            if ($newKy !== $this->selectedKy) {
+                $this->selectedKy = $newKy;
+
+                if ($this->selectedClassId) {
+                    $this->loadSessions();         // ← reload theo kỳ mới
+                    $this->loadAttendanceRecords();
+                }
+            }
         }
 
         $this->resetPage();

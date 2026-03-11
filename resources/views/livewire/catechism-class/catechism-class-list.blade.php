@@ -216,7 +216,6 @@
                                     <span class="text-slate-300">|</span>
 
                                     {{-- Phân công GLV --}}
-                                    <p>{{ $class->id }}</p>
                                     <a href="{{ route('classes.catechists', ['id' => $class->id]) }}"
                                         class="inline-flex items-center gap-1 text-purple-600 hover:text-purple-700
                                                font-semibold text-sm transition">
@@ -228,6 +227,14 @@
                                     </a>
 
                                     <span class="text-slate-300">|</span>
+
+                                    <x-table-action
+                                        wire="delete({{ $class->id }})"
+                                        icon="trash"
+                                        color="danger"
+                                        confirm="Bạn có chắc chắn muốn xóa lớp {{ $class->name }}?">
+                                        Xóa
+                                    </x-table-action>
                                 </div>
                             </td>
                         </tr>

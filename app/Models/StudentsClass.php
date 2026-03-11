@@ -53,7 +53,7 @@ class StudentsClass extends Pivot
     */
     public function student()
     {
-        return $this->belongsTo(Student::class);
+        return $this->belongsTo(StudentNew::class);
     }
 
     public function lop()

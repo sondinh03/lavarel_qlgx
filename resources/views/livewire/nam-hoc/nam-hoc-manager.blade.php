@@ -57,6 +57,12 @@
                     </x-action-button>
                 </div>
             </div>
+
+            <a href="{{ route('school-years.copy') }}"
+                class="inline-flex items-center gap-2 px-4 py-2 border border-primary-600
+          text-primary-600 rounded-xl hover:bg-primary-50 text-sm font-semibold">
+                Copy từ năm cũ
+            </a>
         </div>
 
         <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">

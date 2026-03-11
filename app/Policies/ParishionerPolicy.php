@@ -33,15 +33,26 @@ class ParishionerPolicy
 
     /**
      * Xem chi tiết một giáo dân
+     * parish_admin và catechist chỉ xem giáo dân trong xứ mình
      */
     public function view(User $user, Parishioner $parishioner): bool
     {
-        return $user->hasRole('parish_admin')
-            && $user->parish_id === $parishioner->parish_id;
+        if ($user->hasRole('parish_admin')) {
+            return $user->parish_id === $parishioner->parish_id;
+        }
+
+        if ($user->hasRole('catechist')) {
+            return $parishioner->classes()
+                ->whereHas('teachers', fn($q) => $q->where('user_id', $user->id))
+                ->exists();
+        }
+
+        return false;
     }
 
     /**
      * Tạo giáo dân mới
+     * chỉ parish_admin trong cùng xứ được tạo giáo dân mới
      */
     public function create(User $user): bool
     {

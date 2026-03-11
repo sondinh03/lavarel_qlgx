@@ -96,22 +96,18 @@ abstract class BaseComponent extends Component
         $this->loadInitialData();
     }
 
-    /**
-     * Khởi tạo thông tin user từ session
-     * Child class có thể override để custom logic
-     */
+    // ==================== INITIALIZATION METHODS ====================
     protected function initializeUser(): void
     {
+        /** @var \App\Models\User $user */
         $user = auth()->user() ?? abort(401, 'Chưa đăng nhập');
-        if (!$user->hasRole('super_admin')) {
-            $this->parishId = $user->parish_id;
+        if (!$user->isSuperAdmin()) {
+            $this->parishId = $user->parishId();
         }
     }
 
-
     /**
-     * Yêu cầu phải có parishId (cho cả Admin và Decen)
-     * Gọi method này trong child component nếu bắt buộc phải có parishId
+     * Kiểm tra nếu cần parishId, throw 403 nếu không có
      */
     protected function requireParishId(): void
     {
@@ -250,30 +246,34 @@ abstract class BaseComponent extends Component
      */
     protected function logError(\Exception $e, string $context, array $extra = []): void
     {
-        Log::error(static::class . ": {$context}", array_merge([
-            'error'     => $e->getMessage(),
-            'trace'     => $e->getTraceAsString(),
-            'parishId'  => $this->parishId,
-            'user_id'   => auth()->id(),        // thay is_admin
-            'roles'     => auth()->user()?->getRoleNames(), // log roles thực tế
+        Log::error(static::class . ": $context - " . $e->getMessage(), array_merge([
+            'parishId' => $this->parishId,
+            'search' => $this->search,
+            'perPage' => $this->perPage,
         ], $extra));
     }
 
     /**
-     * Check quyền admin tổng, throw 403 nếu không phải
+     * Check quyền Super Admin, throw 403 nếu không phải
      */
-    protected function requireAdmin(): void
-    {
-        auth()->user()?->hasRole('super_admin')
-            || abort(403, 'Chỉ super admin mới có quyền');
-    }
+    // protected function requireAdmin(): void
+    // {
+    //     /** @var \App\Models\User $user */
+    //     $user = auth()->user();
+
+    //     $user->isSuperAdmin()
+    //         || abort(403, 'Chỉ super admin mới có quyền');
+    // }
 
     /**
      * Check quyền quản trị (Super Admin hoặc Parish Admin), throw 403 nếu không phải
      */
     protected function requireManager(): void
     {
-        auth()->user()?->hasAnyRole(['super_admin', 'parish_admin'])
+        /** @var \App\Models\User $user */
+        $user = auth()->user();
+
+        $user->hasAnyRole(['super_admin', 'parish_admin'])
             || abort(403, 'Chỉ quản trị viên mới có quyền');
     }
 
@@ -282,7 +282,10 @@ abstract class BaseComponent extends Component
      */
     protected function requireDecenOfParish(): void
     {
-        auth()->user()?->hasRole('parish_admin')
+        /** @var \App\Models\User $user */
+        $user = auth()->user();
+
+        $user->hasRole('parish_admin')
             || abort(403, 'Chỉ quản trị xứ mới có quyền');
 
         $this->parishId

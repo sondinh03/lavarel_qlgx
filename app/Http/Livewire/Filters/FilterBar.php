@@ -62,7 +62,7 @@ class FilterBar extends Component
         $this->namHocs = collect();
         $this->khois   = collect();
         $this->lops    = collect();
-        $this->kys     = collect();
+        // $this->kys     = collect();
 
         if ($this->parish_id !== null) {
             $this->loadNamHocs();
@@ -72,6 +72,57 @@ class FilterBar extends Component
             $this->loadKhois();
             $this->loadLops();
         }
+
+        if (!$this->selectedKy && $this->selectedNamHoc) {
+            $this->selectedKy = $this->detectCurrentSemester();
+        }
+    }
+
+    /**
+     * Xác định kỳ hiện tại dựa vào ngày hôm nay và NamHoc đang chọn
+     */
+    protected function detectCurrentSemester(): ?int
+    {
+        if (!$this->selectedNamHoc) {
+            return null;
+        }
+
+        $namHoc = NamHoc::find($this->selectedNamHoc);
+
+        if (!$namHoc) {
+            return null;
+        }
+
+        $today = now()->toDateString();
+
+        // Trong khoảng kỳ 1
+        if ($namHoc->start_date_one && $namHoc->end_date_one) {
+            if (
+                $today >= $namHoc->start_date_one->toDateString()
+                && $today <= $namHoc->end_date_one->toDateString()
+            ) {
+                return 1;
+            }
+        }
+
+        // Trong khoảng kỳ 2
+        if ($namHoc->start_date_two && $namHoc->end_date_two) {
+            if (
+                $today >= $namHoc->start_date_two->toDateString()
+                && $today <= $namHoc->end_date_two->toDateString()
+            ) {
+                return 2;
+            }
+        }
+
+        // Ngoài cả 2 kỳ → fallback theo ngày
+        // Trước kỳ 1 hoặc giữa 2 kỳ → chọn kỳ 1
+        // Sau kỳ 2 → chọn kỳ 2
+        if ($namHoc->end_date_two && $today > $namHoc->end_date_two->toDateString()) {
+            return 2;
+        }
+
+        return 1; // default kỳ 1
     }
 
     public function loadNamHocs()
@@ -117,6 +168,8 @@ class FilterBar extends Component
             : null;
 
         $this->reset(['selectedKhoi', 'selectedLop', 'selectedKy']);
+
+        $this->selectedKy = $this->detectCurrentSemester();
 
         $this->loadKhois();
         $this->loadLops();

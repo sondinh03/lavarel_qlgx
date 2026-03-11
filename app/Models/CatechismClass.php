@@ -49,6 +49,11 @@ class CatechismClass extends Model
         return $this->belongsTo(GradeLevel::class, 'grade_level_id');
     }
 
+    public function scoreTypes()
+    {
+        return $this->hasMany(ScoreType::class, 'class_id');
+    }
+
     public function teachers()
     {
         return $this->belongsToMany(

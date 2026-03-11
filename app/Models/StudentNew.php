@@ -118,6 +118,11 @@ class StudentNew extends Model
         )->withTimestamps();
     }
 
+    public function studentsClass()
+    {
+        return $this->hasMany(StudentsClass::class, 'student_id');
+    }
+
     /*
     |--------------------------------------------------------------------------
     | Accessors
