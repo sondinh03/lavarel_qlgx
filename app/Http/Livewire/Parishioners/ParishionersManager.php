@@ -288,17 +288,18 @@ class ParishionersManager extends BaseComponent
 
     public function create(): void
     {
-        $this->requireManager();
+        $this->authorize('create', Parishioner::class);
         $this->resetForm();
         $this->showForm = true;
     }
 
     public function edit(int $id): void
     {
-        $this->requireManager();
 
         try {
             $p = Parishioner::ofParish($this->parishId)->findOrFail($id);
+
+            $this->authorize('update', $p);
 
             $this->editingId           = $p->id;
             $this->last_name           = $p->last_name;
@@ -345,7 +346,16 @@ class ParishionersManager extends BaseComponent
 
     public function save(): void
     {
-        $this->requireManager();
+        if ($this->editingId) {
+            $p = Parishioner::ofParish($this->parishId)->find($this->editingId);
+            if (!$p) {
+                session()->flash('error', 'Không tìm thấy giáo dân này');
+                return;
+            }
+            $this->authorize('update', $p);
+        } else {
+            $this->authorize('create', Parishioner::class);
+        }
         $this->validate($this->formRules, $this->messages);
 
         try {
@@ -437,7 +447,7 @@ class ParishionersManager extends BaseComponent
 
     public function toggleStatus(int $id): void
     {
-        $this->requireManager();
+        $this->authorize('update', Parishioner::class);
 
         try {
             $p = Parishioner::ofParish($this->parishId)->findOrFail($id);
@@ -488,7 +498,7 @@ class ParishionersManager extends BaseComponent
 
     public function openStudentLink(int $parishionerId): void
     {
-        $this->requireManager();
+        $this->authorize('viewAny', Student::class);
 
         try {
             Parishioner::ofParish($this->parishId)->findOrFail($parishionerId);
