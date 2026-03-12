@@ -271,7 +271,6 @@ class TeacherManager extends BaseComponent
             throw new \Exception('Email hoặc số điện thoại đã được dùng cho tài khoản khác');
         }
 
-        dd($this->parishId);
         // Tạo user account
         $user = User::create([
             'name'      => trim($this->last_name . ' ' . $this->first_name),
