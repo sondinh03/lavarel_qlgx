@@ -88,35 +88,51 @@
                 <div class="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4">
                     {{-- LEFT: Filters --}}
                     <div class="flex flex-col gap-3 w-full lg:flex-row lg:items-center">
-                        {{-- Filter Bar --}}
-                        <livewire:filters.filter-bar
-                            :parish-id="$parishId"
-                            :show-nam-hoc="true"
-                            :show-khoi="true"
-                            :show-lop="true"
-                            :show-ky="true"
-                            :selected-nam-hoc="$selectedNamHoc"
-                            :selected-khoi="$selectedKhoi"
-                            :selected-lop="$selectedClassId"
-                            :selected-ky="$selectedKy" />
+                        {{-- Desktop: full filters --}}
+                        <div class="hidden lg:block">
+                            <livewire:filters.filter-bar
+                                :parish-id="$parishId"
+                                :show-nam-hoc="true"
+                                :show-khoi="true"
+                                :show-lop="true"
+                                :show-ky="true"
+                                :selected-nam-hoc="$selectedNamHoc"
+                                :selected-khoi="$selectedKhoi"
+                                :selected-lop="$selectedClassId"
+                                :selected-ky="$selectedKy" />
+                        </div>
 
-                        {{-- Search --}}
+                        {{-- Mobile: chỉ Lớp + Kỳ --}}
+                        <div class="lg:hidden">
+                            <livewire:filters.filter-bar
+                                :parish-id="$parishId"
+                                :show-nam-hoc="false"
+                                :show-khoi="false"
+                                :show-lop="true"
+                                :show-ky="true"
+                                :selected-nam-hoc="$selectedNamHoc"
+                                :selected-khoi="$selectedKhoi"
+                                :selected-lop="$selectedClassId"
+                                :selected-ky="$selectedKy" />
+                        </div>
+
+                        {{-- Search — desktop only --}}
                         <input
                             wire:model.live.debounce.500ms="search"
                             placeholder="Tìm học sinh..."
-                            class="w-56 px-3 py-2 rounded-xl
+                            class="hidden lg:block w-56 px-3 py-2 rounded-xl
                                 border border-slate-300
                                 text-sm focus:outline-none
                                 focus:ring-2 focus:ring-primary-500" />
                     </div>
 
                     {{-- RIGHT: Actions --}}
-                    <div class="flex items-center gap-3">
+                    <div class="hidden lg:flex items-center gap-3">
                         @if($hasUnsavedChanges)
                         <button
                             wire:click="discardDrafts"
                             class="px-4 py-2 border border-red-300 text-red-700 rounded-xl hover:bg-red-50 transition-colors
-                                text-sm font-medium flex items-center gap-2">
+            text-sm font-medium flex items-center gap-2">
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
                             </svg>
@@ -124,11 +140,11 @@
                         </button>
                         @endif
 
-                        {{-- Export Button (future) --}}
+                        {{-- Export Button --}}
                         <button
                             class="px-4 py-2 bg-white border border-slate-300 rounded-xl
-                                text-sm font-medium text-slate-700
-                                hover:bg-slate-50 transition-colors"
+            text-sm font-medium text-slate-700
+            hover:bg-slate-50 transition-colors"
                             disabled>
                             <svg class="w-4 h-4 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -522,27 +538,24 @@
         {{-- Table View --}}
         <div class="overflow-x-auto">
             <table class="w-full border-separate border-spacing-0">
-                <thead class="bg-slate-50 border-b-2 border-slate-200">
+                <thead class="bg-slate-50 border-b border-slate-200">
                     <tr>
-                        <th class="w-12 px-2 py-3 text-left text-xs font-bold text-slate-900 uppercase tracking-wider border-r border-slate-200">
-                            STT
+                        <th class="px-4 py-3 text-left text-xs font-bold text-slate-500 uppercase tracking-wider w-full">
+                            Học sinh
+                            <span class="ml-1 font-normal text-slate-400">({{ $students->count() }})</span>
                         </th>
-                        <th class="w-32 px-2 py-3 text-left text-xs font-bold text-slate-900 uppercase tracking-wider border-r border-slate-200">
-                            Họ và tên
-                        </th>
-                        <th class="px-3 py-3 text-center text-xs font-bold text-slate-900 uppercase tracking-wider">
-                            <div class="flex flex-col gap-1">
-                                <span class="{{ $locked ? 'text-slate-400' : '' }}">Điểm danh</span>
-                                @if($locked)
-                                <div class="flex items-center justify-center gap-1 text-slate-400">
-                                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                            d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-                                    </svg>
-                                    <span class="text-[10px]">Đã khóa</span>
-                                </div>
-                                @endif
-                            </div>
+                        <th class="px-3 py-3 text-center text-xs font-bold text-slate-500 uppercase tracking-wider whitespace-nowrap">
+                            @if($locked)
+                            <span class="inline-flex items-center gap-1 text-slate-400">
+                                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                                </svg>
+                                Đã khóa
+                            </span>
+                            @else
+                            Điểm danh
+                            @endif
                         </th>
                     </tr>
                 </thead>
@@ -550,74 +563,92 @@
                 <tbody class="divide-y divide-slate-100 bg-white">
                     @foreach ($students as $index => $student)
                     @php $status = $this->getAttendanceStatus($student->id, $selectedDate ?? ''); @endphp
-                    <tr class="hover:bg-slate-50 transition-colors" wire:key="mobile-student-{{ $student->id }}">
-                        <td class="w-12 px-2 py-3 text-sm text-slate-500 font-medium border-r border-slate-100">
-                            {{ $index + 1 }}
-                        </td>
-                        <td class="w-32 px-2 py-3 border-r border-slate-100">
-                            <div class="flex flex-col">
-                                <span class="text-[10px] text-slate-500 leading-tight">{{ $student->saint_name }}</span>
-                                <span class="font-semibold text-slate-900 text-xs leading-tight">
-                                    {{ $student->last_name }} {{ $student->name }}
-                                </span>
+                    <tr wire:key="mobile-student-{{ $student->id }}"
+                        class="{{ $status == 1 ? 'bg-green-50/40' : ($status == 3 ? 'bg-red-50/30' : '') }} transition-colors">
+
+                        {{-- Tên học sinh --}}
+                        <td class="px-4 py-3">
+                            <div class="flex items-center gap-3">
+                                {{-- Avatar index --}}
+                                <div class="w-7 h-7 rounded-full bg-slate-100 flex items-center justify-center
+                                    flex-shrink-0 text-xs font-semibold text-slate-500">
+                                    {{ $index + 1 }}
+                                </div>
+                                <div class="min-w-0">
+                                    <div class="text-sm font-semibold text-slate-900 leading-tight">
+                                        {{ $student->full_name }}
+                                    </div>
+                                    @if($student->saint_name)
+                                    <div class="text-xs text-slate-400 leading-tight mt-0.5">
+                                        {{ $student->saint_name }}
+                                    </div>
+                                    @endif
+                                </div>
                             </div>
                         </td>
+
+                        {{-- Attendance buttons --}}
                         <td class="px-3 py-3">
                             @if($locked)
-                            <div class="flex items-center justify-center">
+                            {{-- Read-only view --}}
+                            <div class="flex justify-center">
                                 @if($status == 1)
-                                <div class="flex flex-col items-center gap-1">
-                                    <div class="w-8 h-8 bg-green-500 rounded-lg flex items-center justify-center shadow-sm">
-                                        <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7" />
-                                        </svg>
-                                    </div>
-                                    <span class="text-[9px] text-green-700 font-medium">Có mặt</span>
-                                </div>
+                                <span class="w-11 h-11 rounded-xl bg-green-500 flex items-center justify-center shadow-sm">
+                                    <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7" />
+                                    </svg>
+                                </span>
                                 @elseif($status == 2)
-                                <div class="flex flex-col items-center gap-1">
-                                    <div class="w-8 h-8 bg-yellow-400 rounded-lg flex items-center justify-center shadow-sm">
-                                        <span class="text-slate-900 font-bold text-sm">P</span>
-                                    </div>
-                                    <span class="text-[9px] text-yellow-700 font-medium">Vắng CP</span>
-                                </div>
+                                <span class="w-11 h-11 rounded-xl bg-yellow-400 flex items-center justify-center shadow-sm">
+                                    <span class="text-slate-900 font-bold text-base">P</span>
+                                </span>
                                 @elseif($status == 3)
-                                <div class="flex flex-col items-center gap-1">
-                                    <div class="w-8 h-8 bg-red-500 rounded-lg flex items-center justify-center shadow-sm">
-                                        <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M6 18L18 6M6 6l12 12" />
-                                        </svg>
-                                    </div>
-                                    <span class="text-[9px] text-red-700 font-medium">Vắng KP</span>
-                                </div>
+                                <span class="w-11 h-11 rounded-xl bg-red-500 flex items-center justify-center shadow-sm">
+                                    <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M6 18L18 6M6 6l12 12" />
+                                    </svg>
+                                </span>
                                 @else
-                                <span class="text-xs text-slate-400">-</span>
+                                <span class="w-11 h-11 flex items-center justify-center text-slate-300 text-lg">—</span>
                                 @endif
                             </div>
+
                             @else
-                            <div class="flex gap-1 justify-center">
+                            {{-- Interactive buttons --}}
+                            <div class="flex gap-1.5 justify-center">
                                 <button
                                     wire:click="setAttendance({{ $student->id }}, {{ $currentSession['id'] ?? 0 }}, {{ $status == 1 ? 'null' : 1 }})"
-                                    class="w-9 h-9 rounded-md flex items-center justify-center transition
-                                                {{ $status == 1 ? 'bg-green-500 text-white shadow-sm' : 'bg-green-50 text-green-700 border border-green-100 hover:bg-green-100' }}"
-                                    wire:loading.attr="disabled">
-                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    wire:loading.attr="disabled"
+                                    wire:target="setAttendance"
+                                    class="w-11 h-11 rounded-xl flex items-center justify-center transition-all active:scale-95
+                                {{ $status == 1
+                                    ? 'bg-green-500 text-white shadow-md ring-2 ring-green-300'
+                                    : 'bg-green-50 text-green-700 border border-green-200 active:bg-green-100' }}">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7" />
                                     </svg>
                                 </button>
+
                                 <button
                                     wire:click="setAttendance({{ $student->id }}, {{ $currentSession['id'] ?? 0 }}, {{ $status == 2 ? 'null' : 2 }})"
-                                    class="w-9 h-9 rounded-md flex items-center justify-center font-semibold transition
-                                                {{ $status == 2 ? 'bg-yellow-400 text-slate-900 shadow-sm' : 'bg-yellow-50 text-yellow-700 border border-yellow-100 hover:bg-yellow-100' }}"
-                                    wire:loading.attr="disabled">
+                                    wire:loading.attr="disabled"
+                                    wire:target="setAttendance"
+                                    class="w-11 h-11 rounded-xl flex items-center justify-center font-bold text-base transition-all active:scale-95
+                                {{ $status == 2
+                                    ? 'bg-yellow-400 text-slate-900 shadow-md ring-2 ring-yellow-300'
+                                    : 'bg-yellow-50 text-yellow-700 border border-yellow-200 active:bg-yellow-100' }}">
                                     P
                                 </button>
+
                                 <button
                                     wire:click="setAttendance({{ $student->id }}, {{ $currentSession['id'] ?? 0 }}, {{ $status == 3 ? 'null' : 3 }})"
-                                    class="w-9 h-9 rounded-md flex items-center justify-center transition
-                                                {{ $status == 3 ? 'bg-red-500 text-white shadow-sm' : 'bg-red-50 text-red-700 border border-red-100 hover:bg-red-100' }}"
-                                    wire:loading.attr="disabled">
-                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    wire:loading.attr="disabled"
+                                    wire:target="setAttendance"
+                                    class="w-11 h-11 rounded-xl flex items-center justify-center transition-all active:scale-95
+                                {{ $status == 3
+                                    ? 'bg-red-500 text-white shadow-md ring-2 ring-red-300'
+                                    : 'bg-red-50 text-red-700 border border-red-200 active:bg-red-100' }}">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M6 18L18 6M6 6l12 12" />
                                     </svg>
                                 </button>
@@ -629,6 +660,81 @@
                 </tbody>
             </table>
         </div>
+
+        {{-- Mobile Sticky Bottom Bar --}}
+        <div class="lg:hidden fixed bottom-0 left-0 right-0 z-40
+            bg-white border-t border-slate-200 shadow-lg px-4 py-3">
+            <div class="flex items-center gap-3 max-w-7xl mx-auto">
+
+                {{-- QR Button --}}
+                @if($selectedClassId && $currentSession && !$locked)
+                <a href="{{ route('attendance.qr', [
+                    'classId' => $selectedClassId,
+                    'sessionId' => $currentSession['id'],
+                    'type' => $attendanceType,
+                ]) }}"
+                    class="flex-shrink-0 w-11 h-11 rounded-xl border border-slate-200
+                   flex items-center justify-center text-slate-600
+                   hover:bg-slate-50 transition-colors">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z" />
+                    </svg>
+                </a>
+                @endif
+
+                {{-- Discard --}}
+                @if($hasUnsavedChanges)
+                <button
+                    wire:click="discardDrafts"
+                    class="flex-shrink-0 w-11 h-11 rounded-xl border border-red-200
+                   flex items-center justify-center text-red-500
+                   hover:bg-red-50 transition-colors">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                </button>
+                @endif
+
+                {{-- Save --}}
+                <button
+                    wire:click="saveAttendance"
+                    wire:loading.attr="disabled"
+                    wire:target="saveAttendance"
+                    @disabled(empty($draftAttendance))
+                    class="flex-1 h-11 rounded-xl font-semibold text-sm transition-all
+                   flex items-center justify-center gap-2
+                   {{ !empty($draftAttendance)
+                       ? 'bg-primary-600 text-white shadow-md active:scale-95'
+                       : 'bg-slate-100 text-slate-400 cursor-not-allowed' }}">
+
+                    <span wire:loading.remove wire:target="saveAttendance" class="flex items-center gap-2">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" />
+                        </svg>
+                        Lưu điểm danh
+                        @if($pendingCount > 0)
+                        <span class="bg-white/20 text-white text-xs font-bold px-2 py-0.5 rounded-full">
+                            {{ $pendingCount }}
+                        </span>
+                        @endif
+                    </span>
+
+                    <span wire:loading wire:target="saveAttendance" class="flex items-center gap-2">
+                        <svg class="animate-spin w-4 h-4" fill="none" viewBox="0 0 24 24">
+                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
+                            <path class="opacity-75" fill="currentColor"
+                                d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                        </svg>
+                        Đang lưu...
+                    </span>
+                </button>
+            </div>
+        </div>
+
+        {{-- Spacer để content không bị sticky bar che --}}
+        <div class="lg:hidden h-20"></div>
     </div>
 
     @else
@@ -782,9 +888,10 @@
 </div>
 @endif
 
-{{-- Unsaved Changes Indicator --}}
+{{-- Unsaved Changes Indicator — desktop only --}}
 @if($hasUnsavedChanges)
-<div class="fixed top-4 right-4 bg-amber-500 text-white px-4 py-3 rounded-xl shadow-lg flex items-center gap-3 animate-pulse">
+<div class="hidden lg:flex fixed top-4 right-4 bg-amber-500 text-white px-4 py-3 
+            rounded-xl shadow-lg items-center gap-3">
     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
             d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />

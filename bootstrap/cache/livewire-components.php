@@ -1,5 +1,6 @@
 <?php return array (
   'attendance-manager' => 'App\\Http\\Livewire\\AttendanceManager',
+  'attendance-qr' => 'App\\Http\\Livewire\\AttendanceQr',
   'attendance.session-manager' => 'App\\Http\\Livewire\\Attendance\\SessionManager',
   'block.block-manager' => 'App\\Http\\Livewire\\Block\\BlockManager',
   'catechism-class.catechism-class-list' => 'App\\Http\\Livewire\\CatechismClass\\CatechismClassList',

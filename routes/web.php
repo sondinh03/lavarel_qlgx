@@ -40,6 +40,7 @@ use App\Http\Controllers\Student\StudentsImportController;
 use App\Http\Controllers\StudentImportController;
 use App\Http\Livewire\Attendance\SessionManager;
 use App\Http\Livewire\AttendanceManager;
+use App\Http\Livewire\AttendanceQr;
 use App\Http\Livewire\Block\BlockManager;
 use App\Http\Livewire\CatechismClass\CatechismClassList;
 use App\Http\Livewire\ClassStudentManager;
@@ -82,6 +83,9 @@ Route::middleware('auth')->group(function () {
 
         Route::get('/attendance', AttendanceManager::class)
             ->name('attendance.show');
+
+       Route::get('/attendance/qr', AttendanceQr::class)
+            ->name('attendance.qr');
 
         Route::get('/students', StudentListNew::class)
             ->name('students.index');
