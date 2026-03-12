@@ -47,7 +47,7 @@
 
     {{-- Camera View --}}
     @if(!($session['locked'] ?? false))
-    <div class="relative flex-shrink-0 bg-black" style="height: 60vw; max-height: 320px;">
+    <div id="camera-container" class="relative flex-shrink-0 bg-black" style="height: 60vw; max-height: 320px;">
 
         {{-- Video element — JS sẽ inject stream vào đây --}}
         <video id="qr-video"
@@ -197,31 +197,97 @@
 <script src="https://unpkg.com/jsqr@1.4.0/dist/jsQR.js"></script>
 <script>
     document.addEventListener('livewire:load', function() {
-        const video = document.getElementById('qr-video');
-        const canvas = document.createElement('canvas');
-        const ctx = canvas.getContext('2d');
-        let scanning = false;
-        let cooldown = false; // tránh emit liên tục 1 QR
 
-        async function startCamera() {
-            try {
-                const stream = await navigator.mediaDevices.getUserMedia({
-                    video: {
-                        facingMode: 'environment'
-                    } // camera sau
-                });
-                video.srcObject = stream;
-                video.play();
-                scanning = true;
-                requestAnimationFrame(tick);
-            } catch (err) {
-                console.error('Camera error:', err);
+        // iOS Safari: đợi DOM thật sự ready
+        function waitForElement(id, callback, maxTries = 20) {
+            const el = document.getElementById(id);
+            if (el) {
+                callback(el);
+            } else if (maxTries > 0) {
+                setTimeout(() => waitForElement(id, callback, maxTries - 1), 100);
+            } else {
+                console.error('Element #' + id + ' not found after waiting');
             }
         }
 
-        function tick() {
-            if (!scanning) return;
+        @if(!($session['locked'] ?? false))
+        waitForElement('qr-video', function(video) {
+            startCamera(video);
+        });
+        @endif
 
+        function startCamera(video) {
+            // Kiểm tra browser support
+            if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+                showCameraError('Trình duyệt không hỗ trợ camera');
+                return;
+            }
+
+            // iOS ưu tiên: thử camera sau trước, fallback về bất kỳ camera nào
+            const constraints = [{
+                    video: {
+                        facingMode: {
+                            exact: 'environment'
+                        }
+                    }
+                }, // camera sau (exact)
+                {
+                    video: {
+                        facingMode: 'environment'
+                    }
+                }, // camera sau (preferred)
+                {
+                    video: true
+                }, // bất kỳ camera nào
+            ];
+
+            tryGetUserMedia(constraints, 0, video);
+        }
+
+        function tryGetUserMedia(constraints, index, video) {
+            if (index >= constraints.length) {
+                showCameraError('Không thể truy cập camera. Kiểm tra quyền trong Cài đặt.');
+                return;
+            }
+
+            navigator.mediaDevices.getUserMedia(constraints[index])
+                .then(function(stream) {
+                    video.srcObject = stream;
+
+                    // iOS cần gọi play() sau khi set srcObject
+                    const playPromise = video.play();
+
+                    if (playPromise !== undefined) {
+                        playPromise
+                            .then(function() {
+                                // Play thành công, bắt đầu scan
+                                requestAnimationFrame(function() {
+                                    tick(video);
+                                });
+                            })
+                            .catch(function(err) {
+                                console.error('Play error:', err);
+                                // iOS đôi khi cần user gesture — hiện nút bấm
+                                showPlayButton(video);
+                            });
+                    } else {
+                        requestAnimationFrame(function() {
+                            tick(video);
+                        });
+                    }
+                })
+                .catch(function(err) {
+                    console.warn('Camera constraint ' + index + ' failed:', err.name);
+                    // Thử constraint tiếp theo
+                    tryGetUserMedia(constraints, index + 1, video);
+                });
+        }
+
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d');
+        let cooldown = false;
+
+        function tick(video) {
             if (video.readyState === video.HAVE_ENOUGH_DATA) {
                 canvas.width = video.videoWidth;
                 canvas.height = video.videoHeight;
@@ -232,25 +298,62 @@
 
                 if (code && !cooldown) {
                     cooldown = true;
-
-                    // Gửi token lên Livewire
                     @this.call('handleQrScanned', code.data);
 
-                    // Cooldown 2.5s trước khi cho quét tiếp
-                    setTimeout(() => {
+                    setTimeout(function() {
                         cooldown = false;
                         @this.call('clearResult');
                     }, 2500);
                 }
             }
 
-            requestAnimationFrame(tick);
+            requestAnimationFrame(function() {
+                tick(video);
+            });
         }
 
-        // Chỉ start nếu không bị locked
-        @if(!($session['locked'] ?? false))
-        startCamera();
-        @endif
+        // Hiện lỗi camera lên UI
+        function showCameraError(message) {
+            const container = document.getElementById('camera-container');
+            if (container) {
+                container.innerHTML =
+                    '<div class="absolute inset-0 flex flex-col items-center justify-center gap-3 px-6">' +
+                    '<svg class="w-12 h-12 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">' +
+                    '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" ' +
+                    'd="M15 10l4.553-2.069A1 1 0 0121 8.868v6.264a1 1 0 01-1.447.894L15 14M3 8a2 2 0 00-2 2v4a2 2 0 002 2h8a2 2 0 002-2v-4a2 2 0 00-2-2H3z"/>' +
+                    '</svg>' +
+                    '<p class="text-slate-400 text-sm text-center">' + message + '</p>' +
+                    '<p class="text-slate-600 text-xs text-center">iOS: Vào Cài đặt → Safari → Camera → Cho phép</p>' +
+                    '</div>';
+            }
+        }
+
+        // iOS đôi khi cần tap để play video
+        function showPlayButton(video) {
+            const container = document.getElementById('camera-container');
+            if (!container) return;
+
+            const btn = document.createElement('button');
+            btn.className = 'absolute inset-0 flex flex-col items-center justify-center gap-3 bg-black/60';
+            btn.innerHTML =
+                '<div class="w-16 h-16 bg-primary-500 rounded-full flex items-center justify-center">' +
+                '<svg class="w-8 h-8 text-white" fill="currentColor" viewBox="0 0 24 24">' +
+                '<path d="M8 5v14l11-7z"/>' +
+                '</svg>' +
+                '</div>' +
+                '<span class="text-white text-sm">Nhấn để bật camera</span>';
+
+            btn.addEventListener('click', function() {
+                video.play().then(function() {
+                    btn.remove();
+                    requestAnimationFrame(function() {
+                        tick(video);
+                    });
+                });
+            });
+
+            container.appendChild(btn);
+        }
     });
 </script>
 @endpush
