@@ -59,7 +59,7 @@ class LoginController extends Controller
                 // 'isDecen' => false,
                 'isTeacher' => false,
             ]);
-            
+
             return redirect()->intended('/admin/dashboard');
         }
 
@@ -76,10 +76,9 @@ class LoginController extends Controller
             session([
                 'parish_id' => $decen->pid,
                 'isAdmin' => false,
-                // 'isDecen' => true,
                 'isTeacher' => false,
             ]);
-            
+
             return redirect()->intended('/dashboard');
         }
 
@@ -89,17 +88,17 @@ class LoginController extends Controller
                 ->active()
                 ->first();
 
-            if (!$teacher || !$teacher->pid) {
+            if (!$teacher || !$teacher->parish_id) {
                 return $this->logoutWithError('Tài khoản giáo lý viên chưa được gán giáo xứ. Vui lòng liên hệ admin.');
             }
 
             session([
-                'parish_id' => $teacher->pid,
+                'parish_id' => $teacher->parish_id,
                 'isAdmin' => false,
                 'isDecen' => false,
                 'isTeacher' => true,
             ]);
-            
+
             return redirect()->intended('/dashboard');
         }
 
@@ -113,7 +112,7 @@ class LoginController extends Controller
     private function logoutWithError(string $message)
     {
         Auth::logout();
-        
+
         return redirect()->route('login')
             ->withErrors(['email' => $message]);
     }
