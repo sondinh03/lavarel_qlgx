@@ -13,7 +13,7 @@ $className = $lop->name ?? '';
 $yearName = $lop->schoolYear->name ?? '';
 $birthday = $student->birthday?->format('d/m/Y') ?? '';
 $code = $student->student_code ?? ('HS-' . $student->id);
-$qrToken = $student->qr_token ?? $code;
+$qrToken = $student->qr_token ?? '';
 $isMale = in_array($student->gender, ['male', 1, '1']);
 $genderColor = $isMale ? '#1d4ed8' : '#be185d';
 $genderLabel = $isMale ? 'Nam' : 'Nữ';
@@ -124,13 +124,13 @@ $genderLabel = $isMale ? 'Nam' : 'Nữ';
             <img
                 src="https://api.qrserver.com/v1/create-qr-code/?size=53x53&data={{ urlencode($qrToken) }}&color=0f172a&bgcolor=ffffff"
                 style="
-        width: 14mm;
-        height: 14mm;
-        border: 0.3mm solid #e2e8f0;
-        border-radius: 1mm;
-        display: block;
-        flex-shrink: 0;
-    "
+                    width: 14mm;
+                    height: 14mm;
+                    border: 0.3mm solid #e2e8f0;
+                    border-radius: 1mm;
+                    display: block;
+                    flex-shrink: 0;
+                "
                 alt="QR {{ $code }}"
                 crossorigin="anonymous" />
         </div>
