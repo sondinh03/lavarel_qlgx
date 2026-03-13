@@ -55,6 +55,7 @@ use App\Http\Livewire\Parish\ParishGroup;
 use App\Http\Livewire\Parish\ParishGroupManager;
 use App\Http\Livewire\Parishioners\ParishionersManager;
 use App\Http\Livewire\Score\ScoreManager;
+use App\Http\Livewire\Student\PrintCards;
 use App\Http\Livewire\Student\StudentDetail;
 use App\Http\Livewire\Student\StudentEdit;
 use App\Http\Livewire\Student\StudentImportPreview;
@@ -75,18 +76,21 @@ Auth::routes();
 Route::middleware('auth')->group(function () {
 
 
-    Route::get('/dashboard-admin', AdminDashboard::class)
-        ->name('dashboard.admin');
+    Route::get('/parish-admin-dashboard', AdminDashboard::class)
+        ->name('parish-admin.dashboard');
 
     Route::get('/catechist-dashboard', CatechistDashboard::class)
         ->name('catechist.dashboard');
 
     Route::get('/dashboard', function () {
-        if (auth()->user()?->isCatechist()) {
-            return redirect()->route('catechist.dashboard');
-        } else {
-            return redirect()->route('dashboard.admin');
-        }
+        $user = auth()->user();
+
+        return match (true) {
+            $user?->isCatechist()   => redirect()->route('catechist.dashboard'),
+            $user?->isParishAdmin() => redirect()->route('parish-admin.dashboard'),
+            $user?->isSuperAdmin()  => redirect('/admin/dashboard'),
+            default => redirect()->route('login'),
+        };
     })->name('dashboard');
 
     Route::get('/parishioner', ParishionersManager::class)
@@ -131,6 +135,9 @@ Route::middleware('auth')->group(function () {
 
         Route::get('/students/{id}/edit', StudentEdit::class)
             ->name('students.edit');
+
+        Route::get('/studentss/print-cards', PrintCards::class)
+            ->name('students.print-cards');
 
         Route::get('/catechists/import', TeacherImportPreview::class)
             ->name('catechists.import');

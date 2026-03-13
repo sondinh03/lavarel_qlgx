@@ -287,11 +287,10 @@ class StudentListNew extends BaseComponent
             )
         );
 
-        $currentIds    = $this->getCurrentStudentsQuery()->pluck('id')->toArray();
-        $selectedCount = count(array_intersect($this->selectedStudents, $currentIds));
-        $totalCount    = count($currentIds);
+        $totalCount    = $this->getCurrentStudentsQuery()->count();
+        $selectedCount = count($this->selectedStudents);
 
-        $this->selectAll = $totalCount > 0 && $selectedCount === $totalCount;
+        $this->selectAll = $totalCount > 0 && $selectedCount >= $totalCount;
     }
 
     public function updatedSelectAllInModal($value): void
@@ -866,6 +865,24 @@ class StudentListNew extends BaseComponent
             ]);
             session()->flash('error', 'Có lỗi khi tải danh sách học viên.');
             return new LengthAwarePaginator([], 0, $this->perPage, $this->page ?? 1);
+        }
+    }
+
+    // Trong StudentListNew.php — thêm method này
+    public function printSelected(): void
+    {
+        if (empty($this->selectedStudents) && !$this->selectedLop) {
+            session()->flash('warning', 'Vui lòng chọn học sinh hoặc lớp');
+            return;
+        }
+
+        if (!empty($this->selectedStudents)) {
+            // In những học sinh đã checkbox
+            $ids = implode(',', $this->selectedStudents);
+            $this->redirect(route('students.print-cards', ['ids' => $ids]));
+        } else {
+            // Không chọn ai → in cả lớp
+            $this->redirect(route('students.print-cards', ['classId' => $this->selectedLop]));
         }
     }
 

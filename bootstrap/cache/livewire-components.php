@@ -20,6 +20,7 @@
   'parish.parish-group-manager' => 'App\\Http\\Livewire\\Parish\\ParishGroupManager',
   'parishioners.parishioners-manager' => 'App\\Http\\Livewire\\Parishioners\\ParishionersManager',
   'score.score-manager' => 'App\\Http\\Livewire\\Score\\ScoreManager',
+  'student.print-cards' => 'App\\Http\\Livewire\\Student\\PrintCards',
   'student.student-detail' => 'App\\Http\\Livewire\\Student\\StudentDetail',
   'student.student-edit' => 'App\\Http\\Livewire\\Student\\StudentEdit',
   'student.student-import-preview' => 'App\\Http\\Livewire\\Student\\StudentImportPreview',
