@@ -37,13 +37,16 @@
     <div class="mx-auto max-w-7xl space-y-5">
 
         {{-- Breadcrumb --}}
-        <x-breadcrumb
-            :items="[
+        <div class="hidden lg:block">
+            <x-breadcrumb
+                :items="[
                 ['label' => 'Trang chủ', 'url' => route('dashboard')],
                 ['label' => 'Điểm danh', 'url' => route('attendance.show')],
                 ['label' => $selectedClassName]
             ]"
-            separator="arrow" />
+                separator="arrow" />
+        </div>
+
 
         {{-- Toast Notifications --}}
         <div role="status" aria-live="polite">
@@ -102,14 +105,14 @@
                                 :selected-ky="$selectedKy" />
                         </div>
 
-                        {{-- Mobile: chỉ Lớp + Kỳ --}}
+                        {{-- Mobile: chỉ Lớp --}}
                         <div class="lg:hidden">
                             <livewire:filters.filter-bar
                                 :parish-id="$parishId"
                                 :show-nam-hoc="false"
                                 :show-khoi="false"
                                 :show-lop="true"
-                                :show-ky="true"
+                                :show-ky="false"
                                 :selected-nam-hoc="$selectedNamHoc"
                                 :selected-khoi="$selectedKhoi"
                                 :selected-lop="$selectedClassId"
@@ -662,8 +665,9 @@
         </div>
 
         {{-- Mobile Sticky Bottom Bar --}}
-        <div class="lg:hidden fixed bottom-0 left-0 right-0 z-40
-            bg-white border-t border-slate-200 shadow-lg px-4 py-3">
+        <div class="lg:hidden fixed left-0 right-0 z-40
+            bg-white border-t border-slate-200 shadow-lg px-4"
+            style="bottom: calc(env(safe-area-inset-bottom) + 60px); padding-bottom: 12px; padding-top: 12px;">
             <div class="flex items-center gap-3 max-w-7xl mx-auto">
 
                 {{-- QR Button --}}
@@ -673,7 +677,7 @@
                     'sessionId' => $currentSession['id'],
                     'type' => $attendanceType,
                 ]) }}"
-                    class="flex-shrink-0 w-11 h-11 rounded-xl border border-slate-200
+                    class="flex-shrink-0 w-14 h-14 rounded-xl border border-slate-200
                    flex items-center justify-center text-slate-600
                    hover:bg-slate-50 transition-colors">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -687,7 +691,7 @@
                 @if($hasUnsavedChanges)
                 <button
                     wire:click="discardDrafts"
-                    class="flex-shrink-0 w-11 h-11 rounded-xl border border-red-200
+                    class="flex-shrink-0 w-14 h-14 rounded-xl border border-red-200
                    flex items-center justify-center text-red-500
                    hover:bg-red-50 transition-colors">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -702,7 +706,7 @@
                     wire:loading.attr="disabled"
                     wire:target="saveAttendance"
                     @disabled(empty($draftAttendance))
-                    class="flex-1 h-11 rounded-xl font-semibold text-sm transition-all
+                    class="flex-1 h-14 rounded-xl font-semibold text-sm transition-all
                    flex items-center justify-center gap-2
                    {{ !empty($draftAttendance)
                        ? 'bg-primary-600 text-white shadow-md active:scale-95'
@@ -734,7 +738,7 @@
         </div>
 
         {{-- Spacer để content không bị sticky bar che --}}
-        <div class="lg:hidden h-20"></div>
+        <div class="lg:hidden h-32"></div>
     </div>
 
     @else

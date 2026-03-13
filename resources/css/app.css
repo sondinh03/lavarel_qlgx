@@ -2,4 +2,11 @@
 @tailwind components;
 @tailwind utilities;
 
-/* @import 'bootstrap/dist/css/bootstrap.min.css'; */
+.nav-item {
+    @apply flex items-center gap-1.5 px-3 py-2 rounded-xl text-sm font-medium
+           text-slate-600 hover:bg-primary-50 hover:text-primary-700
+           transition-all whitespace-nowrap;
+}
+.nav-active   { @apply bg-primary-50 text-primary-700 font-semibold; }
+.dropdown-menu { @apply absolute left-0 mt-2 w-56 bg-white border border-slate-200 rounded-2xl shadow-xl overflow-hidden z-50 py-1; }
+.sticky-action-bar { bottom: var(--bottom-offset); }

@@ -36,16 +36,15 @@ use App\Http\Controllers\LopImportController;
 use App\Http\Controllers\TeacherImportController;
 use App\Http\Controllers\KetQuaExportController;
 use App\Http\Controllers\HonPhoiExportController;
-use App\Http\Controllers\Student\StudentsImportController;
 use App\Http\Controllers\StudentImportController;
 use App\Http\Livewire\Attendance\SessionManager;
 use App\Http\Livewire\AttendanceManager;
 use App\Http\Livewire\AttendanceQr;
-use App\Http\Livewire\Block\BlockManager;
 use App\Http\Livewire\CatechismClass\CatechismClassList;
 use App\Http\Livewire\ClassStudentManager;
+use App\Http\Livewire\Dashboard\AdminDashboard;
+use App\Http\Livewire\Dashboard\CatechistDashboard;
 use App\Http\Livewire\Holy\HolyManager;
-use App\Http\Livewire\Home;
 use App\Http\Livewire\Landing;
 use App\Http\Livewire\Lop\AssignTeacher;
 use App\Http\Livewire\Lop\LopDetail;
@@ -74,7 +73,21 @@ Route::middleware('redirect.auth.dashboard')->group(function () {
 Auth::routes();
 
 Route::middleware('auth')->group(function () {
-    Route::get('/dashboard', Home::class)->name('dashboard');
+
+
+    Route::get('/dashboard-admin', AdminDashboard::class)
+        ->name('dashboard.admin');
+
+    Route::get('/catechist-dashboard', CatechistDashboard::class)
+        ->name('catechist.dashboard');
+
+    Route::get('/dashboard', function () {
+        if (auth()->user()?->isCatechist()) {
+            return redirect()->route('catechist.dashboard');
+        } else {
+            return redirect()->route('dashboard.admin');
+        }
+    })->name('dashboard');
 
     Route::get('/parishioner', ParishionersManager::class)
         ->name('parishioners.index');
@@ -84,7 +97,7 @@ Route::middleware('auth')->group(function () {
         Route::get('/attendance', AttendanceManager::class)
             ->name('attendance.show');
 
-       Route::get('/attendance/qr', AttendanceQr::class)
+        Route::get('/attendance/qr', AttendanceQr::class)
             ->name('attendance.qr');
 
         Route::get('/students', StudentListNew::class)

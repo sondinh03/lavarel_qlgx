@@ -635,6 +635,40 @@ class AttendanceManager extends BaseComponent
 
     protected function getDefaultNamHocId(): ?int
     {
+        $today = now()->toDateString();
+
+        // Ưu tiên 1: năm học đang trong khoảng kỳ 1 hoặc kỳ 2
+        $current = NamHoc::where('parish_id', $this->parishId)
+            ->where('status', true)
+            ->where(function ($q) use ($today) {
+                $q->where(function ($q1) use ($today) {
+                    // Trong kỳ 1
+                    $q1->whereDate('start_date_one', '<=', $today)
+                        ->whereDate('end_date_one', '>=', $today);
+                })->orWhere(function ($q2) use ($today) {
+                    // Trong kỳ 2
+                    $q2->whereDate('start_date_two', '<=', $today)
+                        ->whereDate('end_date_two', '>=', $today);
+                });
+            })
+            ->value('id');
+
+        if ($current) {
+            return $current;
+        }
+
+        // Ưu tiên 2: năm học gần nhất chưa kết thúc (end_date_two >= today)
+        $upcoming = NamHoc::where('parish_id', $this->parishId)
+            ->where('status', true)
+            ->whereDate('end_date_two', '>=', $today)
+            ->orderBy('start_date_one')
+            ->value('id');
+
+        if ($upcoming) {
+            return $upcoming;
+        }
+
+        // Fallback: năm học active mới nhất
         return NamHoc::where('parish_id', $this->parishId)
             ->where('status', true)
             ->orderByDesc('id')
@@ -715,10 +749,11 @@ class AttendanceManager extends BaseComponent
 
     public function render()
     {
+        $layout = auth()->user()?->isCatechist() ? 'frontend.layout.catechist' : 'frontend.layout.main';
         return view('livewire.attendance-manager', [
             'parishId' => $this->parishId,
         ])
-            ->extends('frontend.layout.main')
+            ->extends($layout)
             ->section('content');
     }
 }

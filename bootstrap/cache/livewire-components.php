@@ -5,6 +5,8 @@
   'block.block-manager' => 'App\\Http\\Livewire\\Block\\BlockManager',
   'catechism-class.catechism-class-list' => 'App\\Http\\Livewire\\CatechismClass\\CatechismClassList',
   'class-student-manager' => 'App\\Http\\Livewire\\ClassStudentManager',
+  'dashboard.admin-dashboard' => 'App\\Http\\Livewire\\Dashboard\\AdminDashboard',
+  'dashboard.catechist-dashboard' => 'App\\Http\\Livewire\\Dashboard\\CatechistDashboard',
   'filters.filter-bar' => 'App\\Http\\Livewire\\Filters\\FilterBar',
   'holy.holy-manager' => 'App\\Http\\Livewire\\Holy\\HolyManager',
   'home' => 'App\\Http\\Livewire\\Home',
