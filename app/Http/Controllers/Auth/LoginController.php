@@ -39,6 +39,10 @@ class LoginController extends Controller
      */
     protected function authenticated($request, $user)
     {
+        if ($request->filled('remember')) {
+            config(['session.remember_expire' => 60 * 24 * 30]);
+        }
+        
         if (!$user->hasRole('super_admin') && !$user->parish_id) {
             return $this->logoutWithError('Tài khoản chưa được gán giáo xứ. Vui lòng liên hệ admin.');
         }

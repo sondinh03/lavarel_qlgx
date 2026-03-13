@@ -2,39 +2,40 @@
     x-data="{
         downloading: false,
         async downloadPdf() {
-    this.downloading = true;
-    await this.$nextTick();
+        this.downloading = true;
+        await this.$nextTick();
 
-    const area = document.getElementById('print-area');
+        const area = document.getElementById('print-area');
 
-    // Hiện vùng in tạm thời để html2pdf chụp
-    area.style.display = 'block';
-    area.style.visibility = 'visible';
+        // Hiện vùng in tạm thời để html2pdf chụp
+        area.style.display = 'block';
+        area.style.visibility = 'visible';
 
-    // Chờ ảnh load xong (quan trọng nếu dùng QR từ API)
-    await Promise.all(
-        [...area.querySelectorAll('img')]
-            .filter(img => !img.complete)
-            .map(img => new Promise(resolve => {
-                img.onload = img.onerror = resolve;
-            }))
-    );
+        // Chờ ảnh load xong (quan trọng nếu dùng QR từ API)
+        await Promise.all(
+            [...area.querySelectorAll('img')]
+                .filter(img => !img.complete)
+                .map(img => new Promise(resolve => {
+                    img.onload = img.onerror = resolve;
+                }))
+        );
 
-    try {
-        await html2pdf().set({
-            margin: [8, 8, 8, 8],
-            filename: '{{ \Str::slug(($lop->name ?? "the-hoc-sinh") . "-" . ($lop->schoolYear->name ?? "")) }}.pdf',
-            image: { type: 'jpeg', quality: 0.95 },
-            html2canvas: { scale: 2, useCORS: true, allowTaint: false, logging: false },
-            jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
-            pagebreak: { mode: ['css', 'legacy'] },
-                }).from(area).save();
-            } finally {
-                area.style.display = '';
-                area.style.visibility = '';
-                this.downloading = false;
+        try {
+            await html2pdf().set({
+                margin: [8, 8, 8, 8],
+                filename: '{{ \Str::slug(($lop->name ?? "the-hoc-sinh") . "-" . ($lop->schoolYear->name ?? "")) }}.pdf',
+                image: { type: 'jpeg', quality: 0.95 },
+                html2canvas: { scale: 2, useCORS: true, allowTaint: false, logging: false, 
+                scrollY: 0, scrollX: 0, windowWidth: document.documentElement.scrollWidth, windowHeight: document.documentElement.scrollHeight, },
+                jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
+                pagebreak: { mode: ['css', 'legacy'] },
+                    }).from(area).save();
+                } finally {
+                    area.style.display = 'none';
+                    area.style.visibility = '';
+                    this.downloading = false;
+                }
             }
-        }
     }">
 
     {{-- ══ UI (ẩn khi print) ══ --}}
@@ -74,7 +75,7 @@
                         @endif
                         <span class="font-semibold text-blue-600">{{ $students->count() }} thẻ</span>
                         @if($students->count() > 0)
-                        · <span class="text-slate-400">{{ ceil($students->count() / 2) }} trang A4</span>
+                        · <span class="text-slate-400">{{ ceil($students->count() / 8) }} trang A4</span>
                         @endif
                     </p>
                 </div>
@@ -169,23 +170,21 @@
 
     {{-- ══ Vùng in / xuất PDF ══ --}}
     @if($students->count() > 0)
-    <div id="print-area" class="hidden print:block"
-        style="width: 210mm; padding: 8mm; box-sizing: border-box;">
-        <div class="print-grid">
-            {{-- @foreach($students as $student)
+    <div id="print-area"
+        style="display:none; width: 794px; padding: 38px; box-sizing: border-box;">
+        {{-- @foreach($students as $student)
             @include('livewire.student.student-card', ['student' => $student, 'lop' => $lop, 'forPrint' => true])
             @endforeach --}}
 
-            @foreach($students->chunk(8) as $chunk)
-            <div class="print-page">
-                <div class="print-grid">
-                    @foreach($chunk as $student)
-                    @include('livewire.student.student-card', ['student' => $student, 'lop' => $lop, 'forPrint' => true])
-                    @endforeach
-                </div>
+        @foreach($students->chunk(8) as $chunk)
+        <div class="print-page">
+            <div class="print-grid">
+                @foreach($chunk as $student)
+                @include('livewire.student.student-card', ['student' => $student, 'lop' => $lop, 'forPrint' => true])
+                @endforeach
             </div>
-            @endforeach
         </div>
+        @endforeach
     </div>
     @endif
 
@@ -240,9 +239,22 @@
 
     .print-grid {
         display: grid;
-        grid-template-columns: repeat(2, 85.6mm);
-        gap: 6mm;
-        width: 100%;
+        grid-template-columns: 323px 323px;
+        /* 85.6mm × 3.78 ≈ 323px */
+        gap: 23px;
+        /* 6mm × 3.78 ≈ 23px */
+        width: 669px;
+        max-width: 669px;
+    }
+
+    .print-page {
+        page-break-after: always;
+        break-after: page;
+    }
+
+    .print-page:last-child {
+        page-break-after: avoid;
+        break-after: avoid;
     }
 
 
@@ -268,15 +280,19 @@
             page-break-inside: avoid !important;
         }
 
-        /* Ngắt trang sau mỗi 8 thẻ (4 hàng × 2 cột) */
-        .student-card:nth-child(8n) {
-            break-after: page !important;
-            page-break-after: always !important;
-        }
-
         @page {
             size: A4 portrait;
             margin: 10mm;
+        }
+
+        .print-page {
+            page-break-after: always;
+            break-after: page;
+        }
+
+        .print-page:last-child {
+            page-break-after: avoid;
+            break-after: avoid;
         }
     }
 </style>
