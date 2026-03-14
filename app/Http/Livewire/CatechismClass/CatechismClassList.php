@@ -10,29 +10,6 @@ use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
-/**
- * Component danh sách Lớp học (CatechismClass)
- *
- * Thay thế LopList cũ, dùng model CatechismClass / bảng `classes`.
- *
- * Mapping thay đổi so với LopList:
- *  - Lop            → CatechismClass
- *  - lop.pid        → classes.parish_id   (BelongsToParish global scope)
- *  - lop.schoolyear → classes.school_year_id
- *  - lop.block      → classes.grade_level_id
- *  - Block          → GradeLevel
- *  - lop.symbol     → (bỏ — không còn trong schema mới)
- *  - lop.status     → classes.is_active (boolean)
- *  - did/deid/paid  → (bỏ)
- *
- * Features:
- * - Phân trang với options
- * - Tìm kiếm theo tên lớp
- * - Lọc theo năm học, khối (grade level)
- * - Query string support (URL sharing)
- * - Auto-select năm học mới nhất
- * - CRUD với modal form
- */
 class CatechismClassList extends BaseComponent
 {
     // ==================== FILTERS ====================

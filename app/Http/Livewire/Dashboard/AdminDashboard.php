@@ -49,10 +49,9 @@ class AdminDashboard extends BaseComponent
         try {
             $parishId = $this->parishId;
 
+
             $data = Cache::remember($this->cacheKey(), self::CACHE_TTL, function () use ($parishId) {
-                // ✅ where('parish_id') thay ofParish() scope
-                $schoolYear = NamHoc::where('parish_id', $parishId)
-                    ->active()
+                $schoolYear = NamHoc::active()
                     ->orderByDesc('id')
                     ->first();
 
@@ -83,6 +82,7 @@ class AdminDashboard extends BaseComponent
             }
         } catch (\Exception $e) {
             $this->logError($e, 'Error loading dashboard');
+            dd($e);
             session()->flash('error', 'Có lỗi khi tải dữ liệu. Vui lòng thử lại.');
         }
     }
@@ -236,16 +236,12 @@ class AdminDashboard extends BaseComponent
 
     private function buildTodayAttendance(NamHoc $schoolYear, int $parishId): array
     {
-        // ✅ CatechismClass thay Lop
-        //    gradeLevel() thay blockRelation()
-        //    teachers() thay classTeachers()
-        //    wherePivot('status', 1) thay activeStudents scope
         $classes = CatechismClass::with(['gradeLevel', 'teachers'])
             ->where('school_year_id', $schoolYear->id)
             ->where('parish_id', $parishId)
             ->where('is_active', true)
             ->withCount([
-                'students as students_count' => fn($q) => $q->wherePivot('status', 1),
+                'students as students_count' => fn($q) => $q->where('students_class.status', 1),
             ])
             ->orderBy('name')
             ->limit(10)
