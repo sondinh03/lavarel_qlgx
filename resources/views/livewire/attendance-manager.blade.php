@@ -2,7 +2,7 @@
     <a href="#main-content" class="sr-only focus:not-sr-only">Bỏ qua tới nội dung</a>
 
     @php
-    $selectedClassName = $this->selectedClassName;
+    $selectedClassName = $this->selectedClassName ?? 'Chọn lớp';
     $hasUnsavedChanges = $this->hasUnsavedChanges;
     $pendingCount = $this->pendingCount;
     @endphp
@@ -236,8 +236,8 @@
                             {{-- Attendance cells --}}
                             @foreach($sessions as $session)
                             @php
-                            $status = $this->getAttendanceStatus($student->id, $session['dateStr']);
                             $draftKey = $student->id . '_' . $session['id'];
+                            $status = $attendanceGrid[$student->id][$session['id']] ?? null;
                             $note = $draftAttendance[$draftKey]['note']
                             ?? $attendanceRecords[$draftKey]['note']
                             ?? null;
@@ -347,7 +347,7 @@
                                 Thống kê
                             </td>
                             @foreach($sessions as $session)
-                            @php $stats = $this->getDateStats($session['dateStr']); @endphp
+                            @php $stats = $sessionStats[$session['dateStr']] ?? ['present' => 0, 'absentPermitted' => 0, 'absentNotPermitted' => 0]; @endphp
                             <td class="px-3 py-3 text-center">
                                 <div class="flex flex-col gap-1 text-xs">
                                     <div class="text-green-600">✓ {{ $stats['present'] }}</div>
@@ -366,7 +366,7 @@
                 @php
                 $currentSession = collect($sessions)->firstWhere('dateStr', $selectedDate);
                 $locked = $currentSession['locked'] ?? false;
-                $stats = $this->getDateStats($selectedDate ?? '');
+                $stats = $sessionStats[$selectedDate ?? ''] ?? ['present' => 0, 'absentPermitted' => 0, 'absentNotPermitted' => 0];
                 $total = $students->count();
                 @endphp
 
@@ -377,7 +377,7 @@
                         @foreach($sessions as $session)
                         @php
                         $isActive = $session['dateStr'] === $selectedDate;
-                        $chipStats = $this->getDateStats($session['dateStr']);
+                        $chipStats = $sessionStats[$session['dateStr']] ?? ['present' => 0, 'absentPermitted' => 0, 'absentNotPermitted' => 0];
                         $hasAnyRecord = ($chipStats['present'] + $chipStats['absentPermitted'] + $chipStats['absentNotPermitted']) > 0;
                         @endphp
                         <button
@@ -480,7 +480,11 @@
 
                         <tbody class="divide-y divide-slate-100 bg-white">
                             @foreach ($students as $index => $student)
-                            @php $status = $this->getAttendanceStatus($student->id, $selectedDate ?? ''); @endphp
+                            @php
+                            $mobileSession = collect($sessions)->firstWhere('dateStr', $selectedDate);
+                            $mobileKey = $mobileSession ? $student->id . '_' . $mobileSession['id'] : null;
+                            $status = $mobileKey ? ($attendanceGrid[$student->id][$mobileSession['id']] ?? null) : null;
+                            @endphp
                             <tr wire:key="mobile-student-{{ $student->id }}"
                                 class="{{ $status == 1 ? 'bg-green-50/40' : ($status == 3 ? 'bg-red-50/30' : '') }} transition-colors">
 
@@ -676,7 +680,7 @@
 </div>
 
 {{-- Note Modal --}}
-@if ($this->showNoteModal == 1)
+@if ($this->showNoteModal)
 <div
     class="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4"
     role="dialog"

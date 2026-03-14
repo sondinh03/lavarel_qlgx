@@ -35,6 +35,8 @@ class AttendanceManager extends BaseComponent
     /** @var string Filter by attendance status */
     public $filterStatus = 'all';
 
+    public string $selectedClassName = '';
+
     // ==================== VIEW STATE ====================
 
     /** @var string View mode (desktop/mobile) */
@@ -117,7 +119,6 @@ class AttendanceManager extends BaseComponent
         $this->students = collect();
 
         parent::mount();
-
         $this->requireParishId();
 
         // Nếu có classId trên URL, resolve ngược lên namHoc + khoi
@@ -145,6 +146,7 @@ class AttendanceManager extends BaseComponent
             $this->loadStudents();
             $this->loadSessions();
             $this->loadAttendanceRecords();
+            $this->loadClassName();
         }
     }
 
@@ -182,6 +184,18 @@ class AttendanceManager extends BaseComponent
 
     // ==================== PROPERTY UPDATERS ====================
 
+    protected function loadClassName(): void
+    {
+        if (!$this->selectedClassId) {
+            $this->selectedClassName = 'Chọn lớp';
+            return;
+        }
+
+        // Ưu tiên lấy từ $students nếu đã load — không cần query thêm
+        $this->selectedClassName = CatechismClass::where('id', $this->selectedClassId)
+            ->value('name') ?? 'Chọn lớp';
+    }
+
     public function updatedSearch(): void
     {
         parent::updatedSearch();
@@ -198,6 +212,7 @@ class AttendanceManager extends BaseComponent
             $this->loadStudents();
             $this->loadSessions();
             $this->loadAttendanceRecords();
+            $this->loadClassName();
         } else {
             $this->clearAttendanceState();
         }
@@ -313,13 +328,11 @@ class AttendanceManager extends BaseComponent
                 )
                 ->orderBy('date');
 
-            // Mobile: chỉ load session của ngày đang chọn (sau khi đã chọn ngày)
-            // Lần đầu (selectedDate == null) load tất cả để pick ngày
-            if ($this->viewMode === 'mobile' && $this->selectedDate) {
-                $query->whereDate('date', $this->selectedDate);
+            if ($this->viewMode === 'mobile') {
+                $sessions = $query->get(['id', 'date', 'type', 'status']);
+            } else {
+                $sessions = $query->get();
             }
-
-            $sessions = $query->get();
 
             $this->sessions = $sessions->map(function ($s) {
                 $date = Carbon::parse($s->date);
@@ -335,22 +348,21 @@ class AttendanceManager extends BaseComponent
                 ];
             })->toArray();
 
-            // Mobile: auto-pick ngày nếu chưa có
+            // Mobile: auto-pick ngày, sau đó load records của ngày đó
             if ($this->viewMode === 'mobile' && !$this->selectedDate && !empty($this->sessions)) {
                 $this->autoSelectDateForMobile();
-                // Sau khi chọn ngày, load lại chỉ session của ngày đó
-                $this->loadSessions();
+                $this->loadAttendanceRecords();
+                return;
             }
 
             if (empty($this->sessions)) {
                 session()->flash('info', 'Chưa có buổi điểm danh nào');
             }
         } catch (\Exception $e) {
-            $this->logError($e, 'Error loading sessions', ['class_id' => $this->selectedClassId]);
+            $this->logError($e, 'Error loading sessions');
             $this->sessions     = [];
             $this->selectedDate = null;
             $this->attendanceRecords = [];
-            session()->flash('error', 'Không thể tải danh sách buổi học');
         }
     }
 
@@ -369,7 +381,7 @@ class AttendanceManager extends BaseComponent
                 if ($this->viewMode === 'mobile' && $this->selectedDate) {
                     $q->whereDate('date', $this->selectedDate);
                 }
-            })->with('session');
+            });
 
             $this->attendanceRecords = $query->get()
                 ->groupBy(function ($r) {
@@ -726,15 +738,6 @@ class AttendanceManager extends BaseComponent
 
     // ==================== COMPUTED PROPERTIES ====================
 
-    public function getSelectedClassNameProperty(): string
-    {
-        if (!$this->selectedClassId) {
-            return 'Chọn lớp';
-        }
-
-        return CatechismClass::where('id', $this->selectedClassId)->value('name') ?? 'Chọn lớp';
-    }
-
     public function getPendingCountProperty(): int
     {
         return count($this->draftAttendance);
@@ -749,9 +752,29 @@ class AttendanceManager extends BaseComponent
 
     public function render()
     {
+        // Pre-compute 1 lần
+        $grid = [];
+        $stats = [];
+
+        foreach ($this->students as $student) {
+            foreach ($this->sessions as $session) {
+                $grid[$student->id][$session['id']] = $this->getAttendanceStatus(
+                    $student->id,
+                    $session['dateStr']
+                );
+            }
+        }
+
+        foreach ($this->sessions as $session) {
+            $stats[$session['dateStr']] = $this->getDateStats($session['dateStr']);
+        }
+
         $layout = auth()->user()?->isCatechist() ? 'frontend.layout.catechist' : 'frontend.layout.main';
+
         return view('livewire.attendance-manager', [
             'parishId' => $this->parishId,
+            'attendanceGrid' => $grid,
+            'sessionStats' => $stats,
         ])
             ->extends($layout)
             ->section('content');
