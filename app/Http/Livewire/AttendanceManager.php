@@ -118,7 +118,6 @@ class AttendanceManager extends BaseComponent
                 $this->loadStudents();
                 $this->loadSessions();
                 $this->loadAttendanceRecords();
-                // dd('gọi ở mount');
 
                 if ($this->viewMode === 'mobile') {
                     $this->loadSessionIndicators();
@@ -216,7 +215,6 @@ class AttendanceManager extends BaseComponent
             $this->loadStudents();
             $this->loadSessions();
             $this->loadAttendanceRecords();
-            dd('update select class');
 
             if ($this->viewMode === 'mobile') {
                 $this->loadSessionIndicators();
@@ -243,7 +241,6 @@ class AttendanceManager extends BaseComponent
 
         $this->loadSessions();
         $this->loadAttendanceRecords();
-        dd('update type');
 
         if ($this->viewMode === 'mobile') {
             $this->loadSessionIndicators();
@@ -365,7 +362,7 @@ class AttendanceManager extends BaseComponent
         }
     }
 
-    protected function loadAttendanceRecords(): void
+    protected function loadAttendanceRecordsQuiet(): void
     {
         if (!$this->selectedClassId) {
             $this->attendanceRecords = [];
@@ -406,6 +403,58 @@ class AttendanceManager extends BaseComponent
         }
     }
 
+    protected function loadAttendanceRecords(): void
+    {
+        // if (!$this->selectedClassId) {
+        //     $this->attendanceRecords = [];
+        //     return;
+        // }
+
+        // try {
+        //     $query = AttendanceRecord::whereHas('session', function ($q) {
+        //         $q->where('class_id', $this->selectedClassId)
+        //             ->where('type', $this->attendanceType);
+
+        //         if ($this->viewMode === 'mobile' && $this->selectedDate) {
+        //             $q->whereDate('date', $this->selectedDate);
+        //         }
+        //     });
+
+        //     $this->attendanceRecords = $query->get()
+        //         ->groupBy(fn($r) => $r->student_id . '_' . $r->session_id)
+        //         ->map(fn($group) => [
+        //             'status' => $group->first()->status,
+        //             'note'   => $group->first()->note,
+        //         ])
+        //         ->toArray();
+
+        //     Log::info('dispatching attendance-records-loaded', [
+        //         'count' => count($this->attendanceRecords),
+        //         'viewMode' => $this->viewMode,
+        //         'data records' => $this->attendanceRecords,
+        //     ]);
+
+        //     // ✅ Thông báo Alpine có data mới để merge với draft
+        //     $this->dispatchBrowserEvent('attendance-records-loaded', [
+        //         'records' => $this->attendanceRecords,
+        //     ]);
+        // } catch (\Exception $e) {
+        //     $this->logError($e, 'Error loading attendance records');
+        //     $this->attendanceRecords = [];
+        // }
+
+        $this->loadAttendanceRecordsQuiet();
+
+        \Log::info('[loadAttendanceRecords] dispatching', [
+            'count' => count($this->attendanceRecords),
+            'sample' => array_slice($this->attendanceRecords, 0, 3, true),
+        ]);
+
+        $this->dispatchBrowserEvent('attendance-records-loaded', [
+            'records' => $this->attendanceRecords,
+        ]);
+    }
+
     protected function loadSessionIndicators(): void
     {
         if (!$this->selectedClassId || $this->viewMode !== 'mobile') {
@@ -434,6 +483,11 @@ class AttendanceManager extends BaseComponent
      */
     public function saveFromClient(array $draft): void
     {
+        \Log::info('[2] saveFromClient nhận', [
+            'count' => count($draft),
+            'keys' => array_keys($draft),
+        ]);
+
         if (empty($draft)) {
             session()->flash('warning', 'Không có dữ liệu để lưu');
             return;
@@ -457,8 +511,18 @@ class AttendanceManager extends BaseComponent
         try {
             $result = $this->attendanceService->saveBulkAttendance($drafts);
 
+            \Log::info('[3] saveBulk result', [
+                'success' => $result['success'],
+                'message' => $result['message'] ?? null,
+            ]);
+
             if ($result['success']) {
-                $this->loadAttendanceRecords();
+                // 1. Load lại records từ DB
+                $this->loadAttendanceRecordsQuiet();
+
+                \Log::info('[3] records sau load', [
+                    'count' => count($this->attendanceRecords),
+                ]);
 
                 if ($this->viewMode === 'mobile') {
                     $this->loadSessionIndicators();
@@ -467,7 +531,10 @@ class AttendanceManager extends BaseComponent
                 session()->flash('message', $result['message'] ?? 'Đã lưu điểm danh thành công');
 
                 // ✅ Thông báo Alpine xóa draft sau khi lưu thành công
-                $this->dispatchBrowserEvent('attendance-saved');
+                $this->dispatchBrowserEvent('attendance-saved', [
+                    'records' => $this->attendanceRecords,
+                ]);
+                \Log::info('[3] đã dispatch attendance-saved');
             } else {
                 session()->flash('error', $result['message']);
             }
@@ -597,7 +664,6 @@ class AttendanceManager extends BaseComponent
                     $this->loadStudents();
                     $this->loadSessions();
                     $this->loadAttendanceRecords();
-                    // dd('filter change');
 
                     if ($this->viewMode === 'mobile') {
                         $this->loadSessionIndicators();
@@ -615,7 +681,6 @@ class AttendanceManager extends BaseComponent
                 if ($this->selectedClassId) {
                     $this->loadSessions();
                     $this->loadAttendanceRecords();
-                    // dd('filter change 2');
                     if ($this->viewMode === 'mobile') {
                         $this->loadSessionIndicators();
                     }
@@ -661,6 +726,17 @@ class AttendanceManager extends BaseComponent
         $this->selectedDate = $unlocked
             ? $unlocked['dateStr']
             : $this->sessions[0]['dateStr'];
+    }
+
+    public function selectDate(string $date): void
+    {
+        \Log::info('[selectDate] called', ['date' => $date, 'viewMode' => $this->viewMode]);
+
+        $this->selectedDate = $date;
+
+        if ($this->viewMode === 'mobile') {
+            $this->loadAttendanceRecords();
+        }
     }
 
     protected function getVietnameseDayName(Carbon $date): string

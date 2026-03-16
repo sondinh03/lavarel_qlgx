@@ -29,62 +29,94 @@
 
     <div wire:key="attendance-{{ $selectedClassId }}-{{ $attendanceType }}"
         x-data="{
-    records: @js($attendanceRecords ?? []),
-    draft: {},
+            {{-- records: @js($attendanceRecords ?? []), --}}
+            records: {},
+            draft: {},
 
-    getStatus(studentId, sessionId) {
-        const key = studentId + '_' + sessionId;
-        if (this.draft[key] !== undefined) return this.draft[key].status;
-        const val = this.records[key]?.status ?? null;
-        if (val !== null) console.log(`[getStatus] key=${key} val=${val} type=${typeof val}`);
-        return this.records[key]?.status ?? null;
-    },
+            getStatus(studentId, sessionId) {
+                const key = studentId + '_' + sessionId;
+                if (this.draft[key] !== undefined) return this.draft[key].status;
+                const record = this.records[key];
+                if (record !== undefined) {
+                console.log('[getStatus] record raw:', JSON.stringify(record), 'type:', typeof record);
+                }
+                return this.records[key]?.status ?? null;
+            },
 
-    getNote(studentId, sessionId) {
-        const key = studentId + '_' + sessionId;
-        if (this.draft[key] !== undefined) return this.draft[key].note || null;
-        return this.records[key]?.note || null;
-    },
+            getNote(studentId, sessionId) {
+                const key = studentId + '_' + sessionId;
+                if (this.draft[key] !== undefined) return this.draft[key].note || null;
+                return this.records[key]?.note || null;
+            },
 
-    hasDraft() { return Object.keys(this.draft).length > 0; },
-    draftCount() { return Object.keys(this.draft).length; },
+            hasDraft() { return Object.keys(this.draft).length > 0; },
+            draftCount() { return Object.keys(this.draft).length; },
 
-    toggle(studentId, sessionId, status) {
-        const key     = studentId + '_' + sessionId;
-        const current = this.getStatus(studentId, sessionId);
-        if (current === status) {
-            delete this.draft[key];
-        } else {
-            this.draft[key] = { status: status, note: '' };
-        }
-    },
+            toggle(studentId, sessionId, status) {
+                const key     = studentId + '_' + sessionId;
+                const current = this.getStatus(studentId, sessionId);
+                if (current === status) {
+                    delete this.draft[key];
+                } else {
+                    this.draft[key] = { status: status, note: '' };
+                }
+            },
 
-    openNote(studentId, sessionId) {
-        $wire.openNoteModal(studentId, sessionId);
-    },
+            openNote(studentId, sessionId) {
+                $wire.openNoteModal(studentId, sessionId);
+            },
 
-    markAll(sessionId, studentIds) {
-        studentIds.forEach(id => {
-            this.draft[id + '_' + sessionId] = { status: 1, note: '' };
-        });
-    },
+            markAll(sessionId, studentIds) {
+                studentIds.forEach(id => {
+                    this.draft[id + '_' + sessionId] = { status: 1, note: '' };
+                });
+            },
 
-    save() {
-        if (!this.hasDraft()) return;
-        $wire.saveFromClient(this.draft);
-    },
+            save() {
+                if (!this.hasDraft()) return;
+                console.log('[1] draft gửi lên:', JSON.stringify(this.draft));
+                console.log('[1] số lượng:', this.draftCount());
+                $wire.saveFromClient(this.draft);
+            },
 
-    discard() { this.draft = {}; },
+            discard() { this.draft = {}; },
 
-    onRecordsLoaded(newRecords) { this.records = newRecords; },
-    onSaved() { this.draft = {}; },
-    onCleared() { this.draft = {}; this.records = {}; },
-    onNoteSaved({ key, status, note }) {
-        this.draft[key] = { status: status, note: note };
-    },
-}"
-        x-on:attendance-records-loaded.window="onRecordsLoaded($event.detail.records)"
-        x-on:attendance-saved.window="onSaved()"
+            onSaved(detail) { 
+                console.log('[4] onSaved fired, records nhận về:', detail);
+                console.log('[4] draft TRƯỚC khi xóa:', JSON.stringify(this.draft));
+                this.draft = {}; 
+                if (detail && detail.records) {
+                    // Xóa hết key cũ
+                    console.log('[4] draft SAU khi xóa:', JSON.stringify(this.draft));
+                    Object.keys(this.records).forEach(k => delete this.records[k]);
+                    // Gán key mới — Alpine detect mutation
+                    Object.assign(this.records, detail.records);
+                    console.log('[4] records sau assign:', JSON.stringify(this.records));
+                }
+            },
+
+            onRecordsLoaded(newRecords) {
+            console.log('[onRecordsLoaded] fired, count:', Object.keys(newRecords).length);
+            console.log('[onRecordsLoaded] sample:', JSON.stringify(Object.entries(newRecords).slice(0, 3)));
+            // Tương tự
+            Object.keys(this.records).forEach(k => delete this.records[k]);
+            Object.assign(this.records, newRecords);
+            console.log('[onRecordsLoaded] records sau assign:', Object.keys(this.records).length);
+            },
+
+            onCleared() {
+                this.draft = {};
+                this.records = {};
+            },
+
+            onNoteSaved({ key, status, note }) {
+                this.draft[key] = { status: status, note: note };
+            },
+        }"
+        x-init="records = @js($attendanceRecords ?? [])"
+        {{-- x-on:attendance-records-loaded.window="onRecordsLoaded($event.detail.records)" --}}
+        x-on:attendance-records-loaded.window="console.log('[raw event]', $event, $event.detail, JSON.stringify($event.detail))"
+        x-on:attendance-saved.window="onSaved($event.detail)"
         x-on:attendance-state-cleared.window="onCleared()"
         x-on:note-saved.window="onNoteSaved($event.detail)">
 
@@ -344,9 +376,13 @@
                                         {{-- Có mặt --}}
                                         <button
                                             x-on:click="toggle({{ $student->id }}, {{ $session['id'] }}, 1)"
-                                            :class="getStatus({{ $student->id }}, {{ $session['id'] }}) == 1
-                                            ? 'bg-green-500 text-white shadow-md scale-105'
-                                            : 'bg-green-50 text-green-700 border border-green-200 hover:bg-green-100'"
+                                            :class="(() => {
+                                                const s = getStatus({{ $student->id }}, {{ $session['id'] }});
+                                                console.log('[render] student={{ $student->id }} session={{ $session['id'] }} status=' + s + ' type=' + typeof s);
+                                                return s == 1
+                                                    ? 'bg-green-500 text-white shadow-md scale-105'
+                                                    : 'bg-green-50 text-green-700 border border-green-200 hover:bg-green-100';
+                                            })()"
                                             class="px-2 py-1 rounded text-xs font-medium transition-all"
                                             aria-label="Có mặt">
                                             ✓
@@ -448,7 +484,8 @@
                             && $sessionHasRecord[$session['dateStr']] > 0;
                             @endphp
                             <button
-                                wire:click="$set('selectedDate', '{{ $session['dateStr'] }}')"
+                                {{-- wire:click="$set('selectedDate', '{{ $session['dateStr'] }}')" --}}
+                                wire:click="selectDate('{{ $session['dateStr'] }}')"
                                 class="flex-shrink-0 snap-start flex flex-col items-center gap-1 px-3 py-2
                                    rounded-xl border transition-all min-w-[72px]
                                 {{ $isActive
@@ -548,7 +585,7 @@
 
                             <tbody class="divide-y divide-slate-100 bg-white">
                                 @foreach ($students as $index => $student)
-                                <tr wire:key="mobile-student-{{ $student->id }}"
+                                <tr wire:key="mobile-student-{{ $student->id }}-{{ $mobileSessionId }}"
                                     @if($mobileSessionId)
                                     :class="{
                                     'bg-green-50/40': getStatus({{ $student->id }}, {{ $mobileSessionId }}) == 1,
@@ -576,7 +613,7 @@
                                         </div>
                                     </td>
 
-                                    <td class="px-3 py-3">
+                                    <td wire:key="mobile-cell-{{ $student->id }}-{{ $mobileSessionId }}" class="px-3 py-3">
                                         @if($locked)
                                         {{-- Read-only mobile --}}
                                         @php
