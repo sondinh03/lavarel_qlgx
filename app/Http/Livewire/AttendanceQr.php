@@ -143,12 +143,14 @@ class AttendanceQr extends BaseComponent
         if (!$this->sessionId) {
             $this->lastResult     = ['message' => 'Chưa chọn buổi học'];
             $this->lastResultType = 'error';
+            $this->dispatchBrowserEvent('qr-code');
             return;
         }
 
         if ($this->session['locked'] ?? false) {
             $this->lastResult     = ['message' => 'Buổi học đã khóa, không thể điểm danh'];
             $this->lastResultType = 'error';
+            $this->dispatchBrowserEvent('qr-code');
             return;
         }
 
@@ -160,6 +162,7 @@ class AttendanceQr extends BaseComponent
             if (!$student) {
                 $this->lastResult     = ['message' => 'Mã QR không hợp lệ'];
                 $this->lastResultType = 'error';
+                $this->dispatchBrowserEvent('qr-done');
                 return;
             }
 
@@ -176,6 +179,7 @@ class AttendanceQr extends BaseComponent
                     'saint_name'   => $student->saint_name,
                 ];
                 $this->lastResultType = 'warning';
+                $this->dispatchBrowserEvent('qr-done');
                 return;
             }
 
@@ -192,6 +196,7 @@ class AttendanceQr extends BaseComponent
                     'time'         => $existing->created_at?->format('H:i'),
                 ];
                 $this->lastResultType = 'warning';
+                $this->dispatchBrowserEvent('qr-done');
                 return;
             }
 
@@ -218,10 +223,12 @@ class AttendanceQr extends BaseComponent
                 'saint_name'   => $student->saint_name,
             ];
             $this->lastResultType = 'success';
+            $this->dispatchBrowserEvent('qr-done');
         } catch (\Exception $e) {
             $this->logError($e, 'QR scan error', ['token' => substr($token, 0, 8)]);
             $this->lastResult     = ['message' => 'Có lỗi xảy ra, vui lòng thử lại'];
             $this->lastResultType = 'error';
+            $this->dispatchBrowserEvent('qr-done');
         }
     }
 

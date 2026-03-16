@@ -27,19 +27,14 @@
         </div>
     </div>
 
-    <div wire:key="attendance-{{ $selectedClassId }}-{{ $attendanceType }}-{{ $viewMode }}--{{$selectedDate}}"
+    <div wire:key="attendance-{{ $selectedClassId }}-{{ $attendanceType }}-{{ $viewMode }}--{{$selectedDate}}--{{$search}}"
         x-data="{
-            {{-- records: @js($attendanceRecords ?? []), --}}
             records: {},
             draft: {},
 
             getStatus(studentId, sessionId) {
                 const key = studentId + '_' + sessionId;
                 if (this.draft[key] !== undefined) return this.draft[key].status;
-                const record = this.records[key];
-                if (record !== undefined) {
-                console.log('[getStatus] record raw:', JSON.stringify(record), 'type:', typeof record);
-                }
                 return this.records[key]?.status ?? null;
             },
 
@@ -53,16 +48,13 @@
             draftCount() { return Object.keys(this.draft).length; },
 
             toggle(studentId, sessionId, status) {
-                console.log('[toggle] called', studentId, sessionId, status);
                 const key     = studentId + '_' + sessionId;
                 const current = this.getStatus(studentId, sessionId);
-                console.log('[toggle] current:', current, 'new:', status);
                 if (current === status) {
                     delete this.draft[key];
                 } else {
                     this.draft[key] = { status: status, note: '' };
                 }
-                    console.log('[toggle] draft after:', JSON.stringify(this.draft));
             },
 
             openNote(studentId, sessionId) {
@@ -77,34 +69,24 @@
 
             save() {
                 if (!this.hasDraft()) return;
-                console.log('[1] draft gửi lên:', JSON.stringify(this.draft));
-                console.log('[1] số lượng:', this.draftCount());
                 $wire.saveFromClient(this.draft);
             },
 
             discard() { this.draft = {}; },
 
             onSaved(detail) { 
-                console.log('[4] onSaved fired, records nhận về:', detail);
-                console.log('[4] draft TRƯỚC khi xóa:', JSON.stringify(this.draft));
                 this.draft = {}; 
                 if (detail && detail.records) {
-                    // Xóa hết key cũ
-                    console.log('[4] draft SAU khi xóa:', JSON.stringify(this.draft));
                     Object.keys(this.records).forEach(k => delete this.records[k]);
                     // Gán key mới — Alpine detect mutation
                     Object.assign(this.records, detail.records);
-                    console.log('[4] records sau assign:', JSON.stringify(this.records));
                 }
             },
 
             onRecordsLoaded(newRecords) {
-            console.log('[onRecordsLoaded] fired, count:', Object.keys(newRecords).length);
-            console.log('[onRecordsLoaded] sample:', JSON.stringify(Object.entries(newRecords).slice(0, 3)));
             // Tương tự
             Object.keys(this.records).forEach(k => delete this.records[k]);
             Object.assign(this.records, newRecords);
-            console.log('[onRecordsLoaded] records sau assign:', Object.keys(this.records).length);
             },
 
             onCleared() {

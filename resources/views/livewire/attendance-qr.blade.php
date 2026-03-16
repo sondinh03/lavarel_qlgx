@@ -286,8 +286,12 @@
         const canvas = document.createElement('canvas');
         const ctx = canvas.getContext('2d');
         let cooldown = false;
+        let scanning = true;
+        let animFrameId = null;
 
         function tick(video) {
+            if (!scanning) return;
+
             if (video.readyState === video.HAVE_ENOUGH_DATA) {
                 canvas.width = video.videoWidth;
                 canvas.height = video.videoHeight;
@@ -307,10 +311,25 @@
                 }
             }
 
-            requestAnimationFrame(function() {
-                tick(video);
-            });
+            // requestAnimationFrame(function() {
+            //     tick(video);
+            // });
+
+            animFrameId = requestAnimationFrame(() => tick(video));
         }
+
+        function pauseScan() {
+            scanning = false;
+        }
+
+        function resumeScan() {
+            scanning = true;
+            tick(video);
+        }
+
+        document.addEventListener('visibilitychange', () => {
+            document.hidden ? pauseScan() : resumeScan();
+        });
 
         // Hiện lỗi camera lên UI
         function showCameraError(message) {

@@ -102,10 +102,6 @@ class AttendanceManager extends BaseComponent
         parent::mount();
         $this->requireParishId();
 
-        Log::info('mount', [
-            'selectedClassId' => $this->selectedClassId,
-        ]);
-
         if ($this->selectedClassId) {
             $class = CatechismClass::select('id', 'name', 'school_year_id', 'grade_level_id')
                 ->find($this->selectedClassId);
@@ -158,11 +154,6 @@ class AttendanceManager extends BaseComponent
                 $this->loadSessionIndicators();
             }
         }
-
-        Log::info('data', [
-            'count' => count($this->attendanceRecords),
-            'viewMode' => $this->viewMode,
-        ]);
     }
 
     // ==================== SANITIZE ====================
@@ -386,17 +377,6 @@ class AttendanceManager extends BaseComponent
                     'note'   => $group->first()->note,
                 ])
                 ->toArray();
-
-            Log::info('dispatching attendance-records-loaded', [
-                'count' => count($this->attendanceRecords),
-                'viewMode' => $this->viewMode,
-                'data records' => $this->attendanceRecords,
-            ]);
-
-            // ✅ Thông báo Alpine có data mới để merge với draft
-            // $this->dispatchBrowserEvent('attendance-records-loaded', [
-            //     'records' => $this->attendanceRecords,
-            // ]);
         } catch (\Exception $e) {
             $this->logError($e, 'Error loading attendance records');
             $this->attendanceRecords = [];
@@ -405,50 +385,12 @@ class AttendanceManager extends BaseComponent
 
     protected function loadAttendanceRecords(): void
     {
-        // if (!$this->selectedClassId) {
-        //     $this->attendanceRecords = [];
-        //     return;
-        // }
-
-        // try {
-        //     $query = AttendanceRecord::whereHas('session', function ($q) {
-        //         $q->where('class_id', $this->selectedClassId)
-        //             ->where('type', $this->attendanceType);
-
-        //         if ($this->viewMode === 'mobile' && $this->selectedDate) {
-        //             $q->whereDate('date', $this->selectedDate);
-        //         }
-        //     });
-
-        //     $this->attendanceRecords = $query->get()
-        //         ->groupBy(fn($r) => $r->student_id . '_' . $r->session_id)
-        //         ->map(fn($group) => [
-        //             'status' => $group->first()->status,
-        //             'note'   => $group->first()->note,
-        //         ])
-        //         ->toArray();
-
-        //     Log::info('dispatching attendance-records-loaded', [
-        //         'count' => count($this->attendanceRecords),
-        //         'viewMode' => $this->viewMode,
-        //         'data records' => $this->attendanceRecords,
-        //     ]);
-
-        //     // ✅ Thông báo Alpine có data mới để merge với draft
-        //     $this->dispatchBrowserEvent('attendance-records-loaded', [
-        //         'records' => $this->attendanceRecords,
-        //     ]);
-        // } catch (\Exception $e) {
-        //     $this->logError($e, 'Error loading attendance records');
-        //     $this->attendanceRecords = [];
-        // }
+        if (!$this->selectedClassId) {
+            $this->attendanceRecords = [];
+            return;
+        }
 
         $this->loadAttendanceRecordsQuiet();
-
-        \Log::info('[loadAttendanceRecords] dispatching', [
-            'count' => count($this->attendanceRecords),
-            'sample' => array_slice($this->attendanceRecords, 0, 3, true),
-        ]);
 
         $this->dispatchBrowserEvent('attendance-records-loaded', [
             'records' => $this->attendanceRecords,
@@ -483,11 +425,6 @@ class AttendanceManager extends BaseComponent
      */
     public function saveFromClient(array $draft): void
     {
-        \Log::info('[2] saveFromClient nhận', [
-            'count' => count($draft),
-            'keys' => array_keys($draft),
-        ]);
-
         if (empty($draft)) {
             session()->flash('warning', 'Không có dữ liệu để lưu');
             return;
@@ -511,18 +448,9 @@ class AttendanceManager extends BaseComponent
         try {
             $result = $this->attendanceService->saveBulkAttendance($drafts);
 
-            \Log::info('[3] saveBulk result', [
-                'success' => $result['success'],
-                'message' => $result['message'] ?? null,
-            ]);
-
             if ($result['success']) {
                 // 1. Load lại records từ DB
                 $this->loadAttendanceRecordsQuiet();
-
-                \Log::info('[3] records sau load', [
-                    'count' => count($this->attendanceRecords),
-                ]);
 
                 if ($this->viewMode === 'mobile') {
                     $this->loadSessionIndicators();
@@ -534,7 +462,6 @@ class AttendanceManager extends BaseComponent
                 $this->dispatchBrowserEvent('attendance-saved', [
                     'records' => $this->attendanceRecords,
                 ]);
-                \Log::info('[3] đã dispatch attendance-saved');
             } else {
                 session()->flash('error', $result['message']);
             }
@@ -570,7 +497,6 @@ class AttendanceManager extends BaseComponent
             return;
         }
 
-        // $student = $this->students->firstWhere('id', (int) $studentId);
         $student = \App\Models\StudentNew::find((int) $studentId);
 
         if (!$student) {
@@ -812,9 +738,11 @@ class AttendanceManager extends BaseComponent
 
     public function render()
     {
-        $students = $this->selectedClassId
-            ? $this->getStudents()
-            : collect();
+        if ($this->selectedClassId && empty($this->students)) {
+            $this->loadStudents();
+        }
+
+        $students = $this->students ?? collect();
 
         // Pre-compute grid và stats từ attendanceRecords (không còn N×M calls)
         $grid  = [];
