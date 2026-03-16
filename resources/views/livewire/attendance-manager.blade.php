@@ -27,7 +27,7 @@
         </div>
     </div>
 
-    <div wire:key="attendance-{{ $selectedClassId }}-{{ $attendanceType }}"
+    <div wire:key="attendance-{{ $selectedClassId }}-{{ $attendanceType }}-{{ $viewMode }}--{{$selectedDate}}"
         x-data="{
             {{-- records: @js($attendanceRecords ?? []), --}}
             records: {},
@@ -53,13 +53,16 @@
             draftCount() { return Object.keys(this.draft).length; },
 
             toggle(studentId, sessionId, status) {
+                console.log('[toggle] called', studentId, sessionId, status);
                 const key     = studentId + '_' + sessionId;
                 const current = this.getStatus(studentId, sessionId);
+                console.log('[toggle] current:', current, 'new:', status);
                 if (current === status) {
                     delete this.draft[key];
                 } else {
                     this.draft[key] = { status: status, note: '' };
                 }
+                    console.log('[toggle] draft after:', JSON.stringify(this.draft));
             },
 
             openNote(studentId, sessionId) {
@@ -113,9 +116,10 @@
                 this.draft[key] = { status: status, note: note };
             },
         }"
-        x-init="records = @js($attendanceRecords ?? [])"
-        {{-- x-on:attendance-records-loaded.window="onRecordsLoaded($event.detail.records)" --}}
-        x-on:attendance-records-loaded.window="console.log('[raw event]', $event, $event.detail, JSON.stringify($event.detail))"
+        x-init="records = @js($attendanceRecords ?? []); console.log('[x-init] records count:', Object.keys(records).length);
+    console.log('[x-init] sample:', JSON.stringify(Object.entries(records).slice(0, 2)));
+    console.log('[x-init] mobileSessionId from PHP:', {{ $mobileSessionId ?? 'null' }});"
+        x-on:attendance-records-loaded.window="onRecordsLoaded($event.detail.records)"
         x-on:attendance-saved.window="onSaved($event.detail)"
         x-on:attendance-state-cleared.window="onCleared()"
         x-on:note-saved.window="onNoteSaved($event.detail)">
@@ -650,7 +654,11 @@
                                         @if($mobileSessionId)
                                         <div class="flex gap-1.5 justify-center">
                                             <button
-                                                x-on:click="toggle({{ $student->id }}, {{ $mobileSessionId }}, 1)"
+                                                {{-- x-on:click="toggle({{ $student->id }}, {{ $mobileSessionId }}, 1)" --}}
+                                                x-on:click="
+                                                    console.log('[B1] click event fired');
+                                                    toggle({{ $student->id }}, {{ $mobileSessionId }}, 1)
+                                                "
                                                 :class="getStatus({{ $student->id }}, {{ $mobileSessionId }}) == 1
                                                 ? 'bg-green-500 text-white shadow-md ring-2 ring-green-300'
                                                 : 'bg-green-50 text-green-700 border border-green-200 active:bg-green-100'"

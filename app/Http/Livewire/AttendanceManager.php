@@ -40,7 +40,7 @@ class AttendanceManager extends BaseComponent
 
     // ==================== DATA ====================
 
-    public $students;
+    protected $students;
     public $sessions         = [];
     public $attendanceRecords = [];  // load từ DB, đọc bởi Alpine
     public $sessionHasRecord  = [];  // cho mobile chip dots
@@ -548,6 +548,7 @@ class AttendanceManager extends BaseComponent
     {
         if ($type === $this->attendanceType) return;
         $this->attendanceType = $type;
+        $this->selectedDate = null;
         $this->loadSessions();
         $this->loadAttendanceRecords();
         if ($this->viewMode === 'mobile') {
@@ -569,7 +570,8 @@ class AttendanceManager extends BaseComponent
             return;
         }
 
-        $student = $this->students->firstWhere('id', (int) $studentId);
+        // $student = $this->students->firstWhere('id', (int) $studentId);
+        $student = \App\Models\StudentNew::find((int) $studentId);
 
         if (!$student) {
             session()->flash('error', 'Không tìm thấy học sinh');
@@ -656,6 +658,7 @@ class AttendanceManager extends BaseComponent
 
             if ($newClassId !== $this->selectedClassId) {
                 $this->selectedClassId = $newClassId;
+                $this->selectedDate = null;
 
                 if ($this->selectedClassId) {
                     $this->selectedClassName = CatechismClass::where('id', $this->selectedClassId)
@@ -697,7 +700,6 @@ class AttendanceManager extends BaseComponent
             $this->viewMode = $mode;
 
             if ($this->selectedClassId) {
-                $this->selectedDate = null;
                 $this->loadSessions();
                 $this->loadAttendanceRecords();
 
@@ -730,8 +732,6 @@ class AttendanceManager extends BaseComponent
 
     public function selectDate(string $date): void
     {
-        \Log::info('[selectDate] called', ['date' => $date, 'viewMode' => $this->viewMode]);
-
         $this->selectedDate = $date;
 
         if ($this->viewMode === 'mobile') {
@@ -795,15 +795,32 @@ class AttendanceManager extends BaseComponent
         return $this->selectedClassName ?: 'Chọn lớp';
     }
 
+    private function getStudents()
+    {
+        $class = CatechismClass::with([
+            'students' => fn($q) => $q->wherePivot('status', 1)
+                ->orderBy('last_name')->orderBy('first_name'),
+            'students.saint',
+        ])->find($this->selectedClassId);
+
+        return $class
+            ? $class->students->makeHidden(['qr_token', 'parishioner_id'])
+            : collect();
+    }
+
     // ==================== RENDER ====================
 
     public function render()
     {
+        $students = $this->selectedClassId
+            ? $this->getStudents()
+            : collect();
+
         // Pre-compute grid và stats từ attendanceRecords (không còn N×M calls)
         $grid  = [];
         $stats = [];
 
-        foreach ($this->students as $student) {
+        foreach ($students as $student) {          // dùng local $students
             foreach ($this->sessions as $session) {
                 $key = $student->id . '_' . $session['id'];
                 $grid[$student->id][$session['id']] = $this->attendanceRecords[$key]['status'] ?? null;
@@ -814,7 +831,7 @@ class AttendanceManager extends BaseComponent
             $dateStr = $session['dateStr'];
             $s = ['present' => 0, 'absentPermitted' => 0, 'absentNotPermitted' => 0];
 
-            foreach ($this->students as $student) {
+            foreach ($students as $student) {       // dùng local $students
                 $key    = $student->id . '_' . $session['id'];
                 $status = $this->attendanceRecords[$key]['status'] ?? null;
                 match ($status) {
@@ -833,6 +850,7 @@ class AttendanceManager extends BaseComponent
             : 'frontend.layout.main';
 
         return view('livewire.attendance-manager', [
+            'students' => $students,
             'parishId'       => $this->parishId,
             'attendanceGrid' => $grid,
             'sessionStats'   => $stats,
