@@ -6,6 +6,11 @@ use Illuminate\Pagination\Paginator;
 
 use App\Http\Controllers\SlugController;
 
+// Offline route for PWA
+Route::get('/offline', function () {
+    return view('offline');
+});
+
 use App\Http\Controllers\GiaDinhController;
 use App\Http\Controllers\GiaoPhanController;
 use App\Http\Controllers\UsersImportController;

@@ -4,7 +4,7 @@ const urlsToCache = [
   '/css/app.css',
   '/js/app.js',
   '/site.webmanifest',
-  // Thêm các assets khác nếu cần
+  '/offline', // Thêm route offline nếu có
 ];
 
 // Install event
@@ -15,15 +15,24 @@ self.addEventListener('install', event => {
         return cache.addAll(urlsToCache);
       })
   );
+  self.skipWaiting();
 });
 
-// Fetch event
+// Fetch event - Network first, fallback to cache
 self.addEventListener('fetch', event => {
   event.respondWith(
-    caches.match(event.request)
+    fetch(event.request)
       .then(response => {
-        // Return cached version or fetch from network
-        return response || fetch(event.request);
+        // Clone response để cache
+        const responseClone = response.clone();
+        caches.open(CACHE_NAME)
+          .then(cache => cache.put(event.request, responseClone));
+        return response;
+      })
+      .catch(() => {
+        // Offline: Trả về cache hoặc offline page
+        return caches.match(event.request)
+          .then(response => response || caches.match('/offline'));
       })
   );
 });
@@ -41,4 +50,5 @@ self.addEventListener('activate', event => {
       );
     })
   );
+  self.clients.claim();
 });
