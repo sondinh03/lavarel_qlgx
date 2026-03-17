@@ -417,8 +417,6 @@ class AttendanceManager extends BaseComponent
             ->toArray();
     }
 
-    // ==================== ALPINE ENTRY POINT ====================
-
     /**
      * ✅ Method duy nhất Alpine gọi để lưu — thay thế setAttendance() và markAllPresent()
      * $draft = [ "studentId_sessionId" => ['status' => int, 'note' => string], ... ]
@@ -428,6 +426,29 @@ class AttendanceManager extends BaseComponent
         if (empty($draft)) {
             session()->flash('warning', 'Không có dữ liệu để lưu');
             return;
+        }
+
+        // ✅ Validate draft array để tránh edge cases
+        foreach ($draft as $key => $item) {
+            // Check key format: must be "studentId_sessionId"
+            if (!preg_match('/^\d+_\d+$/', $key)) {
+                session()->flash('error', 'Dữ liệu điểm danh không hợp lệ (key format)');
+                return;
+            }
+
+            // Check status: must be int 1-3
+            $status = $item['status'] ?? null;
+            if (!is_int($status) || !in_array($status, [1, 2, 3])) {
+                session()->flash('error', 'Trạng thái điểm danh không hợp lệ');
+                return;
+            }
+
+            // Check note: must be string, max 500 chars
+            $note = $item['note'] ?? '';
+            if (!is_string($note) || strlen($note) > 500) {
+                session()->flash('error', 'Ghi chú không hợp lệ hoặc quá dài');
+                return;
+            }
         }
 
         // Build drafts array theo format AttendanceService cần
@@ -446,6 +467,9 @@ class AttendanceManager extends BaseComponent
             ->toArray();
 
         try {
+            // ✅ Dispatch loading state cho Alpine
+            $this->dispatchBrowserEvent('saving-attendance');
+
             $result = $this->attendanceService->saveBulkAttendance($drafts);
 
             if ($result['success']) {
@@ -468,6 +492,9 @@ class AttendanceManager extends BaseComponent
         } catch (\Exception $e) {
             $this->logError($e, 'Error saving attendance');
             session()->flash('error', 'Có lỗi khi lưu điểm danh');
+        } finally {
+            // ✅ Dispatch end loading state
+            $this->dispatchBrowserEvent('attendance-save-completed');
         }
     }
 
@@ -721,19 +748,6 @@ class AttendanceManager extends BaseComponent
         return $this->selectedClassName ?: 'Chọn lớp';
     }
 
-    private function getStudents()
-    {
-        $class = CatechismClass::with([
-            'students' => fn($q) => $q->wherePivot('status', 1)
-                ->orderBy('last_name')->orderBy('first_name'),
-            'students.saint',
-        ])->find($this->selectedClassId);
-
-        return $class
-            ? $class->students->makeHidden(['qr_token', 'parishioner_id'])
-            : collect();
-    }
-
     // ==================== RENDER ====================
 
     public function render()
@@ -744,23 +758,23 @@ class AttendanceManager extends BaseComponent
 
         $students = $this->students ?? collect();
 
-        // Pre-compute grid và stats từ attendanceRecords (không còn N×M calls)
-        $grid  = [];
-        $stats = [];
-
-        foreach ($students as $student) {          // dùng local $students
+        // ✅ Optimize: Pre-build grid từ attendanceRecords (O(1) lookup thay vì N×M)
+        $grid = [];
+        foreach ($students as $student) {
+            $grid[$student->id] = [];
             foreach ($this->sessions as $session) {
                 $key = $student->id . '_' . $session['id'];
                 $grid[$student->id][$session['id']] = $this->attendanceRecords[$key]['status'] ?? null;
             }
         }
 
-        foreach ($this->sessions as $session) {
+        // ✅ Optimize: Pre-compute stats với array_map để giảm loops
+        $stats = array_map(function ($session) use ($students) {
             $dateStr = $session['dateStr'];
             $s = ['present' => 0, 'absentPermitted' => 0, 'absentNotPermitted' => 0];
 
-            foreach ($students as $student) {       // dùng local $students
-                $key    = $student->id . '_' . $session['id'];
+            foreach ($students as $student) {
+                $key = $student->id . '_' . $session['id'];
                 $status = $this->attendanceRecords[$key]['status'] ?? null;
                 match ($status) {
                     AttendanceRecord::STATUS_PRESENT          => $s['present']++,
@@ -770,7 +784,13 @@ class AttendanceManager extends BaseComponent
                 };
             }
 
-            $stats[$dateStr] = $s;
+            return $s;
+        }, $this->sessions);
+
+        // Convert to associative array for view
+        $statsAssoc = [];
+        foreach ($this->sessions as $index => $session) {
+            $statsAssoc[$session['dateStr']] = $stats[$index];
         }
 
         $layout = auth()->user()?->isCatechist()
@@ -781,7 +801,7 @@ class AttendanceManager extends BaseComponent
             'students' => $students,
             'parishId'       => $this->parishId,
             'attendanceGrid' => $grid,
-            'sessionStats'   => $stats,
+            'sessionStats'   => $statsAssoc,
         ])->extends($layout)->section('content');
     }
 }

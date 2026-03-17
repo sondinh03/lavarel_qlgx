@@ -81,6 +81,12 @@ class Teacher extends Model
         return trim($this->last_name . ' ' . $this->first_name);
     }
 
+    public function getFullNameWithSaintAttribute(): string
+    {
+        $saintName = $this->saint?->name ?? '';
+        return trim($saintName . ' ' . $this->full_name);
+    }
+
     public function getGenderTextAttribute(): string
     {
         return match ($this->gender) {
@@ -101,8 +107,8 @@ class Teacher extends Model
         return $query->where('is_active', true);
     }
 
-    public function scopeOfParish($query, $parishId)
-    {
-        return $query->where('parish_id', $parishId);
-    }
+    // public function scopeOfParish($query, $parishId)
+    // {
+    //     return $query->where('parish_id', $parishId);
+    // }
 }

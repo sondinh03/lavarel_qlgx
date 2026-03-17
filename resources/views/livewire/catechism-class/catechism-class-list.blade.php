@@ -84,7 +84,7 @@
                             <x-table-header>Tên lớp</x-table-header>
                             <x-table-header>Khối</x-table-header>
                             <x-table-header class="text-center">Sĩ số</x-table-header>
-                            <x-table-header class="text-center">Sức chứa</x-table-header>
+                            {{-- <x-table-header class="text-center">Sức chứa</x-table-header> --}}
                             <x-table-header>Giáo lý viên</x-table-header>
                             <x-table-header class="text-center">Trạng thái</x-table-header>
                             <x-table-header class="text-center">Thao tác</x-table-header>
@@ -124,7 +124,7 @@
                                 </div>
                             </td>
 
-                            {{-- Sức chứa --}}
+                            {{-- Sức chứa 
                             <td class="px-6 py-4 text-center">
                                 @if($class->capacity)
                                 @php $ratio = ($class->students_count ?? 0) / $class->capacity; @endphp
@@ -136,17 +136,18 @@
                                 <span class="text-slate-400 text-sm">—</span>
                                 @endif
                             </td>
+                            --}}
 
                             {{-- Giáo lý viên --}}
-                            <td class="px-6 py-4">
+                            <td class="px-6 py-4 relative">
                                 @if(($class->teachers_count ?? 0) > 0)
-                                <div x-data="{ open: false }" class="relative inline-block">
+                                <div x-data="{ open: false }" class="inline-block">
                                     <button
                                         @mouseenter="open = true"
                                         @mouseleave="open = false"
                                         class="flex items-center gap-2 text-sm font-medium text-slate-900
                                                hover:text-purple-600 transition-colors">
-                                        <span class="max-w-32 truncate">
+                                        <span class="truncate">
                                             {{ $class->teacher_names[0] ?? 'GLV' }}
                                         </span>
                                         @if($class->teachers_count > 1)
@@ -158,7 +159,7 @@
                                     </button>
 
                                     <div x-show="open" x-transition x-cloak
-                                        class="absolute left-0 top-full mt-2 w-auto min-w-48 max-w-xs
+                                        class="absolute left-0 top-full mb-2 mt-2 w-auto min-w-48 max-w-xs
                                                p-3 bg-white rounded-xl shadow-xl border border-slate-200 z-20">
                                         <div class="space-y-2">
                                             @foreach($class->teacher_names ?? [] as $teacherName)
@@ -223,7 +224,7 @@
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                                 d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
                                         </svg>
-                                        Giáo lý viên
+                                        Glv
                                     </a>
 
                                     <span class="text-slate-300">|</span>

@@ -352,12 +352,14 @@ class CatechismClassList extends BaseComponent
         }
 
         try {
-
-            // BelongsToParish global scope đã filter parish_id tự động
-            $query = CatechismClass::with(['gradeLevel', 'schoolYear', 'teachers'])
+            $query = CatechismClass::with([
+                'gradeLevel',
+                'schoolYear',
+                'teachers:id,saint_id,last_name,first_name',
+                'teachers.saint:id,name'
+            ])
                 ->where('school_year_id', $this->selectedNamHoc)
-                ->withCount('students')
-                ->withCount('teachers');
+                ->withCount('students', 'teachers');
 
             if ($this->selectedGradeLevel !== '') {
                 $query->where('grade_level_id', $this->selectedGradeLevel);

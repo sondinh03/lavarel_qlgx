@@ -89,6 +89,6 @@ class CatechismClass extends Model
 
     public function getTeacherNamesAttribute(): array
     {
-        return $this->teachers->pluck('name')->toArray();
+        return $this->teachers->pluck('full_name_with_saint')->toArray();
     }
 }
