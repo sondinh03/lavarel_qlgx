@@ -29,6 +29,7 @@
         "maatwebsite/excel": "^3.1",
         "nesbot/carbon": "^2.73",
         "phpoffice/phpspreadsheet": "^1.29",
+        "predis/predis": "^3.4",
         "spatie/laravel-settings": "^3.4",
         "stolz/assets": "^0.2.0"
     },
@@ -76,7 +77,11 @@
     "config": {
         "optimize-autoloader": true,
         "preferred-install": "dist",
-        "sort-packages": true
+        "sort-packages": true,
+        "audit": {
+        "abandoned": "ignore",
+        "block-insecure": false
+    }
     },
     "minimum-stability": "dev",
     "prefer-stable": true,
