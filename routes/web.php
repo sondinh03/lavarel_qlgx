@@ -133,7 +133,7 @@ Route::middleware('auth')->group(function () {
         Route::get('/studentss/import', StudentImportPreview::class)
             ->name('students.import');
 
-        Route::get('/studentss/import/template', [StudentImportController::class, 'template'])
+        Route::get('/studentss/download-template', [StudentImportController::class, 'template'])
             ->name('students.import.template');
 
         Route::get('/students/{id}/edit', StudentEdit::class)
