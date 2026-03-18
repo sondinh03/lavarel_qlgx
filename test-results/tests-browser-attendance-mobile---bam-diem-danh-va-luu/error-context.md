@@ -1,0 +1,439 @@
+# Page snapshot
+
+```yaml
+- generic [ref=e1]:
+  - banner [ref=e2]:
+    - generic [ref=e3]:
+      - link "Logo" [ref=e4] [cursor=pointer]:
+        - /url: https://mvgiaoxu.org/dashboard
+        - img "Logo" [ref=e5]
+      - generic [ref=e6]:
+        - button "Thông báo" [ref=e7] [cursor=pointer]:
+          - img [ref=e8]
+        - button "Menu" [ref=e10] [cursor=pointer]
+  - main [ref=e11]:
+    - generic [ref=e12]:
+      - link "Bỏ qua tới nội dung" [ref=e13] [cursor=pointer]:
+        - /url: "#main-content"
+      - generic [ref=e15]:
+        - status
+        - generic [ref=e16]:
+          - generic [ref=e18]:
+            - generic [ref=e19]:
+              - img [ref=e21]
+              - generic [ref=e23]:
+                - heading "Điểm danh - Thánh Thể 1B" [level=1] [ref=e24]
+                - paragraph [ref=e25]: Điểm danh đi học • 25 học sinh • 17 buổi
+            - generic [ref=e27]:
+              - generic [ref=e28]: "25"
+              - generic [ref=e29]: Học sinh
+          - generic [ref=e35]:
+            - generic [ref=e36]: Lớp
+            - combobox [ref=e37]:
+              - option "-- Tất cả lớp --"
+              - option "Thánh Thể 1A"
+              - option "Hiệp Sĩ"
+              - option "Thánh Thể 1B" [selected]
+              - option "Thánh Linh 2B"
+              - option "Thánh Linh 2A"
+              - option "Sống Đạo 1A"
+              - option "Sống Đạo 1B"
+          - generic [ref=e38]:
+            - button "Điểm danh đi học" [ref=e39] [cursor=pointer]
+            - button "Điểm danh đi lễ" [ref=e40] [cursor=pointer]
+        - generic [ref=e42]:
+          - generic [ref=e43]:
+            - generic [ref=e44]:
+              - button "15/03 CN" [ref=e45] [cursor=pointer]:
+                - generic [ref=e47]: 15/03
+                - generic [ref=e48]: CN
+              - button "22/03 CN" [ref=e50] [cursor=pointer]:
+                - generic [ref=e52]: 22/03
+                - generic [ref=e53]: CN
+              - button "29/03 CN" [ref=e55] [cursor=pointer]:
+                - generic [ref=e57]: 29/03
+                - generic [ref=e58]: CN
+              - button "05/04 CN" [ref=e60] [cursor=pointer]:
+                - generic [ref=e62]: 05/04
+                - generic [ref=e63]: CN
+              - button "12/04 CN" [ref=e65] [cursor=pointer]:
+                - generic [ref=e67]: 12/04
+                - generic [ref=e68]: CN
+              - button "19/04 CN" [ref=e70] [cursor=pointer]:
+                - generic [ref=e72]: 19/04
+                - generic [ref=e73]: CN
+              - button "26/04 CN" [ref=e75] [cursor=pointer]:
+                - generic [ref=e77]: 26/04
+                - generic [ref=e78]: CN
+              - button "03/05 CN" [ref=e80] [cursor=pointer]:
+                - generic [ref=e82]: 03/05
+                - generic [ref=e83]: CN
+              - button "10/05 CN" [ref=e85] [cursor=pointer]:
+                - generic [ref=e87]: 10/05
+                - generic [ref=e88]: CN
+              - button "17/05 CN" [ref=e90] [cursor=pointer]:
+                - generic [ref=e92]: 17/05
+                - generic [ref=e93]: CN
+              - button "24/05 CN" [ref=e95] [cursor=pointer]:
+                - generic [ref=e97]: 24/05
+                - generic [ref=e98]: CN
+              - button "31/05 CN" [ref=e100] [cursor=pointer]:
+                - generic [ref=e102]: 31/05
+                - generic [ref=e103]: CN
+              - button "07/06 CN" [ref=e105] [cursor=pointer]:
+                - generic [ref=e107]: 07/06
+                - generic [ref=e108]: CN
+              - button "14/06 CN" [ref=e110] [cursor=pointer]:
+                - generic [ref=e112]: 14/06
+                - generic [ref=e113]: CN
+              - button "21/06 CN" [ref=e115] [cursor=pointer]:
+                - generic [ref=e117]: 21/06
+                - generic [ref=e118]: CN
+              - button "28/06 CN" [ref=e120] [cursor=pointer]:
+                - generic [ref=e122]: 28/06
+                - generic [ref=e123]: CN
+              - button "05/07 CN" [ref=e125] [cursor=pointer]:
+                - generic [ref=e127]: 05/07
+                - generic [ref=e128]: CN
+            - generic [ref=e130]:
+              - generic [ref=e131]:
+                - generic [ref=e132]: "18"
+                - generic [ref=e134]: "0"
+                - generic [ref=e136]: "7"
+                - generic [ref=e138]: / 25
+              - button "Tất cả có mặt" [ref=e139] [cursor=pointer]:
+                - img [ref=e140]
+                - text: Tất cả có mặt
+          - table [ref=e143]:
+            - rowgroup [ref=e144]:
+              - row "Học sinh (25) Điểm danh" [ref=e145]:
+                - columnheader "Học sinh (25)" [ref=e146]
+                - columnheader "Điểm danh" [ref=e147]
+            - rowgroup [ref=e148]:
+              - row "1 Đỗ Bảo Quốc Có mặt Vắng có phép Vắng không phép" [ref=e149]:
+                - cell "1 Đỗ Bảo Quốc" [ref=e150]:
+                  - generic [ref=e151]:
+                    - generic [ref=e152]: "1"
+                    - generic [ref=e154]: Đỗ Bảo Quốc
+                - cell "Có mặt Vắng có phép Vắng không phép" [ref=e155]:
+                  - generic [ref=e156]:
+                    - button "Có mặt" [ref=e157] [cursor=pointer]:
+                      - img [ref=e158]
+                    - button "Vắng có phép" [ref=e160] [cursor=pointer]: P
+                    - button "Vắng không phép" [ref=e161] [cursor=pointer]:
+                      - img [ref=e162]
+              - row "2 Đỗ Minh Tú Có mặt Vắng có phép Vắng không phép" [ref=e164]:
+                - cell "2 Đỗ Minh Tú" [ref=e165]:
+                  - generic [ref=e166]:
+                    - generic [ref=e167]: "2"
+                    - generic [ref=e169]: Đỗ Minh Tú
+                - cell "Có mặt Vắng có phép Vắng không phép" [ref=e170]:
+                  - generic [ref=e171]:
+                    - button "Có mặt" [ref=e172] [cursor=pointer]:
+                      - img [ref=e173]
+                    - button "Vắng có phép" [ref=e175] [cursor=pointer]: P
+                    - button "Vắng không phép" [active] [ref=e176] [cursor=pointer]:
+                      - img [ref=e177]
+              - row "3 Đỗ Ngọc Minh Châu Có mặt Vắng có phép Vắng không phép" [ref=e179]:
+                - cell "3 Đỗ Ngọc Minh Châu" [ref=e180]:
+                  - generic [ref=e181]:
+                    - generic [ref=e182]: "3"
+                    - generic [ref=e184]: Đỗ Ngọc Minh Châu
+                - cell "Có mặt Vắng có phép Vắng không phép" [ref=e185]:
+                  - generic [ref=e186]:
+                    - button "Có mặt" [ref=e187] [cursor=pointer]:
+                      - img [ref=e188]
+                    - button "Vắng có phép" [ref=e190] [cursor=pointer]: P
+                    - button "Vắng không phép" [ref=e191] [cursor=pointer]:
+                      - img [ref=e192]
+              - row "4 Đỗ Nhật Hoàng Có mặt Vắng có phép Vắng không phép" [ref=e194]:
+                - cell "4 Đỗ Nhật Hoàng" [ref=e195]:
+                  - generic [ref=e196]:
+                    - generic [ref=e197]: "4"
+                    - generic [ref=e199]: Đỗ Nhật Hoàng
+                - cell "Có mặt Vắng có phép Vắng không phép" [ref=e200]:
+                  - generic [ref=e201]:
+                    - button "Có mặt" [ref=e202] [cursor=pointer]:
+                      - img [ref=e203]
+                    - button "Vắng có phép" [ref=e205] [cursor=pointer]: P
+                    - button "Vắng không phép" [ref=e206] [cursor=pointer]:
+                      - img [ref=e207]
+              - row "5 Đỗ Thành Nam Có mặt Vắng có phép Vắng không phép" [ref=e209]:
+                - cell "5 Đỗ Thành Nam" [ref=e210]:
+                  - generic [ref=e211]:
+                    - generic [ref=e212]: "5"
+                    - generic [ref=e214]: Đỗ Thành Nam
+                - cell "Có mặt Vắng có phép Vắng không phép" [ref=e215]:
+                  - generic [ref=e216]:
+                    - button "Có mặt" [ref=e217] [cursor=pointer]:
+                      - img [ref=e218]
+                    - button "Vắng có phép" [ref=e220] [cursor=pointer]: P
+                    - button "Vắng không phép" [ref=e221] [cursor=pointer]:
+                      - img [ref=e222]
+              - row "6 Đỗ Thủy Tiên Có mặt Vắng có phép Vắng không phép" [ref=e224]:
+                - cell "6 Đỗ Thủy Tiên" [ref=e225]:
+                  - generic [ref=e226]:
+                    - generic [ref=e227]: "6"
+                    - generic [ref=e229]: Đỗ Thủy Tiên
+                - cell "Có mặt Vắng có phép Vắng không phép" [ref=e230]:
+                  - generic [ref=e231]:
+                    - button "Có mặt" [ref=e232] [cursor=pointer]:
+                      - img [ref=e233]
+                    - button "Vắng có phép" [ref=e235] [cursor=pointer]: P
+                    - button "Vắng không phép" [ref=e236] [cursor=pointer]:
+                      - img [ref=e237]
+              - row "7 Ngô Bảo Anh Có mặt Vắng có phép Vắng không phép" [ref=e239]:
+                - cell "7 Ngô Bảo Anh" [ref=e240]:
+                  - generic [ref=e241]:
+                    - generic [ref=e242]: "7"
+                    - generic [ref=e244]: Ngô Bảo Anh
+                - cell "Có mặt Vắng có phép Vắng không phép" [ref=e245]:
+                  - generic [ref=e246]:
+                    - button "Có mặt" [ref=e247] [cursor=pointer]:
+                      - img [ref=e248]
+                    - button "Vắng có phép" [ref=e250] [cursor=pointer]: P
+                    - button "Vắng không phép" [ref=e251] [cursor=pointer]:
+                      - img [ref=e252]
+              - row "8 Ngô Hương Trà Có mặt Vắng có phép Vắng không phép" [ref=e254]:
+                - cell "8 Ngô Hương Trà" [ref=e255]:
+                  - generic [ref=e256]:
+                    - generic [ref=e257]: "8"
+                    - generic [ref=e259]: Ngô Hương Trà
+                - cell "Có mặt Vắng có phép Vắng không phép" [ref=e260]:
+                  - generic [ref=e261]:
+                    - button "Có mặt" [ref=e262] [cursor=pointer]:
+                      - img [ref=e263]
+                    - button "Vắng có phép" [ref=e265] [cursor=pointer]: P
+                    - button "Vắng không phép" [ref=e266] [cursor=pointer]:
+                      - img [ref=e267]
+              - row "9 Ngô Khánh Linh Có mặt Vắng có phép Vắng không phép" [ref=e269]:
+                - cell "9 Ngô Khánh Linh" [ref=e270]:
+                  - generic [ref=e271]:
+                    - generic [ref=e272]: "9"
+                    - generic [ref=e274]: Ngô Khánh Linh
+                - cell "Có mặt Vắng có phép Vắng không phép" [ref=e275]:
+                  - generic [ref=e276]:
+                    - button "Có mặt" [ref=e277] [cursor=pointer]:
+                      - img [ref=e278]
+                    - button "Vắng có phép" [ref=e280] [cursor=pointer]: P
+                    - button "Vắng không phép" [ref=e281] [cursor=pointer]:
+                      - img [ref=e282]
+              - row "10 Ngô Ngọc Hà Có mặt Vắng có phép Vắng không phép" [ref=e284]:
+                - cell "10 Ngô Ngọc Hà" [ref=e285]:
+                  - generic [ref=e286]:
+                    - generic [ref=e287]: "10"
+                    - generic [ref=e289]: Ngô Ngọc Hà
+                - cell "Có mặt Vắng có phép Vắng không phép" [ref=e290]:
+                  - generic [ref=e291]:
+                    - button "Có mặt" [ref=e292] [cursor=pointer]:
+                      - img [ref=e293]
+                    - button "Vắng có phép" [ref=e295] [cursor=pointer]: P
+                    - button "Vắng không phép" [ref=e296] [cursor=pointer]:
+                      - img [ref=e297]
+              - row "11 Ngô Phương Hiền Có mặt Vắng có phép Vắng không phép" [ref=e299]:
+                - cell "11 Ngô Phương Hiền" [ref=e300]:
+                  - generic [ref=e301]:
+                    - generic [ref=e302]: "11"
+                    - generic [ref=e304]: Ngô Phương Hiền
+                - cell "Có mặt Vắng có phép Vắng không phép" [ref=e305]:
+                  - generic [ref=e306]:
+                    - button "Có mặt" [ref=e307] [cursor=pointer]:
+                      - img [ref=e308]
+                    - button "Vắng có phép" [ref=e310] [cursor=pointer]: P
+                    - button "Vắng không phép" [ref=e311] [cursor=pointer]:
+                      - img [ref=e312]
+              - row "12 Ngô Thanh Tùng Có mặt Vắng có phép Vắng không phép" [ref=e314]:
+                - cell "12 Ngô Thanh Tùng" [ref=e315]:
+                  - generic [ref=e316]:
+                    - generic [ref=e317]: "12"
+                    - generic [ref=e319]: Ngô Thanh Tùng
+                - cell "Có mặt Vắng có phép Vắng không phép" [ref=e320]:
+                  - generic [ref=e321]:
+                    - button "Có mặt" [ref=e322] [cursor=pointer]:
+                      - img [ref=e323]
+                    - button "Vắng có phép" [ref=e325] [cursor=pointer]: P
+                    - button "Vắng không phép" [ref=e326] [cursor=pointer]:
+                      - img [ref=e327]
+              - row "13 Nguyễn Tuấn Kiệt Có mặt Vắng có phép Vắng không phép" [ref=e329]:
+                - cell "13 Nguyễn Tuấn Kiệt" [ref=e330]:
+                  - generic [ref=e331]:
+                    - generic [ref=e332]: "13"
+                    - generic [ref=e334]: Nguyễn Tuấn Kiệt
+                - cell "Có mặt Vắng có phép Vắng không phép" [ref=e335]:
+                  - generic [ref=e336]:
+                    - button "Có mặt" [ref=e337] [cursor=pointer]:
+                      - img [ref=e338]
+                    - button "Vắng có phép" [ref=e340] [cursor=pointer]: P
+                    - button "Vắng không phép" [ref=e341] [cursor=pointer]:
+                      - img [ref=e342]
+              - row "14 Phạm Công Tuấn Có mặt Vắng có phép Vắng không phép" [ref=e344]:
+                - cell "14 Phạm Công Tuấn" [ref=e345]:
+                  - generic [ref=e346]:
+                    - generic [ref=e347]: "14"
+                    - generic [ref=e349]: Phạm Công Tuấn
+                - cell "Có mặt Vắng có phép Vắng không phép" [ref=e350]:
+                  - generic [ref=e351]:
+                    - button "Có mặt" [ref=e352] [cursor=pointer]:
+                      - img [ref=e353]
+                    - button "Vắng có phép" [ref=e355] [cursor=pointer]: P
+                    - button "Vắng không phép" [ref=e356] [cursor=pointer]:
+                      - img [ref=e357]
+              - row "15 Phạm Đan Trường Có mặt Vắng có phép Vắng không phép" [ref=e359]:
+                - cell "15 Phạm Đan Trường" [ref=e360]:
+                  - generic [ref=e361]:
+                    - generic [ref=e362]: "15"
+                    - generic [ref=e364]: Phạm Đan Trường
+                - cell "Có mặt Vắng có phép Vắng không phép" [ref=e365]:
+                  - generic [ref=e366]:
+                    - button "Có mặt" [ref=e367] [cursor=pointer]:
+                      - img [ref=e368]
+                    - button "Vắng có phép" [ref=e370] [cursor=pointer]: P
+                    - button "Vắng không phép" [ref=e371] [cursor=pointer]:
+                      - img [ref=e372]
+              - row "16 Phạm Khánh Ngọc Có mặt Vắng có phép Vắng không phép" [ref=e374]:
+                - cell "16 Phạm Khánh Ngọc" [ref=e375]:
+                  - generic [ref=e376]:
+                    - generic [ref=e377]: "16"
+                    - generic [ref=e379]: Phạm Khánh Ngọc
+                - cell "Có mặt Vắng có phép Vắng không phép" [ref=e380]:
+                  - generic [ref=e381]:
+                    - button "Có mặt" [ref=e382] [cursor=pointer]:
+                      - img [ref=e383]
+                    - button "Vắng có phép" [ref=e385] [cursor=pointer]: P
+                    - button "Vắng không phép" [ref=e386] [cursor=pointer]:
+                      - img [ref=e387]
+              - row "17 Phạm Quỳnh Anh Có mặt Vắng có phép Vắng không phép" [ref=e389]:
+                - cell "17 Phạm Quỳnh Anh" [ref=e390]:
+                  - generic [ref=e391]:
+                    - generic [ref=e392]: "17"
+                    - generic [ref=e394]: Phạm Quỳnh Anh
+                - cell "Có mặt Vắng có phép Vắng không phép" [ref=e395]:
+                  - generic [ref=e396]:
+                    - button "Có mặt" [ref=e397] [cursor=pointer]:
+                      - img [ref=e398]
+                    - button "Vắng có phép" [ref=e400] [cursor=pointer]: P
+                    - button "Vắng không phép" [ref=e401] [cursor=pointer]:
+                      - img [ref=e402]
+              - row "18 Phạm Quỳnh Anh Có mặt Vắng có phép Vắng không phép" [ref=e404]:
+                - cell "18 Phạm Quỳnh Anh" [ref=e405]:
+                  - generic [ref=e406]:
+                    - generic [ref=e407]: "18"
+                    - generic [ref=e409]: Phạm Quỳnh Anh
+                - cell "Có mặt Vắng có phép Vắng không phép" [ref=e410]:
+                  - generic [ref=e411]:
+                    - button "Có mặt" [ref=e412] [cursor=pointer]:
+                      - img [ref=e413]
+                    - button "Vắng có phép" [ref=e415] [cursor=pointer]: P
+                    - button "Vắng không phép" [ref=e416] [cursor=pointer]:
+                      - img [ref=e417]
+              - row "19 Phạm Thanh Nga Có mặt Vắng có phép Vắng không phép" [ref=e419]:
+                - cell "19 Phạm Thanh Nga" [ref=e420]:
+                  - generic [ref=e421]:
+                    - generic [ref=e422]: "19"
+                    - generic [ref=e424]: Phạm Thanh Nga
+                - cell "Có mặt Vắng có phép Vắng không phép" [ref=e425]:
+                  - generic [ref=e426]:
+                    - button "Có mặt" [ref=e427] [cursor=pointer]:
+                      - img [ref=e428]
+                    - button "Vắng có phép" [ref=e430] [cursor=pointer]: P
+                    - button "Vắng không phép" [ref=e431] [cursor=pointer]:
+                      - img [ref=e432]
+              - row "20 Phạm Thế Huynh Có mặt Vắng có phép Vắng không phép" [ref=e434]:
+                - cell "20 Phạm Thế Huynh" [ref=e435]:
+                  - generic [ref=e436]:
+                    - generic [ref=e437]: "20"
+                    - generic [ref=e439]: Phạm Thế Huynh
+                - cell "Có mặt Vắng có phép Vắng không phép" [ref=e440]:
+                  - generic [ref=e441]:
+                    - button "Có mặt" [ref=e442] [cursor=pointer]:
+                      - img [ref=e443]
+                    - button "Vắng có phép" [ref=e445] [cursor=pointer]: P
+                    - button "Vắng không phép" [ref=e446] [cursor=pointer]:
+                      - img [ref=e447]
+              - row "21 Phạm Thiên Phúc Có mặt Vắng có phép Vắng không phép" [ref=e449]:
+                - cell "21 Phạm Thiên Phúc" [ref=e450]:
+                  - generic [ref=e451]:
+                    - generic [ref=e452]: "21"
+                    - generic [ref=e454]: Phạm Thiên Phúc
+                - cell "Có mặt Vắng có phép Vắng không phép" [ref=e455]:
+                  - generic [ref=e456]:
+                    - button "Có mặt" [ref=e457] [cursor=pointer]:
+                      - img [ref=e458]
+                    - button "Vắng có phép" [ref=e460] [cursor=pointer]: P
+                    - button "Vắng không phép" [ref=e461] [cursor=pointer]:
+                      - img [ref=e462]
+              - row "22 Phạm Trần Hà Phương Có mặt Vắng có phép Vắng không phép" [ref=e464]:
+                - cell "22 Phạm Trần Hà Phương" [ref=e465]:
+                  - generic [ref=e466]:
+                    - generic [ref=e467]: "22"
+                    - generic [ref=e469]: Phạm Trần Hà Phương
+                - cell "Có mặt Vắng có phép Vắng không phép" [ref=e470]:
+                  - generic [ref=e471]:
+                    - button "Có mặt" [ref=e472] [cursor=pointer]:
+                      - img [ref=e473]
+                    - button "Vắng có phép" [ref=e475] [cursor=pointer]: P
+                    - button "Vắng không phép" [ref=e476] [cursor=pointer]:
+                      - img [ref=e477]
+              - row "23 Phạm Văn Gia Thịnh Có mặt Vắng có phép Vắng không phép" [ref=e479]:
+                - cell "23 Phạm Văn Gia Thịnh" [ref=e480]:
+                  - generic [ref=e481]:
+                    - generic [ref=e482]: "23"
+                    - generic [ref=e484]: Phạm Văn Gia Thịnh
+                - cell "Có mặt Vắng có phép Vắng không phép" [ref=e485]:
+                  - generic [ref=e486]:
+                    - button "Có mặt" [ref=e487] [cursor=pointer]:
+                      - img [ref=e488]
+                    - button "Vắng có phép" [ref=e490] [cursor=pointer]: P
+                    - button "Vắng không phép" [ref=e491] [cursor=pointer]:
+                      - img [ref=e492]
+              - row "24 Phạm Vũ Linh Đan Có mặt Vắng có phép Vắng không phép" [ref=e494]:
+                - cell "24 Phạm Vũ Linh Đan" [ref=e495]:
+                  - generic [ref=e496]:
+                    - generic [ref=e497]: "24"
+                    - generic [ref=e499]: Phạm Vũ Linh Đan
+                - cell "Có mặt Vắng có phép Vắng không phép" [ref=e500]:
+                  - generic [ref=e501]:
+                    - button "Có mặt" [ref=e502] [cursor=pointer]:
+                      - img [ref=e503]
+                    - button "Vắng có phép" [ref=e505] [cursor=pointer]: P
+                    - button "Vắng không phép" [ref=e506] [cursor=pointer]:
+                      - img [ref=e507]
+              - row "25 Vũ Phạm Diệp Chi Có mặt Vắng có phép Vắng không phép" [ref=e509]:
+                - cell "25 Vũ Phạm Diệp Chi" [ref=e510]:
+                  - generic [ref=e511]:
+                    - generic [ref=e512]: "25"
+                    - generic [ref=e514]: Vũ Phạm Diệp Chi
+                - cell "Có mặt Vắng có phép Vắng không phép" [ref=e515]:
+                  - generic [ref=e516]:
+                    - button "Có mặt" [ref=e517] [cursor=pointer]:
+                      - img [ref=e518]
+                    - button "Vắng có phép" [ref=e520] [cursor=pointer]: P
+                    - button "Vắng không phép" [ref=e521] [cursor=pointer]:
+                      - img [ref=e522]
+          - generic [ref=e525]:
+            - link [ref=e526] [cursor=pointer]:
+              - /url: https://mvgiaoxu.org/attendance/qr?classId=45&sessionId=73&type=1
+              - img [ref=e527]
+            - button "Lưu điểm danh" [disabled] [ref=e529]:
+              - img [ref=e530]
+              - generic [ref=e532]: Lưu điểm danh
+    - text: ">"
+  - navigation [ref=e534]:
+    - generic [ref=e535]:
+      - link "Trang chủ" [ref=e536] [cursor=pointer]:
+        - /url: https://mvgiaoxu.org/dashboard
+        - img [ref=e538]
+        - generic [ref=e540]: Trang chủ
+      - link "Học sinh" [ref=e541] [cursor=pointer]:
+        - /url: https://mvgiaoxu.org/students
+        - img [ref=e543]
+        - generic [ref=e545]: Học sinh
+      - link "Điểm danh" [ref=e546] [cursor=pointer]:
+        - /url: https://mvgiaoxu.org/attendance
+        - img [ref=e548]
+        - generic [ref=e551]: Điểm danh
+      - link "Lịch sử" [ref=e552] [cursor=pointer]:
+        - /url: https://mvgiaoxu.org/session
+        - img [ref=e554]
+        - generic [ref=e556]: Lịch sử
+```

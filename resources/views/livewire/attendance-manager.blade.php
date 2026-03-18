@@ -484,7 +484,6 @@
                             && $sessionHasRecord[$session['dateStr']] > 0;
                             @endphp
                             <button
-                                {{-- wire:click="$set('selectedDate', '{{ $session['dateStr'] }}')" --}}
                                 wire:click="selectDate('{{ $session['dateStr'] }}')"
                                 class="flex-shrink-0 snap-start flex flex-col items-center gap-1 px-3 py-2
                                    rounded-xl border transition-all min-w-[72px]

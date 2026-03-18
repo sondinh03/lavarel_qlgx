@@ -169,112 +169,387 @@ test("mobile - mo trang", async ({ browser }) => {
 });
 
 test("mobile - bam diem danh va luu", async ({ browser }) => {
-  const ctx = await browser.newContext({
-    ...iPhone,
-    viewport: { width: 390, height: 844 },
-  });
-  const page = await ctx.newPage();
+  const TOTAL_USERS = 10;
 
-  page.on("console", (msg) =>
-    console.log(`[browser ${msg.type()}] ${msg.text()}`),
-  );
-  page.on("pageerror", (err) =>
-    console.error(`[browser error] ${err.message}`),
-  );
+  // --- Helper: chạy 1 phiên điểm danh ---
+  async function runOneSession(userId) {
+    const start = Date.now();
+    const ctx = await browser.newContext({
+      ...iPhone,
+      viewport: { width: 390, height: 844 },
+    });
+    const page = await ctx.newPage();
 
-  await login(page);
-  console.log("[test] Đăng nhập xong");
-
-  await page.goto(`${URL}/attendance?classId=${CLASS_ID}`);
-  console.log("[test] Đã vào trang");
-
-  // Emit mobile mode
-  await page
-    .waitForFunction(
-      () =>
-        typeof window.Livewire !== "undefined" ||
-        typeof window.livewire !== "undefined",
-      { timeout: 15000 },
-    )
-    .catch(() => console.log("[warn] Livewire không tìm thấy"));
-
-  await page.evaluate(() => {
-    const emit = window.Livewire || window.livewire;
-    if (emit) emit.emit("viewModeDetected", "mobile");
-  });
-  console.log("[test] Đã emit viewModeDetected mobile");
-
-  await page.waitForTimeout(2000);
-  await waitForLivewireIdle(page);
-
-  // Chờ danh sách học sinh hiện ra
-  await page.waitForSelector('.lg\\:hidden button[aria-label="Có mặt"]', {
-    timeout: 15000,
-  });
-  console.log("[test] Danh sách học sinh đã load");
-
-  // Đếm số học sinh
-  const studentCount = await page
-    .locator('.lg\\:hidden button[aria-label="Có mặt"]')
-    .count();
-  console.log(`[test] Số học sinh = ${studentCount}`);
-
-  // Tap có mặt cho học sinh đầu tiên
-  await page.locator('.lg\\:hidden button[aria-label="Có mặt"]').first().tap();
-  console.log("[test] Đã tap Có mặt học sinh 1");
-
-  // Kiểm tra nút chuyển sang màu xanh
-  await page.waitForTimeout(300);
-  const isGreen = await page.evaluate(() => {
-    const btn = document.querySelector(
-      '.lg\\:hidden button[aria-label="Có mặt"]',
+    page.on("console", (msg) =>
+      console.log(`[user${userId}][${msg.type()}] ${msg.text()}`),
     );
-    return btn?.classList.contains("bg-green-500");
-  });
-  console.log(`[test] Nút có mặt xanh = ${isGreen}`);
+    page.on("pageerror", (err) =>
+      console.error(`[user${userId}][pageerror] ${err.message}`),
+    );
 
-  // Tap vắng không phép cho học sinh thứ 2
-  await page
-    .locator('.lg\\:hidden button[aria-label="Vắng không phép"]')
-    .nth(1)
-    .tap();
-  console.log("[test] Đã tap Vắng không phép học sinh 2");
+    const timings = {};
 
-  // Kiểm tra badge số thay đổi chưa lưu
-  await page.waitForTimeout(300);
-  const draftCount = await page
-    .locator('button:has-text("Lưu điểm danh") span')
-    .last()
-    .textContent()
-    .catch(() => "không thấy badge");
-  console.log(`[test] Draft count badge = ${draftCount}`);
+    try {
+      // 1. Login
+      let t = Date.now();
+      await login(page);
+      timings.login = Date.now() - t;
+      console.log(`[user${userId}] Đăng nhập xong (${timings.login}ms)`);
 
-  // Bấm lưu — nút mobile ở bottom bar
-  await page.locator('button:has-text("Lưu điểm danh")').last().tap();
-  console.log("[test] Đã tap Lưu");
+      // 2. Vào trang
+      t = Date.now();
+      await page.goto(`${URL}/attendance?classId=${CLASS_ID}`);
+      timings.pageLoad = Date.now() - t;
+      console.log(`[user${userId}] Đã vào trang (${timings.pageLoad}ms)`);
 
-  // Chờ toast thành công
-  await expect(page.locator("text=Đã lưu")).toBeVisible({ timeout: 8000 });
-  console.log("[test] Toast Đã lưu xuất hiện");
+      // 3. Emit mobile mode
+      await page
+        .waitForFunction(
+          () =>
+            typeof window.Livewire !== "undefined" ||
+            typeof window.livewire !== "undefined",
+          { timeout: 15000 },
+        )
+        .catch(() =>
+          console.log(`[user${userId}][warn] Livewire không tìm thấy`),
+        );
 
-  // Sau khi lưu — draft phải được xóa
-  await page.waitForTimeout(500);
-  const draftAfter = await page
-    .locator('button:has-text("Lưu điểm danh") span')
-    .last()
-    .textContent()
-    .catch(() => "0");
-  console.log(`[test] Draft sau khi lưu = ${draftAfter}`);
+      await page.evaluate(() => {
+        const emit = window.Livewire || window.livewire;
+        if (emit) emit.emit("viewModeDetected", "mobile");
+      });
 
-  // Chụp screenshot
-  await page.screenshot({
-    path: "tests/browser/screenshots/mobile-sau-khi-luu.png",
-    fullPage: true,
-  });
-  console.log("[test] Screenshot lưu xong");
+      await page.waitForTimeout(2000);
+      await waitForLivewireIdle(page);
 
-  await ctx.close();
-  console.log("[test] Xong");
+      // 4. Chờ danh sách học sinh
+      await page.waitForSelector('.lg\\:hidden button[aria-label="Có mặt"]', {
+        timeout: 15000,
+      });
+
+      const studentCount = await page
+        .locator('.lg\\:hidden button[aria-label="Có mặt"]')
+        .count();
+      console.log(`[user${userId}] Số học sinh = ${studentCount}`);
+
+      // 5. Tap có mặt học sinh 1
+      await page
+        .locator('.lg\\:hidden button[aria-label="Có mặt"]')
+        .first()
+        .tap();
+
+      await page.waitForTimeout(300);
+      const isGreen = await page.evaluate(() => {
+        const btn = document.querySelector(
+          '.lg\\:hidden button[aria-label="Có mặt"]',
+        );
+        return btn?.classList.contains("bg-green-500");
+      });
+      console.log(`[user${userId}] Nút có mặt xanh = ${isGreen}`);
+
+      // 6. Tap vắng không phép học sinh 2
+      await page
+        .locator('.lg\\:hidden button[aria-label="Vắng không phép"]')
+        .nth(1)
+        .tap();
+
+      await page.waitForTimeout(300);
+      const draftCount = await page
+        .locator('button:has-text("Lưu điểm danh") span')
+        .last()
+        .textContent()
+        .catch(() => "không thấy badge");
+      console.log(`[user${userId}] Draft count = ${draftCount}`);
+
+      // 7. Bấm lưu + đo thời gian lưu
+      t = Date.now();
+      await page.locator('button:has-text("Lưu điểm danh")').last().tap();
+
+      await expect(page.locator("text=Đã lưu")).toBeVisible({ timeout: 8000 });
+      timings.save = Date.now() - t;
+      console.log(`[user${userId}] Toast Đã lưu (${timings.save}ms)`);
+
+      // 8. Kiểm tra draft bị xóa
+      await page.waitForTimeout(500);
+      const draftAfter = await page
+        .locator('button:has-text("Lưu điểm danh") span')
+        .last()
+        .textContent()
+        .catch(() => "0");
+      console.log(`[user${userId}] Draft sau lưu = ${draftAfter}`);
+
+      // 9. Screenshot
+      await page.screenshot({
+        path: `tests/browser/screenshots/mobile-user${userId}-sau-khi-luu.png`,
+        fullPage: true,
+      });
+
+      timings.total = Date.now() - start;
+      return { userId, status: "ok", timings };
+    } catch (err) {
+      timings.total = Date.now() - start;
+      console.error(`[user${userId}] LỖI: ${err.message}`);
+      await page
+        .screenshot({
+          path: `tests/browser/screenshots/mobile-user${userId}-error.png`,
+          fullPage: true,
+        })
+        .catch(() => {});
+      return { userId, status: "fail", error: err.message, timings };
+    } finally {
+      await ctx.close();
+    }
+  }
+
+  // --- Chạy 10 session song song ---
+  const overallStart = Date.now();
+
+  const results = await Promise.all(
+    Array.from({ length: TOTAL_USERS }, (_, i) => runOneSession(i + 1)),
+  );
+
+  const overallMs = Date.now() - overallStart;
+
+  // --- Tổng hợp kết quả ---
+  const passed = results.filter((r) => r.status === "ok");
+  const failed = results.filter((r) => r.status === "fail");
+
+  console.log("\n========== KẾT QUẢ ==========");
+  console.log(`Tổng thời gian chạy song song : ${overallMs}ms`);
+  console.log(`Thành công : ${passed.length}/${TOTAL_USERS}`);
+  console.log(`Thất bại   : ${failed.length}/${TOTAL_USERS}`);
+
+  if (passed.length > 0) {
+    const avg = (key) =>
+      Math.round(
+        passed.reduce((s, r) => s + (r.timings[key] ?? 0), 0) / passed.length,
+      );
+    const max = (key) => Math.max(...passed.map((r) => r.timings[key] ?? 0));
+    const min = (key) => Math.min(...passed.map((r) => r.timings[key] ?? 0));
+
+    console.log("\n--- Thống kê (ms) ---");
+    console.log(
+      `${"Bước".padEnd(12)} ${"Avg".padStart(7)} ${"Min".padStart(7)} ${"Max".padStart(7)}`,
+    );
+    for (const key of ["login", "pageLoad", "save", "total"]) {
+      console.log(
+        `${key.padEnd(12)} ${String(avg(key)).padStart(7)} ${String(min(key)).padStart(7)} ${String(max(key)).padStart(7)}`,
+      );
+    }
+
+    // Chi tiết từng user
+    console.log("\n--- Chi tiết từng user ---");
+    results.forEach((r) => {
+      const icon = r.status === "ok" ? "✓" : "✗";
+      const t = r.timings;
+      console.log(
+        `${icon} user${r.userId}: login=${t.login ?? "-"}ms | load=${t.pageLoad ?? "-"}ms | save=${t.save ?? "-"}ms | total=${t.total}ms${r.error ? ` | ERR: ${r.error}` : ""}`,
+      );
+    });
+  }
+
+  if (failed.length > 0) {
+    console.log("\n--- Users thất bại ---");
+    failed.forEach((r) => console.log(`  user${r.userId}: ${r.error}`));
+  }
+
+  console.log("==============================\n");
+
+  // Assert ít nhất 8/10 thành công
+  expect(passed.length).toBeGreaterThanOrEqual(8);
+});
+
+test("mobile - 10 users bam diem danh va luu (concurrent + timing)", async ({
+  browser,
+}) => {
+  const TOTAL_USERS = 10;
+
+  // --- Helper: chạy 1 phiên điểm danh ---
+  async function runOneSession(userId) {
+    const start = Date.now();
+    const ctx = await browser.newContext({
+      ...iPhone,
+      viewport: { width: 390, height: 844 },
+    });
+    const page = await ctx.newPage();
+
+    page.on("console", (msg) =>
+      console.log(`[user${userId}][${msg.type()}] ${msg.text()}`),
+    );
+    page.on("pageerror", (err) =>
+      console.error(`[user${userId}][pageerror] ${err.message}`),
+    );
+
+    const timings = {};
+
+    try {
+      // 1. Login
+      let t = Date.now();
+      await login(page);
+      timings.login = Date.now() - t;
+      console.log(`[user${userId}] Đăng nhập xong (${timings.login}ms)`);
+
+      // 2. Vào trang
+      t = Date.now();
+      await page.goto(`${URL}/attendance?classId=${CLASS_ID}`);
+      timings.pageLoad = Date.now() - t;
+      console.log(`[user${userId}] Đã vào trang (${timings.pageLoad}ms)`);
+
+      // 3. Emit mobile mode
+      await page
+        .waitForFunction(
+          () =>
+            typeof window.Livewire !== "undefined" ||
+            typeof window.livewire !== "undefined",
+          { timeout: 15000 },
+        )
+        .catch(() =>
+          console.log(`[user${userId}][warn] Livewire không tìm thấy`),
+        );
+
+      await page.evaluate(() => {
+        const emit = window.Livewire || window.livewire;
+        if (emit) emit.emit("viewModeDetected", "mobile");
+      });
+
+      await page.waitForTimeout(2000);
+      await waitForLivewireIdle(page);
+
+      // 4. Chờ danh sách học sinh
+      await page.waitForSelector('.lg\\:hidden button[aria-label="Có mặt"]', {
+        timeout: 15000,
+      });
+
+      const studentCount = await page
+        .locator('.lg\\:hidden button[aria-label="Có mặt"]')
+        .count();
+      console.log(`[user${userId}] Số học sinh = ${studentCount}`);
+
+      // 5. Tap có mặt học sinh 1
+      await page
+        .locator('.lg\\:hidden button[aria-label="Có mặt"]')
+        .first()
+        .tap();
+
+      await page.waitForTimeout(300);
+      const isGreen = await page.evaluate(() => {
+        const btn = document.querySelector(
+          '.lg\\:hidden button[aria-label="Có mặt"]',
+        );
+        return btn?.classList.contains("bg-green-500");
+      });
+      console.log(`[user${userId}] Nút có mặt xanh = ${isGreen}`);
+
+      // 6. Tap vắng không phép học sinh 2
+      await page
+        .locator('.lg\\:hidden button[aria-label="Vắng không phép"]')
+        .nth(1)
+        .tap();
+
+      await page.waitForTimeout(300);
+      const draftCount = await page
+        .locator('button:has-text("Lưu điểm danh") span')
+        .last()
+        .textContent()
+        .catch(() => "không thấy badge");
+      console.log(`[user${userId}] Draft count = ${draftCount}`);
+
+      // 7. Bấm lưu + đo thời gian lưu
+      t = Date.now();
+      await page.locator('button:has-text("Lưu điểm danh")').last().tap();
+
+      await expect(page.locator("text=Đã lưu")).toBeVisible({ timeout: 8000 });
+      timings.save = Date.now() - t;
+      console.log(`[user${userId}] Toast Đã lưu (${timings.save}ms)`);
+
+      // 8. Kiểm tra draft bị xóa
+      await page.waitForTimeout(500);
+      const draftAfter = await page
+        .locator('button:has-text("Lưu điểm danh") span')
+        .last()
+        .textContent()
+        .catch(() => "0");
+      console.log(`[user${userId}] Draft sau lưu = ${draftAfter}`);
+
+      // 9. Screenshot
+      await page.screenshot({
+        path: `tests/browser/screenshots/mobile-user${userId}-sau-khi-luu.png`,
+        fullPage: true,
+      });
+
+      timings.total = Date.now() - start;
+      return { userId, status: "ok", timings };
+    } catch (err) {
+      timings.total = Date.now() - start;
+      console.error(`[user${userId}] LỖI: ${err.message}`);
+      await page
+        .screenshot({
+          path: `tests/browser/screenshots/mobile-user${userId}-error.png`,
+          fullPage: true,
+        })
+        .catch(() => {});
+      return { userId, status: "fail", error: err.message, timings };
+    } finally {
+      await ctx.close();
+    }
+  }
+
+  // --- Chạy 10 session song song ---
+  const overallStart = Date.now();
+
+  const results = await Promise.all(
+    Array.from({ length: TOTAL_USERS }, (_, i) => runOneSession(i + 1)),
+  );
+
+  const overallMs = Date.now() - overallStart;
+
+  // --- Tổng hợp kết quả ---
+  const passed = results.filter((r) => r.status === "ok");
+  const failed = results.filter((r) => r.status === "fail");
+
+  console.log("\n========== KẾT QUẢ ==========");
+  console.log(`Tổng thời gian chạy song song : ${overallMs}ms`);
+  console.log(`Thành công : ${passed.length}/${TOTAL_USERS}`);
+  console.log(`Thất bại   : ${failed.length}/${TOTAL_USERS}`);
+
+  if (passed.length > 0) {
+    const avg = (key) =>
+      Math.round(
+        passed.reduce((s, r) => s + (r.timings[key] ?? 0), 0) / passed.length,
+      );
+    const max = (key) => Math.max(...passed.map((r) => r.timings[key] ?? 0));
+    const min = (key) => Math.min(...passed.map((r) => r.timings[key] ?? 0));
+
+    console.log("\n--- Thống kê (ms) ---");
+    console.log(
+      `${"Bước".padEnd(12)} ${"Avg".padStart(7)} ${"Min".padStart(7)} ${"Max".padStart(7)}`,
+    );
+    for (const key of ["login", "pageLoad", "save", "total"]) {
+      console.log(
+        `${key.padEnd(12)} ${String(avg(key)).padStart(7)} ${String(min(key)).padStart(7)} ${String(max(key)).padStart(7)}`,
+      );
+    }
+
+    // Chi tiết từng user
+    console.log("\n--- Chi tiết từng user ---");
+    results.forEach((r) => {
+      const icon = r.status === "ok" ? "✓" : "✗";
+      const t = r.timings;
+      console.log(
+        `${icon} user${r.userId}: login=${t.login ?? "-"}ms | load=${t.pageLoad ?? "-"}ms | save=${t.save ?? "-"}ms | total=${t.total}ms${r.error ? ` | ERR: ${r.error}` : ""}`,
+      );
+    });
+  }
+
+  if (failed.length > 0) {
+    console.log("\n--- Users thất bại ---");
+    failed.forEach((r) => console.log(`  user${r.userId}: ${r.error}`));
+  }
+
+  console.log("==============================\n");
+
+  // Assert ít nhất 8/10 thành công
+  expect(passed.length).toBeGreaterThanOrEqual(8);
 });
 
 test("mobile - 100 nguoi theo dot", async ({ browser }) => {

@@ -310,6 +310,24 @@ class AttendanceManager extends BaseComponent
             return;
         }
 
+        if ($this->viewMode === 'mobile') {
+            $this->sessions = AttendanceSession::where('class_id', $this->selectedClassId)
+                ->where('type', $this->attendanceType)
+                ->orderBy('date')
+                ->get(['id', 'date', 'status'])  // chỉ 3 field
+                ->map(fn($s) => [
+                    'id'      => $s->id,
+                    'dateStr' => Carbon::parse($s->date)->format('Y-m-d'),
+                    'fullDate' => Carbon::parse($s->date)->format('d/m'),
+                    'dayName' => $this->getVietnameseDayName(Carbon::parse($s->date)),
+                    'locked'  => $s->status === AttendanceSession::STATUS_CLOSED,
+                ])->toArray();
+
+            $this->autoSelectDateForMobile();
+            $this->loadAttendanceRecords();
+            return;
+        }
+
         try {
             $query = AttendanceSession::where('class_id', $this->selectedClassId)
                 ->where('type', $this->attendanceType)
@@ -670,17 +688,29 @@ class AttendanceManager extends BaseComponent
         if (empty($this->sessions)) return;
 
         $today = Carbon::today()->format('Y-m-d');
-        $todaySession = collect($this->sessions)->firstWhere('dateStr', $today);
+        $sessions = collect($this->sessions)->sortBy('dateStr');
 
+        $todaySession = $sessions->firstWhere('dateStr', $today);
         if ($todaySession) {
-            $this->selectedDate = $todaySession['dateStr'];
+            $this->selectedDate = $today;
             return;
         }
 
-        $unlocked = collect($this->sessions)->first(fn($s) => !$s['locked']);
-        $this->selectedDate = $unlocked
-            ? $unlocked['dateStr']
-            : $this->sessions[0]['dateStr'];
+        // Ngày trước gần nhất
+        $prev = $sessions->last(fn($s) => $s['dateStr'] < $today);
+        if ($prev) {
+            $this->selectedDate = $prev['dateStr'];
+            return;
+        }
+
+        // Ngày sau gần nhất
+        $next = $sessions->first(fn($s) => $s['dateStr'] > $today);
+        if ($next) {
+            $this->selectedDate = $next['dateStr'];
+            return;
+        }
+
+        $this->selectedDate = $sessions->first()['dateStr'];
     }
 
     public function selectDate(string $date): void
