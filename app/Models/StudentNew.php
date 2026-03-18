@@ -139,6 +139,11 @@ class StudentNew extends Model
         };
     }
 
+    public function getSaintNameAttribute(): string
+    {
+        return $this->saint?->name ?? '-';
+    }
+
     public function getFullNameAttribute(): string
     {
         return trim($this->last_name . ' ' . $this->first_name);

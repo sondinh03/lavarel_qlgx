@@ -600,14 +600,12 @@
                                                 {{ $index + 1 }}
                                             </div>
                                             <div class="min-w-0">
-                                                <div class="text-sm font-semibold text-slate-900 leading-tight">
-                                                    {{ $student->full_name }}
-                                                </div>
-                                                @if($student->saint_name)
                                                 <div class="text-xs text-slate-400 leading-tight mt-0.5">
                                                     {{ $student->saint_name }}
                                                 </div>
-                                                @endif
+                                                <div class="text-sm font-semibold text-slate-900 leading-tight">
+                                                    {{ $student->full_name }}
+                                                </div>
                                             </div>
                                         </div>
                                     </td>

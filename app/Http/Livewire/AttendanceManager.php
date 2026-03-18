@@ -26,26 +26,23 @@ class AttendanceManager extends BaseComponent
 
     // ==================== VIEW STATE ====================
 
-    public $viewMode    = 'desktop';
+    public $viewMode     = 'desktop';
     public $selectedDate = null;
 
     // ==================== NOTE MODAL ====================
-    // Vẫn giữ modal phía Livewire vì cần load student name từ server
 
-    public $showNoteModal     = false;
-    public $currentStudentId  = null;
-    public $currentSessionId  = null;
+    public $showNoteModal      = false;
+    public $currentStudentId   = null;
+    public $currentSessionId   = null;
     public $currentStudentName = '';
-    public $attendanceNote    = '';
+    public $attendanceNote     = '';
 
     // ==================== DATA ====================
 
     protected $students;
-    public $sessions         = [];
-    public $attendanceRecords = [];  // load từ DB, đọc bởi Alpine
-    public $sessionHasRecord  = [];  // cho mobile chip dots
-
-    // ✅ BỎ $draftAttendance — draft sống trong Alpine
+    public $sessions          = [];
+    public $attendanceRecords = [];
+    public $sessionHasRecord  = [];
 
     // ==================== CLASS NAME ====================
 
@@ -73,11 +70,11 @@ class AttendanceManager extends BaseComponent
     protected function queryString()
     {
         return array_merge([
-            'selectedClassId' => ['as' => 'classId',  'except' => null],
-            'attendanceType'  => ['as' => 'type',     'except' => 1],
-            'selectedDate'    => ['as' => 'date',     'except' => null],
-            'selectedKy'      => ['as' => 'ky',       'except' => null],
-            'filterStatus'    => ['as' => 'status',   'except' => 'all'],
+            'selectedClassId' => ['as' => 'classId', 'except' => null],
+            'attendanceType'  => ['as' => 'type',    'except' => 1],
+            'selectedDate'    => ['as' => 'date',    'except' => null],
+            'selectedKy'      => ['as' => 'ky',      'except' => null],
+            'filterStatus'    => ['as' => 'status',  'except' => 'all'],
         ], parent::queryString());
     }
 
@@ -108,16 +105,11 @@ class AttendanceManager extends BaseComponent
 
             if ($class) {
                 $this->selectedNamHoc    = $class->school_year_id;
-                // $this->selectedKhoi      = $class->grade_level_id;
                 $this->selectedClassName = $class->name;
 
                 $this->loadStudents();
                 $this->loadSessions();
-                $this->loadAttendanceRecords();
-
-                if ($this->viewMode === 'mobile') {
-                    $this->loadSessionIndicators();
-                }
+                $this->loadAttendanceRecords(); // FIX 1: gọi ngoài, không nhúng trong loadSessions()
             } else {
                 $this->selectedClassId = null;
                 session()->flash('warning', 'Lớp học không tồn tại');
@@ -139,7 +131,6 @@ class AttendanceManager extends BaseComponent
                     ->find($this->selectedClassId);
 
                 if ($class) {
-                    // $this->selectedKhoi      = $class->grade_level_id;
                     $this->selectedClassName = $class->name;
                 }
             }
@@ -148,11 +139,7 @@ class AttendanceManager extends BaseComponent
         if ($this->selectedClassId) {
             $this->loadStudents();
             $this->loadSessions();
-            $this->loadAttendanceRecords();
-
-            if ($this->viewMode === 'mobile') {
-                $this->loadSessionIndicators();
-            }
+            $this->loadAttendanceRecords(); // FIX 1: gọi ngoài
         }
     }
 
@@ -199,17 +186,12 @@ class AttendanceManager extends BaseComponent
             ? (int) $this->selectedClassId : null;
 
         if ($this->selectedClassId) {
-            // Load class name ngay khi chọn lớp
             $this->selectedClassName = CatechismClass::where('id', $this->selectedClassId)
                 ->value('name') ?? 'Chọn lớp';
 
             $this->loadStudents();
             $this->loadSessions();
-            $this->loadAttendanceRecords();
-
-            if ($this->viewMode === 'mobile') {
-                $this->loadSessionIndicators();
-            }
+            $this->loadAttendanceRecords(); // FIX 1+2: 1 lần duy nhất, cả desktop lẫn mobile
         } else {
             $this->selectedClassName = '';
             $this->clearAttendanceState();
@@ -231,15 +213,8 @@ class AttendanceManager extends BaseComponent
             ? (int) $this->attendanceType : 1;
 
         $this->selectedDate = null;
-        $this->loadSessions(); // mobile: đã gọi loadAttendanceRecords() bên trong
-
-        if ($this->viewMode !== 'mobile') {
-            $this->loadAttendanceRecords();
-        }
-
-        if ($this->viewMode === 'mobile') {
-            $this->loadSessionIndicators();
-        }
+        $this->loadSessions();
+        $this->loadAttendanceRecords(); // FIX 1+2: gọi 1 lần ngoài, không phân biệt desktop/mobile
 
         $this->resetPage();
     }
@@ -264,7 +239,6 @@ class AttendanceManager extends BaseComponent
         $this->sessionHasRecord  = [];
         $this->selectedDate      = null;
 
-        // Thông báo Alpine reset draft
         $this->dispatchBrowserEvent('attendance-state-cleared');
     }
 
@@ -280,9 +254,16 @@ class AttendanceManager extends BaseComponent
         try {
             $class = CatechismClass::with([
                 'students' => function ($q) {
-                    $q->wherePivot('status', 1)
-                        ->orderBy('last_name')
-                        ->orderBy('first_name');
+                    $q->select(
+                        'students.id',
+                        'students.saint_id',   // bắt buộc cho eager load saint
+                        'students.last_name',
+                        'students.first_name',
+                        'students.birthday',
+                    )
+                        ->wherePivot('status', 1)
+                        ->orderBy('first_name')
+                        ->orderBy('last_name');
 
                     if (!empty(trim($this->search))) {
                         $search = '%' . trim($this->search) . '%';
@@ -293,11 +274,11 @@ class AttendanceManager extends BaseComponent
                         );
                     }
                 },
-                'students.saint',
+                'students.saint:id,name', // chỉ lấy 2 cột cần thiết
             ])->find($this->selectedClassId);
 
             $this->students = $class
-                ? $class->students->makeHidden(['qr_token', 'parishioner_id'])
+                ? $class->students
                 : collect();
         } catch (\Exception $e) {
             $this->logError($e, 'Error loading students');
@@ -306,6 +287,10 @@ class AttendanceManager extends BaseComponent
         }
     }
 
+    /**
+     * FIX 1: loadSessions() chỉ load sessions — không gọi loadAttendanceRecords() bên trong nữa.
+     * Caller tự gọi loadAttendanceRecords() sau khi loadSessions() xong.
+     */
     protected function loadSessions(): void
     {
         if (!$this->selectedClassId) {
@@ -337,7 +322,7 @@ class AttendanceManager extends BaseComponent
                     $this->autoSelectDateForMobile();
                 }
 
-                $this->loadAttendanceRecords();
+                // FIX 1: đã bỏ $this->loadAttendanceRecords() khỏi đây
             } catch (\Exception $e) {
                 $this->logError($e, 'Error loading sessions (mobile)');
                 $this->sessions          = [];
@@ -408,6 +393,10 @@ class AttendanceManager extends BaseComponent
         }
     }
 
+    /**
+     * FIX 3: loadAttendanceRecords() tự gọi loadSessionIndicators() bên trong nếu mobile.
+     * Không cần gọi loadSessionIndicators() rải rác ở các caller nữa.
+     */
     protected function loadAttendanceRecords(): void
     {
         if (!$this->selectedClassId) {
@@ -416,6 +405,10 @@ class AttendanceManager extends BaseComponent
         }
 
         $this->loadAttendanceRecordsQuiet();
+
+        if ($this->viewMode === 'mobile') {
+            $this->loadSessionIndicators(); // FIX 3: tích hợp vào đây
+        }
 
         $this->dispatchBrowserEvent('attendance-records-loaded', [
             'records' => $this->attendanceRecords,
@@ -429,7 +422,6 @@ class AttendanceManager extends BaseComponent
             return;
         }
 
-        // Tính từ attendanceRecords đã có sẵn — không cần query thêm
         $this->sessionHasRecord = [];
         foreach ($this->sessions as $session) {
             $count = collect($this->attendanceRecords)
@@ -442,8 +434,7 @@ class AttendanceManager extends BaseComponent
     }
 
     /**
-     * ✅ Method duy nhất Alpine gọi để lưu — thay thế setAttendance() và markAllPresent()
-     * $draft = [ "studentId_sessionId" => ['status' => int, 'note' => string], ... ]
+     * Method duy nhất Alpine gọi để lưu.
      */
     public function saveFromClient(array $draft): void
     {
@@ -452,22 +443,18 @@ class AttendanceManager extends BaseComponent
             return;
         }
 
-        // ✅ Validate draft array để tránh edge cases
         foreach ($draft as $key => $item) {
-            // Check key format: must be "studentId_sessionId"
             if (!preg_match('/^\d+_\d+$/', $key)) {
                 session()->flash('error', 'Dữ liệu điểm danh không hợp lệ (key format)');
                 return;
             }
 
-            // Check status: must be int 1-3
             $status = $item['status'] ?? null;
             if (!is_int($status) || !in_array($status, [1, 2, 3])) {
                 session()->flash('error', 'Trạng thái điểm danh không hợp lệ');
                 return;
             }
 
-            // Check note: must be string, max 500 chars
             $note = $item['note'] ?? '';
             if (!is_string($note) || strlen($note) > 500) {
                 session()->flash('error', 'Ghi chú không hợp lệ hoặc quá dài');
@@ -475,7 +462,6 @@ class AttendanceManager extends BaseComponent
             }
         }
 
-        // Build drafts array theo format AttendanceService cần
         $drafts = collect($draft)
             ->map(function ($item, $key) {
                 [$studentId, $sessionId] = explode('_', $key);
@@ -491,22 +477,16 @@ class AttendanceManager extends BaseComponent
             ->toArray();
 
         try {
-            // ✅ Dispatch loading state cho Alpine
             $this->dispatchBrowserEvent('saving-attendance');
 
             $result = $this->attendanceService->saveBulkAttendance($drafts);
 
             if ($result['success']) {
-                // 1. Load lại records từ DB
-                $this->loadAttendanceRecordsQuiet();
-
-                if ($this->viewMode === 'mobile') {
-                    $this->loadSessionIndicators();
-                }
+                // FIX 3: loadAttendanceRecords() tự gọi loadSessionIndicators() bên trong
+                $this->loadAttendanceRecords();
 
                 session()->flash('message', $result['message'] ?? 'Đã lưu điểm danh thành công');
 
-                // ✅ Thông báo Alpine xóa draft sau khi lưu thành công
                 $this->dispatchBrowserEvent('attendance-saved', [
                     'records' => $this->attendanceRecords,
                 ]);
@@ -517,7 +497,6 @@ class AttendanceManager extends BaseComponent
             $this->logError($e, 'Error saving attendance');
             session()->flash('error', 'Có lỗi khi lưu điểm danh');
         } finally {
-            // ✅ Dispatch end loading state
             $this->dispatchBrowserEvent('attendance-save-completed');
         }
     }
@@ -527,22 +506,12 @@ class AttendanceManager extends BaseComponent
         if ($type === $this->attendanceType) return;
         $this->attendanceType = $type;
         $this->selectedDate   = null;
-        $this->loadSessions(); // mobile: đã gọi loadAttendanceRecords() bên trong
-
-        if ($this->viewMode !== 'mobile') {
-            $this->loadAttendanceRecords();
-        }
-
-        if ($this->viewMode === 'mobile') {
-            $this->loadSessionIndicators();
-        }
+        $this->loadSessions();
+        $this->loadAttendanceRecords(); // FIX 1+2: 1 lần ngoài, thay vì phân biệt desktop/mobile
     }
 
     // ==================== NOTE MODAL ====================
 
-    /**
-     * Alpine gọi khi click P — server tìm student name và mở modal
-     */
     public function openNoteModal($studentId, $sessionId): void
     {
         $session = collect($this->sessions)->firstWhere('id', (int) $sessionId);
@@ -559,22 +528,18 @@ class AttendanceManager extends BaseComponent
             return;
         }
 
-        $this->currentStudentId    = (int) $studentId;
-        $this->currentSessionId    = (int) $sessionId;
-        $this->currentStudentName  = $student->full_name_with_saint
+        $this->currentStudentId   = (int) $studentId;
+        $this->currentSessionId   = (int) $sessionId;
+        $this->currentStudentName = $student->full_name_with_saint
             ?? $student->full_name
             ?? 'Học sinh';
 
-        // Lấy note hiện tại từ draft (Alpine sẽ pass vào) hoặc từ DB
         $dbKey = $studentId . '_' . $sessionId;
         $this->attendanceNote = $this->attendanceRecords[$dbKey]['note'] ?? '';
 
         $this->showNoteModal = true;
     }
 
-    /**
-     * Lưu note từ modal — emit lại cho Alpine để Alpine cập nhật draft
-     */
     public function saveAttendanceWithNote(): void
     {
         $this->validate(['attendanceNote' => 'nullable|string|max:500']);
@@ -584,7 +549,6 @@ class AttendanceManager extends BaseComponent
             return;
         }
 
-        // ✅ Emit cho Alpine thay vì lưu vào $draftAttendance
         $this->dispatchBrowserEvent('note-saved', [
             'key'    => $this->currentStudentId . '_' . $this->currentSessionId,
             'status' => AttendanceRecord::STATUS_ABSENT_EXCUSED,
@@ -597,11 +561,11 @@ class AttendanceManager extends BaseComponent
 
     public function closeNoteModal(): void
     {
-        $this->showNoteModal       = false;
-        $this->currentStudentId    = null;
-        $this->currentSessionId    = null;
-        $this->currentStudentName  = '';
-        $this->attendanceNote      = '';
+        $this->showNoteModal      = false;
+        $this->currentStudentId   = null;
+        $this->currentSessionId   = null;
+        $this->currentStudentName = '';
+        $this->attendanceNote     = '';
         $this->resetValidation(['attendanceNote']);
     }
 
@@ -639,7 +603,7 @@ class AttendanceManager extends BaseComponent
 
             if ($newClassId !== $this->selectedClassId) {
                 $this->selectedClassId = $newClassId;
-                $this->selectedDate = null;
+                $this->selectedDate    = null;
 
                 if ($this->selectedClassId) {
                     $this->selectedClassName = CatechismClass::where('id', $this->selectedClassId)
@@ -647,11 +611,7 @@ class AttendanceManager extends BaseComponent
 
                     $this->loadStudents();
                     $this->loadSessions();
-                    $this->loadAttendanceRecords();
-
-                    if ($this->viewMode === 'mobile') {
-                        $this->loadSessionIndicators();
-                    }
+                    $this->loadAttendanceRecords(); // FIX 1+2: 1 lần ngoài
                 } else {
                     $this->clearAttendanceState();
                 }
@@ -664,10 +624,7 @@ class AttendanceManager extends BaseComponent
                 $this->selectedKy = $newKy;
                 if ($this->selectedClassId) {
                     $this->loadSessions();
-                    $this->loadAttendanceRecords();
-                    if ($this->viewMode === 'mobile') {
-                        $this->loadSessionIndicators();
-                    }
+                    $this->loadAttendanceRecords(); // FIX 1+2: 1 lần ngoài
                 }
             }
         }
@@ -682,11 +639,7 @@ class AttendanceManager extends BaseComponent
 
             if ($this->selectedClassId) {
                 $this->loadSessions();
-                $this->loadAttendanceRecords();
-
-                if ($mode === 'mobile') {
-                    $this->loadSessionIndicators();
-                }
+                $this->loadAttendanceRecords(); // FIX 1+2+3: 1 lần ngoài, tự gọi indicators bên trong
             }
         }
     }
@@ -697,7 +650,7 @@ class AttendanceManager extends BaseComponent
     {
         if (empty($this->sessions)) return;
 
-        $today = Carbon::today()->format('Y-m-d');
+        $today    = Carbon::today()->format('Y-m-d');
         $sessions = collect($this->sessions)->sortBy('dateStr');
 
         $todaySession = $sessions->firstWhere('dateStr', $today);
@@ -706,14 +659,12 @@ class AttendanceManager extends BaseComponent
             return;
         }
 
-        // Ngày trước gần nhất
         $prev = $sessions->last(fn($s) => $s['dateStr'] < $today);
         if ($prev) {
             $this->selectedDate = $prev['dateStr'];
             return;
         }
 
-        // Ngày sau gần nhất
         $next = $sessions->first(fn($s) => $s['dateStr'] > $today);
         if ($next) {
             $this->selectedDate = $next['dateStr'];
@@ -798,7 +749,6 @@ class AttendanceManager extends BaseComponent
 
         $students = $this->students ?? collect();
 
-        // ✅ Optimize: Pre-build grid từ attendanceRecords (O(1) lookup thay vì N×M)
         $grid = [];
         foreach ($students as $student) {
             $grid[$student->id] = [];
@@ -808,13 +758,11 @@ class AttendanceManager extends BaseComponent
             }
         }
 
-        // ✅ Optimize: Pre-compute stats với array_map để giảm loops
         $stats = array_map(function ($session) use ($students) {
-            $dateStr = $session['dateStr'];
             $s = ['present' => 0, 'absentPermitted' => 0, 'absentNotPermitted' => 0];
 
             foreach ($students as $student) {
-                $key = $student->id . '_' . $session['id'];
+                $key    = $student->id . '_' . $session['id'];
                 $status = $this->attendanceRecords[$key]['status'] ?? null;
                 match ($status) {
                     AttendanceRecord::STATUS_PRESENT          => $s['present']++,
@@ -827,7 +775,6 @@ class AttendanceManager extends BaseComponent
             return $s;
         }, $this->sessions);
 
-        // Convert to associative array for view
         $statsAssoc = [];
         foreach ($this->sessions as $index => $session) {
             $statsAssoc[$session['dateStr']] = $stats[$index];
@@ -838,7 +785,7 @@ class AttendanceManager extends BaseComponent
             : 'frontend.layout.main';
 
         return view('livewire.attendance-manager', [
-            'students' => $students,
+            'students'       => $students,
             'parishId'       => $this->parishId,
             'attendanceGrid' => $grid,
             'sessionStats'   => $statsAssoc,
