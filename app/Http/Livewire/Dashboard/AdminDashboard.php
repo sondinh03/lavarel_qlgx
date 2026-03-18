@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Http\Livewire\Dashboard;
 
 use App\Http\Livewire\Base\BaseComponent;
@@ -223,8 +224,8 @@ class AdminDashboard extends BaseComponent
             ->where('classes.parish_id', $parishId)
             ->where('students_class.status', 1)
             ->selectRaw('
-                SUM(CASE WHEN students.gender = 1 THEN 1 ELSE 0 END) as male,
-                SUM(CASE WHEN students.gender = 0 THEN 1 ELSE 0 END) as female
+                COUNT(DISTINCT CASE WHEN students.gender = "male" THEN students.id END) as male,
+                COUNT(DISTINCT CASE WHEN students.gender = "female" THEN students.id END) as female
             ')
             ->first();
 

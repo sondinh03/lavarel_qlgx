@@ -84,7 +84,7 @@
         {{-- ===================================================== --}}
         <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
 
-            {{-- Học sinh — FIX: blue → primary --}}
+            {{-- Học sinh  --}}
             <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-5">
                 <div class="flex items-center justify-between">
                     <div>
