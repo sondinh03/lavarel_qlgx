@@ -17,8 +17,8 @@ class AttendanceService
             $savedCount = 0;
             $errors     = [];
             $userId     = auth()->id();
+            $now        = now();
 
-            // Group by session để validate session 1 lần
             $groupedBySession = collect($drafts)->groupBy('session_id');
 
             foreach ($groupedBySession as $sessionId => $records) {
@@ -35,7 +35,6 @@ class AttendanceService
                     continue;
                 }
 
-                // Validate type khớp
                 $firstRecord = $records->first();
                 if (
                     isset($firstRecord['attendanceType'])
@@ -45,35 +44,96 @@ class AttendanceService
                     continue;
                 }
 
+                // ✅ 1 query lấy tất cả records hiện có của session này
+                $existingIds = AttendanceRecord::where('session_id', $sessionId)
+                    ->pluck('id', 'student_id')  // [student_id => record_id]
+                    ->toArray();
+
+                $toInsert = [];
+                $toUpdate = [];
+
                 foreach ($records as $record) {
                     if (!AttendanceRecord::isValidStatus($record['status'])) {
                         $errors[] = "Học sinh #{$record['student_id']}: Trạng thái không hợp lệ";
                         continue;
                     }
 
-                    // Dùng updateOrCreate — tách created_by và updated_by đúng ngữ nghĩa
-                    $existing = AttendanceRecord::where('session_id', $sessionId)
-                        ->where('student_id', $record['student_id'])
-                        ->first();
+                    $studentId = $record['student_id'];
 
-                    if ($existing) {
-                        $existing->update([
+                    if (isset($existingIds[$studentId])) {
+                        // Có rồi → UPDATE
+                        $toUpdate[] = [
+                            'id'         => $existingIds[$studentId],
                             'status'     => $record['status'],
                             'note'       => $record['note'] ?? null,
                             'updated_by' => $userId,
-                        ]);
+                            'updated_at' => $now,
+                        ];
                     } else {
-                        AttendanceRecord::create([
+                        // Chưa có → INSERT
+                        $toInsert[] = [
                             'session_id' => $sessionId,
-                            'student_id' => $record['student_id'],
+                            'student_id' => $studentId,
                             'status'     => $record['status'],
                             'note'       => $record['note'] ?? null,
                             'created_by' => $userId,
                             'updated_by' => $userId,
-                        ]);
+                            'created_at' => $now,
+                            'updated_at' => $now,
+                        ];
                     }
 
                     $savedCount++;
+                }
+
+                // ✅ Bulk INSERT 1 query thay vì N queries
+                if (!empty($toInsert)) {
+                    DB::table('attendance_records')->insert($toInsert);
+                }
+
+                // ✅ Bulk UPDATE dùng CASE WHEN — 1 query thay vì N queries
+                if (!empty($toUpdate)) {
+                    $ids          = array_column($toUpdate, 'id');
+                    $statusCases  = '';
+                    $noteCases    = '';
+                    $bindings     = [];
+
+                    foreach ($toUpdate as $row) {
+                        $statusCases .= " WHEN id = ? THEN ?";
+                        $noteCases   .= " WHEN id = ? THEN ?";
+                        $bindings[]   = $row['id'];
+                        $bindings[]   = $row['status'];
+                    }
+                    foreach ($toUpdate as $row) {
+                        $bindings[] = $row['id'];
+                        $bindings[] = $row['note'];
+                    }
+
+                    $placeholders = implode(',', array_fill(0, count($ids), '?'));
+                    $bindings     = array_merge(
+                        array_column($toUpdate, 'id'),
+                        array_column($toUpdate, 'status'),
+                        array_column($toUpdate, 'id'),
+                        array_column($toUpdate, 'note'),
+                        [$userId, $now],
+                        $ids
+                    );
+
+                    DB::statement("
+                    UPDATE attendance_records
+                    SET
+                        status     = CASE " . implode(' ', array_map(
+                        fn($r) => "WHEN id = {$r['id']} THEN {$r['status']}",
+                        $toUpdate
+                    )) . " END,
+                        note       = CASE " . implode(' ', array_map(
+                        fn($r) => "WHEN id = {$r['id']} THEN " . DB::getPdo()->quote($r['note'] ?? ''),
+                        $toUpdate
+                    )) . " END,
+                        updated_by = ?,
+                        updated_at = ?
+                    WHERE id IN ({$placeholders})
+                ", array_merge([$userId, $now], $ids));
                 }
             }
 
@@ -98,7 +158,6 @@ class AttendanceService
             Log::error('AttendanceService::saveBulkAttendance failed', [
                 'drafts_count' => count($drafts),
                 'error'        => $e->getMessage(),
-                'trace'        => $e->getTraceAsString(),
             ]);
 
             return ['success' => false, 'message' => 'Có lỗi khi lưu điểm danh. Vui lòng thử lại sau.'];
