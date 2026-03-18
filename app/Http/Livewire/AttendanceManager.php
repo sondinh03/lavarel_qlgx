@@ -230,8 +230,12 @@ class AttendanceManager extends BaseComponent
         $this->attendanceType = in_array((int) $this->attendanceType, [1, 2])
             ? (int) $this->attendanceType : 1;
 
-        $this->loadSessions();
-        $this->loadAttendanceRecords();
+        $this->selectedDate = null;
+        $this->loadSessions(); // mobile: đã gọi loadAttendanceRecords() bên trong
+
+        if ($this->viewMode !== 'mobile') {
+            $this->loadAttendanceRecords();
+        }
 
         if ($this->viewMode === 'mobile') {
             $this->loadSessionIndicators();
@@ -311,54 +315,57 @@ class AttendanceManager extends BaseComponent
         }
 
         if ($this->viewMode === 'mobile') {
-            $this->sessions = AttendanceSession::where('class_id', $this->selectedClassId)
-                ->where('type', $this->attendanceType)
-                ->orderBy('date')
-                ->get(['id', 'date', 'status'])  // chỉ 3 field
-                ->map(fn($s) => [
-                    'id'      => $s->id,
-                    'dateStr' => Carbon::parse($s->date)->format('Y-m-d'),
-                    'fullDate' => Carbon::parse($s->date)->format('d/m'),
-                    'dayName' => $this->getVietnameseDayName(Carbon::parse($s->date)),
-                    'locked'  => $s->status === AttendanceSession::STATUS_CLOSED,
-                ])->toArray();
+            try {
+                $this->sessions = AttendanceSession::where('class_id', $this->selectedClassId)
+                    ->where('type', $this->attendanceType)
+                    ->orderBy('date')
+                    ->get(['id', 'date', 'status'])
+                    ->map(fn($s) => [
+                        'id'       => $s->id,
+                        'dateStr'  => Carbon::parse($s->date)->format('Y-m-d'),
+                        'fullDate' => Carbon::parse($s->date)->format('d/m'),
+                        'dayName'  => $this->getVietnameseDayName(Carbon::parse($s->date)),
+                        'locked'   => $s->status === AttendanceSession::STATUS_CLOSED,
+                    ])->toArray();
 
-            $this->autoSelectDateForMobile();
-            $this->loadAttendanceRecords();
+                if (empty($this->sessions)) {
+                    session()->flash('info', 'Chưa có buổi điểm danh nào');
+                    return;
+                }
+
+                if (!$this->selectedDate) {
+                    $this->autoSelectDateForMobile();
+                }
+
+                $this->loadAttendanceRecords();
+            } catch (\Exception $e) {
+                $this->logError($e, 'Error loading sessions (mobile)');
+                $this->sessions          = [];
+                $this->selectedDate      = null;
+                $this->attendanceRecords = [];
+            }
             return;
         }
 
         try {
-            $query = AttendanceSession::where('class_id', $this->selectedClassId)
+            $this->sessions = AttendanceSession::where('class_id', $this->selectedClassId)
                 ->where('type', $this->attendanceType)
                 ->when($this->selectedKy, fn($q) => $q->where('semester', $this->selectedKy))
-                ->orderBy('date');
-
-            // Mobile chỉ cần metadata nhẹ
-            $sessions = $this->viewMode === 'mobile'
-                ? $query->get(['id', 'date', 'type', 'status'])
-                : $query->get();
-
-            $this->sessions = $sessions->map(function ($s) {
-                $date = Carbon::parse($s->date);
-                return [
-                    'id'       => $s->id,
-                    'date'     => $date,
-                    'dateStr'  => $date->format('Y-m-d'),
-                    'fullDate' => $date->format('d/m'),
-                    'dayName'  => $this->getVietnameseDayName($date),
-                    'type'     => $s->type,
-                    'status'   => $s->status,
-                    'locked'   => $s->status === AttendanceSession::STATUS_CLOSED,
-                ];
-            })->toArray();
-
-            // Mobile auto-pick ngày
-            if ($this->viewMode === 'mobile' && !$this->selectedDate && !empty($this->sessions)) {
-                $this->autoSelectDateForMobile();
-                $this->loadAttendanceRecords();
-                return;
-            }
+                ->orderBy('date')
+                ->get()
+                ->map(function ($s) {
+                    $date = Carbon::parse($s->date);
+                    return [
+                        'id'       => $s->id,
+                        'date'     => $date,
+                        'dateStr'  => $date->format('Y-m-d'),
+                        'fullDate' => $date->format('d/m'),
+                        'dayName'  => $this->getVietnameseDayName($date),
+                        'type'     => $s->type,
+                        'status'   => $s->status,
+                        'locked'   => $s->status === AttendanceSession::STATUS_CLOSED,
+                    ];
+                })->toArray();
 
             if (empty($this->sessions)) {
                 session()->flash('info', 'Chưa có buổi điểm danh nào');
@@ -422,17 +429,16 @@ class AttendanceManager extends BaseComponent
             return;
         }
 
-        $this->sessionHasRecord = AttendanceRecord::whereHas(
-            'session',
-            fn($q) =>
-            $q->where('class_id', $this->selectedClassId)
-                ->where('type', $this->attendanceType)
-        )
-            ->join('attendance_sessions', 'attendance_records.session_id', '=', 'attendance_sessions.id')
-            ->selectRaw('DATE_FORMAT(attendance_sessions.date, "%Y-%m-%d") as date_str, COUNT(*) as total')
-            ->groupBy('date_str')
-            ->pluck('total', 'date_str')
-            ->toArray();
+        // Tính từ attendanceRecords đã có sẵn — không cần query thêm
+        $this->sessionHasRecord = [];
+        foreach ($this->sessions as $session) {
+            $count = collect($this->attendanceRecords)
+                ->filter(fn($_, $key) => str_ends_with($key, '_' . $session['id']))
+                ->count();
+            if ($count > 0) {
+                $this->sessionHasRecord[$session['dateStr']] = $count;
+            }
+        }
     }
 
     /**
@@ -520,9 +526,13 @@ class AttendanceManager extends BaseComponent
     {
         if ($type === $this->attendanceType) return;
         $this->attendanceType = $type;
-        $this->selectedDate = null;
-        $this->loadSessions();
-        $this->loadAttendanceRecords();
+        $this->selectedDate   = null;
+        $this->loadSessions(); // mobile: đã gọi loadAttendanceRecords() bên trong
+
+        if ($this->viewMode !== 'mobile') {
+            $this->loadAttendanceRecords();
+        }
+
         if ($this->viewMode === 'mobile') {
             $this->loadSessionIndicators();
         }
