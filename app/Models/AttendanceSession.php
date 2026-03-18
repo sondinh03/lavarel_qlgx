@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Traits\BelongsToParish;
 use Backpack\CRUD\app\Models\Traits\CrudTrait;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Venturecraft\Revisionable\RevisionableTrait;
 
@@ -12,6 +13,7 @@ class AttendanceSession extends Model
     use CrudTrait;
     use RevisionableTrait;
     use BelongsToParish;
+    use HasFactory;
 
     protected $table = 'attendance_sessions';
     protected $guarded = ['id'];

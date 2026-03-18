@@ -13,10 +13,10 @@ class ChangeExtrasToLongtext extends Migration
      */
     public function up()
     {
-        Schema::table('pages', function (Blueprint $table) {
+            Schema::table('pages', function (Blueprint $table) {
             $table->longText('extras')->nullable()->change();
-        });
-    }
+            });
+        }
 
     /**
      * Reverse the migrations.
@@ -25,8 +25,10 @@ class ChangeExtrasToLongtext extends Migration
      */
     public function down()
     {
-        Schema::table('pages', function (Blueprint $table) {
-            $table->text('extras')->nullable()->change();
-        });
+        if (Schema::hasColumn('pages', 'extras')) {
+            Schema::table('pages', function (Blueprint $table) {
+                $table->text('extras')->change();
+            });
+        }
     }
 }

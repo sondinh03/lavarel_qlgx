@@ -79,8 +79,6 @@ Route::middleware('redirect.auth.dashboard')->group(function () {
 Auth::routes();
 
 Route::middleware('auth')->group(function () {
-
-
     Route::get('/parish-admin-dashboard', AdminDashboard::class)
         ->name('parish-admin.dashboard');
 

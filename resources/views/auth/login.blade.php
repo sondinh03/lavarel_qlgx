@@ -41,12 +41,52 @@
                 <label class="block text-sm font-semibold text-slate-700 mb-1">
                     Mật khẩu
                 </label>
-                <input
+                {{-- <input
                     type="password"
                     name="password"
                     required
                     class="w-full px-3 py-2 rounded-xl border border-slate-300
-                           focus:ring-2 focus:ring-primary-500 focus:outline-none">
+                           focus:ring-2 focus:ring-primary-500 focus:outline-none"> --}}
+                <div x-data="{ show: false }" class="relative">
+                    <input
+                        :type="show ? 'text' : 'password'"
+                        name="password"
+                        required
+                        class="w-full px-3 py-2 pr-10 rounded-xl border border-slate-300
+               focus:ring-2 focus:ring-primary-500 focus:outline-none">
+
+                    <!-- Toggle button -->
+                    <button
+                        type="button"
+                        @click="show = !show"
+                        class="absolute right-3 top-1/2 -translate-y-1/2
+               text-slate-400 hover:text-slate-600 transition"
+                        tabindex="-1">
+                        <!-- Eye -->
+                        <svg x-show="!show" xmlns="http://www.w3.org/2000/svg"
+                            class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M2.458 12C3.732 7.943 7.523 5 12 5
+                     c4.477 0 8.268 2.943 9.542 7
+                     -1.274 4.057-5.065 7-9.542 7
+                     -4.477 0-8.268-2.943-9.542-7z" />
+                        </svg>
+
+                        <!-- Eye off -->
+                        <svg x-show="show" xmlns="http://www.w3.org/2000/svg"
+                            class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M13.875 18.825A10.05 10.05 0 0112 19
+                     c-4.477 0-8.268-2.943-9.542-7
+                     a9.956 9.956 0 012.223-3.592M6.223 6.223
+                     A9.956 9.956 0 0112 5c4.477 0 8.268 2.943 9.542 7
+                     a9.956 9.956 0 01-4.293 5.293M6.223 6.223L3 3m3.223 3.223
+                     l11.554 11.554" />
+                        </svg>
+                    </button>
+                </div>
                 @error('password')
                 <p class="text-sm text-red-500 mt-1">{{ $message }}</p>
                 @enderror

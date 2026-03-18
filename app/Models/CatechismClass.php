@@ -3,11 +3,13 @@
 namespace App\Models;
 
 use App\Traits\BelongsToParish;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class CatechismClass extends Model
 {
     use BelongsToParish;
+    use HasFactory;
 
     protected $table = "classes";
 
