@@ -46,17 +46,12 @@
             },
 
             hasDraft() { 
-                console.log('[hasDraft] this:', this);           // so sánh với toggle
-                console.log('[hasDraft] draft ref:', this.draft); // có phải cùng object?
                 return Object.keys(this.draft).length > 0;  
             },
 
             draftCount() { return Object.keys(this.draft).length; },
 
             toggle(studentId, sessionId, status) {
-                console.log('[toggle] this:', this);           // in ra Alpine instance
-                console.log('[toggle] draft ref:', this.draft); // in ra Proxy object
-
                 const key     = studentId + '_' + sessionId;
                 const current = this.getStatus(studentId, sessionId);
 
@@ -64,7 +59,6 @@
                     delete this.draft[key];
                 } else {
                     this.draft[key] = { status: status, note: '' };
-                    console.log('[toggle] draft sau khi ghi:', this.draft);
                 }
             },
 
@@ -114,9 +108,7 @@
             onSavingStarted() { this.isSaving = true; },
             onSavingCompleted() { this.isSaving = false; },
         }"
-        x-init="records = @js($attendanceRecords ?? []); console.log('[x-init] records count:', Object.keys(records).length);
-    console.log('[x-init] sample:', JSON.stringify(Object.entries(records).slice(0, 2)));
-    console.log('[x-init] mobileSessionId from PHP:', {{ $mobileSessionId ?? 'null' }});"
+        x-init="records = @js($attendanceRecords ?? []);"
         x-on:attendance-records-loaded.window="onRecordsLoaded($event.detail.records)"
         x-on:attendance-saved.window="onSaved($event.detail)"
         x-on:attendance-state-cleared.window="onCleared()"
@@ -386,10 +378,7 @@
                                         {{-- Có mặt --}}
                                         <button
                                             x-on:click="toggle({{ $student->id }}, {{ $session['id'] }}, 1)"
-                                            :class="(() => {
-                                                const s = getStatus({{ $student->id }}, {{ $session['id'] }});
-                                                console.log('[render] student={{ $student->id }} session={{ $session['id'] }} status=' + s + ' type=' + typeof s);
-                                                return s == 1
+                                            :class="getStatus({{ $student->id }}, {{ $session['id'] }}) == 1
                                                     ? 'bg-green-500 text-white shadow-md scale-105'
                                                     : 'bg-green-50 text-green-700 border border-green-200 hover:bg-green-100';
                                             })()"
