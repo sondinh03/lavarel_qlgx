@@ -78,6 +78,12 @@ class CatechismClass extends Model
             ->withTimestamps();
     }
 
+
+    public function getTeacherNamesAttribute(): array
+    {
+        return $this->teachers->pluck('full_name_with_saint')->toArray();
+    }
+
     /*
     |--------------------------------------------------------------------------
     | Scopes (local)
@@ -89,8 +95,11 @@ class CatechismClass extends Model
         return $query->where('is_active', true);
     }
 
-    public function getTeacherNamesAttribute(): array
+    public function scopeOrdered($query)
     {
-        return $this->teachers->pluck('full_name_with_saint')->toArray();
+        return $query
+            ->join('grade_levels', 'classes.grade_level_id', '=', 'grade_levels.id')
+            ->orderBy('grade_levels.sort_order')
+            ->orderBy('classes.name');
     }
 }

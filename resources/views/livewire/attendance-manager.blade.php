@@ -45,16 +45,26 @@
                 return this.records[key]?.note || null;
             },
 
-            hasDraft() { return Object.keys(this.draft).length > 0; },
+            hasDraft() { 
+                console.log('[hasDraft] this:', this);           // so sánh với toggle
+                console.log('[hasDraft] draft ref:', this.draft); // có phải cùng object?
+                return Object.keys(this.draft).length > 0;  
+            },
+
             draftCount() { return Object.keys(this.draft).length; },
 
             toggle(studentId, sessionId, status) {
+                console.log('[toggle] this:', this);           // in ra Alpine instance
+                console.log('[toggle] draft ref:', this.draft); // in ra Proxy object
+
                 const key     = studentId + '_' + sessionId;
                 const current = this.getStatus(studentId, sessionId);
+
                 if (current === status) {
                     delete this.draft[key];
                 } else {
                     this.draft[key] = { status: status, note: '' };
+                    console.log('[toggle] draft sau khi ghi:', this.draft);
                 }
             },
 

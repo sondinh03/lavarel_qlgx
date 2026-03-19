@@ -158,6 +158,8 @@ class FilterBar extends Component
                 fn($q) => $q->where('grade_level_id', $this->selectedKhoi)
             )
             ->active()
+            ->orderBy('grade_level_id')
+            ->orderBy('name')
             ->pluck('name', 'id');
     }
 

@@ -728,6 +728,7 @@ class AttendanceManager extends BaseComponent
 
         return CatechismClass::where('school_year_id', $this->selectedNamHoc)
             ->where('is_active', true)
+            ->orderBy('grade_level_id')
             ->orderBy('name')
             ->value('id');
     }
