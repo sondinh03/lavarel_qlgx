@@ -27,7 +27,7 @@
         </div>
     </div>
 
-    <div wire:key="attendance-{{ $selectedClassId }}-{{ $attendanceType }}-{{ $viewMode }}--{{$selectedDate}}--{{$search}}"
+    <div wire:key="attendance-{{ $selectedClassId }}-{{ $attendanceType }}-{{ $selectedDate }}"
         x-data="{
             records: {},
             draft: {},
@@ -920,18 +920,18 @@
 @push('scripts')
 <script>
     document.addEventListener('livewire:load', function() {
-        function detectViewMode() {
-            const isMobile = window.innerWidth < 1024;
-            Livewire.emit('viewModeDetected', isMobile ? 'mobile' : 'desktop');
-        }
+        // function detectViewMode() {
+        //     const isMobile = window.innerWidth < 1024;
+        //     Livewire.emit('viewModeDetected', isMobile ? 'mobile' : 'desktop');
+        // }
 
-        detectViewMode();
+        // detectViewMode();
 
-        let resizeTimer;
-        window.addEventListener('resize', function() {
-            clearTimeout(resizeTimer);
-            resizeTimer = setTimeout(detectViewMode, 200);
-        });
+        // let resizeTimer;
+        // window.addEventListener('resize', function() {
+        //     clearTimeout(resizeTimer);
+        //     resizeTimer = setTimeout(detectViewMode, 200);
+        // });
 
         // Ctrl+S / Cmd+S → save
         window.addEventListener('keydown', function(e) {
