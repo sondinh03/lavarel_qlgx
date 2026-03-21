@@ -24,9 +24,21 @@ class UserRequest extends FormRequest
      */
     public function rules()
     {
-        return [
-            // 'name' => 'required|min:5|max:255'
+        $rules = [
+            'name'      => 'required|string|max:255',
+            'email'     => 'required|email|unique:users,email,' . $this->route('id'),
+            'parish_id' => 'required|exists:parishes,id',
+            'roles'     => 'required|string',
         ];
+
+        // Tạo mới → password bắt buộc, update → không bắt buộc
+        if ($this->isMethod('POST')) {
+            $rules['password'] = 'required|min:8';
+        } else {
+            $rules['password'] = 'nullable|min:8';
+        }
+
+        return $rules;
     }
 
     /**

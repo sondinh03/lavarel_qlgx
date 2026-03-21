@@ -1316,9 +1316,6 @@ video {
 .grid-cols-4 {
   grid-template-columns: repeat(4, minmax(0, 1fr));
 }
-.grid-cols-5 {
-  grid-template-columns: repeat(5, minmax(0, 1fr));
-}
 .flex-row {
   flex-direction: row;
 }
@@ -1498,6 +1495,10 @@ video {
   border-bottom-right-radius: 1rem;
   border-bottom-left-radius: 1rem;
 }
+.rounded-b-xl {
+  border-bottom-right-radius: 0.75rem;
+  border-bottom-left-radius: 0.75rem;
+}
 .rounded-l-md {
   border-top-left-radius: 0.375rem;
   border-bottom-left-radius: 0.375rem;
@@ -1625,6 +1626,10 @@ video {
   --tw-border-opacity: 1;
   border-color: rgb(32 170 82 / var(--tw-border-opacity));
 }
+.border-primary-700 {
+  --tw-border-opacity: 1;
+  border-color: rgb(26 135 68 / var(--tw-border-opacity));
+}
 .border-purple-200 {
   --tw-border-opacity: 1;
   border-color: rgb(233 213 255 / var(--tw-border-opacity));
@@ -1674,9 +1679,6 @@ video {
 }
 .border-transparent {
   border-color: transparent;
-}
-.border-white\/30 {
-  border-color: rgb(255 255 255 / 0.3);
 }
 .border-yellow-200 {
   --tw-border-opacity: 1;
@@ -2638,6 +2640,10 @@ video {
   --tw-text-opacity: 1;
   color: rgb(26 135 68 / var(--tw-text-opacity));
 }
+.text-primary-800 {
+  --tw-text-opacity: 1;
+  color: rgb(21 101 52 / var(--tw-text-opacity));
+}
 .text-purple-500 {
   --tw-text-opacity: 1;
   color: rgb(168 85 247 / var(--tw-text-opacity));
@@ -3175,9 +3181,6 @@ video {
 .hover\:bg-white\/20:hover {
   background-color: rgb(255 255 255 / 0.2);
 }
-.hover\:bg-white\/30:hover {
-  background-color: rgb(255 255 255 / 0.3);
-}
 .hover\:bg-white\/50:hover {
   background-color: rgb(255 255 255 / 0.5);
 }
@@ -3427,15 +3430,17 @@ video {
   --tw-bg-opacity: 1;
   background-color: rgb(220 252 231 / var(--tw-bg-opacity));
 }
+.active\:bg-primary-800:active {
+  --tw-bg-opacity: 1;
+  background-color: rgb(21 101 52 / var(--tw-bg-opacity));
+}
 .active\:bg-red-100:active {
   --tw-bg-opacity: 1;
   background-color: rgb(254 226 226 / var(--tw-bg-opacity));
 }
-.active\:bg-white\/30:active {
-  background-color: rgb(255 255 255 / 0.3);
-}
-.active\:bg-white\/40:active {
-  background-color: rgb(255 255 255 / 0.4);
+.active\:bg-slate-200:active {
+  --tw-bg-opacity: 1;
+  background-color: rgb(226 232 240 / var(--tw-bg-opacity));
 }
 .active\:bg-yellow-100:active {
   --tw-bg-opacity: 1;

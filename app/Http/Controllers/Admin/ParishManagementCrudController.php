@@ -3,12 +3,10 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Requests\ParishManagementRequest;
-use App\Http\Controllers\ParishManagementController;
 use App\Models\ParishNew;
 
 use Backpack\CRUD\app\Http\Controllers\CrudController;
 use Backpack\CRUD\app\Library\CrudPanel\CrudPanelFacade as CRUD;
-
 use Illuminate\Support\Facades\DB;
 
 /**
@@ -24,33 +22,20 @@ class ParishManagementCrudController extends CrudController
     use \Backpack\CRUD\app\Http\Controllers\Operations\DeleteOperation;
     use \Backpack\CRUD\app\Http\Controllers\Operations\ShowOperation;
 
-    /**
-     * Configure the CrudPanel object. Apply settings to all operations.
-     *
-     * @return void
-     */
     public function setup()
     {
         CRUD::setModel(\App\Models\ParishNew::class);
-        CRUD::setRoute(config('backpack.base.route_prefix') . '/parish-management');
+        CRUD::setRoute(config('backpack.base.route_prefix') . '/parish-management'); // giữ nguyên route cũ
         CRUD::setEntityNameStrings(__('backend.parish_management'), __('backend.parish_management'));
         CRUD::orderBy('id', 'desc');
 
-        /*
-         |--------------------------------------------------------------------------
-         | Check Roles & Permissions (dùng Spatie HasRoles)
-         |--------------------------------------------------------------------------
-         */
         $user = backpack_user();
 
-        // Super admin có toàn quyền
         if ($user->isSuperAdmin()) {
-            CRUD::allowAccess(['list', 'create', 'update', 'delete', 'show', 'revisions']);
-            CRUD::with('revisionHistory');
+            CRUD::allowAccess(['list', 'create', 'update', 'delete', 'show']);
             return;
         }
 
-        // Parish admin chỉ quản lý parish của mình
         if ($user->isParishAdmin()) {
             CRUD::allowAccess(['list', 'show', 'update']);
             CRUD::denyAccess(['create', 'delete']);
@@ -59,7 +44,6 @@ class ParishManagementCrudController extends CrudController
             return;
         }
 
-        // Các role khác (catechist, v.v.) chỉ xem
         if ($user->canManage()) {
             CRUD::allowAccess(['list', 'show']);
             CRUD::denyAccess(['create', 'update', 'delete']);
@@ -67,29 +51,20 @@ class ParishManagementCrudController extends CrudController
             CRUD::removeButton('update');
             CRUD::removeButton('delete');
         } else {
-            // Không có quyền gì
             CRUD::denyAccess(['list', 'create', 'update', 'delete', 'show']);
         }
     }
 
-    /**
-     * Define what happens when the List operation is loaded.
-     *
-     * @see  https://backpackforlaravel.com/docs/crud-operation-list-entries
-     * @return void
-     */
     protected function setupListOperation()
     {
         $user = backpack_user();
 
-        // Parish admin chỉ thấy parish của mình
         if ($user->isParishAdmin() && !$user->isSuperAdmin()) {
-            if (!empty($user->parish_id)) {
-                CRUD::addClause('where', 'id', $user->parish_id);
-            } else {
-                CRUD::addClause('where', 'id', 0);
-            }
+            CRUD::addClause('where', 'id', !empty($user->parish_id) ? $user->parish_id : 0);
         }
+
+        // Eager load tránh N+1
+        $this->crud->query->with(['deanery', 'diocese']);
 
         CRUD::addColumn([
             'name'      => 'image',
@@ -107,20 +82,18 @@ class ParishManagementCrudController extends CrudController
         ]);
 
         CRUD::addColumn([
+            'name'      => 'code',
+            'type'      => 'text',
+            'orderable' => false,
+            'label'     => __('backend.code') ?? 'Mã',
+        ]);
+
+        CRUD::addColumn([
             'name'      => 'deanery_id',
             'type'      => 'closure',
             'orderable' => false,
             'label'     => __('backend.deanerys'),
-            'function'  => function ($entry) {
-                if (!empty($entry->deanery_id)) {
-                    $deanery = DB::table('deanerys')
-                        ->where('id', $entry->deanery_id)
-                        ->where('status', 1)
-                        ->first();
-                    return $deanery?->name ?? '—';
-                }
-                return '—';
-            },
+            'function'  => fn($entry) => $entry->deanery?->name ?? '—',
         ]);
 
         CRUD::addColumn([
@@ -128,16 +101,7 @@ class ParishManagementCrudController extends CrudController
             'type'      => 'closure',
             'orderable' => false,
             'label'     => __('backend.diocese'),
-            'function'  => function ($entry) {
-                if (!empty($entry->diocese_id)) {
-                    $diocese = DB::table('dioceses')
-                        ->where('id', $entry->diocese_id)
-                        ->where('status', 1)
-                        ->first();
-                    return $diocese?->name ?? '—';
-                }
-                return '—';
-            },
+            'function'  => fn($entry) => $entry->diocese?->name ?? '—',
         ]);
 
         CRUD::addColumn([
@@ -147,26 +111,17 @@ class ParishManagementCrudController extends CrudController
             'label'     => __('backend.phone'),
         ]);
 
-
         CRUD::addColumn([
             'name'      => 'status',
             'type'      => 'closure',
             'orderable' => false,
             'label'     => __('backend.status'),
-            'function'  => function ($entry) {
-                return $entry->status == 0
-                    ? __('backend.draft')
-                    : __('backend.publish');
-            },
+            'function'  => fn($entry) => $entry->status == 1
+                ? __('backend.publish')
+                : __('backend.draft'),
         ]);
     }
 
-    /**
-     * Define what happens when the Create operation is loaded.
-     *
-     * @see https://backpackforlaravel.com/docs/crud-operation-create
-     * @return void
-     */
     protected function setupCreateOperation()
     {
         CRUD::setValidation(ParishManagementRequest::class);
@@ -180,7 +135,7 @@ class ParishManagementCrudController extends CrudController
             'tab'     => __('backend.general'),
         ]);
 
-        // --- Code giáo xứ ---
+        // --- Mã giáo xứ ---
         CRUD::addField([
             'name'    => 'code',
             'type'    => 'text',
@@ -190,16 +145,9 @@ class ParishManagementCrudController extends CrudController
         ]);
 
         // --- Giáo phận ---
-        $array_diocese = DB::table('dioceses')
-            ->where('status', '1')
-            ->orderBy('id', 'ASC')
-            ->get()
-            ->toArray();
-        $array_diocese = json_decode(json_encode($array_diocese, true), true);
-
         $array_dio = [];
-        foreach ($array_diocese as $item) {
-            $array_dio[$item['id']] = $item['name'];
+        foreach (DB::table('dioceses')->where('status', 1)->orderBy('id')->get() as $item) {
+            $array_dio[$item->id] = $item->name;
         }
 
         CRUD::addField([
@@ -211,18 +159,18 @@ class ParishManagementCrudController extends CrudController
             'tab'     => __('backend.general'),
         ]);
 
-        // --- Giáo hạt (load theo diocese_id) ---
+        // --- Giáo hạt ---
         $deanerys = $this->GetDeanerys(request()->route('id'));
         if (empty($deanerys)) {
-            $firstDiocese = reset($array_diocese);
-            $deanerys = $this->GetDeanery_first($firstDiocese['id'] ?? null);
+            $firstDioceseId = array_key_first($array_dio);
+            $deanerys = $this->GetDeanery_first($firstDioceseId);
         }
 
         CRUD::addField([
             'name'    => 'deanery_id',
             'type'    => 'select_from_array',
-            'options' => $deanerys,
             'label'   => __('backend.deanerys'),
+            'options' => $deanerys,
             'wrapper' => ['class' => 'form-group col-md-4'],
             'tab'     => __('backend.general'),
         ]);
@@ -231,13 +179,13 @@ class ParishManagementCrudController extends CrudController
         @include(resource_path() . '/cities/tinh_thanhpho.php');
 
         CRUD::addField([
-            'name'             => 'province',
-            'type'             => 'select_from_array',
-            'label'            => __('backend.province'),
-            'options'          => $tinh_thanhpho,
-            'allows_multiple'  => false,
-            'wrapper'          => ['class' => 'form-group col-md-4'],
-            'tab'              => __('backend.general'),
+            'name'            => 'province',
+            'type'            => 'select_from_array',
+            'label'           => __('backend.province'),
+            'options'         => $tinh_thanhpho,
+            'allows_multiple' => false,
+            'wrapper'         => ['class' => 'form-group col-md-4'],
+            'tab'             => __('backend.general'),
         ]);
 
         // --- Xã/phường ---
@@ -277,21 +225,18 @@ class ParishManagementCrudController extends CrudController
             'name'    => 'status',
             'type'    => 'radio',
             'label'   => __('backend.status'),
-            'options' => [
-                0 => __('backend.draft'),
-                1 => __('backend.publish'),
-            ],
+            'options' => [0 => __('backend.draft'), 1 => __('backend.publish')],
             'default' => 1,
             'inline'  => true,
             'tab'     => __('backend.general'),
         ]);
 
-        // --- AJAX: load xã theo tỉnh & giáo hạt theo giáo phận ---
 ?>
         <script src="https://code.jquery.com/jquery-3.4.1.min.js"></script>
         <script type="text/javascript">
             jQuery(document).ready(function($) {
 
+                // Đổi tỉnh → load xã/phường
                 $("select[name='province']").change(function() {
                     var province = $(this).find('option:selected').val();
                     $.ajax({
@@ -304,18 +249,19 @@ class ParishManagementCrudController extends CrudController
                             province: province
                         },
                         beforeSend: function() {
-                            $("select[name='ward'] option[value]").remove();
+                            $("select[name='ward'] option").remove();
                         },
                         success: function(data) {
                             $.each(data, function(key, value) {
                                 $("select[name='ward']").append(
-                                    "<option value=" + value.xaid + ">" + value.name + "</option>"
+                                    "<option value='" + value.xaid + "'>" + value.name + "</option>"
                                 );
                             });
                         }
                     });
                 });
 
+                // Đổi giáo phận → load giáo hạt
                 $("select[name='diocese_id']").change(function() {
                     var diocese = $(this).find('option:selected').val();
                     $.ajax({
@@ -328,12 +274,12 @@ class ParishManagementCrudController extends CrudController
                             diocese: diocese
                         },
                         beforeSend: function() {
-                            $("select[name='deanery_id'] option[value]").remove();
+                            $("select[name='deanery_id'] option").remove();
                         },
                         success: function(data) {
                             $.each(data, function(key, value) {
                                 $("select[name='deanery_id']").append(
-                                    "<option value=" + value.id + ">" + value.name + "</option>"
+                                    "<option value='" + value.id + "'>" + value.name + "</option>"
                                 );
                             });
                         }
@@ -345,12 +291,6 @@ class ParishManagementCrudController extends CrudController
 <?php
     }
 
-    /**
-     * Define what happens when the Update operation is loaded.
-     *
-     * @see https://backpackforlaravel.com/docs/crud-operation-update
-     * @return void
-     */
     protected function setupUpdateOperation()
     {
         $this->setupCreateOperation();
@@ -360,17 +300,12 @@ class ParishManagementCrudController extends CrudController
     // Helpers
     // -----------------------------------------------------------------------
 
-    /**
-     * Lấy danh sách xã/phường theo tỉnh của parish đang edit.
-     */
     public function GetXa($id): array
     {
         @include(resource_path() . '/cities/xa_phuong_thitran.php');
-
         $array_xa = [];
         if (!empty($id)) {
             $parish = DB::table('parishes')->where('id', $id)->first();
-
             if ($parish && !empty($parish->province)) {
                 foreach ($xa_phuong_thitran as $xa) {
                     if ($xa['matp'] == $parish->province) {
@@ -382,9 +317,6 @@ class ParishManagementCrudController extends CrudController
         return $array_xa;
     }
 
-    /**
-     * Lấy danh sách giáo hạt theo giáo phận của parish đang edit.
-     */
     public function GetDeanerys($id): array
     {
         $array_dea = [];
@@ -397,8 +329,8 @@ class ParishManagementCrudController extends CrudController
                 ->get()
                 ->toArray();
 
-            foreach (json_decode(json_encode($deanerys, true), true) as $item) {
-                $array_dea[$item['id']] = $item['name'];
+            foreach ($deanerys as $item) {
+                $array_dea[$item->id] = $item->name;
             }
         }
         return $array_dea;
@@ -412,11 +344,11 @@ class ParishManagementCrudController extends CrudController
                 ->select('id', 'did', 'name')
                 ->where('did', '=', $dioceseId)
                 ->where('status', 1)
-                ->get()
-                ->toArray();
+                ->orderBy('id')
+                ->get();
 
-            foreach (json_decode(json_encode($deanerys, true), true) as $item) {
-                $array_dea[$item['id']] = $item['name'];
+            foreach ($deanerys as $item) {
+                $array_dea[$item->id] = $item->name;
             }
         }
         return $array_dea;

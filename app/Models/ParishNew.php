@@ -5,6 +5,7 @@ namespace App\Models;
 use Backpack\CRUD\app\Models\Traits\CrudTrait;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Venturecraft\Revisionable\RevisionableTrait;
 
 class ParishNew extends Model
@@ -36,6 +37,15 @@ class ParishNew extends Model
     | Relationships
     |--------------------------------------------------------------------------
     */
+    public function deanery(): BelongsTo
+    {
+        return $this->belongsTo(Deanery::class, 'deanery_id', 'id');
+    }
+
+    public function diocese(): BelongsTo
+    {
+        return $this->belongsTo(Diocese::class, 'diocese_id', 'id');
+    }
 
     public function users()
     {

@@ -5,12 +5,9 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Requests\UserRequest;
 use Backpack\CRUD\app\Http\Controllers\CrudController;
 use Backpack\CRUD\app\Library\CrudPanel\CrudPanelFacade as CRUD;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Hash;
 
-/**
- * Class UserCrudController
- * @package App\Http\Controllers\Admin
- * @property-read \Backpack\CRUD\app\Library\CrudPanel\CrudPanel $crud
- */
 class UserCrudController extends CrudController
 {
     use \Backpack\CRUD\app\Http\Controllers\Operations\ListOperation;
@@ -19,91 +16,160 @@ class UserCrudController extends CrudController
     use \Backpack\CRUD\app\Http\Controllers\Operations\DeleteOperation;
     use \Backpack\CRUD\app\Http\Controllers\Operations\ShowOperation;
 
-    /**
-     * Configure the CrudPanel object. Apply settings to all operations.
-     * 
-     * @return void
-     */
     public function setup()
     {
         CRUD::setModel(\App\Models\User::class);
         CRUD::setRoute(config('backpack.base.route_prefix') . '/user');
         CRUD::setEntityNameStrings(__('backend.user'), __('backend.users'));
-        
-        /*
-         |--------------------------------------------------------------------------
-         | Check Roles & Permissions
-         |--------------------------------------------------------------------------
-         */
-        /*
-        if (! backpack_user()->can('view_user')) {
-            CRUD::denyAccess(['list']);
+
+        $user = backpack_user();
+
+        if ($user->isSuperAdmin()) {
+            CRUD::allowAccess(['list', 'create', 'update', 'delete', 'show']);
+            return;
         }
-        
-        if (! backpack_user()->can('delete_user')) {
-            CRUD::removeButton('delete');
-        }
-        
-        if (! backpack_user()->can('create_user')) {
+
+        if ($user->isParishAdmin()) {
+            CRUD::allowAccess(['list', 'show']);
+            CRUD::denyAccess(['create', 'update', 'delete']);
             CRUD::removeButton('create');
-        }
-        
-        if (backpack_user()->can('update_user')) {
-            CRUD::allowAccess(['reorder']);
-            CRUD::enableReorder('name', 0);
-        } else {
             CRUD::removeButton('update');
-            CRUD::allowAccess(['show']);
+            CRUD::removeButton('delete');
+            return;
         }
-        */
+
+        CRUD::denyAccess(['list', 'create', 'update', 'delete', 'show']);
     }
 
-    /**
-     * Define what happens when the List operation is loaded.
-     * 
-     * @see  https://backpackforlaravel.com/docs/crud-operation-list-entries
-     * @return void
-     */
     protected function setupListOperation()
     {
-        CRUD::column('name');
-        CRUD::column('email');
-        CRUD::column('password');
+        $user = backpack_user();
 
-        /**
-         * Columns can be defined using the fluent syntax or array syntax:
-         * - CRUD::column('price')->type('number');
-         * - CRUD::addColumn(['name' => 'price', 'type' => 'number']); 
-         */
+        if ($user->isParishAdmin() && !$user->isSuperAdmin()) {
+            CRUD::addClause('where', 'parish_id', $user->parish_id ?? 0);
+        }
+
+        $this->crud->query->with(['parish']);
+
+        CRUD::addColumn([
+            'name'  => 'name',
+            'type'  => 'text',
+            'label' => __('backend.name'),
+        ]);
+
+        CRUD::addColumn([
+            'name'  => 'email',
+            'type'  => 'text',
+            'label' => __('backend.email'),
+        ]);
+
+        CRUD::addColumn([
+            'name'     => 'parish_id',
+            'type'     => 'closure',
+            'label'    => __('backend.parish_management'),
+            'function' => fn($entry) => $entry->parish?->name ?? '—',
+        ]);
+
+        CRUD::addColumn([
+            'name'     => 'roles',
+            'type'     => 'closure',
+            'label'    => 'Vai trò',
+            'function' => fn($entry) => $entry->getRoleNames()->implode(', ') ?: '—',
+        ]);
     }
 
-    /**
-     * Define what happens when the Create operation is loaded.
-     * 
-     * @see https://backpackforlaravel.com/docs/crud-operation-create
-     * @return void
-     */
     protected function setupCreateOperation()
     {
-        CRUD::field('name');
-        CRUD::field('email');
-        CRUD::field('password');
+        CRUD::setValidation(UserRequest::class);
 
-        /**
-         * Fields can be defined using the fluent syntax or array syntax:
-         * - CRUD::field('price')->type('number');
-         * - CRUD::addField(['name' => 'price', 'type' => 'number'])); 
-         */
+        // ← Thêm dòng này: báo Backpack bỏ qua field 'roles' khi lưu vào DB
+        $this->crud->setOperationSetting('saveAllInputsExcept', [
+            '_token',
+            '_method',
+            'http_method',
+            'current_tab',
+            'save_action',
+            'roles'
+        ]);
+
+        CRUD::addField([
+            'name'    => 'name',
+            'type'    => 'text',
+            'label'   => __('backend.name'),
+            'wrapper' => ['class' => 'form-group col-md-6'],
+        ]);
+
+        CRUD::addField([
+            'name'    => 'email',
+            'type'    => 'text',
+            'label'   => __('backend.email'),
+            'wrapper' => ['class' => 'form-group col-md-6'],
+        ]);
+
+        CRUD::addField([
+            'name'    => 'password',
+            'type'    => 'password',
+            'label'   => __('backend.password'),
+            'wrapper' => ['class' => 'form-group col-md-6'],
+        ]);
+
+        // --- Giáo xứ ---
+        $user        = backpack_user();
+        $parishQuery = DB::table('parishes')->where('status', 1)->orderBy('name');
+
+        if ($user->isParishAdmin() && !$user->isSuperAdmin()) {
+            $parishQuery->where('id', $user->parish_id);
+        }
+
+        $parishes = [];
+        foreach ($parishQuery->get() as $parish) {
+            $parishes[$parish->id] = $parish->name;
+        }
+
+        CRUD::addField([
+            'name'        => 'parish_id',
+            'type'        => 'select_from_array',
+            'label'       => 'Giáo xứ',
+            'options'     => $parishes,
+            'allows_null' => true,
+            'default'     => $user->isParishAdmin() ? $user->parish_id : null,
+            'wrapper'     => ['class' => 'form-group col-md-6'],
+        ]);
+
+        // --- Vai trò (Spatie) ---
+        $roles = [];
+        foreach (DB::table('roles')->orderBy('name')->get() as $role) {
+            $roles[$role->name] = $role->name;
+        }
+
+        CRUD::addField([
+            'name'        => 'roles',
+            'type'        => 'select_from_array',
+            'label'       => 'Vai trò',
+            'options'     => $roles,
+            'allows_null' => false,
+            'wrapper'     => ['class' => 'form-group col-md-6'],
+        ]);
     }
 
-    /**
-     * Define what happens when the Update operation is loaded.
-     * 
-     * @see https://backpackforlaravel.com/docs/crud-operation-update
-     * @return void
-     */
     protected function setupUpdateOperation()
     {
         $this->setupCreateOperation();
+
+        // Ghi đè field password — để trống thì không đổi
+        CRUD::addField([
+            'name'    => 'password',
+            'type'    => 'password',
+            'label'   => __('backend.password'),
+            'hint'    => 'Để trống nếu không muốn đổi mật khẩu.',
+            'wrapper' => ['class' => 'form-group col-md-6'],
+        ]);
+
+        $this->crud->setOperationSetting('saveAllInputsExcept', [
+            '_token',
+            '_method',
+            'http_method',
+            'current_tab',
+        ]);
     }
 }

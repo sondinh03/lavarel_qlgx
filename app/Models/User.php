@@ -9,6 +9,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Support\Facades\Hash;
 use Laravel\Sanctum\HasApiTokens;
 
 class User extends Authenticatable
@@ -46,9 +47,11 @@ class User extends Authenticatable
      */
     protected $casts = [
         'email_verified_at' => 'datetime',
+        'parish_id'         => 'integer',
     ];
 
-    public function parishId() {
+    public function parishId()
+    {
         return $this->parish_id;
     }
 
@@ -74,47 +77,28 @@ class User extends Authenticatable
 
     public function canManage(): bool
     {
-        // return $this->isSuperAdmin() || $this->isParishAdmin();
         return $this->hasAnyRole(['super_admin', 'parish_admin']);
-    }
-
-    /*
-    public function admin()
-    {
-        return $this->hasOne(SetAdmin::class, 'use', 'id');
-    }
-
-    public function decen()
-    {
-        return $this->hasOne(Decen::class, 'use', 'id');
-    }
-
-    public function teacher()
-    {
-        return $this->hasOne(Teacher::class, 'user_id', 'id');
-    }
-
-    public function isAdmin(): bool
-    {
-        return $this->admin && $this->admin->status === 1;
-    }
-
-
-
-    // public function isCatechist(): bool
-    // {
-    //     return $this->teacher && $this->teacher->status === 1;
-    // }
-
-    */
-
-    public function isDecen(): bool
-    {
-        return $this->decen && $this->decen->status === 1;
     }
 
     public function parishName(): ?string
     {
         return $this->parish?->name ?? null;
+    }
+
+    public function setPasswordAttribute($value): void
+    {
+        if (!empty($value)) {
+            $this->attributes['password'] = Hash::make($value);
+        }
+    }
+
+    protected static function booted(): void
+    {
+        static::saved(function ($user) {
+            $request = request();
+            if ($request->filled('roles')) {
+                $user->syncRoles([$request->roles]);
+            }
+        });
     }
 }
