@@ -28,7 +28,7 @@ class AttendanceManager extends BaseComponent
 
     // ==================== VIEW STATE ====================
 
-    // public $viewMode     = 'desktop';
+    public $viewMode     = 'desktop';
     public $selectedDate = null;
 
     // ==================== NOTE MODAL ====================
@@ -97,35 +97,9 @@ class AttendanceManager extends BaseComponent
 
     public function mount()
     {
-        Log::info('🔴 mount() START', ['selectedClassId' => $this->selectedClassId]);
-
         $this->students = collect();
         parent::mount();
         $this->requireParishId();
-
-        Log::info('🔴 mount() AFTER parent::mount()', ['selectedClassId' => $this->selectedClassId]);
-
-        // if ($this->selectedClassId) {
-        //     Log::info('🔴 mount() — nhánh if chạy → sắp gọi load lần 2');
-        //     $class = CatechismClass::select('id', 'name', 'school_year_id', 'grade_level_id')
-        //         ->find($this->selectedClassId);
-
-        //     if ($class) {
-        //         $this->selectedNamHoc    = $class->school_year_id;
-        //         $this->selectedClassName = $class->name;
-
-        //         $this->loadStudents();
-        //         $this->loadSessions();
-        //         $this->loadAttendanceRecords(); // FIX 1: gọi ngoài, không nhúng trong loadSessions()
-        //     } else {
-        //         $this->selectedClassId = null;
-        //         session()->flash('warning', 'Lớp học không tồn tại');
-        //     }
-        // }
-        Log::info('🔴 mount() END', ['selectedClassId' => $this->selectedClassId]);
-        Log::info('   👥 Students loaded cuối mount', [
-            'count' => $this->students->count(),
-        ]);
     }
 
     protected function initializeUser(): void
@@ -134,17 +108,10 @@ class AttendanceManager extends BaseComponent
 
         // Tận dụng auth đã được gọi trong parent
         $this->viewMode = auth()->user()?->isCatechist() ? 'mobile' : 'desktop';
-
-        Log::info('👤 initializeUser()', [
-            'viewMode' => $this->viewMode,
-            'role'     => auth()->user()?->roles->pluck('name'),
-        ]);
     }
 
     protected function loadInitialData(): void
     {
-        Log::info('🟡 loadInitialData() START', ['selectedClassId' => $this->selectedClassId]);
-
         if (!$this->selectedNamHoc) {
             $this->selectedNamHoc = $this->getDefaultNamHocId();
         }
@@ -174,12 +141,10 @@ class AttendanceManager extends BaseComponent
         }
 
         if ($this->selectedClassId) {
-            Log::info('🟡 loadInitialData() — gọi load (1 lần duy nhất)');
             $this->loadStudents();
             $this->loadSessions();
             $this->loadAttendanceRecords();
         }
-        Log::info('🟡 loadInitialData() END');
     }
 
     // ==================== SANITIZE ====================
@@ -221,13 +186,6 @@ class AttendanceManager extends BaseComponent
 
     public function updatedSelectedClassId(): void
     {
-        Log::info('🟤 updatedSelectedClassId() called', [
-            'selectedClassId' => $this->selectedClassId,
-            'trace' => collect(debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS, 3))
-                ->map(fn($f) => ($f['class'] ?? '') . '::' . ($f['function'] ?? ''))
-                ->implode(' → ')
-        ]);
-
         $this->selectedClassId = is_numeric($this->selectedClassId)
             ? (int) $this->selectedClassId : null;
 
@@ -248,31 +206,19 @@ class AttendanceManager extends BaseComponent
 
     public function updatedSelectedDate(): void
     {
-        Log::info('🟢 updatedSelectedDate() called', [
-            'date'     => $this->selectedDate,
-            'viewMode' => $this->viewMode,
-        ]);
         if ($this->viewMode === 'mobile' && $this->selectedDate) {
-            Log::info('🟢 updatedSelectedDate() — load records');
             $this->loadAttendanceRecords();
         }
     }
 
     public function updatedAttendanceType(): void
     {
-        Log::info('🟤 updatedAttendanceType() called', [
-            'attendanceType' => $this->attendanceType,
-            'trace' => collect(debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS, 3))
-                ->map(fn($f) => ($f['class'] ?? '') . '::' . ($f['function'] ?? ''))
-                ->implode(' → ')
-        ]);
-
         $this->attendanceType = in_array((int) $this->attendanceType, [1, 2])
             ? (int) $this->attendanceType : 1;
 
         $this->selectedDate = null;
         $this->loadSessions();
-        $this->loadAttendanceRecords(); // FIX 1+2: gọi 1 lần ngoài, không phân biệt desktop/mobile
+        $this->loadAttendanceRecords();
 
         $this->resetPage();
     }
@@ -304,12 +250,6 @@ class AttendanceManager extends BaseComponent
 
     protected function loadStudents(): void
     {
-        Log::info('   📌 loadStudents() called', [
-            'classId' => $this->selectedClassId,
-            'trace'   => collect(debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS, 4))
-                ->map(fn($f) => ($f['class'] ?? '') . '::' . ($f['function'] ?? ''))
-                ->implode(' → ')
-        ]);
         if (!$this->selectedClassId) {
 
             $this->students = collect();
@@ -346,10 +286,6 @@ class AttendanceManager extends BaseComponent
             $this->students = $class
                 ? $class->students
                 : collect();
-
-            Log::info('   👥 Students loaded', [
-                'count' => $this->students->count(),
-            ]);
         } catch (\Exception $e) {
             $this->logError($e, 'Error loading students');
             $this->students = collect();
@@ -363,22 +299,13 @@ class AttendanceManager extends BaseComponent
      */
     protected function loadSessions(): void
     {
-        Log::info('   📌 loadSessions() called', [
-            'classId' => $this->selectedClassId,
-            'trace'   => collect(debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS, 4))
-                ->map(fn($f) => ($f['class'] ?? '') . '::' . ($f['function'] ?? ''))
-                ->implode(' → ')
-        ]);
-
         if (!$this->selectedClassId) {
-            Log::info('đã vào if selectedClasId = null');
             $this->sessions     = [];
             $this->selectedDate = null;
             return;
         }
 
         if ($this->viewMode === 'mobile') {
-            Log::info('đã vào view mobile');
             try {
                 $this->sessions = AttendanceSession::where('class_id', $this->selectedClassId)
                     ->where('type', $this->attendanceType)
@@ -392,15 +319,12 @@ class AttendanceManager extends BaseComponent
                         'locked'   => $s->status === AttendanceSession::STATUS_CLOSED,
                     ])->toArray();
 
-                Log::info('session count: ' . count($this->sessions));
-
                 if (empty($this->sessions)) {
                     session()->flash('info', 'Chưa có buổi điểm danh nào');
                     return;
                 }
 
                 if (!$this->selectedDate) {
-                    Log::info('bắt đầu autoSelectDate');
                     $this->autoSelectDateForMobile();
                 }
             } catch (\Exception $e) {
@@ -432,8 +356,6 @@ class AttendanceManager extends BaseComponent
                     ];
                 })->toArray();
 
-            Log::info('     📊 Sessions count: ' . count($this->sessions));
-
             if (empty($this->sessions)) {
                 session()->flash('info', 'Chưa có buổi điểm danh nào');
             }
@@ -447,16 +369,6 @@ class AttendanceManager extends BaseComponent
 
     protected function loadAttendanceRecordsQuiet(): void
     {
-        Log::info('   🔍 loadAttendanceRecordsQuiet() called', [
-            'classId'      => $this->selectedClassId,
-            'type'         => $this->attendanceType,
-            'viewMode'     => $this->viewMode,
-            'selectedDate' => $this->selectedDate,
-            'trace'        => collect(debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS, 4))
-                ->map(fn($f) => ($f['class'] ?? '') . '::' . ($f['function'] ?? ''))
-                ->implode(' → ')
-        ]);
-
         if (!$this->selectedClassId) {
             $this->attendanceRecords = [];
             return;
@@ -468,10 +380,7 @@ class AttendanceManager extends BaseComponent
                     ->where('type', $this->attendanceType);
 
                 if ($this->viewMode === 'mobile' && $this->selectedDate) {
-                    Log::info('   🔍 filter by date', ['date' => $this->selectedDate]);
                     $q->whereDate('date', $this->selectedDate);
-                } else {
-                    Log::info('   🔍 load ALL records (no date filter)');
                 }
             });
 
@@ -482,10 +391,6 @@ class AttendanceManager extends BaseComponent
                     'note'   => $group->first()->note,
                 ])
                 ->toArray();
-
-            Log::info('   🔍 loadAttendanceRecordsQuiet() DONE', [
-                'record_count' => count($this->attendanceRecords),
-            ]);
         } catch (\Exception $e) {
             $this->logError($e, 'Error loading attendance records');
             $this->attendanceRecords = [];
@@ -498,12 +403,6 @@ class AttendanceManager extends BaseComponent
      */
     protected function loadAttendanceRecords(): void
     {
-        Log::info('   📌 loadAttendanceRecords() called', [
-            'classId' => $this->selectedClassId,
-            'trace'   => collect(debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS, 4))
-                ->map(fn($f) => ($f['class'] ?? '') . '::' . ($f['function'] ?? ''))
-                ->implode(' → ')
-        ]);
         if (!$this->selectedClassId) {
             $this->attendanceRecords = [];
             return;
@@ -514,8 +413,6 @@ class AttendanceManager extends BaseComponent
         if ($this->viewMode === 'mobile') {
             $this->loadSessionIndicators();
         }
-
-        Log::info('      📊 Records count: ' . count($this->attendanceRecords));
 
         $this->dispatchBrowserEvent('attendance-records-loaded', [
             'records' => $this->attendanceRecords,
@@ -545,11 +442,6 @@ class AttendanceManager extends BaseComponent
      */
     public function saveFromClient(array $draft): void
     {
-        Log::info('💾 saveFromClient() START', [
-            'draft_count' => count($draft),
-            'keys'        => array_keys($draft),
-        ]);
-
         if (empty($draft)) {
             session()->flash('warning', 'Không có dữ liệu để lưu');
             return;
@@ -588,31 +480,18 @@ class AttendanceManager extends BaseComponent
             ->values()
             ->toArray();
 
-        Log::info('💾 saveFromClient() — gọi saveBulkAttendance', [
-            'drafts_count' => count($drafts),
-        ]);
-
         try {
             $this->dispatchBrowserEvent('saving-attendance');
 
             $result = $this->attendanceService->saveBulkAttendance($drafts);
 
-            Log::info('💾 saveBulkAttendance() result', [
-                'success' => $result['success'],
-                'message' => $result['message'] ?? null,
-            ]);
-
             if ($result['success']) {
-                Log::info('💾 reload attendance records sau khi lưu');
                 $this->loadAttendanceRecords();
 
                 session()->flash('message', $result['message'] ?? 'Đã lưu điểm danh thành công');
 
                 $this->dispatchBrowserEvent('attendance-saved', [
                     'records' => $this->attendanceRecords,
-                ]);
-                Log::info('💾 dispatch attendance-saved', [
-                    'records_count' => count($this->attendanceRecords),
                 ]);
             } else {
                 session()->flash('error', $result['message']);
@@ -622,43 +501,29 @@ class AttendanceManager extends BaseComponent
             session()->flash('error', 'Có lỗi khi lưu điểm danh');
         } finally {
             $this->dispatchBrowserEvent('attendance-save-completed');
-            Log::info('💾 saveFromClient() END');
         }
     }
 
     public function switchType(int $type): void
     {
-        Log::info('🟠 switchType() START', [
-            'old_type' => $this->attendanceType,
-            'new_type' => $type,
-        ]);
         if ($type === $this->attendanceType) {
-            Log::info('🟠 switchType() — cùng type, bỏ qua');
             return;
         }
 
         $this->attendanceType = $type;
         $this->selectedDate   = null;
 
-        Log::info('🟠 switchType() — bắt đầu load');
         $this->loadSessions();
         $this->loadAttendanceRecords();
-        Log::info('🟠 switchType() END');
     }
 
     // ==================== NOTE MODAL ====================
 
     public function openNoteModal($studentId, $sessionId): void
     {
-        Log::info('📝 openNoteModal() called', [
-            'studentId' => $studentId,
-            'sessionId' => $sessionId,
-        ]);
-
         $session = collect($this->sessions)->firstWhere('id', (int) $sessionId);
 
         if (!$session || $session['locked']) {
-            Log::info('📝 openNoteModal() — session locked hoặc không tồn tại');
             session()->flash('warning', 'Không thể điểm danh cho buổi này');
             return;
         }
@@ -666,7 +531,6 @@ class AttendanceManager extends BaseComponent
         $student = \App\Models\StudentNew::find((int) $studentId);
 
         if (!$student) {
-            Log::info('📝 openNoteModal() — student not found');
             session()->flash('error', 'Không tìm thấy học sinh');
             return;
         }
@@ -680,37 +544,19 @@ class AttendanceManager extends BaseComponent
         $dbKey = $studentId . '_' . $sessionId;
         $this->attendanceNote = $this->attendanceRecords[$dbKey]['note'] ?? '';
 
-        Log::info('📝 openNoteModal() — mở modal', [
-            'student'       => $this->currentStudentName,
-            'existingNote'  => $this->attendanceNote ?: '(trống)',
-            'existingStatus' => $this->attendanceRecords[$dbKey]['status'] ?? null,
-        ]);
-
         $this->showNoteModal = true;
     }
 
     public function saveAttendanceWithNote(): void
     {
-        Log::info('📝 saveAttendanceWithNote() called', [
-            'studentId' => $this->currentStudentId,
-            'sessionId' => $this->currentSessionId,
-            'note'      => $this->attendanceNote,
-        ]);
         $this->validate(['attendanceNote' => 'nullable|string|max:500']);
 
         if (!$this->currentStudentId || !$this->currentSessionId) {
-            Log::info('📝 saveAttendanceWithNote() — thiếu studentId hoặc sessionId');
             session()->flash('error', 'Thiếu thông tin học sinh hoặc buổi học');
             return;
         }
 
         $key = $this->currentStudentId . '_' . $this->currentSessionId;
-
-        Log::info('📝 saveAttendanceWithNote() — dispatch note-saved', [
-            'key'    => $key,
-            'status' => AttendanceRecord::STATUS_ABSENT_EXCUSED,
-            'note'   => trim($this->attendanceNote),
-        ]);
 
         $this->dispatchBrowserEvent('note-saved', [
             'key'    => $this->currentStudentId . '_' . $this->currentSessionId,
@@ -720,7 +566,6 @@ class AttendanceManager extends BaseComponent
 
         session()->flash('message', 'Đã ghi nhận vắng có phép');
         $this->closeNoteModal();
-        Log::info('📝 saveAttendanceWithNote() END — draft updated in Alpine, chờ user bấm Lưu');
     }
 
     public function closeNoteModal(): void
@@ -737,10 +582,6 @@ class AttendanceManager extends BaseComponent
 
     public function handleFilterChanged($filters): void
     {
-        Log::info('🟠 handleFilterChanged() called', [
-            'filters' => $filters
-        ]);
-
         if (!is_array($filters)) return;
 
         $namHocChanged = false;
@@ -753,7 +594,6 @@ class AttendanceManager extends BaseComponent
             if ($newNamHoc !== $this->selectedNamHoc) {
                 $this->selectedNamHoc = $newNamHoc;
                 $namHocChanged = true;
-                Log::info('🟠 namHoc thay đổi', ['new' => $newNamHoc]);
             }
         }
 
@@ -764,12 +604,10 @@ class AttendanceManager extends BaseComponent
             if ($newKhoi !== $oldKhoi) {
                 $this->selectedKhoi = $newKhoi;
                 $khoiChanged = true;
-                Log::info('🟠 khoi thay đổi', ['new' => $newKhoi]);
             }
         }
 
         if ($namHocChanged || $khoiChanged) {
-            Log::info('🟠 clearAttendanceState() vì namHoc/khoi đổi');
             $this->clearAttendanceState();
             $this->resetPage();
             return;
@@ -779,16 +617,10 @@ class AttendanceManager extends BaseComponent
             $newClassId = is_numeric($filters['lop']) ? (int) $filters['lop'] : null;
             $oldClassId = is_numeric($this->selectedClassId) ? (int) $this->selectedClassId : null;
 
-            Log::info('🟠 handleFilterChanged() — đổi lớp', [
-                'old' => $oldClassId,
-                'new' => $newClassId,
-            ]);
-
             if ($newClassId !== $this->selectedClassId) {
                 $this->selectedClassId = $newClassId;
                 $this->selectedDate    = null;
                 $classChanged = true;
-                Log::info('🟠 lop thay đổi', ['new' => $newClassId]);
             }
         }
 
@@ -798,30 +630,25 @@ class AttendanceManager extends BaseComponent
             if ($newKy !== $oldKy) {
                 $this->selectedKy = $newKy;
                 $kyChanged = true;
-                Log::info('🟠 ky thay đổi', ['new' => $newKy]);
             }
         }
 
         // ── Load 1 lần duy nhất ở đây ─────────────────────────
         if ($classChanged || $kyChanged) {
             if (!$this->selectedClassId) {
-                Log::info('🟠 classId null → clearAttendanceState');
                 $this->clearAttendanceState();
             } else {
                 if ($classChanged) {
                     $this->selectedClassName = CatechismClass::where('id', $this->selectedClassId)
                         ->value('name') ?? '';
-                    Log::info('🟠 load students vì lớp đổi');
                     $this->loadStudents();
                 }
 
-                Log::info('🟠 load sessions + records (1 lần)');
                 $this->loadSessions();
                 $this->loadAttendanceRecords();
             }
         }
 
-        Log::info('🟠 handleFilterChanged() END');
         $this->resetPage();
     }
 
@@ -857,19 +684,11 @@ class AttendanceManager extends BaseComponent
 
     public function selectDate(string $date): void
     {
-        Log::info('🟢 selectDate() called', [
-            'old' => $this->selectedDate,
-            'new' => $date,
-        ]);
-
         $this->selectedDate = $date;
 
         if ($this->viewMode === 'mobile') {
-            Log::info('🟢 selectDate() — load records');
             $this->loadAttendanceRecords();
         }
-
-        Log::info('🟢 selectDate() END');
     }
 
     protected function getVietnameseDayName(Carbon $date): string

@@ -1,6 +1,7 @@
 <?php return array (
   'attendance-manager' => 'App\\Http\\Livewire\\AttendanceManager',
   'attendance-qr' => 'App\\Http\\Livewire\\AttendanceQr',
+  'attendance.attendance-qr' => 'App\\Http\\Livewire\\Attendance\\AttendanceQr',
   'attendance.session-manager' => 'App\\Http\\Livewire\\Attendance\\SessionManager',
   'block.block-manager' => 'App\\Http\\Livewire\\Block\\BlockManager',
   'catechism-class.catechism-class-list' => 'App\\Http\\Livewire\\CatechismClass\\CatechismClassList',
@@ -14,7 +15,6 @@
   'lop.assign-teacher' => 'App\\Http\\Livewire\\Lop\\AssignTeacher',
   'lop.lop-detail' => 'App\\Http\\Livewire\\Lop\\LopDetail',
   'lop.lop-form' => 'App\\Http\\Livewire\\Lop\\LopForm',
-  'lop.lop-list' => 'App\\Http\\Livewire\\Lop\\LopList',
   'nam-hoc.copy-nam-hoc' => 'App\\Http\\Livewire\\NamHoc\\CopyNamHoc',
   'nam-hoc.nam-hoc-manager' => 'App\\Http\\Livewire\\NamHoc\\NamHocManager',
   'parish.parish-group-manager' => 'App\\Http\\Livewire\\Parish\\ParishGroupManager',
@@ -24,7 +24,6 @@
   'student.student-detail' => 'App\\Http\\Livewire\\Student\\StudentDetail',
   'student.student-edit' => 'App\\Http\\Livewire\\Student\\StudentEdit',
   'student.student-import-preview' => 'App\\Http\\Livewire\\Student\\StudentImportPreview',
-  'student.student-list' => 'App\\Http\\Livewire\\Student\\StudentList',
   'student.student-list-new' => 'App\\Http\\Livewire\\Student\\StudentListNew',
   'teacher.teacher-import-preview' => 'App\\Http\\Livewire\\Teacher\\TeacherImportPreview',
   'teacher.teacher-manager' => 'App\\Http\\Livewire\\Teacher\\TeacherManager',

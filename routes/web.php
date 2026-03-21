@@ -42,9 +42,9 @@ use App\Http\Controllers\TeacherImportController;
 use App\Http\Controllers\KetQuaExportController;
 use App\Http\Controllers\HonPhoiExportController;
 use App\Http\Controllers\StudentImportController;
+use App\Http\Livewire\Attendance\AttendanceQr as AttendanceAttendanceQr;
 use App\Http\Livewire\Attendance\SessionManager;
 use App\Http\Livewire\AttendanceManager;
-use App\Http\Livewire\AttendanceQr;
 use App\Http\Livewire\CatechismClass\CatechismClassList;
 use App\Http\Livewire\ClassStudentManager;
 use App\Http\Livewire\Dashboard\AdminDashboard;
@@ -104,7 +104,7 @@ Route::middleware('auth')->group(function () {
         Route::get('/attendance', AttendanceManager::class)
             ->name('attendance.show');
 
-        Route::get('/attendance/qr', AttendanceQr::class)
+        Route::get('/attendance/qr', AttendanceAttendanceQr::class)
             ->name('attendance.qr');
 
         Route::get('/students', StudentListNew::class)
