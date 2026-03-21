@@ -1,4 +1,4 @@
-<div class="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 p-4 sm:p-6">
+<div class="bg-gradient-to-br from-slate-50 to-slate-100 p-4 sm:p-6" style="min-height: calc(100vh - 56px - var(--bottom-offset));">
 
     <a href="#main-content" class="sr-only focus:not-sr-only">Bỏ qua tới nội dung</a>
 
@@ -148,6 +148,7 @@
             {{-- Main Card --}}
             <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
                 {{-- Header --}}
+                @if ($this->viewMode != 'mobile')
                 <x-page-header
                     title="Điểm danh{{ $selectedClassId ? ' - ' . $selectedClassName : '' }}"
                     description="Điểm danh {{ $attendanceType == 1 ? 'đi học' : 'đi lễ' }}{{ $selectedClassId ? ' • ' . $students->count() . ' học sinh • ' . count($sessions) . ' buổi' : '' }}"
@@ -155,6 +156,17 @@
                     stat-label="Học sinh"
                     icon-type="attendance">
                 </x-page-header>
+                @else
+                <div id="page-big-title" class="px-4 pt-5 pb-3 transition-opacity duration-300">
+                    <h1 class="text-2xl font-bold text-slate-800">
+                        Điểm danh{{ $selectedClassId ? ' · ' . $selectedClassName : '' }}
+                    </h1>
+                    <p class="text-sm text-slate-500 mt-0.5">
+                        {{ $attendanceType == 1 ? 'Đi học' : 'Đi lễ' }}
+                        {{ $selectedClassId ? ' · ' . $students->count() . ' học sinh' : '' }}
+                    </p>
+                </div>
+                @endif
 
                 {{-- Actions Bar --}}
                 <div class="px-6 py-4 border-b border-slate-200 bg-slate-50/70">
@@ -917,22 +929,46 @@
     </div>
 </div>>
 
+@push('page-title')
+<span class="text-slate-800 font-semibold text-sm">Điểm danh</span>
+@endpush
+
 @push('scripts')
 <script>
+    // Collapsing header — IntersectionObserver
+    (function() {
+        function initCollapsingHeader() {
+            const bigTitle = document.getElementById('page-big-title');
+            const headerTitle = document.getElementById('header-collapsed-title');
+
+            if (!bigTitle || !headerTitle) return;
+
+            const observer = new IntersectionObserver(
+                ([entry]) => {
+                    if (entry.isIntersecting) {
+                        // Big title visible → ẩn header title
+                        headerTitle.style.opacity = '0';
+                        bigTitle.style.opacity = '1';
+                    } else {
+                        // Big title out of view → hiện header title
+                        headerTitle.style.opacity = '1';
+                        bigTitle.style.opacity = '0';
+                    }
+                }, {
+                    threshold: 0,
+                    rootMargin: '-56px 0px 0px 0px', // trừ đi chiều cao header
+                }
+            );
+
+            observer.observe(bigTitle);
+        }
+
+        // Init sau khi Livewire render xong
+        document.addEventListener('livewire:load', initCollapsingHeader);
+        document.addEventListener('livewire:update', initCollapsingHeader);
+    })();
+
     document.addEventListener('livewire:load', function() {
-        // function detectViewMode() {
-        //     const isMobile = window.innerWidth < 1024;
-        //     Livewire.emit('viewModeDetected', isMobile ? 'mobile' : 'desktop');
-        // }
-
-        // detectViewMode();
-
-        // let resizeTimer;
-        // window.addEventListener('resize', function() {
-        //     clearTimeout(resizeTimer);
-        //     resizeTimer = setTimeout(detectViewMode, 200);
-        // });
-
         // Ctrl+S / Cmd+S → save
         window.addEventListener('keydown', function(e) {
             if ((e.ctrlKey || e.metaKey) && e.key === 's') {

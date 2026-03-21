@@ -1,4 +1,4 @@
-<div class="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 p-4">
+<div class="bg-gradient-to-br from-slate-50 to-slate-100 p-4" style="min-height: calc(100vh - 56px - var(--bottom-offset));">
     <div class="mx-auto max-w-2xl space-y-4">
 
         <div class="bg-white rounded-2xl shadow-sm border border-slate-200 px-5 py-4">

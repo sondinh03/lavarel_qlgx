@@ -3117,6 +3117,10 @@ video {
 .hover\:bg-primary-50\/30:hover {
   background-color: rgb(232 249 241 / 0.3);
 }
+.hover\:bg-primary-600:hover {
+  --tw-bg-opacity: 1;
+  background-color: rgb(32 170 82 / var(--tw-bg-opacity));
+}
 .hover\:bg-primary-700:hover {
   --tw-bg-opacity: 1;
   background-color: rgb(26 135 68 / var(--tw-bg-opacity));
