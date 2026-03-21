@@ -156,20 +156,22 @@ class UserCrudController extends CrudController
     {
         $this->setupCreateOperation();
 
-        // Ghi đè field password — để trống thì không đổi
+        // ← Thêm lại vì setupUpdateOperation chạy độc lập với setupCreateOperation
+        $this->crud->setOperationSetting('saveAllInputsExcept', [
+            '_token',
+            '_method',
+            'http_method',
+            'current_tab',
+            'save_action',
+            'roles'
+        ]);
+
         CRUD::addField([
             'name'    => 'password',
             'type'    => 'password',
             'label'   => __('backend.password'),
             'hint'    => 'Để trống nếu không muốn đổi mật khẩu.',
             'wrapper' => ['class' => 'form-group col-md-6'],
-        ]);
-
-        $this->crud->setOperationSetting('saveAllInputsExcept', [
-            '_token',
-            '_method',
-            'http_method',
-            'current_tab',
         ]);
     }
 }
