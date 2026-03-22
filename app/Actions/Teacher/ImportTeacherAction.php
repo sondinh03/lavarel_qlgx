@@ -94,7 +94,7 @@ class ImportTeacherAction
                         $user = User::create([
                             'name'      => $fullName,
                             'email'     => $accountEmail,
-                            'password'  => Hash::make($phone ?: '12345678'),
+                            'password'  => $phone ?: '12345678',
                             'parish_id' => $parishId,
                         ]);
 

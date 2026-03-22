@@ -276,7 +276,7 @@ class TeacherManager extends BaseComponent
             'name'      => trim($this->last_name . ' ' . $this->first_name),
             'email'     => $accountEmail,
             'parish_id' => $this->parishId,
-            'password'  => Hash::make($this->phone_number ?: '12345678'),
+            'password'  => $this->phone_number ?: '12345678',
         ]);
 
         $user->assignRole('catechist');
