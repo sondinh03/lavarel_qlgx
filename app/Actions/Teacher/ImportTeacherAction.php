@@ -5,7 +5,9 @@ namespace App\Actions\Teacher;
 use App\Models\Holymanagement;
 use App\Models\ParishGroup;
 use App\Models\Teacher;
+use App\Models\User;
 use App\Support\ExcelDateParser;
+use Illuminate\Support\Facades\Hash;
 
 class ImportTeacherAction
 {
@@ -68,11 +70,38 @@ class ImportTeacherAction
                     $gender = 'female';
                 }
 
-                // Tách họ tên: từ cuối là first_name, phần còn lại là last_name
+                // Tách họ tên
                 $fullName  = trim($row['ho_ten'] ?? '');
                 $parts     = explode(' ', $fullName);
                 $firstName = array_pop($parts);
                 $lastName  = implode(' ', $parts);
+
+                $phone = $row['so_dien_thoai'] ?? null;
+                $email = trim($row['email'] ?? '') ?: null;
+
+                // Tạo user account nếu tao_tai_khoan = có
+                $userId      = null;
+                $taotk       = mb_strtolower(trim($row['tao_tai_khoan'] ?? ''), 'UTF-8');
+                $shouldCreate = in_array($taotk, ['có', 'co', 'yes', '1']);
+
+                if ($shouldCreate) {
+                    $accountEmail = $email ?: ($phone . '@giaoly.local');
+
+                    if (User::where('email', $accountEmail)->exists()) {
+                        // Không throw — chỉ ghi warning, vẫn tạo teacher
+                        $errors[] = "Dòng {$rowNumber}: \"{$accountEmail}\" đã tồn tại — bỏ qua tạo tài khoản";
+                    } else {
+                        $user = User::create([
+                            'name'      => $fullName,
+                            'email'     => $accountEmail,
+                            'password'  => Hash::make($phone ?: '12345678'),
+                            'parish_id' => $parishId,
+                        ]);
+
+                        $user->assignRole('catechist');
+                        $userId = $user->id;
+                    }
+                }
 
                 Teacher::create([
                     'last_name'       => $lastName,
@@ -80,10 +109,11 @@ class ImportTeacherAction
                     'saint_id'        => $saintId,
                     'gender'          => $gender,
                     'birthday'        => $birthday,
-                    'email'           => trim($row['email'] ?? '') ?: null,
-                    'phone_number'    => $row['so_dien_thoai'] ?? null,
+                    'email'           => $email,
+                    'phone_number'    => $phone,
                     'parish_group_id' => $parishGroupId,
                     'parish_id'       => $parishId,
+                    'user_id'         => $userId,
                     'is_active'       => true,
                 ]);
 

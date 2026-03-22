@@ -184,7 +184,7 @@ class TeacherImportPreview extends BaseComponent
         }
     }
 
-    public function confirmImport(): void
+    public function confirmImport()
     {
         if (!$this->readyToImport) {
             session()->flash('error', 'Dữ liệu chưa hợp lệ, không thể import');
@@ -207,7 +207,7 @@ class TeacherImportPreview extends BaseComponent
             }
 
             session()->flash('message', $message);
-            // return redirect()->route('catechists.index');
+            return redirect()->route('catechists.index');
         } catch (\Exception $e) {
             $this->logError($e, 'Error confirming teacher import');
             session()->flash('error', 'Có lỗi khi import: ' . $e->getMessage());
