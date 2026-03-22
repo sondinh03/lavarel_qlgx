@@ -55,7 +55,7 @@
                             • <strong>ten_thanh</strong>, <strong>giao_ho</strong>: phải khớp tên trong hệ thống (nếu không khớp sẽ bỏ trống)
                         </p>
                     </div>
-                    <a href="{{ route('catechists.import.template') }}"
+                    <a href="{{ asset('templates/teacher_import_template.xlsx') }}"
                         class="flex-shrink-0 inline-flex items-center gap-1.5 px-3 py-2
                                bg-amber-100 hover:bg-amber-200 text-amber-800 text-xs font-semibold
                                rounded-lg transition">
