@@ -14,7 +14,7 @@ class RedirectIfAuthenticatedToDashboard
             $user = AuthUser::user();
 
             // Sau này có thể tách theo role
-            if ($user->isDecen() || $user->isCatechist()) {
+            if ($user->isParishAdmin() || $user->isCatechist()) {
                 return redirect()->route('dashboard');
             }
         }

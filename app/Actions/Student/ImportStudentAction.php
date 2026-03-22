@@ -9,8 +9,6 @@ use App\Models\ParishGroup;
 use App\Models\StudentNew;
 use App\Support\ExcelDateParser;
 use Illuminate\Support\Carbon;
-use Illuminate\Support\Collection;
-use Illuminate\Support\Facades\DB;
 use Maatwebsite\Excel\Facades\Excel;
 use PhpOffice\PhpSpreadsheet\Shared\Date;
 
@@ -31,7 +29,8 @@ class ImportStudentAction
         $catechismClass = CatechismClass::findOrFail($classId);
 
         // Cache lookups để tránh N+1
-        $saintMap       = Holymanagement::pluck('id', 'name')->map(fn($id) => $id)->toArray();
+        $saintMap       = Holymanagement::pluck('id', 'name')->mapWithKeys(fn($id, $name) => [trim($name) => $id])
+            ->toArray();
         $parishGroupMap = ParishGroup::active()
             ->pluck('id', 'name')
             ->toArray();
@@ -41,8 +40,6 @@ class ImportStudentAction
         $imported = 0;
         $skipped  = 0;
         $errors   = [];
-
-        DB::beginTransaction();
 
         try {
             foreach ($rows as $index => $row) {
@@ -76,50 +73,24 @@ class ImportStudentAction
                     }
 
                     // Parse giới tính
-                    $gender = 'male';
+                    $gender      = 'male';
                     $gioiTinhRaw = mb_strtolower(trim($row['gioi_tinh'] ?? ''), 'UTF-8');
                     if (in_array($gioiTinhRaw, ['nữ', 'nu', 'female', 'f', '0'])) {
                         $gender = 'female';
                     }
 
-                    // $student = StudentNew::create([
-                    //     'last_name'       => trim($row['ho_ten_dem'] ?? ''),
-                    //     'first_name'      => trim($row['ten'] ?? ''),
-                    //     'saint_id'        => $saintId,
-                    //     'gender'          => $gender,
-                    //     'birthday'        => $birthday,
-                    //     'father_name'     => trim($row['ho_ten_bo'] ?? '') ?: null,
-                    //     'mother_name'     => trim($row['ho_ten_me'] ?? '') ?: null,
-                    //     'parish_group_id' => $parishGroupId,
-                    //     'parish_id'       => $parishId,
-                    //     'is_active'       => true,
-                    // ]);
-
-                    try {
-                        $student = StudentNew::create([
-                            'last_name'       => trim($row['ho_ten_dem'] ?? ''),
-                            'first_name'      => trim($row['ten'] ?? ''),
-                            'saint_id'        => $saintId,
-                            'gender'          => $gender,
-                            'birthday'        => $birthday,
-                            'father_name'     => trim($row['ho_ten_bo'] ?? '') ?: null,
-                            'mother_name'     => trim($row['ho_ten_me'] ?? '') ?: null,
-                            'parish_group_id' => $parishGroupId,
-                            'parish_id'       => $parishId,
-                            'is_active'       => true,
-                        ]);
-                    } catch (\Illuminate\Database\QueryException $e) {
-                        dd([
-                            'message' => $e->getMessage(),
-                            'sql'     => $e->getSql(),
-                            'bindings' => $e->getBindings(),
-                        ]);
-                    } catch (\Exception $e) {
-                        dd([
-                            'message' => $e->getMessage(),
-                        ]);
-                    }
-                    // dd(DB::getQueryLog());
+                    $student = StudentNew::create([
+                        'last_name'       => trim($row['ho_ten_dem'] ?? ''),
+                        'first_name'      => trim($row['ten'] ?? ''),
+                        'saint_id'        => $saintId,
+                        'gender'          => $gender,
+                        'birthday'        => $birthday,
+                        'father_name'     => trim($row['ho_ten_bo'] ?? '') ?: null,
+                        'mother_name'     => trim($row['ho_ten_me'] ?? '') ?: null,
+                        'parish_group_id' => $parishGroupId,
+                        'parish_id'       => $parishId,
+                        'is_active'       => true,
+                    ]);
 
                     $student->classes()->attach($catechismClass->id, [
                         'enrolled_at' => now(),
@@ -132,10 +103,7 @@ class ImportStudentAction
                     $errors[] = "Dòng {$rowNumber}: " . $e->getMessage();
                 }
             }
-
-            DB::commit();
         } catch (\Exception $e) {
-            DB::rollBack();
             throw $e;
         }
 

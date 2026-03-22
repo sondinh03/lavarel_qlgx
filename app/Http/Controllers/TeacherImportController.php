@@ -3,31 +3,26 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
-use Maatwebsite\Excel\Concerns\WithStartRow;
-use Maatwebsite\Excel\Facades\Excel;
-use App\Imports\TeacherImport;
+use Symfony\Component\HttpFoundation\BinaryFileResponse;
 
 class TeacherImportController extends Controller
 {
-    public function show()
+    /**
+     * Download file mẫu import giáo lý viên.
+     *
+     * File mẫu đặt tại: storage/app/public/templates/teacher_import_template.xlsx
+     * Đã chạy: php artisan storage:link
+     */
+    public function template(): BinaryFileResponse
     {
-        return view('page.import');
-    }
-    
-    public function store(Request $request)
-    {
-        $file = $request->file('file')->store('import');
-        
-        if(empty($file)){
-            return back()->withStatus('Bạn cần tiến hành chọn file trước khi import');
-        }
-        
-        $file = $request->file('file');
-        $path = $file->getRealPath();
-        
-        Excel::import(new TeacherImport($path), $file);
-        
-        return back()->with('success', 'Import thành công!');
-        
+        $path = storage_path('app\public\templates\teacher_import_template.xlsx');
+
+        abort_unless(file_exists($path), 404, 'File mẫu không tồn tại');
+
+        return response()->download(
+            $path,
+            'teacher_import_template.xlsx',
+            ['Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet']
+        );
     }
 }

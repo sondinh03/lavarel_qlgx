@@ -142,6 +142,9 @@ Route::middleware('auth')->group(function () {
         Route::get('/studentss/print-cards', PrintCards::class)
             ->name('students.print-cards');
 
+        Route::get('/catechists/download-template', [TeacherImportController::class, 'template'])
+            ->name('catechists.import.template');
+
         Route::get('/catechists/import', TeacherImportPreview::class)
             ->name('catechists.import');
 

@@ -1,308 +1,266 @@
 <div class="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 p-4 sm:p-6">
     <div class="mx-auto max-w-7xl space-y-5">
 
-        {{-- Skip link --}}
-        <a href="#main-content" class="sr-only focus:not-sr-only">Bỏ qua tới nội dung</a>
-
         {{-- Breadcrumb --}}
         <x-breadcrumb :items="[
-            ['label' => 'Trang chủ', 'url' => route('catechists.index')],
+            ['label' => 'Trang chủ', 'url' => route('dashboard')],
             ['label' => 'Quản lý Giáo lý viên', 'url' => route('catechists.index')],
-            ['label' => 'Import danh sách']
-        ]" />
+            ['label' => 'Import danh sách'],
+        ]" separator="arrow" />
 
-        {{-- Toast Notifications --}}
-        @if (session()->has('success'))
-        <x-toast-notification type="success" :duration="3500">
-            {{ session('success') }}
-        </x-toast-notification>
-        @endif
+        {{-- Toast --}}
+        <div role="status" aria-live="polite">
+            @if(session()->has('message'))
+            <x-toast-notification type="success" :duration="4000">{{ session('message') }}</x-toast-notification>
+            @endif
+            @if(session()->has('error'))
+            <x-toast-notification type="error" :duration="5000">{{ session('error') }}</x-toast-notification>
+            @endif
+            @if(session()->has('warning'))
+            <x-toast-notification type="warning" :duration="5000">{!! session('warning') !!}</x-toast-notification>
+            @endif
+            @if(session()->has('info'))
+            <x-toast-notification type="info" :duration="4000">{{ session('info') }}</x-toast-notification>
+            @endif
+        </div>
 
-        @if (session()->has('error'))
-        <x-toast-notification type="error" :duration="4000">
-            {{ session('error') }}
-        </x-toast-notification>
-        @endif
-
-        {{-- Page Header --}}
+        {{-- Page header --}}
         <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
-            <div class="p-6 border-b border-slate-200 bg-gradient-to-br from-primary-50 to-white">
-                <div class="flex items-center justify-between">
-                    <div class="flex items-center gap-4">
-                        <div class="w-12 h-12 bg-primary-500 rounded-xl flex items-center justify-center shadow-sm">
-                            <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
-                            </svg>
-                        </div>
-                        <div>
-                            <h1 class="text-2xl font-bold text-slate-900">Import danh sách Giáo lý viên</h1>
-                            <p class="text-sm text-slate-600 mt-1">Nhập danh sách từ file Excel hoặc CSV</p>
-                        </div>
-                    </div>
+            <x-page-header
+                title="Import Giáo lý viên từ Excel"
+                description="Tải lên file Excel để thêm giáo lý viên hàng loạt"
+                icon-type="teachers">
+            </x-page-header>
 
-                    <a href="{{ route('catechists.index') }}"
-                        class="inline-flex items-center gap-2 px-4 py-2.5
-                               bg-white border border-slate-300 rounded-xl
-                               text-slate-700 font-semibold hover:bg-slate-100
-                               active:scale-95 transition-all">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            {{-- Hướng dẫn + download template --}}
+            <div class="px-6 py-4 border-b border-slate-200 bg-amber-50/60">
+                <div class="flex items-start gap-3">
+                    <svg class="w-5 h-5 text-amber-500 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    <div class="flex-1 text-sm text-amber-800">
+                        <p class="font-semibold mb-1">Yêu cầu file Excel</p>
+                        <p>File phải có các cột (tên cột phải khớp chính xác):</p>
+                        <div class="mt-2 flex flex-wrap gap-2">
+                            @foreach(['ten_thanh', 'ho_ten', 'ngay_sinh', 'gioi_tinh', 'email', 'so_dien_thoai', 'giao_ho', 'tao_tai_khoan'] as $col)
+                            <code class="px-2 py-0.5 bg-amber-100 text-amber-900 rounded text-xs font-mono">{{ $col }}</code>
+                            @endforeach
+                        </div>
+                        <p class="mt-2 text-xs text-amber-700">
+                            • <strong>Bắt buộc</strong>: ho_ten, so_dien_thoai<br>
+                            • <strong>gioi_tinh</strong>: nam / nữ<br>
+                            • <strong>ngay_sinh</strong>: định dạng dd/mm/yyyy<br>
+                            • <strong>tao_tai_khoan</strong>: có / không<br>
+                            • <strong>ten_thanh</strong>, <strong>giao_ho</strong>: phải khớp tên trong hệ thống (nếu không khớp sẽ bỏ trống)
+                        </p>
+                    </div>
+                    <a href="{{ route('catechists.import.template') }}"
+                        class="flex-shrink-0 inline-flex items-center gap-1.5 px-3 py-2
+                               bg-amber-100 hover:bg-amber-200 text-amber-800 text-xs font-semibold
+                               rounded-lg transition">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+                                d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                         </svg>
-                        <span class="hidden sm:inline">Quay lại</span>
+                        Tải file mẫu
                     </a>
                 </div>
             </div>
         </div>
 
-        {{-- Upload Section --}}
-        <form wire:submit.prevent="preview" enctype="multipart/form-data" id="main-content">
-            <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+        {{-- Upload form --}}
+        <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
+            <p class="text-sm font-semibold text-slate-700 mb-3">Upload file Excel</p>
 
-                <div class="p-6">
-                    <div class="flex items-center gap-4">
+            <div class="relative">
+                <input
+                    type="file"
+                    wire:model="file"
+                    accept=".xlsx,.csv"
+                    class="block w-full text-sm text-slate-700
+                           file:mr-4 file:py-2.5 file:px-4
+                           file:rounded-xl file:border-0
+                           file:text-sm file:font-semibold
+                           file:bg-primary-50 file:text-primary-700
+                           hover:file:bg-primary-100 cursor-pointer
+                           border border-slate-300 rounded-xl p-2">
 
-                        {{-- File Input --}}
-                        <div class="flex-1">
-                            <label class="block text-sm font-semibold text-slate-900 mb-2">
-                                Chọn file Excel hoặc CSV
-                            </label>
-                            <input id="file-upload"
-                                type="file"
-                                wire:model="file"
-                                accept=".xlsx,.csv"
-                                class="block w-full text-sm text-slate-700
-                                       file:mr-4 file:py-2.5 file:px-4
-                                       file:rounded-xl file:border-0
-                                       file:bg-primary-600
-                                       file:text-white file:font-semibold
-                                       file:shadow-sm
-                                       hover:file:bg-primary-700
-                                       file:cursor-pointer file:transition-all
-                                       border border-slate-200 rounded-xl
-                                       focus:outline-none focus:ring-2 focus:ring-primary-500">
-                            @error('file')
-                            <p class="flex items-center gap-1.5 text-sm text-red-600 mt-2">
-                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                        d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                </svg>
-                                {{ $message }}
-                            </p>
-                            @enderror
-                        </div>
-
-                        {{-- Download Template Button (disabled in development) --}}
-                        <div class="pt-6">
-                            <button type="button"
-                                disabled
-                                class="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl
-                                       bg-slate-200 text-slate-500
-                                       cursor-not-allowed opacity-60">
-                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                        d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                                </svg>
-                                Tải file mẫu
-                            </button>
-                            <p class="text-xs text-slate-500 mt-1 text-center">
-                                (Đang phát triển)
-                            </p>
-                        </div>
-
-                        {{-- Preview Button --}}
-                        <div class="pt-6">
-                            <button type="submit"
-                                wire:loading.attr="disabled"
-                                class="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl
-                                       bg-gradient-to-r from-primary-500 to-primary-600 
-                                       text-white font-semibold
-                                       hover:from-primary-600 hover:to-primary-700
-                                       active:scale-[0.98] transition-all shadow-sm
-                                       disabled:opacity-60 disabled:cursor-not-allowed">
-                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" wire:loading.remove>
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                        d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                        d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                                </svg>
-                                <svg class="w-5 h-5 animate-spin" fill="none" viewBox="0 0 24 24" wire:loading>
-                                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                                </svg>
-                                <span wire:loading.remove>Xem trước</span>
-                                <span wire:loading>Đang xử lý...</span>
-                            </button>
-                        </div>
-
-                    </div>
-                </div>
-
-            </div>
-        </form>
-
-        {{-- Validation Errors --}}
-        @if (!empty($errors) && is_array($errors))
-        <div class="bg-red-50 border-2 border-red-200 rounded-2xl overflow-hidden">
-            <div class="p-4 bg-red-100 border-b border-red-200">
-                <h3 class="font-semibold text-red-900 flex items-center gap-2">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                <div wire:loading wire:target="file"
+                    class="absolute inset-0 flex items-center justify-center bg-white/80 rounded-xl">
+                    <svg class="animate-spin h-5 w-5 text-primary-600" fill="none" viewBox="0 0 24 24">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
                     </svg>
-                    Phát hiện {{ count($errors) }} lỗi trong dữ liệu
-                </h3>
+                    <span class="ml-2 text-sm text-slate-600">Đang tải lên...</span>
+                </div>
             </div>
-            <div class="p-4">
-                <ul class="space-y-2">
-                    @foreach ($errors as $error)
-                    <li class="flex items-start gap-2 text-sm text-red-700">
-                        <svg class="w-4 h-4 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
-                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" />
-                        </svg>
-                        <span>{{ $error }}</span>
-                    </li>
-                    @endforeach
-                </ul>
+
+            @error('file')
+            <p class="mt-1 text-sm text-red-500">{{ $message }}</p>
+            @enderror
+        </div>
+
+        {{-- Lỗi file --}}
+        @if(!empty($fileErrors))
+        <div class="bg-red-50 border border-red-200 rounded-2xl p-5">
+            <div class="flex items-start gap-3">
+                <svg class="w-5 h-5 text-red-500 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <div>
+                    <p class="text-sm font-semibold text-red-800 mb-2">
+                        Không thể import — vui lòng sửa file và upload lại
+                    </p>
+                    <ul class="space-y-1">
+                        @foreach($fileErrors as $err)
+                        <li class="text-sm text-red-700">{!! $err !!}</li>
+                        @endforeach
+                    </ul>
+                    <button wire:click="resetUpload" type="button"
+                        class="mt-3 px-3 py-1.5 bg-red-100 text-red-700 text-sm font-medium rounded-lg hover:bg-red-200 transition">
+                        Upload lại
+                    </button>
+                </div>
             </div>
         </div>
         @endif
 
-        {{-- Preview Table --}}
-        @if (!empty($rows))
+        {{-- Preview table --}}
+        @if(!empty($rows))
         <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
 
-            {{-- Table Header --}}
-            <div class="p-6 border-b border-slate-200 bg-slate-50">
-                <div class="flex items-center justify-between">
-                    <div>
-                        <h3 class="text-lg font-bold text-slate-900 flex items-center gap-2">
-                            <svg class="w-5 h-5 text-primary-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                            </svg>
-                            Xem trước dữ liệu
-                        </h3>
-                        <p class="text-sm text-slate-600 mt-1">
-                            Tìm thấy <span class="font-semibold text-slate-900">{{ count($rows) }}</span> bản ghi
-                            @if($readyToImport)
-                            <span class="text-green-600">• Sẵn sàng import</span>
-                            @else
-                            <span class="text-amber-600">• Có lỗi cần xử lý</span>
-                            @endif
-                        </p>
-                    </div>
-
-                    {{-- Stats --}}
-                    <div class="flex items-center gap-4">
-                        @php
-                        $validCount = collect($rows)->where('duplicate', false)->count();
-                        $duplicateCount = collect($rows)->where('duplicate', true)->count();
-                        @endphp
-
-                        <div class="text-center">
-                            <div class="text-2xl font-bold text-green-600">{{ $validCount }}</div>
-                            <div class="text-xs text-slate-600">Hợp lệ</div>
-                        </div>
-
-                        @if($duplicateCount > 0)
-                        <div class="text-center">
-                            <div class="text-2xl font-bold text-red-600">{{ $duplicateCount }}</div>
-                            <div class="text-xs text-slate-600">Trùng lặp</div>
-                        </div>
-                        @endif
-                    </div>
+            {{-- Preview header --}}
+            <div class="px-6 py-4 border-b border-slate-200 flex items-center justify-between">
+                <div>
+                    <h3 class="text-base font-bold text-slate-900">
+                        Xem trước dữ liệu
+                        <span class="ml-2 text-sm font-normal text-slate-500">
+                            {{ count($rows) }} giáo lý viên
+                        </span>
+                    </h3>
+                    @if(!empty($warnings))
+                    <p class="text-xs text-amber-600 mt-0.5">
+                        ⚠ {{ count($warnings) }} dòng có cảnh báo — các giá trị không khớp sẽ được bỏ trống khi import
+                    </p>
+                    @endif
                 </div>
+
+                <button wire:click="resetUpload" type="button"
+                    class="inline-flex items-center gap-1.5 px-3 py-2
+                           text-sm text-slate-600 hover:bg-slate-100 rounded-xl transition">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                    </svg>
+                    Upload lại
+                </button>
             </div>
 
             {{-- Table --}}
             <div class="overflow-x-auto">
                 <table class="w-full border-separate border-spacing-0">
-                    <thead class="bg-slate-50 border-b border-slate-200">
+                    <thead class="bg-slate-50">
                         <tr>
-                            <th class="px-4 py-3 text-left text-xs font-semibold text-slate-700 uppercase tracking-wider border-b border-slate-200">
-                                #
-                            </th>
-                            <th class="px-4 py-3 text-left text-xs font-semibold text-slate-700 uppercase tracking-wider border-b border-slate-200">
-                                Tên thánh
-                            </th>
-                            <th class="px-4 py-3 text-left text-xs font-semibold text-slate-700 uppercase tracking-wider border-b border-slate-200">
-                                Họ tên
-                            </th>
-                            <th class="px-4 py-3 text-left text-xs font-semibold text-slate-700 uppercase tracking-wider border-b border-slate-200">
-                                Ngày sinh
-                            </th>
-                            <th class="px-4 py-3 text-left text-xs font-semibold text-slate-700 uppercase tracking-wider border-b border-slate-200">
-                                Số điện thoại
-                            </th>
-                            <th class="px-4 py-3 text-left text-xs font-semibold text-slate-700 uppercase tracking-wider border-b border-slate-200">
-                                Giáo họ
-                            </th>
-                            <th class="px-4 py-3 text-center text-xs font-semibold text-slate-700 uppercase tracking-wider border-b border-slate-200">
-                                Tạo TK
-                            </th>
-                            <th class="px-4 py-3 text-center text-xs font-semibold text-slate-700 uppercase tracking-wider border-b border-slate-200">
-                                Trạng thái
-                            </th>
+                            <th class="px-4 py-3 text-left text-xs font-semibold text-slate-600 uppercase">Dòng</th>
+                            <th class="px-4 py-3 text-left text-xs font-semibold text-slate-600 uppercase">Tên thánh</th>
+                            <th class="px-4 py-3 text-left text-xs font-semibold text-slate-600 uppercase">Họ tên</th>
+                            <th class="px-4 py-3 text-left text-xs font-semibold text-slate-600 uppercase">Ngày sinh</th>
+                            <th class="px-4 py-3 text-left text-xs font-semibold text-slate-600 uppercase">GT</th>
+                            <th class="px-4 py-3 text-left text-xs font-semibold text-slate-600 uppercase">Email</th>
+                            <th class="px-4 py-3 text-left text-xs font-semibold text-slate-600 uppercase">SĐT</th>
+                            <th class="px-4 py-3 text-left text-xs font-semibold text-slate-600 uppercase">Giáo họ</th>
+                            <th class="px-4 py-3 text-center text-xs font-semibold text-slate-600 uppercase">Tạo TK</th>
+                            <th class="px-4 py-3 text-center text-xs font-semibold text-slate-600 uppercase">TT</th>
                         </tr>
                     </thead>
-
                     <tbody class="divide-y divide-slate-100">
-                        @foreach ($rows as $index => $row)
-                        <tr class="hover:bg-slate-50 transition-colors
-                                   {{ $row['duplicate'] ? 'bg-red-50' : '' }}">
-                            <td class="px-4 py-3 text-sm text-slate-900 border-b border-slate-100">
-                                {{ $index + 1 }}
-                            </td>
-                            <td class="px-4 py-3 text-sm text-slate-900 border-b border-slate-100">
-                                {{ $row['ten_thanh'] ?? '-' }}
-                            </td>
-                            <td class="px-4 py-3 border-b border-slate-100">
-                                <span class="text-sm font-semibold text-slate-900">
-                                    {{ $row['ho_ten'] }}
-                                </span>
-                            </td>
-                            <td class="px-4 py-3 text-sm text-slate-600 border-b border-slate-100">
-                                {{ $row['ngay_sinh'] ?? '-' }}
-                            </td>
-                            <td class="px-4 py-3 border-b border-slate-100">
-                                <span class="text-sm font-mono text-slate-900">
-                                    {{ $row['so_dien_thoai'] }}
-                                </span>
-                            </td>
-                            <td class="px-4 py-3 text-sm text-slate-600 border-b border-slate-100">
-                                {{ $row['giao_ho'] ?? '-' }}
-                            </td>
-                            <td class="px-4 py-3 text-center border-b border-slate-100">
-                                @if(strtolower($row['tao_tai_khoan']) === 'có' || strtolower($row['tao_tai_khoan']) === 'yes')
-                                <span class="inline-flex items-center px-2 py-1 rounded-lg bg-green-100 text-green-700 text-xs font-medium">
-                                    <svg class="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
-                                        <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
-                                    </svg>
-                                    Có
-                                </span>
+                        @foreach($rows as $row)
+                        <tr class="{{ $row['has_warning'] ? 'bg-amber-50' : ($row['is_duplicate'] ? 'bg-red-50' : 'hover:bg-slate-50') }}"
+                            wire:key="preview-{{ $row['row_number'] }}">
+                            <td class="px-4 py-3 text-xs text-slate-400 font-mono">{{ $row['row_number'] }}</td>
+
+                            {{-- Tên thánh --}}
+                            <td class="px-4 py-3 text-sm text-slate-700">
+                                @if($row['ten_thanh'] && isset($warnings[$row['row_number']]) && collect($warnings[$row['row_number']])->contains(fn($w) => str_contains($w, 'Tên thánh')))
+                                <span class="text-amber-600 line-through">{{ $row['ten_thanh'] }}</span>
                                 @else
-                                <span class="inline-flex items-center px-2 py-1 rounded-lg bg-slate-100 text-slate-600 text-xs font-medium">
-                                    Không
-                                </span>
+                                {{ $row['ten_thanh'] ?: '—' }}
                                 @endif
                             </td>
-                            <td class="px-4 py-3 text-center border-b border-slate-100">
-                                @if ($row['duplicate'])
-                                <span class="inline-flex items-center px-3 py-1 rounded-lg bg-red-100 text-red-700 text-xs font-semibold">
-                                    <svg class="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
-                                        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" />
-                                    </svg>
-                                    Trùng SĐT
+
+                            {{-- Họ tên --}}
+                            <td class="px-4 py-3 text-sm font-semibold text-slate-900">{{ $row['ho_ten'] ?: '—' }}</td>
+
+                            {{-- Ngày sinh --}}
+                            <td class="px-4 py-3 text-sm text-slate-600">{{ $row['ngay_sinh'] ?: '—' }}</td>
+
+                            {{-- Giới tính --}}
+                            <td class="px-4 py-3">
+                                @php
+                                $gt = mb_strtolower($row['gioi_tinh'] ?? '', 'UTF-8');
+                                $isNam = in_array($gt, ['nam', 'male', 'm', '1']);
+                                @endphp
+                                @if(!empty($row['gioi_tinh']))
+                                <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium
+                                                 {{ $isNam ? 'bg-blue-100 text-blue-700' : 'bg-pink-100 text-pink-700' }}">
+                                    {{ $isNam ? 'Nam' : 'Nữ' }}
                                 </span>
                                 @else
-                                <span class="inline-flex items-center px-3 py-1 rounded-lg bg-green-100 text-green-700 text-xs font-semibold">
-                                    <svg class="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
-                                        <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
-                                    </svg>
-                                    Hợp lệ
+                                <span class="text-slate-400">—</span>
+                                @endif
+                            </td>
+
+                            {{-- Email --}}
+                            <td class="px-4 py-3 text-sm text-slate-600">
+                                @if($row['email'] && isset($warnings[$row['row_number']]) && collect($warnings[$row['row_number']])->contains(fn($w) => str_contains($w, 'Email')))
+                                <span class="text-amber-600 line-through">{{ $row['email'] }}</span>
+                                @else
+                                {{ $row['email'] ?: '—' }}
+                                @endif
+                            </td>
+
+                            {{-- SĐT --}}
+                            <td class="px-4 py-3 text-sm font-mono text-slate-700">{{ $row['so_dien_thoai'] ?: '—' }}</td>
+
+                            {{-- Giáo họ --}}
+                            <td class="px-4 py-3 text-sm text-slate-600">
+                                @if($row['giao_ho'] && isset($warnings[$row['row_number']]) && collect($warnings[$row['row_number']])->contains(fn($w) => str_contains($w, 'Giáo họ')))
+                                <span class="text-amber-600 line-through">{{ $row['giao_ho'] }}</span>
+                                @else
+                                {{ $row['giao_ho'] ?: '—' }}
+                                @endif
+                            </td>
+
+                            {{-- Tạo TK --}}
+                            <td class="px-4 py-3 text-center">
+                                @php $taotk = mb_strtolower(trim($row['tao_tai_khoan'] ?? ''), 'UTF-8'); @endphp
+                                @if(in_array($taotk, ['có', 'co', 'yes', '1']))
+                                <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-700">Có</span>
+                                @else
+                                <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-500">Không</span>
+                                @endif
+                            </td>
+
+                            {{-- Trạng thái --}}
+                            <td class="px-4 py-3 text-center">
+                                @if($row['is_duplicate'])
+                                <span title="Số điện thoại đã tồn tại"
+                                    class="inline-flex items-center justify-center w-6 h-6
+                                               bg-red-100 text-red-600 rounded-full cursor-help text-xs font-bold">
+                                    !
                                 </span>
+                                @elseif($row['has_warning'])
+                                <span title="{{ implode(', ', $warnings[$row['row_number']] ?? []) }}"
+                                    class="inline-flex items-center justify-center w-6 h-6
+                                               bg-amber-100 text-amber-600 rounded-full cursor-help text-xs font-bold">
+                                    !
+                                </span>
+                                @else
+                                <svg class="w-4 h-4 text-green-500 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                                </svg>
                                 @endif
                             </td>
                         </tr>
@@ -311,54 +269,50 @@
                 </table>
             </div>
 
-            {{-- Table Footer / Actions --}}
-            <div class="px-6 py-4 bg-slate-50 border-t border-slate-200">
-                <div class="flex flex-col sm:flex-row justify-between items-center gap-3">
-                    <p class="text-sm text-slate-600">
-                        @if($readyToImport)
-                        <span class="flex items-center gap-2 text-green-600 font-medium">
-                            <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
-                            </svg>
-                            Dữ liệu hợp lệ, sẵn sàng import
-                        </span>
-                        @else
-                        <span class="flex items-center gap-2 text-amber-600 font-medium">
-                            <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                                <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
-                            </svg>
-                            Có lỗi trong dữ liệu, vui lòng kiểm tra lại
-                        </span>
-                        @endif
-                    </p>
+            {{-- Warning detail --}}
+            @if(!empty($warnings))
+            <div class="px-6 py-4 border-t border-amber-200 bg-amber-50">
+                <p class="text-xs font-semibold text-amber-800 mb-2">Chi tiết cảnh báo:</p>
+                <ul class="space-y-1">
+                    @foreach($warnings as $rowNum => $rowWarnings)
+                    @foreach($rowWarnings as $w)
+                    <li class="text-xs text-amber-700">• Dòng {{ $rowNum }}: {{ $w }}</li>
+                    @endforeach
+                    @endforeach
+                </ul>
+            </div>
+            @endif
 
-                    <div class="flex gap-3">
-                        <a href="{{ route('catechists.index') }}"
-                            class="px-5 py-2.5 bg-white border border-slate-300 rounded-xl
-                                   text-slate-700 font-semibold hover:bg-slate-100
-                                   active:scale-95 transition-all">
-                            Hủy bỏ
-                        </a>
-
-                        <button
-                            wire:click="confirmImport"
-                            @disabled(!$readyToImport)
-                            wire:loading.attr="disabled"
-                            class="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl
-                                   {{ $readyToImport
-                                        ? 'bg-gradient-to-r from-primary-500 to-primary-600 hover:from-primary-600 hover:to-primary-700'
-                                        : 'bg-slate-300 cursor-not-allowed' }}
-                                   text-white font-semibold
-                                   active:scale-[0.98] transition-all shadow-sm
-                                   disabled:opacity-60 disabled:cursor-not-allowed">
-                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
-                            </svg>
-                            <span wire:loading.remove>Xác nhận import</span>
-                            <span wire:loading>Đang import...</span>
-                        </button>
-                    </div>
+            {{-- Action footer --}}
+            <div class="px-6 py-4 border-t border-slate-200 bg-slate-50 flex items-center justify-between">
+                <p class="text-sm text-slate-600">
+                    Sẽ import <span class="font-semibold text-slate-900">{{ count($rows) }} giáo lý viên</span>
+                </p>
+                <div class="flex gap-3">
+                    <button wire:click="resetUpload" type="button"
+                        class="px-4 py-2.5 bg-slate-100 text-slate-700 text-sm font-semibold
+                               rounded-xl hover:bg-slate-200 active:scale-95 transition-all">
+                        Hủy
+                    </button>
+                    <button wire:click="confirmImport" type="button"
+                        @disabled(!$readyToImport)
+                        wire:loading.attr="disabled"
+                        class="px-4 py-2.5 bg-gradient-to-r from-primary-500 to-primary-600 text-white
+                               text-sm font-semibold rounded-xl hover:from-primary-600 hover:to-primary-700
+                               active:scale-95 transition-all disabled:opacity-50 disabled:cursor-not-allowed
+                               inline-flex items-center gap-2">
+                        <svg wire:loading wire:target="confirmImport"
+                            class="animate-spin w-4 h-4" fill="none" viewBox="0 0 24 24">
+                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+                        </svg>
+                        <svg wire:loading.remove wire:target="confirmImport"
+                            class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                        </svg>
+                        Xác nhận import
+                    </button>
                 </div>
             </div>
         </div>
@@ -367,6 +321,13 @@
     </div>
 </div>
 
-@push('scripts')
-<script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
-@endpush
+{{-- Loading overlay --}}
+<div wire:loading.delay class="fixed inset-0 bg-gray-900/50 flex items-center justify-center z-50">
+    <div class="bg-white rounded-xl p-5 flex items-center gap-3 shadow-xl">
+        <svg class="animate-spin h-5 w-5 text-primary-600" fill="none" viewBox="0 0 24 24">
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+        </svg>
+        <span class="text-sm font-medium text-gray-700">Đang xử lý...</span>
+    </div>
+</div>

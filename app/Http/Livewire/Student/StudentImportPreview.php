@@ -216,7 +216,7 @@ class StudentImportPreview extends BaseComponent
                 }
 
                 $fullName  = strtolower(trim(($row['ho_ten_dem'] ?? '') . ' ' . ($row['ten'] ?? '')));
-                $parsedDate = ExcelDateParser::parse($ngaySinh);
+                // $parsedDate = ExcelDateParser::parse($ngaySinh);
                 $key = $fullName . '_' . ($parsedDate ?? '');
 
                 if (in_array($key, $existingStudents)) {
