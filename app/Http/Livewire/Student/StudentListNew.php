@@ -6,7 +6,6 @@ use App\Http\Livewire\Base\BaseComponent;
 use App\Models\CatechismClass;
 use App\Models\Parishioner;
 use App\Models\StudentNew;
-use App\Models\Parishioners;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\DB;

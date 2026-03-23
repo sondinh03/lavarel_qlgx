@@ -43,7 +43,7 @@ abstract class BaseComponent extends Component
     public int $perPage = 15;
 
     /** @var array Allowed per page options */
-    protected $perPageOptions = [10, 15, 25, 50];
+    protected $perPageOptions = [10, 15, 25, 50, 100];
 
     /** @var bool Component có dùng pagination không */
     protected $usePagination = true;
@@ -252,18 +252,6 @@ abstract class BaseComponent extends Component
             'perPage' => $this->perPage,
         ], $extra));
     }
-
-    /**
-     * Check quyền Super Admin, throw 403 nếu không phải
-     */
-    // protected function requireAdmin(): void
-    // {
-    //     /** @var \App\Models\User $user */
-    //     $user = auth()->user();
-
-    //     $user->isSuperAdmin()
-    //         || abort(403, 'Chỉ super admin mới có quyền');
-    // }
 
     /**
      * Check quyền quản trị (Super Admin hoặc Parish Admin), throw 403 nếu không phải

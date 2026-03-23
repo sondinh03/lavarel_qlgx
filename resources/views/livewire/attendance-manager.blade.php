@@ -107,6 +107,31 @@
 
             onSavingStarted() { this.isSaving = true; },
             onSavingCompleted() { this.isSaving = false; },
+
+            noteModal: {
+                open: false,
+                studentId: null,
+                sessionId: null,
+                studentName: '',
+                note: '',
+            },
+
+            openNoteAlpine(studentId, sessionId, studentName) {
+                const key = studentId + '_' + sessionId;
+                this.noteModal = {
+                    open: true,
+                    studentId,
+                    sessionId,
+                    studentName,
+                    note: this.draft[key]?.note || this.records[key]?.note || '',
+                };
+            },
+
+            saveNote() {
+                const key = this.noteModal.studentId + '_' + this.noteModal.sessionId;
+                this.draft[key] = { status: 2, note: this.noteModal.note };
+                this.noteModal.open = false;
+            },
         }"
         x-init="records = @js($attendanceRecords ?? []);"
         x-on:attendance-records-loaded.window="onRecordsLoaded($event.detail.records)"
@@ -402,7 +427,11 @@
                                         {{-- Vắng có phép --}}
                                         <div class="relative inline-block" x-data="{ open: false }">
                                             <button
-                                                x-on:click="openNote({{ $student->id }}, {{ $session['id'] }})"
+                                                x-on:click="openNoteAlpine(
+                                                    {{ $student->id }},
+                                                    {{ $session['id'] }},
+                                                    '{{ addslashes($student->full_name) }}'
+                                                )"
                                                 @mouseenter="open = true"
                                                 @mouseleave="open = false"
                                                 :class="getStatus({{ $student->id }}, {{ $session['id'] }}) == 2
@@ -675,7 +704,11 @@
                                             </button>
 
                                             <button
-                                                x-on:click="openNote({{ $student->id }}, {{ $mobileSessionId }})"
+                                                x-on:click="openNoteAlpine(
+                                                    {{ $student->id }},
+                                                    {{ $mobileSessionId }},
+                                                    '{{ addslashes($student->full_name) }}'
+                                                )"
                                                 :class="getStatus({{ $student->id }}, {{ $mobileSessionId }}) == 2
                                                 ? 'bg-yellow-400 text-slate-900 shadow-md ring-2 ring-yellow-300'
                                                 : 'bg-yellow-50 text-yellow-700 border border-yellow-200 active:bg-yellow-100'"
@@ -788,132 +821,93 @@
             @endif
 
         </div>
-    </div>
 
-    {{-- ===================== NOTE MODAL ===================== --}}
-    @if ($showNoteModal)
-    <div
-        class="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4"
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="note-modal-title"
-        wire:click="closeNoteModal">
+        {{-- Note Modal — Alpine only --}}
         <div
-            class="bg-white rounded-2xl shadow-xl w-full max-w-lg max-h-[90vh] overflow-hidden flex flex-col"
-            wire:click.stop>
+            x-show="noteModal.open"
+            x-cloak
+            x-transition:enter="transition ease-out duration-200"
+            x-transition:enter-start="opacity-0"
+            x-transition:enter-end="opacity-100"
+            class="fixed inset-0 bg-black/40 z-50 flex items-end lg:items-center justify-center lg:p-4"
+            x-on:click="noteModal.open = false">
 
-            <div class="flex-shrink-0 p-6 border-b border-slate-200 bg-gradient-to-br from-yellow-50 to-white">
-                <div class="flex items-start justify-between">
-                    <div class="flex-1">
-                        <h2 id="note-modal-title" class="text-xl font-bold text-slate-900">Vắng có phép</h2>
-                        <p class="text-sm text-slate-600 mt-1">Ghi chú lý do vắng mặt</p>
+            {{-- Sheet / Modal --}}
+            <div
+                x-show="noteModal.open"
+                x-cloak
+                x-transition:enter="transition ease-out duration-200"
+                x-transition:enter-start="translate-y-full lg:translate-y-0 lg:scale-95 lg:opacity-0"
+                x-transition:enter-end="translate-y-0 lg:scale-100 lg:opacity-100"
+                class="w-full lg:w-[480px] lg:rounded-2xl rounded-t-2xl bg-white"
+                x-on:click.stop>
+
+                {{-- Handle — mobile only --}}
+                <div class="flex justify-center pt-3 pb-2 lg:hidden">
+                    <div class="w-10 h-1 bg-slate-300 rounded-full"></div>
+                </div>
+
+                {{-- Header — desktop only --}}
+                <div class="hidden lg:flex items-center justify-between px-5 py-4 border-b border-slate-200">
+                    <div>
+                        <h3 class="font-semibold text-slate-900">Vắng có phép</h3>
+                        <p class="text-sm text-slate-500 mt-0.5" x-text="noteModal.studentName"></p>
                     </div>
-                    <button wire:click="closeNoteModal" class="text-slate-400 hover:text-slate-600 transition-colors">
-                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <button
+                        type="button"
+                        x-on:click="noteModal.open = false"
+                        class="text-slate-400 hover:text-slate-600 transition-colors">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                 d="M6 18L18 6M6 6l12 12" />
                         </svg>
                     </button>
                 </div>
-            </div>
 
-            <div class="flex-1 overflow-y-auto p-6 space-y-5">
-                <div class="bg-slate-50 border border-slate-200 rounded-xl p-4">
-                    <div class="flex items-center gap-3">
-                        <div class="w-10 h-10 bg-primary-100 rounded-full flex items-center justify-center flex-shrink-0">
-                            <svg class="w-5 h-5 text-primary-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                            </svg>
-                        </div>
-                        <div class="flex-1">
-                            <div class="text-xs text-slate-500">Học sinh</div>
-                            <div class="font-semibold text-slate-900">{{ $currentStudentName }}</div>
-                        </div>
-                    </div>
+                {{-- Student name — mobile only --}}
+                <div class="px-4 pb-3 lg:hidden">
+                    <span class="text-xs text-slate-400">Vắng có phép · </span>
+                    <span class="text-sm font-semibold text-slate-700" x-text="noteModal.studentName"></span>
                 </div>
 
-                @error('attendanceNote')
-                <div class="bg-red-50 border-l-4 border-red-500 rounded-xl p-4">
-                    <p class="text-sm text-red-700">{{ $message }}</p>
-                </div>
-                @enderror
-
-                <div x-data="{ count: {{ strlen($attendanceNote) }} }">
-                    <label for="attendance-note" class="block text-sm font-semibold text-slate-700 mb-2">
-                        Lý do vắng <span class="text-slate-400 font-normal">(không bắt buộc)</span>
-                    </label>
-                    <textarea
-                        id="attendance-note"
-                        wire:model.defer="attendanceNote"
-                        x-on:input="count = $el.value.length"
-                        rows="4"
-                        placeholder="Vd: Bệnh, về quê, đi học thêm, gia đình có việc..."
-                        class="w-full px-4 py-3 rounded-xl border border-slate-300
-                           focus:outline-none focus:ring-2 focus:ring-yellow-500 resize-none text-sm"
-                        maxlength="500"></textarea>
-                    <div class="mt-1 text-xs text-slate-500 flex items-center justify-between">
-                        <span>Tối đa 500 ký tự</span>
-                        <span x-text="count + '/500'"></span>
-                    </div>
+                {{-- Quick reasons --}}
+                <div class="px-4 lg:px-5 lg:py-4 grid grid-cols-2 gap-2">
+                    @foreach(['Bệnh', 'Về quê', 'Gia đình có việc', 'Đi học thêm', 'Dự lễ nơi khác', 'Lý do khác'] as $reason)
+                    <button
+                        type="button"
+                        x-on:click="noteModal.note = '{{ $reason }}'; saveNote()"
+                        class="py-3 bg-slate-50 border border-slate-200 rounded-xl
+                       text-sm text-slate-700 hover:bg-yellow-50 hover:border-yellow-300
+                       active:scale-95 transition-all font-medium">
+                        {{ $reason }}
+                    </button>
+                    @endforeach
                 </div>
 
-                <div>
-                    <div class="text-sm font-semibold text-slate-700 mb-2">Lý do phổ biến</div>
-                    <div class="grid grid-cols-2 gap-2">
-                        @foreach(['Bệnh', 'Về quê', 'Gia đình có việc', 'Đi học thêm', 'Dự lễ nơi khác', 'Trời mưa'] as $reason)
-                        <button
-                            x-on:click="$wire.set('attendanceNote', '{{ $reason }}')"
-                            class="px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm text-slate-700
-                               hover:bg-slate-50 hover:border-yellow-300 transition-all text-left">
-                            {{ $reason }}
-                        </button>
-                        @endforeach
-                    </div>
+                {{-- Nhập tay --}}
+                <div class="px-4 lg:px-5 pt-3 lg:pb-5 flex gap-2"
+                    style="padding-bottom: calc(1rem + env(safe-area-inset-bottom))">
+                    <input
+                        type="text"
+                        x-model="noteModal.note"
+                        x-on:keydown.enter="if(noteModal.note.trim()) saveNote()"
+                        placeholder="Lý do khác..."
+                        class="flex-1 px-3 py-2.5 rounded-xl border border-slate-300 text-sm
+                       focus:outline-none focus:ring-2 focus:ring-yellow-500" />
+                    <button
+                        type="button"
+                        x-on:click="if(noteModal.note.trim()) saveNote()"
+                        :class="noteModal.note.trim()
+                    ? 'bg-yellow-500 hover:bg-yellow-600 text-white active:scale-95'
+                    : 'bg-slate-100 text-slate-400 cursor-not-allowed'"
+                        class="px-4 py-2.5 rounded-xl text-sm font-semibold transition-all">
+                        OK
+                    </button>
                 </div>
 
-                <div class="bg-blue-50 border-l-4 border-blue-500 rounded-xl p-4">
-                    <div class="flex items-start gap-3">
-                        <svg class="w-5 h-5 text-blue-500 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                        </svg>
-                        <p class="text-sm text-blue-600 mt-0.5">
-                            Thông tin này sẽ được lưu tạm. Nhấn <strong>"Lưu điểm danh"</strong> để lưu vào cơ sở dữ liệu.
-                        </p>
-                    </div>
-                </div>
-            </div>
-
-            <div class="flex-shrink-0 px-6 py-4 border-t border-slate-200 bg-slate-50 flex justify-end gap-3">
-                <button
-                    wire:click="closeNoteModal"
-                    class="px-4 py-2 bg-white border border-slate-300 rounded-xl text-sm font-medium
-                       text-slate-700 hover:bg-slate-50 transition-colors">
-                    Hủy
-                </button>
-                <button
-                    wire:click="saveAttendanceWithNote"
-                    wire:loading.attr="disabled"
-                    class="px-4 py-2 bg-yellow-500 text-white rounded-xl text-sm font-medium hover:bg-yellow-600
-                       transition-colors disabled:opacity-50 flex items-center gap-2">
-                    <svg wire:loading.remove wire:target="saveAttendanceWithNote"
-                        class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
-                    </svg>
-                    <svg wire:loading wire:target="saveAttendanceWithNote"
-                        class="animate-spin w-4 h-4" fill="none" viewBox="0 0 24 24">
-                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                        <path class="opacity-75" fill="currentColor"
-                            d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                    </svg>
-                    <span wire:loading.remove wire:target="saveAttendanceWithNote">Xác nhận</span>
-                    <span wire:loading wire:target="saveAttendanceWithNote">Đang lưu...</span>
-                </button>
             </div>
         </div>
     </div>
-    @endif
 
     {{-- Unsaved Changes Indicator desktop --}}
     <div

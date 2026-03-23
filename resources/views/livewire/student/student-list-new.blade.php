@@ -95,58 +95,53 @@
                         {{-- Action Buttons --}}
                         <div class="flex items-center gap-2 flex-wrap">
 
-                            {{-- Ghi danh (gộp 3 flow) --}}
-                            @if($selectedLop)
+                            {{-- Ghi danh — primary, action chính --}}
                             <button type="button"
                                 wire:click="openEnrollModal('existing')"
-                                class="inline-flex items-center gap-2 px-4 py-2.5
-                                       bg-gradient-to-r from-primary-500 to-primary-600
-                                       text-white text-sm font-semibold rounded-xl
-                                       hover:from-primary-600 hover:to-primary-700
-                                       active:scale-95 transition-all shadow-sm">
+                                @if(!$selectedLop) disabled @endif
+                                title="{{ !$selectedLop ? 'Vui lòng chọn lớp trước' : '' }}"
+                                class="group relative inline-flex items-center gap-2 px-4 py-2.5
+           bg-primary-600 text-white text-sm font-semibold rounded-xl
+           hover:bg-primary-700 active:scale-95 transition-all
+           disabled:opacity-40 disabled:cursor-not-allowed disabled:active:scale-100">
                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                         d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
                                 </svg>
                                 Ghi danh
+
+                                {{-- Tooltip khi disabled --}}
+                                @if(!$selectedLop)
+                                <span class="pointer-events-none absolute -bottom-9 left-1/2 -translate-x-1/2
+                                    whitespace-nowrap rounded-lg bg-slate-800 px-2.5 py-1.5
+                                    text-xs font-normal text-white opacity-0
+                                    group-hover:opacity-100 transition-opacity duration-200 z-50">
+                                    Vui lòng chọn lớp trước
+                                    <span class="absolute -top-1 left-1/2 -translate-x-1/2
+                                    border-4 border-transparent border-b-slate-800"></span>
+                                </span>
+                                @endif
                             </button>
-                            @endif
-
-                            <p>{{ $selectedLop }}</p>
-
-                            @if($selectedLop)
-                            <a href="{{ route('students.import') }}?classId={{ $selectedLop }}"
-                                class="inline-flex items-center gap-2 px-4 py-2.5
-                                    bg-gradient-to-r from-indigo-500 to-indigo-600
-                                    text-white text-sm font-semibold rounded-xl ...">
-                                <svg ...> {{-- icon upload --}} </svg>
-                                Import Excel
-                            </a>
-                            @endif
 
                             {{-- Điểm danh --}}
-                            @if($lop)
-                            <a href="{{ route('attendance.show', ['classId' => $lop->id]) }}"
+                            <a href="{{ route('attendance.show') }}{{ $selectedLop ? '?classId='.$selectedLop : '' }}"
                                 class="inline-flex items-center gap-2 px-4 py-2.5
-                                       bg-gradient-to-r from-amber-500 to-amber-600
-                                       text-white text-sm font-semibold rounded-xl
-                                       hover:from-amber-600 hover:to-amber-700
-                                       active:scale-95 transition-all shadow-sm">
+                                    border border-slate-300 bg-white text-slate-700 text-sm font-semibold rounded-xl
+                                    hover:bg-slate-50 active:scale-95 transition-all">
                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                         d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
                                 </svg>
                                 Điểm danh
                             </a>
-                            @endif
 
-                            @if($selectedLop || count($selectedStudents) > 0)
+                            {{-- In thẻ — outline --}}
                             <button wire:click="printSelected" type="button"
-                                class="inline-flex items-center gap-2 px-4 py-2.5
-           bg-gradient-to-r from-violet-500 to-violet-600
-           text-white text-sm font-semibold rounded-xl
-           hover:from-violet-600 hover:to-violet-700
-           active:scale-95 transition-all shadow-sm">
+                                @if(!$selectedLop && count($selectedStudents)===0) disabled @endif
+                                class="group relative inline-flex items-center gap-2 px-4 py-2.5
+           border border-slate-300 bg-white text-slate-700 text-sm font-semibold rounded-xl
+           hover:bg-slate-50 active:scale-95 transition-all
+           disabled:opacity-40 disabled:cursor-not-allowed disabled:active:scale-100">
                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                         d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
@@ -155,15 +150,29 @@
                                 @if(count($selectedStudents) > 0)
                                 ({{ count($selectedStudents) }})
                                 @endif
-                            </button>
-                            @endif
 
-                            <a href="{{ route('students.import') }}"
+                                {{-- Tooltip --}}
+                                <span class="pointer-events-none absolute -bottom-9 left-1/2 -translate-x-1/2
+                                    whitespace-nowrap rounded-lg bg-slate-800 px-2.5 py-1.5
+                                    text-xs font-normal text-white opacity-0
+                                    group-hover:opacity-100 transition-opacity duration-200 z-50">
+                                    @if(!$selectedLop && count($selectedStudents) === 0)
+                                    Vui lòng chọn lớp trước
+                                    @elseif(count($selectedStudents) > 0)
+                                    In thẻ {{ count($selectedStudents) }} học sinh đã chọn
+                                    @else
+                                    In thẻ tất cả học sinh trong lớp
+                                    @endif
+                                    <span class="absolute -top-1 left-1/2 -translate-x-1/2
+                                    border-4 border-transparent border-b-slate-800"></span>
+                                </span>
+                            </button>
+
+                            {{-- Import Excel — outline --}}
+                            <a href="{{ route('students.import') }}{{ $selectedLop ? '?classId='.$selectedLop : '' }}"
                                 class="inline-flex items-center gap-2 px-4 py-2.5
-           bg-gradient-to-r from-indigo-500 to-indigo-600
-           text-white text-sm font-semibold rounded-xl
-           hover:from-indigo-600 hover:to-indigo-700
-           active:scale-95 transition-all shadow-sm">
+                   border border-slate-300 bg-white text-slate-700 text-sm font-semibold rounded-xl
+                   hover:bg-slate-50 active:scale-95 transition-all">
                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                         d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
@@ -171,33 +180,35 @@
                                 Import Excel
                             </a>
 
-                            {{-- Đặt lại --}}
-                            <button type="button"
-                                wire:click="resetFilters"
-                                class="inline-flex items-center gap-2 px-4 py-2.5
-                                       bg-slate-100 text-slate-700 text-sm font-semibold
-                                       rounded-xl hover:bg-slate-200 active:scale-95 transition-all">
-                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                        d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                                </svg>
-                                Đặt lại
-                            </button>
-
-                            {{-- Export --}}
+                            {{-- Export — outline --}}
                             <button type="button"
                                 class="inline-flex items-center gap-2 px-4 py-2.5
-                                       bg-emerald-500 text-white text-sm font-semibold
-                                       rounded-xl hover:bg-emerald-600 active:scale-95 transition-all">
+                   border border-slate-300 bg-white text-slate-700 text-sm font-semibold rounded-xl
+                   hover:bg-slate-50 active:scale-95 transition-all">
                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                         d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                                 </svg>
                                 Export
                             </button>
+
+                            {{-- Đặt lại — chỉ hiện khi có filter active --}}
+                            @if($selectedKhoi || $selectedLop || $search)
+                            <button type="button"
+                                wire:click="resetFilters"
+                                class="inline-flex items-center gap-2 px-4 py-2.5
+                   bg-slate-100 text-slate-500 text-sm font-semibold
+                   rounded-xl hover:bg-slate-200 active:scale-95 transition-all">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                                </svg>
+                                Đặt lại
+                            </button>
+                            @endif
+
                         </div>
                     </div>
-
                 </div>
             </div>
         </div>

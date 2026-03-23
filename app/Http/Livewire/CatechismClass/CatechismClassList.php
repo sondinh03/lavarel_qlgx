@@ -62,7 +62,7 @@ class CatechismClassList extends BaseComponent
     protected $formRules = [
         'name'         => 'required|string|max:255',
         'gradeLevelId' => 'required|integer|exists:grade_levels,id',
-        'capacity'     => 'nullable|integer|min:1|max:999',
+        'capacity'     => 'nullable|integer|min:0|max:999',
         'isActive'     => 'required|boolean',
     ];
 

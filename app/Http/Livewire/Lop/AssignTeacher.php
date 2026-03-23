@@ -214,8 +214,7 @@ class AssignTeacher extends BaseComponent
                 }
             }
 
-            $teacher = Teacher::ofParish($this->parishId)
-                ->active()
+            $teacher = Teacher::active()
                 ->findOrFail($this->selectedTeacherId);
 
             $alreadyAssigned = ClassTeacher::byClass($this->classId)

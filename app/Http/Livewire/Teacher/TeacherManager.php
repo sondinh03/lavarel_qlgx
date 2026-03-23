@@ -163,8 +163,7 @@ class TeacherManager extends BaseComponent
         $this->requireManager();
 
         try {
-            $teacher = Teacher::where('parish_id', $this->parishId)
-                ->findOrFail($id);
+            $teacher = Teacher::findOrFail($id);
 
             $this->editingId        = $teacher->id;
             $this->last_name        = $teacher->last_name;
@@ -234,8 +233,7 @@ class TeacherManager extends BaseComponent
         try {
             DB::beginTransaction();
 
-            $teacher = Teacher::where('parish_id', $this->parishId)
-                ->findOrFail($id);
+            $teacher = Teacher::findOrFail($id);
 
             // Xóa user account đi kèm
             if ($teacher->user_id) {
@@ -329,8 +327,8 @@ class TeacherManager extends BaseComponent
     private function getTeachersPaginated()
     {
         try {
-            $query = Teacher::with(['parishGroup', 'saint', 'user'])
-                ->where('parish_id', $this->parishId);
+            $query = Teacher::with(['parishGroup', 'saint', 'user']);
+                
 
             // Search
             if (!empty(trim($this->search))) {
