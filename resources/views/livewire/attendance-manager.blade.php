@@ -516,7 +516,17 @@
 
                     {{-- Date Selector Sticky --}}
                     <div class="sticky top-0 z-30 bg-white border-b border-slate-200 shadow-sm">
-                        <div class="flex gap-2 overflow-x-auto px-3 py-3 scrollbar-hide snap-x snap-mandatory">
+                        <div 
+                            x-data
+                            x-init="
+                                $nextTick(() => {
+                                    const active = $el.querySelector('[data-active=true]');
+                                    if (active) {
+                                        active.scrollIntoView({ inline: 'center', block: 'nearest', behavior: 'smooth' });
+                                    }
+                                })
+                            "
+                            class="flex gap-2 overflow-x-auto px-3 py-3 scrollbar-hide snap-x snap-mandatory">
                             @foreach($sessions as $session)
                             @php
                             $isActive = $session['dateStr'] === $selectedDate;
@@ -524,6 +534,7 @@
                             && $sessionHasRecord[$session['dateStr']] > 0;
                             @endphp
                             <button
+                                data-active="{{ $isActive ? 'true' : 'false' }}"
                                 wire:click="selectDate('{{ $session['dateStr'] }}')"
                                 class="flex-shrink-0 snap-start flex flex-col items-center gap-1 px-3 py-2
                                    rounded-xl border transition-all min-w-[72px]

@@ -5,6 +5,7 @@ namespace App\Http\Livewire\NamHoc;
 use App\Http\Livewire\Base\BaseComponent;
 use App\Models\NamHoc;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\ValidationException;
 
 /**
@@ -89,7 +90,7 @@ class NamHocManager extends BaseComponent
     {
         return [
             'search' => ['except' => ''],
-            'showForm' => ['except' => false],
+            // 'showForm' => ['except' => false],
         ];
     }
 
@@ -100,8 +101,8 @@ class NamHocManager extends BaseComponent
      */
     protected $listeners = [
         'refresh' => 'handleRefresh',
-        'namHocCreated' => 'loadNamHocs',
-        'namHocUpdated' => 'loadNamHocs',
+        // 'namHocCreated' => 'loadNamHocs',
+        // 'namHocUpdated' => 'loadNamHocs',
     ];
 
     // ==================== LIFECYCLE ====================
@@ -131,6 +132,12 @@ class NamHocManager extends BaseComponent
      */
     public function loadNamHocs(): void
     {
+        Log::info('loadNamHocs called', [
+            'trace' => collect(debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS, 5))
+                ->map(fn($frame) => ($frame['class'] ?? '') . '::' . ($frame['function'] ?? ''))
+                ->implode(' → ')
+        ]);
+
         try {
             $query = NamHoc::ofParish($this->parishId)
                 ->orderByDesc('start_date_one');
@@ -177,7 +184,7 @@ class NamHocManager extends BaseComponent
      */
     public function edit(int $id): void
     {
-        $namHoc = NamHoc::find($id);
+        $namHoc = NamHoc::findOrFail($id);
         $this->authorize('update', $namHoc);
 
         try {
@@ -204,7 +211,7 @@ class NamHocManager extends BaseComponent
     public function save(): void
     {
         if ($this->editingId) {
-            $namHoc = NamHoc::find($this->editingId);
+            $namHoc = NamHoc::findOrFail($this->editingId);
             $this->authorize('update', $namHoc);
         } else {
             $this->authorize('create', NamHoc::class);
@@ -262,7 +269,7 @@ class NamHocManager extends BaseComponent
             $this->loadNamHocs();
 
             // Emit event
-            $this->emit($this->editingId ? 'namHocUpdated' : 'namHocCreated');
+            // $this->emit($this->editingId ? 'namHocUpdated' : 'namHocCreated');
         } catch (\Exception $e) {
             DB::rollBack();
 
@@ -346,9 +353,9 @@ class NamHocManager extends BaseComponent
 
     public function closeModal()
     {
-        $this->showForm = false;
+        // $this->showForm = false;
         $this->resetForm();
-        $this->resetValidation();
+        // $this->resetValidation();
     }
 
     /**
