@@ -54,6 +54,11 @@ class StudentListNew extends BaseComponent
     public $availableSaints       = [];
     public $availableParishGroups = [];
 
+    protected array $allowedSortFields = ['last_name', 'first_name', 'birthday', 'gender'];
+
+    public string $sortField = 'first_name';
+    public string $sortDirection = 'asc';
+
     // ==================== CACHE ====================
     protected $lopCache = null;
 
@@ -111,6 +116,8 @@ class StudentListNew extends BaseComponent
             'selectedNamHoc' => ['as' => 'school-year', 'except' => null],
             'selectedKhoi'   => ['as' => 'grade', 'except' => ''],
             'selectedLop'    => ['as' => 'class', 'except' => ''],
+            'sortField'      => ['except' => 'last_name', 'as' => 'sort'],
+            'sortDirection'  => ['except' => 'asc', 'as' => 'dir'],
         ], parent::queryString());
     }
 
@@ -797,6 +804,8 @@ class StudentListNew extends BaseComponent
                     });
             });
         }
+
+        $this->applySorting($query);
 
         return $query;
     }

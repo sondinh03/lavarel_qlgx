@@ -47,6 +47,11 @@ class CatechismClassList extends BaseComponent
     /** @var \Illuminate\Support\Collection Danh sách khối có thể chọn */
     public $availableGradeLevels;
 
+    protected array $allowedSortFields = ['name', 'grade_level_id', 'students_count', 'is_active'];
+
+    public string $sortField = 'grade_level_id';
+    public string $sortDirection = 'asc';
+
     // ==================== VALIDATION ====================
 
     protected $rules = [
@@ -88,8 +93,10 @@ class CatechismClassList extends BaseComponent
     protected function queryString()
     {
         return array_merge([
-            'selectedNamHoc'    => ['as' => 'school-year', 'except' => null],
+            'selectedNamHoc'     => ['as' => 'school-year', 'except' => null],
             'selectedGradeLevel' => ['as' => 'grade', 'except' => ''],
+            'sortField'          => ['except' => 'grade_level_id', 'as' => 'sort'],
+            'sortDirection'      => ['except' => 'asc', 'as' => 'dir'],
         ], parent::queryString());
     }
 
@@ -369,12 +376,7 @@ class CatechismClassList extends BaseComponent
                 $searchTerm = '%' . trim($this->search) . '%';
                 $query->where('classes.name', 'like', $searchTerm);
             }
-
-            // Order theo thứ tự khối rồi tên lớp
-            // $query->join('grade_levels', 'classes.grade_level_id', '=', 'grade_levels.id')
-            //     ->orderBy('grade_levels.sort_order', 'asc')
-            //     ->orderBy('classes.name', 'asc')
-            //     ->select('classes.*');
+            $this->applySorting($query);
 
             return $query->paginate($this->perPage);
         } catch (\Exception $e) {

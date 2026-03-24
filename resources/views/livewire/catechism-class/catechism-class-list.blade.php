@@ -60,10 +60,9 @@
                         <div class="relative w-56">
                             <input
                                 wire:model.debounce.500ms="search"
-                                placeholder="Tìm kiếm lớp học theo tên..."
+                                placeholder="Tìm kiếm giáo họ..."
                                 class="w-full px-3 py-2 pr-8 rounded-xl border border-slate-300
-               text-sm focus:outline-none focus:ring-2 focus:ring-primary-500" />
-
+                                    text-sm focus:outline-none focus:ring-2 focus:ring-primary-500" />
                             @if ($search)
                             <button
                                 wire:click="$set('search', '')"
@@ -95,12 +94,37 @@
                     <thead class="bg-slate-50 border-b border-slate-200">
                         <tr>
                             <x-table-header>STT</x-table-header>
-                            <x-table-header>Tên lớp</x-table-header>
-                            <x-table-header>Khối</x-table-header>
-                            <x-table-header class="text-center">Sĩ số</x-table-header>
-                            {{-- <x-table-header class="text-center">Sức chứa</x-table-header> --}}
+                            <x-table-header
+                                :sortable="true"
+                                sort-field="name"
+                                :current-sort="$sortField"
+                                :sort-direction="$sortDirection">
+                                Tên lớp
+                            </x-table-header>
+                            <x-table-header
+                                :sortable="true"
+                                sort-field="grade_level_id"
+                                :current-sort="$sortField"
+                                :sort-direction="$sortDirection">
+                                Khối
+                            </x-table-header>
+                            <x-table-header
+                                class="text-center"
+                                :sortable="true"
+                                sort-field="students_count"
+                                :current-sort="$sortField"
+                                :sort-direction="$sortDirection">
+                                Sĩ số
+                            </x-table-header>
                             <x-table-header>Giáo lý viên</x-table-header>
-                            <x-table-header class="text-center">Trạng thái</x-table-header>
+                            <x-table-header
+                                class="text-center"
+                                :sortable="true"
+                                sort-field="is_active"
+                                :current-sort="$sortField"
+                                :sort-direction="$sortDirection">
+                                Trạng thái
+                            </x-table-header>
                             <x-table-header class="text-center">Thao tác</x-table-header>
                         </tr>
                     </thead>

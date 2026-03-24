@@ -230,10 +230,34 @@
                             <x-table-header>STT</x-table-header>
                             <x-table-header>Mã HS</x-table-header>
                             <x-table-header>Tên thánh</x-table-header>
-                            <x-table-header>Họ & Tên đệm</x-table-header>
-                            <x-table-header>Tên</x-table-header>
-                            <x-table-header>Ngày sinh</x-table-header>
-                            <x-table-header>Giới tính</x-table-header>
+                            <x-table-header
+                                :sortable="true"
+                                sort-field="last_name"
+                                :current-sort="$sortField"
+                                :sort-direction="$sortDirection">
+                                Họ & Tên đệm
+                            </x-table-header>
+                            <x-table-header
+                                :sortable="true"
+                                sort-field="first_name"
+                                :current-sort="$sortField"
+                                :sort-direction="$sortDirection">
+                                Tên
+                            </x-table-header>
+                            <x-table-header
+                                :sortable="true"
+                                sort-field="birthday"
+                                :current-sort="$sortField"
+                                :sort-direction="$sortDirection">
+                                Ngày sinh
+                            </x-table-header>
+                            <x-table-header
+                                :sortable="true"
+                                sort-field="gender"
+                                :current-sort="$sortField"
+                                :sort-direction="$sortDirection">
+                                Giới tính
+                            </x-table-header>
                             <x-table-header>Bố</x-table-header>
                             <x-table-header>Giáo họ</x-table-header>
                             <x-table-header>Hồ sơ giáo dân</x-table-header>
