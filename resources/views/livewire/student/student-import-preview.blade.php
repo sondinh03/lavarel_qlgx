@@ -62,7 +62,7 @@
                             • Các cột viền trắng là tùy chọn
                         </p>
                     </div>
-                    <a href="{{ asset('templates/student_import_template.xlsx') }}"
+                    <a href="{{ asset('templates/student_import_template.xlsx') }}?v={{ filemtime(public_path('templates/student_import_template.xlsx')) }}"
                         class="flex-shrink-0 inline-flex items-center gap-1.5 px-3 py-2
                                bg-amber-100 hover:bg-amber-200 text-amber-800 text-xs font-semibold
                                rounded-lg transition">
