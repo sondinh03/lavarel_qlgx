@@ -17,51 +17,33 @@ class ParishManagementRequest extends FormRequest
         return backpack_auth()->check();
     }
 
-    /**
-     * Get the validation rules that apply to the request.
-     *
-     * @return array
-     */
     public function rules()
     {
-        //return [
-            // 'name' => 'required|min:5|max:255'
-        //];
+        $id = $this->route('id');
+
         return [
-            // 'name' => 'required|min:5|max:255'
-            //'name' => 'required|min:5|max:255',
-            /*'ward' => 'required',
-            'province' => 'required',*/
+            'name' => 'required|min:2|max:255|unique:parishes,name,' . $id,
+            'code' => 'required|max:20|unique:parishes,code,' . $id,
         ];
     }
 
-    /**
-     * Get the validation attributes that apply to the request.
-     *
-     * @return array
-     */
     public function attributes()
     {
         return [
-            //
+            'name' => 'Tên giáo xứ',
+            'code' => 'Mã giáo xứ',
         ];
-        /*
-        return [
-            'name' => __('backend.name'),
-            'ward' => __('backend.ward'),
-            'province' => __('backend.province'),
-        ];*/
     }
 
-    /**
-     * Get the validation messages that apply to the request.
-     *
-     * @return array
-     */
     public function messages()
     {
         return [
-            //
+            'name.required' => 'Tên giáo xứ là bắt buộc',
+            'name.unique'   => 'Tên giáo xứ đã tồn tại',
+            'name.min'      => 'Tên giáo xứ phải có ít nhất 2 ký tự',
+            'code.required' => 'Mã giáo xứ là bắt buộc',
+            'code.unique'   => 'Mã giáo xứ đã tồn tại',
+            'code.max'      => 'Mã giáo xứ không được quá 20 ký tự',
         ];
     }
 }
