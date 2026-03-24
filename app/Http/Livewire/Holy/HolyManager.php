@@ -4,6 +4,7 @@ namespace App\Http\Livewire\Holy;
 
 use App\Http\Livewire\Base\BaseComponent;
 use App\Models\Holymanagement;
+use Illuminate\Support\Str;
 
 /**
  * Component quản lý Holy (CRUD)
@@ -61,6 +62,7 @@ class HolyManager extends BaseComponent
     /** ========== Actions ========== */
     public function create()
     {
+        $this->authorize('create', Holymanagement::class);
         $this->resetForm();
         $this->showModal = true;
     }
@@ -69,6 +71,7 @@ class HolyManager extends BaseComponent
     {
         $holy = Holymanagement::findOrFail($id);
 
+        $this->authorize('update', $holy);
         $this->holyId = $holy->id;
         $this->name   = $holy->name;
 
@@ -78,6 +81,22 @@ class HolyManager extends BaseComponent
     public function save()
     {
         $this->validate();
+
+        if ($this->holyId) {
+            $holy = Holymanagement::findOrFail($this->holyId);
+            $this->authorize('update', $holy);
+        } else {
+            $this->authorize('create', Holymanagement::class);
+        }
+
+        $exists = Holymanagement::where('name', Str::title(trim($this->name)))
+            ->when($this->holyId, fn($q) => $q->where('id', '!=', $this->holyId))
+            ->exists();
+
+        if ($exists) {
+            $this->addError('name', 'Tên thánh này đã tồn tại');
+            return;
+        }
 
         Holymanagement::updateOrCreate(
             ['id' => $this->holyId],
@@ -92,14 +111,23 @@ class HolyManager extends BaseComponent
         $this->closeModal();
     }
 
-    public function delete(int $id)
+    public function delete(int $id): void
     {
-        Holymanagement::findOrFail($id)->delete();
+        try {
+            $holy = Holymanagement::findOrFail($id);
+            $this->authorize('delete', $holy);
 
-        $this->dispatchBrowserEvent('notify', [
-            'type' => 'success',
-            'message' => 'Đã xóa',
-        ]);
+            $holy->delete();
+
+            session()->flash('message', 'Đã xóa tên thánh thành công');
+        } catch (\Illuminate\Auth\Access\AuthorizationException $e) {
+            session()->flash('error', 'Bạn không có quyền xóa tên thánh');
+        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+            session()->flash('error', 'Không tìm thấy tên thánh');
+        } catch (\Exception $e) {
+            $this->logError($e, 'Error deleting holy', ['id' => $id]);
+            session()->flash('error', 'Có lỗi khi xóa tên thánh');
+        }
     }
 
     /** ========== Helpers ========== */

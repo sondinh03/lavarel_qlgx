@@ -3,6 +3,7 @@
 namespace App\Providers;
 
 use App\Models\CatechismClass;
+use App\Models\Holymanagement;
 use App\Models\Lop;
 use App\Models\NamHoc;
 use App\Models\Parish;
@@ -14,6 +15,7 @@ use App\Models\Student;
 use App\Models\StudentNew;
 use App\Models\StudentScore;
 use App\Policies\CatechismClassPolicy;
+use App\Policies\HolymanagementPolicy;
 use App\Policies\LopPolicy;
 use App\Policies\ParishGroupPolicy;
 use App\Policies\ParishionerPolicy;
@@ -39,6 +41,7 @@ class AuthServiceProvider extends ServiceProvider
         ParishGroup::class => ParishGroupPolicy::class,
         ScoreType::class => ScoreTypePolicy::class,
         StudentScore::class => StudentScorePolicy::class,
+        Holymanagement::class => HolymanagementPolicy::class,
     ];
 
     /**

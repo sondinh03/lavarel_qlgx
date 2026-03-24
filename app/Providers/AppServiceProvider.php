@@ -5,6 +5,7 @@ namespace App\Providers;
 use Illuminate\Support\ServiceProvider;
 use App\Models\Lop;
 use App\Models\ClassTeacher;
+use App\Models\Holymanagement;
 use App\Models\Parish;
 use App\Models\Parishioner;
 use App\Observers\LopObserver;

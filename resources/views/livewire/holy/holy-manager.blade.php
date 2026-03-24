@@ -1,4 +1,7 @@
-<div class="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 p-4 sm:p-6">
+<div
+    class="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 p-4 sm:p-6"
+    x-data="{ showModal: @entangle('showModal').defer }">
+
     <a href="#main-content" class="sr-only focus:not-sr-only">Bỏ qua tới nội dung</a>
 
     <div id="main-content" class="mx-auto max-w-7xl space-y-5">
@@ -66,7 +69,7 @@
 
                     <tbody class="divide-y divide-slate-100">
                         @forelse ($holies as $i => $holy)
-                        <tr class="hover:bg-slate-50 transition-colors">
+                        <tr class="hover:bg-slate-50 transition-colors" wire:key="holy-{{ $holy->id }}">
                             <td class="px-6 py-4 text-sm text-slate-500">
                                 {{ $holies->firstItem() + $i }}
                             </td>
@@ -92,7 +95,7 @@
                                         icon="trash"
                                         color="danger"
                                         :loading="true"
-                                        onclick="confirm('Xóa Tên thánh này?') || event.stopImmediatePropagation()">
+                                        :confirm="'Xóa tên thánh ' . $holy->name . '?'">
                                         Xóa
                                     </x-table-action>
                                 </div>
@@ -103,10 +106,10 @@
                             <td colspan="3" class="px-6 py-12">
                                 <x-empty-state
                                     icon="church"
-                                    title="Chưa có Holy"
-                                    description="Hãy tạo Holy đầu tiên">
+                                    title="Chưa có tên thánh"
+                                    description="Hãy tạo tên thánh đầu tiên">
                                     <x-action-button wire="create" icon="plus">
-                                        Thêm Holy
+                                        Thêm tên thánh
                                     </x-action-button>
                                 </x-empty-state>
                             </td>
@@ -126,49 +129,108 @@
             @endif
         </div>
 
-        {{-- Modal Form --}}
-        @if ($showModal)
+    </div>
+
+    {{-- Modal Form — ngoài space-y-5 để tránh margin --}}
+    <div
+        x-show="showModal"
+        x-transition:enter="transition ease-out duration-200"
+        x-transition:enter-start="opacity-0"
+        x-transition:enter-end="opacity-100"
+        x-transition:leave="transition ease-in duration-150"
+        x-transition:leave-start="opacity-100"
+        x-transition:leave-end="opacity-0"
+        class="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50 p-4"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="holy-modal-title"
+        @click="showModal = false; $wire.closeModal()">
+
+        {{-- Modal box --}}
         <div
-            class="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4"
-            role="dialog"
-            aria-modal="true"
-            wire:click="closeModal">
+            x-show="showModal"
+            x-transition:enter="transition ease-out duration-200"
+            x-transition:enter-start="opacity-0 translate-y-4 scale-95"
+            x-transition:enter-end="opacity-100 translate-y-0 scale-100"
+            x-transition:leave="transition ease-in duration-150"
+            x-transition:leave-start="opacity-100 translate-y-0 scale-100"
+            x-transition:leave-end="opacity-0 translate-y-4 scale-95"
+            class="bg-white rounded-2xl shadow-xl w-full max-w-lg max-h-[90vh] overflow-hidden flex flex-col"
+            @click.stop>
 
-            <div
-                class="bg-white rounded-2xl shadow-xl w-full max-w-lg overflow-hidden flex flex-col"
-                wire:click.stop>
+            {{-- Header --}}
+            <div class="flex-shrink-0 p-6 border-b border-slate-200 bg-gradient-to-br from-primary-50 to-white">
+                <div class="flex items-start justify-between gap-4">
+                    <div>
+                        <h2 id="holy-modal-title" class="text-xl font-bold text-slate-900">
+                            {{ $holyId ? 'Cập nhật Tên thánh' : 'Thêm Tên thánh mới' }}
+                        </h2>
+                        <p class="text-sm text-slate-600 mt-1">
+                            Nhập thông tin Tên thánh
+                        </p>
+                    </div>
 
-                {{-- Header --}}
-                <div class="flex-shrink-0 p-6 border-b border-slate-200 bg-gradient-to-br from-primary-50 to-white">
-                    <h2 class="text-xl font-bold text-slate-900">
-                        {{ $holyId ? 'Cập nhật Tên thánh' : 'Thêm Tên thánh mới' }}
-                    </h2>
-                    <p class="text-sm text-slate-600 mt-1">
-                        Nhập thông tin Tên thánh
-                    </p>
-                </div>
-
-                {{-- Body --}}
-                <div class="flex-1 p-6 space-y-4">
-                    <x-form-input
-                        label="Tên Tên thánh"
-                        name="name"
-                        wire:model.defer="name"
-                        placeholder="Nhập tên Tên thánh"
-                        required />
-                </div>
-
-                {{-- Footer --}}
-                <div class="flex-shrink-0 px-6 py-4 border-t border-slate-200 bg-slate-50 flex justify-end gap-3">
-                    <x-action-button wire="closeModal" variant="secondary">
-                        Hủy
-                    </x-action-button>
-                    <x-action-button wire="save" icon="save" :loading="true">
-                        Lưu
-                    </x-action-button>
+                    <button
+                        @click="showModal = false; $wire.closeModal()"
+                        class="flex-shrink-0 p-1 rounded-lg text-slate-400 hover:text-slate-600
+                               hover:bg-slate-100 transition-colors">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                    </button>
                 </div>
             </div>
+
+            {{-- Body --}}
+            <div class="flex-1 overflow-y-auto p-6 space-y-4">
+
+                {{-- Error Summary --}}
+                @if ($errors->any())
+                <div class="bg-red-50 border-l-4 border-red-500 rounded-xl p-4">
+                    <div class="flex items-start gap-3">
+                        <svg class="w-5 h-5 text-red-500 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        <div class="flex-1">
+                            <h4 class="text-sm font-semibold text-red-800 mb-2">
+                                Vui lòng kiểm tra lại thông tin
+                            </h4>
+                            <ul class="space-y-1 text-sm text-red-700">
+                                @foreach ($errors->all() as $error)
+                                <li class="flex items-start gap-2">
+                                    <span class="text-red-400 font-bold">•</span>
+                                    <span>{{ $error }}</span>
+                                </li>
+                                @endforeach
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+                @endif
+
+                <x-form-input
+                    label="Tên thánh"
+                    name="name"
+                    wire:model.defer="name"
+                    placeholder="Nhập tên thánh, VD: Maria, Giuse..."
+                    required />
+            </div>
+
+            {{-- Footer --}}
+            <div class="flex-shrink-0 px-6 py-4 border-t border-slate-200 bg-slate-50 flex justify-end gap-3">
+                <x-action-button
+                    @click="showModal = false; $wire.closeModal()"
+                    variant="secondary">
+                    Hủy
+                </x-action-button>
+                <x-action-button wire:click="save" icon="save" :loading="true">
+                    {{ $holyId ? 'Cập nhật' : 'Thêm mới' }}
+                </x-action-button>
+            </div>
+
         </div>
-        @endif
     </div>
+
 </div>
