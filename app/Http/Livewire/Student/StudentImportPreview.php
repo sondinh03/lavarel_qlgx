@@ -12,7 +12,6 @@ use App\Models\ParishGroup;
 use App\Models\StudentNew;
 use App\Support\ExcelDateParser;
 use Livewire\WithFileUploads;
-use Maatwebsite\Excel\Concerns\ToArray;
 use Maatwebsite\Excel\Facades\Excel;
 
 /**
@@ -31,7 +30,8 @@ class StudentImportPreview extends BaseComponent
 
     public $selectedNamHoc = null;
     public $selectedKhoi   = null;
-    public $selectedLop    = null; // = classId
+    public $selectedLop    = null;
+    public ?string $className = null;
 
     // ==================== FILE ====================
 
@@ -47,6 +47,11 @@ class StudentImportPreview extends BaseComponent
     // ==================== VALIDATION ====================
 
     protected $rules = [
+        'file'        => 'nullable|mimes:xlsx,csv|max:5120',
+        'selectedLop' => 'nullable|integer|exists:classes,id',
+    ];
+
+    protected $formRules = [
         'file'        => 'required|mimes:xlsx,csv|max:5120',
         'selectedLop' => 'required|integer|exists:classes,id',
     ];
@@ -121,6 +126,10 @@ class StudentImportPreview extends BaseComponent
                 $this->resetPreview();
                 $this->file = null;
             }
+
+            $this->className = $this->selectedLop
+                ? CatechismClass::where('id', $this->selectedLop)->value('name')
+                : null;
         }
     }
 
@@ -136,7 +145,7 @@ class StudentImportPreview extends BaseComponent
             return;
         }
 
-        $this->validateOnly('file');
+        $this->validateOnly('file', $this->formRules, $this->messages);
 
         $this->preview();
     }
@@ -145,10 +154,7 @@ class StudentImportPreview extends BaseComponent
 
     public function preview(): void
     {
-        $this->validate([
-            'file'        => 'required|mimes:xlsx,csv|max:5120',
-            'selectedLop' => 'required|integer|exists:classes,id',
-        ], $this->messages);
+        $this->validate($this->formRules, $this->messages);
 
         $this->resetPreview();
 
@@ -173,9 +179,9 @@ class StudentImportPreview extends BaseComponent
                 return;
             }
 
-
             $saintNames = Holymanagement::pluck('name')
-                ->map(fn($n) => strtolower(trim($n)))->toArray();
+                ->map(fn($n) => strtolower(trim($n)))
+                ->toArray();
 
             $groupNames = ParishGroup::active()
                 ->pluck('name')
@@ -187,40 +193,66 @@ class StudentImportPreview extends BaseComponent
                     . '_' . ($s->birthday?->format('Y-m-d') ?? ''))
                 ->toArray();
 
+            $validGenders = ['nam', 'nữ', 'nu', 'male', 'female', 'm', 'f', '1', '0'];
+
             foreach ($data as $index => $row) {
                 $rowNumber = $index + 6;
 
+                // Bỏ qua dòng trống
                 if (empty(trim($row['ho_ten_dem'] ?? '')) && empty(trim($row['ten'] ?? ''))) {
                     continue;
                 }
 
                 $rowWarnings = [];
                 $tenThanh    = trim($row['ten_thanh'] ?? '');
-
                 $giaoHo      = trim($row['giao_ho'] ?? '');
                 $ngaySinh    = $row['ngay_sinh'] ?? '';
+                $soDienThoai = trim($row['so_dien_thoai'] ?? '');
+                $email       = trim($row['email'] ?? '');
+                $ghiChu      = trim($row['ghi_chu'] ?? '');
+                $gioi_tinh   = trim($row['gioi_tinh'] ?? '');
 
+                // Validate giới tính
+                if (!empty($gioi_tinh) && !in_array(strtolower($gioi_tinh), $validGenders)) {
+                    $rowWarnings[] = "Giới tính \"{$gioi_tinh}\" không hợp lệ (dùng: nam / nữ)";
+                }
+
+                // Validate tên thánh
                 if (!empty($tenThanh) && !in_array(strtolower($tenThanh), $saintNames)) {
                     $rowWarnings[] = "Tên thánh \"{$tenThanh}\" không tìm thấy trong hệ thống";
                 }
 
+                // Validate giáo họ
                 if (!empty($giaoHo) && !in_array(strtolower($giaoHo), $groupNames)) {
                     $rowWarnings[] = "Giáo họ \"{$giaoHo}\" không tìm thấy trong hệ thống";
                 }
 
+                // Validate ngày sinh
+                $parsedDate = null;
                 if (!empty($ngaySinh)) {
                     $parsedDate = ExcelDateParser::parse($ngaySinh);
-                    if ($parsedDate == null) {
+                    if ($parsedDate === null) {
                         $rowWarnings[] = "Ngày sinh \"{$ngaySinh}\" không hợp lệ (định dạng: dd/MM/yyyy)";
                     }
                 }
 
-                $fullName  = strtolower(trim(($row['ho_ten_dem'] ?? '') . ' ' . ($row['ten'] ?? '')));
-                // $parsedDate = ExcelDateParser::parse($ngaySinh);
-                $key = $fullName . '_' . ($parsedDate ?? '');
+                // Validate email
+                if (!empty($email) && !filter_var($email, FILTER_VALIDATE_EMAIL)) {
+                    $rowWarnings[] = "Email \"{$email}\" không đúng định dạng";
+                }
 
-                if (in_array($key, $existingStudents)) {
-                    $rowWarnings[] = "Học sinh \"{$row['ten_thanh']} {$row['ho_ten_dem']} {$row['ten']}\" đã tồn tại trong hệ thống";
+                // Validate số điện thoại
+                if (!empty($soDienThoai) && !preg_match('/^[0-9]{9,11}$/', $soDienThoai)) {
+                    $rowWarnings[] = "Số điện thoại \"{$soDienThoai}\" không đúng định dạng";
+                }
+
+                // Kiểm tra trùng học sinh
+                $fullName    = strtolower(trim(($row['ho_ten_dem'] ?? '') . ' ' . ($row['ten'] ?? '')));
+                $key         = $fullName . '_' . ($parsedDate ?? '');
+                $isDuplicate = in_array($key, $existingStudents);
+
+                if ($isDuplicate) {
+                    $rowWarnings[] = "Học sinh đã tồn tại trong hệ thống — dòng này sẽ bị bỏ qua khi import. Vui lòng kiểm tra lại trong năm học hoặc ghi danh bằng phương thức khác.";
                 }
 
                 if (!empty($rowWarnings)) {
@@ -228,27 +260,37 @@ class StudentImportPreview extends BaseComponent
                 }
 
                 $this->rows[] = [
-                    'row_number'  => $rowNumber,
-                    'ten_thanh'   => $tenThanh,
-                    'ho_ten_dem'  => trim($row['ho_ten_dem'] ?? ''),
-                    'ten'         => trim($row['ten'] ?? ''),
-                    'ngay_sinh'   => $ngaySinh,
-                    'gioi_tinh'   => trim($row['gioi_tinh'] ?? ''),
-                    'giao_ho'     => $giaoHo,
-                    'ho_ten_bo'   => trim($row['ho_ten_bo'] ?? ''),
-                    'ho_ten_me'   => trim($row['ho_ten_me'] ?? ''),
-                    'has_warning' => !empty($rowWarnings),
+                    'row_number'    => $rowNumber,
+                    'ten_thanh'     => $tenThanh,
+                    'ho_ten_dem'    => trim($row['ho_ten_dem'] ?? ''),
+                    'ten'           => trim($row['ten'] ?? ''),
+                    'ngay_sinh'     => $ngaySinh,
+                    'gioi_tinh'     => $gioi_tinh,
+                    'giao_ho'       => $giaoHo,
+                    'ho_ten_bo'     => trim($row['ho_ten_bo'] ?? ''),
+                    'ho_ten_me'     => trim($row['ho_ten_me'] ?? ''),
+                    'so_dien_thoai' => $soDienThoai,
+                    'email'         => $email,
+                    'ghi_chu'       => $ghiChu,
+                    'has_warning'   => !empty($rowWarnings),
+                    'is_duplicate'  => $isDuplicate,
                 ];
             }
-
 
             $this->readyToImport = empty($this->errors) && !empty($this->rows);
 
             if ($this->readyToImport) {
-                $warningCount = count($this->warnings);
-                $msg = sprintf('Đã kiểm tra %d dòng dữ liệu. Sẵn sàng import.', count($this->rows));
+                $duplicateCount = collect($this->rows)->where('is_duplicate', true)->count();
+                $willImport     = count($this->rows) - $duplicateCount;
+                $warningCount   = count($this->warnings) - $duplicateCount;
+
+                $msg = sprintf('Đã kiểm tra %d dòng dữ liệu.', count($this->rows));
+                $msg .= " Sẽ import {$willImport} học sinh mới.";
+                if ($duplicateCount > 0) {
+                    $msg .= " Bỏ qua {$duplicateCount} học sinh đã tồn tại.";
+                }
                 if ($warningCount > 0) {
-                    $msg .= " ({$warningCount} dòng có cảnh báo — sẽ bỏ qua giá trị không khớp)";
+                    $msg .= " ({$warningCount} dòng có cảnh báo khác)";
                 }
                 session()->flash('info', $msg);
             }
@@ -276,8 +318,11 @@ class StudentImportPreview extends BaseComponent
 
             $message = "✅ Import thành công {$result['imported']} học sinh vào lớp";
 
-            if ($result['skipped'] > 0) {
-                $message .= " | Bỏ qua {$result['skipped']} dòng trống";
+            if ($result['skipped_empty'] > 0) {
+                $message .= " | Bỏ qua {$result['skipped_empty']} dòng trống";
+            }
+            if ($result['skipped_duplicate'] > 0) {
+                $message .= " | Bỏ qua {$result['skipped_duplicate']} học sinh đã tồn tại";
             }
 
             if (!empty($result['errors'])) {
@@ -287,8 +332,6 @@ class StudentImportPreview extends BaseComponent
 
             session()->flash('message', $message);
             return redirect()->route('dashboard');
-
-            // return redirect()->route('students.index', ['class' => $this->selectedLop]);
         } catch (\Exception $e) {
             $this->logError($e, 'Error confirming student import', ['selectedLop' => $this->selectedLop]);
             session()->flash('error', 'Có lỗi khi import: ' . $e->getMessage());

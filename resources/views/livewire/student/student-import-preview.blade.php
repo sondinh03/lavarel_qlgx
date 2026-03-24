@@ -44,14 +44,22 @@
                         <p class="font-semibold mb-1">Yêu cầu file Excel</p>
                         <p>File phải có các cột (theo thứ tự không quan trọng, tên cột phải khớp chính xác):</p>
                         <div class="mt-2 flex flex-wrap gap-2">
-                            @foreach(['ho_ten_dem', 'ten', 'ngay_sinh', 'gioi_tinh', 'ten_thanh', 'giao_ho', 'ho_ten_bo', 'ho_ten_me'] as $col)
+                            {{-- Cột bắt buộc --}}
+                            @foreach(['ho_ten_dem', 'ten', 'ngay_sinh', 'gioi_tinh'] as $col)
                             <code class="px-2 py-0.5 bg-amber-100 text-amber-900 rounded text-xs font-mono">{{ $col }}</code>
+                            @endforeach
+                            {{-- Cột tùy chọn --}}
+                            @foreach(['ten_thanh', 'giao_ho', 'ho_ten_bo', 'ho_ten_me', 'so_dien_thoai', 'email', 'ghi_chu'] as $col)
+                            <code class="px-2 py-0.5 bg-white/70 text-amber-800 border border-amber-200 rounded text-xs font-mono">{{ $col }}</code>
                             @endforeach
                         </div>
                         <p class="mt-2 text-xs text-amber-700">
                             • <strong>gioi_tinh</strong>: nam / nữ (hoặc male / female)<br>
-                            • <strong>ngay_sinh</strong>: định dạng dd/mm/yyyy hoặc yyyy-mm-dd<br>
-                            • <strong>ten_thanh</strong>, <strong>giao_ho</strong>: phải khớp tên trong hệ thống (nếu không khớp sẽ bỏ trống)
+                            • <strong>ngay_sinh</strong>: định dạng dd/mm/yyyy<br>
+                            • <strong>ten_thanh</strong>, <strong>giao_ho</strong>: phải khớp tên trong hệ thống (nếu không khớp sẽ bỏ trống)<br>
+                            • <strong>so_dien_thoai</strong>: 9–11 chữ số<br>
+                            • <strong>email</strong>: định dạng email hợp lệ<br>
+                            • Các cột viền trắng là tùy chọn
                         </p>
                     </div>
                     <a href="{{ asset('templates/student_import_template.xlsx') }}"
@@ -71,7 +79,6 @@
         {{-- Upload form --}}
         <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 space-y-5">
 
-            {{-- FilterBar: chọn năm học → khối → lớp --}}
             <div>
                 <p class="text-sm font-semibold text-slate-700 mb-3">
                     Bước 1: Chọn lớp cần import vào
@@ -99,7 +106,6 @@
 
             <hr class="border-slate-200">
 
-            {{-- Upload file --}}
             <div>
                 <p class="text-sm font-semibold text-slate-700 mb-3">
                     Bước 2: Upload file Excel
@@ -187,7 +193,7 @@
 
                 <button wire:click="resetUpload" type="button"
                     class="inline-flex items-center gap-1.5 px-3 py-2
-                           text-sm text-slate-600 hover:bg-slate-100 rounded-xl transition">
+                               text-sm text-slate-600 hover:bg-slate-100 rounded-xl transition">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                             d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
@@ -201,57 +207,118 @@
                 <table class="w-full border-separate border-spacing-0">
                     <thead class="bg-slate-50">
                         <tr>
-                            <th class="px-4 py-3 text-left text-xs font-semibold text-slate-600 uppercase">Dòng</th>
-                            <th class="px-4 py-3 text-left text-xs font-semibold text-slate-600 uppercase">Tên thánh</th>
-                            <th class="px-4 py-3 text-left text-xs font-semibold text-slate-600 uppercase">Họ tên đệm</th>
-                            <th class="px-4 py-3 text-left text-xs font-semibold text-slate-600 uppercase">Tên</th>
-                            <th class="px-4 py-3 text-left text-xs font-semibold text-slate-600 uppercase">Ngày sinh</th>
-                            <th class="px-4 py-3 text-left text-xs font-semibold text-slate-600 uppercase">GT</th>
-                            <th class="px-4 py-3 text-left text-xs font-semibold text-slate-600 uppercase">Giáo họ</th>
-                            <th class="px-4 py-3 text-left text-xs font-semibold text-slate-600 uppercase">Bố</th>
-                            <th class="px-4 py-3 text-left text-xs font-semibold text-slate-600 uppercase">Mẹ</th>
-                            <th class="px-4 py-3 text-center text-xs font-semibold text-slate-600 uppercase">TT</th>
+                            <th class="px-4 py-3 text-left text-xs font-semibold text-slate-600 uppercase tracking-wide">Dòng</th>
+                            <th class="px-4 py-3 text-left text-xs font-semibold text-slate-600 uppercase tracking-wide">Tên thánh</th>
+                            <th class="px-4 py-3 text-left text-xs font-semibold text-slate-600 uppercase tracking-wide">Họ tên đệm</th>
+                            <th class="px-4 py-3 text-left text-xs font-semibold text-slate-600 uppercase tracking-wide">Tên</th>
+                            <th class="px-4 py-3 text-left text-xs font-semibold text-slate-600 uppercase tracking-wide">Ngày sinh</th>
+                            <th class="px-4 py-3 text-left text-xs font-semibold text-slate-600 uppercase tracking-wide">GT</th>
+                            <th class="px-4 py-3 text-left text-xs font-semibold text-slate-600 uppercase tracking-wide">Giáo họ</th>
+                            <th class="px-4 py-3 text-left text-xs font-semibold text-slate-600 uppercase tracking-wide">Bố</th>
+                            <th class="px-4 py-3 text-left text-xs font-semibold text-slate-600 uppercase tracking-wide">Mẹ</th>
+                            <th class="px-4 py-3 text-left text-xs font-semibold text-slate-600 uppercase tracking-wide">SĐT</th>
+                            <th class="px-4 py-3 text-left text-xs font-semibold text-slate-600 uppercase tracking-wide">Email</th>
+                            <th class="px-4 py-3 text-left text-xs font-semibold text-slate-600 uppercase tracking-wide">Ghi chú</th>
+                            <th class="px-4 py-3 text-center text-xs font-semibold text-slate-600 uppercase tracking-wide">TT</th>
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-slate-100">
                         @foreach($rows as $row)
-                        <tr class="{{ $row['has_warning'] ? 'bg-amber-50' : 'hover:bg-slate-50' }}"
+                        <tr class="{{ $row['is_duplicate'] ? 'bg-slate-100' : ($row['has_warning'] ? 'bg-amber-50' : 'hover:bg-slate-50') }} {{ $row['is_duplicate'] ? 'opacity-60' : '' }}"
                             wire:key="preview-{{ $row['row_number'] }}">
+
                             <td class="px-4 py-3 text-xs text-slate-400 font-mono">{{ $row['row_number'] }}</td>
+
+                            {{-- Tên thánh --}}
                             <td class="px-4 py-3 text-sm text-slate-700">
-                                @if($row['ten_thanh'] && isset($warnings[$row['row_number']]) && collect($warnings[$row['row_number']])->contains(fn($w) => str_contains($w, 'Tên thánh')))
+                                @php
+                                $tenThanhWarning = isset($warnings[$row['row_number']])
+                                && collect($warnings[$row['row_number']])->contains(fn($w) => str_contains($w, 'Tên thánh'));
+                                @endphp
+                                @if($row['ten_thanh'] && $tenThanhWarning)
                                 <span class="text-amber-600 line-through">{{ $row['ten_thanh'] }}</span>
                                 @else
                                 {{ $row['ten_thanh'] ?: '—' }}
                                 @endif
                             </td>
+
                             <td class="px-4 py-3 text-sm font-semibold text-slate-900">{{ $row['ho_ten_dem'] ?: '—' }}</td>
                             <td class="px-4 py-3 text-sm font-semibold text-slate-900">{{ $row['ten'] ?: '—' }}</td>
                             <td class="px-4 py-3 text-sm text-slate-600">{{ $row['ngay_sinh'] ?: '—' }}</td>
+
+                            {{-- Giới tính --}}
                             <td class="px-4 py-3">
                                 @php
                                 $gt = strtolower($row['gioi_tinh'] ?? '');
                                 $isNam = in_array($gt, ['nam', 'male', 'm', '1']);
+                                $gtWarning = isset($warnings[$row['row_number']])
+                                && collect($warnings[$row['row_number']])->contains(fn($w) => str_contains($w, 'Giới tính'));
                                 @endphp
+                                @if($gtWarning)
+                                <span class="text-amber-600 text-xs">{{ $row['gioi_tinh'] }} (?)</span>
+                                @else
                                 <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium
-                                             {{ $isNam ? 'bg-blue-100 text-blue-700' : 'bg-pink-100 text-pink-700' }}">
+                                                         {{ $isNam ? 'bg-blue-100 text-blue-700' : 'bg-pink-100 text-pink-700' }}">
                                     {{ $isNam ? 'Nam' : 'Nữ' }}
                                 </span>
+                                @endif
                             </td>
+
+                            {{-- Giáo họ --}}
                             <td class="px-4 py-3 text-sm text-slate-600">
-                                @if($row['giao_ho'] && isset($warnings[$row['row_number']]) && collect($warnings[$row['row_number']])->contains(fn($w) => str_contains($w, 'Giáo họ')))
+                                @php
+                                $giaoHoWarning = isset($warnings[$row['row_number']])
+                                && collect($warnings[$row['row_number']])->contains(fn($w) => str_contains($w, 'Giáo họ'));
+                                @endphp
+                                @if($row['giao_ho'] && $giaoHoWarning)
                                 <span class="text-amber-600 line-through">{{ $row['giao_ho'] }}</span>
                                 @else
                                 {{ $row['giao_ho'] ?: '—' }}
                                 @endif
                             </td>
+
                             <td class="px-4 py-3 text-sm text-slate-600">{{ $row['ho_ten_bo'] ?: '—' }}</td>
                             <td class="px-4 py-3 text-sm text-slate-600">{{ $row['ho_ten_me'] ?: '—' }}</td>
+
+                            {{-- Số điện thoại --}}
+                            <td class="px-4 py-3 text-sm text-slate-600">
+                                @php
+                                $sdtWarning = isset($warnings[$row['row_number']])
+                                && collect($warnings[$row['row_number']])->contains(fn($w) => str_contains($w, 'Số điện thoại'));
+                                @endphp
+                                @if($row['so_dien_thoai'] && $sdtWarning)
+                                <span class="text-amber-600 line-through">{{ $row['so_dien_thoai'] }}</span>
+                                @else
+                                {{ $row['so_dien_thoai'] ?: '—' }}
+                                @endif
+                            </td>
+
+                            {{-- Email --}}
+                            <td class="px-4 py-3 text-sm text-slate-600">
+                                @php
+                                $emailWarning = isset($warnings[$row['row_number']])
+                                && collect($warnings[$row['row_number']])->contains(fn($w) => str_contains($w, 'Email'));
+                                @endphp
+                                @if($row['email'] && $emailWarning)
+                                <span class="text-amber-600 line-through">{{ $row['email'] }}</span>
+                                @else
+                                {{ $row['email'] ?: '—' }}
+                                @endif
+                            </td>
+
+                            <td class="px-4 py-3 text-sm text-slate-600">{{ $row['ghi_chu'] ?: '—' }}</td>
+
+                            {{-- Trạng thái --}}
                             <td class="px-4 py-3 text-center">
-                                @if($row['has_warning'])
+                                @if($row['is_duplicate'])
+                                <span class="inline-flex items-center px-2 py-0.5 rounded-full
+                                                         text-xs font-medium bg-slate-200 text-slate-500">
+                                    Bỏ qua
+                                </span>
+                                @elseif($row['has_warning'])
                                 <span title="{{ implode(', ', $warnings[$row['row_number']] ?? []) }}"
                                     class="inline-flex items-center justify-center w-6 h-6
-                                           bg-amber-100 text-amber-600 rounded-full cursor-help text-xs font-bold">
+                                                       bg-amber-100 text-amber-600 rounded-full cursor-help text-xs font-bold">
                                     !
                                 </span>
                                 @else
@@ -266,7 +333,7 @@
                 </table>
             </div>
 
-            {{-- Warning detail --}}
+            {{-- Chi tiết cảnh báo --}}
             @if(!empty($warnings))
             <div class="px-6 py-4 border-t border-amber-200 bg-amber-50">
                 <p class="text-xs font-semibold text-amber-800 mb-2">Chi tiết cảnh báo:</p>
@@ -282,23 +349,34 @@
 
             {{-- Action footer --}}
             <div class="px-6 py-4 border-t border-slate-200 bg-slate-50 flex items-center justify-between">
-                <p class="text-sm text-slate-600">
-                    Sẽ import <span class="font-semibold text-slate-900">{{ count($rows) }} học sinh</span>
-                    @if($this->className) vào lớp <span class="font-semibold text-primary-700">{{ $this->className }}</span> @endif
-                </p>
+                <div class="text-sm text-slate-600 space-y-0.5">
+                    @php $duplicateCount = collect($rows)->where('is_duplicate', true)->count(); @endphp
+                    <p>
+                        Sẽ import
+                        <span class="font-semibold text-slate-900">{{ count($rows) - $duplicateCount }} học sinh mới</span>
+                        @if($this->className)
+                        vào lớp <span class="font-semibold text-primary-700">{{ $this->className }}</span>
+                        @endif
+                    </p>
+                    @if($duplicateCount > 0)
+                    <p class="text-xs text-slate-400">
+                        Bỏ qua {{ $duplicateCount }} học sinh đã tồn tại trong hệ thống
+                    </p>
+                    @endif
+                </div>
                 <div class="flex gap-3">
                     <button wire:click="resetUpload" type="button"
                         class="px-4 py-2.5 bg-slate-100 text-slate-700 text-sm font-semibold
-                               rounded-xl hover:bg-slate-200 active:scale-95 transition-all">
+                                   rounded-xl hover:bg-slate-200 active:scale-95 transition-all">
                         Hủy
                     </button>
                     <button wire:click="confirmImport" type="button"
                         @disabled(!$readyToImport)
                         wire:loading.attr="disabled"
                         class="px-4 py-2.5 bg-gradient-to-r from-primary-500 to-primary-600 text-white
-                               text-sm font-semibold rounded-xl hover:from-primary-600 hover:to-primary-700
-                               active:scale-95 transition-all disabled:opacity-50 disabled:cursor-not-allowed
-                               inline-flex items-center gap-2">
+                                   text-sm font-semibold rounded-xl hover:from-primary-600 hover:to-primary-700
+                                   active:scale-95 transition-all disabled:opacity-50 disabled:cursor-not-allowed
+                                   inline-flex items-center gap-2">
                         <svg wire:loading wire:target="confirmImport"
                             class="animate-spin w-4 h-4" fill="none" viewBox="0 0 24 24">
                             <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
