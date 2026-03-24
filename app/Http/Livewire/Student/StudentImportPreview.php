@@ -11,6 +11,7 @@ use App\Models\NamHoc;
 use App\Models\ParishGroup;
 use App\Models\StudentNew;
 use App\Support\ExcelDateParser;
+use Illuminate\Support\Facades\Log;
 use Livewire\WithFileUploads;
 use Maatwebsite\Excel\Facades\Excel;
 
@@ -302,21 +303,43 @@ class StudentImportPreview extends BaseComponent
 
     public function confirmImport()
     {
+        Log::debug('[Import] confirmImport called', [
+            'readyToImport' => $this->readyToImport,
+            'selectedLop'   => $this->selectedLop,
+            'parishId'      => $this->parishId,
+            'rows_count'    => count($this->rows),
+        ]);
+
         if (!$this->readyToImport) {
-            session()->flash('error', 'Dữ liệu chưa hợp lệ, không thể import');
+            Log::warning('[Import] Blocked: readyToImport = false');
+            $this->addError('import', 'Dữ liệu chưa hợp lệ, không thể import');
             return;
         }
 
         if (!$this->selectedLop) {
-            session()->flash('error', 'Chưa chọn lớp');
+            Log::warning('[Import] Blocked: selectedLop is null');
+            $this->addError('import', 'Chưa chọn lớp');
+            return;
+        }
+
+        if (empty($this->rows)) {
+            Log::warning('[Import] Blocked: rows is empty');
+            $this->addError('import', 'Không có dữ liệu để import, vui lòng upload lại file');
             return;
         }
 
         try {
-            $result = app(ImportStudentAction::class)
-                ->handle($this->file, $this->parishId, $this->selectedLop);
+            Log::debug('[Import] Calling ImportStudentAction::handleFromArray', [
+                'rows_count' => count($this->rows),
+            ]);
 
-            $message = "✅ Import thành công {$result['imported']} học sinh vào lớp";
+            $result = app(ImportStudentAction::class)
+                ->handleFromArray($this->rows, $this->parishId, $this->selectedLop);
+
+            Log::debug('[Import] Result', $result);
+
+            // Build thông báo thành công
+            $message = "✅ Import thành công {$result['imported']} học sinh vào lớp **{$this->className}**";
 
             if ($result['skipped_empty'] > 0) {
                 $message .= " | Bỏ qua {$result['skipped_empty']} dòng trống";
@@ -324,17 +347,28 @@ class StudentImportPreview extends BaseComponent
             if ($result['skipped_duplicate'] > 0) {
                 $message .= " | Bỏ qua {$result['skipped_duplicate']} học sinh đã tồn tại";
             }
-
             if (!empty($result['errors'])) {
                 $message .= " | ❌ " . count($result['errors']) . " dòng lỗi";
+            }
+
+            // Flash warning nếu có lỗi từng dòng
+            if (!empty($result['errors'])) {
                 session()->flash('warning', implode('<br>', array_slice($result['errors'], 0, 5)));
             }
 
+            // Reset form để cho upload lại, giữ nguyên filter lớp
+            $this->resetUpload();
+
+            // Hiển thị thông báo thành công trên trang
             session()->flash('message', $message);
-            return redirect()->route('dashboard');
         } catch (\Exception $e) {
-            $this->logError($e, 'Error confirming student import', ['selectedLop' => $this->selectedLop]);
-            session()->flash('error', 'Có lỗi khi import: ' . $e->getMessage());
+            Log::error('[Import] Exception', [
+                'message' => $e->getMessage(),
+                'file'    => $e->getFile(),
+                'line'    => $e->getLine(),
+                'trace'   => $e->getTraceAsString(),
+            ]);
+            $this->addError('import', 'Có lỗi khi import: ' . $e->getMessage());
         }
     }
 
