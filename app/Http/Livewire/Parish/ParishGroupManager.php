@@ -35,14 +35,9 @@ class ParishGroupManager extends BaseComponent
     /** @var bool Trạng thái */
     public $status = true;
 
-    // ==================== SETTINGS ====================
-
-    /** Không cần pagination */
-    protected $usePagination = false;
+    protected array $allowedSortFields = ['name', 'students_count', 'status'];
 
     // ==================== VALIDATION ====================
-    protected $rules = [];
-
     protected $formRules = [
         'name'   => 'required|string|max:255',
         'status' => 'required|boolean',
@@ -210,9 +205,12 @@ class ParishGroupManager extends BaseComponent
 
     public function render()
     {
-        // Query trực tiếp trong render — BelongsToParish scope tự filter
-        $groups = ParishGroup::withCount('students')->orderBy('name')->get();
+        $query = ParishGroup::withCount('students')
+            ->when($this->search, fn($q) => $q->where('name', 'like', '%' . $this->search . '%'));
 
+        $this->applySorting($query);
+
+        $groups = $query->paginate($this->perPage);
         return view('livewire.parish.parish-group-manager', [
             'groups' => $groups,
         ])

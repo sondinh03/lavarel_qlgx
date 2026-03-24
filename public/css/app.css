@@ -2307,6 +2307,9 @@ video {
 .pr-4 {
   padding-right: 1rem;
 }
+.pr-8 {
+  padding-right: 2rem;
+}
 .ps-0 {
   padding-inline-start: 0px;
 }
@@ -2766,6 +2769,9 @@ video {
 }
 .opacity-50 {
   opacity: 0.5;
+}
+.opacity-60 {
+  opacity: 0.6;
 }
 .opacity-75 {
   opacity: 0.75;

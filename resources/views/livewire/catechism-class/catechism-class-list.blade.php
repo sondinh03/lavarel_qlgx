@@ -57,11 +57,25 @@
                             :selected-nam-hoc="$selectedNamHoc"
                             :selected-khoi="$selectedGradeLevel" />
 
-                        <input
-                            wire:model.debounce.500ms="search"
-                            placeholder="Tìm kiếm lớp..."
-                            class="w-56 px-3 py-2 rounded-xl border border-slate-300
-                                   text-sm focus:outline-none focus:ring-2 focus:ring-primary-500" />
+                        <div class="relative w-56">
+                            <input
+                                wire:model.debounce.500ms="search"
+                                placeholder="Tìm kiếm lớp học theo tên..."
+                                class="w-full px-3 py-2 pr-8 rounded-xl border border-slate-300
+               text-sm focus:outline-none focus:ring-2 focus:ring-primary-500" />
+
+                            @if ($search)
+                            <button
+                                wire:click="$set('search', '')"
+                                class="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400
+                                hover:text-slate-600 transition-colors">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M6 18L18 6M6 6l12 12" />
+                                </svg>
+                            </button>
+                            @endif
+                        </div>
                     </div>
 
                     {{-- RIGHT: Primary Action --}}
@@ -130,11 +144,11 @@
                                 @php $ratio = ($class->students_count ?? 0) / $class->capacity; @endphp
                                 <span class="text-sm font-medium
                                         {{ $ratio >= 1 ? 'text-red-600' : ($ratio >= 0.8 ? 'text-amber-600' : 'text-slate-600') }}">
-                                    {{ $class->students_count ?? 0 }}/{{ $class->capacity }}
-                                </span>
-                                @else
-                                <span class="text-slate-400 text-sm">—</span>
-                                @endif
+                            {{ $class->students_count ?? 0 }}/{{ $class->capacity }}
+                            </span>
+                            @else
+                            <span class="text-slate-400 text-sm">—</span>
+                            @endif
                             </td>
                             --}}
 

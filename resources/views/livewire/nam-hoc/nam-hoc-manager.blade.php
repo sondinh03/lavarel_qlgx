@@ -52,7 +52,26 @@
 
             {{-- Actions Bar --}}
             <div class="px-6 py-4 border-b border-slate-200 bg-slate-50/70">
-                <div class="flex justify-end">
+                <div class="flex items-center justify-between gap-4">
+                    <div class="relative w-56">
+                        <input
+                            wire:model.debounce.500ms="search"
+                            placeholder="Tìm kiếm năm học..."
+                            class="w-full px-3 py-2 pr-8 rounded-xl border border-slate-300
+               text-sm focus:outline-none focus:ring-2 focus:ring-primary-500" />
+
+                        @if ($search)
+                        <button
+                            wire:click="$set('search', '')"
+                            class="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400
+                                hover:text-slate-600 transition-colors">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                        </button>
+                        @endif
+                    </div>
                     {{-- Create Button --}}
                     <x-action-button wire="create" icon="plus">
                         Thêm năm học
@@ -68,11 +87,25 @@
                     <thead class="bg-slate-50 border-b border-slate-200">
                         <tr>
                             <x-table-header>STT</x-table-header>
-                            <x-table-header>Tên năm học</x-table-header>
+                            <x-table-header
+                                class="text-center"
+                                :sortable="true"
+                                sort-field="name"
+                                :current-sort="$sortField"
+                                :sort-direction="$sortDirection">
+                                Tên năm học
+                            </x-table-header>
                             <x-table-header class="text-center">Học kỳ I</x-table-header>
                             <x-table-header class="text-center">Học kỳ II</x-table-header>
                             <x-table-header class="text-center">HK hiện tại</x-table-header>
-                            <x-table-header class="text-center">Trạng thái</x-table-header>
+                            <x-table-header
+                                class="text-center"
+                                :sortable="true"
+                                sort-field="status"
+                                :current-sort="$sortField"
+                                :sort-direction="$sortDirection">
+                                Trạng thái
+                            </x-table-header>
                             <x-table-header class="text-center">Thao tác</x-table-header>
                         </tr>
                     </thead>

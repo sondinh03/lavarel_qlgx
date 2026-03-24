@@ -51,6 +51,12 @@ abstract class BaseComponent extends Component
     /** @var string Pagination theme */
     protected $paginationTheme = 'tailwind';
 
+    /** @var string Cột đang sort */
+    public string $sortField = 'name';
+
+    /** @var string Hướng sort */
+    public string $sortDirection = 'asc';
+
     // ==================== VALIDATION ====================
 
     /**
@@ -128,7 +134,9 @@ abstract class BaseComponent extends Component
     protected function queryString()
     {
         $params = [
-            'search' => ['except' => ''],
+            'search'        => ['except' => ''],
+            'sortField'     => ['except' => 'name', 'as' => 'sort'],
+            'sortDirection' => ['except' => 'asc',  'as' => 'dir'],
         ];
 
         if ($this->usePagination) {
@@ -182,6 +190,30 @@ abstract class BaseComponent extends Component
         $this->search = '';
         $this->perPage = 15;
         $this->resetPage();
+    }
+
+    protected array $allowedSortFields = ['name'];
+
+    public function sortBy(string $field): void
+    {
+        if (!in_array($field, $this->allowedSortFields)) return;
+
+        if ($this->sortField === $field) {
+            $this->sortDirection = $this->sortDirection === 'asc' ? 'desc' : 'asc';
+        } else {
+            $this->sortField     = $field;
+            $this->sortDirection = 'asc';
+        }
+
+        $this->resetPage();
+    }
+
+    /**
+     * Apply sort vào query — dùng trong render() của child class
+     */
+    protected function applySorting($query)
+    {
+        return $query->orderBy($this->sortField, $this->sortDirection);
     }
 
     // ==================== PROPERTY UPDATERS ====================
