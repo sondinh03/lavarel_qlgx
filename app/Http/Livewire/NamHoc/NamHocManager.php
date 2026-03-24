@@ -3,6 +3,8 @@
 namespace App\Http\Livewire\NamHoc;
 
 use App\Http\Livewire\Base\BaseComponent;
+use App\Models\CatechismClass;
+use App\Models\GradeLevel;
 use App\Models\NamHoc;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -90,7 +92,6 @@ class NamHocManager extends BaseComponent
     {
         return [
             'search' => ['except' => ''],
-            // 'showForm' => ['except' => false],
         ];
     }
 
@@ -101,8 +102,6 @@ class NamHocManager extends BaseComponent
      */
     protected $listeners = [
         'refresh' => 'handleRefresh',
-        // 'namHocCreated' => 'loadNamHocs',
-        // 'namHocUpdated' => 'loadNamHocs',
     ];
 
     // ==================== LIFECYCLE ====================
@@ -267,9 +266,6 @@ class NamHocManager extends BaseComponent
 
             $this->resetForm();
             $this->loadNamHocs();
-
-            // Emit event
-            // $this->emit($this->editingId ? 'namHocUpdated' : 'namHocCreated');
         } catch (\Exception $e) {
             DB::rollBack();
 
@@ -315,7 +311,6 @@ class NamHocManager extends BaseComponent
      */
     public function delete(int $id): void
     {
-        // Chỉ Admin mới được xóa
         $this->authorize('delete', NamHoc::class);
 
         try {
@@ -324,11 +319,10 @@ class NamHocManager extends BaseComponent
             $namHoc = NamHoc::ofParish($this->parishId)
                 ->findOrFail($id);
 
-            // Check nếu năm học đang được sử dụng (có khối học hoặc lớp học)
-            $hasBlocks = \App\Models\Block::where('namhoc', $namHoc->id)->exists();
-
-            if ($hasBlocks) {
-                session()->flash('error', 'Không thể xóa năm học đang có khối học hoặc lớp học');
+            // Check có lớp học không
+            $hasClasses = CatechismClass::where('school_year_id', $namHoc->id)->exists();
+            if ($hasClasses) {
+                session()->flash('error', 'Không thể xóa năm học đang có lớp học');
                 return;
             }
 
@@ -337,7 +331,6 @@ class NamHocManager extends BaseComponent
             DB::commit();
 
             session()->flash('message', 'Đã xóa năm học thành công');
-
             $this->loadNamHocs();
         } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
             DB::rollBack();

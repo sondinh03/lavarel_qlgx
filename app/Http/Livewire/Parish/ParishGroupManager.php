@@ -3,7 +3,7 @@
 namespace App\Http\Livewire\Parish;
 
 use App\Http\Livewire\Base\BaseComponent;
-
+use App\Models\ParishGroup;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Support\Facades\DB;
 
@@ -41,8 +41,9 @@ class ParishGroupManager extends BaseComponent
     protected $usePagination = false;
 
     // ==================== VALIDATION ====================
+    protected $rules = [];
 
-    protected $rules = [
+    protected $formRules = [
         'name'   => 'required|string|max:255',
         'status' => 'required|boolean',
     ];
@@ -56,23 +57,17 @@ class ParishGroupManager extends BaseComponent
 
     public function mount()
     {
-        $this->initializeUser();
-        $this->authorize('viewAny', \App\Models\ParishGroup::class);
         parent::mount();
+        $this->authorize('viewAny', \App\Models\ParishGroup::class);
     }
 
-    protected function loadInitialData(): void
-    {
-        // Data được load trực tiếp trong render()
-        // không cần lưu vào property vì BelongsToParish scope
-        // tự filter mỗi lần render
-    }
+    protected function loadInitialData(): void {}
 
     // ==================== CRUD ACTIONS ====================
 
     public function create(): void
     {
-        $this->authorize('create', \App\Models\ParishGroup::class);
+        $this->authorize('create', ParishGroup::class);
         $this->resetForm();
         $this->showForm = true;
     }
@@ -105,27 +100,28 @@ class ParishGroupManager extends BaseComponent
             $this->authorize('create', \App\Models\ParishGroup::class);
         }
 
-        $this->validate();
-
-        // Kiểm tra tên trùng trong cùng xứ
-        $exists = \App\Models\ParishGroup::where('name', $this->name)
-            ->when($this->editingId, fn($q) => $q->where('id', '!=', $this->editingId))
-            ->exists();
-
-        if ($exists) {
-            session()->flash('error', 'Tên giáo họ đã tồn tại');
-            return;
-        }
+        $this->validate($this->formRules, $this->messages);
 
         try {
             DB::beginTransaction();
 
+            // Check trùng tên TRONG transaction để tránh race condition
+            $exists = \App\Models\ParishGroup::where('name', $this->name)
+                ->when($this->editingId, fn($q) => $q->where('id', '!=', $this->editingId))
+                ->exists();
+
+            if ($exists) {
+                DB::rollBack();
+                $this->addError('name', 'Tên giáo họ đã tồn tại');  // ← hiện inline
+                return;
+            }
+
             \App\Models\ParishGroup::updateOrCreate(
                 ['id' => $this->editingId],
                 [
+                    'parish_id' => $this->parishId,
                     'name'   => $this->name,
                     'status' => $this->status,
-                    // parish_id được Observer tự gán
                 ]
             );
 
@@ -160,7 +156,7 @@ class ParishGroupManager extends BaseComponent
 
             session()->flash(
                 'message',
-                $group->status ? 'Đã kích hoạt giáo họ' : 'Đã tắt giáo họ'
+                $group->status ? 'Đã kích hoạt giáo họ' : 'Đã Lưu trữ giáo họ'
             );
         } catch (ModelNotFoundException) {
             session()->flash('error', 'Không tìm thấy giáo họ');
@@ -215,7 +211,7 @@ class ParishGroupManager extends BaseComponent
     public function render()
     {
         // Query trực tiếp trong render — BelongsToParish scope tự filter
-        $groups = \App\Models\ParishGroup::orderBy('name')->get();
+        $groups = ParishGroup::withCount('students')->orderBy('name')->get();
 
         return view('livewire.parish.parish-group-manager', [
             'groups' => $groups,

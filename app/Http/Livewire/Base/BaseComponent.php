@@ -161,16 +161,15 @@ abstract class BaseComponent extends Component
      */
     protected function validateInitialState(): void
     {
+        if (!$this->usePagination) {
+            return;
+        }
+
         try {
-            $this->validate();
+            $this->validateOnly('perPage');
         } catch (ValidationException $e) {
             $this->resetToDefaults();
             session()->flash('warning', 'Một số tham số không hợp lệ, đã đặt lại về mặc định.');
-
-            Log::warning(static::class . ': Validation failed on mount', [
-                'errors' => $e->errors(),
-                'parishId' => $this->parishId,
-            ]);
         }
     }
 

@@ -196,29 +196,59 @@
     {{-- Modal --}}
     <div
         x-show="showForm"
-        x-transition
-        class="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4"
+        x-transition:enter="transition ease-out duration-200"
+        x-transition:enter-start="opacity-0"
+        x-transition:enter-end="opacity-100"
+        x-transition:leave="transition ease-in duration-150"
+        x-transition:leave-start="opacity-100"
+        x-transition:leave-end="opacity-0"
+        class="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50 p-4"
         role="dialog"
         aria-modal="true"
         aria-labelledby="namhoc-modal-title"
         @click="showForm = false; $wire.closeModal()">
 
+        {{-- Modal box --}}
         <div
+            x-show="showForm"
+            x-transition:enter="transition ease-out duration-200"
+            x-transition:enter-start="opacity-0 translate-y-4 scale-95"
+            x-transition:enter-end="opacity-100 translate-y-0 scale-100"
+            x-transition:leave="transition ease-in duration-150"
+            x-transition:leave-start="opacity-100 translate-y-0 scale-100"
+            x-transition:leave-end="opacity-0 translate-y-4 scale-95"
             class="bg-white rounded-2xl shadow-xl w-full max-w-xl max-h-[90vh] overflow-hidden flex flex-col"
             @click.stop>
 
             {{-- Header --}}
             <div class="flex-shrink-0 p-6 border-b border-slate-200 bg-gradient-to-br from-primary-50 to-white">
-                <h2 id="namhoc-modal-title" class="text-xl font-bold text-slate-900">
-                    {{ $editingId ? 'Cập nhật năm học' : 'Thêm năm học mới' }}
-                </h2>
-                <p class="text-sm text-slate-600 mt-1">
-                    Thiết lập thông tin năm học và thời gian các học kỳ
-                </p>
+                <div class="flex items-start justify-between gap-4">
+
+                    <div>
+                        <h2 id="namhoc-modal-title" class="text-xl font-bold text-slate-900">
+                            {{ $editingId ? 'Cập nhật năm học' : 'Thêm năm học mới' }}
+                        </h2>
+                        <p class="text-sm text-slate-600 mt-1">
+                            Thiết lập thông tin năm học và thời gian các học kỳ
+                        </p>
+                    </div>
+
+                    <button
+                        @click="showForm = false; $wire.closeModal()"
+                        class="flex-shrink-0 p-1 rounded-lg text-slate-400 hover:text-slate-600
+                           hover:bg-slate-100 transition-colors">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                    </button>
+                </div>
             </div>
 
             {{-- Body --}}
             <div class="flex-1 overflow-y-auto p-6 space-y-5">
+
+                {{-- Error summary --}}
                 @if ($errors->any())
                 <div class="bg-red-50 border-l-4 border-red-500 rounded-xl p-4">
                     <div class="flex items-start gap-3">
@@ -227,7 +257,9 @@
                                 d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                         </svg>
                         <div class="flex-1">
-                            <h4 class="text-sm font-semibold text-red-800 mb-2">Vui lòng kiểm tra lại thông tin</h4>
+                            <h4 class="text-sm font-semibold text-red-800 mb-2">
+                                Vui lòng kiểm tra lại thông tin
+                            </h4>
                             <ul class="space-y-1 text-sm text-red-700">
                                 @foreach ($errors->all() as $error)
                                 <li class="flex items-start gap-2">
@@ -241,12 +273,15 @@
                 </div>
                 @endif
 
-                <x-form-input label="Tên năm học"
+                {{-- Tên năm học --}}
+                <x-form-input
+                    label="Tên năm học"
                     name="name"
                     wire:model="name"
                     placeholder="Ví dụ: 2025 – 2026"
                     required />
 
+                {{-- Học kỳ I --}}
                 <div class="border border-slate-200 rounded-xl p-4 space-y-3">
                     <h3 class="text-sm font-bold text-slate-900">Học kỳ I</h3>
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -255,6 +290,7 @@
                     </div>
                 </div>
 
+                {{-- Học kỳ II --}}
                 <div class="border border-slate-200 rounded-xl p-4 space-y-3">
                     <h3 class="text-sm font-bold text-slate-900">Học kỳ II</h3>
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -267,7 +303,7 @@
             {{-- Footer --}}
             <div class="flex-shrink-0 px-6 py-4 border-t border-slate-200 bg-slate-50 flex justify-end gap-3">
                 <x-action-button
-                    @click="showForm = false; $wire.closeModal()" {{-- Alpine đóng ngay --}}
+                    @click="showForm = false; $wire.closeModal()"
                     variant="secondary">
                     Hủy
                 </x-action-button>
@@ -275,6 +311,7 @@
                     Lưu
                 </x-action-button>
             </div>
+
         </div>
     </div>
 </div>
