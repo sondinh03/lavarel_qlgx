@@ -58,7 +58,9 @@ use App\Http\Livewire\NamHoc\NamHocManager;
 use App\Http\Livewire\Parish\ParishChild;
 use App\Http\Livewire\Parish\ParishGroup;
 use App\Http\Livewire\Parish\ParishGroupManager;
+use App\Http\Livewire\Parishioners\ParishionerShow;
 use App\Http\Livewire\Parishioners\ParishionersManager;
+use App\Http\Livewire\Parishioners\SacramentsManager;
 use App\Http\Livewire\Score\ScoreManager;
 use App\Http\Livewire\Student\PrintCards;
 use App\Http\Livewire\Student\StudentDetail;
@@ -98,6 +100,10 @@ Route::middleware('auth')->group(function () {
 
     Route::get('/parishioner', ParishionersManager::class)
         ->name('parishioners.index');
+    Route::get('/parishioner/sacrament', SacramentsManager::class)
+        ->name('parishioners.sacrament');
+    Route::get('/parishioners/{parishioner}', ParishionerShow::class)
+        ->name('parishioners.show');
 
     Route::middleware('role:parish_admin|catechist')->group(function () {
 
