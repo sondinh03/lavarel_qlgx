@@ -4,7 +4,7 @@
 
     <a href="#main-content" class="sr-only focus:not-sr-only">Bỏ qua tới nội dung</a>
 
-    <div id="main-content" class="mx-auto max-w-7xl space-y-5">
+    <div id="main-content" class="mx-auto max-w-3xl space-y-5">
 
         {{-- Breadcrumb --}}
         <x-breadcrumb :items="[
@@ -46,7 +46,7 @@
             </x-page-header>
 
             {{-- Actions Bar --}}
-            <div class="px-6 py-4 border-b border-slate-200 bg-slate-50/70">
+            <div class="px-4 py-3 border-b border-slate-200 bg-slate-50/70">
                 <div class="flex justify-end">
                     <x-action-button wire="create" icon="plus">
                         Thêm Tên thánh
@@ -70,17 +70,17 @@
                     <tbody class="divide-y divide-slate-100">
                         @forelse ($holies as $i => $holy)
                         <tr class="hover:bg-slate-50 transition-colors" wire:key="holy-{{ $holy->id }}">
-                            <td class="px-6 py-4 text-sm text-slate-500">
+                            <td class="px-4 py-3 text-sm text-slate-500">
                                 {{ $holies->firstItem() + $i }}
                             </td>
 
-                            <td class="px-6 py-4">
+                            <td class="px-4 py-3">
                                 <div class="font-semibold text-slate-900">
                                     {{ $holy->name }}
                                 </div>
                             </td>
 
-                            <td class="px-6 py-4">
+                            <td class="px-4 py-3">
                                 <div class="flex items-center justify-center gap-3">
                                     <x-table-action
                                         wire="edit({{ $holy->id }})"
@@ -219,7 +219,7 @@
             </div>
 
             {{-- Footer --}}
-            <div class="flex-shrink-0 px-6 py-4 border-t border-slate-200 bg-slate-50 flex justify-end gap-3">
+            <div class="flex-shrink-0 px-4 py-3 border-t border-slate-200 bg-slate-50 flex justify-end gap-3">
                 <x-action-button
                     @click="showModal = false; $wire.closeModal()"
                     variant="secondary">
