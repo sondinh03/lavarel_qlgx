@@ -395,133 +395,420 @@
 
     {{-- ===== MODAL: Thông tin cơ bản ===== --}}
     @if($showEditBasic)
-    <div class="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4" wire:click="$set('showEditBasic', false)">
-        <div class="bg-white rounded-2xl shadow-xl w-full max-w-3xl max-h-[90vh] flex flex-col" wire:click.stop>
-            @include('livewire.parishioners.partials.modal-header', ['title' => 'Chỉnh sửa thông tin cơ bản', 'close' => 'showEditBasic'])
-            <div class="flex-1 overflow-y-auto p-6 space-y-4">
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    @include('livewire.parishioners.partials.field-text', ['wire' => 'last_name', 'label' => 'Họ', 'required' => true])
-                    @include('livewire.parishioners.partials.field-text', ['wire' => 'first_name', 'label' => 'Tên', 'required' => true])
-                    @include('livewire.parishioners.partials.field-select', ['wire' => 'gender', 'label' => 'Giới tính', 'options' => ['male' => 'Nam', 'female' => 'Nữ']])
-                    @include('livewire.parishioners.partials.field-date', ['wire' => 'birthday', 'label' => 'Ngày sinh'])
-                    @include('livewire.parishioners.partials.field-text', ['wire' => 'cccd', 'label' => 'CCCD'])
-                    @include('livewire.parishioners.partials.field-text', ['wire' => 'phone', 'label' => 'Điện thoại'])
-                    @include('livewire.parishioners.partials.field-text', ['wire' => 'email', 'label' => 'Email', 'type' => 'email'])
-                    @include('livewire.parishioners.partials.field-select', ['wire' => 'career', 'label' => 'Nghề nghiệp', 'options' => config('parishioner.career', []), 'nullable' => true])
-                    @include('livewire.parishioners.partials.field-select', ['wire' => 'education_level', 'label' => 'Học vấn', 'options' => config('parishioner.education_level', []), 'nullable' => true])
-                    @include('livewire.parishioners.partials.field-select', ['wire' => 'catechism_level', 'label' => 'Trình độ giáo lý', 'options' => config('parishioner.catechism_level', []), 'nullable' => true])
-                    @include('livewire.parishioners.partials.field-select', ['wire' => 'position', 'label' => 'Chức vụ', 'options' => config('parishioner.position', []), 'nullable' => true])
-                </div>
-                <div class="grid grid-cols-2 gap-3 pt-2">
-                    @include('livewire.parishioners.partials.field-checkbox', ['wire' => 'status', 'label' => 'Kích hoạt'])
-                    @include('livewire.parishioners.partials.field-checkbox', ['wire' => 'is_active', 'label' => 'Đang sinh hoạt tại xứ'])
-                    @include('livewire.parishioners.partials.field-checkbox', ['wire' => 'is_new_convert', 'label' => 'Tân tòng'])
-                    @include('livewire.parishioners.partials.field-checkbox', ['wire' => 'is_included_in_stats', 'label' => 'Tính vào thống kê'])
-                </div>
-                <div>
-                    <label class="block text-sm font-medium text-slate-700 mb-1">Ghi chú</label>
-                    <textarea wire:model.defer="note" rows="3"
-                        class="w-full px-3 py-2 rounded-xl border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition"></textarea>
-                </div>
-                <div>
-                    <label class="block text-sm font-medium text-slate-700 mb-1">Ảnh đại diện</label>
-                    <input wire:model="avatar" type="file" accept="image/*" class="w-full text-sm text-slate-600" />
-                    @if($currentAvatarPath)
-                    <img src="{{ asset('storage/' . $currentAvatarPath) }}" class="w-14 h-14 rounded-full mt-2 object-cover" />
-                    @endif
-                    @error('avatar') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
+    <div
+        x-data
+        x-show="$wire.showEditBasic"
+        x-transition:enter="transition ease-out duration-200"
+        x-transition:enter-start="opacity-0"
+        x-transition:enter-end="opacity-100"
+        x-transition:leave="transition ease-in duration-150"
+        x-transition:leave-start="opacity-100"
+        x-transition:leave-end="opacity-0"
+        class="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50 p-4"
+        @click="$wire.set('showEditBasic', false)"
+        @keydown.escape.window="$wire.set('showEditBasic', false)">
+
+        <div
+            x-show="$wire.showEditBasic"
+            x-transition:enter="transition ease-out duration-200"
+            x-transition:enter-start="opacity-0 translate-y-4 scale-95"
+            x-transition:enter-end="opacity-100 translate-y-0 scale-100"
+            x-transition:leave="transition ease-in duration-150"
+            x-transition:leave-start="opacity-100 translate-y-0 scale-100"
+            x-transition:leave-end="opacity-0 translate-y-4 scale-95"
+            class="bg-white rounded-2xl shadow-xl w-full max-w-3xl max-h-[90vh] flex flex-col overflow-hidden"
+            @click.stop>
+
+            {{-- HEADER --}}
+            <div class="p-6 border-b border-slate-200 bg-gradient-to-br from-primary-50 to-white">
+                <div class="flex justify-between">
+                    <div>
+                        <h2 class="text-xl font-bold text-slate-900">Chỉnh sửa thông tin cơ bản</h2>
+                        <p class="text-sm text-slate-600 mt-1">Cập nhật thông tin cá nhân giáo dân</p>
+                    </div>
+                    <button @click="$wire.set('showEditBasic', false)"
+                        class="p-1 rounded-lg hover:bg-slate-100 text-slate-400">
+                        ✕
+                    </button>
                 </div>
             </div>
-            @include('livewire.parishioners.partials.modal-footer', ['close' => 'showEditBasic', 'save' => 'saveBasic'])
+
+            {{-- BODY --}}
+            <div class="flex-1 overflow-y-auto p-6 space-y-5">
+
+                <div class="border rounded-xl p-4 space-y-4">
+                    <h3 class="text-sm font-bold text-slate-900">Thông tin cá nhân</h3>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        @include('livewire.parishioners.partials.field-text', ['wire'=>'last_name','label'=>'Họ'])
+                        @include('livewire.parishioners.partials.field-text', ['wire'=>'first_name','label'=>'Tên'])
+                        @include('livewire.parishioners.partials.field-select',['wire'=>'gender','label'=>'Giới tính','options'=>['male'=>'Nam','female'=>'Nữ']])
+                        @include('livewire.parishioners.partials.field-date',['wire'=>'birthday','label'=>'Ngày sinh'])
+                    </div>
+                </div>
+
+                <div class="border rounded-xl p-4 space-y-4">
+                    <h3 class="text-sm font-bold text-slate-900">Liên hệ & khác</h3>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        @include('livewire.parishioners.partials.field-text',['wire'=>'phone','label'=>'Điện thoại'])
+                        @include('livewire.parishioners.partials.field-text',['wire'=>'email','label'=>'Email'])
+                        @include('livewire.parishioners.partials.field-text',['wire'=>'cccd','label'=>'CCCD'])
+                    </div>
+                </div>
+
+            </div>
+
+            {{-- FOOTER --}}
+            <div class="px-6 py-4 border-t border-slate-200 bg-slate-50 flex justify-end gap-3">
+                <button @click="$wire.set('showEditBasic', false)"
+                    class="px-4 py-2 text-sm font-medium text-slate-600 
+                        bg-white border border-slate-300 rounded-xl
+                        hover:bg-slate-50 hover:text-slate-800
+                        active:scale-95
+                        focus:outline-none focus:ring-2 focus:ring-slate-400
+                        transition-all duration-150">Hủy</button>
+
+                <button wire:click="saveBasic"
+                    class="px-5 py-2 text-sm font-medium text-white 
+                        bg-primary-600 rounded-xl
+                        hover:bg-primary-700 
+                        active:scale-95
+                        focus:outline-none focus:ring-2 focus:ring-primary-500
+                        transition-all duration-150">
+                    Lưu
+                </button>
+            </div>
+
         </div>
     </div>
     @endif
 
     {{-- ===== MODAL: Địa chỉ ===== --}}
     @if($showEditAddress)
-    <div class="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4" wire:click="$set('showEditAddress', false)">
-        <div class="bg-white rounded-2xl shadow-xl w-full max-w-2xl max-h-[90vh] flex flex-col" wire:click.stop>
-            @include('livewire.parishioners.partials.modal-header', ['title' => 'Chỉnh sửa địa chỉ', 'close' => 'showEditAddress'])
-            <div class="flex-1 overflow-y-auto p-6 space-y-4">
-                @include('livewire.parishioners.partials.field-text', ['wire' => 'origin', 'label' => 'Quê quán'])
-                <p class="text-xs font-semibold text-slate-500 uppercase tracking-wide pt-1">Thường trú</p>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    @include('livewire.parishioners.partials.field-text', ['wire' => 'permanent_province', 'label' => 'Tỉnh/TP'])
-                    @include('livewire.parishioners.partials.field-text', ['wire' => 'permanent_residence', 'label' => 'Địa chỉ chi tiết'])
-                </div>
-                <p class="text-xs font-semibold text-slate-500 uppercase tracking-wide pt-1">Tạm trú</p>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    @include('livewire.parishioners.partials.field-text', ['wire' => 'temporary_province', 'label' => 'Tỉnh/TP'])
-                    @include('livewire.parishioners.partials.field-text', ['wire' => 'temporary_residence', 'label' => 'Địa chỉ chi tiết'])
-                </div>
+    <div x-data x-show="$wire.showEditAddress" class="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center p-4"
+        @click="$wire.set('showEditAddress', false)">
+
+        <div class="bg-white rounded-2xl shadow-xl w-full max-w-2xl flex flex-col"
+            @click.stop>
+
+            <div class="p-6 border-b bg-gradient-to-br from-primary-50">
+                <h2 class="text-xl font-bold">Địa chỉ</h2>
             </div>
-            @include('livewire.parishioners.partials.modal-footer', ['close' => 'showEditAddress', 'save' => 'saveAddress'])
+
+            <div class="p-6 space-y-4">
+                @include('livewire.parishioners.partials.field-text',['wire'=>'origin','label'=>'Quê quán'])
+                @include('livewire.parishioners.partials.field-text',['wire'=>'permanent_residence','label'=>'Thường trú'])
+            </div>
+
+            <div class="p-4 border-t bg-slate-50 flex justify-end gap-2">
+                <button @click="$wire.set('showEditAddress', false)">Hủy</button>
+                <button wire:click="saveAddress" class="bg-primary-600 text-white px-4 py-2 rounded-xl">Lưu</button>
+            </div>
+
         </div>
     </div>
     @endif
 
     {{-- ===== MODAL: Gia đình ===== --}}
     @if($showEditFamily)
-    <div class="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4" wire:click="$set('showEditFamily', false)">
-        <div class="bg-white rounded-2xl shadow-xl w-full max-w-2xl max-h-[90vh] flex flex-col" wire:click.stop>
-            @include('livewire.parishioners.partials.modal-header', ['title' => 'Chỉnh sửa gia đình', 'close' => 'showEditFamily'])
-            <div class="flex-1 overflow-y-auto p-6">
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    @include('livewire.parishioners.partials.field-text', ['wire' => 'father_name', 'label' => 'Tên cha'])
-                    @include('livewire.parishioners.partials.field-text', ['wire' => 'mother_name', 'label' => 'Tên mẹ'])
-                    @include('livewire.parishioners.partials.field-select', ['wire' => 'married', 'label' => 'Tình trạng hôn nhân', 'options' => ['0' => 'Độc thân', '1' => 'Đã kết hôn', '2' => 'Góa', '3' => 'Ly hôn']])
+    <div
+        x-data
+        x-show="$wire.showEditFamily"
+        x-transition:enter="transition ease-out duration-200"
+        x-transition:enter-start="opacity-0"
+        x-transition:enter-end="opacity-100"
+        x-transition:leave="transition ease-in duration-150"
+        x-transition:leave-start="opacity-100"
+        x-transition:leave-end="opacity-0"
+        class="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50 p-4"
+        @click="$wire.set('showEditFamily', false)"
+        @keydown.escape.window="$wire.set('showEditFamily', false)">
+
+        {{-- Modal box --}}
+        <div
+            x-show="$wire.showEditFamily"
+            x-transition:enter="transition ease-out duration-200"
+            x-transition:enter-start="opacity-0 translate-y-4 scale-95"
+            x-transition:enter-end="opacity-100 translate-y-0 scale-100"
+            x-transition:leave="transition ease-in duration-150"
+            x-transition:leave-start="opacity-100 translate-y-0 scale-100"
+            x-transition:leave-end="opacity-0 translate-y-4 scale-95"
+            class="bg-white rounded-2xl shadow-xl w-full max-w-2xl max-h-[90vh] flex flex-col overflow-hidden"
+            @click.stop>
+
+            {{-- HEADER --}}
+            <div class="flex-shrink-0 p-6 border-b border-slate-200 bg-gradient-to-br from-primary-50 to-white">
+                <div class="flex items-start justify-between gap-4">
+                    <div>
+                        <h2 class="text-xl font-bold text-slate-900">
+                            Chỉnh sửa gia đình
+                        </h2>
+                        <p class="text-sm text-slate-600 mt-1">
+                            Cập nhật thông tin cha mẹ và tình trạng hôn nhân
+                        </p>
+                    </div>
+
+                    <button
+                        @click="$wire.set('showEditFamily', false)"
+                        class="p-1 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                    </button>
                 </div>
-                <p class="text-xs text-slate-400 mt-4">
-                    Để liên kết cha/mẹ theo hồ sơ trong hệ thống, vui lòng dùng chức năng tìm kiếm (đang phát triển).
-                </p>
             </div>
-            @include('livewire.parishioners.partials.modal-footer', ['close' => 'showEditFamily', 'save' => 'saveFamily'])
+
+            {{-- BODY --}}
+            <div class="flex-1 overflow-y-auto p-6 space-y-5">
+
+                {{-- Thông tin cha mẹ --}}
+                <div class="border border-slate-200 rounded-xl p-4 space-y-4">
+                    <h3 class="text-sm font-bold text-slate-900">Cha / Mẹ</h3>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        @include('livewire.parishioners.partials.field-text', [
+                        'wire' => 'father_name',
+                        'label' => 'Tên cha'
+                        ])
+
+                        @include('livewire.parishioners.partials.field-text', [
+                        'wire' => 'mother_name',
+                        'label' => 'Tên mẹ'
+                        ])
+                    </div>
+                </div>
+
+                {{-- Tình trạng hôn nhân --}}
+                <div class="border border-slate-200 rounded-xl p-4 space-y-4">
+                    <h3 class="text-sm font-bold text-slate-900">Hôn nhân</h3>
+
+                    @include('livewire.parishioners.partials.field-select', [
+                    'wire' => 'married',
+                    'label' => 'Tình trạng hôn nhân',
+                    'options' => [
+                    '0' => 'Độc thân',
+                    '1' => 'Đã kết hôn',
+                    '2' => 'Góa',
+                    '3' => 'Ly hôn'
+                    ]
+                    ])
+                </div>
+
+                {{-- Ghi chú --}}
+                <div class="text-xs text-slate-400">
+                    Để liên kết cha/mẹ theo hồ sơ trong hệ thống, vui lòng dùng chức năng tìm kiếm (đang phát triển).
+                </div>
+
+            </div>
+
+            {{-- FOOTER --}}
+            <div class="flex-shrink-0 px-6 py-4 border-t border-slate-200 bg-slate-50 flex justify-end gap-3">
+
+                {{-- Cancel --}}
+                <button
+                    @click="$wire.set('showEditFamily', false)"
+                    class="px-4 py-2 text-sm font-medium text-slate-600 
+                       bg-white border border-slate-300 rounded-xl
+                       hover:bg-slate-50 hover:text-slate-800
+                       active:scale-95
+                       focus:outline-none focus:ring-2 focus:ring-slate-400
+                       transition-all duration-150">
+                    Hủy
+                </button>
+
+                {{-- Save --}}
+                <button
+                    wire:click="saveFamily"
+                    wire:loading.attr="disabled"
+                    class="px-5 py-2 text-sm font-medium text-white 
+                       bg-primary-600 rounded-xl
+                       hover:bg-primary-700
+                       active:scale-95
+                       focus:outline-none focus:ring-2 focus:ring-primary-500
+                       transition-all duration-150
+                       disabled:opacity-60">
+                    <span wire:loading.remove wire:target="saveFamily">
+                        Lưu
+                    </span>
+                    <span wire:loading wire:target="saveFamily">
+                        Đang lưu...
+                    </span>
+                </button>
+
+            </div>
+
         </div>
     </div>
     @endif
 
     {{-- ===== MODAL: Hôn phối ===== --}}
     @if($showEditMarriage)
-    <div class="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4" wire:click="$set('showEditMarriage', false)">
-        <div class="bg-white rounded-2xl shadow-xl w-full max-w-2xl max-h-[90vh] flex flex-col" wire:click.stop>
-            @include('livewire.parishioners.partials.modal-header', ['title' => 'Chỉnh sửa hôn phối', 'close' => 'showEditMarriage'])
-            <div class="flex-1 overflow-y-auto p-6">
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    @include('livewire.parishioners.partials.field-date', ['wire' => 'married_date', 'label' => 'Ngày kết hôn'])
-                    @include('livewire.parishioners.partials.field-select', ['wire' => 'marriage_status', 'label' => 'Trạng thái', 'options' => \App\Models\Marriage::statusOptions()])
-                    @include('livewire.parishioners.partials.field-text', ['wire' => 'certificate_number', 'label' => 'Số chứng chỉ'])
-                    @include('livewire.parishioners.partials.field-text', ['wire' => 'marriage_parish_name','label' => 'Nơi kết hôn'])
-                    @include('livewire.parishioners.partials.field-text', ['wire' => 'witness_1', 'label' => 'Nhân chứng 1'])
-                    @include('livewire.parishioners.partials.field-text', ['wire' => 'witness_2', 'label' => 'Nhân chứng 2'])
-                </div>
-                <div class="mt-4">
-                    <label class="block text-sm font-medium text-slate-700 mb-1">Ghi chú</label>
-                    <textarea wire:model.defer="marriage_note" rows="2"
-                        class="w-full px-3 py-2 rounded-xl border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition"></textarea>
+    <div
+        x-data
+        x-show="$wire.showEditMarriage"
+        x-transition:enter="transition ease-out duration-200"
+        x-transition:enter-start="opacity-0"
+        x-transition:enter-end="opacity-100"
+        x-transition:leave="transition ease-in duration-150"
+        x-transition:leave-start="opacity-100"
+        x-transition:leave-end="opacity-0"
+        class="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50 p-4"
+        @click="$wire.set('showEditMarriage', false)"
+        @keydown.escape.window="$wire.set('showEditMarriage', false)">
+
+        {{-- Modal box --}}
+        <div
+            x-show="$wire.showEditMarriage"
+            x-transition:enter="transition ease-out duration-200"
+            x-transition:enter-start="opacity-0 translate-y-4 scale-95"
+            x-transition:enter-end="opacity-100 translate-y-0 scale-100"
+            x-transition:leave="transition ease-in duration-150"
+            x-transition:leave-start="opacity-100 translate-y-0 scale-100"
+            x-transition:leave-end="opacity-0 translate-y-4 scale-95"
+            class="bg-white rounded-2xl shadow-xl w-full max-w-2xl max-h-[90vh] flex flex-col overflow-hidden"
+            @click.stop>
+
+            {{-- HEADER --}}
+            <div class="flex-shrink-0 p-6 border-b border-slate-200 bg-gradient-to-br from-primary-50 to-white">
+                <div class="flex items-start justify-between gap-4">
+                    <div>
+                        <h2 class="text-xl font-bold text-slate-900">
+                            {{ $marriage_id ? 'Chỉnh sửa hôn phối' : 'Thêm hôn phối' }}
+                        </h2>
+                        <p class="text-sm text-slate-600 mt-1">
+                            Cập nhật thông tin bí tích hôn phối
+                        </p>
+                    </div>
+
+                    <button
+                        @click="$wire.set('showEditMarriage', false)"
+                        class="p-1 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                    </button>
                 </div>
             </div>
-            {{-- Footer riêng cho modal hôn phối vì có nút Xóa bên trái --}}
-            <div class="flex items-center justify-between px-6 py-4 border-t border-slate-100 bg-slate-50 flex-shrink-0">
+
+            {{-- BODY --}}
+            <div class="flex-1 overflow-y-auto p-6 space-y-5">
+
+                {{-- Thông tin chính --}}
+                <div class="border border-slate-200 rounded-xl p-4 space-y-4">
+                    <h3 class="text-sm font-bold text-slate-900">Thông tin hôn phối</h3>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        @include('livewire.parishioners.partials.field-date', [
+                        'wire' => 'married_date',
+                        'label' => 'Ngày kết hôn'
+                        ])
+
+                        @include('livewire.parishioners.partials.field-select', [
+                        'wire' => 'marriage_status',
+                        'label' => 'Trạng thái',
+                        'options' => \App\Models\Marriage::statusOptions()
+                        ])
+
+                        @include('livewire.parishioners.partials.field-text', [
+                        'wire' => 'certificate_number',
+                        'label' => 'Số chứng chỉ'
+                        ])
+
+                        @include('livewire.parishioners.partials.field-text', [
+                        'wire' => 'marriage_parish_name',
+                        'label' => 'Nơi kết hôn'
+                        ])
+                    </div>
+                </div>
+
+                {{-- Nhân chứng --}}
+                <div class="border border-slate-200 rounded-xl p-4 space-y-4">
+                    <h3 class="text-sm font-bold text-slate-900">Nhân chứng</h3>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        @include('livewire.parishioners.partials.field-text', [
+                        'wire' => 'witness_1',
+                        'label' => 'Nhân chứng 1'
+                        ])
+
+                        @include('livewire.parishioners.partials.field-text', [
+                        'wire' => 'witness_2',
+                        'label' => 'Nhân chứng 2'
+                        ])
+                    </div>
+                </div>
+
+                {{-- Ghi chú --}}
+                <div class="space-y-2">
+                    <label class="text-sm font-medium text-slate-700">Ghi chú</label>
+                    <textarea
+                        wire:model.defer="marriage_note"
+                        rows="2"
+                        class="w-full px-3 py-2 rounded-xl border border-slate-300 text-sm
+                           focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition"></textarea>
+                </div>
+
+            </div>
+
+            {{-- FOOTER --}}
+            <div class="flex-shrink-0 px-6 py-4 border-t border-slate-200 bg-slate-50 flex items-center justify-between">
+
+                {{-- Delete --}}
                 @if($marriage_id)
-                <button wire:click="deleteMarriage" wire:confirm="Xóa hôn phối này?"
-                    class="px-4 py-2 text-sm font-medium text-red-600 bg-red-50 border border-red-200 rounded-xl hover:bg-red-100 transition">
+                <button
+                    wire:click="deleteMarriage"
+                    wire:confirm="Xóa hôn phối này?"
+                    class="px-4 py-2 text-sm font-medium text-red-600 
+                       bg-red-50 border border-red-200 rounded-xl
+                       hover:bg-red-100
+                       active:scale-95
+                       focus:outline-none focus:ring-2 focus:ring-red-500
+                       transition-all duration-150">
                     Xóa hôn phối
                 </button>
                 @else
                 <div></div>
                 @endif
+
+                {{-- Actions --}}
                 <div class="flex items-center gap-3">
-                    <button wire:click="$set('showEditMarriage', false)"
-                        class="px-4 py-2 text-sm font-medium text-slate-600 bg-white border border-slate-300 rounded-xl hover:bg-slate-50 transition">
+
+                    <button
+                        @click="$wire.set('showEditMarriage', false)"
+                        class="px-4 py-2 text-sm font-medium text-slate-600 
+                           bg-white border border-slate-300 rounded-xl
+                           hover:bg-slate-50 hover:text-slate-800
+                           active:scale-95
+                           focus:outline-none focus:ring-2 focus:ring-slate-400
+                           transition-all duration-150">
                         Hủy
                     </button>
-                    <button wire:click="saveMarriage" wire:loading.attr="disabled"
-                        class="px-6 py-2 text-sm font-medium text-white bg-gradient-to-r from-primary-500 to-primary-600 rounded-xl hover:bg-primary-700 active:scale-95 shadow-sm transition disabled:opacity-60">
-                        <span wire:loading.remove wire:target="saveMarriage">Lưu</span>
-                        <span wire:loading wire:target="saveMarriage">Đang lưu...</span>
+
+                    <button
+                        wire:click="saveMarriage"
+                        wire:loading.attr="disabled"
+                        class="px-5 py-2 text-sm font-medium text-white 
+                           bg-primary-600 rounded-xl
+                           hover:bg-primary-700
+                           active:scale-95
+                           focus:outline-none focus:ring-2 focus:ring-primary-500
+                           transition-all duration-150
+                           disabled:opacity-60">
+                        <span wire:loading.remove wire:target="saveMarriage">
+                            Lưu
+                        </span>
+                        <span wire:loading wire:target="saveMarriage">
+                            Đang lưu...
+                        </span>
                     </button>
+
                 </div>
+
             </div>
+
         </div>
     </div>
     @endif

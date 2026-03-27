@@ -210,13 +210,13 @@
                                 <div class="inline-flex items-center gap-2">
                                     <a href="{{ route('parishioners.show', $p->id) }}"
                                         class="text-sm text-slate-600 hover:text-slate-800 font-medium">Xem</a>
-                                    <span class="text-slate-300">|</span>
+                                    {{-- <span class="text-slate-300">|</span>
                                     <button wire:click="edit({{ $p->id }})" class="text-sm text-primary-600 hover:text-primary-700 font-medium">Sửa</button>
                                     <span class="text-slate-300">|</span>
                                     <button wire:click="toggleStatus({{ $p->id }})" wire:loading.attr="disabled"
                                         class="text-sm {{ $p->status ? 'text-amber-600 hover:text-amber-700' : 'text-green-600 hover:text-green-700' }} font-medium">
                                         {{ $p->status ? 'Tắt' : 'Bật' }}
-                                    </button>
+                                    </button> --}}
                                     <span class="text-slate-300">|</span>
                                     <button wire:click="delete({{ $p->id }})"
                                         wire:confirm="Bạn có chắc muốn xóa giáo dân này không?"
