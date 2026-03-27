@@ -108,6 +108,7 @@
         {{-- Table --}}
         <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
             @if($parishioners->count() > 0)
+
             <div class="overflow-x-auto">
                 <table class="w-full border-separate border-spacing-0">
                     <thead class="bg-slate-50 border-b border-slate-200">
@@ -596,3 +597,109 @@
     </div>
 
 </div>
+
+
+
+{{--
+<td class="px-4 py-3 text-center">
+    <div class="inline-flex items-center gap-2">
+        <a href="{{ route('parishioners.show', $p->id) }}"
+class="text-sm text-slate-600 hover:text-slate-800 font-medium">Xem</a>
+<span class="text-slate-300">|</span>
+<button wire:click="delete({{ $p->id }})"
+    wire:confirm="Bạn có chắc muốn xóa giáo dân này không?"
+    class="text-sm text-red-500 hover:text-red-600 font-medium">
+    Xóa
+</button>
+</div>
+</td> --}}
+
+
+{{-- <div class="overflow-x-auto">
+    <table class="w-full">
+
+        <thead class="bg-slate-50 border-b border-slate-200">
+            <tr>
+                <th class="px-5 py-3 text-left text-xs font-semibold text-slate-500">STT</th>
+                <th class="px-5 py-3 text-left text-xs font-semibold text-slate-500">Ảnh</th>
+                <th class="px-5 py-3 text-left text-xs font-semibold text-slate-500">Họ và tên</th>
+                <th class="px-5 py-3 text-center text-xs font-semibold text-slate-500">Giới tính</th>
+                <th class="px-5 py-3 text-center text-xs font-semibold text-slate-500">Tuổi</th>
+                <th class="px-5 py-3 text-left text-xs font-semibold text-slate-500">Điện thoại</th>
+                <th class="px-5 py-3 text-left text-xs font-semibold text-slate-500">Giáo họ</th>
+                <th class="px-5 py-3 text-center text-xs font-semibold text-slate-500">Bí tích</th>
+                <th class="px-5 py-3 text-center text-xs font-semibold text-slate-500">Học sinh</th>
+                <th class="px-5 py-3 text-center text-xs font-semibold text-slate-500">Trạng thái</th>
+                <th class="px-5 py-3 text-center text-xs font-semibold text-slate-500">Thao tác</th>
+            </tr>
+        </thead>
+
+        <tbody class="divide-y divide-slate-100">
+
+            @foreach($parishioners as $index => $p)
+            <tr class="hover:bg-slate-50 transition-colors">
+
+                <td class="px-5 py-3 text-sm text-slate-500">
+                    {{ ($parishioners->firstItem() ?? 0) + $index }}
+                </td>
+
+                <td class="px-5 py-3">
+                    <div class="w-10 h-10 rounded-full overflow-hidden bg-slate-100 flex items-center justify-center">
+                        @if($p->avatar_path)
+                        <img src="{{ asset('storage/' . $p->avatar_path) }}" class="w-full h-full object-cover">
+                        @else
+                        <svg class="w-5 h-5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-width="2" d="M16 7a4 4 0 11-8 0" />
+                        </svg>
+                        @endif
+                    </div>
+                </td>
+
+                <td class="px-5 py-3">
+                    <div class="font-semibold text-slate-900 text-sm">{{ $p->full_name_with_saint }}</div>
+                    <div class="text-xs text-slate-400">{{ $p->cccd }}</div>
+                </td>
+
+                <td class="px-5 py-3 text-center text-sm text-slate-600">
+                    {{ $p->gender_name }}
+                </td>
+
+                <td class="px-5 py-3 text-center text-sm text-slate-700">
+                    {{ $p->age ? $p->age . ' tuổi' : '—' }}
+                </td>
+
+                <td class="px-5 py-3 text-sm">
+                    {{ $p->phone ?? '—' }}
+                </td>
+
+                <td class="px-5 py-3 text-sm text-slate-600">
+                    {{ $p->parishGroup?->name ?? '—' }}
+                </td>
+
+                <td class="px-5 py-3 text-center">
+                    <button class="px-3 py-1 text-xs rounded-xl bg-slate-100 text-slate-700 hover:bg-slate-200">
+                        Xem
+                    </button>
+                </td>
+
+                <td class="px-5 py-3 text-center text-xs text-slate-400">
+                    {{ $p->student ? 'Có' : '—' }}
+                </td>
+
+                <td class="px-5 py-3 text-center">
+                    <span class="px-2 py-1 text-xs rounded-full {{ $p->status ? 'bg-primary-100 text-primary-700' : 'bg-slate-200 text-slate-600' }}">
+                        {{ $p->status_name }}
+                    </span>
+                </td>
+
+                <td class="px-5 py-3 text-center text-sm">
+                    <button class="text-red-500 hover:text-red-600">Xóa</button>
+                </td>
+
+            </tr>
+            @endforeach
+
+        </tbody>
+
+    </table>
+</div> --}}

@@ -1,82 +1,96 @@
 <div class="p-6 space-y-6">
 
-    {{-- Thông báo --}}
+    {{-- Toast --}}
     @if(session('sacrament_message'))
     <div class="px-4 py-3 bg-primary-50 border border-primary-200 text-primary-700 rounded-xl text-sm">
         {{ session('sacrament_message') }}
     </div>
     @endif
+
     @if(session('sacrament_error'))
     <div class="px-4 py-3 bg-red-50 border border-red-200 text-red-700 rounded-xl text-sm">
         {{ session('sacrament_error') }}
     </div>
     @endif
 
-    {{-- Danh sách bí tích theo nhóm --}}
+    {{-- Groups --}}
     @foreach($groupedSacraments as $type => $group)
-    <div class="border border-slate-200 rounded-2xl shadow-sm hover:shadow-md transition-all overflow-hidden">
+    <div class="bg-white rounded-2xl shadow-sm hover:shadow-md transition-all border border-slate-200 overflow-hidden">
 
-        {{-- Header từng loại bí tích --}}
-        <div class="flex items-center justify-between px-4 py-3 bg-slate-50 border-b border-slate-200">
+        {{-- Header --}}
+        <div class="flex items-center justify-between px-5 py-3 bg-slate-50 border-b border-slate-200">
+
             <div class="flex items-center gap-2">
-                <span class="text-sm font-semibold text-slate-900">{{ $group['label'] }}</span>
+                <span class="text-sm font-semibold text-slate-900">
+                    {{ $group['label'] }}
+                </span>
+
                 @if($group['records']->count() > 0)
-                <span class="inline-flex px-2 py-0.5 text-xs font-semibold rounded-full bg-primary-100 text-primary-700">
+                <span class="px-2 py-0.5 text-xs font-semibold rounded-full bg-primary-100 text-primary-700">
                     Đã có
                 </span>
                 @else
-                <span class="inline-flex px-2 py-0.5 text-xs font-semibold rounded-full bg-slate-200 text-slate-500">
+                <span class="px-2 py-0.5 text-xs font-semibold rounded-full bg-slate-200 text-slate-600">
                     Chưa có
                 </span>
                 @endif
             </div>
 
-            {{-- Nút thêm: luôn hiện với anointing, còn lại chỉ hiện khi chưa có --}}
             @if($group['multiple'] || $group['records']->count() === 0)
             <button wire:click="create('{{ $type }}')"
-                class="inline-flex items-center gap-1 px-3 py-1 text-xs font-medium bg-primary-500 text-white rounded-xl hover:bg-primary-600 transition">
+                class="inline-flex items-center gap-1 px-3 py-1 text-xs font-medium bg-primary-500 hover:bg-primary-600 text-white rounded-xl transition-all">
                 <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                    <path stroke-width="2" d="M12 4v16m8-8H4" />
                 </svg>
                 Thêm
             </button>
             @endif
+
         </div>
 
         {{-- Records --}}
         @if($group['records']->count() > 0)
+
         <div class="divide-y divide-slate-100">
+
             @foreach($group['records'] as $sacrament)
-            <div class="flex items-center justify-between px-4 py-3" wire:key="sacrament-{{ $sacrament->id }}">
-                <div class="grid grid-cols-2 md:grid-cols-4 gap-x-6 gap-y-1 flex-1">
+            <div class="flex items-center justify-between px-5 py-4" wire:key="sacrament-{{ $sacrament->id }}">
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-x-6 gap-y-2 flex-1">
 
                     @if($sacrament->received_date)
                     <div>
-                        <p class="text-xs text-slate-400">Ngày lãnh nhận</p>
-                        <p class="text-sm font-medium text-slate-900">{{ $sacrament->received_date->format('d/m/Y') }}</p>
+                        <p class="text-xs text-slate-500">Ngày lãnh nhận</p>
+                        <p class="text-sm font-medium text-slate-900">
+                            {{ $sacrament->received_date->format('d/m/Y') }}
+                        </p>
                     </div>
                     @endif
 
                     @if($sacrament->certificate_number || $sacrament->book_number)
                     <div>
-                        <p class="text-xs text-slate-400">Số chứng chỉ / sách</p>
+                        <p class="text-xs text-slate-500">Số chứng chỉ / sách</p>
                         <p class="text-sm font-medium text-slate-900">
                             {{ $sacrament->certificate_number }}
-                            @if($sacrament->book_number) · Sách {{ $sacrament->book_number }} @endif
+                            @if($sacrament->book_number)
+                            · Sách {{ $sacrament->book_number }}
+                            @endif
                         </p>
                     </div>
                     @endif
 
                     @if($sacrament->giver)
                     <div>
-                        <p class="text-xs text-slate-400">Người ban</p>
-                        <p class="text-sm font-medium text-slate-900">{{ $sacrament->giver }}</p>
+                        <p class="text-xs text-slate-500">Người ban</p>
+                        <p class="text-sm font-medium text-slate-900">
+                            {{ $sacrament->giver }}
+                        </p>
                     </div>
                     @endif
 
                     @if($sacrament->parish_name || $sacrament->parish?->name)
                     <div>
-                        <p class="text-xs text-slate-400">Nơi lãnh nhận</p>
+                        <p class="text-xs text-slate-500">Nơi lãnh nhận</p>
                         <p class="text-sm font-medium text-slate-900">
                             {{ $sacrament->parish?->name ?? $sacrament->parish_name }}
                         </p>
@@ -86,122 +100,146 @@
                 </div>
 
                 {{-- Actions --}}
-                <div class="flex items-center gap-2 ml-4 flex-shrink-0">
+                <div class="flex items-center gap-3 ml-4 flex-shrink-0 text-sm">
                     <button wire:click="edit({{ $sacrament->id }})"
-                        class="text-xs text-primary-600 hover:text-primary-700 font-medium">
+                        class="text-primary-600 hover:text-primary-700 font-medium">
                         Sửa
                     </button>
-                    <span class="text-slate-300">|</span>
-                    <button wire:click="delete({{ $sacrament->id }})"
-                        wire:confirm="Xóa bí tích {{ $group['label'] }} này?"
+
+                    <button wire:click="confirmDelete({{ $sacrament->id }})"
                         class="text-xs text-red-500 hover:text-red-600 font-medium">
                         Xóa
                     </button>
                 </div>
+
             </div>
             @endforeach
+
         </div>
+
         @else
-        <div class="px-4 py-3 text-sm text-slate-400 italic">Chưa có thông tin</div>
+        <div class="px-5 py-4 text-sm text-slate-500 italic">
+            Chưa có thông tin
+        </div>
         @endif
 
     </div>
     @endforeach
 
-    {{-- ===== FORM thêm/sửa bí tích ===== --}}
-    @if($showForm)
-    <div class="border border-slate-200 bg-white rounded-xl p-5 bg-primary-50/30 space-y-4">
 
-        <h4 class="font-semibold text-slate-900 text-sm">
+    {{-- FORM --}}
+    @if($showForm)
+    <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 space-y-5">
+
+        <h4 class="text-sm font-semibold text-slate-900">
             {{ $editingId ? 'Cập nhật bí tích' : 'Thêm bí tích' }}
-            @if($activeType)
-            — {{ $typeOptions[$activeType] ?? $activeType }}
-            @endif
         </h4>
 
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
 
-            {{-- Loại bí tích --}}
+            @php
+            $input = "w-full px-3 py-2 rounded-xl border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500";
+            @endphp
+
             <div>
-                <label class="block text-sm font-medium text-slate-700 mb-1">Loại bí tích <span class="text-red-500">*</span></label>
-                <select wire:model="type"
-                    {{ $activeType ? 'disabled' : '' }}
-                    class="w-full px-3 py-2 rounded-xl border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 @error('type') border-red-400 @enderror">
+                <label class="text-sm font-medium text-slate-700 mb-1 block">Loại bí tích</label>
+                <select wire:model="type" class="{{ $input }}">
                     <option value="">-- Chọn --</option>
                     @foreach($typeOptions as $val => $label)
                     <option value="{{ $val }}">{{ $label }}</option>
                     @endforeach
                 </select>
-                @error('type') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
             </div>
 
-            {{-- Ngày lãnh nhận --}}
             <div>
-                <label class="block text-sm font-medium text-slate-700 mb-1">Ngày lãnh nhận</label>
-                <input wire:model.defer="received_date" type="date"
-                    class="w-full px-3 py-2 rounded-xl border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 @error('received_date') border-red-400 @enderror" />
-                @error('received_date') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
+                <label class="text-sm font-medium text-slate-700 mb-1 block">Ngày lãnh nhận</label>
+                <input wire:model.defer="received_date" type="date" class="{{ $input }}">
             </div>
 
-            {{-- Số chứng chỉ --}}
             <div>
-                <label class="block text-sm font-medium text-slate-700 mb-1">Số chứng chỉ</label>
-                <input wire:model.defer="certificate_number" type="text"
-                    class="w-full px-3 py-2 rounded-xl border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500" />
+                <label class="text-sm font-medium text-slate-700 mb-1 block">Số chứng chỉ</label>
+                <input wire:model.defer="certificate_number" class="{{ $input }}">
             </div>
 
-            {{-- Số sách --}}
             <div>
-                <label class="block text-sm font-medium text-slate-700 mb-1">Số sách</label>
-                <input wire:model.defer="book_number" type="number" min="1"
-                    class="w-full px-3 py-2 rounded-xl border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500" />
+                <label class="text-sm font-medium text-slate-700 mb-1 block">Số sách</label>
+                <input wire:model.defer="book_number" type="number" class="{{ $input }}">
             </div>
 
-            {{-- Người ban bí tích --}}
             <div>
-                <label class="block text-sm font-medium text-slate-700 mb-1">Người ban bí tích</label>
-                <input wire:model.defer="giver" type="text" placeholder="Tên linh mục..."
-                    class="w-full px-3 py-2 rounded-xl border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500" />
+                <label class="text-sm font-medium text-slate-700 mb-1 block">Người ban</label>
+                <input wire:model.defer="giver" class="{{ $input }}">
             </div>
 
-            {{-- Người đỡ đầu --}}
             <div>
-                <label class="block text-sm font-medium text-slate-700 mb-1">Người đỡ đầu / chứng nhân</label>
-                <input wire:model.defer="sponsor" type="text"
-                    class="w-full px-3 py-2 rounded-xl border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500" />
+                <label class="text-sm font-medium text-slate-700 mb-1 block">Người đỡ đầu</label>
+                <input wire:model.defer="sponsor" class="{{ $input }}">
             </div>
 
-            {{-- Nơi lãnh nhận (text nếu ngoài hệ thống) --}}
             <div class="md:col-span-2">
-                <label class="block text-sm font-medium text-slate-700 mb-1">Nơi lãnh nhận</label>
-                <input wire:model.defer="parish_name" type="text" placeholder="Tên giáo xứ nơi lãnh nhận..."
-                    class="w-full px-3 py-2 rounded-xl border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500" />
-                <p class="text-xs text-slate-400 mt-1">Nhập tên giáo xứ nếu không có trong hệ thống</p>
+                <label class="text-sm font-medium text-slate-700 mb-1 block">Nơi lãnh nhận</label>
+                <input wire:model.defer="parish_name" class="{{ $input }}">
             </div>
 
-            {{-- Ghi chú --}}
             <div class="md:col-span-2">
-                <label class="block text-sm font-medium text-slate-700 mb-1">Ghi chú</label>
-                <textarea wire:model.defer="note" rows="2"
-                    class="w-full px-3 py-2 rounded-xl border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
-                    placeholder="Ghi chú thêm..."></textarea>
+                <label class="text-sm font-medium text-slate-700 mb-1 block">Ghi chú</label>
+                <textarea wire:model.defer="note" rows="2" class="{{ $input }}"></textarea>
             </div>
 
         </div>
 
-        {{-- Buttons --}}
-        <div class="flex justify-end gap-3 pt-2">
+        <div class="flex justify-end gap-3">
             <button wire:click="closeForm"
-                class="px-4 py-2 text-sm font-medium text-slate-600 bg-white border border-slate-300 rounded-xl hover:bg-slate-50 transition">
+                class="px-4 py-2 text-sm text-slate-600 bg-white border border-slate-300 rounded-xl hover:bg-slate-50 transition-all">
                 Hủy
             </button>
-            <button wire:click="save" wire:loading.attr="disabled"
-                class="px-6 py-2 text-sm font-medium text-white bg-primary-500 rounded-xl hover:bg-primary-600 transition disabled:opacity-60">
-                <span wire:loading.remove wire:target="save">Lưu bí tích</span>
-                <span wire:loading wire:target="save">Đang lưu...</span>
+
+            <button wire:click="save"
+                class="px-6 py-2 text-sm text-white bg-primary-500 hover:bg-primary-600 rounded-xl transition-all">
+                Lưu
             </button>
         </div>
 
+    </div>
+    @endif
+
+    @if($showDeleteConfirm)
+    <div class="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4"
+        wire:click="$set('showDeleteConfirm', false)">
+
+        <div class="bg-white rounded-2xl shadow-xl w-full max-w-md"
+            wire:click.stop>
+
+            <div class="px-6 py-4 border-b border-slate-200">
+                <h3 class="text-base font-semibold text-slate-900">
+                    Xác nhận xóa
+                </h3>
+            </div>
+
+            <div class="px-6 py-4">
+                <p class="text-sm text-slate-600">
+                    Bạn có chắc muốn xóa bí tích này không?
+                </p>
+                <p class="text-xs text-slate-400 mt-2">
+                    Hành động này không thể hoàn tác.
+                </p>
+            </div>
+
+            <div class="px-6 py-4 border-t border-slate-200 flex justify-end gap-3">
+
+                <button wire:click="$set('showDeleteConfirm', false)"
+                    class="px-4 py-2 text-sm text-slate-600 bg-white border border-slate-300 rounded-xl hover:bg-slate-50">
+                    Hủy
+                </button>
+
+                <button wire:click="delete"
+                    class="px-4 py-2 text-sm text-white bg-red-500 hover:bg-red-600 rounded-xl">
+                    Xóa
+                </button>
+
+            </div>
+
+        </div>
     </div>
     @endif
 

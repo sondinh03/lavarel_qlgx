@@ -29,6 +29,8 @@ class SacramentsManager extends Component
     public bool    $showForm   = false;
     public ?int    $editingId  = null;
     public ?string $activeType = null;  // type đang mở form
+    public $deleteId = null;
+    public $showDeleteConfirm = false;
 
     // ==================== FORM FIELDS ====================
 
@@ -161,9 +163,11 @@ class SacramentsManager extends Component
 
             DB::commit();
 
-            session()->flash('sacrament_message', $this->editingId
-                ? 'Cập nhật bí tích thành công'
-                : 'Thêm bí tích thành công'
+            session()->flash(
+                'sacrament_message',
+                $this->editingId
+                    ? 'Cập nhật bí tích thành công'
+                    : 'Thêm bí tích thành công'
             );
 
             $this->emit('sacramentSaved');
@@ -174,16 +178,28 @@ class SacramentsManager extends Component
         }
     }
 
-    public function delete(int $id): void
+    public function confirmDelete(int $id): void
+    {
+        $this->deleteId = $id;
+        $this->showDeleteConfirm = true;
+    }
+
+    public function delete(): void
     {
         try {
             $s = Sacrament::where('parishioner_id', $this->parishionerId)
-                ->findOrFail($id);
+                ->findOrFail($this->deleteId);
+
             $s->delete();
+
             session()->flash('sacrament_message', 'Đã xóa bí tích');
         } catch (ModelNotFoundException) {
             session()->flash('sacrament_error', 'Không tìm thấy bí tích');
         }
+
+        // reset state
+        $this->showDeleteConfirm = false;
+        $this->deleteId = null;
     }
 
     // ==================== HELPERS ====================
@@ -198,9 +214,19 @@ class SacramentsManager extends Component
     public function resetForm(): void
     {
         $this->reset([
-            'editingId', 'type', 'activeType', 'received_date',
-            'certificate_number', 'book_number', 'giver', 'sponsor',
-            'parish_id', 'parish_name', 'deanery_id', 'diocese_id', 'note',
+            'editingId',
+            'type',
+            'activeType',
+            'received_date',
+            'certificate_number',
+            'book_number',
+            'giver',
+            'sponsor',
+            'parish_id',
+            'parish_name',
+            'deanery_id',
+            'diocese_id',
+            'note',
         ]);
         $this->resetValidation();
     }
