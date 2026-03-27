@@ -1,5 +1,5 @@
 <div class="min-h-screen bg-slate-50 p-4 sm:p-6">
-    <div class="mx-auto max-w-7xl space-y-5">
+    <div class="mx-auto max-w-7xl space-y-6">
 
         {{-- Breadcrumb --}}
         <x-breadcrumb :items="[

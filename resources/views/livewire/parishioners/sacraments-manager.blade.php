@@ -2,7 +2,7 @@
 
     {{-- Thông báo --}}
     @if(session('sacrament_message'))
-    <div class="px-4 py-3 bg-green-50 border border-green-200 text-green-700 rounded-xl text-sm">
+    <div class="px-4 py-3 bg-primary-50 border border-primary-200 text-primary-700 rounded-xl text-sm">
         {{ session('sacrament_message') }}
     </div>
     @endif
@@ -14,14 +14,14 @@
 
     {{-- Danh sách bí tích theo nhóm --}}
     @foreach($groupedSacraments as $type => $group)
-    <div class="border border-slate-200 rounded-xl overflow-hidden">
+    <div class="border border-slate-200 rounded-2xl shadow-sm hover:shadow-md transition-all overflow-hidden">
 
         {{-- Header từng loại bí tích --}}
         <div class="flex items-center justify-between px-4 py-3 bg-slate-50 border-b border-slate-200">
             <div class="flex items-center gap-2">
-                <span class="text-sm font-semibold text-slate-800">{{ $group['label'] }}</span>
+                <span class="text-sm font-semibold text-slate-900">{{ $group['label'] }}</span>
                 @if($group['records']->count() > 0)
-                <span class="inline-flex px-2 py-0.5 text-xs font-semibold rounded-full bg-green-100 text-green-700">
+                <span class="inline-flex px-2 py-0.5 text-xs font-semibold rounded-full bg-primary-100 text-primary-700">
                     Đã có
                 </span>
                 @else
@@ -34,7 +34,7 @@
             {{-- Nút thêm: luôn hiện với anointing, còn lại chỉ hiện khi chưa có --}}
             @if($group['multiple'] || $group['records']->count() === 0)
             <button wire:click="create('{{ $type }}')"
-                class="inline-flex items-center gap-1 px-3 py-1 text-xs font-medium bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition">
+                class="inline-flex items-center gap-1 px-3 py-1 text-xs font-medium bg-primary-500 text-white rounded-xl hover:bg-primary-600 transition">
                 <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
                 </svg>
@@ -53,14 +53,14 @@
                     @if($sacrament->received_date)
                     <div>
                         <p class="text-xs text-slate-400">Ngày lãnh nhận</p>
-                        <p class="text-sm font-medium text-slate-800">{{ $sacrament->received_date->format('d/m/Y') }}</p>
+                        <p class="text-sm font-medium text-slate-900">{{ $sacrament->received_date->format('d/m/Y') }}</p>
                     </div>
                     @endif
 
                     @if($sacrament->certificate_number || $sacrament->book_number)
                     <div>
                         <p class="text-xs text-slate-400">Số chứng chỉ / sách</p>
-                        <p class="text-sm font-medium text-slate-800">
+                        <p class="text-sm font-medium text-slate-900">
                             {{ $sacrament->certificate_number }}
                             @if($sacrament->book_number) · Sách {{ $sacrament->book_number }} @endif
                         </p>
@@ -70,14 +70,14 @@
                     @if($sacrament->giver)
                     <div>
                         <p class="text-xs text-slate-400">Người ban</p>
-                        <p class="text-sm font-medium text-slate-800">{{ $sacrament->giver }}</p>
+                        <p class="text-sm font-medium text-slate-900">{{ $sacrament->giver }}</p>
                     </div>
                     @endif
 
                     @if($sacrament->parish_name || $sacrament->parish?->name)
                     <div>
                         <p class="text-xs text-slate-400">Nơi lãnh nhận</p>
-                        <p class="text-sm font-medium text-slate-800">
+                        <p class="text-sm font-medium text-slate-900">
                             {{ $sacrament->parish?->name ?? $sacrament->parish_name }}
                         </p>
                     </div>
@@ -110,9 +110,9 @@
 
     {{-- ===== FORM thêm/sửa bí tích ===== --}}
     @if($showForm)
-    <div class="border-2 border-primary-200 rounded-xl p-5 bg-primary-50/30 space-y-4">
+    <div class="border border-slate-200 bg-white rounded-xl p-5 bg-primary-50/30 space-y-4">
 
-        <h4 class="font-semibold text-slate-800 text-sm">
+        <h4 class="font-semibold text-slate-900 text-sm">
             {{ $editingId ? 'Cập nhật bí tích' : 'Thêm bí tích' }}
             @if($activeType)
             — {{ $typeOptions[$activeType] ?? $activeType }}
@@ -196,7 +196,7 @@
                 Hủy
             </button>
             <button wire:click="save" wire:loading.attr="disabled"
-                class="px-6 py-2 text-sm font-medium text-white bg-primary-600 rounded-xl hover:bg-primary-700 transition disabled:opacity-60">
+                class="px-6 py-2 text-sm font-medium text-white bg-primary-500 rounded-xl hover:bg-primary-600 transition disabled:opacity-60">
                 <span wire:loading.remove wire:target="save">Lưu bí tích</span>
                 <span wire:loading wire:target="save">Đang lưu...</span>
             </button>
