@@ -303,13 +303,6 @@ class StudentImportPreview extends BaseComponent
 
     public function confirmImport()
     {
-        Log::debug('[Import] confirmImport called', [
-            'readyToImport' => $this->readyToImport,
-            'selectedLop'   => $this->selectedLop,
-            'parishId'      => $this->parishId,
-            'rows_count'    => count($this->rows),
-        ]);
-
         if (!$this->readyToImport) {
             Log::warning('[Import] Blocked: readyToImport = false');
             $this->addError('import', 'Dữ liệu chưa hợp lệ, không thể import');
@@ -329,14 +322,8 @@ class StudentImportPreview extends BaseComponent
         }
 
         try {
-            Log::debug('[Import] Calling ImportStudentAction::handleFromArray', [
-                'rows_count' => count($this->rows),
-            ]);
-
             $result = app(ImportStudentAction::class)
                 ->handleFromArray($this->rows, $this->parishId, $this->selectedLop);
-
-            Log::debug('[Import] Result', $result);
 
             // Build thông báo thành công
             $message = "✅ Import thành công {$result['imported']} học sinh vào lớp **{$this->className}**";

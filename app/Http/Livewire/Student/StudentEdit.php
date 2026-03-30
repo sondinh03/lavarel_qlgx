@@ -53,7 +53,7 @@ class StudentEdit extends BaseComponent
             'email'           => 'nullable|email|max:255',
             'note'            => 'nullable|string|max:1000',
             'is_active'       => 'required|boolean',
-            'parish_id'       => 'required|exists:parish_managements,id', // ✅ đúng tên bảng
+            'parish_id'       => 'required|exists:parishes,id', 
             'parish_group_id' => 'nullable|exists:parish_groups,id',
             'saint_id'        => 'nullable|exists:holymanagements,id',
             'father_name'       => 'nullable|string|max:255',
