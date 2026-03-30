@@ -29,28 +29,29 @@
 
         /* Main content offset */
         #main-wrapper {
+            margin-left: var(--sidebar-current);
             transition: margin-left 200ms ease;
         }
 
         /* Hide text labels when mini */
-        #sidebar.mini .sidebar-label {
+        #sidebar[data-mini="true"] .sidebar-label {
             display: none;
         }
 
-        #sidebar.mini .sidebar-chevron {
+        #sidebar[data-mini="true"] .sidebar-chevron {
             display: none;
         }
 
-        #sidebar.mini .logo-text {
+        #sidebar[data-mini="true"] .logo-text {
             display: none;
         }
 
-        #sidebar.mini .user-info {
+        #sidebar[data-mini="true"] .user-info {
             display: none;
         }
 
         /* Flyout tooltip for mini mode */
-        #sidebar.mini .has-flyout:hover .flyout-menu {
+        #sidebar[data-mini="true"] .has-flyout:hover .flyout-menu {
             display: block;
         }
 
@@ -84,11 +85,31 @@
     </style>
 </head>
 
+@php
+$activeGroup = null;
+
+if (request()->routeIs('students.*','attendance.*','classes.*','scores.*','session.*')) {
+$activeGroup = 'students';
+} elseif (request()->routeIs('catechists.*','parishioners.*')) {
+$activeGroup = 'staff';
+} elseif (request()->routeIs('school-years.*','parish-group.*','holy-names.*')) {
+$activeGroup = 'system';
+}
+@endphp
+
+@php
+$isDashboard = request()->routeIs(
+'dashboard',
+'catechist.dashboard',
+'parish-admin.dashboard'
+);
+@endphp
+
 <body class="min-h-screen bg-slate-50 text-slate-800 antialiased"
     x-data="{
         sidebarMini: false,
         mobileOpen: false,
-        openGroup: null,
+        openGroup: '{{ $activeGroup }}',   
         toggleGroup(name) {
             if (this.sidebarMini) return;
             this.openGroup = this.openGroup === name ? null : name;
@@ -117,12 +138,15 @@
          SIDEBAR
     ═══════════════════════════════════════════ --}}
     <aside id="sidebar"
+        :data-mini="sidebarMini ? 'true' : 'false'"
         :class="[
             sidebarMini ? 'w-16' : 'w-64',
             mobileOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
         ]"
-        class="fixed top-0 left-0 h-screen z-50 bg-white border-r border-slate-200 shadow-sm
-               flex flex-col transition-all duration-200 overflow-hidden">
+        style="height:100vh;height:100dvh;"
+        class="fixed top-0 left-0 z-50 bg-white border-r border-slate-200 shadow-sm
+               flex flex-col transition-all duration-200
+               -translate-x-full lg:translate-x-0">
 
         {{-- ── Logo ── --}}
         <div class="flex items-center gap-3 px-4 h-16 border-b border-slate-100 flex-shrink-0">
@@ -147,21 +171,21 @@
         </div>
 
         {{-- ── Navigation ── --}}
-        <nav id="sidebar-nav" class="flex-1 overflow-y-auto overflow-x-hidden py-3 px-2 space-y-0.5">
+        <nav id="sidebar-nav" class="flex-1 overflow-y-auto overflow-x-hidden min-h-0 py-3 px-2 space-y-0.5">
 
             {{-- Trang chủ --}}
             <a href="{{ route('dashboard') }}"
                 class="relative flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition group
-                    {{ request()->routeIs('dashboard') ? 'bg-primary-50 text-primary-700' : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900' }}">
+                    {{ $isDashboard ? 'bg-primary-50 text-primary-700' : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900' }}">
                 <svg class="w-5 h-5 flex-shrink-0
-                    {{ request()->routeIs('dashboard') ? 'text-primary-600' : 'text-slate-400 group-hover:text-slate-600' }}"
+                    {{ $isDashboard ? 'text-primary-600' : 'text-slate-400 group-hover:text-slate-600' }}"
                     fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                         d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
                 </svg>
                 <span class="sidebar-label truncate">Trang chủ</span>
 
-                @if(request()->routeIs('dashboard'))
+                @if($isDashboard)
                 <span class="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-6 bg-primary-500 rounded-r-full"></span>
                 @endif
             </a>
@@ -381,8 +405,10 @@
          MAIN WRAPPER
     ═══════════════════════════════════════════ --}}
     <div id="main-wrapper"
-        :class="sidebarMini ? 'lg:ml-16' : 'lg:ml-64'"
-        class="min-h-screen flex flex-col transition-all duration-200">
+        :style="sidebarMini 
+        ? '--sidebar-current: var(--sidebar-w-mini)' 
+        : '--sidebar-current: var(--sidebar-w)'"
+        class="min-h-screen flex flex-col">
 
         {{-- ── Topbar ── --}}
         <header class="sticky top-0 z-30 bg-white/90 backdrop-blur-sm border-b border-slate-200 shadow-sm">
@@ -425,7 +451,9 @@
 
         {{-- ── Page content ── --}}
         <main id="main-content" class="flex-1">
-            @yield('content')
+            <div class="max-w-7xl mx-auto p-4 sm:p-6">
+                @yield('content')
+            </div>
         </main>
 
         @include('frontend.layout.footer')
