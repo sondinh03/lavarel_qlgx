@@ -42,24 +42,22 @@ class StudentEdit extends BaseComponent
     public $saints = [];
 
     // ==================== VALIDATION ====================
-    protected function rules()
-    {
-        return [
-            'first_name'      => 'required|string|max:255',
-            'last_name'       => 'required|string|max:255',
-            'gender'          => 'required|in:male,female',
-            'birthday'        => 'nullable|date',
-            'phone'           => 'nullable|string|max:15',
-            'email'           => 'nullable|email|max:255',
-            'note'            => 'nullable|string|max:1000',
-            'is_active'       => 'required|boolean',
-            'parish_id'       => 'required|exists:parishes,id', 
-            'parish_group_id' => 'nullable|exists:parish_groups,id',
-            'saint_id'        => 'nullable|exists:holymanagements,id',
-            'father_name'       => 'nullable|string|max:255',
-            'mother_name'       => 'nullable|string|max:255',
-        ];
-    }
+    protected $formRules =
+    [
+        'first_name'      => 'required|string|max:255',
+        'last_name'       => 'required|string|max:255',
+        'gender'          => 'required|in:male,female',
+        'birthday'        => 'nullable|date',
+        'phone'           => 'nullable|string|max:15',
+        'email'           => 'nullable|email|max:255',
+        'note'            => 'nullable|string|max:1000',
+        'is_active'       => 'required|boolean',
+        'parish_id'       => 'required|exists:parishes,id',
+        'parish_group_id' => 'nullable|exists:parish_groups,id',
+        'saint_id'        => 'nullable|exists:holymanagements,id',
+        'father_name'       => 'nullable|string|max:255',
+        'mother_name'       => 'nullable|string|max:255',
+    ];
 
     protected $messages = [
         'first_name.required' => 'Vui lòng nhập tên',
@@ -182,7 +180,7 @@ class StudentEdit extends BaseComponent
 
     public function save(): void
     {
-        $this->validate();
+        $this->validate($this->formRules, $this->messages);
 
         try {
             DB::beginTransaction();
