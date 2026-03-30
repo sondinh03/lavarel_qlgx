@@ -14,8 +14,10 @@
     {{-- Set margin-left NGAY khi parse HTML, trước khi Alpine load --}}
     <script>
         (function() {
+            if (window.innerWidth < 1024) return; // mobile: không set margin
             var mini = localStorage.getItem('sidebarMini') === 'true';
             var style = document.createElement('style');
+            style.id = 'sidebar-init-style';
             style.textContent = mini
                 ? '#main-wrapper { margin-left: 64px !important; } #sidebar { width: 64px !important; }'
                 : '#main-wrapper { margin-left: 256px !important; }';
@@ -143,10 +145,11 @@
                         sidebar.classList.remove('is-animating');
                         wrapper.classList.remove('is-animating');
                     }, 220);
-                    sidebarMini = !sidebarMini;
-                    openGroup = sidebarMini ? null : '{{ $activeGroup }}';
-                    localStorage.setItem('sidebarMini', sidebarMini);
-                    wrapper.style.marginLeft = sidebarMini ? '64px' : '256px';
+                    const nextMini = !sidebarMini;
+                    sidebarMini = nextMini;
+                    openGroup = nextMini ? null : '{{ $activeGroup }}';
+                    localStorage.setItem('sidebarMini', nextMini);
+                    wrapper.style.marginLeft = nextMini ? '64px' : '256px';
                 "
                 class="hidden lg:flex ml-auto flex-shrink-0 w-7 h-7 items-center justify-center
                        rounded-lg text-slate-400 hover:bg-slate-100 hover:text-primary-600 transition">
@@ -164,16 +167,16 @@
             {{-- Trang chủ --}}
             <a href="{{ route('dashboard') }}"
                 class="relative flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition group
-                    {{ $isDashboard ? 'bg-primary-50 text-primary-700' : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900' }}">
+                    {{ request()->routeIs('dashboard') ? 'bg-primary-50 text-primary-700' : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900' }}">
                 <svg class="w-5 h-5 flex-shrink-0
-                    {{ $isDashboard ? 'text-primary-600' : 'text-slate-400 group-hover:text-slate-600' }}"
+                    {{ request()->routeIs('dashboard') ? 'text-primary-600' : 'text-slate-400 group-hover:text-slate-600' }}"
                      fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                         d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
                 </svg>
                 <span class="sidebar-label truncate">Trang chủ</span>
 
-                @if($isDashboard)
+                @if(request()->routeIs('dashboard'))
                 <span class="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-6 bg-primary-500 rounded-r-full"></span>
                 @endif
             </a>
@@ -393,11 +396,14 @@
          MAIN WRAPPER
     ═══════════════════════════════════════════ --}}
     <div id="main-wrapper"
-         style="margin-left: 256px;"
          class="min-h-screen flex flex-col"
          x-init="
-             const mini = localStorage.getItem('sidebarMini') === 'true';
-             $el.style.marginLeft = mini ? '64px' : '256px';
+             if (window.innerWidth >= 1024) {
+                 $el.style.marginLeft = sidebarMini ? '64px' : '256px';
+             }
+             // Xoá style inject từ head script sau khi Alpine đã handle
+             var s = document.getElementById('sidebar-init-style');
+             if (s) s.remove();
          ">
 
         {{-- ── Topbar ── --}}
@@ -476,6 +482,27 @@
         });
     </script>
 
+    <script>
+        // Optimistic active highlight: tô màu ngay khi click, trước khi server response
+        document.addEventListener('DOMContentLoaded', function () {
+            document.querySelectorAll('#sidebar-nav a[href]').forEach(function (link) {
+                link.addEventListener('click', function () {
+                    // Xoá active cũ
+                    document.querySelectorAll('#sidebar-nav a[href]').forEach(function (el) {
+                        el.classList.remove('bg-primary-50', 'text-primary-700');
+                        el.classList.add('text-slate-500');
+                        var dot = el.querySelector('span.bg-primary-500');
+                        if (dot) dot.classList.replace('bg-primary-500', 'bg-slate-300');
+                    });
+                    // Set active mới ngay lập tức
+                    link.classList.add('bg-primary-50', 'text-primary-700');
+                    link.classList.remove('text-slate-500');
+                    var dot = link.querySelector('span.bg-slate-300');
+                    if (dot) dot.classList.replace('bg-slate-300', 'bg-primary-500');
+                });
+            });
+        });
+    </script>
     @stack('scripts')
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
     @livewireScripts
