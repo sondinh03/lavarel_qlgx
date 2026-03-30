@@ -125,10 +125,17 @@ $isDashboard = request()->routeIs('dashboard','catechist.dashboard','parish-admi
     x-data="{
         sidebarMini: localStorage.getItem('sidebarMini') === 'true',
         mobileOpen: false,
-        openGroup: '{{ $activeGroup }}',
+        openGroups: JSON.parse(localStorage.getItem('openGroups') || '[]'),
         toggleGroup(name) {
             if (this.sidebarMini) return;
-            this.openGroup = this.openGroup === name ? null : name;
+
+            if (this.openGroups.includes(name)) {
+                this.openGroups = this.openGroups.filter(g => g !== name);
+            } else {
+                this.openGroups.push(name);
+            }
+
+            localStorage.setItem('openGroups', JSON.stringify(this.openGroups));
         }
     }"
     :class="{ 'overflow-hidden': mobileOpen }">
@@ -247,7 +254,7 @@ $isDashboard = request()->routeIs('dashboard','catechist.dashboard','parish-admi
                 </button>
 
                 {{-- Accordion submenu (full sidebar) --}}
-                <div x-show="openGroup === 'students' && !sidebarMini"
+                <div x-show="openGroups.includes('students') && !sidebarMini"
                     x-transition:enter="transition ease-out duration-150"
                     x-transition:enter-start="opacity-0 -translate-y-1"
                     x-transition:enter-end="opacity-100 translate-y-0"
@@ -297,7 +304,7 @@ $isDashboard = request()->routeIs('dashboard','catechist.dashboard','parish-admi
                     @endif
                 </button>
 
-                <div x-show="openGroup === 'staff' && !sidebarMini"
+                <div x-show="openGroups.includes('staff') && !sidebarMini"
                     x-transition:enter="transition ease-out duration-150"
                     x-transition:enter-start="opacity-0 -translate-y-1"
                     x-transition:enter-end="opacity-100 translate-y-0"
@@ -343,7 +350,7 @@ $isDashboard = request()->routeIs('dashboard','catechist.dashboard','parish-admi
                     @endif
                 </button>
 
-                <div x-show="openGroup === 'system' && !sidebarMini"
+                <div x-show="openGroups.includes('system') && !sidebarMini"
                     x-transition:enter="transition ease-out duration-150"
                     x-transition:enter-start="opacity-0 -translate-y-1"
                     x-transition:enter-end="opacity-100 translate-y-0"
@@ -439,13 +446,14 @@ $isDashboard = request()->routeIs('dashboard','catechist.dashboard','parish-admi
     <div id="main-wrapper"
         class="min-h-screen flex flex-col"
         x-init="
-             if (window.innerWidth >= 1024) {
-                 $el.style.marginLeft = sidebarMini ? '64px' : '256px';
-             }
-             // Xoá style inject từ head script sau khi Alpine đã handle
-             var s = document.getElementById('sidebar-init-style');
-             if (s) s.remove();
-         ">
+            if (window.innerWidth >= 1024) {
+                $el.style.marginLeft = sidebarMini ? '64px' : '256px';
+            }
+
+            // Xoá style inject từ head script sau khi Alpine đã handle
+            var s = document.getElementById('sidebar-init-style');
+            if (s) s.remove();
+        ">
 
         {{-- ── Topbar ── --}}
         <header class="sticky top-0 z-30 bg-white/90 backdrop-blur-sm border-b border-slate-200 shadow-sm">
