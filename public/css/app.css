@@ -3841,10 +3841,6 @@ video {
     grid-column: span 3 / span 3;
   }
 
-  .lg\:ml-64 {
-    margin-left: 16rem;
-  }
-
   .lg\:block {
     display: block;
   }
@@ -3936,14 +3932,6 @@ video {
 
   .lg\:pb-5 {
     padding-bottom: 1.25rem;
-  }
-
-  .lg\:pl-16 {
-    padding-left: 4rem;
-  }
-
-  .lg\:pl-64 {
-    padding-left: 16rem;
   }
 
   .lg\:opacity-0 {
