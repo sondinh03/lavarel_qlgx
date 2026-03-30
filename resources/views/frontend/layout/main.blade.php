@@ -244,7 +244,7 @@ $isDashboard = request()->routeIs('dashboard','catechist.dashboard','parish-admi
                     </svg>
                     <span class="sidebar-label flex-1 text-left truncate">Học Sinh</span>
                     <svg class="sidebar-chevron w-3.5 h-3.5 flex-shrink-0 text-slate-400 transition-transform duration-200"
-                        :class="openGroup === 'students' ? 'rotate-180 text-primary-600' : 'text-slate-400'"
+                        :class="openGroups.includes('students') ? 'rotate-180 text-primary-600' : 'text-slate-400'"
                         fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
                     </svg>
@@ -295,7 +295,7 @@ $isDashboard = request()->routeIs('dashboard','catechist.dashboard','parish-admi
                     </svg>
                     <span class="sidebar-label flex-1 text-left truncate">Nhân Sự</span>
                     <svg class="sidebar-chevron w-3.5 h-3.5 flex-shrink-0 text-slate-400 transition-transform duration-200"
-                        :class="openGroup === 'staff' ? 'rotate-180 text-primary-600' : 'text-slate-400'"
+                        :class="openGroups.includes('staff') ? 'rotate-180 text-primary-600' : 'text-slate-400'"
                         fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
                     </svg>
@@ -341,7 +341,7 @@ $isDashboard = request()->routeIs('dashboard','catechist.dashboard','parish-admi
                     </svg>
                     <span class="sidebar-label flex-1 text-left truncate">Hệ Thống</span>
                     <svg class="sidebar-chevron w-3.5 h-3.5 flex-shrink-0 text-slate-400 transition-transform duration-200"
-                        :class="openGroup === 'system' ? 'rotate-180 text-primary-600' : 'text-slate-400'"
+                        :class="openGroups.includes('system') ? 'rotate-180 text-primary-600' : 'text-slate-400'"
                         fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
                     </svg>
@@ -453,6 +453,13 @@ $isDashboard = request()->routeIs('dashboard','catechist.dashboard','parish-admi
             // Xoá style inject từ head script sau khi Alpine đã handle
             var s = document.getElementById('sidebar-init-style');
             if (s) s.remove();
+
+            const active = '{{ $activeGroup }}';
+
+            if (active) {
+                openGroups = [active];
+                localStorage.setItem('openGroups', JSON.stringify(openGroups));
+            }
         ">
 
         {{-- ── Topbar ── --}}
