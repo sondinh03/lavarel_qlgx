@@ -117,11 +117,9 @@
                             <th class="px-4 py-3 text-left text-xs font-semibold text-slate-600 uppercase tracking-wide">Ảnh</th>
                             <th class="px-4 py-3 text-left text-xs font-semibold text-slate-600 uppercase tracking-wide">Họ và tên</th>
                             <th class="px-4 py-3 text-center text-xs font-semibold text-slate-600 uppercase tracking-wide">Giới tính</th>
-                            <th class="px-4 py-3 text-center text-xs font-semibold text-slate-600 uppercase tracking-wide">Tuổi</th>
+                            <th class="px-4 py-3 text-center text-xs font-semibold text-slate-600 uppercase tracking-wide">Ngày sinh</th>
                             <th class="px-4 py-3 text-left text-xs font-semibold text-slate-600 uppercase tracking-wide">Điện thoại</th>
                             <th class="px-4 py-3 text-left text-xs font-semibold text-slate-600 uppercase tracking-wide">Giáo họ</th>
-                            <th class="px-4 py-3 text-center text-xs font-semibold text-slate-600 uppercase tracking-wide">Bí tích</th>
-                            <th class="px-4 py-3 text-center text-xs font-semibold text-slate-600 uppercase tracking-wide">Học sinh</th>
                             <th class="px-4 py-3 text-center text-xs font-semibold text-slate-600 uppercase tracking-wide">Trạng thái</th>
                             <th class="px-4 py-3 text-center text-xs font-semibold text-slate-600 uppercase tracking-wide">Thao tác</th>
                         </tr>
@@ -162,7 +160,7 @@
                             </td>
 
                             <td class="px-4 py-3 text-center text-sm text-slate-700">
-                                {{ $p->age ? $p->age . ' tuổi' : '—' }}
+                                {{ $p->birthday?->format('d/m/Y') ?? '—' }}
                             </td>
 
                             <td class="px-4 py-3 text-sm">
@@ -175,29 +173,6 @@
 
                             <td class="px-4 py-3 text-sm text-slate-600">
                                 {{ $p->parishGroup?->name ?? '—' }}
-                            </td>
-
-                            {{-- Bí tích --}}
-                            <td class="px-4 py-3 text-center">
-                                <button wire:click="openSacraments({{ $p->id }})"
-                                    class="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-semibold rounded-full bg-amber-100 text-amber-700 hover:bg-amber-200 transition">
-                                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                    </svg>
-                                    Xem
-                                </button>
-                            </td>
-
-                            {{-- Học sinh --}}
-                            <td class="px-4 py-3 text-center">
-                                @if($p->student)
-                                <button wire:click="openStudentLink({{ $p->id }})"
-                                    class="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-semibold rounded-full bg-purple-100 text-purple-700 hover:bg-purple-200 transition">
-                                    Xem
-                                </button>
-                                @else
-                                <span class="text-slate-400 text-xs">Chưa có</span>
-                                @endif
                             </td>
 
                             <td class="px-4 py-3 text-center">
@@ -641,65 +616,65 @@ class="text-sm text-slate-600 hover:text-slate-800 font-medium">Xem</a>
 
                 <td class="px-5 py-3 text-sm text-slate-500">
                     {{ ($parishioners->firstItem() ?? 0) + $index }}
-                </td>
+</td>
 
-                <td class="px-5 py-3">
-                    <div class="w-10 h-10 rounded-full overflow-hidden bg-slate-100 flex items-center justify-center">
-                        @if($p->avatar_path)
-                        <img src="{{ asset('storage/' . $p->avatar_path) }}" class="w-full h-full object-cover">
-                        @else
-                        <svg class="w-5 h-5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-width="2" d="M16 7a4 4 0 11-8 0" />
-                        </svg>
-                        @endif
-                    </div>
-                </td>
+<td class="px-5 py-3">
+    <div class="w-10 h-10 rounded-full overflow-hidden bg-slate-100 flex items-center justify-center">
+        @if($p->avatar_path)
+        <img src="{{ asset('storage/' . $p->avatar_path) }}" class="w-full h-full object-cover">
+        @else
+        <svg class="w-5 h-5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-width="2" d="M16 7a4 4 0 11-8 0" />
+        </svg>
+        @endif
+    </div>
+</td>
 
-                <td class="px-5 py-3">
-                    <div class="font-semibold text-slate-900 text-sm">{{ $p->full_name_with_saint }}</div>
-                    <div class="text-xs text-slate-400">{{ $p->cccd }}</div>
-                </td>
+<td class="px-5 py-3">
+    <div class="font-semibold text-slate-900 text-sm">{{ $p->full_name_with_saint }}</div>
+    <div class="text-xs text-slate-400">{{ $p->cccd }}</div>
+</td>
 
-                <td class="px-5 py-3 text-center text-sm text-slate-600">
-                    {{ $p->gender_name }}
-                </td>
+<td class="px-5 py-3 text-center text-sm text-slate-600">
+    {{ $p->gender_name }}
+</td>
 
-                <td class="px-5 py-3 text-center text-sm text-slate-700">
-                    {{ $p->age ? $p->age . ' tuổi' : '—' }}
-                </td>
+<td class="px-5 py-3 text-center text-sm text-slate-700">
+    {{ $p->age ? $p->age . ' tuổi' : '—' }}
+</td>
 
-                <td class="px-5 py-3 text-sm">
-                    {{ $p->phone ?? '—' }}
-                </td>
+<td class="px-5 py-3 text-sm">
+    {{ $p->phone ?? '—' }}
+</td>
 
-                <td class="px-5 py-3 text-sm text-slate-600">
-                    {{ $p->parishGroup?->name ?? '—' }}
-                </td>
+<td class="px-5 py-3 text-sm text-slate-600">
+    {{ $p->parishGroup?->name ?? '—' }}
+</td>
 
-                <td class="px-5 py-3 text-center">
-                    <button class="px-3 py-1 text-xs rounded-xl bg-slate-100 text-slate-700 hover:bg-slate-200">
-                        Xem
-                    </button>
-                </td>
+<td class="px-5 py-3 text-center">
+    <button class="px-3 py-1 text-xs rounded-xl bg-slate-100 text-slate-700 hover:bg-slate-200">
+        Xem
+    </button>
+</td>
 
-                <td class="px-5 py-3 text-center text-xs text-slate-400">
-                    {{ $p->student ? 'Có' : '—' }}
-                </td>
+<td class="px-5 py-3 text-center text-xs text-slate-400">
+    {{ $p->student ? 'Có' : '—' }}
+</td>
 
-                <td class="px-5 py-3 text-center">
-                    <span class="px-2 py-1 text-xs rounded-full {{ $p->status ? 'bg-primary-100 text-primary-700' : 'bg-slate-200 text-slate-600' }}">
-                        {{ $p->status_name }}
-                    </span>
-                </td>
+<td class="px-5 py-3 text-center">
+    <span class="px-2 py-1 text-xs rounded-full {{ $p->status ? 'bg-primary-100 text-primary-700' : 'bg-slate-200 text-slate-600' }}">
+        {{ $p->status_name }}
+    </span>
+</td>
 
-                <td class="px-5 py-3 text-center text-sm">
-                    <button class="text-red-500 hover:text-red-600">Xóa</button>
-                </td>
+<td class="px-5 py-3 text-center text-sm">
+    <button class="text-red-500 hover:text-red-600">Xóa</button>
+</td>
 
-            </tr>
-            @endforeach
+</tr>
+@endforeach
 
-        </tbody>
+</tbody>
 
-    </table>
+</table>
 </div> --}}

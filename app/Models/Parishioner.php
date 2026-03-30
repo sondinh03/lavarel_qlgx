@@ -10,6 +10,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Carbon;
 use Venturecraft\Revisionable\RevisionableTrait;
 
 class Parishioner extends Model
@@ -220,7 +221,7 @@ class Parishioner extends Model
 
     public function student(): HasOne
     {
-        return $this->hasOne(Student::class, 'parishioner_id');
+        return $this->hasOne(StudentNew::class, 'parishioner_id');
     }
 
     public function slug(): MorphOne

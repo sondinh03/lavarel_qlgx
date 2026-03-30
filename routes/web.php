@@ -53,6 +53,7 @@ use App\Http\Livewire\Holy\HolyManager;
 use App\Http\Livewire\Landing;
 use App\Http\Livewire\Lop\AssignTeacher;
 use App\Http\Livewire\Lop\LopDetail;
+use App\Http\Livewire\ModuleSelect;
 use App\Http\Livewire\NamHoc\CopyNamHoc;
 use App\Http\Livewire\NamHoc\NamHocManager;
 use App\Http\Livewire\Parish\ParishChild;
@@ -77,6 +78,10 @@ Paginator::useBootstrap();
 Route::middleware('redirect.auth.dashboard')->group(function () {
     Route::get('/', Landing::class)->name('landing');
 });
+
+Route::get('/select-module', ModuleSelect::class)
+    ->middleware('auth')
+    ->name('module.select');
 
 Auth::routes();
 

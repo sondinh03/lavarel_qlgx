@@ -28,7 +28,8 @@ class ParishionerPolicy
      */
     public function viewAny(User $user): bool
     {
-        return $user->hasRole('parish_admin');
+        return $user->hasRole('parish_admin')
+            || $user->hasRole('catechist');
     }
 
     /**
@@ -37,14 +38,14 @@ class ParishionerPolicy
      */
     public function view(User $user, Parishioner $parishioner): bool
     {
+        // parish_admin xem trong xứ mình
         if ($user->hasRole('parish_admin')) {
             return $user->parish_id === $parishioner->parish_id;
         }
 
+        // catechist chỉ xem, không sửa/xóa — check cùng xứ là đủ
         if ($user->hasRole('catechist')) {
-            return $parishioner->classes()
-                ->whereHas('teachers', fn($q) => $q->where('user_id', $user->id))
-                ->exists();
+            return $user->parish_id === $parishioner->parish_id;
         }
 
         return false;

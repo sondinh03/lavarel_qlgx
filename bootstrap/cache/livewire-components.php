@@ -15,6 +15,7 @@
   'lop.assign-teacher' => 'App\\Http\\Livewire\\Lop\\AssignTeacher',
   'lop.lop-detail' => 'App\\Http\\Livewire\\Lop\\LopDetail',
   'lop.lop-form' => 'App\\Http\\Livewire\\Lop\\LopForm',
+  'module-select' => 'App\\Http\\Livewire\\ModuleSelect',
   'nam-hoc.copy-nam-hoc' => 'App\\Http\\Livewire\\NamHoc\\CopyNamHoc',
   'nam-hoc.nam-hoc-manager' => 'App\\Http\\Livewire\\NamHoc\\NamHocManager',
   'parish.parish-group-manager' => 'App\\Http\\Livewire\\Parish\\ParishGroupManager',

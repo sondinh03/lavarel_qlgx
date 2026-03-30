@@ -447,17 +447,17 @@ class StudentListNew extends BaseComponent
 
         return Parishioner::query()
             ->active()
-            ->whereDoesntHave('studentNew')
+            ->whereDoesntHave('student')
             ->when($this->parishionerBirthYear, function ($q) {
                 $q->whereYear('birthday', $this->parishionerBirthYear);
             })
             ->when(trim($this->parishionerSearch), function ($q, $search) {
                 $q->where(function ($q2) use ($search) {
                     $q2->where('last_name', 'like', "%{$search}%")
-                        ->orWhere('name', 'like', "%{$search}%")
+                        ->orWhere('first_name', 'like', "%{$search}%")
                         ->orWhere('cccd', 'like', "%{$search}%")
                         ->orWhere('phone', 'like', "%{$search}%")
-                        ->orWhereRaw("CONCAT(last_name, ' ', name) LIKE ?", ["%{$search}%"]);
+                        ->orWhereRaw("CONCAT(last_name, ' ', first_name) LIKE ?", ["%{$search}%"]);
                 });
             })
             ->when($this->ageFrom || $this->ageTo, function ($q) {
@@ -472,8 +472,8 @@ class StudentListNew extends BaseComponent
                     $q->where('birthday', '>=', $to);
                 }
             })
-            ->orderBy('last_name')
-            ->orderBy('name');
+            ->orderBy('first_name')
+            ->orderBy('last_name');
     }
 
     private function getAvailableParishionersPaginated()
@@ -502,7 +502,7 @@ class StudentListNew extends BaseComponent
             foreach (Parishioner::whereIn('id', $this->selectedParishioners)->get() as $p) {
                 try {
                     $student = StudentNew::create([
-                        'first_name'      => $p->name,
+                        'first_name'      => $p->first_name,
                         'last_name'       => $p->last_name,
                         'saint_id'        => $p->holy ?? null,
                         'gender'          => $p->sex == 1 ? 'male' : 'female',
