@@ -125,8 +125,21 @@ $isDashboard = request()->routeIs('dashboard','catechist.dashboard','parish-admi
     x-data="{
         sidebarMini: localStorage.getItem('sidebarMini') === 'true',
         mobileOpen: false,
-        openGroups: JSON.parse(localStorage.getItem('openGroups') || '[]'),
+        openGroups: (function() {
+            const active = '{{ $activeGroup }}';
+            console.log('[INIT] activeGroup from Blade =', active);
+
+            if (active) return [active];
+
+            const ls = JSON.parse(localStorage.getItem('openGroups') || '[]');
+            console.log('[INIT] openGroups from localStorage =', ls);
+
+            return ls;
+        })(),
+
         toggleGroup(name) {
+            console.log('[CLICK GROUP]', name);
+
             if (this.sidebarMini) return;
 
             if (this.openGroups.includes(name)) {
@@ -134,6 +147,8 @@ $isDashboard = request()->routeIs('dashboard','catechist.dashboard','parish-admi
             } else {
                 this.openGroups.push(name);
             }
+
+            console.log('[AFTER TOGGLE]', this.openGroups);
 
             localStorage.setItem('openGroups', JSON.stringify(this.openGroups));
         }
@@ -255,6 +270,7 @@ $isDashboard = request()->routeIs('dashboard','catechist.dashboard','parish-admi
 
                 {{-- Accordion submenu (full sidebar) --}}
                 <div x-show="openGroups.includes('students') && !sidebarMini"
+                    style="{{ $isStudentActive ? '' : 'display:none' }}"
                     x-transition:enter="transition ease-out duration-150"
                     x-transition:enter-start="opacity-0 -translate-y-1"
                     x-transition:enter-end="opacity-100 translate-y-0"
@@ -262,7 +278,7 @@ $isDashboard = request()->routeIs('dashboard','catechist.dashboard','parish-admi
                     x-transition:leave-start="opacity-100"
                     x-transition:leave-end="opacity-0"
                     class="mt-0.5 ml-4 pl-3 border-l border-slate-100 space-y-0.5"
-                    x-cloak>
+                    >
                     @include('frontend.layout.partials.sidebar-sub-item', ['route' => 'students.index', 'label' => 'Quản lý học sinh'])
                     @include('frontend.layout.partials.sidebar-sub-item', ['route' => 'classes.index', 'label' => 'Danh sách lớp'])
                     @include('frontend.layout.partials.sidebar-sub-item', ['route' => 'attendance.show', 'label' => 'Điểm danh'])
@@ -305,6 +321,7 @@ $isDashboard = request()->routeIs('dashboard','catechist.dashboard','parish-admi
                 </button>
 
                 <div x-show="openGroups.includes('staff') && !sidebarMini"
+                    style="{{ $isStaffActive ? '' : 'display:none' }}"
                     x-transition:enter="transition ease-out duration-150"
                     x-transition:enter-start="opacity-0 -translate-y-1"
                     x-transition:enter-end="opacity-100 translate-y-0"
@@ -312,7 +329,7 @@ $isDashboard = request()->routeIs('dashboard','catechist.dashboard','parish-admi
                     x-transition:leave-start="opacity-100"
                     x-transition:leave-end="opacity-0"
                     class="mt-0.5 ml-4 pl-3 border-l border-slate-100 space-y-0.5"
-                    x-cloak>
+                    >
                     @include('frontend.layout.partials.sidebar-sub-item', ['route' => 'catechists.index', 'label' => 'Giáo lý viên'])
                     @include('frontend.layout.partials.sidebar-sub-item', ['route' => 'parishioners.index','label' => 'Giáo dân'])
                     @include('frontend.layout.partials.sidebar-sub-item', ['route' => 'catechists.import', 'label' => 'Import GLV'])
@@ -351,6 +368,7 @@ $isDashboard = request()->routeIs('dashboard','catechist.dashboard','parish-admi
                 </button>
 
                 <div x-show="openGroups.includes('system') && !sidebarMini"
+                    style="{{ $isSystemActive ? '' : 'display:none' }}"
                     x-transition:enter="transition ease-out duration-150"
                     x-transition:enter-start="opacity-0 -translate-y-1"
                     x-transition:enter-end="opacity-100 translate-y-0"
@@ -358,7 +376,7 @@ $isDashboard = request()->routeIs('dashboard','catechist.dashboard','parish-admi
                     x-transition:leave-start="opacity-100"
                     x-transition:leave-end="opacity-0"
                     class="mt-0.5 ml-4 pl-3 border-l border-slate-100 space-y-0.5"
-                    x-cloak>
+                    >
                     @include('frontend.layout.partials.sidebar-sub-item', ['route' => 'school-years.index', 'label' => 'Năm học'])
                     @include('frontend.layout.partials.sidebar-sub-item', ['route' => 'classes.index', 'label' => 'Lớp học'])
                     @include('frontend.layout.partials.sidebar-sub-item', ['route' => 'parish-group.index', 'label' => 'Giáo họ'])
@@ -446,6 +464,14 @@ $isDashboard = request()->routeIs('dashboard','catechist.dashboard','parish-admi
     <div id="main-wrapper"
         class="min-h-screen flex flex-col"
         x-init="
+            localStorage.setItem('openGroups', JSON.stringify(openGroups));
+            
+                console.log('[ALPINE INIT DONE]', openGroups);
+
+            $watch('openGroups', value => {
+                console.log('[WATCH openGroups]', value);
+            });
+
             if (window.innerWidth >= 1024) {
                 $el.style.marginLeft = sidebarMini ? '64px' : '256px';
             }
@@ -453,13 +479,6 @@ $isDashboard = request()->routeIs('dashboard','catechist.dashboard','parish-admi
             // Xoá style inject từ head script sau khi Alpine đã handle
             var s = document.getElementById('sidebar-init-style');
             if (s) s.remove();
-
-            const active = '{{ $activeGroup }}';
-
-            if (active) {
-                openGroups = [active];
-                localStorage.setItem('openGroups', JSON.stringify(openGroups));
-            }
         ">
 
         {{-- ── Topbar ── --}}
@@ -543,6 +562,12 @@ $isDashboard = request()->routeIs('dashboard','catechist.dashboard','parish-admi
         document.addEventListener('DOMContentLoaded', function() {
             document.querySelectorAll('#sidebar-nav a[href]').forEach(function(link) {
                 link.addEventListener('click', function() {
+                    console.log('--- CLICK LINK ---');
+                    console.log('href:', link.href);
+                    console.log('openGroups BEFORE click:', JSON.parse(localStorage.getItem('openGroups')));
+                });
+                
+                link.addEventListener('click', function() {
                     // Xoá active cũ
                     document.querySelectorAll('#sidebar-nav a[href]').forEach(function(el) {
                         el.classList.remove('bg-primary-50', 'text-primary-700');
@@ -557,6 +582,12 @@ $isDashboard = request()->routeIs('dashboard','catechist.dashboard','parish-admi
                     if (dot) dot.classList.replace('bg-slate-300', 'bg-primary-500');
                 });
             });
+        });
+
+        console.log('--- PAGE LOAD START ---');
+
+        window.addEventListener('beforeunload', () => {
+            console.log('--- BEFORE UNLOAD ---');
         });
     </script>
     @stack('scripts')
