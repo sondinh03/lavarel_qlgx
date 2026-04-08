@@ -1,4 +1,4 @@
-<div class="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 p-4 sm:p-6">
+<div class="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 p-2 sm:p-2">
     <a href="#main-content" class="sr-only focus:not-sr-only">Bỏ qua tới nội dung</a>
 
     <div class="mx-auto max-w-7xl space-y-5">
@@ -1149,7 +1149,3 @@
         <span class="text-gray-700">Đang xử lý...</span>
     </div>
 </div>
-
-@push('scripts')
-<script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
-@endpush

@@ -20,7 +20,7 @@
             <x-page-header
                 title="Quản lý giáo dân"
                 description="Danh sách giáo dân trong giáo xứ"
-                :stat-value="$parishioners->total()"
+                :stat-value="$this->parishioners->total()"
                 stat-label="Giáo dân" />
 
             <div class="px-6 py-4 border-b border-slate-200 bg-slate-50/70 space-y-4">
@@ -107,7 +107,7 @@
 
         {{-- Table --}}
         <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
-            @if($parishioners->count() > 0)
+            @if($this->parishioners->count() > 0)
 
             <div class="overflow-x-auto">
                 <table class="w-full border-separate border-spacing-0">
@@ -126,11 +126,11 @@
                     </thead>
 
                     <tbody class="divide-y divide-slate-100">
-                        @foreach($parishioners as $index => $p)
+                        @foreach($this->parishioners as $index => $p)
                         <tr class="hover:bg-slate-50 transition-colors" wire:key="p-{{ $p->id }}">
 
                             <td class="px-4 py-3 text-sm text-slate-500">
-                                {{ ($parishioners->firstItem() ?? 0) + $index }}
+                                {{ ($this->parishioners->firstItem() ?? 0) + $index }}
                             </td>
 
                             <td class="px-4 py-3">
@@ -207,9 +207,9 @@
                 </table>
             </div>
 
-            @if($parishioners->hasPages())
+            @if($this->parishioners->hasPages())
             <div class="px-6 py-4 border-t border-slate-200">
-                <x-pagination :paginator="$parishioners" :per-page-options="[10, 15, 25, 50]" />
+                <x-pagination :paginator="$this->parishioners" :per-page-options="[10, 15, 25, 50]" />
             </div>
             @endif
 
@@ -611,11 +611,11 @@ class="text-sm text-slate-600 hover:text-slate-800 font-medium">Xem</a>
 
         <tbody class="divide-y divide-slate-100">
 
-            @foreach($parishioners as $index => $p)
+            @foreach($this->parishioners as $index => $p)
             <tr class="hover:bg-slate-50 transition-colors">
 
                 <td class="px-5 py-3 text-sm text-slate-500">
-                    {{ ($parishioners->firstItem() ?? 0) + $index }}
+                    {{ ($this->parishioners->firstItem() ?? 0) + $index }}
 </td>
 
 <td class="px-5 py-3">

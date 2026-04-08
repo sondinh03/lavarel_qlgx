@@ -146,7 +146,6 @@ class ParishionersManager extends BaseComponent
 
     protected $listeners = [
         'refresh'            => 'handleRefresh',
-        'parishionerSaved'   => '$refresh',
     ];
 
     // ==================== LIFECYCLE ====================
@@ -367,7 +366,6 @@ class ParishionersManager extends BaseComponent
                     : 'Thêm giáo dân thành công'
             );
 
-            $this->emit('parishionerSaved');
             $this->closeModal();
         } catch (\Exception $e) {
             DB::rollBack();
@@ -574,12 +572,16 @@ class ParishionersManager extends BaseComponent
         $this->resetValidation();
     }
 
+    public function getParishionersProperty()
+    {
+        return $this->getParishioners();
+    }
+
     // ==================== RENDER ====================
 
     public function render()
     {
-        return view('livewire.parishioners.parishioners-manager', [
-            'parishioners' => $this->getParishioners(),
-        ])->extends('frontend.layout.main')->section('content');
+        return view('livewire.parishioners.parishioners-manager')
+            ->extends('frontend.layout.main')->section('content');
     }
 }

@@ -280,7 +280,7 @@ $isDashboard = request()->routeIs('dashboard','catechist.dashboard','parish-admi
                     class="mt-0.5 ml-4 pl-3 border-l border-slate-100 space-y-0.5"
                     >
                     @include('frontend.layout.partials.sidebar-sub-item', ['route' => 'students.index', 'label' => 'Quản lý học sinh'])
-                    @include('frontend.layout.partials.sidebar-sub-item', ['route' => 'classes.index', 'label' => 'Danh sách lớp'])
+                    {{-- @include('frontend.layout.partials.sidebar-sub-item', ['route' => 'classes.index', 'label' => 'Danh sách lớp']) --}}
                     @include('frontend.layout.partials.sidebar-sub-item', ['route' => 'attendance.show', 'label' => 'Điểm danh'])
                     @include('frontend.layout.partials.sidebar-sub-item', ['route' => 'session.index', 'label' => 'Phiên điểm danh'])
                     @include('frontend.layout.partials.sidebar-sub-item', ['route' => 'scores.index', 'label' => 'Kết quả học tập'])
@@ -290,7 +290,7 @@ $isDashboard = request()->routeIs('dashboard','catechist.dashboard','parish-admi
                 <div class="flyout-menu" x-cloak>
                     <div class="px-3 py-2 text-xs font-semibold text-slate-400 uppercase tracking-wide">Học Sinh</div>
                     @include('frontend.layout.partials.flyout-item', ['route' => 'students.index', 'label' => 'Quản lý học sinh'])
-                    @include('frontend.layout.partials.flyout-item', ['route' => 'classes.index', 'label' => 'Danh sách lớp'])
+                    {{-- @include('frontend.layout.partials.flyout-item', ['route' => 'classes.index', 'label' => 'Danh sách lớp']) --}}
                     @include('frontend.layout.partials.flyout-item', ['route' => 'attendance.show', 'label' => 'Điểm danh'])
                     @include('frontend.layout.partials.flyout-item', ['route' => 'session.index', 'label' => 'Phiên điểm danh'])
                     @include('frontend.layout.partials.flyout-item', ['route' => 'scores.index', 'label' => 'Kết quả học tập'])

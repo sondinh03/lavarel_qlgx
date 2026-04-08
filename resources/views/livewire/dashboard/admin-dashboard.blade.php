@@ -1,4 +1,4 @@
-<div class="min-h-screen bg-slate-50 p-6">
+<div class="min-h-screen bg-slate-50 p-2">
     <div class="mx-auto max-w-7xl space-y-6">
 
         {{-- ============================================================ --}}
