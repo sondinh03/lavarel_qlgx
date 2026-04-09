@@ -24,10 +24,11 @@ class ParishionerShow extends Component
 
     // ==================== UI STATE ====================
 
-    public bool $showEditBasic    = false;
-    public bool $showEditAddress  = false;
-    public bool $showEditFamily   = false;
-    public bool $showEditMarriage = false;
+    public bool $showEditBasic     = false;
+    public bool $showEditAddress   = false;
+    public bool $showEditFamily    = false;
+    public bool $showEditMarriage  = false;
+    public bool $showEditDeceased  = false;
     public bool $showDeleteConfirm = false;
 
     // ==================== FORM: CƠ BẢN ====================
@@ -36,6 +37,7 @@ class ParishionerShow extends Component
     public string  $first_name  = '';
     public string  $gender      = 'male';
     public ?string $birthday    = null;
+    public ?int    $birth_order = null;
     public ?int    $saint_id    = null;
     public ?string $cccd        = null;
     public ?string $phone       = null;
@@ -45,17 +47,19 @@ class ParishionerShow extends Component
     public ?string $currentAvatarPath = null;
 
     // Phân loại
-    public ?int $ethnic           = null;
-    public ?int $career           = null;
-    public ?int $education_level  = null;
-    public ?int $catechism_level  = null;
-    public ?int $position         = null;
-    public ?int $language         = null;
-    public ?int $holy_order_status = null;
-    public bool $is_new_convert       = false;
-    public bool $is_included_in_stats = true;
-    public bool $is_active            = true;
-    public bool $status               = true;
+    public ?int    $ethnic            = null;
+    public ?int    $career            = null;
+    public ?int    $education_level   = null;
+    public ?int    $specialist_level  = null;
+    public ?int    $catechism_level   = null;
+    public ?string $catechism_major   = null;
+    public ?int    $position          = null;
+    public ?int    $language          = null;
+    public ?int    $holy_order_status = null;
+    public bool    $is_new_convert       = false;
+    public bool    $is_included_in_stats = true;
+    public bool    $is_active            = true;
+    public bool    $status               = true;
 
     // ==================== FORM: ĐỊA CHỈ ====================
 
@@ -78,18 +82,29 @@ class ParishionerShow extends Component
 
     // ==================== FORM: HÔN PHỐI ====================
 
-    public ?int    $marriage_id         = null;
-    public ?int    $spouse_id           = null;   // husband_id hoặc wife_id (bên kia)
-    public ?string $married_date        = null;
-    public ?string $certificate_number  = null;
-    public ?int    $marriage_parish_id  = null;
+    public ?int    $marriage_id          = null;
+    public ?int    $spouse_id            = null;
+    public ?string $married_date         = null;
+    public ?string $certificate_number   = null;
+    public ?int    $marriage_parish_id   = null;
     public ?string $marriage_parish_name = null;
-    public string  $marriage_status     = 'valid';
-    public ?string $witness_1           = null;
-    public ?string $witness_2           = null;
-    public ?string $marriage_note       = null;
+    public ?string $place_province       = null;
+    public ?int    $place_ward_id        = null;
+    public ?string $priest_witness       = null;
+    public string  $marriage_status      = 'valid';
+    public ?string $witness_1            = null;
+    public ?string $witness_2            = null;
+    public ?string $marriage_note        = null;
 
-    // ==================== VALIDATION RULES ====================
+    // ==================== FORM: TỬ VONG ====================
+
+    public bool    $is_deceased       = false;
+    public ?string $death_date        = null;
+    public ?string $death_book_number = null;
+    public ?string $death_place       = null;
+    public ?string $burial_place      = null;
+
+    // ==================== VALIDATION ====================
 
     protected function rulesBasic(): array
     {
@@ -98,12 +113,15 @@ class ParishionerShow extends Component
             'first_name'          => 'required|string|max:100',
             'gender'              => 'required|in:male,female',
             'birthday'            => 'nullable|date|before:today',
+            'birth_order'         => 'nullable|integer|min:1',
             'saint_id'            => 'nullable|integer|exists:holymanagements,id',
             'cccd'                => 'nullable|string|max:20',
             'phone'               => 'nullable|string|max:20',
             'email'               => 'nullable|email|max:255',
             'note'                => 'nullable|string|max:1000',
             'avatar'              => 'nullable|image|max:2048',
+            'specialist_level'    => 'nullable|integer',
+            'catechism_major'     => 'nullable|string|max:100',
         ];
     }
 
@@ -137,10 +155,23 @@ class ParishionerShow extends Component
             'certificate_number'   => 'nullable|string|max:50',
             'marriage_parish_id'   => 'nullable|integer|exists:parishes,id',
             'marriage_parish_name' => 'nullable|string|max:100',
+            'place_province'       => 'nullable|string|max:100',
+            'place_ward_id'        => 'nullable|integer',
+            'priest_witness'       => 'nullable|string|max:100',
             'marriage_status'      => 'required|in:valid,invalid,widowed,divorced',
             'witness_1'            => 'nullable|string|max:100',
             'witness_2'            => 'nullable|string|max:100',
             'marriage_note'        => 'nullable|string|max:500',
+        ];
+    }
+
+    protected function rulesDeceased(): array
+    {
+        return [
+            'death_date'        => 'required_if:is_deceased,true|nullable|date',
+            'death_book_number' => 'nullable|string|max:20',
+            'death_place'       => 'nullable|string|max:255',
+            'burial_place'      => 'nullable|string|max:255',
         ];
     }
 
@@ -150,24 +181,15 @@ class ParishionerShow extends Component
     {
         $this->authorize('view', $parishioner);
         $this->parishioner = $parishioner->load([
-            'saint',
-            'parishGroup',
-            'parish',
-            'deanery',
-            'diocese',
-            'family',
-            'father',
-            'mother',
-            'children',
-            'baptism',
-            'communion',
-            'confirmation',
-            'holyOrders',
-            'anointing',
-            'marriageAsHusband.wife',
-            'marriageAsWife.husband',
+            'saint', 'parishGroup', 'parish', 'deanery', 'diocese',
+            'family', 'father', 'mother', 'children',
+            'baptism', 'communion', 'confirmation', 'holyOrders', 'anointing',
+            'marriageAsHusband.wife', 'marriageAsWife.husband',
             'sacraments',
         ]);
+
+        // Khởi tạo trạng thái tử vong từ model
+        $this->is_deceased = $this->parishioner->death_date !== null;
     }
 
     public function goToTab(string $tab): void
@@ -186,17 +208,19 @@ class ParishionerShow extends Component
         $this->first_name         = $p->first_name;
         $this->gender             = $p->gender ?? 'male';
         $this->birthday           = $p->birthday?->format('Y-m-d');
+        $this->birth_order        = $p->birth_order;
         $this->saint_id           = $p->saint_id;
         $this->cccd               = $p->cccd;
         $this->phone              = $p->phone;
         $this->email              = $p->email;
         $this->note               = $p->note;
         $this->currentAvatarPath  = $p->avatar_path;
-
         $this->ethnic             = $p->ethnic;
         $this->career             = $p->career;
         $this->education_level    = $p->education_level;
+        $this->specialist_level   = $p->specialist_level;
         $this->catechism_level    = $p->catechism_level;
+        $this->catechism_major    = $p->catechism_major;
         $this->position           = $p->position;
         $this->language           = $p->language;
         $this->holy_order_status  = $p->holy_order_status;
@@ -221,6 +245,7 @@ class ParishionerShow extends Component
                 'first_name'            => $this->first_name,
                 'gender'                => $this->gender,
                 'birthday'              => $this->birthday ?: null,
+                'birth_order'           => $this->birth_order,
                 'saint_id'              => $this->saint_id,
                 'cccd'                  => $this->cccd,
                 'phone'                 => $this->phone,
@@ -229,7 +254,9 @@ class ParishionerShow extends Component
                 'ethnic'                => $this->ethnic,
                 'career'                => $this->career,
                 'education_level'       => $this->education_level,
+                'specialist_level'      => $this->specialist_level,
                 'catechism_level'       => $this->catechism_level,
+                'catechism_major'       => $this->catechism_major,
                 'position'              => $this->position,
                 'language'              => $this->language,
                 'holy_order_status'     => $this->holy_order_status,
@@ -255,7 +282,7 @@ class ParishionerShow extends Component
             $this->resetValidation();
         } catch (\Exception $e) {
             DB::rollBack();
-            Log::error(self::class . ': Error saving basic info - ' . $e->getMessage(), ['id' => $this->parishioner->id]);
+            Log::error(self::class . ': saveBasic - ' . $e->getMessage(), ['id' => $this->parishioner->id]);
             session()->flash('error', 'Có lỗi khi lưu. Vui lòng thử lại.');
         }
     }
@@ -299,7 +326,7 @@ class ParishionerShow extends Component
             $this->showEditAddress = false;
             $this->resetValidation();
         } catch (\Exception $e) {
-            Log::error(self::class . ': Error saving address - ' . $e->getMessage(), ['id' => $this->parishioner->id]);
+            Log::error(self::class . ': saveAddress - ' . $e->getMessage(), ['id' => $this->parishioner->id]);
             session()->flash('error', 'Có lỗi khi lưu địa chỉ.');
         }
     }
@@ -341,7 +368,7 @@ class ParishionerShow extends Component
             $this->showEditFamily = false;
             $this->resetValidation();
         } catch (\Exception $e) {
-            Log::error(self::class . ': Error saving family - ' . $e->getMessage(), ['id' => $this->parishioner->id]);
+            Log::error(self::class . ': saveFamily - ' . $e->getMessage(), ['id' => $this->parishioner->id]);
             session()->flash('error', 'Có lỗi khi lưu thông tin gia đình.');
         }
     }
@@ -361,13 +388,14 @@ class ParishionerShow extends Component
             $this->certificate_number    = $marriage->certificate_number;
             $this->marriage_parish_id    = $marriage->parish_id;
             $this->marriage_parish_name  = $marriage->parish_name;
+            $this->place_province        = $marriage->place_province;
+            $this->place_ward_id         = $marriage->place_ward_id;
+            $this->priest_witness        = $marriage->priest_witness;
             $this->marriage_status       = $marriage->status;
             $this->witness_1             = $marriage->witness_1;
             $this->witness_2             = $marriage->witness_2;
             $this->marriage_note         = $marriage->note;
-
-            // spouse là bên kia
-            $this->spouse_id = $this->parishioner->gender === 'male'
+            $this->spouse_id             = $this->parishioner->gender === 'male'
                 ? $marriage->wife_id
                 : $marriage->husband_id;
         } else {
@@ -386,28 +414,28 @@ class ParishionerShow extends Component
             DB::beginTransaction();
 
             $data = [
-                'married_date'       => $this->married_date ?: null,
-                'certificate_number' => $this->certificate_number,
-                'parish_id'          => $this->marriage_parish_id,
-                'parish_name'        => $this->marriage_parish_name,
-                'status'             => $this->marriage_status,
-                'witness_1'          => $this->witness_1,
-                'witness_2'          => $this->witness_2,
-                'note'               => $this->marriage_note,
+                'married_date'        => $this->married_date ?: null,
+                'certificate_number'  => $this->certificate_number,
+                'parish_id'           => $this->marriage_parish_id,
+                'parish_name'         => $this->marriage_parish_name,
+                'place_province'      => $this->place_province,
+                'place_ward_id'       => $this->place_ward_id,
+                'priest_witness'      => $this->priest_witness,
+                'status'              => $this->marriage_status,
+                'witness_1'           => $this->witness_1,
+                'witness_2'           => $this->witness_2,
+                'note'                => $this->marriage_note,
             ];
 
             if ($this->marriage_id) {
-                // Cập nhật
                 Marriage::findOrFail($this->marriage_id)->update($data);
             } else {
-                // Tạo mới — xác định husband/wife theo gender
                 $data['husband_id'] = $this->parishioner->gender === 'male'
                     ? $this->parishioner->id
                     : $this->spouse_id;
                 $data['wife_id'] = $this->parishioner->gender === 'female'
                     ? $this->parishioner->id
                     : $this->spouse_id;
-
                 Marriage::create($data);
             }
 
@@ -423,7 +451,7 @@ class ParishionerShow extends Component
             $this->resetValidation();
         } catch (\Exception $e) {
             DB::rollBack();
-            Log::error(self::class . ': Error saving marriage - ' . $e->getMessage(), ['id' => $this->parishioner->id]);
+            Log::error(self::class . ': saveMarriage - ' . $e->getMessage(), ['id' => $this->parishioner->id]);
             session()->flash('error', 'Có lỗi khi lưu hôn phối.');
         }
     }
@@ -431,7 +459,6 @@ class ParishionerShow extends Component
     public function deleteMarriage(): void
     {
         $this->authorize('update', $this->parishioner);
-
         if (!$this->marriage_id) return;
 
         try {
@@ -443,8 +470,49 @@ class ParishionerShow extends Component
             session()->flash('message', 'Đã xóa hôn phối');
             $this->showEditMarriage = false;
         } catch (\Exception $e) {
-            Log::error(self::class . ': Error deleting marriage - ' . $e->getMessage(), ['id' => $this->marriage_id]);
+            Log::error(self::class . ': deleteMarriage - ' . $e->getMessage(), ['id' => $this->marriage_id]);
             session()->flash('error', 'Có lỗi khi xóa hôn phối.');
+        }
+    }
+
+    // ==================== EDIT: TỬ VONG ====================
+
+    public function openEditDeceased(): void
+    {
+        $this->authorize('update', $this->parishioner);
+        $p = $this->parishioner;
+
+        $this->is_deceased       = $p->death_date !== null;
+        $this->death_date        = $p->death_date?->format('Y-m-d');
+        $this->death_book_number = $p->death_book_number;
+        $this->death_place       = $p->death_place;
+        $this->burial_place      = $p->burial_place;
+
+        $this->showEditDeceased = true;
+    }
+
+    public function saveDeceased(): void
+    {
+        $this->authorize('update', $this->parishioner);
+        $this->validate($this->rulesDeceased());
+
+        try {
+            $this->parishioner->update([
+                'death_date'        => $this->is_deceased ? ($this->death_date ?: null) : null,
+                'death_book_number' => $this->is_deceased ? $this->death_book_number : null,
+                'death_place'       => $this->is_deceased ? $this->death_place : null,
+                'burial_place'      => $this->is_deceased ? $this->burial_place : null,
+            ]);
+
+            $this->parishioner->refresh();
+            $this->is_deceased = $this->parishioner->death_date !== null;
+
+            session()->flash('message', 'Cập nhật thông tin tử vong thành công');
+            $this->showEditDeceased = false;
+            $this->resetValidation();
+        } catch (\Exception $e) {
+            Log::error(self::class . ': saveDeceased - ' . $e->getMessage(), ['id' => $this->parishioner->id]);
+            session()->flash('error', 'Có lỗi khi lưu.');
         }
     }
 
@@ -468,7 +536,7 @@ class ParishionerShow extends Component
             return redirect()->route('parishioners.index');
         } catch (\Exception $e) {
             DB::rollBack();
-            Log::error(self::class . ': Error deleting parishioner - ' . $e->getMessage(), ['id' => $this->parishioner->id]);
+            Log::error(self::class . ': delete - ' . $e->getMessage(), ['id' => $this->parishioner->id]);
             session()->flash('error', 'Có lỗi khi xóa giáo dân.');
         }
 
@@ -480,15 +548,10 @@ class ParishionerShow extends Component
     private function resetMarriageForm(): void
     {
         $this->reset([
-            'marriage_id',
-            'spouse_id',
-            'married_date',
-            'certificate_number',
-            'marriage_parish_id',
-            'marriage_parish_name',
-            'witness_1',
-            'witness_2',
-            'marriage_note',
+            'marriage_id', 'spouse_id', 'married_date', 'certificate_number',
+            'marriage_parish_id', 'marriage_parish_name',
+            'place_province', 'place_ward_id', 'priest_witness',
+            'witness_1', 'witness_2', 'marriage_note',
         ]);
         $this->marriage_status = 'valid';
     }
@@ -499,6 +562,7 @@ class ParishionerShow extends Component
         $this->showEditAddress  = false;
         $this->showEditFamily   = false;
         $this->showEditMarriage = false;
+        $this->showEditDeceased = false;
         $this->showDeleteConfirm = false;
         $this->resetValidation();
     }

@@ -16,26 +16,27 @@ class Sacrament extends Model
     protected $table = 'sacraments';
     protected $guarded = ['id'];
 
-    // Các loại bí tích
-    const TYPE_BAPTISM      = 'baptism';        // Rửa tội
-    const TYPE_COMMUNION    = 'communion';      // Rước lễ lần đầu
-    const TYPE_CONFIRMATION = 'confirmation';   // Thêm sức
-    const TYPE_ANOINTING    = 'anointing';      // Xức dầu
-    const TYPE_HOLY_ORDERS  = 'holy_orders';    // Truyền chức thánh
+    const TYPE_BAPTISM      = 'baptism';      // Rửa tội
+    const TYPE_COMMUNION    = 'communion';    // Rước lễ lần đầu
+    const TYPE_CONFIRMATION = 'confirmation'; // Thêm sức
+    const TYPE_ANOINTING    = 'anointing';    // Xức dầu bệnh nhân
+    const TYPE_HOLY_ORDERS  = 'holy_orders';  // Truyền chức thánh
 
     protected $fillable = [
-        'parishioner_id',
-        'type',
-        'received_date',
-        'certificate_number',
-        'book_number',
-        'giver',            // Người ban bí tích
-        'sponsor',          // Người đỡ đầu
-        'parish_id',
-        'parish_name',
-        'deanery_id',
-        'diocese_id',
-        'note',
+        'parishioner_id',       // FK → parishioners_new
+        'type',                 // Loại bí tích (enum)
+        'anointing_condition',  // Tình trạng khi xức dầu (chỉ dùng khi type = anointing) — mục 54
+        'received_date',        // Ngày lãnh bí tích
+        'certificate_number',   // Số chứng thư / số sách
+        'book_number',          // Số quyển sổ
+        'giver',                // Người ban bí tích (linh mục / giám mục)
+        'sponsor',              // Người đỡ đầu
+        'parish_id',            // FK → parishes (nơi lãnh bí tích)
+        'parish_name',          // Tên giáo xứ nơi lãnh bí tích
+        'church_name',          // Tên nhà thờ / họ đạo cụ thể (có thể khác parish_name)
+        'deanery_id',           // FK → deaneries
+        'diocese_id',           // FK → dioceses
+        'note',                 // Ghi chú
     ];
 
     protected $casts = [
@@ -131,5 +132,10 @@ class Sacrament extends Model
             self::TYPE_ANOINTING    => 'Xức dầu bệnh nhân',
             self::TYPE_HOLY_ORDERS  => 'Truyền chức thánh',
         ];
+    }
+
+    public function getIsAnointingAttribute(): bool
+    {
+        return $this->type === self::TYPE_ANOINTING;
     }
 }

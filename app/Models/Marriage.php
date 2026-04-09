@@ -16,22 +16,25 @@ class Marriage extends Model
     protected $table = 'marriages';
     protected $guarded = ['id'];
 
-    const STATUS_VALID   = 'valid';     // Hợp lệ
-    const STATUS_INVALID = 'invalid';   // Bất hợp lệ
-    const STATUS_WIDOWED = 'widowed';   // Góa
+    const STATUS_VALID    = 'valid';    // Hợp lệ
+    const STATUS_INVALID  = 'invalid';  // Bất hợp lệ
+    const STATUS_WIDOWED  = 'widowed';  // Góa
     const STATUS_DIVORCED = 'divorced'; // Ly hôn
 
     protected $fillable = [
-        'husband_id',
-        'wife_id',
-        'married_date',
-        'certificate_number',
-        'parish_id',
-        'parish_name',
-        'status',
-        'witness_1',
-        'witness_2',
-        'note',
+        'husband_id',           // FK → parishioners (chồng)
+        'wife_id',              // FK → parishioners (vợ)
+        'married_date',         // Ngày hôn phối — mục 24
+        'certificate_number',   // Số hôn phối — mục 23
+        'parish_id',            // FK → parishes (nơi hôn phối)
+        'parish_name',          // Tên nơi hôn phối — mục 25
+        'place_ward_id',        // Xã / Phường nơi hôn phối — mục 26
+        'place_province',       // Tỉnh / TP nơi hôn phối — mục 27
+        'priest_witness',       // Linh mục chứng hôn — mục 28
+        'witness_1',            // Người chứng 1 — mục 29
+        'witness_2',            // Người chứng 2 — mục 30
+        'status',               // Tình trạng hôn phối — mục 31
+        'note',                 // Ghi chú hôn phối — mục 32
     ];
 
     protected $casts = [
@@ -121,5 +124,13 @@ class Marriage extends Model
     public function getIsValidAttribute(): bool
     {
         return $this->status === self::STATUS_VALID;
+    }
+
+    public function getCoupleNameAttribute(): string
+    {
+        $husband = $this->husband?->full_name ?? 'N/A';
+        $wife    = $this->wife?->full_name ?? 'N/A';
+
+        return "{$husband} & {$wife}";
     }
 }

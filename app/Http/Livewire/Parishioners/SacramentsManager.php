@@ -12,10 +12,9 @@ use Livewire\Component;
 /**
  * SacramentsManager
  *
- * Dùng như một nested component trong trang show giáo dân.
- * Không extend BaseComponent vì không cần search/pagination.
+ * Nested component dùng trong trang show giáo dân.
  *
- * Cách dùng trong blade:
+ * Cách dùng:
  *   @livewire('parishioners.sacraments-manager', ['parishionerId' => $parishioner->id])
  */
 class SacramentsManager extends Component
@@ -26,11 +25,11 @@ class SacramentsManager extends Component
 
     // ==================== UI STATE ====================
 
-    public bool    $showForm   = false;
-    public ?int    $editingId  = null;
-    public ?string $activeType = null;  // type đang mở form
-    public $deleteId = null;
-    public $showDeleteConfirm = false;
+    public bool    $showForm          = false;
+    public ?int    $editingId         = null;
+    public ?string $activeType        = null;
+    public $deleteId                  = null;
+    public bool    $showDeleteConfirm = false;
 
     // ==================== FORM FIELDS ====================
 
@@ -40,6 +39,8 @@ class SacramentsManager extends Component
     public ?int    $book_number         = null;
     public ?string $giver               = null;
     public ?string $sponsor             = null;
+    public ?string $church_name         = null;  // tên nhà thờ / họ đạo cụ thể
+    public ?string $anointing_condition = null;  // tình trạng xức dầu (chỉ dùng khi type=anointing)
     public ?int    $parish_id           = null;
     public ?string $parish_name         = null;
     public ?int    $deanery_id          = null;
@@ -57,6 +58,8 @@ class SacramentsManager extends Component
             'book_number'        => 'nullable|integer|min:1',
             'giver'              => 'nullable|string|max:100',
             'sponsor'            => 'nullable|string|max:100',
+            'church_name'        => 'nullable|string|max:100',
+            'anointing_condition'=> 'nullable|string|max:100',
             'parish_id'          => 'nullable|integer|exists:parishes,id',
             'parish_name'        => 'nullable|string|max:100',
             'deanery_id'         => 'nullable|integer|exists:deaneries,id',
@@ -66,8 +69,8 @@ class SacramentsManager extends Component
     }
 
     protected $messages = [
-        'type.required'    => 'Vui lòng chọn loại bí tích',
-        'type.in'          => 'Loại bí tích không hợp lệ',
+        'type.required'      => 'Vui lòng chọn loại bí tích',
+        'type.in'            => 'Loại bí tích không hợp lệ',
         'received_date.date' => 'Ngày không hợp lệ',
     ];
 
@@ -81,16 +84,12 @@ class SacramentsManager extends Component
 
     public function mount(int $parishionerId): void
     {
-        // Kiểm tra giáo dân tồn tại
         Parishioner::findOrFail($parishionerId);
         $this->parishionerId = $parishionerId;
     }
 
     // ==================== CRUD ====================
 
-    /**
-     * Mở form thêm bí tích — truyền type sẵn để khóa dropdown
-     */
     public function create(string $type = ''): void
     {
         $this->resetForm();
@@ -113,6 +112,8 @@ class SacramentsManager extends Component
             $this->book_number        = $s->book_number;
             $this->giver              = $s->giver;
             $this->sponsor            = $s->sponsor;
+            $this->church_name        = $s->church_name;
+            $this->anointing_condition = $s->anointing_condition;
             $this->parish_id          = $s->parish_id;
             $this->parish_name        = $s->parish_name;
             $this->deanery_id         = $s->deanery_id;
@@ -128,7 +129,7 @@ class SacramentsManager extends Component
     {
         $this->validate();
 
-        // Kiểm tra duplicate (trừ anointing)
+        // Kiểm tra duplicate (trừ anointing có thể lãnh nhiều lần)
         if ($this->type !== Sacrament::TYPE_ANOINTING) {
             $exists = Sacrament::where('parishioner_id', $this->parishionerId)
                 ->where('type', $this->type)
@@ -152,6 +153,11 @@ class SacramentsManager extends Component
                 'book_number'        => $this->book_number,
                 'giver'              => $this->giver,
                 'sponsor'            => $this->sponsor,
+                'church_name'        => $this->church_name,
+                // Chỉ lưu anointing_condition khi type = anointing
+                'anointing_condition' => $this->type === Sacrament::TYPE_ANOINTING
+                    ? $this->anointing_condition
+                    : null,
                 'parish_id'          => $this->parish_id,
                 'parish_name'        => $this->parish_name,
                 'deanery_id'         => $this->deanery_id,
@@ -165,9 +171,7 @@ class SacramentsManager extends Component
 
             session()->flash(
                 'sacrament_message',
-                $this->editingId
-                    ? 'Cập nhật bí tích thành công'
-                    : 'Thêm bí tích thành công'
+                $this->editingId ? 'Cập nhật bí tích thành công' : 'Thêm bí tích thành công'
             );
 
             $this->emit('sacramentSaved');
@@ -180,7 +184,7 @@ class SacramentsManager extends Component
 
     public function confirmDelete(int $id): void
     {
-        $this->deleteId = $id;
+        $this->deleteId          = $id;
         $this->showDeleteConfirm = true;
     }
 
@@ -189,17 +193,14 @@ class SacramentsManager extends Component
         try {
             $s = Sacrament::where('parishioner_id', $this->parishionerId)
                 ->findOrFail($this->deleteId);
-
             $s->delete();
-
             session()->flash('sacrament_message', 'Đã xóa bí tích');
         } catch (ModelNotFoundException) {
             session()->flash('sacrament_error', 'Không tìm thấy bí tích');
         }
 
-        // reset state
         $this->showDeleteConfirm = false;
-        $this->deleteId = null;
+        $this->deleteId          = null;
     }
 
     // ==================== HELPERS ====================
@@ -214,19 +215,10 @@ class SacramentsManager extends Component
     public function resetForm(): void
     {
         $this->reset([
-            'editingId',
-            'type',
-            'activeType',
-            'received_date',
-            'certificate_number',
-            'book_number',
-            'giver',
-            'sponsor',
-            'parish_id',
-            'parish_name',
-            'deanery_id',
-            'diocese_id',
-            'note',
+            'editingId', 'type', 'activeType',
+            'received_date', 'certificate_number', 'book_number',
+            'giver', 'sponsor', 'church_name', 'anointing_condition',
+            'parish_id', 'parish_name', 'deanery_id', 'diocese_id', 'note',
         ]);
         $this->resetValidation();
     }
@@ -236,9 +228,6 @@ class SacramentsManager extends Component
         return Sacrament::typeOptions()[$this->type] ?? $this->type;
     }
 
-    /**
-     * Load tất cả bí tích của giáo dân, group theo type để dễ hiển thị
-     */
     private function getSacraments(): array
     {
         $sacraments = Sacrament::where('parishioner_id', $this->parishionerId)
@@ -246,7 +235,6 @@ class SacramentsManager extends Component
             ->orderBy('received_date')
             ->get();
 
-        // Group: mỗi type 1 record (trừ anointing có thể nhiều)
         $grouped = [];
         foreach (Sacrament::typeOptions() as $type => $label) {
             $grouped[$type] = [

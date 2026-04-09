@@ -1,14 +1,15 @@
-<div class="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 p-4 sm:p-6">
+@section('topbar')
+<x-breadcrumb :items="[
+        ['label' => 'Trang chủ', 'url' => route('dashboard')],
+        ['label' => 'Học sinh', 'url' => route('students.index')],
+        ['label' => 'Chi tiết', 'url' => null],
+    ]" />
+@endsection
+
+<div class="min-h-screen bg-slate-50">
     <a href="#student-profile-main" class="sr-only focus:not-sr-only">Bỏ qua tới nội dung</a>
 
-    <div id="student-profile-main" class="mx-auto max-w-7xl space-y-5">
-
-        {{-- Breadcrumb --}}
-        <x-breadcrumb :items="[
-            ['label' => 'Trang chủ', 'url' => route('dashboard')],
-            ['label' => 'Danh sách học sinh', 'url' => route('students.index')],
-            ['label' => 'Hồ sơ học sinh', 'icon' => '<svg class=\'w-4 h-4\' fill=\'none\' stroke=\'currentColor\' viewBox=\'0 0 24 24\'><path stroke-linecap=\'round\' stroke-linejoin=\'round\' stroke-width=\'2\' d=\'M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z\'/></svg>']
-        ]" separator="arrow" />
+    <div id="student-profile-main" class="mx-auto max-w-7xl p-4 sm:p-6 space-y-6">
 
         {{-- Toast Notifications --}}
         <div role="status" aria-live="polite">
@@ -46,7 +47,7 @@
         <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
 
             {{-- HEADER --}}
-            <div class="p-6 border-b border-slate-200 bg-gradient-to-br from-primary-50 to-white">
+            <div class="p-6 border-b border-slate-200 bg-white">
                 <div class="flex flex-col sm:flex-row gap-4 sm:items-start justify-between">
 
                     {{-- Avatar + Info --}}
@@ -187,11 +188,11 @@
                             Thông tin cá nhân
                         </h3>
                         <div class="space-y-3">
+                            <x-info-row label="Tên thánh" :value="$student['saint_name']" />
                             <x-info-row label="Họ và tên" :value="$student['full_name']" />
-                            <x-info-row label="Giới tính" :value="$student['gender_label']" />
                             <x-info-row label="Ngày sinh" :value="$student['birthday']" />
-                            <x-info-row label="Điện thoại" :value="$student['phone']" />
-                            <x-info-row label="Email" :value="$student['email']" />
+                            <x-info-row label="Giới tính" :value="$student['gender_label']" />
+                            <x-info-row label="Liên hệ" :value="$student['phone'] . ' - ' . $student['email']" />
                         </div>
                     </div>
 
@@ -222,7 +223,6 @@
                         <div class="space-y-3">
                             <x-info-row label="Giáo xứ" :value="$student['parish']" />
                             <x-info-row label="Giáo họ" :value="$student['parish_group']" />
-                            <x-info-row label="Bậc thánh" :value="$student['saint_name']" />
                         </div>
                     </div>
 

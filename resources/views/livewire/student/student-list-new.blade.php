@@ -1,7 +1,14 @@
-<div class="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 p-2 sm:p-2">
+@section('topbar')
+<x-breadcrumb :items="[
+        ['label' => 'Trang chủ', 'url' => route('dashboard')],
+        ['label' => 'Học sinh']
+    ]" />
+@endsection
+
+<div class="min-h-screen bg-slate-50 p-4 lg:p-6">
     <a href="#main-content" class="sr-only focus:not-sr-only">Bỏ qua tới nội dung</a>
 
-    <div class="mx-auto max-w-7xl space-y-5">
+    <div class="mx-auto max-w-7xl space-y-6">
         {{-- Toast Notifications --}}
         <div role="status" aria-live="polite">
             @if (session()->has('message'))
@@ -28,30 +35,11 @@
             {{-- Header --}}
             <x-page-header
                 title="Danh sách học sinh"
-                :description="$lop ? 'Lớp: ' . $lop->name : 'Tất cả học sinh trong giáo xứ'"
-                :stat-value="$total"
-                stat-label="Học sinh"
-                icon-type="students">
-                {{-- Gender Stats --}}
-                <div class="flex items-center gap-4 mt-2 text-sm">
-                    @if($countnam > 0)
-                    <div class="flex items-center gap-1.5">
-                        <div class="w-2 h-2 bg-blue-500 rounded-full"></div>
-                        <span class="text-slate-600">Nam: <span class="font-semibold text-blue-600">{{ $countnam }}</span></span>
-                    </div>
-                    @endif
-
-                    @if($countnu > 0)
-                    <div class="flex items-center gap-1.5">
-                        <div class="w-2 h-2 bg-pink-500 rounded-full"></div>
-                        <span class="text-slate-600">Nữ: <span class="font-semibold text-pink-600">{{ $countnu }}</span></span>
-                    </div>
-                    @endif
-                </div>
+                :count="$students->total()">
             </x-page-header>
 
             {{-- Actions Bar --}}
-            <div class="px-6 py-4 border-b border-slate-200 bg-slate-50/70">
+            <div class="p-6 border-b border-slate-200 bg-slate-50/70">
                 <div class="flex flex-col gap-4">
 
                     {{-- TOP ROW: FilterBar --}}
@@ -78,117 +66,79 @@
 
                         {{-- Action Buttons --}}
                         <div class="flex items-center gap-2 flex-wrap">
+                            <x-tooltip content="Vui lòng chọn lớp trước" :show="!$selectedLop">
+                                <x-button
+                                    wire:click="openEnrollModal('existing')"
+                                    :disabled="!$selectedLop">
+                                    <x-icon name="user-plus" />
+                                    Ghi danh
+                                </x-button>
+                            </x-tooltip>
 
-                            {{-- Ghi danh — primary, action chính --}}
-                            <button type="button"
-                                wire:click="openEnrollModal('existing')"
-                                @if(!$selectedLop) disabled @endif
-                                title="{{ !$selectedLop ? 'Vui lòng chọn lớp trước' : '' }}"
-                                class="group relative inline-flex items-center gap-2 px-4 py-2.5
-           bg-primary-600 text-white text-sm font-semibold rounded-xl
-           hover:bg-primary-700 active:scale-95 transition-all
-           disabled:opacity-40 disabled:cursor-not-allowed disabled:active:scale-100">
-                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                        d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
-                                </svg>
-                                Ghi danh
-
-                                {{-- Tooltip khi disabled --}}
-                                @if(!$selectedLop)
-                                <span class="pointer-events-none absolute -bottom-9 left-1/2 -translate-x-1/2
-                                    whitespace-nowrap rounded-lg bg-slate-800 px-2.5 py-1.5
-                                    text-xs font-normal text-white opacity-0
-                                    group-hover:opacity-100 transition-opacity duration-200 z-50">
-                                    Vui lòng chọn lớp trước
-                                    <span class="absolute -top-1 left-1/2 -translate-x-1/2
-                                    border-4 border-transparent border-b-slate-800"></span>
-                                </span>
-                                @endif
-                            </button>
-
-                            {{-- Điểm danh --}}
-                            <a href="{{ route('attendance.show') }}{{ $selectedLop ? '?classId='.$selectedLop : '' }}"
-                                class="inline-flex items-center gap-2 px-4 py-2.5
-                                    border border-slate-300 bg-white text-slate-700 text-sm font-semibold rounded-xl
-                                    hover:bg-slate-50 active:scale-95 transition-all">
-                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                        d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-                                </svg>
+                            <x-button
+                                as="a"
+                                href="{{ route('attendance.show') }}{{ $selectedLop ? '?classId='.$selectedLop : '' }}"
+                                variant="outline">
+                                <x-icon name="clipboard" />
                                 Điểm danh
-                            </a>
+                            </x-button>
 
-                            {{-- In thẻ — outline --}}
-                            <button wire:click="printSelected" type="button"
-                                @if(!$selectedLop && count($selectedStudents)===0) disabled @endif
-                                class="group relative inline-flex items-center gap-2 px-4 py-2.5
-           border border-slate-300 bg-white text-slate-700 text-sm font-semibold rounded-xl
-           hover:bg-slate-50 active:scale-95 transition-all
-           disabled:opacity-40 disabled:cursor-not-allowed disabled:active:scale-100">
-                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                        d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
-                                </svg>
-                                In thẻ
-                                @if(count($selectedStudents) > 0)
-                                ({{ count($selectedStudents) }})
-                                @endif
+                            {{-- <x-tooltip :show="!$selectedLop && count($selectedStudents) === 0"
+                                content="Vui lòng chọn lớp trước">
+                                <x-button
+                                    wire:click="printSelected"
+                                    :disabled="!$selectedLop && count($selectedStudents)===0"
+                                    variant="outline">
+                                    <x-icon name="printer" />
+                                    In thẻ
+                                    @if(count($selectedStudents) > 0)
+                                    ({{ count($selectedStudents) }})
+                            @endif
+                            </x-button>
+                            </x-tooltip>
 
-                                {{-- Tooltip --}}
-                                <span class="pointer-events-none absolute -bottom-9 left-1/2 -translate-x-1/2
-                                    whitespace-nowrap rounded-lg bg-slate-800 px-2.5 py-1.5
-                                    text-xs font-normal text-white opacity-0
-                                    group-hover:opacity-100 transition-opacity duration-200 z-50">
-                                    @if(!$selectedLop && count($selectedStudents) === 0)
-                                    Vui lòng chọn lớp trước
-                                    @elseif(count($selectedStudents) > 0)
-                                    In thẻ {{ count($selectedStudents) }} học sinh đã chọn
-                                    @else
-                                    In thẻ tất cả học sinh trong lớp
-                                    @endif
-                                    <span class="absolute -top-1 left-1/2 -translate-x-1/2
-                                    border-4 border-transparent border-b-slate-800"></span>
-                                </span>
-                            </button>
-
-                            {{-- Import Excel — outline --}}
-                            <a href="{{ route('students.import') }}{{ $selectedLop ? '?classId='.$selectedLop : '' }}"
-                                class="inline-flex items-center gap-2 px-4 py-2.5
-                   border border-slate-300 bg-white text-slate-700 text-sm font-semibold rounded-xl
-                   hover:bg-slate-50 active:scale-95 transition-all">
-                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                        d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
-                                </svg>
+                            <x-button as="a"
+                                href="{{ route('students.import') }}{{ $selectedLop ? '?classId='.$selectedLop : '' }}"
+                                variant="outline">
+                                <x-icon name="upload" />
                                 Import Excel
-                            </a>
+                            </x-button>
 
-                            {{-- Export — outline --}}
-                            <button type="button"
-                                class="inline-flex items-center gap-2 px-4 py-2.5
-                   border border-slate-300 bg-white text-slate-700 text-sm font-semibold rounded-xl
-                   hover:bg-slate-50 active:scale-95 transition-all">
-                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                        d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                                </svg>
+                            <x-button variant="outline">
+                                <x-icon name="download" />
                                 Export
-                            </button>
+                            </x-button> --}}
 
-                            {{-- Đặt lại — chỉ hiện khi có filter active --}}
+                            <x-dropdown label="Khác" icon="dots-horizontal" align="right">
+
+                                <x-dropdown-item
+                                    x-on:click="$wire.printSelected()"
+                                    :disabled="!$selectedLop && count($selectedStudents) === 0"
+                                    icon="printer"
+                                    :badge="count($selectedStudents) > 0 ? count($selectedStudents) : null">
+                                    In thẻ
+                                </x-dropdown-item>
+
+                                <div class="my-1 border-t border-slate-100"></div>
+
+                                <x-dropdown-item
+                                    as="a"
+                                    :href="$this->importUrl"
+                                    icon="upload">
+                                    Import Excel
+                                </x-dropdown-item>
+
+                                <x-dropdown-item wire:click="export" icon="download">
+                                    Export
+                                </x-dropdown-item>
+
+                            </x-dropdown>
+
                             @if($selectedKhoi || $selectedLop || $search)
-                            <button type="button"
-                                wire:click="resetFilters"
-                                class="inline-flex items-center gap-2 px-4 py-2.5
-                   bg-slate-100 text-slate-500 text-sm font-semibold
-                   rounded-xl hover:bg-slate-200 active:scale-95 transition-all">
-                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                        d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                                </svg>
+                            <x-button wire:click="resetFilters" variant="subtle">
+                                <x-icon name="refresh" />
                                 Đặt lại
-                            </button>
+                            </x-button>
                             @endif
 
                         </div>
@@ -212,9 +162,8 @@
                                     class="w-4 h-4 rounded border-slate-300 text-primary-600 focus:ring-primary-500">
                             </x-table-header>
                             <x-table-header>STT</x-table-header>
-                            <x-table-header>Mã HS</x-table-header>
                             <x-table-header>Tên thánh</x-table-header>
-                            <x-table-header
+                            <x-table-header class="w-[180px]"
                                 :sortable="true"
                                 sort-field="last_name"
                                 :current-sort="$sortField"
@@ -242,9 +191,9 @@
                                 :sort-direction="$sortDirection">
                                 Giới tính
                             </x-table-header>
-                            <x-table-header>Bố</x-table-header>
+                            <x-table-header class="w-[140px]">Bố</x-table-header>
+                            <x-table-header class="w-[140px]">SĐT</x-table-header>
                             <x-table-header>Giáo họ</x-table-header>
-                            <x-table-header>Hồ sơ giáo dân</x-table-header>
                             <x-table-header class="text-center">Thao tác</x-table-header>
                         </tr>
                     </thead>
@@ -266,18 +215,13 @@
                                 {{ ($students->firstItem() ?? 0) + $index }}
                             </td>
 
-                            {{-- Mã HS --}}
-                            <td class="px-4 py-4 text-sm font-mono font-semibold text-blue-600">
-                                {{ $student->student_code ?? '—' }}
-                            </td>
-
                             {{-- Tên thánh --}}
                             <td class="px-4 py-4 text-sm text-slate-900">
                                 {{ $student->saint->name ?? '—' }}
                             </td>
 
                             {{-- Họ & tên đệm --}}
-                            <td class="px-4 py-4 text-sm font-semibold text-slate-900">
+                            <td class="px-4 py-4 text-sm font-semibold text-slate-900 whitespace-nowrap">
                                 {{ $student->last_name }}
                             </td>
 
@@ -297,129 +241,56 @@
                             </td>
 
                             {{-- Bố --}}
-                            <td class="px-4 py-4 text-sm text-slate-700">
+                            <td class="px-4 py-4 text-sm text-slate-700 whitespace-nowrap">
                                 {{ $student->father_name ?? '—' }}
                             </td>
 
-                            {{-- Giáo họ --}}
-                            <td class="px-4 py-4">
-                                @if($student->parishGroup)
-                                <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold
-                                             bg-amber-100 text-amber-700">
-                                    {{ $student->parishGroup->name }}
-                                </span>
-                                @else
-                                <span class="text-slate-400 text-xs">Chưa xác định</span>
-                                @endif
+                            <td class="px-4 py-4 text-sm text-slate-700">
+                                {{ $student->phone ?? '—' }}
                             </td>
 
-                            {{-- Cột Giáo dân --}}
-                            <td class="px-6 py-4">
-                                @if($student->parishioner_id)
-                                {{-- Đã liên kết --}}
-                                <a href="{{ route('parishioners.show', $student->parishioner_id) }}"
-                                    class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full
-                   text-xs font-semibold bg-green-100 text-green-700
-                   hover:bg-green-200 transition-colors">
-                                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                            d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                                    </svg>
-                                    Xem hồ sơ
-                                </a>
-                                @else
-                                {{-- Chưa liên kết --}}
-                                <button wire:click="openLinkParishioner({{ $student->id }})"
-                                    class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full
-                   text-xs font-semibold bg-amber-50 text-amber-700
-                   hover:bg-amber-100 transition-colors">
-                                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                            d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101" />
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                            d="M14.828 14.828a4 4 0 015.656 0l4-4a4 4 0 01-5.656-5.656l-1.102 1.101" />
-                                    </svg>
-                                    Chưa liên kết
-                                </button>
-                                @endif
+                            {{-- Giáo họ --}}
+                            <td class="px-4 py-4 text-sm text-slate-700 whitespace-nowrap">
+                                {{ $student->parishGroup->name ?? '—' }}
                             </td>
 
                             {{-- Thao tác --}}
                             <td class="px-4 py-4">
                                 <div class="flex items-center justify-center gap-2">
+                                    <div class="flex items-center justify-center gap-1">
 
-                                    {{-- Xem chi tiết --}}
-                                    <a href="{{ route('students.show', $student->id) }}"
-                                        class="p-2 hover:bg-blue-50 text-blue-600 rounded-lg
-                                               active:scale-95 transition-all"
-                                        title="Xem chi tiết">
-                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                                        </svg>
-                                    </a>
+                                        {{-- Xem --}}
+                                        <a href="{{ route('students.show', $student->id) }}"
+                                            class="p-2 hover:bg-blue-50 text-blue-600 rounded-lg">
+                                            <x-icon name="eye" />
+                                        </a>
 
-                                    {{-- Chỉnh sửa --}}
-                                    <a href="{{ route('students.edit', $student->id) }}"
-                                        class="p-2 hover:bg-orange-50 text-orange-600 rounded-lg
-                                               active:scale-95 transition-all"
-                                        title="Chỉnh sửa">
-                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                                        </svg>
-                                    </a>
+                                        {{-- Sửa --}}
+                                        <a href="{{ route('students.edit', $student->id) }}"
+                                            class="p-2 hover:bg-orange-50 text-orange-600 rounded-lg">
+                                            <x-icon name="edit" />
+                                        </a>
 
-                                    <x-table-action
-                                        wire="delete({{ $student->id }})"
-                                        icon="trash"
-                                        color="danger"
-                                        confirm="Bạn có chắc chắn muốn xóa học sinh {{ $student->name }} khỏi lớp?">
-                                        Xóa
-                                    </x-table-action>
+                                        {{-- More --}}
+                                        <x-dropdown icon="more-vertical" label="" align="right" variant="subtle">
 
-                                    {{-- More actions --}}
-                                    <div class="relative" x-data="{ open: false }">
-                                        <button @click="open = !open"
-                                            type="button"
-                                            class="p-2 hover:bg-slate-100 rounded-lg active:scale-95 transition-all"
-                                            title="Thêm tùy chọn">
-                                            <svg class="w-4 h-4 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                    d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z" />
-                                            </svg>
-                                        </button>
+                                            <x-dropdown-item
+                                                x-on:click="$wire.openLinkParishioner({{ $student->id }})"
+                                                icon="link">
+                                                Liên kết giáo dân
+                                            </x-dropdown-item>
 
+                                            <div class="h-px bg-slate-100 my-1"></div>
 
-
-                                        <div x-show="open"
-                                            @click.outside="open = false"
-                                            x-transition
-                                            x-cloak
-                                            class="absolute right-0 mt-2 w-48 bg-white rounded-xl
-                                                   border border-slate-200 shadow-lg overflow-hidden z-20">
-                                            <button type="button"
-                                                @click="if(confirm('Bạn chắc chắn muốn xóa học sinh này?')) $wire.delete({{ $student->id }}); open = false"
-                                                class="w-full px-4 py-3 text-left hover:bg-red-50 transition-colors
-                                                    flex items-center gap-3">
-                                                <svg class="w-4 h-4 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                        d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                                                </svg>
-                                                <span class="text-sm font-medium text-red-600">Xóa học sinh</span>
-                                            </button>
-                                            <x-table-action
-                                                wire="delete({{ $student->id }})"
+                                            <x-dropdown-item
+                                                x-on:click="if(confirm('Xóa học sinh này?')) $wire.delete({{ $student->id }})"
                                                 icon="trash"
-                                                color="danger"
-                                                confirm="Bạn có chắc chắn muốn xóa học sinh {{ $student->name }} khỏi lớp?">
-                                                Xóa
-                                            </x-table-action>
-                                        </div>
-                                    </div>
+                                                class="text-red-600 hover:bg-red-50">
+                                                Xóa học sinh
+                                            </x-dropdown-item>
 
+                                        </x-dropdown>
+                                    </div>
                                 </div>
                             </td>
                         </tr>
@@ -447,7 +318,7 @@
 
             {{-- Pagination --}}
             @if($students->hasPages())
-            <div class="px-6 py-4 border-t border-slate-200">
+            <div class="p-6 border-t border-slate-200">
                 <x-pagination
                     :paginator="$students"
                     :per-page-options="[10, 15, 25, 50, 100]" />
@@ -528,8 +399,8 @@
 
                                 {{-- Nút liên kết --}}
                                 <button wire:click="confirmLink({{ $p->id }})"
-                                    class="flex-shrink-0 px-4 py-2 bg-primary-600 text-white text-sm
-                                   font-semibold rounded-xl hover:bg-primary-700 transition-colors">
+                                    class="flex-shrink-0 px-4 py-2 bg-primary-500 text-white text-sm
+                                   font-semibold rounded-xl hover:bg-primary-600 transition-colors">
                                     Liên kết
                                 </button>
                             </div>
@@ -553,7 +424,7 @@
                 </div>
 
                 {{-- Footer --}}
-                <div class="flex-shrink-0 px-6 py-4 border-t border-slate-200 bg-slate-50 flex justify-end">
+                <div class="flex-shrink-0 p-6 border-t border-slate-200 bg-slate-50 flex justify-end">
                     <x-action-button wire="skipLink" variant="secondary">
                         Bỏ qua
                     </x-action-button>
@@ -1020,7 +891,7 @@
                 </div>{{-- /body --}}
 
                 {{-- ── FOOTER (cố định, thay đổi theo tab) ── --}}
-                <div class="flex-shrink-0 px-6 py-4 border-t border-slate-200 bg-slate-50">
+                <div class="flex-shrink-0 p-6 border-t border-slate-200 bg-slate-50">
 
                     {{-- Footer tab 1: Học sinh có sẵn --}}
                     @if($enrollTab === 'existing')
@@ -1120,13 +991,6 @@
 
     </div>
 </div>
-
-@section('topbar')
-    <x-breadcrumb :items="[
-        ['label' => 'Trang chủ', 'url' => route('dashboard')],
-        ['label' => 'Học sinh']
-    ]" />
-@endsection
 
 {{-- Loading Indicator --}}
 <div wire:loading class="fixed inset-0 bg-gray-900 bg-opacity-50 flex items-center justify-center z-[60]">

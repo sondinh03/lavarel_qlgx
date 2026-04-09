@@ -24,63 +24,72 @@ class Parishioner extends Model
 
     protected $fillable = [
         // Thông tin cá nhân
-        'last_name',
-        'first_name',
-        'gender',
-        'birthday',
-        'saint_id',
-        'phone',
-        'email',
-        'cccd',
-        'avatar_path',
-        'note',
+        'last_name',            // Họ và tên đệm
+        'first_name',           // Tên
+        'gender',               // Giới tính: male | female
+        'birthday',             // Ngày sinh (dương lịch)
+        'birth_order',          // Con thứ mấy trong gia đình
+        'saint_id',             // Tên thánh (FK → holymanagements)
+        'phone',                // Số điện thoại
+        'email',                // Email
+        'cccd',                 // CMND / CCCD
+        'avatar_path',          // Đường dẫn ảnh đại diện
+        'note',                 // Ghi chú
 
         // Phân cấp giáo hội
-        'diocese_id',
-        'deanery_id',
-        'parish_id',
-        'parish_area_id',       // parish_group_id
+        'diocese_id',           // Giáo phận
+        'deanery_id',           // Giáo hạt
+        'parish_id',            // Giáo xứ
+        'parish_area_id',       // Giáo họ (parish_group)
 
-        // Phân loại
-        'ethnic',
-        'career',
-        'education_level',
-        'catechism_level',
-        'position',
-        'language',
-        'holy_order_status',
-        'is_new_convert',
-        'is_included_in_stats',
-        'married',
-        'level',
-        'status',
+        // Phân loại cá nhân - xã hội
+        'ethnic',               // Dân tộc (tinyint enum)
+        'career',               // Nghề nghiệp (tinyint enum)
+        'education_level',      // Trình độ học vấn (tinyint enum)
+        'specialist_level',     // Trình độ chuyên môn (tinyint enum) — mục 27
+        'catechism_level',      // Trình độ giáo lý (tinyint enum)
+        'catechism_major',      // Chuyên ngành giáo lý / giáo dục — mục 28
+        'position',             // Chức vụ (tinyint enum)
+        'language',             // Ngôn ngữ (tinyint enum)
+        'holy_order_status',    // Tình trạng thánh chức (tinyint enum)
+        'is_new_convert',       // Tân tòng: 0 | 1
+        'is_included_in_stats', // Được thống kê: 0 | 1
+        'married',              // Tình trạng hôn nhân (int enum)
+        'level',                // Cấp bậc / mức độ (tinyint)
+        'status',               // Trạng thái hoạt động: 0 | 1
 
         // Địa chỉ thường trú
-        'permanent_ward_id',
-        'permanent_province',
-        'permanent_residence',
+        'permanent_ward_id',    // Xã / Phường thường trú
+        'permanent_province',   // Tỉnh / TP thường trú
+        'permanent_residence',  // Địa chỉ thường trú chi tiết
 
         // Địa chỉ tạm trú
-        'temporary_ward_id',
-        'temporary_province',
-        'temporary_residence',
+        'temporary_ward_id',    // Xã / Phường tạm trú
+        'temporary_province',   // Tỉnh / TP tạm trú
+        'temporary_residence',  // Địa chỉ tạm trú chi tiết
 
         // Quê quán
-        'origin',
+        'origin',               // Nguyên quán
 
         // Gia đình
-        'father_name',
-        'mother_name',
-        'father_id',
-        'mother_id',
-        'family_id',
+        'father_name',          // Tên cha (văn bản, khi chưa có tài khoản)
+        'mother_name',          // Tên mẹ (văn bản, khi chưa có tài khoản)
+        'father_id',            // FK → parishioners (cha)
+        'mother_id',            // FK → parishioners (mẹ)
+        'family_id',            // FK → families
 
         // Gia nhập / chuyển xứ
-        'joined_date',
-        'transferred_from',
-        'transferred_date',
-        'is_active',
-        'left_reason',
+        'joined_date',          // Ngày gia nhập giáo xứ
+        'transferred_from',     // Chuyển đến từ giáo xứ nào (FK → parishes)
+        'transferred_date',     // Ngày chuyển đến
+        'is_active',            // Đang sinh hoạt tại xứ: 0 | 1
+        'left_reason',          // Lý do rời xứ
+
+        // Thông tin tử vong
+        'death_date',           // Ngày mất — mục 58
+        'death_book_number',    // Số sổ mất — mục 59
+        'death_place',          // Nơi qua đời — mục 60
+        'burial_place',         // Nơi an táng — mục 61
     ];
 
     protected $casts = [
@@ -88,11 +97,14 @@ class Parishioner extends Model
         'birthday'             => 'date',
         'joined_date'          => 'date',
         'transferred_date'     => 'date',
+        'death_date'           => 'date',
         'is_new_convert'       => 'boolean',
         'is_included_in_stats' => 'boolean',
         'is_active'            => 'boolean',
         'status'               => 'boolean',
         'married'              => 'integer',
+        'birth_order'          => 'integer',
+        'specialist_level'     => 'integer',
     ];
 
     protected $appends = [
@@ -143,8 +155,7 @@ class Parishioner extends Model
 
     public function children(): HasMany
     {
-        return $this->hasMany(Parishioner::class, 'father_id')
-            ->orWhere('mother_id', $this->id);
+        return $this->hasMany(Parishioner::class, 'father_id');
     }
 
     public function transferredFromParish(): BelongsTo
@@ -292,6 +303,16 @@ class Parishioner extends Model
         return $query->where('is_included_in_stats', true);
     }
 
+    public function scopeAlive(Builder $query): Builder
+    {
+        return $query->whereNull('death_date');
+    }
+
+    public function scopeDeceased(Builder $query): Builder
+    {
+        return $query->whereNotNull('death_date');
+    }
+
     public function scopeSearch(Builder $query, string $term): Builder
     {
         $searchTerm = '%' . trim($term) . '%';
@@ -325,7 +346,7 @@ class Parishioner extends Model
     public function getAgeAttribute(): ?int
     {
         return $this->birthday
-            ? \Carbon\Carbon::parse($this->birthday)->age
+            ? Carbon::parse($this->birthday)->age
             : null;
     }
 
@@ -394,9 +415,21 @@ class Parishioner extends Model
             : $this->sacraments()->where('type', 'confirmation')->exists();
     }
 
+    public function getIsDeceasedAttribute(): bool
+    {
+        return $this->death_date !== null;
+    }
+
     public function getMarriageAttribute(): ?Marriage
     {
         return $this->marriageAsHusband ?? $this->marriageAsWife;
+    }
+
+    public function getChildrenAttribute()
+    {
+        return Parishioner::where('father_id', $this->id)
+            ->orWhere('mother_id', $this->id)
+            ->get();
     }
 
     /*

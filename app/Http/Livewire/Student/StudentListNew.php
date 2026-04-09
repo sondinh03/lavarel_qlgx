@@ -476,6 +476,11 @@ class StudentListNew extends BaseComponent
             ->orderBy('last_name');
     }
 
+    public function getImportUrlProperty(): string
+    {
+        return route('students.import') . ($this->selectedLop ? '?classId=' . $this->selectedLop : '');
+    }
+
     private function getAvailableParishionersPaginated()
     {
         return $this->getAvailableParishionersQuery()
