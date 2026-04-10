@@ -158,6 +158,8 @@ $isDashboard = request()->routeIs('dashboard','catechist.dashboard','parish-admi
     {{-- Loading indicator --}}
     <x-loading-indicator target="selectedNamHoc,selectedKhoi,resetFilters" />
 
+    <x-toast-manager />
+
     {{-- ═══════════════════════════════════════════
          MOBILE OVERLAY
     ═══════════════════════════════════════════ --}}

@@ -9,7 +9,7 @@
     <a href="#main-content" class="sr-only focus:not-sr-only">Bỏ qua tới nội dung</a>
 
     <div class="mx-auto max-w-7xl space-y-6">
-        {{-- Toast Notifications --}}
+        {{-- Toast Notifications 
         <div role="status" aria-live="polite">
             @if (session()->has('message'))
             <x-toast-notification type="success" :duration="3500">
@@ -29,30 +29,40 @@
             </x-toast-notification>
             @endif
         </div>
+        --}}
 
         {{-- Main Card --}}
-        <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+        <div class="bg-white rounded-2xl shadow-sm border border-slate-200">
             {{-- Header --}}
             <x-page-header
+                class="rounded-t-2xl"
                 title="Danh sách học sinh"
                 :count="$students->total()">
             </x-page-header>
 
             {{-- Actions Bar --}}
-            <div class="p-6 border-b border-slate-200 bg-slate-50/70">
+            <div class="p-6 border-b border-slate-200 bg-slate-50/70 rounded-b-2xl">
                 <div class="flex flex-col gap-4">
 
                     {{-- TOP ROW: FilterBar --}}
-                    <div>
-                        <livewire:filters.filter-bar
-                            :parish-id="$parishId"
-                            :show-nam-hoc="true"
-                            :show-khoi="true"
-                            :show-lop="true"
-                            :show-ky="false"
-                            :selected-nam-hoc="$selectedNamHoc"
-                            :selected-khoi="$selectedKhoi"
-                            :selected-lop="$selectedLop" />
+                    <div class="flex items-end gap-3">
+                        <div class="flex-1">
+                            <livewire:filters.filter-bar
+                                :parish-id="$parishId"
+                                :show-nam-hoc="true"
+                                :show-khoi="true"
+                                :show-lop="true"
+                                :show-ky="false"
+                                :selected-nam-hoc="$selectedNamHoc"
+                                :selected-khoi="$selectedKhoi"
+                                :selected-lop="$selectedLop" />
+                        </div>
+                        <div class="flex-shrink-0 pb-0.5">
+                            <x-button wire:click="resetFilters" variant="subtle">
+                                <x-icon name="refresh" />
+                                Đặt lại
+                            </x-button>
+                        </div>
                     </div>
 
                     {{-- BOTTOM ROW: Search + Actions --}}
@@ -83,10 +93,10 @@
                                 Điểm danh
                             </x-button>
 
-                            <x-dropdown label="Khác" icon="dots-horizontal" align="right">
+                            <x-dropdown label="Khác" icon="dots-horizontal" align="right" position="fixed">
 
                                 <x-dropdown-item
-                                    x-on:click="$wire.printSelected()"
+                                    wire:click="printSelected"
                                     :disabled="!$selectedLop && count($selectedStudents) === 0"
                                     icon="printer"
                                     :badge="count($selectedStudents) > 0 ? count($selectedStudents) : null">
@@ -99,19 +109,11 @@
                                     Import Excel
                                 </x-dropdown-item>
 
-                                <x-dropdown-item x-on:click="$wire.export()" icon="download">
+                                <x-dropdown-item wire:click="export" icon="download">
                                     Export
                                 </x-dropdown-item>
 
                             </x-dropdown>
-
-                            @if($selectedKhoi || $selectedLop || $search)
-                            <x-button wire:click="resetFilters" variant="subtle">
-                                <x-icon name="refresh" />
-                                Đặt lại
-                            </x-button>
-                            @endif
-
                         </div>
                     </div>
                 </div>
@@ -243,11 +245,9 @@
                                         </a>
 
                                         {{-- More --}}
-                                        <x-dropdown icon="more-vertical" label="" align="right" variant="subtle">
+                                        <x-dropdown icon="more-vertical" label="" align="right" variant="subtle" position="fixed">
 
-                                            <x-dropdown-item
-                                                x-on:click="$wire.openLinkParishioner({{ $student->id }})"
-                                                icon="link">
+                                            <x-dropdown-item wire:click="openLinkParishioner({{ $student->id }})" icon="link">
                                                 Liên kết giáo dân
                                             </x-dropdown-item>
 

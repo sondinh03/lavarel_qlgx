@@ -45,6 +45,8 @@ class FilterBar extends Component
      */
     public int $parish_id;
 
+    protected $listeners = ['resetFilters' => 'handleReset'];
+
     /** 
      * Parish context
      * - null  : admin tổng
@@ -76,6 +78,13 @@ class FilterBar extends Component
         if (!$this->selectedKy && $this->selectedNamHoc) {
             $this->selectedKy = $this->detectCurrentSemester();
         }
+    }
+
+    public function handleReset(): void
+    {
+        $this->selectedKhoi = null;
+        $this->selectedLop  = null;
+        $this->emitFilter(); // notify lại cha để đồng bộ
     }
 
     /**

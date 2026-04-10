@@ -979,11 +979,17 @@ class StudentListNew extends BaseComponent
 
     public function resetFilters(): void
     {
+        if (!$this->selectedKhoi && !$this->selectedLop && !$this->search) {
+            session()->flash('warning', 'Không có bộ lọc nào đang được áp dụng');
+            return;
+        }
+
         $this->selectedKhoi = null;
         $this->selectedLop  = null;
         $this->search       = '';
         $this->resetPage();
         $this->resetSelection();
+        $this->emitTo('filters.filter-bar', 'resetFilters');
         session()->flash('message', 'Đã đặt lại bộ lọc');
     }
 

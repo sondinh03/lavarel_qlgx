@@ -16,7 +16,7 @@
 } ?>
 <?php unset($__defined_vars); ?>
 
-<div class="px-6 py-4 border-b border-slate-200 bg-white">
+<div class="px-6 py-4 border-b border-slate-200 bg-white rounded-t-2xl">
     <div class="flex items-center justify-between gap-4">
         
         
