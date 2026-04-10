@@ -963,7 +963,7 @@
     </div>
 </div>
 
-{{-- Loading Indicator --}}
+{{-- Loading Indicator 
 <div wire:loading class="fixed inset-0 bg-gray-900 bg-opacity-50 flex items-center justify-center z-[60]">
     <div class="bg-white rounded-lg p-6 flex items-center gap-3">
         <svg class="animate-spin h-6 w-6 text-primary-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
@@ -975,3 +975,4 @@
         <span class="text-gray-700">Đang xử lý...</span>
     </div>
 </div>
+--}}

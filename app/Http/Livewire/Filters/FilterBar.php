@@ -84,6 +84,7 @@ class FilterBar extends Component
     {
         $this->selectedKhoi = null;
         $this->selectedLop  = null;
+        $this->loadLops(); 
         $this->emitFilter(); // notify lại cha để đồng bộ
     }
 

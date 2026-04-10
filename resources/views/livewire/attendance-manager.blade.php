@@ -6,13 +6,14 @@
     $selectedClassName = $this->selectedClassName;
     @endphp
 
-    {{-- Loading Indicator --}}
+    {{-- Loading Indicator
     <div
         wire:loading
         wire:loading.delay.shortest
         class="fixed top-0 left-0 right-0 z-[9999] pointer-events-none">
         <div class="h-0.5 bg-primary-100 overflow-hidden">
-            <div class="h-full bg-primary-500 animate-[indeterminate_1.4s_ease-in-out_infinite]"></div>
+            <div class="h-full bg-primary-500"
+                style="animation: indeterminate 1.4s ease-in-out infinite;"></div>
         </div>
         <div class="absolute top-3 right-4 flex items-center gap-1.5
                 bg-white/90 backdrop-blur-sm shadow-md
@@ -26,6 +27,7 @@
             <span>Đang xử lý</span>
         </div>
     </div>
+     --}}
 
     <div wire:key="attendance-{{ $selectedClassId }}-{{ $attendanceType }}-{{ $selectedDate }}"
         x-data="{
@@ -516,7 +518,7 @@
 
                     {{-- Date Selector Sticky --}}
                     <div class="sticky top-0 z-30 bg-white border-b border-slate-200 shadow-sm">
-                        <div 
+                        <div
                             x-data
                             x-init="
                                 $nextTick(() => {

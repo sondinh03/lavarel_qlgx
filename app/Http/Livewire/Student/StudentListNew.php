@@ -980,7 +980,7 @@ class StudentListNew extends BaseComponent
     public function resetFilters(): void
     {
         if (!$this->selectedKhoi && !$this->selectedLop && !$this->search) {
-            session()->flash('warning', 'Không có bộ lọc nào đang được áp dụng');
+            $this->emit('toast', 'warning', 'Không có bộ lọc nào đang được áp dụng');
             return;
         }
 
@@ -990,7 +990,7 @@ class StudentListNew extends BaseComponent
         $this->resetPage();
         $this->resetSelection();
         $this->emitTo('filters.filter-bar', 'resetFilters');
-        session()->flash('message', 'Đã đặt lại bộ lọc');
+        $this->emit('toast', 'success', 'Đã đặt lại bộ lọc');
     }
 
     public function handleRefresh(): void

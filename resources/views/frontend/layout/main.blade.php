@@ -105,6 +105,20 @@
             background: #cbd5e1;
             border-radius: 4px;
         }
+
+        @keyframes indeterminate {
+            0% {
+                transform: translateX(-100%) scaleX(0.3);
+            }
+
+            50% {
+                transform: translateX(0%) scaleX(0.7);
+            }
+
+            100% {
+                transform: translateX(100%) scaleX(0.3);
+            }
+        }
     </style>
 </head>
 
@@ -155,8 +169,23 @@ $isDashboard = request()->routeIs('dashboard','catechist.dashboard','parish-admi
     }"
     :class="{ 'overflow-hidden': mobileOpen }">
 
-    {{-- Loading indicator --}}
-    <x-loading-indicator target="selectedNamHoc,selectedKhoi,resetFilters" />
+    {{-- Loading Indicator --}}
+    <div id="global-loading" class="hidden fixed top-0 left-0 right-0 z-[9999] pointer-events-none">
+        <div class="h-0.5 bg-primary-100 overflow-hidden">
+            <div class="h-full bg-primary-500 animate-[indeterminate_1.4s_ease-in-out_infinite]"></div>
+        </div>
+        <div class="absolute top-3 right-4 flex items-center gap-1.5
+            bg-white/90 backdrop-blur-sm shadow-md
+            rounded-full px-3 py-1 text-xs font-medium text-slate-600
+            border border-slate-200">
+            <svg class="animate-spin w-3 h-3 text-primary-500" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
+                <path class="opacity-75" fill="currentColor"
+                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+            </svg>
+            <span>Đang xử lý</span>
+        </div>
+    </div>
 
     <x-toast-manager />
 
@@ -279,8 +308,7 @@ $isDashboard = request()->routeIs('dashboard','catechist.dashboard','parish-admi
                     x-transition:leave="transition ease-in duration-100"
                     x-transition:leave-start="opacity-100"
                     x-transition:leave-end="opacity-0"
-                    class="mt-0.5 ml-4 pl-3 border-l border-slate-100 space-y-0.5"
-                    >
+                    class="mt-0.5 ml-4 pl-3 border-l border-slate-100 space-y-0.5">
                     @include('frontend.layout.partials.sidebar-sub-item', ['route' => 'students.index', 'label' => 'Quản lý học sinh'])
                     {{-- @include('frontend.layout.partials.sidebar-sub-item', ['route' => 'classes.index', 'label' => 'Danh sách lớp']) --}}
                     @include('frontend.layout.partials.sidebar-sub-item', ['route' => 'attendance.show', 'label' => 'Điểm danh'])
@@ -330,8 +358,7 @@ $isDashboard = request()->routeIs('dashboard','catechist.dashboard','parish-admi
                     x-transition:leave="transition ease-in duration-100"
                     x-transition:leave-start="opacity-100"
                     x-transition:leave-end="opacity-0"
-                    class="mt-0.5 ml-4 pl-3 border-l border-slate-100 space-y-0.5"
-                    >
+                    class="mt-0.5 ml-4 pl-3 border-l border-slate-100 space-y-0.5">
                     @include('frontend.layout.partials.sidebar-sub-item', ['route' => 'catechists.index', 'label' => 'Giáo lý viên'])
                     @include('frontend.layout.partials.sidebar-sub-item', ['route' => 'parishioners.index','label' => 'Giáo dân'])
                     @include('frontend.layout.partials.sidebar-sub-item', ['route' => 'catechists.import', 'label' => 'Import GLV'])
@@ -377,8 +404,7 @@ $isDashboard = request()->routeIs('dashboard','catechist.dashboard','parish-admi
                     x-transition:leave="transition ease-in duration-100"
                     x-transition:leave-start="opacity-100"
                     x-transition:leave-end="opacity-0"
-                    class="mt-0.5 ml-4 pl-3 border-l border-slate-100 space-y-0.5"
-                    >
+                    class="mt-0.5 ml-4 pl-3 border-l border-slate-100 space-y-0.5">
                     @include('frontend.layout.partials.sidebar-sub-item', ['route' => 'school-years.index', 'label' => 'Năm học'])
                     @include('frontend.layout.partials.sidebar-sub-item', ['route' => 'classes.index', 'label' => 'Lớp học'])
                     @include('frontend.layout.partials.sidebar-sub-item', ['route' => 'parish-group.index', 'label' => 'Giáo họ'])
@@ -568,7 +594,7 @@ $isDashboard = request()->routeIs('dashboard','catechist.dashboard','parish-admi
                     console.log('href:', link.href);
                     console.log('openGroups BEFORE click:', JSON.parse(localStorage.getItem('openGroups')));
                 });
-                
+
                 link.addEventListener('click', function() {
                     // Xoá active cũ
                     document.querySelectorAll('#sidebar-nav a[href]').forEach(function(el) {
@@ -592,8 +618,30 @@ $isDashboard = request()->routeIs('dashboard','catechist.dashboard','parish-admi
             console.log('--- BEFORE UNLOAD ---');
         });
     </script>
+
+    <script>
+        document.addEventListener('livewire:load', () => {
+            Livewire.on('toast', (type, message) => {
+                window.dispatchEvent(new CustomEvent('toast', {
+                    detail: [type, message]
+                }));
+            });
+        });
+    </script>
+
+    <script>
+        document.addEventListener('livewire:load', () => {
+            Livewire.hook('message.sent', () => {
+                document.getElementById('global-loading').classList.remove('hidden');
+            });
+            Livewire.hook('message.processed', () => {
+                document.getElementById('global-loading').classList.add('hidden');
+            });
+        });
+    </script>
+
     @stack('scripts')
-    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
     @livewireScripts
 </body>
 
