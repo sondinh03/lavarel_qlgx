@@ -1,34 +1,37 @@
 @props([
     'label'   => '',
-    'icon'     => null,
-    'align'    => 'right',   {{-- 'left' | 'right' --}}
-    'width'    => '48',      {{-- Tailwind width: '48' | '56' | '64' --}}
-    'variant'  => 'outline', {{-- truyền thẳng vào x-button --}}
+    'icon'    => null,
+    'align'   => 'right',
+    'width'   => '48',
+    'variant' => 'outline',
 ])
 
 <div
     x-data="{
         open: false,
         triggerRect: {},
+        wireId: null,
+        init() {
+            const el = this.$el.closest('[wire\\:id]');
+            this.wireId = el ? el.getAttribute('wire:id') : null;
+        },
         updatePosition() {
             const el = this.$refs.trigger.getBoundingClientRect();
             this.triggerRect = {
-                top:    el.bottom + window.scrollY,
-                left:   el.left   + window.scrollX,
-                right:  window.innerWidth - el.right + window.scrollX,
-                width:  el.width,
+                top:   el.bottom + window.scrollY,
+                left:  el.left   + window.scrollX,
+                right: window.innerWidth - el.right + window.scrollX,
             };
         }
     }"
-    @click.outside="open = false"
-    @keydown.escape.window="open = false"
+    x-on:click.outside="open = false"
+    x-on:keydown.escape.window="open = false"
+    x-on:dropdown-close.window="open = false"
 >
-    {{-- Trigger --}}
     <div x-ref="trigger">
         <x-button
             :variant="$variant"
-            @click="updatePosition(); open = !open"
-            :aria-expanded="'false'"
+            x-on:click="updatePosition(); open = !open"
             x-bind:aria-expanded="open.toString()"
             aria-haspopup="true"
         >
@@ -48,7 +51,6 @@
         </x-button>
     </div>
 
-    {{-- Dropdown — teleport ra body để thoát overflow:hidden --}}
     <template x-teleport="body">
         <div
             x-show="open"
@@ -58,15 +60,12 @@
             x-transition:leave="transition ease-in duration-75"
             x-transition:leave-start="opacity-100 translate-y-0"
             x-transition:leave-end="opacity-0 -translate-y-1"
-
-            {{-- Vị trí tính từ triggerRect --}}
             :style="
                 '{{ $align }}' === 'right'
                     ? `position:absolute; top:${triggerRect.top + 4}px; right:${triggerRect.right}px; z-index:9999;`
                     : `position:absolute; top:${triggerRect.top + 4}px; left:${triggerRect.left}px; z-index:9999;`
             "
-
-            class="w-{{ $width }} bg-white rounded-xl shadow-lg border border-slate-200 py-1 focus:outline-none"
+            class="w-{{ $width }} bg-white rounded-xl shadow-lg border border-slate-200 py-1"
             role="menu"
             style="display:none"
         >

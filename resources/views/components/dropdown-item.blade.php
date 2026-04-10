@@ -11,13 +11,21 @@
     $active   = 'text-slate-700 hover:bg-slate-50 cursor-pointer';
     $inactive = 'text-slate-400 cursor-not-allowed pointer-events-none';
     $classes  = $base . ' ' . ($disabled ? $inactive : $active);
+
+    $callerClick    = $attributes->get('x-on:click', '');
+    $callerClick    = str_replace('$wire.', 'Livewire.find(wireId).', $callerClick);
+
+    $finalClick     = $callerClick
+                        ? $callerClick . "; \$dispatch('dropdown-close')"
+                        : "\$dispatch('dropdown-close')";
+    $restAttributes = $attributes->except('x-on:click')->merge(['class' => $classes]);
 @endphp
 
 @if($as === 'a' && $href)
     <a href="{{ $href }}"
-       {{ $attributes->merge(['class' => $classes]) }}
+       {{ $restAttributes }}
        role="menuitem"
-       x-on:click="open = false">
+       x-on:click="{{ $finalClick }}">
         @if($icon)<x-icon :name="$icon" class="w-4 h-4 flex-shrink-0" />@endif
         <span class="flex-1">{{ $slot }}</span>
         @if($badge)
@@ -28,9 +36,9 @@
     </a>
 @else
     <button type="button"
-            {{ $attributes->merge(['class' => $classes]) }}
+            {{ $restAttributes }}
             role="menuitem"
-            x-on:click="open = false"
+            x-on:click="{{ $finalClick }}"
             @if($disabled) disabled @endif>
         @if($icon)<x-icon :name="$icon" class="w-4 h-4 flex-shrink-0" />@endif
         <span class="flex-1">{{ $slot }}</span>

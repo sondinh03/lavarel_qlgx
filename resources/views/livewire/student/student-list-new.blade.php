@@ -83,32 +83,6 @@
                                 Điểm danh
                             </x-button>
 
-                            {{-- <x-tooltip :show="!$selectedLop && count($selectedStudents) === 0"
-                                content="Vui lòng chọn lớp trước">
-                                <x-button
-                                    wire:click="printSelected"
-                                    :disabled="!$selectedLop && count($selectedStudents)===0"
-                                    variant="outline">
-                                    <x-icon name="printer" />
-                                    In thẻ
-                                    @if(count($selectedStudents) > 0)
-                                    ({{ count($selectedStudents) }})
-                            @endif
-                            </x-button>
-                            </x-tooltip>
-
-                            <x-button as="a"
-                                href="{{ route('students.import') }}{{ $selectedLop ? '?classId='.$selectedLop : '' }}"
-                                variant="outline">
-                                <x-icon name="upload" />
-                                Import Excel
-                            </x-button>
-
-                            <x-button variant="outline">
-                                <x-icon name="download" />
-                                Export
-                            </x-button> --}}
-
                             <x-dropdown label="Khác" icon="dots-horizontal" align="right">
 
                                 <x-dropdown-item
@@ -121,14 +95,11 @@
 
                                 <div class="my-1 border-t border-slate-100"></div>
 
-                                <x-dropdown-item
-                                    as="a"
-                                    :href="$this->importUrl"
-                                    icon="upload">
+                                <x-dropdown-item as="a" :href="$this->importUrl" icon="upload">
                                     Import Excel
                                 </x-dropdown-item>
 
-                                <x-dropdown-item wire:click="export" icon="download">
+                                <x-dropdown-item x-on:click="$wire.export()" icon="download">
                                     Export
                                 </x-dropdown-item>
 
