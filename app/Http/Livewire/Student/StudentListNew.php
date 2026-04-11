@@ -192,7 +192,7 @@ class StudentListNew extends BaseComponent
             $this->validateOnly('search');
         } catch (ValidationException $e) {
             $this->search = '';
-            session()->flash('warning', 'Từ khóa tìm kiếm không hợp lệ.');
+            $this->emit('toast', 'wwarning', 'Từ khóa tìm kiếm không hợp lệ.');
         }
 
         $this->resetPage();
@@ -223,7 +223,7 @@ class StudentListNew extends BaseComponent
             $this->validateOnly('selectedNamHoc');
         } catch (ValidationException $e) {
             $this->selectedNamHoc = null;
-            session()->flash('warning', 'Năm học không hợp lệ.');
+            $this->emit('toast', 'warning', 'Năm học không hợp lệ.');
         }
 
         $this->selectedKhoi = null;
@@ -244,7 +244,7 @@ class StudentListNew extends BaseComponent
                 $this->validateOnly('selectedKhoi');
             } catch (ValidationException $e) {
                 $this->selectedKhoi = null;
-                session()->flash('warning', 'Khối không hợp lệ.');
+                $this->emit('toast', 'warning', 'Khối không hợp lệ.');
             }
         }
 
@@ -265,7 +265,7 @@ class StudentListNew extends BaseComponent
                 $this->validateOnly('selectedLop');
             } catch (ValidationException $e) {
                 $this->selectedLop = null;
-                session()->flash('warning', 'Lớp không hợp lệ.');
+                $this->emit('toast', 'warning', 'Lớp không hợp lệ.');
             }
         }
 
@@ -349,7 +349,7 @@ class StudentListNew extends BaseComponent
             $this->suggestedParishioners = $this->findSuggestedParishioners($student);
             $this->showLinkModal         = true;
         } catch (ModelNotFoundException $e) {
-            session()->flash('error', 'Không tìm thấy học sinh này');
+            $this->emit('toast', 'error', 'Không tìm thấy học sinh này');
         }
     }
 
@@ -389,21 +389,21 @@ class StudentListNew extends BaseComponent
 
             DB::commit();
 
-            session()->flash('message', "Đã liên kết {$student->name} với giáo dân {$parishioner->full_name}");
+            $this->emit('toast', 'message', "Đã liên kết {$student->name} với giáo dân {$parishioner->full_name}");
             $this->closeLinkModal();
         } catch (ModelNotFoundException $e) {
             DB::rollBack();
-            session()->flash('error', 'Không tìm thấy dữ liệu');
+            $this->emit('toast', 'error', 'Không tìm thấy dữ liệu');
         } catch (\Exception $e) {
             DB::rollBack();
             $this->logError($e, 'Error linking parishioner to student');
-            session()->flash('error', 'Có lỗi khi liên kết');
+            $this->emit('toast', 'error', 'Có lỗi khi liên kết');
         }
     }
 
     public function skipLink(): void
     {
-        session()->flash('info', 'Đã bỏ qua liên kết giáo dân');
+        $this->emit('toast', 'info', 'Đã bỏ qua liên kết giáo dân');
         $this->closeLinkModal();
     }
 
@@ -413,10 +413,10 @@ class StudentListNew extends BaseComponent
 
         try {
             StudentNew::findOrFail($studentId)->update(['parishioner_id' => null]);
-            session()->flash('message', 'Đã hủy liên kết giáo dân');
+            $this->emit('toast', 'message', 'Đã hủy liên kết giáo dân');
         } catch (\Exception $e) {
             $this->logError($e, 'Error unlinking parishioner');
-            session()->flash('error', 'Có lỗi khi hủy liên kết');
+            $this->emit('toast', 'error', 'Có lỗi khi hủy liên kết');
         }
     }
 
@@ -492,7 +492,7 @@ class StudentListNew extends BaseComponent
         $this->authorize('create', StudentNew::class);
 
         if (empty($this->selectedParishioners)) {
-            session()->flash('warning', 'Vui lòng chọn ít nhất 1 giáo dân');
+            $this->emit('toast', 'warning', 'Vui lòng chọn ít nhất 1 giáo dân');
             return;
         }
 
@@ -545,14 +545,14 @@ class StudentListNew extends BaseComponent
             if ($errorCount > 0) {
                 $message .= " | ❌ {$errorCount} lỗi";
             }
-            session()->flash('message', $message);
+            $this->emit('toast', 'message', $message);
 
             if (!empty($errors)) {
                 $detail = '<strong>Chi tiết lỗi:</strong><br>' . implode('<br>', array_slice($errors, 0, 5));
                 if (count($errors) > 5) {
                     $detail .= '<br><em>... và ' . (count($errors) - 5) . ' lỗi khác</em>';
                 }
-                session()->flash('warning', $detail);
+                $this->emit('toast', 'warning', $detail);
             }
 
             $this->closeImportFromParishioners();
@@ -563,7 +563,7 @@ class StudentListNew extends BaseComponent
                 'selected_count' => count($this->selectedParishioners),
                 'lop_id'         => $this->selectedLop,
             ]);
-            session()->flash('error', 'Có lỗi khi import học sinh: ' . $e->getMessage());
+            $this->emit('toast', 'error', 'Có lỗi khi import học sinh: ' . $e->getMessage());
         }
     }
 
@@ -574,7 +574,7 @@ class StudentListNew extends BaseComponent
         $this->authorize('create', StudentNew::class);
 
         if (!$this->selectedLop) {
-            session()->flash('warning', 'Vui lòng chọn lớp trước khi ghi danh');
+            $this->emit('toast', 'warning', 'Vui lòng chọn lớp trước khi ghi danh');
             return;
         }
 
@@ -639,7 +639,7 @@ class StudentListNew extends BaseComponent
             DB::commit();
 
             $fullName = trim("{$this->enrollLastName} {$this->enrollFirstName}");
-            session()->flash('message', "Đã ghi danh học sinh {$fullName} thành công");
+            $this->emit('toast', 'message', "Đã ghi danh học sinh {$fullName} thành công");
 
             $this->closeEnrollModal();
             $this->emit('refreshStudents');
@@ -649,7 +649,7 @@ class StudentListNew extends BaseComponent
                 'name'   => "{$this->enrollLastName} {$this->enrollFirstName}",
                 'lop_id' => $this->selectedLop,
             ]);
-            session()->flash('error', 'Có lỗi khi ghi danh học sinh. Vui lòng thử lại.');
+            $this->emit('toast', 'error', 'Có lỗi khi ghi danh học sinh. Vui lòng thử lại.');
         }
     }
 
@@ -686,7 +686,7 @@ class StudentListNew extends BaseComponent
         $this->authorize('create', StudentNew::class);
 
         if (empty($this->studentsToAdd)) {
-            session()->flash('warning', 'Vui lòng chọn ít nhất một học sinh');
+            $this->emit('toast', 'warning', 'Vui lòng chọn ít nhất một học sinh');
             return;
         }
 
@@ -703,7 +703,7 @@ class StudentListNew extends BaseComponent
             $newStudentIds      = array_diff($this->studentsToAdd, $existingStudentIds);
 
             if (empty($newStudentIds)) {
-                session()->flash('warning', 'Tất cả học sinh đã có trong lớp này');
+                $this->emit('toast', 'warning', 'Tất cả học sinh đã có trong lớp này');
                 return;
             }
 
@@ -715,7 +715,7 @@ class StudentListNew extends BaseComponent
 
             DB::commit();
 
-            session()->flash('message', 'Đã thêm ' . count($newStudentIds) . ' học sinh vào lớp thành công');
+            $this->emit('toast', 'message', 'Đã thêm ' . count($newStudentIds) . ' học sinh vào lớp thành công');
 
             $this->closeAddStudentsModal();
             $this->emit('refreshStudents');
@@ -725,7 +725,7 @@ class StudentListNew extends BaseComponent
                 'lop_id'      => $this->selectedLop,
                 'student_ids' => $this->studentsToAdd,
             ]);
-            session()->flash('error', 'Có lỗi khi thêm học sinh vào lớp. Vui lòng thử lại.');
+            $this->emit('toast', 'error', 'Có lỗi khi thêm học sinh vào lớp. Vui lòng thử lại.');
         }
     }
 
@@ -752,25 +752,25 @@ class StudentListNew extends BaseComponent
                     ->whereIn('class_id', $classIds)
                     ->delete();
             } else {
-                session()->flash('error', 'Vui lòng chọn năm học trước khi xóa');
+                $this->emit('toast', 'error', 'Vui lòng chọn năm học trước khi xóa');
                 return;
             }
 
             DB::commit();
 
-            session()->flash('message', 'Đã xóa học sinh khỏi lớp thành công');
+            $this->emit('toast', 'message', 'Đã xóa học sinh khỏi lớp thành công');
             $this->emit('refreshStudents');
         } catch (\Illuminate\Auth\Access\AuthorizationException $e) {
-            session()->flash('error', 'Bạn không có quyền xóa học sinh này');
+            $this->emit('toast', 'error', 'Bạn không có quyền xóa học sinh này');
         } catch (ModelNotFoundException $e) {
-            session()->flash('error', 'Không tìm thấy học sinh hoặc lớp học');
+            $this->emit('toast', 'error', 'Không tìm thấy học sinh hoặc lớp học');
         } catch (\Exception $e) {
             DB::rollBack();
             $this->logError($e, 'Error deleting StudentNew from class', [
                 'lop_id'     => $this->selectedLop,
                 'student_id' => $studentId,
             ]);
-            session()->flash('error', 'Có lỗi khi xóa học sinh khỏi lớp. Vui lòng thử lại.');
+            $this->emit('toast', 'error', 'Có lỗi khi xóa học sinh khỏi lớp. Vui lòng thử lại.');
         }
     }
 
@@ -876,7 +876,7 @@ class StudentListNew extends BaseComponent
                 'lop'    => $this->selectedLop,
                 'search' => $this->search,
             ]);
-            session()->flash('error', 'Có lỗi khi tải danh sách học viên.');
+            $this->emit('toast', 'error', 'Có lỗi khi tải danh sách học viên.');
             return new LengthAwarePaginator([], 0, $this->perPage, $this->page ?? 1);
         }
     }
@@ -885,7 +885,7 @@ class StudentListNew extends BaseComponent
     public function printSelected(): void
     {
         if (empty($this->selectedStudents) && !$this->selectedLop) {
-            session()->flash('warning', 'Vui lòng chọn học sinh hoặc lớp');
+            $this->emit('toast', 'warning', 'Vui lòng chọn học sinh hoặc lớp');
             return;
         }
 
@@ -957,6 +957,7 @@ class StudentListNew extends BaseComponent
                 $this->selectedNamHoc = $newNamHoc;
                 $this->selectedKhoi   = null;
                 $this->selectedLop    = null;
+                $this->search         = '';
             }
         }
 
@@ -965,14 +966,15 @@ class StudentListNew extends BaseComponent
             if ($newKhoi !== $this->selectedKhoi) {
                 $this->selectedKhoi = $newKhoi;
                 $this->selectedLop  = null;
+                $this->search       = '';
             }
         }
 
         if (array_key_exists('lop', $filters)) {
             $this->selectedLop = is_numeric($filters['lop']) ? (int) $filters['lop'] : null;
+            $this->search      = '';
         }
 
-        $this->search = '';
         $this->resetPage();
         $this->resetSelection();
     }
@@ -998,7 +1000,6 @@ class StudentListNew extends BaseComponent
         $this->lopCache = null;
         $this->resetPage();
         $this->resetSelection();
-        session()->flash('message', 'Đã làm mới danh sách học viên');
     }
 
     // ==================== HELPERS ====================
@@ -1050,6 +1051,10 @@ class StudentListNew extends BaseComponent
             ? $this->getAvailableParishionersPaginated()
             : null;
 
+        $layout = auth()->user()?->isCatechist()
+            ? 'frontend.layout.catechist'
+            : 'frontend.layout.main';
+
         return view('livewire.student.student-list-new', [
             'lop'                   => $lop,
             'students'              => $students,
@@ -1062,7 +1067,7 @@ class StudentListNew extends BaseComponent
             'availableSaints'       => $this->availableSaints,
             'availableParishGroups' => $this->availableParishGroups,
         ])
-            ->extends('frontend.layout.main')
+            ->extends($layout)
             ->section('content');
     }
 }

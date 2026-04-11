@@ -71,11 +71,35 @@
         .scrollbar-hide::-webkit-scrollbar {
             display: none;
         }
+
+        @keyframes indeterminate {
+            0% {
+                transform: translateX(-100%) scaleX(0.3);
+            }
+
+            50% {
+                transform: translateX(0%) scaleX(0.7);
+            }
+
+            100% {
+                transform: translateX(100%) scaleX(0.3);
+            }
+        }
     </style>
 </head>
 
 <body class="min-h-screen bg-slate-50 text-slate-800 antialiased"
     x-data="{ showMenu: false }">
+
+    {{-- Toast --}}
+    <x-toast-manager />
+
+    {{-- Loading indicator --}}
+    <div id="global-loading" class="hidden fixed top-0 left-0 right-0 z-[9999] pointer-events-none">
+        <div class="h-0.5 bg-primary-100 overflow-hidden">
+            <div class="h-full bg-primary-500 animate-[indeterminate_1.4s_ease-in-out_infinite]"></div>
+        </div>
+    </div>
 
     <header id="main-header"
         class="sticky top-0 z-40 bg-primary-50 shadow-sm rounded-b-xl transition-all duration-200">
@@ -273,7 +297,7 @@
     <script src="{{ mix('js/vendor.js') }}"></script>
     <script src="{{ mix('js/app.js') }}"></script>
     @stack('scripts')
-    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
     <script>
         (function() {
             const header = document.getElementById('main-header');
@@ -294,6 +318,47 @@
             });
             onScroll(); // check ngay khi load
         })();
+    </script>
+
+    <script>
+        document.addEventListener('livewire:load', () => {
+            Livewire.on('toast', (type, message) => {
+                window.dispatchEvent(new CustomEvent('toast', {
+                    detail: [type, message]
+                }));
+            });
+
+            Livewire.hook('message.sent', () => {
+                document.getElementById('global-loading')?.classList.remove('hidden');
+            });
+            Livewire.hook('message.processed', () => {
+                document.getElementById('global-loading')?.classList.add('hidden');
+            });
+        });
+    </script>
+
+    <script>
+        document.addEventListener('livewire:load', () => {
+            Livewire.on('toast', (type, message) => {
+                window.dispatchEvent(new CustomEvent('toast', {
+                    detail: [type, message]
+                }));
+            });
+
+            let loadingTimer = null;
+
+            Livewire.hook('message.sent', () => {
+                loadingTimer = setTimeout(() => {
+                    document.getElementById('global-loading')?.classList.remove('hidden');
+                }, 500);
+            });
+
+            Livewire.hook('message.processed', () => {
+                clearTimeout(loadingTimer);
+                loadingTimer = null;
+                document.getElementById('global-loading')?.classList.add('hidden');
+            });
+        });
     </script>
     @livewireScripts
 </body>
