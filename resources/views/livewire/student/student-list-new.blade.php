@@ -9,20 +9,51 @@
     <a href="#main-content" class="sr-only focus:not-sr-only">Bỏ qua tới nội dung</a>
 
     <div class="mx-auto max-w-7xl space-y-6">
+        @php $isCatechist = auth()->user()->isCatechist(); @endphp
+
         {{-- Main Card --}}
         <div class="bg-white rounded-2xl shadow-sm border border-slate-200">
-            {{-- Header --}}
             <x-page-header
                 class="rounded-t-2xl"
                 title="Danh sách học sinh"
                 :count="$students->total()">
             </x-page-header>
 
-            {{-- Actions Bar --}}
-            <div class="p-6 border-b border-slate-200 bg-slate-50/70 rounded-b-2xl">
+            <div class="p-4 lg:p-6 border-b border-slate-200 bg-slate-50/70 rounded-b-2xl">
+                @if($isCatechist)
+                {{-- ══ CATECHIST: Chỉ filter lớp + search + điểm danh ══ --}}
+                <div class="flex flex-col gap-3">
+                    <livewire:filters.filter-bar
+                        :parish-id="$parishId"
+                        :show-nam-hoc="false"
+                        :show-khoi="false"
+                        :show-lop="true"
+                        :show-ky="false"
+                        :selected-nam-hoc="$selectedNamHoc"
+                        :selected-khoi="$selectedKhoi"
+                        :selected-lop="$selectedLop" />
+
+                    <div class="flex items-center gap-3">
+                        <x-search-input
+                            placeholder="Tìm kiếm học sinh..."
+                            wire-model="search"
+                            debounce="500ms"
+                            class="flex-1" />
+
+                        <x-button
+                            as="a"
+                            href="{{ route('attendance.show') }}{{ $selectedLop ? '?classId='.$selectedLop : '' }}"
+                            variant="outline">
+                            <x-icon name="clipboard" />
+                            Điểm danh
+                        </x-button>
+                    </div>
+                </div>
+
+                @else
+                {{-- ══ ADMIN: Đầy đủ ══ --}}
                 <div class="flex flex-col gap-4">
 
-                    {{-- TOP ROW: FilterBar --}}
                     <div class="flex items-end gap-3">
                         <div class="flex-1">
                             <livewire:filters.filter-bar
@@ -43,16 +74,13 @@
                         </div>
                     </div>
 
-                    {{-- BOTTOM ROW: Search + Actions --}}
                     <div class="flex items-center justify-between gap-4">
-                        {{-- Search --}}
                         <x-search-input
                             placeholder="Tìm kiếm theo tên thánh, họ tên, mã học sinh..."
                             wire-model="search"
                             debounce="500ms"
                             class="max-w-md" />
 
-                        {{-- Action Buttons --}}
                         <div class="flex items-center gap-2 flex-wrap">
                             <x-tooltip content="Vui lòng chọn lớp trước" :show="!$selectedLop">
                                 <x-button
@@ -72,7 +100,6 @@
                             </x-button>
 
                             <x-dropdown label="Khác" icon="dots-horizontal" align="right" position="fixed">
-
                                 <x-dropdown-item
                                     wire:click="printSelected"
                                     :disabled="!$selectedLop && count($selectedStudents) === 0"
@@ -80,26 +107,102 @@
                                     :badge="count($selectedStudents) > 0 ? count($selectedStudents) : null">
                                     In thẻ
                                 </x-dropdown-item>
-
                                 <div class="my-1 border-t border-slate-100"></div>
-
                                 <x-dropdown-item as="a" :href="$this->importUrl" icon="upload">
                                     Import Excel
                                 </x-dropdown-item>
-
                                 <x-dropdown-item wire:click="export" icon="download">
                                     Export
                                 </x-dropdown-item>
-
                             </x-dropdown>
                         </div>
                     </div>
+
                 </div>
+                @endif
             </div>
         </div>
 
-        {{-- Student Table --}}
         @if($selectedNamHoc)
+        @if($isCatechist)
+        {{-- ══ CATECHIST: Card list ══ --}}
+        <div class="space-y-3">
+            @if($students && $students->count() > 0)
+
+            @foreach($students as $student)
+            <a href="{{ route('students.show', $student->id) }}"
+                wire:key="student-card-{{ $student->id }}"
+                class="bg-white rounded-2xl border border-slate-200 p-4
+                      flex items-center gap-3 hover:border-primary-300
+                      hover:bg-primary-50/30 transition-all active:scale-[0.99] block">
+
+                {{-- Avatar --}}
+                <div class="w-11 h-11 rounded-full flex-shrink-0 flex items-center justify-center
+                            text-sm font-medium
+                            {{ $student->gender === 'male' ? 'bg-blue-50 text-blue-800' : 'bg-pink-50 text-pink-800' }}">
+                    @if($student->avatar_path)
+                    <img src="{{ asset('storage/'.$student->avatar_path) }}"
+                        class="w-full h-full rounded-full object-cover" />
+                    @else
+                    {{ strtoupper(mb_substr($student->first_name, 0, 2)) }}
+                    @endif
+                </div>
+
+                {{-- Info --}}
+                <div class="flex-1 min-w-0">
+                    <div class="flex items-center gap-2 mb-0.5">
+                        <span class="text-sm font-medium text-slate-900 truncate">
+                            {{ $student->saint->name ?? '' }} {{ $student->last_name }} {{ $student->first_name }}
+                        </span>
+                        <span class="flex-shrink-0 text-xs px-2 py-0.5 rounded-full
+                            {{ $student->gender === 'male'
+                                ? 'bg-blue-50 text-blue-800'
+                                : 'bg-pink-50 text-pink-800' }}">
+                            {{ $student->gender === 'male' ? 'Nam' : 'Nữ' }}
+                        </span>
+                    </div>
+                    <div class="text-xs text-slate-500 mb-1.5">
+                        {{ $student->birthday?->format('d/m/Y') ?? '—' }}
+                        · {{ $student->parishGroup->name ?? '—' }}
+                    </div>
+                    <div class="flex items-center gap-3 text-xs text-slate-400">
+                        <span>
+                            <span class="text-slate-500">Bố:</span>
+                            {{ $student->father_name ?? '—' }}
+                        </span>
+                        @if($student->phone)
+                        <span>{{ $student->phone }}</span>
+                        @endif
+                    </div>
+                </div>
+
+                {{-- Arrow --}}
+                <svg class="w-4 h-4 text-slate-300 flex-shrink-0" fill="none"
+                    stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round"
+                        stroke-width="2" d="M9 5l7 7-7 7" />
+                </svg>
+            </a>
+            @endforeach
+
+            {{-- Pagination --}}
+            @if($students->hasPages())
+            <div class="pt-2">
+                <x-pagination :paginator="$students" :per-page-options="[15, 25, 50]" />
+            </div>
+            @endif
+
+            @else
+            <x-empty-state
+                icon="students"
+                :colspan="1"
+                title="Không tìm thấy học sinh"
+                description="Không có học sinh nào phù hợp với bộ lọc của bạn" />
+            @endif
+        </div>
+
+        @else
+        {{-- ══ ADMIN: Table đầy đủ ══ --}}
         <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
             @if($students && $students->count() > 0)
             <div class="overflow-x-auto">
@@ -107,39 +210,29 @@
                     <thead class="bg-slate-50 border-b border-slate-200">
                         <tr>
                             <x-table-header>
-                                <input
-                                    type="checkbox"
-                                    wire:model="selectAll"
+                                <input type="checkbox" wire:model="selectAll"
                                     class="w-4 h-4 rounded border-slate-300 text-primary-600 focus:ring-primary-500">
                             </x-table-header>
                             <x-table-header>STT</x-table-header>
                             <x-table-header>Tên thánh</x-table-header>
                             <x-table-header class="w-[180px]"
-                                :sortable="true"
-                                sort-field="last_name"
-                                :current-sort="$sortField"
-                                :sort-direction="$sortDirection">
+                                :sortable="true" sort-field="last_name"
+                                :current-sort="$sortField" :sort-direction="$sortDirection">
                                 Họ & Tên đệm
                             </x-table-header>
                             <x-table-header
-                                :sortable="true"
-                                sort-field="first_name"
-                                :current-sort="$sortField"
-                                :sort-direction="$sortDirection">
+                                :sortable="true" sort-field="first_name"
+                                :current-sort="$sortField" :sort-direction="$sortDirection">
                                 Tên
                             </x-table-header>
                             <x-table-header
-                                :sortable="true"
-                                sort-field="birthday"
-                                :current-sort="$sortField"
-                                :sort-direction="$sortDirection">
+                                :sortable="true" sort-field="birthday"
+                                :current-sort="$sortField" :sort-direction="$sortDirection">
                                 Ngày sinh
                             </x-table-header>
                             <x-table-header
-                                :sortable="true"
-                                sort-field="gender"
-                                :current-sort="$sortField"
-                                :sort-direction="$sortDirection">
+                                :sortable="true" sort-field="gender"
+                                :current-sort="$sortField" :sort-direction="$sortDirection">
                                 Giới tính
                             </x-table-header>
                             <x-table-header class="w-[140px]">Bố</x-table-header>
@@ -152,46 +245,36 @@
                         @foreach($students as $index => $student)
                         <tr class="hover:bg-slate-50 transition-colors" wire:key="student-{{ $student->id }}">
 
-                            {{-- Checkbox --}}
                             <td class="px-4 py-4">
-                                <input
-                                    type="checkbox"
-                                    wire:model="selectedStudents"
+                                <input type="checkbox" wire:model="selectedStudents"
                                     value="{{ $student->id }}"
                                     class="w-4 h-4 rounded border-slate-300 text-primary-600 focus:ring-primary-500">
                             </td>
 
-                            {{-- STT --}}
                             <td class="px-4 py-4 text-sm font-semibold text-slate-500">
                                 {{ ($students->firstItem() ?? 0) + $index }}
                             </td>
 
-                            {{-- Tên thánh --}}
                             <td class="px-4 py-4 text-sm text-slate-900">
                                 {{ $student->saint->name ?? '—' }}
                             </td>
 
-                            {{-- Họ & tên đệm --}}
                             <td class="px-4 py-4 text-sm font-semibold text-slate-900 whitespace-nowrap">
                                 {{ $student->last_name }}
                             </td>
 
-                            {{-- Tên --}}
                             <td class="px-4 py-4 text-sm font-semibold text-slate-900">
                                 {{ $student->first_name }}
                             </td>
 
-                            {{-- Ngày sinh --}}
                             <td class="px-4 py-4 text-sm text-slate-600">
                                 {{ $student->birthday?->format('d/m/Y') ?? '—' }}
                             </td>
 
-                            {{-- Giới tính --}}
                             <td class="px-4 py-4 text-sm text-slate-600">
                                 {{ $student->gender_text }}
                             </td>
 
-                            {{-- Bố --}}
                             <td class="px-4 py-4 text-sm text-slate-700 whitespace-nowrap">
                                 {{ $student->father_name ?? '—' }}
                             </td>
@@ -200,46 +283,32 @@
                                 {{ $student->phone ?? '—' }}
                             </td>
 
-                            {{-- Giáo họ --}}
                             <td class="px-4 py-4 text-sm text-slate-700 whitespace-nowrap">
                                 {{ $student->parishGroup->name ?? '—' }}
                             </td>
 
-                            {{-- Thao tác --}}
                             <td class="px-4 py-4">
-                                <div class="flex items-center justify-center gap-2">
-                                    <div class="flex items-center justify-center gap-1">
-
-                                        {{-- Xem --}}
-                                        <a href="{{ route('students.show', $student->id) }}"
-                                            class="p-2 hover:bg-blue-50 text-blue-600 rounded-lg">
-                                            <x-icon name="eye" />
-                                        </a>
-
-                                        {{-- Sửa --}}
-                                        <a href="{{ route('students.edit', $student->id) }}"
-                                            class="p-2 hover:bg-orange-50 text-orange-600 rounded-lg">
-                                            <x-icon name="edit" />
-                                        </a>
-
-                                        {{-- More --}}
-                                        <x-dropdown icon="more-vertical" label="" align="right" variant="subtle" position="fixed">
-
-                                            <x-dropdown-item wire:click="openLinkParishioner({{ $student->id }})" icon="link">
-                                                Liên kết giáo dân
-                                            </x-dropdown-item>
-
-                                            <div class="h-px bg-slate-100 my-1"></div>
-
-                                            <x-dropdown-item
-                                                x-on:click="if(confirm('Xóa học sinh này?')) $wire.delete({{ $student->id }})"
-                                                icon="trash"
-                                                class="text-red-600 hover:bg-red-50">
-                                                Xóa học sinh
-                                            </x-dropdown-item>
-
-                                        </x-dropdown>
-                                    </div>
+                                <div class="flex items-center justify-center gap-1">
+                                    <a href="{{ route('students.show', $student->id) }}"
+                                        class="p-2 hover:bg-blue-50 text-blue-600 rounded-lg">
+                                        <x-icon name="eye" />
+                                    </a>
+                                    <a href="{{ route('students.edit', $student->id) }}"
+                                        class="p-2 hover:bg-orange-50 text-orange-600 rounded-lg">
+                                        <x-icon name="edit" />
+                                    </a>
+                                    <x-dropdown icon="more-vertical" label="" align="right" variant="subtle" position="fixed">
+                                        <x-dropdown-item wire:click="openLinkParishioner({{ $student->id }})" icon="link">
+                                            Liên kết giáo dân
+                                        </x-dropdown-item>
+                                        <div class="h-px bg-slate-100 my-1"></div>
+                                        <x-dropdown-item
+                                            x-on:click="if(confirm('Xóa học sinh này?')) $wire.delete({{ $student->id }})"
+                                            icon="trash"
+                                            class="text-red-600 hover:bg-red-50">
+                                            Xóa học sinh
+                                        </x-dropdown-item>
+                                    </x-dropdown>
                                 </div>
                             </td>
                         </tr>
@@ -254,23 +323,18 @@
                 <span class="text-sm font-semibold text-primary-700">
                     Đã chọn {{ count($selectedStudents) }} học sinh
                 </span>
-                <div class="flex items-center gap-2">
-                    <button type="button"
-                        wire:click="$set('selectedStudents', [])"
-                        class="px-3 py-1.5 text-sm font-medium text-primary-600
-                               hover:bg-primary-100 rounded-lg transition">
-                        Bỏ chọn tất cả
-                    </button>
-                </div>
+                <button type="button" wire:click="$set('selectedStudents', [])"
+                    class="px-3 py-1.5 text-sm font-medium text-primary-600
+                       hover:bg-primary-100 rounded-lg transition">
+                    Bỏ chọn tất cả
+                </button>
             </div>
             @endif
 
             {{-- Pagination --}}
             @if($students->hasPages())
             <div class="p-6 border-t border-slate-200">
-                <x-pagination
-                    :paginator="$students"
-                    :per-page-options="[10, 15, 25, 50, 100]" />
+                <x-pagination :paginator="$students" :per-page-options="[10, 15, 25, 50, 100]" />
             </div>
             @endif
 
@@ -282,7 +346,10 @@
                 description="Không có học sinh nào phù hợp với bộ lọc của bạn" />
             @endif
         </div>
+        @endif
+
         @else
+        {{-- Chưa chọn năm học --}}
         <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-12 text-center">
             <svg class="mx-auto w-16 h-16 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -292,8 +359,8 @@
         </div>
         @endif
 
-
-        @if($showLinkModal)
+        {{-- Modal liên kết giáo dân — chỉ admin dùng --}}
+        @if(!$isCatechist && $showLinkModal)
         <div class="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4"
             role="dialog" aria-modal="true" wire:click="closeLinkModal">
             <div class="bg-white rounded-2xl shadow-xl w-full max-w-lg max-h-[80vh] overflow-hidden flex flex-col"

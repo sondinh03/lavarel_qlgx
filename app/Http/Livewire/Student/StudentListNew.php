@@ -1012,6 +1012,17 @@ class StudentListNew extends BaseComponent
 
     protected function getDefaultNamHocId(): ?int
     {
+        // Ưu tiên 1: năm học đang trong khoảng thời gian hiện tại
+        $current = \App\Models\NamHoc::ofParish($this->parishId)
+            ->active()
+            ->current()
+            ->value('id');
+
+        if ($current) {
+            return $current;
+        }
+
+        // Ưu tiên 2: fallback về năm học mới nhất nếu không có năm học hiện tại
         return \App\Models\NamHoc::ofParish($this->parishId)
             ->active()
             ->orderByDesc('name')
