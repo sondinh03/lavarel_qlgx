@@ -200,31 +200,17 @@
                     <div class="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4">
                         {{-- LEFT: Filters --}}
                         <div class="flex flex-col gap-3 w-full lg:flex-row lg:items-center">
-                            <div class="hidden lg:block">
-                                <livewire:filters.filter-bar
-                                    :parish-id="$parishId"
-                                    :show-nam-hoc="true"
-                                    :show-khoi="true"
-                                    :show-lop="true"
-                                    :show-ky="true"
-                                    :selected-nam-hoc="$selectedNamHoc"
-                                    :selected-khoi="$selectedKhoi"
-                                    :selected-lop="$selectedClassId"
-                                    :selected-ky="$selectedKy" />
-                            </div>
-
-                            <div class="lg:hidden">
-                                <livewire:filters.filter-bar
-                                    :parish-id="$parishId"
-                                    :show-nam-hoc="false"
-                                    :show-khoi="false"
-                                    :show-lop="true"
-                                    :show-ky="false"
-                                    :selected-nam-hoc="$selectedNamHoc"
-                                    :selected-khoi="$selectedKhoi"
-                                    :selected-lop="$selectedClassId"
-                                    :selected-ky="$selectedKy" />
-                            </div>
+                            @php $isAdmin = !auth()->user()->isCatechist(); @endphp
+                            <livewire:filters.filter-bar
+                                :parish-id="$parishId"
+                                :show-nam-hoc="$isAdmin"
+                                :show-khoi="$isAdmin"
+                                :show-lop="true"
+                                :show-ky="$isAdmin"
+                                :selected-nam-hoc="$selectedNamHoc"
+                                :selected-khoi="$selectedKhoi"
+                                :selected-lop="$selectedClassId"
+                                :selected-ky="$selectedKy" />
 
                             <input
                                 wire:model.live.debounce.500ms="search"
@@ -993,20 +979,6 @@
 
 @push('styles')
 <style>
-    @keyframes indeterminate {
-        0% {
-            transform: translateX(-100%) scaleX(0.3);
-        }
-
-        50% {
-            transform: translateX(0%) scaleX(0.7);
-        }
-
-        100% {
-            transform: translateX(100%) scaleX(0.3);
-        }
-    }
-
     .scrollbar-hide {
         -ms-overflow-style: none;
         scrollbar-width: none;
