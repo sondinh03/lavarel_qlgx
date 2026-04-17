@@ -152,7 +152,7 @@
                                         {{-- 2. Ảnh từ DB --}}
                                         <template x-if="!avatarPreview">
                                             @if($avatar_path)
-                                            <img src="{{ asset('uploads/' . $avatar_path) }}"
+                                            <img src="{{ asset($avatar_path) }}"
                                                 alt="Avatar"
                                                 class="w-28 h-28 rounded-2xl object-cover shadow-md ring-4 ring-primary-50" />
                                             @else

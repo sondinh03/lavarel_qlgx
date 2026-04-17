@@ -55,7 +55,7 @@
 
                         {{-- Avatar: ảnh thật hoặc chữ cái đầu --}}
                         @if($student['avatar_path'])
-                        <img src="{{ asset('uploads/' . $student['avatar_path']) }}"
+                        <img src="{{ asset($student['avatar_path']) }}"
                             alt="{{ $student['full_name'] }}"
                             class="w-20 h-20 rounded-2xl object-cover shadow-lg ring-4 ring-primary-50 flex-shrink-0">
                         @else
