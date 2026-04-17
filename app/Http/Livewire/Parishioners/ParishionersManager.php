@@ -25,6 +25,7 @@ class ParishionersManager extends BaseComponent
     public bool $showForm        = false;
     public bool $showStudentLink = false;
     public bool $showSacraments  = false;
+    public $showAdvancedFilters = false;
 
     public ?int $editingId              = null;
     public ?int $linkingParishionerId   = null;
@@ -195,7 +196,7 @@ class ParishionersManager extends BaseComponent
             $this->selectedStatus = '';
         }
         if (!in_array($this->selectedDeceased, ['0', '1', ''], true)) {
-            $this->selectedDeceased = '';
+            $this->selectedDeceased = '0'; // mặc định chỉ hiện người còn sống
         }
         if (!array_key_exists($this->selectedAgeGroup, $this->ageGroups) && $this->selectedAgeGroup !== '') {
             $this->selectedAgeGroup = '';
@@ -296,10 +297,10 @@ class ParishionersManager extends BaseComponent
 
             $this->showForm = true;
         } catch (ModelNotFoundException) {
-            session()->flash('error', 'Không tìm thấy giáo dân');
+            $this->emit('toast', 'error', 'Không tìm thấy giáo dân');
         } catch (\Exception $e) {
             $this->logError($e, 'Error loading parishioner for edit', ['id' => $id]);
-            session()->flash('error', 'Có lỗi khi tải thông tin');
+            $this->emit('toast', 'error', 'Có lỗi khi tải thông tin');
         }
     }
 
@@ -331,7 +332,7 @@ class ParishionersManager extends BaseComponent
         if ($this->editingId) {
             $p = Parishioner::ofParish($this->parishId)->find($this->editingId);
             if (!$p) {
-                session()->flash('error', 'Không tìm thấy giáo dân');
+                $this->emit('toast', 'error', 'Không tìm thấy giáo dân');
                 return;
             }
             $this->authorize('update', $p);
@@ -408,7 +409,7 @@ class ParishionersManager extends BaseComponent
 
             DB::commit();
 
-            session()->flash(
+            $this->emit('toast', 
                 'message',
                 $this->editingId ? 'Cập nhật giáo dân thành công' : 'Thêm giáo dân thành công'
             );
@@ -417,7 +418,7 @@ class ParishionersManager extends BaseComponent
         } catch (\Exception $e) {
             DB::rollBack();
             $this->logError($e, 'Error saving parishioner', ['editing_id' => $this->editingId]);
-            session()->flash('error', 'Có lỗi khi lưu dữ liệu. Vui lòng thử lại.');
+            $this->emit('toast', 'error', 'Có lỗi khi lưu dữ liệu. Vui lòng thử lại.');
         }
     }
 
@@ -427,12 +428,12 @@ class ParishionersManager extends BaseComponent
             $p = Parishioner::ofParish($this->parishId)->findOrFail($id);
             $this->authorize('update', $p);
             $p->update(['status' => !$p->status]);
-            session()->flash('message', $p->status ? 'Đã kích hoạt' : 'Đã tắt');
+            $this->emit('toast', 'message', $p->status ? 'Đã kích hoạt' : 'Đã tắt');
         } catch (ModelNotFoundException) {
-            session()->flash('error', 'Không tìm thấy giáo dân');
+            $this->emit('toast', 'error', 'Không tìm thấy giáo dân');
         } catch (\Exception $e) {
             $this->logError($e, 'Error toggling status', ['id' => $id]);
-            session()->flash('error', 'Có lỗi khi thay đổi trạng thái');
+            $this->emit('toast', 'error', 'Có lỗi khi thay đổi trạng thái');
         }
     }
 
@@ -445,7 +446,7 @@ class ParishionersManager extends BaseComponent
             $this->authorize('delete', $p);
 
             if (Student::where('parishioner_id', $p->id)->exists()) {
-                session()->flash('error', 'Không thể xóa — giáo dân đang có học sinh liên kết');
+                $this->emit('toast', 'error', 'Không thể xóa — giáo dân đang có học sinh liên kết');
                 return;
             }
 
@@ -456,14 +457,14 @@ class ParishionersManager extends BaseComponent
             $p->delete();
             DB::commit();
 
-            session()->flash('message', 'Đã xóa giáo dân thành công');
+            $this->emit('toast', 'message', 'Đã xóa giáo dân thành công');
         } catch (ModelNotFoundException) {
             DB::rollBack();
-            session()->flash('error', 'Không tìm thấy giáo dân');
+            $this->emit('toast', 'error', 'Không tìm thấy giáo dân');
         } catch (\Exception $e) {
             DB::rollBack();
             $this->logError($e, 'Error deleting parishioner', ['id' => $id]);
-            session()->flash('error', 'Có lỗi khi xóa');
+            $this->emit('toast', 'error', 'Có lỗi khi xóa');
         }
     }
 
@@ -479,7 +480,7 @@ class ParishionersManager extends BaseComponent
                 ->get();
             $this->showStudentLink = true;
         } catch (ModelNotFoundException) {
-            session()->flash('error', 'Không tìm thấy giáo dân');
+            $this->emit('toast', 'error', 'Không tìm thấy giáo dân');
         }
     }
 
@@ -499,7 +500,7 @@ class ParishionersManager extends BaseComponent
             $this->sacramentParishionerId = $parishionerId;
             $this->showSacraments = true;
         } catch (ModelNotFoundException) {
-            session()->flash('error', 'Không tìm thấy giáo dân');
+            $this->emit('toast', 'error', 'Không tìm thấy giáo dân');
         }
     }
 
@@ -521,7 +522,7 @@ class ParishionersManager extends BaseComponent
         $this->selectedDeceased = '';
         $this->search           = '';
         $this->resetPage();
-        session()->flash('message', 'Đã đặt lại bộ lọc');
+        $this->emit('toast', 'message', 'Đã đặt lại bộ lọc');
     }
 
     // ==================== DATA LOADING ====================
@@ -567,7 +568,7 @@ class ParishionersManager extends BaseComponent
                 ->paginate($this->perPage);
         } catch (\Exception $e) {
             $this->logError($e, 'Error loading parishioners');
-            session()->flash('error', 'Có lỗi khi tải danh sách');
+            $this->emit('toast', 'error', 'Có lỗi khi tải danh sách');
             return new \Illuminate\Pagination\LengthAwarePaginator([], 0, $this->perPage);
         }
     }
