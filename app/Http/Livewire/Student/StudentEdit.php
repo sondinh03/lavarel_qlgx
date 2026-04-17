@@ -7,10 +7,14 @@ use App\Models\StudentNew;
 use App\Models\ParishNew;
 use App\Models\Holymanagement;
 use App\Models\ParishGroup;
+use App\Services\UploadService;
 use Illuminate\Support\Facades\DB;
+use Livewire\WithFileUploads;
 
 class StudentEdit extends BaseComponent
 {
+    use WithFileUploads;
+
     // ==================== PROPERTIES ====================
     public $studentId = null;
     public $isEdit = false;
@@ -30,6 +34,7 @@ class StudentEdit extends BaseComponent
     public $is_active = true;
     public $father_name = '';
     public $mother_name = '';
+    public $avatar_path; // For file upload
 
     // Parish
     public $parish_id = null;
@@ -57,6 +62,7 @@ class StudentEdit extends BaseComponent
         'saint_id'        => 'nullable|exists:holymanagements,id',
         'father_name'       => 'nullable|string|max:255',
         'mother_name'       => 'nullable|string|max:255',
+        'avatar_path'            => 'nullable|image|max:2048',
     ];
 
     protected $messages = [
@@ -208,6 +214,15 @@ class StudentEdit extends BaseComponent
                 'father_name'     => $this->father_name,
                 'mother_name'     => $this->mother_name,
             ]);
+
+            if ($this->avatar_path) {
+                if ($this->isEdit && $student->avatar_path) {
+                    @unlink(public_path('uploads/' . $student->avatar_path));
+                }
+
+                $path = app(UploadService::class)->upload($this->avatar_path, 'avatars');
+                $student->avatar_path = $path;
+            }
 
             $student->save();
 

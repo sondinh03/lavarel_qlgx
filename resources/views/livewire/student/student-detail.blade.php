@@ -55,13 +55,13 @@
 
                         {{-- Avatar: ảnh thật hoặc chữ cái đầu --}}
                         @if($student['avatar_path'])
-                        <img src="{{ asset($student['avatar_path']) }}"
+                        <img src="{{ asset('uploads/' . $student['avatar_path']) }}"
                             alt="{{ $student['full_name'] }}"
                             class="w-20 h-20 rounded-2xl object-cover shadow-lg ring-4 ring-primary-50 flex-shrink-0">
                         @else
                         <div class="w-20 h-20 rounded-2xl bg-gradient-to-br from-primary-500 to-primary-600
-                                    text-white flex items-center justify-center text-2xl font-bold
-                                    shadow-lg ring-4 ring-primary-50 flex-shrink-0">
+        text-white flex items-center justify-center text-2xl font-bold
+        shadow-lg ring-4 ring-primary-50 flex-shrink-0">
                             {{ mb_substr($student['full_name'], 0, 1, 'UTF-8') }}
                         </div>
                         @endif
