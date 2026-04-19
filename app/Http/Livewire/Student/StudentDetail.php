@@ -32,7 +32,7 @@ class StudentDetail extends BaseComponent
         $this->studentId = (int) $id;
 
         if ($this->studentId <= 0) {
-            session()->flash('error', 'ID học sinh không hợp lệ.');
+            $this->emit('toast', 'error', 'ID học sinh không hợp lệ.');
             $this->redirectRoute('classes.index');
             return;
         }
@@ -70,11 +70,11 @@ class StudentDetail extends BaseComponent
         } catch (\Illuminate\Auth\Access\AuthorizationException $e) {
             abort(403, 'Bạn không có quyền xem học sinh này');
         } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
-            session()->flash('error', 'Không tìm thấy học sinh');
+            $this->emit('toast', 'error', 'Không tìm thấy học sinh');
             $this->redirectRoute('classes.index');
         } catch (\Exception $e) {
             $this->logError($e, 'Failed to load student data', ['student_id' => $this->studentId]);
-            session()->flash('error', 'Có lỗi xảy ra khi tải thông tin học sinh');
+            $this->emit('toast', 'error', 'Có lỗi xảy ra khi tải thông tin học sinh');
         } finally {
             $this->isLoading = false;
         }
@@ -174,11 +174,11 @@ class StudentDetail extends BaseComponent
 
         try {
             $student->delete();
-            session()->flash('message', 'Đã xóa học sinh thành công');
+            $this->emit('toast', 'message', 'Đã xóa học sinh thành công');
             $this->redirect(route('classes.index'));
         } catch (\Exception $e) {
             $this->logError($e, 'Failed to delete student', ['student_id' => $this->studentId]);
-            session()->flash('error', 'Có lỗi xảy ra khi xóa học sinh');
+            $this->emit('toast', 'error', 'Có lỗi xảy ra khi xóa học sinh');
         }
     }
 

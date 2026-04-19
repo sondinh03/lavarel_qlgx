@@ -10,39 +10,6 @@
     <a href="#student-profile-main" class="sr-only focus:not-sr-only">Bỏ qua tới nội dung</a>
 
     <div id="student-profile-main" class="mx-auto max-w-7xl p-4 sm:p-6 space-y-6">
-
-        {{-- Toast Notifications --}}
-        <div role="status" aria-live="polite">
-            @if (session()->has('message'))
-            <x-toast-notification type="success" :duration="3500">
-                {{ session('message') }}
-            </x-toast-notification>
-            @endif
-            @if (session()->has('error'))
-            <x-toast-notification type="error" :duration="4000">
-                {{ session('error') }}
-            </x-toast-notification>
-            @endif
-        </div>
-
-        {{-- Loading State --}}
-        @if($isLoading)
-        <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-12">
-            <div class="flex items-center justify-center gap-3">
-                <svg class="animate-spin h-8 w-8 text-primary-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                </svg>
-                <span class="text-lg text-slate-700">Đang tải dữ liệu học sinh...</span>
-            </div>
-        </div>
-
-        @elseif(empty($student))
-        <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-12 text-center">
-            <p class="text-slate-500">Không có dữ liệu học sinh.</p>
-        </div>
-
-        @else
         {{-- CARD CONTAINER --}}
         <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
 
@@ -60,8 +27,8 @@
                             class="w-20 h-20 rounded-2xl object-cover shadow-lg ring-4 ring-primary-50 flex-shrink-0">
                         @else
                         <div class="w-20 h-20 rounded-2xl bg-gradient-to-br from-primary-500 to-primary-600
-        text-white flex items-center justify-center text-2xl font-bold
-        shadow-lg ring-4 ring-primary-50 flex-shrink-0">
+                            text-white flex items-center justify-center text-2xl font-bold
+                            shadow-lg ring-4 ring-primary-50 flex-shrink-0">
                             {{ mb_substr($student['full_name'], 0, 1, 'UTF-8') }}
                         </div>
                         @endif
@@ -103,8 +70,8 @@
                         @can('update', $studentModel)
                         <button wire:click="edit"
                             class="inline-flex items-center gap-2 px-4 py-2 rounded-xl
-               bg-primary-600 text-white font-semibold
-               hover:bg-primary-700 active:scale-95 transition-all shadow-sm">
+               bg-primary-500 text-white font-semibold
+               hover:bg-primary-600 active:scale-95 transition-all shadow-sm">
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                     d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
@@ -179,7 +146,7 @@
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
 
                     {{-- Thông tin cá nhân --}}
-                    <div class="bg-slate-50 rounded-xl p-5 border border-slate-200">
+                    <div class="bg-slate-50 rounded-xl p-5 border border-slate-200 hover:shadow-md transition-all">
                         <h3 class="text-base font-bold text-slate-900 mb-4 flex items-center gap-2">
                             <svg class="w-5 h-5 text-primary-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -192,12 +159,11 @@
                             <x-info-row label="Họ và tên" :value="$student['full_name']" />
                             <x-info-row label="Ngày sinh" :value="$student['birthday']" />
                             <x-info-row label="Giới tính" :value="$student['gender_label']" />
-                            <x-info-row label="Liên hệ" :value="$student['phone'] . ' - ' . $student['email']" />
                         </div>
                     </div>
 
                     {{-- Gia đình --}}
-                    <div class="bg-slate-50 rounded-xl p-5 border border-slate-200">
+                    <div class="bg-slate-50 rounded-xl p-5 border border-slate-200 hover:shadow-md transition-all">
                         <h3 class="text-base font-bold text-slate-900 mb-4 flex items-center gap-2">
                             <svg class="w-5 h-5 text-primary-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -206,13 +172,15 @@
                             Gia đình
                         </h3>
                         <div class="space-y-3">
-                            <x-info-row label="Tên cha" :value="$student['father_name']" />
-                            <x-info-row label="Tên mẹ" :value="$student['mother_name']" />
+                            <x-info-row label="Họ tên bố" :value="$student['father_name']" />
+                            <x-info-row label="Họ tên mẹ" :value="$student['mother_name']" />
+                            <x-info-row label="Số điện thoại" :value="$student['phone']" />
+                            <x-info-row label="Email" :value="$student['email']" />
                         </div>
                     </div>
 
                     {{-- Giáo xứ --}}
-                    <div class="bg-slate-50 rounded-xl p-5 border border-slate-200">
+                    <div class="bg-slate-50 rounded-xl p-5 border border-slate-200 hover:shadow-md transition-all">
                         <h3 class="text-base font-bold text-slate-900 mb-4 flex items-center gap-2">
                             <svg class="w-5 h-5 text-primary-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -227,7 +195,7 @@
                     </div>
 
                     {{-- Hồ sơ giáo dân + Ghi chú --}}
-                    <div class="bg-slate-50 rounded-xl p-5 border border-slate-200">
+                    <div class="bg-slate-50 rounded-xl p-5 border border-slate-200 hover:shadow-md transition-all">
                         <h3 class="text-base font-bold text-slate-900 mb-4 flex items-center gap-2">
                             <svg class="w-5 h-5 text-primary-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -275,7 +243,7 @@
                 {{-- ====== TAB: LỊCH SỬ HỌC TẬP ====== --}}
                 @if($activeTab === 'history')
                 <div class="max-w-3xl mx-auto">
-                    <div class="bg-slate-50 rounded-xl p-5 border border-slate-200">
+                    <div class="bg-slate-50 rounded-xl p-5 border border-slate-200 hover:shadow-md transition-all">
                         <h3 class="text-base font-bold text-slate-900 mb-4 flex items-center gap-2">
                             <svg class="w-5 h-5 text-primary-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -317,7 +285,7 @@
                                 {{-- Badge lớp đầu tiên (hiện tại) --}}
                                 @if($i === 0)
                                 <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold
-                                             bg-green-100 text-green-700 flex-shrink-0">
+                                             bg-primary-100 text-primary-700 flex-shrink-0">
                                     Hiện tại
                                 </span>
                                 @endif
@@ -336,11 +304,8 @@
                     </div>
                 </div>
                 @endif
-
             </div>
         </div>
-        @endif
-
     </div>
 </div>
 

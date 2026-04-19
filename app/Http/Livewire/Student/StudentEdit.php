@@ -114,11 +114,11 @@ class StudentEdit extends BaseComponent
         } catch (\Illuminate\Auth\Access\AuthorizationException $e) {
             abort(403, 'Bạn không có quyền thực hiện thao tác này');
         } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
-            session()->flash('error', 'Không tìm thấy học sinh');
+            $this->emit('toast', 'error', 'Không tìm thấy học sinh');
             $this->redirect(route('classes.index'));
         } catch (\Exception $e) {
             $this->logError($e, 'Failed to load initial data');
-            session()->flash('error', 'Có lỗi khi tải dữ liệu');
+            $this->emit('toast', 'error', 'Có lỗi khi tải dữ liệu');
         } finally {
             $this->isLoading = false;
         }
@@ -228,7 +228,8 @@ class StudentEdit extends BaseComponent
 
             DB::commit();
 
-            session()->flash(
+            $this->emit(
+                'toast',
                 'message',
                 $this->isEdit ? 'Cập nhật học sinh thành công' : 'Thêm học sinh mới thành công'
             );
@@ -243,7 +244,7 @@ class StudentEdit extends BaseComponent
                 'student_id' => $this->studentId,
                 'is_edit'    => $this->isEdit,
             ]);
-            session()->flash('error', 'Có lỗi xảy ra khi lưu dữ liệu. Vui lòng thử lại.');
+            $this->emit('toast', 'error', 'Có lỗi xảy ra khi lưu dữ liệu. Vui lòng thử lại.');
         }
     }
 

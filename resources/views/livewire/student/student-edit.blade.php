@@ -1,35 +1,13 @@
+@section('topbar')
+<x-breadcrumb :items="[
+    ['label' => 'Trang chủ', 'url' => route('dashboard')],
+    ['label' => 'Học sinh', 'url' => route('students.index')],
+    ['label' => $isEdit ? 'Chỉnh sửa học sinh' : 'Thêm học sinh mới'],
+]" separator="arrow" />
+@endsection
+
 <div class="min-h-screen bg-slate-50 p-4 sm:p-6">
     <div class="max-w-4xl mx-auto space-y-5">
-
-        {{-- ===== BREADCRUMB ===== --}}
-        <x-breadcrumb :items="[
-            ['label' => 'Trang chủ', 'url' => route('dashboard')],
-            ['label' => 'Học sinh', 'url' => route('students.index')],
-            ['label' => $isEdit ? 'Chỉnh sửa học sinh' : 'Thêm học sinh mới'],
-        ]" separator="arrow" />
-
-        {{-- ===== TOAST ===== --}}
-        @if(session('message'))
-        <x-toast-notification type="success" :duration="3500">{{ session('message') }}</x-toast-notification>
-        @endif
-        @if(session('error'))
-        <x-toast-notification type="error" :duration="4000">{{ session('error') }}</x-toast-notification>
-        @endif
-
-        {{-- ===== LOADING STATE ===== --}}
-        @if($isLoading)
-        <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-16">
-            <div class="flex flex-col items-center justify-center gap-4">
-                <svg class="animate-spin h-8 w-8 text-primary-500" fill="none" viewBox="0 0 24 24">
-                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
-                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-                </svg>
-                <p class="text-sm text-slate-500">Đang tải dữ liệu...</p>
-            </div>
-        </div>
-
-        @else
-
         {{-- ===== MAIN CARD ===== --}}
         <div
             x-data="{
@@ -323,6 +301,34 @@
                                     <p class="mt-1 text-xs text-red-500">{{ $message }}</p>
                                     @enderror
                                 </div>
+                            </div>
+                        </div>
+
+                        {{-- ── SECTION: Gia đình ── --}}
+                        <div class="bg-slate-50 rounded-2xl border border-slate-200 p-5">
+                            <h2 class="text-base font-semibold text-slate-900 mb-4 flex items-center gap-2">
+                                <span class="inline-flex items-center justify-center w-6 h-6 rounded-lg bg-primary-100">
+                                    <svg class="w-3.5 h-3.5 text-primary-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+                                    </svg>
+                                </span>
+                                Gia đình
+                            </h2>
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                <div>
+                                    <label class="block text-sm font-semibold text-slate-700 mb-1.5">Tên cha</label>
+                                    <input type="text" wire:model.defer="father_name" placeholder="Họ và tên cha"
+                                        class="w-full px-3 py-2 rounded-xl border border-slate-300 bg-white text-sm
+                                               focus:outline-none focus:ring-2 focus:ring-primary-500 transition-all" />
+                                </div>
+
+                                <div>
+                                    <label class="block text-sm font-semibold text-slate-700 mb-1.5">Tên mẹ</label>
+                                    <input type="text" wire:model.defer="mother_name" placeholder="Họ và tên mẹ"
+                                        class="w-full px-3 py-2 rounded-xl border border-slate-300 bg-white text-sm
+                                               focus:outline-none focus:ring-2 focus:ring-primary-500 transition-all" />
+                                </div>
 
                                 {{-- Điện thoại --}}
                                 <div>
@@ -345,34 +351,6 @@
                                     @error('email')
                                     <p class="mt-1 text-xs text-red-500">{{ $message }}</p>
                                     @enderror
-                                </div>
-
-                            </div>
-                        </div>
-
-                        {{-- ── SECTION: Gia đình ── --}}
-                        <div class="bg-slate-50 rounded-2xl border border-slate-200 p-5">
-                            <h2 class="text-base font-semibold text-slate-900 mb-4 flex items-center gap-2">
-                                <span class="inline-flex items-center justify-center w-6 h-6 rounded-lg bg-primary-100">
-                                    <svg class="w-3.5 h-3.5 text-primary-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                            d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
-                                    </svg>
-                                </span>
-                                Gia đình
-                            </h2>
-                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                <div>
-                                    <label class="block text-sm font-semibold text-slate-700 mb-1.5">Tên cha</label>
-                                    <input type="text" wire:model.defer="father_name" placeholder="Họ và tên cha"
-                                        class="w-full px-3 py-2 rounded-xl border border-slate-300 bg-white text-sm
-                                               focus:outline-none focus:ring-2 focus:ring-primary-500 transition-all" />
-                                </div>
-                                <div>
-                                    <label class="block text-sm font-semibold text-slate-700 mb-1.5">Tên mẹ</label>
-                                    <input type="text" wire:model.defer="mother_name" placeholder="Họ và tên mẹ"
-                                        class="w-full px-3 py-2 rounded-xl border border-slate-300 bg-white text-sm
-                                               focus:outline-none focus:ring-2 focus:ring-primary-500 transition-all" />
                                 </div>
                             </div>
                         </div>
@@ -509,12 +487,8 @@
                         <span wire:loading.remove wire:target="save">{{ $isEdit ? 'Cập nhật' : 'Tạo mới' }}</span>
                         <span wire:loading wire:target="save">Đang lưu...</span>
                     </button>
-
                 </div>
-
             </form>
-        </div>{{-- end main card --}}
-
-        @endif
+        </div>
     </div>
 </div>
