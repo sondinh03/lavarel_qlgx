@@ -35,45 +35,40 @@
                         </p>
                     </div>
                     <span class="inline-flex items-center px-3 py-1 rounded-xl text-xs font-semibold flex-shrink-0
-                        {{ $isEdit ? 'bg-blue-100 text-blue-700' : 'bg-primary-100 text-primary-700' }}">
+                        {{ $isEdit ? 'bg-primary-100 text-primary-700' : 'bg-primary-100 text-primary-700' }}">
                         {{ $isEdit ? 'Chế độ sửa' : 'Tạo mới' }}
                     </span>
                 </div>
             </div>
 
             {{-- ── TABS ── --}}
-            <div class="px-6 pt-0 border-b border-slate-200 bg-white">
-                <nav class="flex gap-1" role="tablist">
-
-                    <button type="button" role="tab"
-                        @click="tab = 'basic'"
-                        :aria-selected="tab === 'basic'"
-                        :class="tab === 'basic'
-                            ? 'border-b-2 border-primary-500 text-primary-600 font-semibold'
-                            : 'border-b-2 border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300'"
-                        class="inline-flex items-center gap-2 px-4 py-3.5 text-sm transition-all duration-200">
-                        <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div class="px-6 py-4 border-b border-slate-200 bg-slate-50">
+                <div class="inline-flex rounded-xl bg-slate-200 p-1 text-sm font-medium">
+                    <button
+                        wire:click="switchTab('basic')"
+                        class="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg transition-all
+                               {{ $activeTab === 'basic'
+                                   ? 'bg-white shadow-sm text-primary-600 font-semibold'
+                                   : 'text-slate-600 hover:text-primary-600 hover:bg-white/50' }}">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                 d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                         </svg>
                         Thông tin cơ bản
                     </button>
 
-                    <button type="button" role="tab"
-                        @click="tab = 'other'"
-                        :aria-selected="tab === 'other'"
-                        :class="tab === 'other'
-                            ? 'border-b-2 border-primary-500 text-primary-600 font-semibold'
-                            : 'border-b-2 border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300'"
-                        class="inline-flex items-center gap-2 px-4 py-3.5 text-sm transition-all duration-200">
+                    <button wire:click="switchTab('other')"
+                        class="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg transition-all
+                               {{ $activeTab === 'other'
+                                   ? 'bg-white shadow-sm text-primary-600 font-semibold'
+                                   : 'text-slate-600 hover:text-primary-600 hover:bg-white/50' }}">
                         <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                 d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                         </svg>
                         Thông tin khác
                     </button>
-
-                </nav>
+                </div>
             </div>
 
             {{-- ── FORM ── --}}
@@ -102,10 +97,11 @@
                 <div class="p-6 space-y-6">
 
                     {{-- ==================== TAB: CƠ BẢN ==================== --}}
+                    @if($activeTab === 'basic')
                     <div x-show="tab === 'basic'" x-cloak class="space-y-5">
 
                         {{-- ── SECTION: Avatar + Định danh ── --}}
-                        <div class="bg-slate-50 rounded-2xl border border-slate-200 p-5">
+                        <div class="bg-slate-50 rounded-2xl border border-slate-200 p-5 hover:shadow-md transition-all">
                             <h2 class="text-base font-semibold text-slate-900 mb-4 flex items-center gap-2">
                                 <span class="inline-flex items-center justify-center w-6 h-6 rounded-lg bg-primary-100">
                                     <svg class="w-3.5 h-3.5 text-primary-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -216,7 +212,7 @@
                         </div>
 
                         {{-- ── SECTION: Thông tin cá nhân ── --}}
-                        <div class="bg-slate-50 rounded-2xl border border-slate-200 p-5">
+                        <div class="bg-slate-50 rounded-2xl border border-slate-200 p-5 hover:shadow-md transition-all">
                             <h2 class="text-base font-semibold text-slate-900 mb-4 flex items-center gap-2">
                                 <span class="inline-flex items-center justify-center w-6 h-6 rounded-lg bg-primary-100">
                                     <svg class="w-3.5 h-3.5 text-primary-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -305,7 +301,7 @@
                         </div>
 
                         {{-- ── SECTION: Gia đình ── --}}
-                        <div class="bg-slate-50 rounded-2xl border border-slate-200 p-5">
+                        <div class="bg-slate-50 rounded-2xl border border-slate-200 p-5 hover:shadow-md transition-all">
                             <h2 class="text-base font-semibold text-slate-900 mb-4 flex items-center gap-2">
                                 <span class="inline-flex items-center justify-center w-6 h-6 rounded-lg bg-primary-100">
                                     <svg class="w-3.5 h-3.5 text-primary-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -356,7 +352,7 @@
                         </div>
 
                         {{-- ── SECTION: Giáo xứ ── --}}
-                        <div class="bg-slate-50 rounded-2xl border border-slate-200 p-5">
+                        <div class="bg-slate-50 rounded-2xl border border-slate-200 p-5 hover:shadow-md transition-all">
                             <h2 class="text-base font-semibold text-slate-900 mb-4 flex items-center gap-2">
                                 <span class="inline-flex items-center justify-center w-6 h-6 rounded-lg bg-primary-100">
                                     <svg class="w-3.5 h-3.5 text-primary-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -406,10 +402,12 @@
                         </div>
 
                     </div>{{-- end tab basic --}}
+                    @endif
 
                     {{-- ==================== TAB: KHÁC ==================== --}}
+                    @if($activeTab === 'other')
                     <div x-show="tab === 'other'" x-cloak>
-                        <div class="bg-slate-50 rounded-2xl border border-slate-200 p-5 space-y-5">
+                        <div class="bg-slate-50 rounded-2xl border border-slate-200 p-5 hover:shadow-md transition-all space-y-5">
 
                             <h2 class="text-base font-semibold text-slate-900 flex items-center gap-2">
                                 <span class="inline-flex items-center justify-center w-6 h-6 rounded-lg bg-primary-100">
@@ -449,14 +447,18 @@
                             </div>
 
                         </div>
-                    </div>{{-- end tab other --}}
-
+                    </div>
+                    @endif
                 </div>
 
                 {{-- ── FORM ACTIONS ── --}}
                 <div class="px-6 py-4 border-t border-slate-200 bg-slate-50 flex items-center justify-between gap-4">
 
-                    <a href="{{ $isEdit ? route('students.show', $studentId) : route('students.index') }}"
+                    <a href="{{ 
+                        $isEdit 
+                            ? route('students.show', $studentId) 
+                            : route('students.index', $classId ? ['class' => $classId] : [])
+                    }}"
                         class="inline-flex items-center gap-2 px-4 py-2 rounded-xl border border-slate-200
                                bg-white text-sm font-medium text-slate-700
                                hover:bg-slate-50 hover:shadow-md transition-all duration-200">
@@ -491,4 +493,3 @@
             </form>
         </div>
     </div>
-</div>

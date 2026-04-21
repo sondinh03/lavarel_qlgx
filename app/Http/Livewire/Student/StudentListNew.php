@@ -2,6 +2,7 @@
 
 namespace App\Http\Livewire\Student;
 
+use App\Exports\StudentExport;
 use App\Http\Livewire\Base\BaseComponent;
 use App\Models\CatechismClass;
 use App\Models\Parishioner;
@@ -42,18 +43,6 @@ class StudentListNew extends BaseComponent
     public $showEnrollNewModal = false;
     public $enrollTab = 'existing';
 
-    public $enrollLastName    = '';
-    public $enrollFirstName   = '';
-    public $enrollSaintId     = null;
-    public $enrollGender      = 'male';
-    public $enrollBirthday    = '';
-    public $enrollFatherName  = '';
-    public $enrollMotherName  = '';
-    public $enrollParishGroup = null;
-
-    public $availableSaints       = [];
-    public $availableParishGroups = [];
-
     protected array $allowedSortFields = ['last_name', 'first_name', 'birthday', 'gender'];
 
     public string $sortField = 'first_name';
@@ -79,14 +68,6 @@ class StudentListNew extends BaseComponent
         'studentsToAdd'      => 'nullable|array',
         'studentsToAdd.*'    => 'integer|exists:students,id',
         'modalSearch'        => 'nullable|string|max:255',
-        'enrollLastName'     => 'nullable|string|max:100',
-        'enrollFirstName'    => 'nullable|string|max:100',
-        'enrollSaintId'      => 'nullable|integer|exists:holymanagements,id',
-        'enrollGender'       => 'nullable|in:male,female',
-        'enrollBirthday'     => 'nullable|date',
-        'enrollFatherName'   => 'nullable|string|max:100',
-        'enrollMotherName'   => 'nullable|string|max:100',
-        'enrollParishGroup'  => 'nullable|integer|exists:parish_groups,id',
         'birthYear'          => 'nullable|integer|min:1900|max:' . PHP_INT_MAX,
     ];
 
@@ -100,13 +81,6 @@ class StudentListNew extends BaseComponent
         'modalSearch.max'          => 'Tìm kiếm không được quá 255 ký tự',
         'birthYear.integer'        => 'Năm sinh phải là số',
         'birthYear.min'            => 'Năm sinh không hợp lệ',
-        'enrollLastName.required'  => 'Vui lòng nhập họ',
-        'enrollFirstName.required' => 'Vui lòng nhập tên',
-        'enrollGender.required'    => 'Vui lòng chọn giới tính',
-        'enrollBirthday.required'  => 'Vui lòng nhập ngày sinh',
-        'enrollBirthday.date'      => 'Ngày sinh không hợp lệ',
-        'enrollSaintId.exists'     => 'Tên thánh không tồn tại',
-        'enrollParishGroup.exists' => 'Giáo họ không tồn tại',
     ];
 
     // ==================== QUERY STRING ====================
@@ -141,21 +115,6 @@ class StudentListNew extends BaseComponent
         if (!$this->selectedNamHoc) {
             $this->selectedNamHoc = $this->getDefaultNamHocId();
         }
-
-        $this->loadDropdownData();
-    }
-
-    protected function loadDropdownData(): void
-    {
-        $this->availableSaints = \App\Models\Holymanagement::orderBy('name')
-            ->pluck('name', 'id')
-            ->toArray();
-
-        $this->availableParishGroups = \App\Models\ParishGroup::where('parish_id', $this->parishId)
-            ->where('status', 1)
-            ->orderBy('name')
-            ->pluck('name', 'id')
-            ->toArray();
     }
 
     protected function sanitizeQueryString(): void
@@ -428,17 +387,6 @@ class StudentListNew extends BaseComponent
     }
 
     // ==================== IMPORT FROM PARISHIONERS ====================
-
-    public function openImportFromParishioners(): void
-    {
-        $this->openEnrollModal('parishioner');
-    }
-
-    public function closeImportFromParishioners(): void
-    {
-        $this->closeEnrollModal();
-    }
-
     private function getAvailableParishionersQuery()
     {
         if (!$this->selectedNamHoc) {
@@ -555,7 +503,7 @@ class StudentListNew extends BaseComponent
                 $this->emit('toast', 'warning', $detail);
             }
 
-            $this->closeImportFromParishioners();
+            $this->closeEnrollModal();
             $this->emit('refreshStudents');
         } catch (\Exception $e) {
             DB::rollBack();
@@ -597,72 +545,8 @@ class StudentListNew extends BaseComponent
         $this->resetValidation();
     }
 
-    public function enrollNewStudent(): void
-    {
-        $this->authorize('create', StudentNew::class);
-
-        $this->validate([
-            'enrollLastName'    => 'required|string|max:100',
-            'enrollFirstName'   => 'required|string|max:100',
-            'enrollSaintId'     => 'nullable|integer|exists:holymanagements,id',
-            'enrollGender'      => 'required|in:male,female',
-            'enrollBirthday'    => 'required|date',
-            'enrollFatherName'  => 'nullable|string|max:100',
-            'enrollMotherName'  => 'nullable|string|max:100',
-            'enrollParishGroup' => 'nullable|integer|exists:parish_groups,id',
-        ], $this->messages);
-
-        try {
-            DB::beginTransaction();
-
-            $catechismClass = CatechismClass::findOrFail($this->selectedLop);
-
-            $student = StudentNew::create([
-                'last_name'       => trim($this->enrollLastName),
-                'first_name'      => trim($this->enrollFirstName),
-                'saint_id'        => $this->enrollSaintId ?: null,
-                'gender'          => $this->enrollGender,
-                'birthday'        => $this->enrollBirthday ?: null,
-                'father_name'     => trim($this->enrollFatherName) ?: null,
-                'mother_name'     => trim($this->enrollMotherName) ?: null,
-                'parish_group_id' => $this->enrollParishGroup ?: null,
-                'parish_id'       => $this->parishId,
-                'is_active'       => true,
-            ]);
-
-            $student->classes()->attach($catechismClass->id, [
-                'enrolled_at' => now(),
-                'created_at'  => now(),
-                'updated_at'  => now(),
-            ]);
-
-            DB::commit();
-
-            $fullName = trim("{$this->enrollLastName} {$this->enrollFirstName}");
-            $this->emit('toast', 'message', "Đã ghi danh học sinh {$fullName} thành công");
-
-            $this->closeEnrollModal();
-            $this->emit('refreshStudents');
-        } catch (\Exception $e) {
-            DB::rollBack();
-            $this->logError($e, 'Error enrolling new student', [
-                'name'   => "{$this->enrollLastName} {$this->enrollFirstName}",
-                'lop_id' => $this->selectedLop,
-            ]);
-            $this->emit('toast', 'error', 'Có lỗi khi ghi danh học sinh. Vui lòng thử lại.');
-        }
-    }
-
     private function resetEnrollForm(): void
     {
-        $this->enrollLastName    = '';
-        $this->enrollFirstName   = '';
-        $this->enrollSaintId     = null;
-        $this->enrollGender      = 'male';
-        $this->enrollBirthday    = '';
-        $this->enrollFatherName  = '';
-        $this->enrollMotherName  = '';
-        $this->enrollParishGroup = null;
         $this->studentsToAdd     = [];
         $this->selectAllInModal  = false;
         $this->modalSearch       = '';
@@ -670,17 +554,6 @@ class StudentListNew extends BaseComponent
     }
 
     // ==================== ADD STUDENTS MODAL ====================
-
-    public function openAddStudentsModal(): void
-    {
-        $this->openEnrollModal('existing');
-    }
-
-    public function closeAddStudentsModal(): void
-    {
-        $this->closeEnrollModal();
-    }
-
     public function addStudentsToClass(): void
     {
         $this->authorize('create', StudentNew::class);
@@ -717,7 +590,7 @@ class StudentListNew extends BaseComponent
 
             $this->emit('toast', 'message', 'Đã thêm ' . count($newStudentIds) . ' học sinh vào lớp thành công');
 
-            $this->closeAddStudentsModal();
+            $this->closeEnrollModal();
             $this->emit('refreshStudents');
         } catch (\Exception $e) {
             DB::rollBack();
@@ -1046,6 +919,23 @@ class StudentListNew extends BaseComponent
         return $years;
     }
 
+    public function export()
+    {
+        if (!$this->selectedLop) {
+            $this->emit('toast', 'warning', 'Vui lòng chọn lớp trước khi xuất file');
+            return;
+        }
+
+        $selectedNameClass = CatechismClass::findOrFail($this->selectedLop)->name;
+
+        return response()->streamDownload(function () {
+            echo \Maatwebsite\Excel\Facades\Excel::raw(
+                new StudentExport($this->selectedLop),
+                \Maatwebsite\Excel\Excel::XLSX
+            );
+        }, 'Lop-' . $selectedNameClass . '-' . now()->format('dmY_His') . '.xlsx');
+    }
+
     // ==================== RENDER ====================
 
     public function render()
@@ -1075,8 +965,6 @@ class StudentListNew extends BaseComponent
             'parishId'              => $this->parishId,
             'availableStudents'     => $availableStudents,
             'availableParishioners' => $availableParishioners,
-            'availableSaints'       => $this->availableSaints,
-            'availableParishGroups' => $this->availableParishGroups,
         ])
             ->extends($layout)
             ->section('content');

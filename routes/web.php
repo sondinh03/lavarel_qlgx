@@ -121,6 +121,10 @@ Route::middleware('auth')->group(function () {
         Route::get('/students', StudentListNew::class)
             ->name('students.index');
 
+        Route::get('/students/create', StudentEdit::class)
+            ->middleware('role:parish_admin')        
+            ->name('students.create');
+
         Route::get('/students/{id}', StudentDetail::class)
             ->name('students.show');
     });
@@ -137,9 +141,6 @@ Route::middleware('auth')->group(function () {
 
         Route::get('/classes/{id}/catechists', AssignTeacher::class)
             ->name('classes.catechists');
-
-        Route::get('/students/create', StudentEdit::class)
-            ->name('students.create');
 
         Route::get('/studentss/import', StudentImportPreview::class)
             ->name('students.import');

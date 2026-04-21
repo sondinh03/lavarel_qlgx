@@ -3,6 +3,7 @@
 namespace App\Http\Livewire\Student;
 
 use App\Http\Livewire\Base\BaseComponent;
+use App\Models\CatechismClass;
 use App\Models\StudentNew;
 use App\Models\ParishNew;
 use App\Models\Holymanagement;
@@ -21,6 +22,7 @@ class StudentEdit extends BaseComponent
     public $isLoading = true;
     public $activeTab = 'basic';
     protected $usePagination = false;
+    public ?int $classId = null;
 
     // ==================== FORM FIELDS ====================
     public $student_code = '';
@@ -79,6 +81,7 @@ class StudentEdit extends BaseComponent
     {
         return [
             'activeTab' => ['except' => 'basic', 'as' => 'tab'],
+            'classId' => ['except' => null, 'as' => 'classId'],
         ];
     }
 
@@ -86,6 +89,12 @@ class StudentEdit extends BaseComponent
 
     public function mount($id = null): void
     {
+        if ($this->classId) {
+            $class = CatechismClass::find($this->classId);
+            if (!$class) {
+                $this->classId = null;
+            }
+        }
         $this->studentId = $id ? (int) $id : null;
         $this->isEdit    = $this->studentId !== null;
         parent::mount();
@@ -226,6 +235,14 @@ class StudentEdit extends BaseComponent
 
             $student->save();
 
+            if ($this->classId) {
+                $student->classes()->attach($this->classId, [
+                    'enrolled_at' => now(),
+                    'created_at'  => now(),
+                    'updated_at'  => now(),
+                ]);
+            }
+
             DB::commit();
 
             $this->emit(
@@ -234,7 +251,11 @@ class StudentEdit extends BaseComponent
                 $this->isEdit ? 'Cập nhật học sinh thành công' : 'Thêm học sinh mới thành công'
             );
 
-            $this->redirect(route('students.show', $student->id));
+            if (!$this->isEdit && $this->classId) {
+                $this->redirect(route('students.index', ['class' => $this->classId]));
+            } else {
+                $this->redirect(route('students.show', $student->id));
+            }
         } catch (\Illuminate\Auth\Access\AuthorizationException $e) {
             DB::rollBack();
             abort(403, 'Bạn không có quyền thực hiện thao tác này');

@@ -629,9 +629,9 @@ $isDashboard = request()->routeIs('dashboard','catechist.dashboard','parish-admi
         });
     </script>
 
-    @stack('scripts')
     <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
     @livewireScripts
+    @stack('scripts')
 </body>
 
 </html>

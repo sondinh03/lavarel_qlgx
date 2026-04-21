@@ -11,6 +11,8 @@ class StudentDetail extends BaseComponent
     public $studentData = [];
     public $isLoading = true;
     public $activeTab = 'basic';
+    public $confirmingDelete = false;
+
     protected $usePagination = false;
 
     protected function queryString()
@@ -23,6 +25,7 @@ class StudentDetail extends BaseComponent
     protected $listeners = [
         'refresh'        => 'loadStudentData',
         'studentUpdated' => 'loadStudentData',
+        'deleteStudent'  => 'deleteStudent',
     ];
 
     // ==================== LIFECYCLE ====================
@@ -44,6 +47,8 @@ class StudentDetail extends BaseComponent
     {
         $this->loadStudentData();
     }
+
+
 
     // ==================== DATA LOADING ====================
 
@@ -167,7 +172,7 @@ class StudentDetail extends BaseComponent
         $this->redirect(route('students.edit', ['id' => $this->studentId]));
     }
 
-    public function delete(): void
+    public function deleteStudent(): void
     {
         $student = StudentNew::findOrFail($this->studentId);
         $this->authorize('delete', $student);
@@ -206,6 +211,8 @@ class StudentDetail extends BaseComponent
 
     public function render()
     {
+        $layout = auth()->user()->isCatechist() ? 'frontend.layout.catechist' : 'frontend.layout.main';
+
         return view('livewire.student.student-detail', [
             'student'   => $this->studentData,
             'studentModel' => $this->studentId
@@ -213,7 +220,7 @@ class StudentDetail extends BaseComponent
                 : null,
             'isLoading' => $this->isLoading,
         ])
-            ->extends('frontend.layout.main')
+            ->extends($layout)
             ->section('content');
     }
 }

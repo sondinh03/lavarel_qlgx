@@ -206,7 +206,7 @@
         <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
             @if($students && $students->count() > 0)
             <div class="overflow-x-auto">
-                <table class="w-full border-separate border-spacing-0">
+                <table class="w-full">
                     <thead class="bg-slate-50 border-b border-slate-200">
                         <tr>
                             <x-table-header>
@@ -235,15 +235,15 @@
                                 :current-sort="$sortField" :sort-direction="$sortDirection">
                                 Giới tính
                             </x-table-header>
-                            <x-table-header class="w-[140px]">Bố</x-table-header>
-                            <x-table-header class="w-[140px]">SĐT</x-table-header>
+                            <x-table-header class="w-[140px]">Họ tên bố</x-table-header>
+                            <x-table-header class="w-[140px]">Số điện thoại</x-table-header>
                             <x-table-header>Giáo họ</x-table-header>
                             <x-table-header class="text-center">Thao tác</x-table-header>
                         </tr>
                     </thead>
-                    <tbody class="divide-y divide-slate-100">
+                    <tbody class="divide-y divide-slate-100 overflow-visible">
                         @foreach($students as $index => $student)
-                        <tr class="hover:bg-slate-50 transition-colors" wire:key="student-{{ $student->id }}">
+                        <tr class="hover:bg-slate-50 transition-colors overflow-visible" wire:key="student-{{ $student->id }}">
 
                             <td class="px-4 py-4">
                                 <input type="checkbox" wire:model="selectedStudents"
@@ -287,16 +287,21 @@
                                 {{ $student->parishGroup->name ?? '—' }}
                             </td>
 
-                            <td class="px-4 py-4">
+                            <td class="px-4 py-4 overflow-visible">
                                 <div class="flex items-center justify-center gap-1">
-                                    <a href="{{ route('students.show', $student->id) }}"
-                                        class="p-2 hover:bg-blue-50 text-blue-600 rounded-lg">
-                                        <x-icon name="eye" />
-                                    </a>
-                                    <a href="{{ route('students.edit', $student->id) }}"
-                                        class="p-2 hover:bg-orange-50 text-orange-600 rounded-lg">
-                                        <x-icon name="edit" />
-                                    </a>
+                                    <x-tooltip content="Xem chi tiết">
+                                        <a href="{{ route('students.show', $student->id) }}"
+                                            class="p-2 hover:bg-blue-50 text-blue-600 rounded-lg">
+                                            <x-icon name="eye" />
+                                        </a>
+                                    </x-tooltip>
+
+                                    <x-tooltip content="Chỉnh sửa">
+                                        <a href="{{ route('students.edit', $student->id) }}"
+                                            class="p-2 hover:bg-orange-50 text-orange-600 rounded-lg">
+                                            <x-icon name="edit" />
+                                        </a>
+                                    </x-tooltip>
                                     <x-dropdown icon="more-vertical" label="" align="right" variant="subtle" position="fixed">
                                         <x-dropdown-item wire:click="openLinkParishioner({{ $student->id }})" icon="link">
                                             Liên kết giáo dân
@@ -500,19 +505,18 @@
                         </button>
 
                         {{-- Tab 2: Tạo mới --}}
-                        <button type="button"
-                            wire:click="switchEnrollTab('new')"
+                        <a href="{{ route('students.create') }}{{ $selectedLop ? '?classId='.$selectedLop : '' }}"
                             class="inline-flex items-center gap-2 px-4 py-2 text-sm font-semibold
-                                   rounded-lg transition-all
-                                   {{ $enrollTab === 'new'
-                                       ? 'bg-white text-primary-700 shadow-sm'
-                                       : 'text-slate-500 hover:text-slate-700' }}">
+                                rounded-lg transition-all
+                                {{ $enrollTab === 'new'
+                                    ? 'bg-white text-primary-700 shadow-sm'
+                                    : 'text-slate-500 hover:text-slate-700' }}">
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                     d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
                             </svg>
                             Tạo mới
-                        </button>
+                        </a>
 
                         {{-- Tab 3: Import giáo dân --}}
                         <button type="button"
@@ -632,152 +636,6 @@
                         </div>
                         @endif
 
-                    </div>
-                    @endif
-
-                    {{-- ════════ TAB 2: Tạo mới ════════ --}}
-                    @if($enrollTab === 'new')
-                    <div class="p-6">
-
-                        {{-- Error summary --}}
-                        @if ($errors->any())
-                        <div class="mb-5 bg-red-50 border-l-4 border-red-500 rounded-xl p-4">
-                            <div class="flex items-start gap-3">
-                                <svg class="w-5 h-5 text-red-500 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                        d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                </svg>
-                                <div>
-                                    <p class="text-sm font-semibold text-red-800 mb-1">Vui lòng kiểm tra lại thông tin</p>
-                                    <ul class="text-sm text-red-700 space-y-0.5">
-                                        @foreach ($errors->all() as $error)
-                                        <li>• {{ $error }}</li>
-                                        @endforeach
-                                    </ul>
-                                </div>
-                            </div>
-                        </div>
-                        @endif
-
-                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
-
-                            {{-- Họ & tên đệm --}}
-                            <div>
-                                <label class="block text-sm font-semibold text-slate-700 mb-1">
-                                    Họ & tên đệm <span class="text-red-500">*</span>
-                                </label>
-                                <input wire:model.defer="enrollLastName" type="text"
-                                    placeholder="Nguyễn Văn"
-                                    class="w-full px-3 py-2.5 rounded-xl border text-sm
-                                           focus:outline-none focus:ring-2 focus:ring-primary-500
-                                           {{ $errors->has('enrollLastName') ? 'border-red-400 bg-red-50' : 'border-slate-300' }}">
-                                @error('enrollLastName')
-                                <p class="mt-1 text-xs text-red-500">{{ $message }}</p>
-                                @enderror
-                            </div>
-
-                            {{-- Tên --}}
-                            <div>
-                                <label class="block text-sm font-semibold text-slate-700 mb-1">
-                                    Tên <span class="text-red-500">*</span>
-                                </label>
-                                <input wire:model.defer="enrollFirstName" type="text"
-                                    placeholder="An"
-                                    class="w-full px-3 py-2.5 rounded-xl border text-sm
-                                           focus:outline-none focus:ring-2 focus:ring-primary-500
-                                           {{ $errors->has('enrollFirstName') ? 'border-red-400 bg-red-50' : 'border-slate-300' }}">
-                                @error('enrollFirstName')
-                                <p class="mt-1 text-xs text-red-500">{{ $message }}</p>
-                                @enderror
-                            </div>
-
-                            {{-- Tên thánh --}}
-                            <div>
-                                <label class="block text-sm font-semibold text-slate-700 mb-1">Tên thánh</label>
-                                <select wire:model.defer="enrollSaintId"
-                                    class="w-full px-3 py-2.5 rounded-xl border border-slate-300 text-sm
-                                           focus:outline-none focus:ring-2 focus:ring-primary-500">
-                                    <option value="">-- Chọn tên thánh --</option>
-                                    @foreach($availableSaints as $id => $name)
-                                    <option value="{{ $id }}">{{ $name }}</option>
-                                    @endforeach
-                                </select>
-                                @error('enrollSaintId')
-                                <p class="mt-1 text-xs text-red-500">{{ $message }}</p>
-                                @enderror
-                            </div>
-
-                            {{-- Giới tính --}}
-                            <div>
-                                <label class="block text-sm font-semibold text-slate-700 mb-1">
-                                    Giới tính <span class="text-red-500">*</span>
-                                </label>
-                                <div class="flex gap-6 mt-2.5">
-                                    <label class="flex items-center gap-2 cursor-pointer">
-                                        <input type="radio" wire:model.defer="enrollGender" value="male"
-                                            class="w-4 h-4 text-primary-600 border-slate-300 focus:ring-primary-500">
-                                        <span class="text-sm text-slate-700">Nam</span>
-                                    </label>
-                                    <label class="flex items-center gap-2 cursor-pointer">
-                                        <input type="radio" wire:model.defer="enrollGender" value="female"
-                                            class="w-4 h-4 text-primary-600 border-slate-300 focus:ring-primary-500">
-                                        <span class="text-sm text-slate-700">Nữ</span>
-                                    </label>
-                                </div>
-                                @error('enrollGender')
-                                <p class="mt-1 text-xs text-red-500">{{ $message }}</p>
-                                @enderror
-                            </div>
-
-                            {{-- Ngày sinh --}}
-                            <div>
-                                <label class="block text-sm font-semibold text-slate-700 mb-1">
-                                    Ngày sinh <span class="text-red-500">*</span>
-                                </label>
-                                <input wire:model.defer="enrollBirthday" type="date"
-                                    class="w-full px-3 py-2.5 rounded-xl border text-sm
-                                           focus:outline-none focus:ring-2 focus:ring-primary-500
-                                           {{ $errors->has('enrollBirthday') ? 'border-red-400 bg-red-50' : 'border-slate-300' }}">
-                                @error('enrollBirthday')
-                                <p class="mt-1 text-xs text-red-500">{{ $message }}</p>
-                                @enderror
-                            </div>
-
-                            {{-- Giáo họ --}}
-                            <div>
-                                <label class="block text-sm font-semibold text-slate-700 mb-1">Giáo họ</label>
-                                <select wire:model.defer="enrollParishGroup"
-                                    class="w-full px-3 py-2.5 rounded-xl border border-slate-300 text-sm
-                                           focus:outline-none focus:ring-2 focus:ring-primary-500">
-                                    <option value="">-- Chọn giáo họ --</option>
-                                    @foreach($availableParishGroups as $id => $name)
-                                    <option value="{{ $id }}">{{ $name }}</option>
-                                    @endforeach
-                                </select>
-                                @error('enrollParishGroup')
-                                <p class="mt-1 text-xs text-red-500">{{ $message }}</p>
-                                @enderror
-                            </div>
-
-                            {{-- Họ tên cha --}}
-                            <div>
-                                <label class="block text-sm font-semibold text-slate-700 mb-1">Họ tên cha</label>
-                                <input wire:model.defer="enrollFatherName" type="text"
-                                    placeholder="Họ và tên cha"
-                                    class="w-full px-3 py-2.5 rounded-xl border border-slate-300 text-sm
-                                           focus:outline-none focus:ring-2 focus:ring-primary-500">
-                            </div>
-
-                            {{-- Họ tên mẹ --}}
-                            <div>
-                                <label class="block text-sm font-semibold text-slate-700 mb-1">Họ tên mẹ</label>
-                                <input wire:model.defer="enrollMotherName" type="text"
-                                    placeholder="Họ và tên mẹ"
-                                    class="w-full px-3 py-2.5 rounded-xl border border-slate-300 text-sm
-                                           focus:outline-none focus:ring-2 focus:ring-primary-500">
-                            </div>
-
-                        </div>
                     </div>
                     @endif
 
@@ -933,35 +791,6 @@
                                 Thêm vào lớp
                             </button>
                         </div>
-                    </div>
-                    @endif
-
-                    {{-- Footer tab 2: Tạo mới --}}
-                    @if($enrollTab === 'new')
-                    <div class="flex items-center justify-end gap-3">
-                        <button wire:click="closeEnrollModal" type="button"
-                            class="px-4 py-2.5 bg-slate-100 text-slate-900 text-sm font-semibold
-                                   rounded-xl hover:bg-slate-200 active:scale-95 transition-all">
-                            Hủy
-                        </button>
-                        <button wire:click="enrollNewStudent" type="button"
-                            wire:loading.attr="disabled"
-                            class="px-4 py-2.5 bg-gradient-to-r from-green-500 to-green-600 text-white
-                                   text-sm font-semibold rounded-xl hover:from-green-600 hover:to-green-700
-                                   active:scale-95 transition-all disabled:opacity-60 disabled:cursor-not-allowed
-                                   inline-flex items-center gap-2">
-                            <svg wire:loading wire:target="enrollNewStudent"
-                                class="animate-spin w-4 h-4" fill="none" viewBox="0 0 24 24">
-                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
-                            </svg>
-                            <svg wire:loading.remove wire:target="enrollNewStudent"
-                                class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
-                            </svg>
-                            Ghi danh
-                        </button>
                     </div>
                     @endif
 

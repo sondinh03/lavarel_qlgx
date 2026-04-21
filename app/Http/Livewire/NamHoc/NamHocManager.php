@@ -129,13 +129,15 @@ class NamHocManager extends BaseComponent
     {
         $this->authorize('create', NamHoc::class);
         $this->resetForm();
-        $this->showForm = true;
+        $this->emit('openModal');
     }
 
     public function edit(int $id): void
     {
         $namHoc = NamHoc::findOrFail($id);
         $this->authorize('update', $namHoc);
+
+        $this->emit('openModal');
 
         try {
             $this->editingId      = $namHoc->id;
@@ -292,6 +294,7 @@ class NamHocManager extends BaseComponent
         $this->status   = 1;
         $this->showForm = false;
         $this->resetValidation();
+        $this->emit('closeModal');
     }
 
     // ==================== RENDER ====================
