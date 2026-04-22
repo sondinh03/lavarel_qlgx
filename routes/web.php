@@ -93,15 +93,22 @@ Route::middleware('auth')->group(function () {
         ->name('catechist.dashboard');
 
     Route::get('/dashboard', function () {
-        $user = auth()->user();
+    $user = auth()->user();
 
-        return match (true) {
-            $user?->isCatechist()   => redirect()->route('catechist.dashboard'),
-            $user?->isParishAdmin() => redirect()->route('parish-admin.dashboard'),
-            $user?->isSuperAdmin()  => redirect('/admin/dashboard'),
-            default => redirect()->route('login'),
-        };
-    })->name('dashboard');
+    if ($user?->isCatechist()) {
+        return redirect()->route('catechist.dashboard');
+    }
+
+    if ($user?->isParishAdmin()) {
+        return redirect()->route('parish-admin.dashboard');
+    }
+
+    if ($user?->isSuperAdmin()) {
+        return redirect('/admin/dashboard');
+    }
+
+    abort(403);
+})->middleware('auth')->name('dashboard');
 
     Route::get('/parishioner', ParishionersManager::class)
         ->name('parishioners.index');

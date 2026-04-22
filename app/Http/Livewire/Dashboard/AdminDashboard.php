@@ -25,6 +25,10 @@ class AdminDashboard extends BaseComponent
 
     public function mount(): void
     {
+        if (auth()->user()?->isCatechist()) {
+            redirect()->route('catechist.dashboard');
+        }
+
         parent::mount();
         $this->requireParishId();
     }

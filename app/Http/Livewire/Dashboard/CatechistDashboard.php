@@ -29,6 +29,15 @@ class CatechistDashboard extends BaseComponent
         $this->loadMyClasses();
     }
 
+    public function mount(): void
+    {
+        if (auth()->user()?->isParishAdmin()) {
+            redirect()->route('parish-admin.dashboard');
+        }
+
+        parent::mount();
+    }
+
     protected function loadMyClasses(): void
     {
         if (!$this->activeSchoolYear) {
