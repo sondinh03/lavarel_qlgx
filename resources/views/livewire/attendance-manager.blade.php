@@ -1,3 +1,11 @@
+@section('topbar')
+<x-breadcrumb :items="[
+        ['label' => 'Trang chủ', 'url' => route('dashboard')],
+        ['label' => 'Điểm danh', 'url' => route('attendance.show')],
+        ['label' => $selectedClassName],
+    ]" />
+@endsection
+
 <div class="bg-gradient-to-br from-slate-50 to-slate-100 p-4 sm:p-6" style="min-height: calc(100vh - 56px - var(--bottom-offset));">
 
     <a href="#main-content" class="sr-only focus:not-sr-only">Bỏ qua tới nội dung</a>
@@ -5,29 +13,6 @@
     @php
     $selectedClassName = $this->selectedClassName;
     @endphp
-
-    {{-- Loading Indicator
-    <div
-        wire:loading
-        wire:loading.delay.shortest
-        class="fixed top-0 left-0 right-0 z-[9999] pointer-events-none">
-        <div class="h-0.5 bg-primary-100 overflow-hidden">
-            <div class="h-full bg-primary-500"
-                style="animation: indeterminate 1.4s ease-in-out infinite;"></div>
-        </div>
-        <div class="absolute top-3 right-4 flex items-center gap-1.5
-                bg-white/90 backdrop-blur-sm shadow-md
-                rounded-full px-3 py-1 text-xs font-medium text-slate-600
-                border border-slate-200">
-            <svg class="animate-spin w-3 h-3 text-primary-500" fill="none" viewBox="0 0 24 24">
-                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
-                <path class="opacity-75" fill="currentColor"
-                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-            </svg>
-            <span>Đang xử lý</span>
-        </div>
-    </div>
-     --}}
 
     <div wire:key="attendance-{{ $selectedClassId }}-{{ $attendanceType }}-{{ $selectedDate }}"
         x-data="{
@@ -144,34 +129,6 @@
         x-on:attendance-save-completed.window="onSavingCompleted()">
 
         <div class="mx-auto max-w-7xl space-y-5">
-
-            {{-- Breadcrumb --}}
-            <div class="hidden lg:block">
-                <x-breadcrumb
-                    :items="[
-                    ['label' => 'Trang chủ', 'url' => route('dashboard')],
-                    ['label' => 'Điểm danh', 'url' => route('attendance.show')],
-                    ['label' => $selectedClassName],
-                ]"
-                    separator="arrow" />
-            </div>
-
-            {{-- Toast Notifications --}}
-            <div role="status" aria-live="polite">
-                @if (session()->has('message'))
-                <x-toast-notification type="success" :duration="3500">{{ session('message') }}</x-toast-notification>
-                @endif
-                @if (session()->has('error'))
-                <x-toast-notification type="error" :duration="4000">{{ session('error') }}</x-toast-notification>
-                @endif
-                @if (session()->has('warning'))
-                <x-toast-notification type="warning" :duration="4000">{{ session('warning') }}</x-toast-notification>
-                @endif
-                @if (session()->has('info'))
-                <x-toast-notification type="info" :duration="3500">{{ session('info') }}</x-toast-notification>
-                @endif
-            </div>
-
             {{-- Main Card --}}
             <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
                 {{-- Header --}}
@@ -262,7 +219,7 @@
 
                 {{-- Tabs --}}
                 @if($selectedClassId)
-                <div class="bg-primary-50 p-1 flex gap-1 border-b border-slate-200">
+                <div class="flex rounded-b-xl bg-slate-200 p-1 text-sm font-medium">
                     <button
                         wire:click="switchType(1)"
                         class="flex-1 py-2 rounded-lg text-sm font-semibold transition-all

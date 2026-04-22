@@ -182,7 +182,7 @@ class SessionManager extends BaseComponent
             $this->currentNamHoc  = $class->schoolYear;
         } catch (\Exception $e) {
             $this->logError($e, 'Error loading class info');
-            session()->flash('error', 'Không tìm thấy lớp học');
+            $this->emit('toast',  'error', 'Không tìm thấy lớp học');
         }
     }
 
@@ -280,19 +280,20 @@ class SessionManager extends BaseComponent
 
     public function create(): void
     {
-        $this->requireManager();
+        $this->authorize('create', AttendanceSession::class);
 
         if (!$this->selectedClassId) {
-            session()->flash('warning', 'Vui lòng chọn lớp trước');
+            $this->emit('toast',  'warning', 'Vui lòng chọn lớp trước');
             return;
         }
 
         if (!$this->currentNamHoc) {
-            session()->flash('warning', 'Không tìm thấy thông tin năm học');
+            $this->emit('toast',  'warning', 'Không tìm thấy thông tin năm học');
             return;
         }
 
         $this->resetForm();
+        $this->emit('openModal');
 
         $today          = Carbon::today();
         $currentSemester = $this->getCurrentSemester();
@@ -315,17 +316,17 @@ class SessionManager extends BaseComponent
         $this->requireManager();
 
         if ($this->createMode === 'weekly' && empty($this->weekDays)) {
-            session()->flash('error', 'Vui lòng chọn ít nhất 1 ngày trong tuần');
+            $this->emit('toast',  'error', 'Vui lòng chọn ít nhất 1 ngày trong tuần');
             return;
         }
 
         if ($this->createMode === 'custom' && empty($this->selectedDates)) {
-            session()->flash('error', 'Vui lòng chọn ít nhất 1 ngày');
+            $this->emit('toast',  'error', 'Vui lòng chọn ít nhất 1 ngày');
             return;
         }
 
         if (!$this->startDate) {
-            session()->flash('error', 'Vui lòng chọn ngày bắt đầu');
+            $this->emit('toast',  'error', 'Vui lòng chọn ngày bắt đầu');
             return;
         }
 
@@ -338,13 +339,13 @@ class SessionManager extends BaseComponent
             $validDates = $this->filterValidDates($dates);
 
             if (empty($dates)) {
-                session()->flash('warning', 'Không có ngày nào được tạo. Vui lòng kiểm tra lại.');
+                $this->emit('toast',  'warning', 'Không có ngày nào được tạo. Vui lòng kiểm tra lại.');
                 DB::rollBack();
                 return;
             }
 
             if (empty($validDates)) {
-                session()->flash('warning', 'Tất cả các ngày đều nằm ngoài khoảng thời gian năm học.');
+                $this->emit('toast',  'warning', 'Tất cả các ngày đều nằm ngoài khoảng thời gian năm học.');
                 DB::rollBack();
                 return;
             }
@@ -406,7 +407,7 @@ class SessionManager extends BaseComponent
                 $message .= " ({$skipped} phiên đã tồn tại)";
             }
 
-            session()->flash('message', $message);
+            $this->emit('toast',  'message', $message);
             $this->resetForm();
             $this->loadSessions();
             $this->emit('sessionCreated');
@@ -416,7 +417,7 @@ class SessionManager extends BaseComponent
                 'class_id' => $this->selectedClassId,
                 'mode'     => $this->createMode,
             ]);
-            session()->flash('error', 'Có lỗi khi tạo phiên điểm danh. Vui lòng thử lại.');
+            $this->emit('toast',  'error', 'Có lỗi khi tạo phiên điểm danh. Vui lòng thử lại.');
         }
     }
 
@@ -439,11 +440,11 @@ class SessionManager extends BaseComponent
                 ? 'Đã khóa phiên điểm danh'
                 : 'Đã mở lại phiên điểm danh';
 
-            session()->flash('message', $message);
+            $this->emit('toast',  'message', $message);
             $this->loadSessions();
         } catch (\Exception $e) {
             $this->logError($e, 'Error toggling session status', ['id' => $id]);
-            session()->flash('error', 'Có lỗi khi thay đổi trạng thái');
+            $this->emit('toast',  'error', 'Có lỗi khi thay đổi trạng thái');
         }
     }
 
@@ -460,7 +461,7 @@ class SessionManager extends BaseComponent
             $hasRecords = $session->records()->whereNotNull('status')->exists();
 
             if ($hasRecords) {
-                session()->flash('error', 'Không thể xóa phiên đã có dữ liệu điểm danh');
+                $this->emit('toast',  'error', 'Không thể xóa phiên đã có dữ liệu điểm danh');
                 DB::rollBack();
                 return;
             }
@@ -468,12 +469,12 @@ class SessionManager extends BaseComponent
             $session->delete();
             DB::commit();
 
-            session()->flash('message', 'Đã xóa phiên điểm danh');
+            $this->emit('toast',  'message', 'Đã xóa phiên điểm danh');
             $this->loadSessions();
         } catch (\Exception $e) {
             DB::rollBack();
             $this->logError($e, 'Error deleting session', ['id' => $id]);
-            session()->flash('error', 'Có lỗi khi xóa phiên điểm danh');
+            $this->emit('toast',  'error', 'Có lỗi khi xóa phiên điểm danh');
         }
     }
 
@@ -631,6 +632,7 @@ class SessionManager extends BaseComponent
         $this->createMode = 'single';
         $this->showForm   = false;
         $this->resetValidation();
+        $this->emit('closeModal');
     }
 
     // ==================== COMPUTED PROPERTIES ====================

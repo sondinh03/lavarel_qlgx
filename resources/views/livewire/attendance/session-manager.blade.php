@@ -1,35 +1,27 @@
-<div class="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 p-4 sm:p-6">
+@section('topbar')
+<x-breadcrumb :items="[
+        ['label' => 'Trang chủ', 'url' => route('dashboard')],
+        ['label' => 'Phiên điểm danh', 'url' => route('session.index')]
+    ]" />
+@endsection
+
+<div class="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 p-4 sm:p-6"
+    x-data="{ showForm: false }"
+    x-init="
+        document.addEventListener('livewire:load', () => {
+            Livewire.on('openModal', () => {
+                showForm = true;
+            });
+            Livewire.on('closeModal', () => {
+                showForm = false;
+            });
+        });
+    ">
     <a href="#main-content" class="sr-only focus:not-sr-only">Bỏ qua tới nội dung</a>
 
     @php $selectedClassName = $this->selectedClassName; @endphp
 
     <div class="mx-auto max-w-7xl space-y-5">
-
-        {{-- Breadcrumb --}}
-        <x-breadcrumb
-            :items="[
-                ['label' => 'Trang chủ', 'url' => route('dashboard')],
-                ['label' => 'Quản lý phiên điểm danh', 'url' => route('session.index')],
-                ['label' => $selectedClassName]
-            ]"
-            separator="arrow" />
-
-        {{-- Toast Notifications --}}
-        <div role="status" aria-live="polite">
-            @if (session()->has('message'))
-            <x-toast-notification type="success" :duration="3500">{{ session('message') }}</x-toast-notification>
-            @endif
-            @if (session()->has('error'))
-            <x-toast-notification type="error" :duration="4000">{{ session('error') }}</x-toast-notification>
-            @endif
-            @if (session()->has('warning'))
-            <x-toast-notification type="warning" :duration="4000">{{ session('warning') }}</x-toast-notification>
-            @endif
-            @if (session()->has('info'))
-            <x-toast-notification type="info" :duration="3500">{{ session('info') }}</x-toast-notification>
-            @endif
-        </div>
-
         {{-- Main Card --}}
         <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
             {{-- Header --}}

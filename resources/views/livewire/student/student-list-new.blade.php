@@ -99,12 +99,10 @@
                                 Điểm danh
                             </x-button>
 
-                            <x-dropdown label="Khác" icon="dots-horizontal" align="right" position="fixed">
+                            <x-dropdown label="Khác" icon="grid" align="right" position="fixed">
                                 <x-dropdown-item
                                     wire:click="printSelected"
-                                    :disabled="!$selectedLop && count($selectedStudents) === 0"
-                                    icon="printer"
-                                    :badge="count($selectedStudents) > 0 ? count($selectedStudents) : null">
+                                    icon="printer">
                                     In thẻ
                                 </x-dropdown-item>
                                 <div class="my-1 border-t border-slate-100"></div>

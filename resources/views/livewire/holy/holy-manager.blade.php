@@ -1,39 +1,27 @@
+@section('topbar')
+<x-breadcrumb :items="[
+    [ 'label' => 'Trang chủ', 'url' => route('dashboard')],
+    [ 'label' => 'Tên thánh']
+]" />
+@endsection
+
 <div
     class="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 p-4 sm:p-6"
-    x-data="{ showModal: @entangle('showModal').defer }">
+    x-data="{ showModal: false }"
+    x-init="
+        document.addEventListener('livewire:load', () => {
+            Livewire.on('openModal', () => {
+                showModal = true;
+            });
+            Livewire.on('closeModal', () => {
+                showModal = false;
+            });
+        });
+    ">
 
     <a href="#main-content" class="sr-only focus:not-sr-only">Bỏ qua tới nội dung</a>
 
     <div id="main-content" class="mx-auto max-w-3xl space-y-5">
-
-        {{-- Breadcrumb --}}
-        <x-breadcrumb :items="[
-            [
-                'label' => 'Trang chủ',
-                'url' => route('dashboard'),
-            ],
-            [
-                'label' => 'Quản lý Tên thánh',
-                'url' => route('holy-names.index'),
-                'icon' => '<svg class=\'w-4 h-4\' fill=\'none\' stroke=\'currentColor\' viewBox=\'0 0 24 24\'><path stroke-linecap=\'round\' stroke-linejoin=\'round\' stroke-width=\'2\' d=\'M12 8c-1.657 0-3 1.343-3 3v2h6v-2c0-1.657-1.343-3-3-3z\'/></svg>'
-            ],
-        ]" separator="arrow" />
-
-        {{-- Toast Notifications --}}
-        <div role="status" aria-live="polite">
-            @if (session()->has('message'))
-            <x-toast-notification type="success" :duration="3500">
-                {{ session('message') }}
-            </x-toast-notification>
-            @endif
-
-            @if (session()->has('error'))
-            <x-toast-notification type="error" :duration="3500">
-                {{ session('error') }}
-            </x-toast-notification>
-            @endif
-        </div>
-
         {{-- Main Card --}}
         <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
             {{-- Header --}}
@@ -82,22 +70,38 @@
 
                             <td class="px-4 py-3">
                                 <div class="flex items-center justify-center gap-3">
-                                    <x-table-action
-                                        wire="edit({{ $holy->id }})"
-                                        icon="edit">
-                                        Sửa
-                                    </x-table-action>
+                                    <x-tooltip content="Sửa tên thánh">
+                                        <x-table-action
+                                            wire="edit({{ $holy->id }})"
+                                            icon="edit"
+                                            :icon-only="true">
+                                        </x-table-action>
+                                    </x-tooltip>
 
                                     <span class="text-slate-300">|</span>
 
-                                    <x-table-action
-                                        wire="delete({{ $holy->id }})"
-                                        icon="trash"
-                                        color="danger"
-                                        :loading="true"
-                                        :confirm="'Xóa tên thánh ' . $holy->name . '?'">
-                                        Xóa
-                                    </x-table-action>
+                                    @php
+                                        $canDelete = $holy->students_count == 0;
+                                    @endphp
+
+                                    <x-tooltip :content="$canDelete 
+                                        ? 'Xóa tên thánh' 
+                                        : 'Không thể xóa tên thánh đang được sử dụng'">
+
+                                        <x-table-action
+                                            wire="delete({{ $holy->id }})"
+                                            icon="trash"
+                                            color="danger"
+                                            :confirm="$canDelete 
+                                                ? 'Xóa tên thánh ' . $holy->name . '?' 
+                                                : null"
+                                            :loading="true"
+                                            :disabled="!$canDelete">
+                                        </x-table-action>
+
+                                    </x-tooltip>
+
+
                                 </div>
                             </td>
                         </tr>

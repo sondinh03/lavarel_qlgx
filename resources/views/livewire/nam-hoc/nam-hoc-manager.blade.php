@@ -10,13 +10,10 @@
     x-data="{ showForm: false }"
     x-init="
         document.addEventListener('livewire:load', () => {
-            console.log('[NamHoc] livewire:load fired');
             Livewire.on('openModal', () => {
-                console.log('[NamHoc] openModal received');
                 showForm = true;
             });
             Livewire.on('closeModal', () => {
-                console.log('[NamHoc] closeModal received');
                 showForm = false;
             });
         });
@@ -65,14 +62,14 @@
                 <thead class="bg-slate-50 border-b border-slate-200">
                     <tr>
                         <x-table-header class="w-12">STT</x-table-header>
-                        <x-table-header class="w-auto text-center" :sortable="true" sort-field="name"
+                        <x-table-header class="w-24 text-center" :sortable="true" sort-field="name"
                             :current-sort="$sortField" :sort-direction="$sortDirection">
                             Tên năm học
                         </x-table-header>
-                        <x-table-header class="w-24 text-center">Học kỳ I</x-table-header>
-                        <x-table-header class="w-24 text-center">Học kỳ II</x-table-header>
-                        <x-table-header class="w-28 text-center">HK hiện tại</x-table-header>
-                        <x-table-header class="w-32 text-center" :sortable="true" sort-field="status"
+                        <x-table-header class="w-28 text-center">Học kỳ I</x-table-header>
+                        <x-table-header class="w-28 text-center">Học kỳ II</x-table-header>
+                        <x-table-header class="w-24 text-center">HK hiện tại</x-table-header>
+                        <x-table-header class="w-24 text-center" :sortable="true" sort-field="status"
                             :current-sort="$sortField" :sort-direction="$sortDirection">
                             Trạng thái
                         </x-table-header>
@@ -150,7 +147,7 @@
 
                                 <x-tooltip content="Sao chép năm học">
                                     <a href="{{ route('school-years.copy', ['target' => $nh->id]) }}"
-                                        class="inline-flex items-center gap-1 text-indigo-600 hover:text-indigo-800 text-sm font-medium transition-colors">
+                                        class="inline-flex items-center gap-1 text-primary-600 hover:text-primary-800 text-sm font-medium transition-colors">
                                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                                 d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
@@ -189,7 +186,7 @@
         class="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50 p-4"
         role="dialog"
         aria-modal="true"
-        @click.away="showForm = false; $wire('closeModal')">
+        @click="showForm = false; $wire.closeModal()">
 
         <div
             x-show="showForm"

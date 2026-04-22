@@ -64,7 +64,7 @@ class ParishGroupManager extends BaseComponent
     {
         $this->authorize('create', ParishGroup::class);
         $this->resetForm();
-        $this->showForm = true;
+        $this->emit('openModal');
     }
 
     public function edit(int $id): void
@@ -77,7 +77,7 @@ class ParishGroupManager extends BaseComponent
             $this->editingId = $group->id;
             $this->name      = $group->name;
             $this->status    = $group->status;
-            $this->showForm  = true;
+            $this->emit('openModal');
         } catch (ModelNotFoundException) {
             session()->flash('error', 'Không tìm thấy giáo họ');
         } catch (\Exception $e) {
@@ -189,7 +189,6 @@ class ParishGroupManager extends BaseComponent
 
     public function closeModal(): void
     {
-        $this->showForm = false;
         $this->resetForm();
     }
 
@@ -199,6 +198,7 @@ class ParishGroupManager extends BaseComponent
         $this->status = true;
         $this->showForm = false;
         $this->resetValidation();
+        $this->emit('closeModal');
     }
 
     // ==================== RENDER ====================

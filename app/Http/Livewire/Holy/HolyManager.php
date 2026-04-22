@@ -46,6 +46,7 @@ class HolyManager extends BaseComponent
     public function render()
     {
         $holies = Holymanagement::query()
+            ->withCount('students')
             ->when($this->search, function ($q) {
                 $q->where('name', 'like', '%' . trim($this->search) . '%');
             })
@@ -64,7 +65,7 @@ class HolyManager extends BaseComponent
     {
         $this->authorize('create', Holymanagement::class);
         $this->resetForm();
-        $this->showModal = true;
+        $this->emit('openModal');
     }
 
     public function edit(int $id)
@@ -75,7 +76,7 @@ class HolyManager extends BaseComponent
         $this->holyId = $holy->id;
         $this->name   = $holy->name;
 
-        $this->showModal = true;
+        $this->emit('openModal');
     }
 
     public function save()
@@ -140,6 +141,5 @@ class HolyManager extends BaseComponent
     public function closeModal()
     {
         $this->resetForm();
-        $this->showModal = false;
     }
 }

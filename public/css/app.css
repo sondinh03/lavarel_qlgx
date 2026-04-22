@@ -1200,6 +1200,9 @@ video {
 .shrink-0 {
   flex-shrink: 0;
 }
+.table-fixed {
+  table-layout: fixed;
+}
 .border-collapse {
   border-collapse: collapse;
 }
@@ -1490,6 +1493,9 @@ video {
 }
 .overflow-hidden {
   overflow: hidden;
+}
+.overflow-visible {
+  overflow: visible;
 }
 .overflow-x-auto {
   overflow-x: auto;
@@ -3310,10 +3316,6 @@ video {
 .hover\:text-green-700:hover {
   --tw-text-opacity: 1;
   color: rgb(21 128 61 / var(--tw-text-opacity));
-}
-.hover\:text-indigo-800:hover {
-  --tw-text-opacity: 1;
-  color: rgb(55 48 163 / var(--tw-text-opacity));
 }
 .hover\:text-orange-700:hover {
   --tw-text-opacity: 1;

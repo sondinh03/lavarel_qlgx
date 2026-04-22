@@ -1,38 +1,27 @@
+@section('topbar')
+<x-breadcrumb :items="[
+    [ 'label' => 'Trang chủ', 'url' => route('dashboard')],
+    ['label' => 'Giáo họ']
+]" />
+@endsection
+
 <div
     class="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 p-4 sm:p-6"
-    x-data="{ showForm: @entangle('showForm').defer }">
+    x-data="{ showForm: false }"
+    x-init="
+        document.addEventListener('livewire:load', () => {
+            Livewire.on('openModal', () => {
+                showForm = true;
+            });
+            Livewire.on('closeModal', () => {
+                showForm = false;
+            });
+        });
+    ">
 
     <a href="#main-content" class="sr-only focus:not-sr-only">Bỏ qua tới nội dung</a>
 
     <div id="main-content" class="mx-auto max-w-7xl space-y-5">
-
-        {{-- Breadcrumb --}}
-        <x-breadcrumb :items="[
-            ['label' => 'Trang chủ', 'url' => route('dashboard')],
-            ['label' => 'Quản lý giáo họ', 'url' => route('parish-group.index')],
-        ]" separator="arrow" />
-
-        {{-- Toast --}}
-        <div role="status" aria-live="polite">
-            @if (session()->has('message'))
-            <x-toast-notification type="success" :duration="3500">
-                {{ session('message') }}
-            </x-toast-notification>
-            @endif
-
-            @if (session()->has('error'))
-            <x-toast-notification type="error" :duration="4000">
-                {{ session('error') }}
-            </x-toast-notification>
-            @endif
-
-            @if (session()->has('warning'))
-            <x-toast-notification type="warning" :duration="4000">
-                {{ session('warning') }}
-            </x-toast-notification>
-            @endif
-        </div>
-
         {{-- Main Card --}}
         <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
 
@@ -155,43 +144,47 @@
 
                             {{-- Thao tác --}}
                             <td class="px-6 py-4 text-center">
-                                <div class="inline-flex items-center gap-3">
-
-                                    {{-- Sửa --}}
-                                    <x-table-action
-                                        wire="edit({{ $group->id }})"
-                                        icon="edit">
-                                        Sửa
-                                    </x-table-action>
-
-                                    <span class="text-slate-300">|</span>
-
-                                    {{-- Toggle Status --}}
-                                    <x-table-action
-                                        wire="toggleStatus({{ $group->id }})"
-                                        :icon="$group->status ? 'archive' : 'check'"
-                                        :color="$group->status ? 'warning' : 'success'"
-                                        :loading="true"
-                                        debounce="500">
-                                        {{ $group->status ? 'Lưu trữ' : 'Kích hoạt' }}
-                                    </x-table-action>
+                                <div class="flex items-center justify-center gap-3">
+                                    <x-tooltip content='Chỉnh sửa'>
+                                        <x-table-action
+                                            wire="edit({{ $group->id }})"
+                                            icon="edit"
+                                            :icon-only="true">
+                                        </x-table-action>
+                                    </x-tooltip>
 
                                     <span class="text-slate-300">|</span>
 
-                                    <x-table-action
-                                        wire="delete({{ $group->id }})"
-                                        icon="trash"
-                                        color="danger"
-                                        :confirm="$group->students_count == 0 
+                                    <x-tooltip :content="$group->status ? 'Lưu trữ' : 'Kích hoạt'">
+                                        <x-table-action
+                                            wire="toggleStatus({{ $group->id }})"
+                                            :icon="$group->status ? 'archive' : 'check'"
+                                            :color="$group->status ? 'warning' : 'success'"
+                                            :loading="true"
+                                            debounce="500">
+                                        </x-table-action>
+                                    </x-tooltip>
+
+                                    <span class="text-slate-300">|</span>
+
+                                    @php
+                                    $canDelete = $group->students_count == 0;
+                                    @endphp
+
+                                    <x-tooltip :content="$canDelete
+                                        ? 'Xóa giáo họ' 
+                                        : 'Không thể xóa giáo họ đang có học sinh'">
+                                        <x-table-action
+                                            wire="delete({{ $group->id }})"
+                                            icon="trash"
+                                            color="danger"
+                                            :confirm="$canDelete
                                             ? 'Xóa giáo họ ' . $group->name . '?' 
                                             : null"
-                                        :loading="true"
-                                        :disabled="$group->students_count > 0"
-                                        title="{{ $group->students_count > 0 
-                                            ? 'Giáo họ đang có ' . $group->students_count . ' học sinh' 
-                                            : 'Xóa giáo họ' }}">
-                                        Xóa
-                                    </x-table-action>
+                                            :loading="true"
+                                            :disabled="$group->students_count > 0">
+                                        </x-table-action>
+                                    </x-tooltip>
                                 </div>
                             </td>
                         </tr>
