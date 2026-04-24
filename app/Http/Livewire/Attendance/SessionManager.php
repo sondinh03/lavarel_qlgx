@@ -25,11 +25,10 @@ class SessionManager extends BaseComponent
     /** @var int|null Selected lớp */
     public $selectedClassId = null;
 
+    /** @var string Phạm vi tạo: class, khoi, parish */
+    public $scope = 'class';
+
     // ==================== FORM STATE ====================
-
-    /** @var bool Hiển thị modal form */
-    public $showForm = false;
-
     /** @var int|null ID session đang edit (null = create) */
     public $editingId = null;
 
@@ -84,6 +83,7 @@ class SessionManager extends BaseComponent
         'selectedDates'  => 'required_if:createMode,custom|array',
         'startTime'      => 'nullable|date_format:H:i',
         'endTime'        => 'nullable|date_format:H:i|after:startTime',
+        'scope'          => 'required|string|in:class,khoi,parish',
     ];
 
     protected $messages = [
@@ -102,6 +102,7 @@ class SessionManager extends BaseComponent
             'selectedNamHoc'  => ['as' => 'namHoc', 'except' => null],
             'selectedKhoi'    => ['as' => 'khoi', 'except' => ''],
             'selectedClassId' => ['as' => 'classId', 'except' => null],
+            'scope' => ['as' => 'scope', 'except' => 'class'],
         ], parent::queryString());
     }
 
@@ -282,10 +283,12 @@ class SessionManager extends BaseComponent
     {
         $this->authorize('create', AttendanceSession::class);
 
-        if (!$this->selectedClassId) {
-            $this->emit('toast',  'warning', 'Vui lòng chọn lớp trước');
-            return;
-        }
+        // if (!$this->selectedClassId) {
+        //     $this->emit('toast',  'warning', 'Vui lòng chọn lớp trước');
+        //     return;
+        // }
+
+        $this->currentNamHoc = NamHoc::find($this->selectedNamHoc);
 
         if (!$this->currentNamHoc) {
             $this->emit('toast',  'warning', 'Không tìm thấy thông tin năm học');
@@ -307,13 +310,25 @@ class SessionManager extends BaseComponent
         } else {
             $this->startDate = $today->format('Y-m-d');
         }
+    }
 
-        $this->showForm = true;
+    protected function resolveClassIds(): array
+    {
+        return match ($this->scope) {
+            'khoi' => CatechismClass::where('grade_level_id', $this->selectedKhoi)
+                ->where('school_year_id', $this->selectedNamHoc)
+                ->pluck('id')->toArray(),
+
+            'parish' => CatechismClass::where('school_year_id', $this->selectedNamHoc)
+                ->pluck('id')->toArray(),
+
+            default => $this->selectedClassId ? [$this->selectedClassId] : [],
+        };
     }
 
     public function save(): void
     {
-        $this->requireManager();
+        $this->authorize('create', AttendanceSession::class);
 
         if ($this->createMode === 'weekly' && empty($this->weekDays)) {
             $this->emit('toast',  'error', 'Vui lòng chọn ít nhất 1 ngày trong tuần');
@@ -335,17 +350,24 @@ class SessionManager extends BaseComponent
         try {
             DB::beginTransaction();
 
+            $classIds   = $this->resolveClassIds();
             $dates      = $this->generateDates();
             $validDates = $this->filterValidDates($dates);
 
+            if (empty($classIds)) {
+                $this->emit('toast', 'warning', 'Không tìm thấy lớp nào trong phạm vi đã chọn');
+                DB::rollBack();
+                return;
+            }
+
             if (empty($dates)) {
-                $this->emit('toast',  'warning', 'Không có ngày nào được tạo. Vui lòng kiểm tra lại.');
+                $this->emit('toast', 'warning', 'Không có ngày nào được tạo. Vui lòng kiểm tra lại.');
                 DB::rollBack();
                 return;
             }
 
             if (empty($validDates)) {
-                $this->emit('toast',  'warning', 'Tất cả các ngày đều nằm ngoài khoảng thời gian năm học.');
+                $this->emit('toast', 'warning', 'Tất cả các ngày đều nằm ngoài khoảng thời gian năm học.');
                 DB::rollBack();
                 return;
             }
@@ -353,58 +375,48 @@ class SessionManager extends BaseComponent
             $created = 0;
             $skipped = 0;
 
-            foreach ($validDates as $date) {
-                $exists = AttendanceSession::where('class_id', $this->selectedClassId)
-                    ->where('type', $this->type)
-                    ->whereDate('date', $date)
-                    ->exists();
+            foreach ($classIds as $classId) {
+                foreach ($validDates as $date) {
+                    $exists = AttendanceSession::where('class_id', $classId)
+                        ->where('type', $this->type)
+                        ->whereDate('date', $date)
+                        ->exists();
 
-                if ($exists) {
-                    $skipped++;
-                    continue;
+                    if ($exists) {
+                        $skipped++;
+                        continue;
+                    }
+
+                    $semester = $this->getSemesterForDate($date);
+
+                    try {
+                        AttendanceSession::create([
+                            'class_id'   => $classId,
+                            'date'       => $date,
+                            'semester'   => $semester,
+                            'type'       => $this->type,
+                            'status'     => AttendanceSession::STATUS_OPENING,
+                            'start_time' => $this->startTime ? Carbon::parse($this->startTime) : null,
+                            'end_time'   => $this->endTime ? Carbon::parse($this->endTime) : null,
+                            'note'       => $this->title ?: null,
+                        ]);
+                        $created++;
+                    } catch (\Exception $e) {
+                        $this->logError($e, 'Error creating attendance session', [
+                            'class_id' => $classId,
+                            'date'     => $date,
+                        ]);
+                        continue;
+                    }
                 }
-
-                $semester = $this->getSemesterForDate($date);
-
-                // AttendanceSession::create([
-                //     'class_id'   => $this->selectedClassId,
-                //     'date'       => $date,
-                //     'semester'   => $semester,
-                //     'type'       => $this->type,
-                //     'status'     => AttendanceSession::STATUS_OPENING,
-                //     'start_time' => $this->startTime ? Carbon::parse($this->startTime) : null,
-                //     'end_time'   => $this->endTime ? Carbon::parse($this->endTime) : null,
-                //     'note'       => $this->title ?: null,
-                // ]);
-                try {
-                    AttendanceSession::create([
-                        'class_id'   => $this->selectedClassId,
-                        'date'       => $date,
-                        'semester'   => $semester,
-                        'type'       => $this->type,
-                        'status'     => AttendanceSession::STATUS_OPENING,
-                        'start_time' => $this->startTime ? Carbon::parse($this->startTime) : null,
-                        'end_time'   => $this->endTime ? Carbon::parse($this->endTime) : null,
-                        'note'       => $this->title ?: null,
-                    ]);
-                } catch (\Exception $e) {
-                    $this->logError($e, 'Error creating attendance session', [
-                        'class_id' => $this->selectedClassId,
-                        'date'     => $date,
-                        'semester' => $semester,
-                    ]);
-                    // Không dừng toàn bộ quá trình nếu có lỗi tạo một phiên nào đó
-                    continue;
-                }
-
-                $created++;
             }
 
             DB::commit();
 
-            $message = "Đã tạo {$created} phiên điểm danh";
+            $classCount = count($classIds);
+            $message = "Đã tạo {$created} phiên cho {$classCount} lớp";
             if ($skipped > 0) {
-                $message .= " ({$skipped} phiên đã tồn tại)";
+                $message .= " ({$skipped} phiên đã tồn tại, bỏ qua)";
             }
 
             $this->emit('toast',  'message', $message);
@@ -423,7 +435,7 @@ class SessionManager extends BaseComponent
 
     public function toggleStatus(int $id): void
     {
-        $this->requireManager();
+        $this->authorize('update', AttendanceSession::class);
 
         try {
             // ✅ Fix: bỏ filter parish_id vì AttendanceSession không có cột này
@@ -450,26 +462,24 @@ class SessionManager extends BaseComponent
 
     public function delete(int $id): void
     {
-        $this->requireManager();
+        $this->authorize('delete', AttendanceSession::class);
 
         try {
-            DB::beginTransaction();
-
             $session = AttendanceSession::where('class_id', $this->selectedClassId)
                 ->findOrFail($id);
 
             $hasRecords = $session->records()->whereNotNull('status')->exists();
 
             if ($hasRecords) {
-                $this->emit('toast',  'error', 'Không thể xóa phiên đã có dữ liệu điểm danh');
-                DB::rollBack();
-                return;
+                $this->emit('toast', 'error', 'Không thể xóa phiên đã có dữ liệu điểm danh');
+                return; // return sạch, không có transaction nào mở
             }
 
+            DB::beginTransaction();
             $session->delete();
             DB::commit();
 
-            $this->emit('toast',  'message', 'Đã xóa phiên điểm danh');
+            $this->emit('toast', 'message', 'Đã xóa phiên điểm danh');
             $this->loadSessions();
         } catch (\Exception $e) {
             DB::rollBack();
@@ -608,9 +618,10 @@ class SessionManager extends BaseComponent
 
     public function closeModal(): void
     {
-        $this->showForm = false;
+        // $this->showForm = false;
         $this->resetForm();
         $this->resetValidation();
+        $this->emit('closeModal');
     }
 
     protected function resetForm(): void
@@ -626,11 +637,12 @@ class SessionManager extends BaseComponent
             'weekDays',
             'startTime',
             'endTime',
+            'scope', 
         ]);
 
         $this->type       = 1;
         $this->createMode = 'single';
-        $this->showForm   = false;
+        // $this->showForm   = false;
         $this->resetValidation();
         $this->emit('closeModal');
     }

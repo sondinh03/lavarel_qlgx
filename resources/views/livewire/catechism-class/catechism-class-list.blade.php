@@ -22,7 +22,7 @@
                 icon-type="class" />
 
             {{-- Actions Bar --}}
-            <div class="px-6 py-4 border-t border-slate-100 bg-slate-50">
+            <div class="px-6 py-4 border-t border-slate-200 bg-slate-50">
                 <div class="flex items-center justify-between gap-4">
                     <div class="flex items-center gap-3">
                         <livewire:filters.filter-bar
@@ -34,9 +34,9 @@
                             :selected-nam-hoc="$selectedNamHoc"
                             :selected-khoi="$selectedGradeLevel" />
 
-                            <x-search-input
-                                wireModel="search"
-                                placeholder="Tìm kiếm theo tên lớp..." />
+                        <x-search-input
+                            wireModel="search"
+                            placeholder="Tìm kiếm theo tên lớp..." />
 
                     </div>
 
@@ -91,7 +91,7 @@
                             wire:key="class-{{ $class->id }}">
 
                             {{-- STT --}}
-                            <td class="px-6 py-4 text-sm text-slate-400">
+                            <td class="px-6 py-4 text-sm text-slate-500">
                                 {{ ($classes->firstItem() ?? 0) + $index }}
                             </td>
 
@@ -127,11 +127,11 @@
                                         @mouseenter="open = true"
                                         @mouseleave="open = false"
                                         class="flex items-center gap-2 text-sm font-medium text-slate-800
-                                               hover:text-purple-600 transition-colors duration-200">
+                                               hover:text-slate-900 transition-colors duration-200">
                                         <span class="truncate">{{ $class->teacher_names[0] ?? 'GLV' }}</span>
                                         @if($class->teachers_count > 1)
                                         <span class="inline-flex items-center justify-center w-5 h-5
-                                                     text-xs font-semibold text-purple-700 bg-purple-100 rounded-full">
+                                                     text-xs font-semibold text-primary-700 bg-primary-100 rounded-full">
                                             +{{ $class->teachers_count - 1 }}
                                         </span>
                                         @endif
@@ -143,7 +143,7 @@
                                         <div class="space-y-2">
                                             @foreach($class->teacher_names ?? [] as $teacherName)
                                             <div class="flex items-center gap-2 text-sm">
-                                                <svg class="w-4 h-4 text-purple-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <svg class="w-4 h-4 text-primary-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                                         d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                                                 </svg>
@@ -156,7 +156,7 @@
 
                                 @else
                                 <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full
-                                             text-xs font-semibold bg-amber-100 text-amber-700">
+                                             text-xs font-semibold bg-primary-100 text-primary-700">
                                     <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                             d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
@@ -180,43 +180,32 @@
                             {{-- Thao tác --}}
                             <td class="px-6 py-4 text-center">
                                 <div class="inline-flex items-center gap-3">
-                                    <a href="{{ route('students.index', ['class' => $class->id]) }}"
-                                        class="inline-flex items-center gap-1 text-sm font-medium
-                                              text-slate-600 hover:text-slate-900 transition-colors duration-200">
-                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
-                                        </svg>
-                                        Học sinh
-                                    </a>
+                                    <x-tooltip content="Danh sách học sinh">
+                                        <a href="{{ route('students.index', ['class' => $class->id]) }}"
+                                            class="inline-flex items-center justify-center w-8 h-8
+                                                text-primary-500 hover:text-primary-600
+                                                transition-colors">
+                                            <x-icon name="users" class="w-4 h-4" />
+                                        </a>
+                                    </x-tooltip>
 
-                                    <span class="text-slate-200">|</span>
+                                    <x-tooltip content="Danh sách GLV">
+                                        <a href="{{ route('classes.catechists', ['id' => $class->id]) }}"
+                                            class="inline-flex items-center justify-center w-8 h-8
+                                                text-primary-500 hover:text-primary-600
+                                                transition-colors">
+                                            <x-icon name="catechists" class="w-4 h-4" />
+                                        </a>
+                                    </x-tooltip>
 
-                                    <x-table-action wire="edit({{ $class->id }})" icon="edit">
-                                        Sửa
-                                    </x-table-action>
-
-                                    <span class="text-slate-200">|</span>
-
-                                    <a href="{{ route('classes.catechists', ['id' => $class->id]) }}"
-                                        class="inline-flex items-center gap-1 text-sm font-medium
-                                              text-slate-600 hover:text-slate-900 transition-colors duration-200">
-                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
-                                        </svg>
-                                        GLV
-                                    </a>
-
-                                    <span class="text-slate-200">|</span>
-
-                                    <x-table-action
-                                        wire="delete({{ $class->id }})"
-                                        icon="trash"
-                                        color="danger"
-                                        confirm="Bạn có chắc chắn muốn xóa lớp {{ $class->name }}?">
-                                        Xóa
-                                    </x-table-action>
+                                    <x-tooltip content="Chỉnh sửa">
+                                        <x-table-action
+                                            wire="edit({{ $class->id }})"
+                                            icon="edit"
+                                            variant="light"
+                                            :icon-only="true">
+                                        </x-table-action>
+                                    </x-tooltip>
                                 </div>
                             </td>
 
@@ -227,7 +216,7 @@
             </div>
 
             @if($classes->hasPages())
-            <div class="px-6 py-4 border-t border-slate-100">
+            <div class="px-6 py-4 border-t border-slate-200">
                 <x-pagination :paginator="$classes" :per-page-options="[10, 15, 25, 50]" />
             </div>
             @endif
@@ -287,7 +276,7 @@
                 wire:click.stop>
 
                 {{-- Modal Header --}}
-                <div class="flex-shrink-0 px-6 py-5 border-b border-slate-100
+                <div class="flex-shrink-0 px-6 py-5 border-b border-slate-200
                             bg-gradient-to-br from-primary-50 to-white">
                     <h2 id="class-modal-title" class="text-base font-semibold text-slate-900">
                         {{ $editingId ? 'Cập nhật lớp học' : 'Thêm lớp học mới' }}
@@ -380,7 +369,7 @@
                                 type="checkbox"
                                 wire:model.defer="isActive"
                                 class="mt-0.5 w-4 h-4 rounded border-slate-300
-                                       text-primary-600 focus:ring-primary-500 cursor-pointer">
+                                       text-primary-500 focus:ring-primary-500 cursor-pointer">
                             <div>
                                 <label for="class-is-active"
                                     class="text-sm font-semibold text-slate-900 cursor-pointer">
@@ -414,7 +403,7 @@
                 </div>
 
                 {{-- Modal Footer --}}
-                <div class="flex-shrink-0 px-6 py-4 border-t border-slate-100 bg-slate-50
+                <div class="flex-shrink-0 px-6 py-4 border-t border-slate-200 bg-slate-50
                             flex justify-end gap-3">
                     <x-action-button wire="closeModal" variant="secondary">Hủy</x-action-button>
                     <x-action-button
@@ -430,20 +419,5 @@
         </div>
         @endif
 
-    </div>
-</div>
-
-{{-- Loading Overlay --}}
-<div wire:loading
-    class="fixed inset-0 bg-black/30 flex items-center justify-center z-50">
-    <div class="bg-white rounded-2xl shadow-sm border border-slate-200 px-6 py-4
-                flex items-center gap-3">
-        <svg class="animate-spin w-5 h-5 text-primary-600" fill="none" viewBox="0 0 24 24">
-            <circle class="opacity-25" cx="12" cy="12" r="10"
-                stroke="currentColor" stroke-width="4" />
-            <path class="opacity-75" fill="currentColor"
-                d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-        </svg>
-        <span class="text-sm font-medium text-slate-700">Đang xử lý...</span>
     </div>
 </div>

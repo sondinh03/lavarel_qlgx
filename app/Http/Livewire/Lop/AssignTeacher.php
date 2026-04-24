@@ -142,13 +142,17 @@ class AssignTeacher extends BaseComponent
                 ->pluck('teacher_id')
                 ->toArray();
 
+            $search = trim($this->teacherSearch);
+
             $query = Teacher::active()
                 ->whereNotIn('id', $assignedTeacherIds)
-                ;
-
-            if (!empty(trim($this->teacherSearch))) {
-                $query->search(trim($this->teacherSearch));
-            }
+                ->when($search, function ($q) use ($search) {
+                    $q->where(function ($q2) use ($search) {
+                        $q2->where('first_name', 'like', "%{$search}%")
+                            ->orWhere('last_name', 'like', "%{$search}%")
+                            ->orWhere('phone_number', 'like', "%{$search}%");
+                    });
+                });
 
             $this->availableTeachers = $query
                 ->orderBy('last_name')

@@ -65,7 +65,7 @@ abstract class BaseComponent extends Component
      * @var array
      */
     protected $rules = [
-        'perPage' => 'required|integer|in:10,15,25,50',
+        'perPage' => 'required|integer|in:10,15,25,50,100',
     ];
 
     /**

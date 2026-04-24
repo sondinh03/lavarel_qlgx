@@ -48,16 +48,16 @@
                         wire:click="switchTab('scores')"
                         class="px-4 py-1.5 text-sm font-semibold rounded-lg transition-all
                                {{ $activeTab === 'scores'
-                                   ? 'bg-white text-slate-900 shadow-sm'
-                                   : 'text-slate-500 hover:text-slate-700' }}">
+                                   ? 'bg-white text-primary-600 shadow-sm'
+                                   : 'text-slate-600 hover:text-slate-900' }}">
                         Bảng điểm
                     </button>
                     <button
                         wire:click="switchTab('config')"
                         class="px-4 py-1.5 text-sm font-semibold rounded-lg transition-all
                                {{ $activeTab === 'config'
-                                   ? 'bg-white text-slate-900 shadow-sm'
-                                   : 'text-slate-500 hover:text-slate-700' }}">
+                                   ? 'bg-white text-primary-600 shadow-sm'
+                                   : 'text-slate-600 hover:text-slate-900' }}">
                         Cấu hình loại điểm
                         @if($scoreTypes->count() > 0)
                         <span class="ml-1 px-1.5 py-0.5 bg-primary-100 text-primary-700 text-xs rounded-full">
