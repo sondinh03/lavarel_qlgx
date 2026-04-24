@@ -274,7 +274,6 @@ class ScoreManager extends BaseComponent
         try {
             $this->scoreTypes = ScoreType::where('class_id', $this->selectedLop)
                 ->where('semester', $this->selectedSemester)
-                ->active()
                 ->orderBy('order')
                 ->orderBy('type')
                 ->get();

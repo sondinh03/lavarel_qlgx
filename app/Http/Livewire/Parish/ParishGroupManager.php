@@ -79,10 +79,10 @@ class ParishGroupManager extends BaseComponent
             $this->status    = $group->status;
             $this->emit('openModal');
         } catch (ModelNotFoundException) {
-            session()->flash('error', 'Không tìm thấy giáo họ');
+            $this->emit('toast', 'error', 'Không tìm thấy giáo họ');
         } catch (\Exception $e) {
             $this->logError($e, 'Error loading parish group for edit', ['id' => $id]);
-            session()->flash('error', 'Có lỗi khi tải thông tin giáo họ');
+            $this->emit('toast', 'error', 'Có lỗi khi tải thông tin giáo họ');
         }
     }
 
@@ -122,8 +122,8 @@ class ParishGroupManager extends BaseComponent
 
             DB::commit();
 
-            session()->flash(
-                'message',
+            $this->emit('toast', 
+                'success',
                 $this->editingId
                     ? 'Cập nhật giáo họ thành công'
                     : 'Thêm giáo họ mới thành công'
@@ -136,7 +136,7 @@ class ParishGroupManager extends BaseComponent
                 'editing_id' => $this->editingId,
                 'name'       => $this->name,
             ]);
-            session()->flash('error', 'Có lỗi khi lưu giáo họ. Vui lòng thử lại.');
+            $this->emit('toast', 'error', 'Có lỗi khi lưu giáo họ. Vui lòng thử lại.');
         }
     }
 
@@ -148,16 +148,17 @@ class ParishGroupManager extends BaseComponent
             $this->authorize('update', $group);
 
             $group->update(['status' => !$group->status]);
+            $group->refresh();
 
-            session()->flash(
-                'message',
-                $group->status ? 'Đã kích hoạt giáo họ' : 'Đã Lưu trữ giáo họ'
+            $this->emit('toast', 
+                'success',
+                $group->status ? 'Đã kích hoạt giáo họ' : 'Đã lưu trữ giáo họ'
             );
         } catch (ModelNotFoundException) {
-            session()->flash('error', 'Không tìm thấy giáo họ');
+            $this->emit('toast', 'error', 'Không tìm thấy giáo họ');
         } catch (\Exception $e) {
             $this->logError($e, 'Error toggling parish group status', ['id' => $id]);
-            session()->flash('error', 'Có lỗi khi thay đổi trạng thái');
+            $this->emit('toast', 'error', 'Có lỗi khi thay đổi trạng thái');
         }
     }
 
@@ -170,18 +171,18 @@ class ParishGroupManager extends BaseComponent
 
             // Kiểm tra còn học sinh không
             if ($group->students()->exists()) {
-                session()->flash('error', 'Không thể xóa giáo họ đang có học sinh');
+                $this->emit('toast', 'error', 'Không thể xóa giáo họ đang có học sinh');
                 return;
             }
 
             $group->delete();
 
-            session()->flash('message', 'Đã xóa giáo họ');
+            $this->emit('toast', 'success', 'Đã xóa giáo họ');
         } catch (ModelNotFoundException) {
-            session()->flash('error', 'Không tìm thấy giáo họ');
+            $this->emit('toast', 'error', 'Không tìm thấy giáo họ thành công');
         } catch (\Exception $e) {
             $this->logError($e, 'Error deleting parish group', ['id' => $id]);
-            session()->flash('error', 'Có lỗi khi xóa giáo họ');
+            $this->emit('toast', 'error', 'Có lỗi khi xóa giáo họ');
         }
     }
 

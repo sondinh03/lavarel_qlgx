@@ -104,10 +104,7 @@ class HolyManager extends BaseComponent
             ['name' => $this->name]
         );
 
-        $this->dispatchBrowserEvent('notify', [
-            'type' => 'success',
-            'message' => 'Lưu thành công',
-        ]);
+        $this->emit('toast', 'success', $this->holyId ? 'Đã cập nhật tên thánh thành công' : 'Đã tạo tên thánh thành công');
 
         $this->closeModal();
     }
@@ -120,14 +117,14 @@ class HolyManager extends BaseComponent
 
             $holy->delete();
 
-            session()->flash('message', 'Đã xóa tên thánh thành công');
+            $this->emit('toast', 'success', 'Đã xóa tên thánh thành công');
         } catch (\Illuminate\Auth\Access\AuthorizationException $e) {
-            session()->flash('error', 'Bạn không có quyền xóa tên thánh');
+            $this->emit('toast', 'error', 'Bạn không có quyền xóa tên thánh');
         } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
-            session()->flash('error', 'Không tìm thấy tên thánh');
+            $this->emit('toast', 'error', 'Không tìm thấy tên thánh');
         } catch (\Exception $e) {
             $this->logError($e, 'Error deleting holy', ['id' => $id]);
-            session()->flash('error', 'Có lỗi khi xóa tên thánh');
+            $this->emit('toast', 'error', 'Có lỗi khi xóa tên thánh');
         }
     }
 
@@ -136,6 +133,7 @@ class HolyManager extends BaseComponent
     {
         $this->reset(['holyId', 'name']);
         $this->resetValidation();
+        $this->emit('closeModal');
     }
 
     public function closeModal()

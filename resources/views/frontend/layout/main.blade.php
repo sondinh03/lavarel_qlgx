@@ -559,6 +559,8 @@ $isDashboard = request()->routeIs('dashboard','catechist.dashboard','parish-admi
         </svg>
     </button>
 
+    <x-confirm-dialog />
+
     {{-- Scripts --}}
     <script src="{{ mix('js/manifest.js') }}"></script>
     <script src="{{ mix('js/vendor.js') }}"></script>

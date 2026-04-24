@@ -31,23 +31,9 @@
                 icon-type="schoolYear">
             </x-page-header>
 
-            <div class="px-6 py-4 border-b border-slate-200 bg-slate-50/70">
-                <div class="flex items-center justify-between gap-4">
-                    <div class="relative w-56">
-                        <input
-                            wire:model.debounce.500ms="search"
-                            placeholder="Tìm kiếm năm học..."
-                            class="w-full px-3 py-2 pr-8 rounded-xl border border-slate-300
-                                   text-sm focus:outline-none focus:ring-2 focus:ring-primary-500" />
-                        @if ($search)
-                        <button wire:click="$set('search', '')"
-                            class="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors">
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-                            </svg>
-                        </button>
-                        @endif
-                    </div>
+            <div class="px-4 py-3 border-b border-slate-200 bg-slate-50/70">
+                <div class="flex items-center justify-end gap-3">
+                    <x-search-input wireModel="search" placeholder="Tìm kiếm năm học..." />
                     <x-button wire:click="create" variant="primary">
                         <x-icon name="plus" />
                         Thêm năm học
@@ -186,7 +172,9 @@
         class="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50 p-4"
         role="dialog"
         aria-modal="true"
-        @click="showForm = false; $wire.closeModal()">
+        @click="showForm = false; $wire.closeModal()"
+        @keydown.escape.window="showForm = false; $wire.closeModal()"
+        @keydown.enter.window="console.log('[Enter] showForm=', showForm, 'target=', $event.target.tagName); if(showForm) $wire.save()">
 
         <div
             x-show="showForm"
@@ -206,7 +194,7 @@
                         </p>
                     </div>
                     <button
-                        @click="showForm = false; $wire('closeModal')"
+                        @click="showForm = false; $wire.closeModal()"
                         class="flex-shrink-0 p-1 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors">
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
@@ -261,7 +249,7 @@
 
             {{-- Footer --}}
             <div class="flex-shrink-0 px-6 py-4 border-t border-slate-200 bg-slate-50 flex justify-end gap-3">
-                <x-button variant="outline" @click="showForm = false; $wire('closeModal')">
+                <x-button variant="outline" @click="showForm = false; $wire.closeModal()">
                     Hủy
                 </x-button>
                 <x-button variant="primary" wire:click="save" :loading="true" loading-target="save">

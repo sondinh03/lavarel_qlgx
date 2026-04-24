@@ -289,24 +289,29 @@
                                 <div class="flex items-center justify-center gap-1">
                                     <x-tooltip content="Xem chi tiết">
                                         <a href="{{ route('students.show', $student->id) }}"
-                                            class="p-2 hover:bg-blue-50 text-blue-600 rounded-lg">
+                                            class="p-2 hover:bg-slate-100 text-slate-600 rounded-lg transition-all">
                                             <x-icon name="eye" />
                                         </a>
                                     </x-tooltip>
 
                                     <x-tooltip content="Chỉnh sửa">
                                         <a href="{{ route('students.edit', $student->id) }}"
-                                            class="p-2 hover:bg-orange-50 text-orange-600 rounded-lg">
+                                            class="p-2 hover:bg-primary-50 text-primary-600 rounded-lg transition-all">
                                             <x-icon name="edit" />
                                         </a>
                                     </x-tooltip>
-                                    <x-dropdown icon="more-vertical" label="" align="right" variant="subtle" position="fixed">
+                                    <x-dropdown icon="more-vertical" align="right" variant="subtle" position="fixed">
                                         <x-dropdown-item wire:click="openLinkParishioner({{ $student->id }})" icon="link">
                                             Liên kết giáo dân
                                         </x-dropdown-item>
+
                                         <div class="h-px bg-slate-100 my-1"></div>
+
                                         <x-dropdown-item
-                                            x-on:click="if(confirm('Xóa học sinh này?')) $wire.delete({{ $student->id }})"
+                                            x-on:click="$dispatch('open-confirm', {
+                                                message: 'Xóa học sinh {{ $student->full_name_with_saint }}?',
+                                                wireMethod: 'delete({{ $student->id }})'
+                                            })"
                                             icon="trash"
                                             class="text-red-600 hover:bg-red-50">
                                             Xóa học sinh

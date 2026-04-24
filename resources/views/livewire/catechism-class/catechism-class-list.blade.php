@@ -12,22 +12,6 @@
     <a href="#main-content" class="sr-only focus:not-sr-only">Bỏ qua tới nội dung</a>
 
     <div id="main-content" class="mx-auto max-w-7xl space-y-6">
-        {{-- Toast Notifications --}}
-        <div role="status" aria-live="polite">
-            @if(session()->has('message'))
-            <x-toast-notification type="success" :duration="3500">{{ session('message') }}</x-toast-notification>
-            @endif
-            @if(session()->has('error'))
-            <x-toast-notification type="error" :duration="4000">{{ session('error') }}</x-toast-notification>
-            @endif
-            @if(session()->has('warning'))
-            <x-toast-notification type="warning" :duration="4000">{{ session('warning') }}</x-toast-notification>
-            @endif
-            @if(session()->has('info'))
-            <x-toast-notification type="info" :duration="3500">{{ session('info') }}</x-toast-notification>
-            @endif
-        </div>
-
         {{-- Main Card: Header + Filters --}}
         <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
             <x-page-header
@@ -50,31 +34,16 @@
                             :selected-nam-hoc="$selectedNamHoc"
                             :selected-khoi="$selectedGradeLevel" />
 
-                        <div class="relative w-56">
-                            <input
-                                wire:model.debounce.500ms="search"
-                                placeholder="Tìm kiếm lớp học..."
-                                class="w-full px-3 py-2 pr-8 text-sm rounded-xl
-                                       border border-slate-300
-                                       focus:outline-none focus:ring-2 focus:ring-primary-500
-                                       transition-all duration-200" />
-                            @if($search)
-                            <button
-                                wire:click="$set('search', '')"
-                                class="absolute right-2 top-1/2 -translate-y-1/2
-                                       text-slate-400 hover:text-slate-600 transition-colors duration-200">
-                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                        d="M6 18L18 6M6 6l12 12" />
-                                </svg>
-                            </button>
-                            @endif
-                        </div>
+                            <x-search-input
+                                wireModel="search"
+                                placeholder="Tìm kiếm theo tên lớp..." />
+
                     </div>
 
-                    <x-action-button wire="create" icon="plus" :disabled="!$selectedNamHoc">
+                    <x-button wire:click="create" variant="primary">
+                        <x-icon name="plus" />
                         Thêm lớp
-                    </x-action-button>
+                    </x-button>
                 </div>
             </div>
         </div>

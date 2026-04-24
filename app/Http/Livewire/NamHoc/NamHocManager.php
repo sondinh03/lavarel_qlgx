@@ -103,7 +103,7 @@ class NamHocManager extends BaseComponent
             $this->namHocs = $query->get();
         } catch (\Exception $e) {
             $this->logError($e, 'Error loading nam hocs');
-            session()->flash('error', 'Có lỗi khi tải danh sách năm học');
+            $this->emit('toast', 'error', 'Có lỗi khi tải danh sách năm học');
             $this->namHocs = collect();
         }
     }
@@ -150,7 +150,7 @@ class NamHocManager extends BaseComponent
             $this->showForm       = true;
         } catch (\Exception $e) {
             $this->logError($e, 'Error loading nam hoc for edit', ['id' => $id]);
-            session()->flash('error', 'Có lỗi khi tải thông tin năm học');
+            $this->emit('toast', 'error', 'Có lỗi khi tải thông tin năm học');
         }
     }
 
@@ -201,8 +201,8 @@ class NamHocManager extends BaseComponent
 
             DB::commit();
 
-            session()->flash(
-                'message',
+            $this->emit('toast', 
+                'success',
                 $this->editingId
                     ? 'Cập nhật năm học thành công'
                     : 'Tạo năm học mới thành công'
@@ -216,7 +216,7 @@ class NamHocManager extends BaseComponent
                 'editing_id' => $this->editingId,
                 'name'       => $this->name,
             ]);
-            session()->flash('error', 'Có lỗi khi lưu năm học. Vui lòng thử lại.');
+            $this->emit('toast', 'error', 'Có lỗi khi lưu năm học. Vui lòng thử lại.');
         }
     }
 
@@ -228,8 +228,8 @@ class NamHocManager extends BaseComponent
             $namHoc = NamHoc::ofParish($this->parishId)->findOrFail($id);
             $namHoc->update(['status' => !$namHoc->status]);
 
-            session()->flash(
-                'message',
+            $this->emit('toast', 
+                'success',
                 $namHoc->status
                     ? 'Đã kích hoạt năm học'
                     : 'Đã lưu trữ năm học'
@@ -237,10 +237,10 @@ class NamHocManager extends BaseComponent
 
             $this->loadNamHocs();
         } catch (\Illuminate\Database\Eloquent\ModelNotFoundException) {
-            session()->flash('error', 'Không tìm thấy năm học này');
+            $this->emit('toast', 'error', 'Không tìm thấy năm học này');
         } catch (\Exception $e) {
             $this->logError($e, 'Error toggling nam hoc status', ['id' => $id]);
-            session()->flash('error', 'Có lỗi khi thay đổi trạng thái năm học');
+            $this->emit('toast', 'error', 'Có lỗi khi thay đổi trạng thái năm học');
         }
     }
 
@@ -254,22 +254,22 @@ class NamHocManager extends BaseComponent
             $namHoc = NamHoc::ofParish($this->parishId)->findOrFail($id);
 
             if (CatechismClass::where('school_year_id', $namHoc->id)->exists()) {
-                session()->flash('error', 'Không thể xóa năm học đang có lớp học');
+                $this->emit('toast', 'error', 'Không thể xóa năm học đang có lớp học');
                 return;
             }
 
             $namHoc->delete();
             DB::commit();
 
-            session()->flash('message', 'Đã xóa năm học thành công');
+            $this->emit('toast', 'success', 'Đã xóa năm học thành công');
             $this->loadNamHocs();
         } catch (\Illuminate\Database\Eloquent\ModelNotFoundException) {
             DB::rollBack();
-            session()->flash('error', 'Không tìm thấy năm học này');
+            $this->emit('toast', 'error', 'Không tìm thấy năm học này');
         } catch (\Exception $e) {
             DB::rollBack();
             $this->logError($e, 'Error deleting nam hoc', ['id' => $id]);
-            session()->flash('error', 'Có lỗi khi xóa năm học');
+            $this->emit('toast', 'error', 'Có lỗi khi xóa năm học');
         }
     }
 

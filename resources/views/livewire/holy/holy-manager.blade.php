@@ -35,10 +35,19 @@
 
             {{-- Actions Bar --}}
             <div class="px-4 py-3 border-b border-slate-200 bg-slate-50/70">
-                <div class="flex justify-end">
-                    <x-action-button wire="create" icon="plus">
+                <div class="flex items-center gap-3">
+
+                    {{-- SEARCH --}}
+                    <x-search-input
+                        wireModel="search"
+                        placeholder="Tìm kiếm tên thánh..." />
+
+                    {{-- BUTTON --}}
+                    <x-button wire:click="create" variant="primary">
+                        <x-icon name="plus"/>
                         Thêm Tên thánh
-                    </x-action-button>
+                    </x-button>
+
                 </div>
             </div>
         </div>
@@ -81,7 +90,7 @@
                                     <span class="text-slate-300">|</span>
 
                                     @php
-                                        $canDelete = $holy->students_count == 0;
+                                    $canDelete = $holy->students_count == 0;
                                     @endphp
 
                                     <x-tooltip :content="$canDelete 
@@ -148,7 +157,9 @@
         role="dialog"
         aria-modal="true"
         aria-labelledby="holy-modal-title"
-        @click="showModal = false; $wire.closeModal()">
+        @click="showModal = false; $wire.closeModal()"
+        @keydown.escape.window="showModal = false; $wire.closeModal()"
+        @keydown.enter.window="if(showModal) $wire.save()">
 
         {{-- Modal box --}}
         <div
