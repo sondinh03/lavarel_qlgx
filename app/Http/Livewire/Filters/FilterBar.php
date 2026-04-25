@@ -191,7 +191,7 @@ class FilterBar extends Component
 
     public function updatedSelectedKhoi(): void
     {
-        $this->selectedKhoi = $this->selectedKhoi
+        $this->selectedKhoi = $this->selectedKhoi !== ''
             ? (int) $this->selectedKhoi
             : null;
 
@@ -204,7 +204,7 @@ class FilterBar extends Component
 
     public function updatedSelectedLop()
     {
-        $this->selectedLop = $this->selectedLop
+        $this->selectedLop = $this->selectedLop !== ''
             ? (int) $this->selectedLop
             : null;
 

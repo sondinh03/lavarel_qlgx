@@ -5,6 +5,7 @@ namespace App\Http\Livewire\Attendance;
 use App\Http\Livewire\Base\BaseComponent;
 use App\Models\AttendanceSession;
 use App\Models\CatechismClass;
+use App\Models\GradeLevel;
 use App\Models\NamHoc;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
@@ -19,13 +20,13 @@ class SessionManager extends BaseComponent
     /** @var int|null Selected năm học ID */
     public $selectedNamHoc = null;
 
-    /** @var int|string Selected khối ('' = all) */
-    public $selectedKhoi = '';
+    /** @var int|null Selected khối ('' = all) */
+    public $selectedKhoi = null;
 
     /** @var int|null Selected lớp */
     public $selectedClassId = null;
 
-    /** @var string Phạm vi tạo: class, khoi, parish */
+    /** @var string Phạm vi tạo: class, grade, parish */
     public $scope = 'class';
 
     // ==================== FORM STATE ====================
@@ -83,7 +84,7 @@ class SessionManager extends BaseComponent
         'selectedDates'  => 'required_if:createMode,custom|array',
         'startTime'      => 'nullable|date_format:H:i',
         'endTime'        => 'nullable|date_format:H:i|after:startTime',
-        'scope'          => 'required|string|in:class,khoi,parish',
+        'scope'          => 'required|string|in:class,grade,parish',
     ];
 
     protected $messages = [
@@ -283,8 +284,8 @@ class SessionManager extends BaseComponent
     {
         $this->authorize('create', AttendanceSession::class);
 
-        // if (!$this->selectedClassId) {
-        //     $this->emit('toast',  'warning', 'Vui lòng chọn lớp trước');
+        // if (!$this->selectedClassId || !$this->selectedKhoi) {
+        //     $this->emit('toast',  'warning', 'Vui lòng chọn lớp hoặc khối trước');
         //     return;
         // }
 
@@ -314,16 +315,30 @@ class SessionManager extends BaseComponent
 
     protected function resolveClassIds(): array
     {
-        return match ($this->scope) {
-            'khoi' => CatechismClass::where('grade_level_id', $this->selectedKhoi)
-                ->where('school_year_id', $this->selectedNamHoc)
-                ->pluck('id')->toArray(),
+        if (!$this->selectedNamHoc) {
+            return [];
+        }
 
-            'parish' => CatechismClass::where('school_year_id', $this->selectedNamHoc)
-                ->pluck('id')->toArray(),
+        $query = CatechismClass::query()
+            ->where('school_year_id', $this->selectedNamHoc);
 
-            default => $this->selectedClassId ? [$this->selectedClassId] : [],
-        };
+        // 🎯 1. Nếu có lớp → chỉ lấy lớp đó
+        if ($this->selectedClassId !== null) {
+            return [$this->selectedClassId];
+        }
+
+        // 🎯 2. Nếu có khối → lấy tất cả lớp trong khối
+        if ($this->selectedKhoi !== null && $this->selectedClassId === null) {
+            return (clone $query)
+                ->where('grade_level_id', $this->selectedKhoi)
+                ->pluck('id')
+                ->toArray();
+        }
+
+        // 🎯 3. Còn lại → toàn xứ (theo năm học)
+        return (clone $query)
+            ->pluck('id')
+            ->toArray();
     }
 
     public function save(): void
@@ -637,7 +652,7 @@ class SessionManager extends BaseComponent
             'weekDays',
             'startTime',
             'endTime',
-            'scope', 
+            'scope',
         ]);
 
         $this->type       = 1;
@@ -656,6 +671,16 @@ class SessionManager extends BaseComponent
         }
 
         return CatechismClass::where('id', $this->selectedClassId)->value('name') ?? 'Chọn lớp';
+    }
+
+    public function getSelectedKhoiNameProperty(): string
+    {
+        if (!$this->selectedKhoi) {
+            return 'Chọn khối';
+        }
+
+        return GradeLevel::where('id', $this->selectedKhoi)
+            ->value('name') ?? 'Chọn khối';
     }
 
     // ==================== RENDER ====================

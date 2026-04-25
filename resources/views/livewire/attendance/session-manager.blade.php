@@ -19,12 +19,11 @@
     ">
     <a href="#main-content" class="sr-only focus:not-sr-only">Bỏ qua tới nội dung</a>
 
-    @php $selectedClassName = $this->selectedClassName; @endphp
     {{-- Main Card --}}
     <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
         {{-- Header --}}
         <x-page-header
-            title="Quản lý phiên điểm danh - {{ $selectedClassName }}"
+            title="Quản lý phiên điểm danh - {{ $this->selectedClassName }}"
             description="Tạo và quản lý các phiên điểm danh cho lớp học"
             :stat-value="$sessions->count()"
             stat-label="Phiên điểm danh"
@@ -290,6 +289,7 @@
         <div
             x-show="showForm"
             x-transition
+            x-data="{ createMode: '{{ $createMode }}' }"
             class="bg-white rounded-2xl shadow-xl w-full max-w-xl max-h-[90vh] overflow-hidden flex flex-col"
             @click.stop>
 
@@ -300,7 +300,27 @@
                         <h2 id="session-modal-title" class="text-xl font-bold text-slate-900">
                             Tạo phiên điểm danh
                         </h2>
-                        <p class="text-sm text-slate-600 mt-1">Thiết lập thông tin cho các phiên điểm danh</p>
+                        <div class="mt-1 text-sm text-slate-600 flex items-center gap-2 flex-wrap">
+                            <span>Áp dụng:</span>
+
+                            @if($selectedClassId)
+                            <span class="font-semibold text-primary-700">
+                                Lớp {{ $this->selectedClassName }}
+                            </span>
+                            @elseif($selectedKhoi)
+                            <span class="font-semibold text-primary-700">
+                                Khối {{ $this->selectedKhoiName }}
+                            </span>
+                            @else
+                            <span class="font-semibold text-primary-700">
+                                Toàn bộ năm học
+                            </span>
+                            @endif
+
+                            <span class="text-xs text-slate-500">
+                                ({{ count($this->resolveClassIds()) }} lớp)
+                            </span>
+                        </div>
                     </div>
                     <button wire:click="closeModal" class="text-slate-400 hover:text-slate-600 transition-colors">
                         <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -312,6 +332,11 @@
 
             {{-- Body - SCROLLABLE --}}
             <div class="flex-1 overflow-y-auto p-6 space-y-5">
+                {{-- DEBUG: xóa sau khi fix --}}
+                <div style="background:yellow;padding:8px;font-family:monospace;font-size:12px">
+                    Alpine createMode: <span x-text="createMode"></span>
+                    | typeof: <span x-text="typeof createMode"></span>
+                </div>
                 {{-- Error Summary --}}
                 @if ($errors->any())
                 <div class="bg-red-50 border-l-4 border-red-500 rounded-xl p-4">
@@ -338,77 +363,18 @@
                         Loại điểm danh <span class="text-red-500">*</span>
                     </label>
                     <div class="grid grid-cols-2 gap-3">
-                        <button type="button" wire:click="$set('type', 1)"
-                            class="px-4 py-3 rounded-xl border-2 transition-all text-left
-                                    {{ $type == 1 ? 'border-blue-500 bg-blue-50' : 'border-slate-200 hover:border-slate-300' }}">
-                            <div class="flex items-center gap-2">
-                                <div class="w-4 h-4 rounded-full border-2 flex items-center justify-center
-                                        {{ $type == 1 ? 'border-blue-500' : 'border-slate-300' }}">
-                                    @if($type == 1)<div class="w-2 h-2 rounded-full bg-blue-500"></div>@endif
-                                </div>
-                                <span class="font-semibold {{ $type == 1 ? 'text-blue-700' : 'text-slate-700' }}">Điểm danh đi học</span>
-                            </div>
-                        </button>
-                        <button type="button" wire:click="$set('type', 2)"
-                            class="px-4 py-3 rounded-xl border-2 transition-all text-left
-                                    {{ $type == 2 ? 'border-purple-500 bg-purple-50' : 'border-slate-200 hover:border-slate-300' }}">
-                            <div class="flex items-center gap-2">
-                                <div class="w-4 h-4 rounded-full border-2 flex items-center justify-center
-                                        {{ $type == 2 ? 'border-purple-500' : 'border-slate-300' }}">
-                                    @if($type == 2)<div class="w-2 h-2 rounded-full bg-purple-500"></div>@endif
-                                </div>
-                                <span class="font-semibold {{ $type == 2 ? 'text-purple-700' : 'text-slate-700' }}">Điểm danh đi lễ</span>
-                            </div>
-                        </button>
+                        <x-radio-card
+                            wire:model="type"
+                            :value="1"
+                            label="Điểm danh đi học"
+                            :checked="$type == 1" />
+
+                        <x-radio-card
+                            wire:model="type"
+                            :value="2"
+                            label="Điểm danh đi lễ"
+                            :checked="$type == 2" />
                     </div>
-                </div>
-
-                {{-- Phạm vi tạo --}}
-                <div>
-                    <label class="block text-sm font-semibold text-slate-700 mb-2">
-                        Phạm vi tạo <span class="text-red-500">*</span>
-                    </label>
-                    <div class="grid grid-cols-3 gap-3">
-                        <button type="button" wire:click="$set('scope', 'class')"
-                            class="px-3 py-3 rounded-xl border-2 transition-all text-left
-                                {{ $scope == 'class' ? 'border-primary-500 bg-primary-50' : 'border-slate-200 hover:border-slate-300' }}">
-                            <div class="text-sm font-semibold {{ $scope == 'class' ? 'text-primary-700' : 'text-slate-700' }}">
-                                Lớp này
-                            </div>
-                            <div class="text-xs text-slate-500 mt-0.5">{{ $this->selectedClassName }}</div>
-                        </button>
-
-                        <button type="button" wire:click="$set('scope', 'khoi')"
-                            @disabled(!$selectedKhoi)
-                            class="px-3 py-3 rounded-xl border-2 transition-all text-left
-                                {{ !$selectedKhoi ? 'opacity-40 cursor-not-allowed' : '' }}
-                                {{ $scope == 'khoi' ? 'border-purple-500 bg-purple-50' : 'border-slate-200 hover:border-slate-300' }}">
-                            <div class="text-sm font-semibold {{ $scope == 'khoi' ? 'text-purple-700' : 'text-slate-700' }}">
-                                Cả khối
-                            </div>
-                            <div class="text-xs text-slate-500 mt-0.5">Tất cả lớp trong khối</div>
-                        </button>
-
-                        <button type="button" wire:click="$set('scope', 'parish')"
-                            class="px-3 py-3 rounded-xl border-2 transition-all text-left
-                                {{ $scope == 'parish' ? 'border-coral-500 bg-red-50' : 'border-slate-200 hover:border-slate-300' }}">
-                            <div class="text-sm font-semibold {{ $scope == 'parish' ? 'text-red-700' : 'text-slate-700' }}">
-                                Cả xứ
-                            </div>
-                            <div class="text-xs text-slate-500 mt-0.5">Toàn bộ lớp năm học này</div>
-                        </button>
-                    </div>
-
-                    {{-- Warning khi chọn cả xứ --}}
-                    @if($scope === 'parish')
-                    <div class="mt-2 flex items-center gap-2 text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">
-                        <svg class="w-3.5 h-3.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M12 9v2m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                        </svg>
-                        Thao tác này sẽ tạo phiên cho tất cả lớp trong năm học. Vui lòng kiểm tra kỹ trước khi xác nhận.
-                    </div>
-                    @endif
                 </div>
 
                 {{-- Chế độ tạo --}}
@@ -416,25 +382,40 @@
                     <label class="block text-sm font-semibold text-slate-700 mb-2">
                         Chế độ tạo <span class="text-red-500">*</span>
                     </label>
-                    <div class="grid grid-cols-3 gap-3">
-                        @foreach([['single', 'Ngày đơn'], ['weekly', 'Theo tuần'], ['custom', 'Tùy chọn']] as [$val, $label])
-                        <button type="button" @click="mode = '{{ $val }}'; $wire.set('createMode', '{{ $val }}')"
-                            class="px-3 py-2 rounded-lg border-2 transition-all text-sm font-medium
-                                    {{ $createMode == $val ? 'border-primary-500 bg-primary-50 text-primary-700' : 'border-slate-200 hover:border-slate-300 text-slate-700' }}">
-                            {{ $label }}
-                        </button>
-                        @endforeach
+                    <div class="grid grid-cols-3 gap-3"
+                        x-on:click="
+                            createMode = $event.target.closest('[value]')?.getAttribute('value') ?? createMode;
+                            console.log('[createMode changed]', createMode);
+                        ">
+                        <x-radio-card
+                            wire:model="createMode"
+                            value="single"
+                            label="Theo ngày"
+                            :checked="$createMode == 'single'" />
+
+                        <x-radio-card
+                            wire:model="createMode"
+                            value="weekly"
+                            label="Theo tuần"
+                            :checked="$createMode == 'weekly'" />
+
+                        <x-radio-card
+                            wire:model="createMode"
+                            value="custom"
+                            label="Tùy chọn" 
+                            :checked="$createMode == 'custom'" />
+
                     </div>
                 </div>
 
                 {{-- Single Mode --}}
-                <div x-show="mode === 'single'">
+                <div x-show="createMode === 'single'">
                     <x-form-input label="Ngày điểm danh" name="startDate" type="date"
                         wire:model.defer="startDate" required />
                 </div>
 
                 {{-- Weekly Mode --}}
-                <div x-show="mode === 'weekly'" class="space-y-4">
+                <div x-show="createMode === 'weekly'" x-transition.opacity class="space-y-4">
                     <div class="grid grid-cols-2 gap-4">
                         <x-form-input label="Từ ngày" name="startDate" type="date"
                             wire:model.defer="startDate" required />
@@ -461,7 +442,7 @@
                 </div>
 
                 {{-- Custom Mode --}}
-                <div x-show="mode === 'custom'">
+                <div x-show="createMode === 'custom'">
                     <label class="block text-sm font-semibold text-slate-700 mb-2">
                         Chọn các ngày cụ thể <span class="text-red-500">*</span>
                     </label>
