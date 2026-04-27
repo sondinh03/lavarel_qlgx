@@ -4,12 +4,13 @@ namespace App\Services;
 
 class UploadService
 {
-    protected array $allowedExtensions = ['jpg', 'jpeg', 'png', 'webp', 'gif'];
+    protected array $allowedExtensions = ['jpg', 'jpeg', 'png', 'webp'];
 
     public function upload($file, $folder = 'others'): string
     {
         // 1. Validate extension
         $ext = strtolower($file->getClientOriginalExtension());
+        
         if (!in_array($ext, $this->allowedExtensions)) {
             throw new \Exception("File type [{$ext}] is not allowed.");
         }

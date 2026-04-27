@@ -11,11 +11,6 @@ class AttendanceService
 {
     public function saveBulkAttendance(array $drafts): array
     {
-        Log::info('💾 saveBulkAttendance() START', [
-            'total_drafts' => count($drafts),
-            'session_ids'  => collect($drafts)->pluck('session_id')->unique()->values(),
-        ]);
-
         DB::beginTransaction();
 
         try {
@@ -25,22 +20,15 @@ class AttendanceService
             $groupedBySession = collect($drafts)->groupBy('session_id');
 
             foreach ($groupedBySession as $sessionId => $records) {
-                Log::info('💾 processing session', [
-                    'session_id'    => $sessionId,
-                    'record_count'  => $records->count(),
-                ]);
-
                 $session = AttendanceSession::find($sessionId);
 
                 if (!$session) {
-                    Log::warning('💾 session not found', ['session_id' => $sessionId]);
                     $errors[] = "Buổi #{$sessionId} không tồn tại";
                     continue;
                 }
 
                 $canEdit = $session->canEdit();
                 if (!$canEdit['can']) {
-                    Log::warning('💾 session locked', ['session_id' => $sessionId, 'reason' => $canEdit['reason']]);
                     $errors[] = "Buổi {$session->date->format('d/m')}: {$canEdit['reason']}";
                     continue;
                 }
@@ -48,11 +36,6 @@ class AttendanceService
                 $existingIds = AttendanceRecord::where('session_id', $sessionId)
                     ->pluck('id', 'student_id')
                     ->toArray();
-
-                Log::info('💾 existing records', [
-                    'session_id' => $sessionId,
-                    'existing'   => count($existingIds),
-                ]);
 
                 $toInsert = [];
                 $toUpdate = [];
@@ -65,12 +48,6 @@ class AttendanceService
                         $toInsert[] = $record;
                     }
                 }
-
-                Log::info('💾 split insert/update', [
-                    'session_id' => $sessionId,
-                    'to_insert'  => count($toInsert),
-                    'to_update'  => count($toUpdate),
-                ]);
 
                 // INSERT
                 if (!empty($toInsert)) {
@@ -88,7 +65,6 @@ class AttendanceService
                             'updated_at' => $now,
                         ])->toArray()
                     );
-                    Log::info('💾 INSERT done', ['count' => count($toInsert)]);
                 }
 
                 // UPDATE — dùng Eloquent upsert thay vì raw SQL
@@ -103,18 +79,12 @@ class AttendanceService
                             'updated_at' => $now,
                         ]);
                     }
-                    Log::info('💾 UPDATE done', ['count' => count($toUpdate)]);
                 }
 
                 $savedCount += count($toInsert) + count($toUpdate);
             }
 
             DB::commit();
-
-            Log::info('💾 saveBulkAttendance() SUCCESS', [
-                'saved'  => $savedCount,
-                'errors' => $errors,
-            ]);
 
             if ($savedCount === 0 && !empty($errors)) {
                 return [
@@ -131,12 +101,6 @@ class AttendanceService
             return ['success' => true, 'message' => $message, 'errors' => $errors];
         } catch (\Exception $e) {
             DB::rollBack();
-
-            Log::error('💾 saveBulkAttendance() FAILED', [
-                'error' => $e->getMessage(),
-                'line'  => $e->getLine(),
-                'file'  => $e->getFile(),
-            ]);
 
             return ['success' => false, 'message' => 'Có lỗi khi lưu điểm danh. Vui lòng thử lại sau.'];
         }

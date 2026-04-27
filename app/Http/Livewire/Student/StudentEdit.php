@@ -158,6 +158,7 @@ class StudentEdit extends BaseComponent
         $this->saint_id        = $student->saint_id;
         $this->father_name       = $student->father_name ?? '';
         $this->mother_name       = $student->mother_name ?? '';
+        $this->avatar_path = $student->avatar_path;
 
         if ($this->parish_id) {
             $this->loadParishGroups();
@@ -225,17 +226,18 @@ class StudentEdit extends BaseComponent
             ]);
 
             if ($this->avatar_path) {
+                $path = app(UploadService::class)->upload($this->avatar_path, 'avatars');
+
                 if ($this->isEdit && $student->avatar_path) {
                     @unlink(public_path($student->avatar_path));
                 }
 
-                $path = app(UploadService::class)->upload($this->avatar_path, 'avatars');
                 $student->avatar_path = $path;
             }
 
             $student->save();
 
-            if ($this->classId) {
+            if ($this->classId && !$this->isEdit) {
                 $student->classes()->attach($this->classId, [
                     'enrolled_at' => now(),
                     'created_at'  => now(),
@@ -267,6 +269,19 @@ class StudentEdit extends BaseComponent
             ]);
             $this->emit('toast', 'error', 'Có lỗi xảy ra khi lưu dữ liệu. Vui lòng thử lại.');
         }
+    }
+
+    public function removeAvatar(): void
+    {
+        if ($this->isEdit) {
+            $student = StudentNew::find($this->studentId);
+            if ($student?->avatar_path) {
+                @unlink(public_path($student->avatar_path));
+                $student->update(['avatar_path' => null]);
+            }
+        }
+        $this->avatar_path = null;
+        // Alpine sẽ tự clear avatarPreview qua @click="avatarPreview = null"
     }
 
     public function switchTab(string $tab): void

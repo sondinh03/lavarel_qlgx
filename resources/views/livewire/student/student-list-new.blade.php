@@ -13,11 +13,19 @@
 
         {{-- Main Card --}}
         <div class="bg-white rounded-2xl shadow-sm border border-slate-200">
+            @if (!$isCatechist)
             <x-page-header
                 class="rounded-t-2xl"
                 title="Danh sách học sinh"
                 :count="$students->total()">
             </x-page-header>
+            @else
+            <div id="page-big-title" class="px-4 pt-5 pb-3 transition-opacity duration-300">
+                <h1 class="text-2xl font-bold text-slate-800">
+                    Danh sách học sinh ({{ $students->total() }})
+                </h1>
+            </div>
+            @endif
 
             <div class="p-4 lg:p-6 border-b border-slate-200 bg-slate-50/70 rounded-b-2xl">
                 @if($isCatechist)
@@ -136,13 +144,13 @@
 
                 {{-- Avatar --}}
                 <div class="w-11 h-11 rounded-full flex-shrink-0 flex items-center justify-center
-                            text-sm font-medium
-                            {{ $student->gender === 'male' ? 'bg-blue-50 text-blue-800' : 'bg-pink-50 text-pink-800' }}">
+                    text-sm font-medium shadow-xl
+                    bg-primary-50 text-primary-800">
                     @if($student->avatar_path)
-                    <img src="{{ asset('storage/'.$student->avatar_path) }}"
+                    <img src="{{ asset($student->avatar_path) }}"
                         class="w-full h-full rounded-full object-cover" />
                     @else
-                    {{ strtoupper(mb_substr($student->first_name, 0, 2)) }}
+                    {{ strtoupper(mb_substr($student->last_name, 0, 1) . mb_substr($student->first_name, 0, 1)) }}
                     @endif
                 </div>
 
@@ -154,8 +162,8 @@
                         </span>
                         <span class="flex-shrink-0 text-xs px-2 py-0.5 rounded-full
                             {{ $student->gender === 'male'
-                                ? 'bg-blue-50 text-blue-800'
-                                : 'bg-pink-50 text-pink-800' }}">
+                                ? 'bg-primary-50 text-primary-800'
+                                : 'bg-primary-50 text-primary-600' }}">
                             {{ $student->gender === 'male' ? 'Nam' : 'Nữ' }}
                         </span>
                     </div>
@@ -837,3 +845,43 @@
         @endif
     </div>
 </div>
+
+@push('page-title')
+<span class="text-slate-800 font-semibold text-sm">Danh sách học sinh</span>
+@endpush
+
+@push('scripts')
+<script>
+    (function() {
+        function initCollapsingHeader() {
+            const bigTitle = document.getElementById('page-big-title');
+            const headerTitle = document.getElementById('header-collapsed-title');
+
+            if (!bigTitle || !headerTitle) return;
+
+            const observer = new IntersectionObserver(
+                ([entry]) => {
+                    if (entry.isIntersecting) {
+                        // Big title visible → ẩn header title
+                        headerTitle.style.opacity = '0';
+                        bigTitle.style.opacity = '1';
+                    } else {
+                        // Big title out of view → hiện header title
+                        headerTitle.style.opacity = '1';
+                        bigTitle.style.opacity = '0';
+                    }
+                }, {
+                    threshold: 0,
+                    rootMargin: '-56px 0px 0px 0px', // trừ đi chiều cao header
+                }
+            );
+
+            observer.observe(bigTitle);
+        }
+
+        // Init sau khi Livewire render xong
+        document.addEventListener('livewire:load', initCollapsingHeader);
+        document.addEventListener('livewire:update', initCollapsingHeader);
+    })();
+</script>
+@endpush

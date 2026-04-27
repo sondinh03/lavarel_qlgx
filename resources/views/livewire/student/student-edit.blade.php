@@ -12,7 +12,23 @@
         <div
             x-data="{
                 tab: 'basic',
-                avatarPreview: '{{ $avatarPreviewUrl ?? '' }}',
+                avatarPreview: '{{ $avatar_path ? asset($avatar_path) : '' }}',
+                hasNewUpload: false,
+
+                handleFile(file) {
+                    if (!file || !file.type.startsWith('image/')) return;
+                    const reader = new FileReader();
+                    reader.onload = e => {
+                        this.avatarPreview = e.target.result;
+                        this.hasNewUpload = true;  // ← đánh dấu đây là ảnh mới
+                    };
+                    reader.readAsDataURL(file);
+                },
+
+                isNewUpload() {
+                    return this.avatarPreview && this.avatarPreview.startsWith('data:');
+                },
+
                 isDragging: false,
                 handleFile(file) {
                     if (!file || !file.type.startsWith('image/')) return;
@@ -117,28 +133,28 @@
                                 {{-- Preview --}}
                                 <div class="flex-shrink-0">
                                     <div class="relative w-28 h-28 group">
-                                        {{-- 1. Preview (ưu tiên cao nhất)  --}}
                                         <template x-if="avatarPreview">
-                                            <img :src="avatarPreview" alt="Avatar preview"
-                                                class="w-28 h-28 rounded-2xl object-cover shadow-md ring-4 ring-primary-50" />
+                                            <div class="relative">
+                                                <img :src="avatarPreview"
+                                                    class="w-28 h-28 rounded-2xl object-cover shadow-md ring-4 ring-primary-50" />
+                                                {{-- Badge phân biệt ảnh mới vs ảnh cũ --}}
+                                                <span x-show="isNewUpload()"
+                                                    class="absolute -top-1 -right-1 bg-primary-500 text-white
+                                                        text-[9px] font-bold px-1.5 py-0.5 rounded-full">
+                                                    Mới
+                                                </span>
+                                            </div>
                                         </template>
 
-                                        {{-- 2. Ảnh từ DB --}}
+                                        {{-- Fallback khi không có ảnh nào --}}
                                         <template x-if="!avatarPreview">
-                                            @if($avatar_path)
-                                            <img src="{{ asset($avatar_path) }}"
-                                                alt="Avatar"
-                                                class="w-28 h-28 rounded-2xl object-cover shadow-md ring-4 ring-primary-50" />
-                                            @else
-                                            {{-- 3. Fallback icon --}}
                                             <div class="w-28 h-28 rounded-2xl bg-gradient-to-br from-primary-400 to-primary-600
-                            flex items-center justify-center shadow-md ring-4 ring-primary-50">
+                                                flex items-center justify-center shadow-md ring-4 ring-primary-50">
                                                 <svg class="w-10 h-10 text-white/70" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
                                                         d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                                                 </svg>
                                             </div>
-                                            @endif
                                         </template>
 
                                         {{-- Overlay edit icon --}}
@@ -196,15 +212,16 @@
                                     @enderror
 
                                     {{-- Remove button --}}
-                                    <template x-if="avatarPreview">
+                                    <template x-if="isNewUpload()">
                                         <button type="button"
                                             wire:click="removeAvatar"
-                                            @click="avatarPreview = null"
+                                            x-on:click="avatarPreview = '{{ $avatar_path ? asset($avatar_path) : '' }}'; hasNewUpload = false"
                                             class="mt-2 inline-flex items-center gap-1.5 text-xs text-slate-500 hover:text-red-500 transition-colors">
                                             <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                    d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                                             </svg>
-                                            Xóa ảnh
+                                            Hủy ảnh mới
                                         </button>
                                     </template>
                                 </div>
