@@ -332,11 +332,6 @@
 
             {{-- Body - SCROLLABLE --}}
             <div class="flex-1 overflow-y-auto p-6 space-y-5">
-                {{-- DEBUG: xóa sau khi fix --}}
-                <div style="background:yellow;padding:8px;font-family:monospace;font-size:12px">
-                    Alpine createMode: <span x-text="createMode"></span>
-                    | typeof: <span x-text="typeof createMode"></span>
-                </div>
                 {{-- Error Summary --}}
                 @if ($errors->any())
                 <div class="bg-red-50 border-l-4 border-red-500 rounded-xl p-4">

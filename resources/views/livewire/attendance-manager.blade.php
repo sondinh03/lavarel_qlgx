@@ -34,8 +34,7 @@
 
             hasDraft() { 
                 const result = Object.keys(this.draft).length > 0;
-    console.log('[hasDraft]', result, this.draft);
-    return result; 
+                return result; 
             },
 
             draftCount() { return Object.keys(this.draft).length; },
@@ -49,8 +48,6 @@
                 } else {
                     this.draft[key] = { status: status, note: '' };
                 }
-
-                console.log('[draft after toggle]', this.draft);
             },
 
             openNote(studentId, sessionId) {
@@ -71,11 +68,6 @@
             },
 
             save() {
-                console.log('[save] called', {
-                    hasDraft: this.hasDraft(),
-                    draft: this.draft,
-                    isSaving: this.isSaving
-                });
                 if (!this.hasDraft() || this.isSaving) return;
                 this.isSaving = true;
                 this.getLivewire().call('saveFromClient', this.draft);        
@@ -137,8 +129,24 @@
             },
         }"
         x-init="livewireId = $el.closest('[wire\\:id]')?.getAttribute('wire:id');
-            console.log('livewireId:', livewireId);
-            records = @js($attendanceRecords ?? []);"
+            records = @js($attendanceRecords ?? []);
+
+            const guardUnload = (e) => {
+                if (Object.keys(draft).length === 0) return;
+                e.preventDefault();
+                return e.returnValue = '';
+            };
+
+            window.addEventListener('beforeunload', guardUnload);
+
+            // iOS Safari fallback — pagehide fires khi swipe back
+            window.addEventListener('pagehide', guardUnload);
+
+            $cleanup(() => {
+                window.removeEventListener('beforeunload', guardUnload);
+                window.removeEventListener('pagehide', guardUnload);
+            });
+        "
         x-on:attendance-records-loaded.window="onRecordsLoaded($event.detail.records)"
         x-on:attendance-saved.window="onSaved($event.detail)"
         x-on:attendance-state-cleared.window="onCleared()"
@@ -208,7 +216,7 @@
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                         d="M6 18L18 6M6 6l12 12" />
                                 </svg>
-                                Hủy (<span x-text="draftCount()"></span>)
+                                Hủy 
                             </button>
 
                             <button
@@ -227,18 +235,8 @@
                                     <path class="opacity-75" fill="currentColor"
                                         d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                                 </svg>
-                                <span x-show="!isSaving">Lưu điểm danh</span>
-                                <span x-show="isSaving" x-cloak>Đang lưu...</span>
-                            </button>
-
-                            <button
-                                x-on:click="save()"
-                                :disabled="!hasDraft() || isSaving"
-                                :class="hasDraft() && !isSaving
-                                    ? 'bg-primary-600 text-white hover:bg-primary-700'
-                                    : 'bg-slate-200 text-slate-400 cursor-not-allowed'"
-                                class="px-4 py-2 rounded-xl text-sm font-semibold transition-colors">
-                                <span x-text="isSaving ? 'Đang lưu...' : 'Lưu điểm danh'"></span>
+                                <span x-show="!isSaving">Lưu</span>
+                                <span x-show="isSaving" x-cloak></span>
                             </button>
                         </div>
                         @endif
@@ -670,11 +668,7 @@
                                         @if($mobileSessionId)
                                         <div class="flex gap-1.5 justify-center">
                                             <button
-                                                {{-- x-on:click="toggle({{ $student->id }}, {{ $mobileSessionId }}, 1)" --}}
-                                                x-on:click="
-                                                    console.log('[B1] click event fired');
-                                                    toggle({{ $student->id }}, {{ $mobileSessionId }}, 1)
-                                                "
+                                                x-on:click="toggle({{ $student->id }}, {{ $mobileSessionId }}, 1)"
                                                 :class="getStatus({{ $student->id }}, {{ $mobileSessionId }}) == 1
                                                 ? 'bg-green-500 text-white shadow-md ring-2 ring-green-300'
                                                 : 'bg-green-50 text-green-700 border border-green-200 active:bg-green-100'"
@@ -775,8 +769,8 @@
                                     <path class="opacity-75" fill="currentColor"
                                         d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                                 </svg>
-                                <span x-show="!isSaving">Lưu điểm danh</span>
-                                <span x-show="isSaving" x-cloak>Đang lưu...</span>
+                                <span x-show="!isSaving">Lưu</span>
+                                <span x-show="isSaving" x-cloak></span>
                                 <span
                                     x-show="hasDraft()"
                                     x-text="draftCount()"

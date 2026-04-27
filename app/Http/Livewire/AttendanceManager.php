@@ -85,7 +85,6 @@ class AttendanceManager extends BaseComponent
     protected $listeners = [
         'refresh'          => 'handleRefresh',
         'filterChanged'    => 'handleFilterChanged',
-        // 'viewModeDetected' => 'setViewMode',
     ];
 
     // ==================== LIFECYCLE ====================
@@ -785,7 +784,7 @@ class AttendanceManager extends BaseComponent
             $statsAssoc[$session['dateStr']] = $stats[$index];
         }
 
-        $layout = auth()->user()?->isCatechist()
+        $layout = $this->viewMode === 'mobile'
             ? 'frontend.layout.catechist'
             : 'frontend.layout.main';
 

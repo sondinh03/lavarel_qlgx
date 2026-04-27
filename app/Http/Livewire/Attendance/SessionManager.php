@@ -101,7 +101,7 @@ class SessionManager extends BaseComponent
     {
         return array_merge([
             'selectedNamHoc'  => ['as' => 'namHoc', 'except' => null],
-            'selectedKhoi'    => ['as' => 'khoi', 'except' => ''],
+            'selectedKhoi'    => ['as' => 'khoi', 'except' => null],
             'selectedClassId' => ['as' => 'classId', 'except' => null],
             'scope' => ['as' => 'scope', 'except' => 'class'],
         ], parent::queryString());
@@ -159,7 +159,7 @@ class SessionManager extends BaseComponent
 
         $this->selectedKhoi = is_numeric($this->selectedKhoi)
             ? (int) $this->selectedKhoi
-            : '';
+            : null;
 
         // ✅ Fix: đồng nhất kiểu với AttendanceManager (null thay vì '')
         $this->selectedClassId = is_numeric($this->selectedClassId)
@@ -251,7 +251,7 @@ class SessionManager extends BaseComponent
         if (array_key_exists('khoi', $filters)) {
             $this->selectedKhoi = is_numeric($filters['khoi'])
                 ? (int) $filters['khoi']
-                : '';
+                : null;
         }
 
         if (array_key_exists('lop', $filters)) {
@@ -429,12 +429,13 @@ class SessionManager extends BaseComponent
             DB::commit();
 
             $classCount = count($classIds);
-            $message = "Đã tạo {$created} phiên cho {$classCount} lớp";
+            $message = "Đã tạo {$created} phiên điểm danh";
+
             if ($skipped > 0) {
                 $message .= " ({$skipped} phiên đã tồn tại, bỏ qua)";
             }
 
-            $this->emit('toast',  'message', $message);
+            $this->emit('toast', 'success', $message);
             $this->resetForm();
             $this->loadSessions();
             $this->emit('sessionCreated');
@@ -467,7 +468,7 @@ class SessionManager extends BaseComponent
                 ? 'Đã khóa phiên điểm danh'
                 : 'Đã mở lại phiên điểm danh';
 
-            $this->emit('toast',  'message', $message);
+            $this->emit('toast', 'success', $message);
             $this->loadSessions();
         } catch (\Exception $e) {
             $this->logError($e, 'Error toggling session status', ['id' => $id]);
@@ -494,7 +495,7 @@ class SessionManager extends BaseComponent
             $session->delete();
             DB::commit();
 
-            $this->emit('toast', 'message', 'Đã xóa phiên điểm danh');
+            $this->emit('toast', 'success', 'Đã xóa phiên điểm danh');
             $this->loadSessions();
         } catch (\Exception $e) {
             DB::rollBack();
