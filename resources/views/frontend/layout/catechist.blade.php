@@ -108,7 +108,7 @@
             {{-- Left: logo + page title --}}
             <div class="flex items-center gap-2.5">
                 <a href="{{ route('dashboard') }}">
-                    <img src="{{ url(config('settings.logo')) }}" class="h-7 w-auto" alt="Logo">
+                    <img src="{{ url(config('settings.logo')) }}" class="h-14 w-auto" alt="Logo">
                 </a>
                 <span id="header-collapsed-title"
                     class="text-primary-800 font-semibold text-sm opacity-0 transition-opacity duration-300">
