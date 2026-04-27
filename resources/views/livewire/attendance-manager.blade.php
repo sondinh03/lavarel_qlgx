@@ -128,8 +128,28 @@
                 this.noteModal.open = false;
             },
         }"
-        x-init="livewireId = $el.closest('[wire\\:id]')?.getAttribute('wire:id');
+        x-init="
+            livewireId = $el.closest('[wire\\:id]')?.getAttribute('wire:id');
             records = @js($attendanceRecords ?? []);
+
+            const backupKey = 'draft_{{ $selectedClassId }}_{{ $attendanceType }}';
+
+            // ── Restore draft nếu có từ lần trước (mọi platform) ──
+            const backup = sessionStorage.getItem(backupKey);
+            if (backup) {
+                try {
+                    Object.assign(draft, JSON.parse(backup));
+                    $wire.emit('toast', 'warning', 'Bạn có ' + Object.keys(draft).length + ' thay đổi chưa lưu từ trước');
+                } catch(e) {}
+                sessionStorage.removeItem(backupKey);
+            }
+
+            const saveDraftBackup = () => {
+                if (document.visibilityState === 'hidden' && Object.keys(draft).length > 0) {
+                    sessionStorage.setItem(backupKey, JSON.stringify(draft));
+                }
+            };
+            document.addEventListener('visibilitychange', saveDraftBackup);
 
             const guardUnload = (e) => {
                 if (Object.keys(draft).length === 0) return;
