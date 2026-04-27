@@ -93,22 +93,22 @@ Route::middleware('auth')->group(function () {
         ->name('catechist.dashboard');
 
     Route::get('/dashboard', function () {
-    $user = auth()->user();
+        $user = auth()->user();
 
-    if ($user?->isCatechist()) {
-        return redirect()->route('catechist.dashboard');
-    }
+        if ($user?->isCatechist()) {
+            return redirect()->route('catechist.dashboard');
+        }
 
-    if ($user?->isParishAdmin()) {
-        return redirect()->route('parish-admin.dashboard');
-    }
+        if ($user?->isParishAdmin()) {
+            return redirect()->route('parish-admin.dashboard');
+        }
 
-    if ($user?->isSuperAdmin()) {
-        return redirect('/admin/dashboard');
-    }
+        if ($user?->isSuperAdmin()) {
+            return redirect('/admin/dashboard');
+        }
 
-    abort(403);
-})->middleware('auth')->name('dashboard');
+        abort(403);
+    })->middleware('auth')->name('dashboard');
 
     Route::get('/parishioner', ParishionersManager::class)
         ->name('parishioners.index');
@@ -129,7 +129,7 @@ Route::middleware('auth')->group(function () {
             ->name('students.index');
 
         Route::get('/students/create', StudentEdit::class)
-            ->middleware('role:parish_admin')        
+            ->middleware('role:parish_admin')
             ->name('students.create');
 
         Route::get('/students/{id}', StudentDetail::class)

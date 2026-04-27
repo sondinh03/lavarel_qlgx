@@ -126,7 +126,7 @@ class AttendanceManager extends BaseComponent
             } else {
                 // classId không hợp lệ → reset
                 $this->selectedClassId = null;
-                session()->flash('warning', 'Lớp học không tồn tại');
+                $this->emit('toast', 'warning', 'Lớp học không tồn tại');
             }
         }
 
@@ -289,7 +289,7 @@ class AttendanceManager extends BaseComponent
         } catch (\Exception $e) {
             $this->logError($e, 'Error loading students');
             $this->students = collect();
-            session()->flash('error', 'Không thể tải danh sách học sinh');
+            $this->emit('toast', 'error', 'Không thể tải danh sách học sinh');
         }
     }
 
@@ -320,7 +320,7 @@ class AttendanceManager extends BaseComponent
                     ])->toArray();
 
                 if (empty($this->sessions)) {
-                    session()->flash('info', 'Chưa có buổi điểm danh nào');
+                    $this->emit('toast', 'info', 'Chưa có buổi điểm danh nào');
                     return;
                 }
 
@@ -357,7 +357,7 @@ class AttendanceManager extends BaseComponent
                 })->toArray();
 
             if (empty($this->sessions)) {
-                session()->flash('info', 'Chưa có buổi điểm danh nào');
+                $this->emit('toast', 'info', 'Chưa có buổi điểm danh nào');
             }
         } catch (\Exception $e) {
             $this->logError($e, 'Error loading sessions');
@@ -443,25 +443,25 @@ class AttendanceManager extends BaseComponent
     public function saveFromClient(array $draft): void
     {
         if (empty($draft)) {
-            session()->flash('warning', 'Không có dữ liệu để lưu');
+            $this->emit('toast', 'warning', 'Không có dữ liệu để lưu');
             return;
         }
 
         foreach ($draft as $key => $item) {
             if (!preg_match('/^\d+_\d+$/', $key)) {
-                session()->flash('error', 'Dữ liệu điểm danh không hợp lệ (key format)');
+                $this->emit('toast', 'error', 'Dữ liệu điểm danh không hợp lệ (key format)');
                 return;
             }
 
             $status = $item['status'] ?? null;
             if (!is_int($status) || !in_array($status, [1, 2, 3])) {
-                session()->flash('error', 'Trạng thái điểm danh không hợp lệ');
+                $this->emit('toast', 'error', 'Trạng thái điểm danh không hợp lệ');
                 return;
             }
 
             $note = $item['note'] ?? '';
             if (!is_string($note) || strlen($note) > 500) {
-                session()->flash('error', 'Ghi chú không hợp lệ hoặc quá dài');
+                $this->emit('toast', 'error', 'Ghi chú không hợp lệ hoặc quá dài');
                 return;
             }
         }
@@ -488,17 +488,17 @@ class AttendanceManager extends BaseComponent
             if ($result['success']) {
                 $this->loadAttendanceRecords();
 
-                session()->flash('message', $result['message'] ?? 'Đã lưu điểm danh thành công');
+                $this->emit('toast', 'success', $result['message'] ?? 'Đã lưu điểm danh thành công');
 
                 $this->dispatchBrowserEvent('attendance-saved', [
                     'records' => $this->attendanceRecords,
                 ]);
             } else {
-                session()->flash('error', $result['message']);
+                $this->emit('toast', 'error', $result['message']);
             }
         } catch (\Exception $e) {
             $this->logError($e, 'Error saving attendance');
-            session()->flash('error', 'Có lỗi khi lưu điểm danh');
+            $this->emit('toast', 'error', 'Có lỗi khi lưu điểm danh');
         } finally {
             $this->dispatchBrowserEvent('attendance-save-completed');
         }
@@ -524,14 +524,14 @@ class AttendanceManager extends BaseComponent
         $session = collect($this->sessions)->firstWhere('id', (int) $sessionId);
 
         if (!$session || $session['locked']) {
-            session()->flash('warning', 'Không thể điểm danh cho buổi này');
+            $this->emit('toast', 'warning', 'Không thể điểm danh cho buổi này');
             return;
         }
 
         $student = \App\Models\StudentNew::find((int) $studentId);
 
         if (!$student) {
-            session()->flash('error', 'Không tìm thấy học sinh');
+            $this->emit('toast', 'error', 'Không tìm thấy học sinh');
             return;
         }
 
@@ -552,7 +552,7 @@ class AttendanceManager extends BaseComponent
         $this->validate(['attendanceNote' => 'nullable|string|max:500']);
 
         if (!$this->currentStudentId || !$this->currentSessionId) {
-            session()->flash('error', 'Thiếu thông tin học sinh hoặc buổi học');
+            $this->emit('toast', 'error', 'Thiếu thông tin học sinh hoặc buổi học');
             return;
         }
 
@@ -564,7 +564,7 @@ class AttendanceManager extends BaseComponent
             'note'   => trim($this->attendanceNote),
         ]);
 
-        session()->flash('message', 'Đã ghi nhận vắng có phép');
+        $this->emit('toast', 'success', 'Đã ghi nhận vắng có phép');
         $this->closeNoteModal();
     }
 

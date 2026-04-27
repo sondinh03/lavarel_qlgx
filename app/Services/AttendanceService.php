@@ -119,11 +119,11 @@ class AttendanceService
             if ($savedCount === 0 && !empty($errors)) {
                 return [
                     'success' => false,
-                    'message' => 'Không lưu được bản ghi nào. ' . implode('; ', array_slice($errors, 0, 3)),
+                    'message' => 'Không có học sinh nào được lưu. ' . implode('; ', array_slice($errors, 0, 3)),
                 ];
             }
 
-            $message = "Đã lưu {$savedCount} bản ghi điểm danh";
+            $message = "Đã lưu điểm danh cho {$savedCount} học sinh";
             if (!empty($errors)) {
                 $message .= sprintf(' (có %d lỗi)', count($errors));
             }

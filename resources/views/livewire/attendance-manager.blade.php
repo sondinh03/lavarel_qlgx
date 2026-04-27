@@ -33,7 +33,9 @@
             },
 
             hasDraft() { 
-                return Object.keys(this.draft).length > 0;  
+                const result = Object.keys(this.draft).length > 0;
+    console.log('[hasDraft]', result, this.draft);
+    return result; 
             },
 
             draftCount() { return Object.keys(this.draft).length; },
@@ -47,10 +49,13 @@
                 } else {
                     this.draft[key] = { status: status, note: '' };
                 }
+
+                console.log('[draft after toggle]', this.draft);
             },
 
             openNote(studentId, sessionId) {
-                $wire.openNoteModal(studentId, sessionId);
+                $this.getLivwire().call('openNote', studentId, sessionId);
+
             },
 
             markAll(sessionId, studentIds) {
@@ -59,10 +64,21 @@
                 });
             },
 
+            livewireId: null,
+
+            getLivewire() {
+                return window.Livewire.find(this.livewireId);
+            },
+
             save() {
+                console.log('[save] called', {
+                    hasDraft: this.hasDraft(),
+                    draft: this.draft,
+                    isSaving: this.isSaving
+                });
                 if (!this.hasDraft() || this.isSaving) return;
                 this.isSaving = true;
-                $wire.saveFromClient(this.draft);
+                this.getLivewire().call('saveFromClient', this.draft);        
             },
 
             discard() { this.draft = {}; },
@@ -120,7 +136,9 @@
                 this.noteModal.open = false;
             },
         }"
-        x-init="records = @js($attendanceRecords ?? []);"
+        x-init="livewireId = $el.closest('[wire\\:id]')?.getAttribute('wire:id');
+            console.log('livewireId:', livewireId);
+            records = @js($attendanceRecords ?? []);"
         x-on:attendance-records-loaded.window="onRecordsLoaded($event.detail.records)"
         x-on:attendance-saved.window="onSaved($event.detail)"
         x-on:attendance-state-cleared.window="onCleared()"
@@ -211,6 +229,16 @@
                                 </svg>
                                 <span x-show="!isSaving">Lưu điểm danh</span>
                                 <span x-show="isSaving" x-cloak>Đang lưu...</span>
+                            </button>
+
+                            <button
+                                x-on:click="save()"
+                                :disabled="!hasDraft() || isSaving"
+                                :class="hasDraft() && !isSaving
+                                    ? 'bg-primary-600 text-white hover:bg-primary-700'
+                                    : 'bg-slate-200 text-slate-400 cursor-not-allowed'"
+                                class="px-4 py-2 rounded-xl text-sm font-semibold transition-colors">
+                                <span x-text="isSaving ? 'Đang lưu...' : 'Lưu điểm danh'"></span>
                             </button>
                         </div>
                         @endif
@@ -362,8 +390,7 @@
                                             x-on:click="toggle({{ $student->id }}, {{ $session['id'] }}, 1)"
                                             :class="getStatus({{ $student->id }}, {{ $session['id'] }}) == 1
                                                     ? 'bg-green-500 text-white shadow-md scale-105'
-                                                    : 'bg-green-50 text-green-700 border border-green-200 hover:bg-green-100';
-                                            })()"
+                                                    : 'bg-green-50 text-green-700 border border-green-200 hover:bg-green-100'"
                                             class="px-2 py-1 rounded text-xs font-medium transition-all"
                                             aria-label="Có mặt">
                                             ✓
@@ -865,7 +892,7 @@
         </div>
     </div>
 
-    {{-- Unsaved Changes Indicator desktop --}}
+    {{-- Unsaved Changes Indicator desktop 
     <div
         x-show="hasDraft()"
         x-cloak
@@ -877,6 +904,7 @@
         </svg>
         <span x-text="draftCount() + ' thay đổi chưa lưu'"></span>
     </div>
+    --}}
 </div>>
 
 @push('page-title')

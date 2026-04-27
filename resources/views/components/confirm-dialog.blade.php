@@ -23,7 +23,7 @@
                 return;
             }
 
-            const match = this.wireMethod.match(/^(\w+)\((.*)\)$/);
+            const match = this.wireMethod.match(/^(\w+)(?:\((.*)\))?$/);
             console.log('4. regex match =', match);
 
             if (!match) {

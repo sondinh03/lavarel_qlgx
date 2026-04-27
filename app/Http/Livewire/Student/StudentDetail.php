@@ -178,6 +178,13 @@ class StudentDetail extends BaseComponent
         $this->authorize('delete', $student);
 
         try {
+            if ($student->avatar_path) {
+                $fullPath = public_path($student->avatar_path);
+                if (file_exists($fullPath)) {
+                    @unlink($fullPath);
+                }
+            }
+
             $student->delete();
             $this->emit('toast', 'message', 'Đã xóa học sinh thành công');
             $this->redirect(route('classes.index'));

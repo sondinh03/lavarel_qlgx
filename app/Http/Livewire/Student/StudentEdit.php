@@ -226,7 +226,7 @@ class StudentEdit extends BaseComponent
 
             if ($this->avatar_path) {
                 if ($this->isEdit && $student->avatar_path) {
-                    @unlink(public_path('uploads/' . $student->avatar_path));
+                    @unlink(public_path($student->avatar_path));
                 }
 
                 $path = app(UploadService::class)->upload($this->avatar_path, 'avatars');
