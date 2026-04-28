@@ -6,15 +6,15 @@
     ]" />
 @endsection
 
-<div class="min-h-screen bg-slate-50">
+<div class="min-h-screen bg-slate-50 p-2 sm:p-4 lg:p-6" style="min-height: calc(100vh - 56px - var(--bottom-offset));">
     <a href="#student-profile-main" class="sr-only focus:not-sr-only">Bỏ qua tới nội dung</a>
 
-    <div id="student-profile-main" class="mx-auto max-w-7xl p-4 sm:p-6 space-y-6">
+    <div id="student-profile-main" class="mx-auto max-w-7xl space-y-6">
         {{-- CARD CONTAINER --}}
         <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
 
             {{-- HEADER --}}
-            <div class="p-6 border-b border-slate-200 bg-white">
+            <div class="p-3 sm:p-4 lg:p-6 border-b border-slate-200 bg-white">
                 <div class="flex flex-col sm:flex-row gap-4 sm:items-start justify-between">
 
                     {{-- Avatar + Info --}}
@@ -35,7 +35,7 @@
 
                         <div class="flex-1 min-w-0">
                             <h1 class="text-2xl font-bold text-slate-900 mb-1">
-                                {{ $student['full_name'] }}
+                                {{ $student['full_name_with_saint'] }}
                             </h1>
                             <div class="flex flex-wrap items-center gap-3 text-sm">
                                 <span class="text-slate-600">
@@ -78,10 +78,10 @@
             </div>
 
             {{-- TABS --}}
-            <div class="px-6 py-4 border-b border-slate-200 bg-slate-50">
-                <div class="inline-flex rounded-xl bg-slate-200 p-1 text-sm font-medium">
+            <div class="p-3 sm:p-4 lg:p-6 border-b border-slate-200 bg-slate-50">
+                <div class="inline-flex w-full rounded-xl bg-slate-200 p-1 text-sm font-medium">
                     <button wire:click="switchTab('basic')"
-                        class="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg transition-all
+                        class="flex-1 inline-flex items-center gap-2 px-4 py-2.5 rounded-lg transition-all
                                {{ $activeTab === 'basic'
                                    ? 'bg-white shadow-sm text-primary-600 font-semibold'
                                    : 'text-slate-600 hover:text-primary-600 hover:bg-white/50' }}">
@@ -93,7 +93,7 @@
                     </button>
 
                     <button wire:click="switchTab('history')"
-                        class="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg transition-all
+                        class="flex-1 inline-flex items-center gap-2 px-4 py-2.5 rounded-lg transition-all
                                {{ $activeTab === 'history'
                                    ? 'bg-white shadow-sm text-primary-600 font-semibold'
                                    : 'text-slate-600 hover:text-primary-600 hover:bg-white/50' }}">
@@ -107,7 +107,7 @@
             </div>
 
             {{-- CONTENT --}}
-            <div class="p-6 space-y-6">
+            <div class="p-3 sm:p-4 lg:p-6 space-y-6">
 
                 {{-- ====== TAB: THÔNG TIN CƠ BẢN ====== --}}
                 @if($activeTab === 'basic')

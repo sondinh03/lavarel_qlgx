@@ -5,7 +5,7 @@
     ]" />
 @endsection
 
-<div class="min-h-screen bg-slate-50 p-4 lg:p-6">
+<div class="min-h-screen bg-slate-50 p-2 sm:p-4 lg:p-6" style="min-height: calc(100vh - 56px - var(--bottom-offset));">
     <a href="#main-content" class="sr-only focus:not-sr-only">Bỏ qua tới nội dung</a>
 
     <div class="mx-auto max-w-7xl space-y-6">

@@ -6,7 +6,7 @@
     ]" />
 @endsection
 
-<div class="bg-gradient-to-br from-slate-50 to-slate-100 p-4 sm:p-6" style="min-height: calc(100vh - 56px - var(--bottom-offset));">
+<div class="bg-gradient-to-br from-slate-50 to-slate-100 p-2 sm:p-4 lg:p-6" style="min-height: calc(100vh - 56px - var(--bottom-offset));">
 
     <a href="#main-content" class="sr-only focus:not-sr-only">Bỏ qua tới nội dung</a>
 
@@ -737,32 +737,14 @@
                     </div>
 
                     {{-- Mobile Sticky Bottom Bar --}}
-                    <div class="lg:hidden fixed left-0 right-0 z-40
+                    <div class="lg:hidden fixed left-0 right-0 z-20
                     bg-white border-t border-slate-200 shadow-lg px-4"
                         style="bottom: calc(env(safe-area-inset-bottom) + 60px); padding-bottom: 12px; padding-top: 12px;">
                         <div class="flex items-center gap-3 max-w-7xl mx-auto">
-
-                            {{-- QR --}}
-                            @if($selectedClassId && $currentSession && !$locked)
-                            <a href="{{ route('attendance.qr', [
-                                'classId'   => $selectedClassId,
-                                'sessionId' => $currentSession['id'],
-                                'type'      => $attendanceType,
-                            ]) }}"
-                                class="flex-shrink-0 w-14 h-14 rounded-xl border border-slate-200
-                                   flex items-center justify-center text-slate-600 hover:bg-slate-50 transition-colors">
-                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                        d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z" />
-                                </svg>
-                            </a>
-                            @endif
-
                             {{-- Discard --}}
                             <button
-                                x-show="hasDraft()"
-                                x-cloak
                                 x-on:click="discard()"
+                                :dsabled="!hasDraft() || isSaving"
                                 class="flex-shrink-0 w-14 h-14 rounded-xl border border-red-200
                                    flex items-center justify-center text-red-500 hover:bg-red-50 transition-colors">
                                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -779,7 +761,7 @@
                                 ? 'bg-slate-100 text-slate-400 cursor-not-allowed'
                                 : 'bg-primary-600 text-white shadow-md active:scale-95'"
                                 class="flex-1 h-14 rounded-xl font-semibold text-sm transition-all
-                                   flex items-center justify-center gap-2">
+                                   flex items-center justify-center gap-2 shadow-lg shadow-primary-200/60">
                                 <svg x-show="!isSaving" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                         d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" />

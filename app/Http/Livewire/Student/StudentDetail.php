@@ -92,6 +92,7 @@ class StudentDetail extends BaseComponent
             'student_code' => $student->student_code ?? 'Chưa có mã',
             'avatar_path'  => $student->avatar_path ?? '',
 
+            'full_name_with_saint' => $student->full_name_with_saint ?? $student->full_name ?? '',
             'full_name'    => $student->full_name,
             'first_name'   => $student->first_name ?? '',
             'last_name'    => $student->last_name ?? '',
