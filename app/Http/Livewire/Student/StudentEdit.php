@@ -37,6 +37,7 @@ class StudentEdit extends BaseComponent
     public $father_name = '';
     public $mother_name = '';
     public $avatar_path; // For file upload
+    public $existing_avatar = null; // Lưu đường dẫn ảnh cũ (string)
 
     // Parish
     public $parish_id = null;
@@ -137,9 +138,17 @@ class StudentEdit extends BaseComponent
 
     protected function loadDropdownData(): void
     {
-        // ParishNew dùng đúng model tương ứng bảng students.parish_id
-        $this->parishes = ParishNew::orderBy('name')->get(['id', 'name']);
-        $this->saints   = Holymanagement::orderBy('name')->get(['id', 'name']);
+        $this->parishes = cache()->remember('parishes_list', now()->addHours(24), function () {
+            return ParishNew::orderBy('name')->get(['id', 'name']);
+        });
+
+        $this->saints = cache()->remember('saints_list', now()->addHours(24), function () {
+            return Holymanagement::orderBy('name')->get(['id', 'name']);
+        });
+
+        if ($this->parish_id) {
+            $this->loadParishGroups();
+        }
     }
 
     protected function mapToForm(StudentNew $student): void
@@ -158,7 +167,8 @@ class StudentEdit extends BaseComponent
         $this->saint_id        = $student->saint_id;
         $this->father_name       = $student->father_name ?? '';
         $this->mother_name       = $student->mother_name ?? '';
-        $this->avatar_path = $student->avatar_path;
+        $this->avatar_path = null;
+        $this->existing_avatar = $student->avatar_path;
 
         if ($this->parish_id) {
             $this->loadParishGroups();
@@ -186,9 +196,11 @@ class StudentEdit extends BaseComponent
     protected function loadParishGroups(): void
     {
         $this->parishGroups = $this->parish_id
-            ? ParishGroup::where('parish_id', $this->parish_id)
-            ->orderBy('name')
-            ->get(['id', 'name'])  // bỏ ->toArray()
+            ? cache()->remember("parish_groups_{$this->parish_id}", now()->addHours(24), function () {
+                return ParishGroup::where('parish_id', $this->parish_id)
+                    ->orderBy('name')
+                    ->get(['id', 'name']);
+            })
             : collect();
     }
 
@@ -228,11 +240,13 @@ class StudentEdit extends BaseComponent
             if ($this->avatar_path) {
                 $path = app(UploadService::class)->upload($this->avatar_path, 'avatars');
 
-                if ($this->isEdit && $student->avatar_path) {
-                    @unlink(public_path($student->avatar_path));
+                if ($this->isEdit && $this->existing_avatar) {
+                    @unlink(public_path($this->existing_avatar));
                 }
 
                 $student->avatar_path = $path;
+            } elseif (!$this->isEdit) {
+                $student->avatar_path = null;
             }
 
             $student->save();
@@ -273,15 +287,14 @@ class StudentEdit extends BaseComponent
 
     public function removeAvatar(): void
     {
-        if ($this->isEdit) {
+        if ($this->isEdit && $this->existing_avatar) {
             $student = StudentNew::find($this->studentId);
             if ($student?->avatar_path) {
                 @unlink(public_path($student->avatar_path));
                 $student->update(['avatar_path' => null]);
             }
+            $this->existing_avatar = null;
         }
-        $this->avatar_path = null;
-        // Alpine sẽ tự clear avatarPreview qua @click="avatarPreview = null"
     }
 
     public function switchTab(string $tab): void

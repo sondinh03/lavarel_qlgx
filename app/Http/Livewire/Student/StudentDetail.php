@@ -13,6 +13,8 @@ class StudentDetail extends BaseComponent
     public $activeTab = 'basic';
     public $confirmingDelete = false;
 
+    private ?StudentNew $cachedStudent = null;
+
     protected $usePagination = false;
 
     protected function queryString()
@@ -52,22 +54,24 @@ class StudentDetail extends BaseComponent
 
     // ==================== DATA LOADING ====================
 
+    private function getStudent()
+    {
+        return $this->cachedStudent ??= StudentNew::findOrFail($this->studentId);
+    }
+
     public function loadStudentData(): void
     {
         try {
             $this->isLoading = true;
 
-            $student = StudentNew::with([
-                'parish:id,name',
-                'parishGroup:id,name',
-                'saint:id,name',
-                'parishioner',
-                'classes' => function ($query) {
-                    $query->select('classes.id', 'classes.name', 'classes.school_year_id')
-                        ->with('schoolYear:id,name')
-                        ->orderByDesc('students_class.created_at');
-                },
-            ])->findOrFail($this->studentId);
+            $student = $this->getStudent();
+
+            $student->load([
+                'parish',
+                'parishGroup',
+                'saint',
+                'classes.schoolYear',
+            ]);
 
             $this->authorize('view', $student);
 
@@ -84,6 +88,8 @@ class StudentDetail extends BaseComponent
             $this->isLoading = false;
         }
     }
+
+
 
     protected function mapStudentData(StudentNew $student): array
     {
@@ -168,14 +174,13 @@ class StudentDetail extends BaseComponent
 
     public function edit(): void
     {
-        $student = StudentNew::findOrFail($this->studentId);
-        $this->authorize('update', $student);
+        $this->authorize('update', $this->getStudent());
         $this->redirect(route('students.edit', ['id' => $this->studentId]));
     }
 
     public function deleteStudent(): void
     {
-        $student = StudentNew::findOrFail($this->studentId);
+        $student = $this->getStudent();
         $this->authorize('delete', $student);
 
         try {
@@ -223,9 +228,6 @@ class StudentDetail extends BaseComponent
 
         return view('livewire.student.student-detail', [
             'student'   => $this->studentData,
-            'studentModel' => $this->studentId
-                ? StudentNew::find($this->studentId)
-                : null,
             'isLoading' => $this->isLoading,
         ])
             ->extends($layout)

@@ -236,7 +236,7 @@
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                         d="M6 18L18 6M6 6l12 12" />
                                 </svg>
-                                Hủy 
+                                Hủy
                             </button>
 
                             <button
@@ -744,9 +744,13 @@
                             {{-- Discard --}}
                             <button
                                 x-on:click="discard()"
-                                :dsabled="!hasDraft() || isSaving"
-                                class="flex-shrink-0 w-14 h-14 rounded-xl border border-red-200
-                                   flex items-center justify-center text-red-500 hover:bg-red-50 transition-colors">
+                                :disabled="!hasDraft() || isSaving"
+                                :class="!hasDraft() || isSaving
+                                    ? 'border-slate-200 text-slate-400 cursor-not-allowed bg-slate-100'
+                                    : 'border-red-200 text-red-500 hover:bg-red-50'"
+                                                            class="flex-shrink-0 w-14 h-14 rounded-xl border
+                                    flex items-center justify-center transition-colors shadow-lg shadow-primary-200/60">
+
                                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                         d="M6 18L18 6M6 6l12 12" />
@@ -890,7 +894,7 @@
 </div>>
 
 @push('page-title')
-    <span class="text-slate-800 font-semibold text-sm">Điểm danh</span>
+<span class="text-slate-800 font-semibold text-sm">Điểm danh</span>
 @endpush
 
 @push('scripts')

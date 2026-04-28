@@ -79,9 +79,9 @@
 
             {{-- TABS --}}
             <div class="p-3 sm:p-4 lg:p-6 border-b border-slate-200 bg-slate-50">
-                <div class="inline-flex w-full rounded-xl bg-slate-200 p-1 text-sm font-medium">
+                <div class="inline-flex w-full sm:w-auto max-w-full rounded-xl bg-slate-200 p-1 text-sm font-medium">
                     <button wire:click="switchTab('basic')"
-                        class="flex-1 inline-flex items-center gap-2 px-4 py-2.5 rounded-lg transition-all
+                        class="flex-1 inline-flex items-center gap-2 px-4 py-2.5 rounded-lg transition-all whitespace-nowrap
                                {{ $activeTab === 'basic'
                                    ? 'bg-white shadow-sm text-primary-600 font-semibold'
                                    : 'text-slate-600 hover:text-primary-600 hover:bg-white/50' }}">

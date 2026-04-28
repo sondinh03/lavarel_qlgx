@@ -12,7 +12,7 @@
         <div
             x-data="{
                 tab: 'basic',
-                avatarPreview: '{{ $avatar_path ? asset($avatar_path) : '' }}',
+                avatarPreview: '{{ $existing_avatar ? asset($existing_avatar) : '' }}',
                 hasNewUpload: false,
 
                 handleFile(file) {
@@ -212,16 +212,16 @@
                                     @enderror
 
                                     {{-- Remove button --}}
-                                    <template x-if="isNewUpload()">
+                                    <template x-if="!isNewUpload() && avatarPreview">
                                         <button type="button"
                                             wire:click="removeAvatar"
-                                            x-on:click="avatarPreview = '{{ $avatar_path ? asset($avatar_path) : '' }}'; hasNewUpload = false"
+                                            x-on:click="avatarPreview = ''"
                                             class="mt-2 inline-flex items-center gap-1.5 text-xs text-slate-500 hover:text-red-500 transition-colors">
                                             <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                                     d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                                             </svg>
-                                            Hủy ảnh mới
+                                            Xóa ảnh
                                         </button>
                                     </template>
                                 </div>
@@ -240,62 +240,59 @@
                                 Thông tin cá nhân
                             </h2>
 
-                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <div class="grid grid-cols-1 sm:grid-cols-4 gap-4">
 
-                                {{-- Thánh bổn mạng (tên thánh) --}}
-                                <div class="sm:col-span-2">
-                                    <label class="block text-sm font-semibold text-slate-700 mb-1.5">
-                                        Thánh bổn mạng
-                                    </label>
-                                    <select wire:model.defer="saint_id"
-                                        class="w-full px-3 py-2 rounded-xl border border-slate-300 bg-white text-sm
-                                               focus:outline-none focus:ring-2 focus:ring-primary-500 transition-all">
-                                        <option value="">-- Chọn thánh bổn mạng --</option>
-                                        @foreach($saints as $saint)
-                                        <option value="{{ $saint->id }}">{{ $saint->name }}</option>
-                                        @endforeach
-                                    </select>
+                                {{-- Tên thánh --}}
+                                <div class="sm:col-span-1">
+                                    <label class="block text-sm font-semibold text-slate-700 mb-1.5">Tên thánh</label>
+                                    <x-searchable-select
+                                        wireModel="saint_id"
+                                        :options="$this->saints"
+                                        placeholder="-- Chọn --"
+                                        labelKey="name"
+                                        valueKey="id"
+                                        :value="$this->saint_id" />
                                     @error('saint_id')
                                     <p class="mt-1 text-xs text-red-500">{{ $message }}</p>
                                     @enderror
                                 </div>
 
                                 {{-- Họ --}}
-                                <div>
+                                <div class="sm:col-span-2">
                                     <label class="block text-sm font-semibold text-slate-700 mb-1.5">
                                         Họ <span class="text-red-500">*</span>
                                     </label>
                                     <input type="text" wire:model.defer="last_name" placeholder="Nguyễn"
                                         class="w-full px-3 py-2 rounded-xl border text-sm
-                                               focus:outline-none focus:ring-2 focus:ring-primary-500 transition-all
-                                               {{ $errors->has('last_name') ? 'border-red-400 bg-red-50' : 'border-slate-300 bg-white' }}" />
+                                            focus:outline-none focus:ring-2 focus:ring-primary-500 transition-all
+                                            {{ $errors->has('last_name') ? 'border-red-400 bg-red-50' : 'border-slate-300 bg-white' }}" />
                                     @error('last_name')
                                     <p class="mt-1 text-xs text-red-500">{{ $message }}</p>
                                     @enderror
                                 </div>
 
                                 {{-- Tên --}}
-                                <div>
+                                <div class="sm:col-span-1">
                                     <label class="block text-sm font-semibold text-slate-700 mb-1.5">
                                         Tên <span class="text-red-500">*</span>
                                     </label>
-                                    <input type="text" wire:model.defer="first_name" placeholder="Văn An"
+                                    <input type="text" wire:model.defer="first_name" placeholder="An"
                                         class="w-full px-3 py-2 rounded-xl border text-sm
-                                               focus:outline-none focus:ring-2 focus:ring-primary-500 transition-all
-                                               {{ $errors->has('first_name') ? 'border-red-400 bg-red-50' : 'border-slate-300 bg-white' }}" />
+                                            focus:outline-none focus:ring-2 focus:ring-primary-500 transition-all
+                                            {{ $errors->has('first_name') ? 'border-red-400 bg-red-50' : 'border-slate-300 bg-white' }}" />
                                     @error('first_name')
                                     <p class="mt-1 text-xs text-red-500">{{ $message }}</p>
                                     @enderror
                                 </div>
 
                                 {{-- Giới tính --}}
-                                <div>
+                                <div class="sm:col-span-1">
                                     <label class="block text-sm font-semibold text-slate-700 mb-1.5">
                                         Giới tính <span class="text-red-500">*</span>
                                     </label>
                                     <select wire:model.defer="gender"
                                         class="w-full px-3 py-2 rounded-xl border border-slate-300 bg-white text-sm
-                                               focus:outline-none focus:ring-2 focus:ring-primary-500 transition-all">
+                                            focus:outline-none focus:ring-2 focus:ring-primary-500 transition-all">
                                         <option value="male">Nam</option>
                                         <option value="female">Nữ</option>
                                     </select>
@@ -305,15 +302,16 @@
                                 </div>
 
                                 {{-- Ngày sinh --}}
-                                <div>
+                                <div class="sm:col-span-3">
                                     <label class="block text-sm font-semibold text-slate-700 mb-1.5">Ngày sinh</label>
                                     <input type="date" wire:model.defer="birthday"
                                         class="w-full px-3 py-2 rounded-xl border border-slate-300 bg-white text-sm
-                                               focus:outline-none focus:ring-2 focus:ring-primary-500 transition-all" />
+                                            focus:outline-none focus:ring-2 focus:ring-primary-500 transition-all" />
                                     @error('birthday')
                                     <p class="mt-1 text-xs text-red-500">{{ $message }}</p>
                                     @enderror
                                 </div>
+
                             </div>
                         </div>
 
@@ -383,18 +381,13 @@
 
                                 {{-- Giáo xứ --}}
                                 <div>
-                                    <label class="block text-sm font-semibold text-slate-700 mb-1.5">
-                                        Giáo xứ <span class="text-red-500">*</span>
-                                    </label>
-                                    <select wire:model="parish_id"
-                                        class="w-full px-3 py-2 rounded-xl border text-sm
-                                               focus:outline-none focus:ring-2 focus:ring-primary-500 transition-all
-                                               {{ $errors->has('parish_id') ? 'border-red-400 bg-red-50' : 'border-slate-300 bg-white' }}">
-                                        <option value="">-- Chọn giáo xứ --</option>
-                                        @foreach($parishes as $parish)
-                                        <option value="{{ $parish->id }}">{{ $parish->name }}</option>
-                                        @endforeach
-                                    </select>
+                                    <x-searchable-select
+                                        wireModel="parish_id"
+                                        :options="$this->parishes"
+                                        placeholder="-- Chọn giáo xứ --"
+                                        labelKey="name"
+                                        valueKey="id"
+                                        :value="$this->parish_id" />
                                     @error('parish_id')
                                     <p class="mt-1 text-xs text-red-500">{{ $message }}</p>
                                     @enderror
@@ -402,17 +395,16 @@
 
                                 {{-- Giáo họ --}}
                                 <div>
-                                    <label class="block text-sm font-semibold text-slate-700 mb-1.5">Giáo họ</label>
-                                    <select wire:model.defer="parish_group_id"
-                                        @disabled(!$parish_id)
-                                        class="w-full px-3 py-2 rounded-xl border border-slate-300 text-sm
-                                               focus:outline-none focus:ring-2 focus:ring-primary-500 transition-all
-                                               disabled:bg-slate-100 disabled:text-slate-400 disabled:cursor-not-allowed">
-                                        <option value="">-- Chọn giáo họ --</option>
-                                        @foreach($parishGroups as $group)
-                                        <option value="{{ $group->id }}">{{ $group->name }}</option>
-                                        @endforeach
-                                    </select>
+                                    <x-searchable-select
+                                        wireModel="parish_group_id"
+                                        :options="$this->parishGroups"
+                                        placeholder="-- Chọn giáo họ --"
+                                        labelKey="name"
+                                        valueKey="id"
+                                        :value="$this->parish_group_id" />
+                                    @error('parish_group_id')
+                                    <p class="mt-1 text-xs text-red-500">{{ $message }}</p>
+                                    @enderror
                                 </div>
 
                             </div>
@@ -469,43 +461,20 @@
                 </div>
 
                 {{-- ── FORM ACTIONS ── --}}
-                <div class="px-6 py-4 border-t border-slate-200 bg-slate-50 flex items-center justify-between gap-4">
-
-                    <a href="{{ 
+                <div class="px-6 py-4 border-t border-slate-200 bg-slate-50 flex items-center justify-end gap-4">
+                    <x-button as="a" variant="outline" href="{{ 
                         $isEdit 
                             ? route('students.show', $studentId) 
                             : route('students.index', $classId ? ['class' => $classId] : [])
-                    }}"
-                        class="inline-flex items-center gap-2 px-4 py-2 rounded-xl border border-slate-200
-                               bg-white text-sm font-medium text-slate-700
-                               hover:bg-slate-50 hover:shadow-md transition-all duration-200">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-                        </svg>
+                    }}">
+                        <x-icon name="cancel" class="w-4 h-4" />
                         Hủy
-                    </a>
+                    </x-button>
 
-                    <button type="submit"
-                        wire:loading.attr="disabled"
-                        wire:target="save"
-                        class="inline-flex items-center gap-2 px-6 py-2 rounded-xl
-                               bg-primary-500 hover:bg-primary-600 text-white text-sm font-semibold
-                               hover:shadow-md active:scale-95 transition-all duration-200
-                               disabled:opacity-60 disabled:cursor-not-allowed">
-
-                        <svg wire:loading.remove wire:target="save"
-                            class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
-                        </svg>
-                        <svg wire:loading wire:target="save"
-                            class="animate-spin w-4 h-4" fill="none" viewBox="0 0 24 24">
-                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
-                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-                        </svg>
-
-                        <span wire:loading.remove wire:target="save">{{ $isEdit ? 'Cập nhật' : 'Tạo mới' }}</span>
-                        <span wire:loading wire:target="save">Đang lưu...</span>
-                    </button>
+                    <x-button variant="primary" wire:click="save" wire:loading.attr="disabled" wire:target="save">
+                        <x-icon name="save" class="w-4 h-4" />
+                        Lưu
+                    </x-button>
                 </div>
             </form>
         </div>

@@ -22,10 +22,10 @@
     {{-- Select Container --}}
     <div class="relative">
         <select
-            {{ $wireModel ? "wire:model.live={$wireModel}" : '' }}
+            {{ $wireModel ? "wire:model.defer={$wireModel}" : '' }}
             {{ $disabled ? 'disabled' : '' }}
             {{ $attributes->merge([
-                'class' => 'w-full px-4 py-3 bg-white border rounded-xl text-slate-900 
+                'class' => 'w-full px-4 py-2 bg-white border rounded-xl text-slate-900 
                            focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent
                            transition-all cursor-pointer appearance-none ' .
                            ($error ? 'border-red-300' : 'border-slate-200') .
