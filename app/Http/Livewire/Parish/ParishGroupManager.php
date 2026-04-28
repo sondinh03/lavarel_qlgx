@@ -121,8 +121,6 @@ class ParishGroupManager extends BaseComponent
             );
 
             DB::commit();
-            cache()->forget("parish_groups_{$this->parish_id}");
-
             $this->emit('toast', 
                 'success',
                 $this->editingId
@@ -177,7 +175,6 @@ class ParishGroupManager extends BaseComponent
             }
 
             $group->delete();
-            cache()->forget("parish_groups_{$this->parish_id}");
 
             $this->emit('toast', 'success', 'Đã xóa giáo họ');
         } catch (ModelNotFoundException) {
