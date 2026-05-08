@@ -471,7 +471,7 @@
                         Hủy
                     </x-button>
 
-                    <x-button variant="primary" wire:click="save" wire:loading.attr="disabled" wire:target="save">
+                    <x-button variant="primary" wire:click="save" wire:loading.attr="disabled" wire:target="avatar_path,save">
                         <x-icon name="save" class="w-4 h-4" />
                         Lưu
                     </x-button>
