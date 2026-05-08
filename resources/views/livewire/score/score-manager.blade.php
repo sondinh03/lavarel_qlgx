@@ -59,11 +59,6 @@
                                    ? 'bg-white text-primary-600 shadow-sm'
                                    : 'text-slate-600 hover:text-slate-900' }}">
                         Cấu hình loại điểm
-                        @if($scoreTypes->count() > 0)
-                        <span class="ml-1 px-1.5 py-0.5 bg-primary-100 text-primary-700 text-xs rounded-full">
-                            {{ $scoreTypes->count() }}
-                        </span>
-                        @endif
                     </button>
                 </div>
 
@@ -351,17 +346,18 @@
                         </td>
                         <td class="px-6 py-4 text-center">
                             <div class="inline-flex items-center gap-3">
-                                <x-table-action wire="editScoreType({{ $st->id }})" icon="edit">Sửa</x-table-action>
-
+                                <x-tooltip content="Chỉnh sửa">
+                                    <x-table-action wire="editScoreType({{ $st->id }})" icon="edit" />
+                                </x-tooltip>
                                 <span class="text-slate-300">|</span>
-
-                                <x-table-action
-                                    wire="delete({{ $st->id }})"
-                                    icon="trash"
-                                    color="danger"
-                                    confirm="Bạn có chắc chắn muốn xóa loại điểm '{{ $st->name }}'?">
-                                    Xóa
-                                </x-table-action>
+                                <x-tooltip content="Xóa">
+                                    <x-table-action
+                                        wire="delete({{ $st->id }})"
+                                        icon="trash"
+                                        color="danger"
+                                        :loading="true"
+                                        confirm="Bạn có chắc chắn muốn xóa loại điểm '{{ $st->name }}'?" />
+                                </x-tooltip>
                             </div>
                         </td>
                     </tr>

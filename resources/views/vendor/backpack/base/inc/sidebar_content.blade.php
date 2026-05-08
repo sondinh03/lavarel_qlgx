@@ -22,7 +22,7 @@ use Illuminate\Support\Facades\Auth;
     <ul class="nav-dropdown-items">
     	<li class='nav-item'><a class='nav-link' href='{{ backpack_url('student') }}'><i class='nav-icon la la-briefcase'></i> {{__('backend.students')}}</a></li>
     	<li class='nav-item'><a class='nav-link' href='{{ backpack_url('lop') }}'><i class='nav-icon la la-school'></i> {{__('backend.lops')}}</a></li>
-    	<li class='nav-item'><a class='nav-link' href='{{ backpack_url('block') }}'><i class='nav-icon la la-cubes'></i> {{__('backend.Block')}}</a></li>
+    	<li class='nav-item'><a class='nav-link' href='{{ backpack_url('grade-level') }}'><i class='nav-icon la la-cubes'></i> {{__('backend.Block')}}</a></li>
     	<li class='nav-item'><a class='nav-link' href='{{ backpack_url('nam-hoc') }}'><i class='nav-icon la la-handshake'></i> {{ __('backend.namhoc') }}</a></li>
         <li class='nav-item'><a class='nav-link' href='{{ backpack_url('teacher') }}'><i class='nav-icon la la-chalkboard-teacher'></i> {{__('backend.teachers')}}</a></li>
     </ul>

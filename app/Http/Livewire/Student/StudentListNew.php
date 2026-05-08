@@ -151,7 +151,7 @@ class StudentListNew extends BaseComponent
             $this->validateOnly('search');
         } catch (ValidationException $e) {
             $this->search = '';
-            $this->emit('toast', 'wwarning', 'Từ khóa tìm kiếm không hợp lệ.');
+            $this->emit('toast', 'warning', 'Từ khóa tìm kiếm không hợp lệ.');
         }
 
         $this->resetPage();
@@ -677,6 +677,7 @@ class StudentListNew extends BaseComponent
                 $q->where('first_name', 'like', "%{$search}%")
                     ->orWhere('last_name', 'like', "%{$search}%")
                     ->orWhere('student_code', 'like', "%{$search}%")
+                    ->orWhereRaw("CONCAT(last_name, ' ', first_name) LIKE ?", ["%{$search}%"])
                     ->orWhereHas('saint', function ($q2) use ($search) {
                         $q2->where('name', 'like', "%{$search}%");
                     });
