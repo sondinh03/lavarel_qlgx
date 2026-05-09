@@ -9,6 +9,7 @@ use App\Models\ParishNew;
 use App\Models\Holymanagement;
 use App\Models\ParishGroup;
 use App\Services\UploadService;
+use App\Support\CacheKeys;
 use Illuminate\Support\Facades\DB;
 use Livewire\WithFileUploads;
 
@@ -104,7 +105,6 @@ class StudentEdit extends BaseComponent
     protected function loadInitialData(): void
     {
         try {
-            // Kiểm tra quyền tạo/sửa ngay từ đầu
             if ($this->isEdit) {
                 $student = StudentNew::findOrFail($this->studentId);
                 $this->authorize('update', $student);
@@ -112,7 +112,7 @@ class StudentEdit extends BaseComponent
                 $this->authorize('create', StudentNew::class);
             }
 
-            $this->loadDropdownData();
+            $this->loadDropdownData(); // parishes + saints only
 
             if ($this->isEdit) {
                 $this->mapToForm(
@@ -121,6 +121,9 @@ class StudentEdit extends BaseComponent
             } else {
                 $this->initializeDefaults();
             }
+
+            $this->loadParishGroups(); // ← gọi 1 lần duy nhất ở đây
+
         } catch (\Illuminate\Auth\Access\AuthorizationException $e) {
             abort(403, 'Bạn không có quyền thực hiện thao tác này');
         } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
@@ -138,17 +141,19 @@ class StudentEdit extends BaseComponent
 
     protected function loadDropdownData(): void
     {
-        $this->parishes = cache()->remember('parishes_list', now()->addHours(24), function () {
-            return ParishNew::orderBy('name')->get(['id', 'name']);
-        });
+        $this->parishes = cache()->remember(
+            CacheKeys::PARISHES_LIST,
+            now()->addHours(24),
+            fn() =>
+            ParishNew::orderBy('name')->get(['id', 'name'])
+        );
 
-        $this->saints = cache()->remember('saints_list', now()->addHours(24), function () {
-            return Holymanagement::orderBy('name')->get(['id', 'name']);
-        });
-
-        if ($this->parish_id) {
-            $this->loadParishGroups();
-        }
+        $this->saints = cache()->remember(
+            CacheKeys::SAINTS_LIST,
+            now()->addHours(24),
+            fn() =>
+            Holymanagement::orderBy('name')->get(['id', 'name'])
+        );
     }
 
     protected function mapToForm(StudentNew $student): void
@@ -169,10 +174,6 @@ class StudentEdit extends BaseComponent
         $this->mother_name       = $student->mother_name ?? '';
         $this->avatar_path = null;
         $this->existing_avatar = $student->avatar_path;
-
-        if ($this->parish_id) {
-            $this->loadParishGroups();
-        }
     }
 
     protected function initializeDefaults(): void
@@ -196,7 +197,7 @@ class StudentEdit extends BaseComponent
     protected function loadParishGroups(): void
     {
         $this->parishGroups = $this->parish_id
-            ? cache()->remember("parish_groups_{$this->parish_id}", now()->addHours(24), function () {
+            ? cache()->remember(CacheKeys::parishGroups($this->parish_id), now()->addHours(24), function () {
                 return ParishGroup::where('parish_id', $this->parish_id)
                     ->orderBy('name')
                     ->get(['id', 'name']);

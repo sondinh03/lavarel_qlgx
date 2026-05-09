@@ -48,13 +48,13 @@
                             debounce="500ms"
                             class="flex-1" />
 
-                        <x-button
+                        {{-- <x-button
                             as="a"
                             href="{{ route('attendance.show') }}{{ $selectedLop ? '?classId='.$selectedLop : '' }}"
                             variant="outline">
                             <x-icon name="clipboard" />
                             Điểm danh
-                        </x-button>
+                        </x-button> --}}
                     </div>
                 </div>
 
@@ -99,12 +99,22 @@
                                 </x-button>
                             </x-tooltip>
 
-                            <x-button
+                            {{-- <x-button
                                 as="a"
                                 href="{{ route('attendance.show') }}{{ $selectedLop ? '?classId='.$selectedLop : '' }}"
                                 variant="outline">
                                 <x-icon name="clipboard" />
                                 Điểm danh
+                            </x-button> --}}
+
+                            <x-button as="a" href="$this->importUrl" icon="upload" variant="outline">
+                                <x-icon name="upload" />
+                                Import Excel
+                            </x-button>
+
+                            <x-button wire="export" variant="outline">
+                                <x-icon name="download" />
+                                Export Excel
                             </x-button>
 
                             <x-dropdown label="Khác" icon="grid" align="right" position="fixed">

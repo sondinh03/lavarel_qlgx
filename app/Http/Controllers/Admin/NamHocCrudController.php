@@ -6,11 +6,6 @@ use App\Http\Requests\NamHocRequest;
 use Backpack\CRUD\app\Http\Controllers\CrudController;
 use Backpack\CRUD\app\Library\CrudPanel\CrudPanelFacade as CRUD;
 
-/**
- * Class NamHocCrudController
- * @package App\Http\Controllers\Admin
- * @property-read \Backpack\CRUD\app\Library\CrudPanel\CrudPanel $crud
- */
 class NamHocCrudController extends CrudController
 {
     use \Backpack\CRUD\app\Http\Controllers\Operations\ListOperation;
@@ -19,11 +14,6 @@ class NamHocCrudController extends CrudController
     use \Backpack\CRUD\app\Http\Controllers\Operations\DeleteOperation;
     use \Backpack\CRUD\app\Http\Controllers\Operations\ShowOperation;
 
-    /**
-     * Configure the CrudPanel object. Apply settings to all operations.
-     * 
-     * @return void
-     */
     public function setup()
     {
         CRUD::setModel(\App\Models\NamHoc::class);
@@ -31,79 +21,138 @@ class NamHocCrudController extends CrudController
         CRUD::setEntityNameStrings(__('backend.namhoc'), __('backend.namhoc'));
     }
 
-    /**
-     * Define what happens when the List operation is loaded.
-     * 
-     * @see  https://backpackforlaravel.com/docs/crud-operation-list-entries
-     * @return void
-     */
     protected function setupListOperation()
     {
-        
+        CRUD::addColumn([
+            'name'  => 'name',
+            'type'  => 'text',
+            'label' => __('backend.name'),
+        ]);
 
-        /**
-         * Columns can be defined using the fluent syntax or array syntax:
-         * - CRUD::column('price')->type('number');
-         * - CRUD::addColumn(['name' => 'price', 'type' => 'number']); 
-         */
-        
-        CRUD::addColumn(['name' => 'name', 'type' => 'text', 'label' => __('backend.name'), 'limit' => 255]);
-        CRUD::addColumn(['name' => 'status', 'type' => 'closure', 'label' => __('backend.status'), 'function' => function ($entry) {
-            if ($entry->status == 0) {
-                return __('backend.draft');
-            } else {
-                return __('backend.publish');
-            }
-        }]);
+        // setupListOperation — thêm sau cột name
+        CRUD::addColumn([
+            'name'      => 'parish',
+            'type'      => 'relationship',
+            'label'     => 'Giáo xứ',
+            'attribute' => 'name',
+        ]);
+
+        CRUD::addColumn([
+            'name'  => 'semester_1_display',
+            'type'  => 'text',
+            'label' => 'Học kỳ 1',
+        ]);
+
+        CRUD::addColumn([
+            'name'  => 'semester_2_display',
+            'type'  => 'text',
+            'label' => 'Học kỳ 2',
+        ]);
+
+        CRUD::addColumn([
+            'name'     => 'status_label',
+            'type'     => 'text',
+            'label'    => __('backend.status'),
+        ]);
     }
 
-    /**
-     * Define what happens when the Create operation is loaded.
-     * 
-     * @see https://backpackforlaravel.com/docs/crud-operation-create
-     * @return void
-     */
+    protected function setupShowOperation()
+    {
+        CRUD::set('show.setFromDb', false); // tắt tự động lấy từ DB
+
+        CRUD::addColumn([
+            'name'  => 'name',
+            'type'  => 'text',
+            'label' => 'Tên năm học',
+        ]);
+
+        CRUD::addColumn([
+            'name'      => 'parish',
+            'type'      => 'relationship',
+            'label'     => 'Giáo xứ',
+            'attribute' => 'name',
+        ]);
+
+        CRUD::addColumn([
+            'name'  => 'semester_1_display',
+            'type'  => 'text',
+            'label' => 'Học kỳ 1',
+        ]);
+
+        CRUD::addColumn([
+            'name'  => 'semester_2_display',
+            'type'  => 'text',
+            'label' => 'Học kỳ 2',
+        ]);
+
+        CRUD::addColumn([
+            'name'  => 'status_label',
+            'type'  => 'text',
+            'label' => 'Trạng thái',
+        ]);
+    }
+
     protected function setupCreateOperation()
     {
         CRUD::setValidation(NamHocRequest::class);
 
-        
-
-        /**
-         * Fields can be defined using the fluent syntax or array syntax:
-         * - CRUD::field('price')->type('number');
-         * - CRUD::addField(['name' => 'price', 'type' => 'number'])); 
-         */
-        
+        // Tab: Thông tin chung
         CRUD::addField([
-            'name' => 'name',
-            'type' => 'text',
-            'label' => __('backend.name'),
-            'wrapper' => [
-                'class' => 'form-group col-md-4',
-            ],
-            'tab' => __('backend.general'),
+            'name'        => 'parish_id',
+            'type'        => 'select',
+            'label'       => 'Giáo xứ',
+            'entity'      => 'parish',
+            'attribute'   => 'name',
+            'model'       => \App\Models\ParishNew::class,
+            'wrapper'     => ['class' => 'form-group col-md-6'],
+            'tab'         => 'Thông tin chung',
         ]);
+
         CRUD::addField([
-            'name' => 'status',
-            'type' => 'radio',
-            'label' => __('backend.status'),
-            'options' => [
-                0 => __('backend.draft'),
-                1 => __('backend.publish')
-            ],
-            'default'   => 1,
-            'inline' => true,
-            'tab' => __('backend.general')
+            'name'    => 'status',
+            'type'    => 'radio',
+            'label'   => __('backend.status'),
+            'options' => \App\Models\NamHoc::STATUS_LABELS,
+            'default' => \App\Models\NamHoc::STATUS_ACTIVE,
+            'inline'  => true,
+            'tab'     => 'Thông tin chung',
+        ]);
+
+        // Tab: Học kỳ 1
+        CRUD::addField([
+            'name'    => 'start_date_one',
+            'type'    => 'date',
+            'label'   => 'Ngày bắt đầu HK1',
+            'wrapper' => ['class' => 'form-group col-md-6'],
+            'tab'     => 'Học kỳ 1',
+        ]);
+
+        CRUD::addField([
+            'name'    => 'end_date_one',
+            'type'    => 'date',
+            'label'   => 'Ngày kết thúc HK1',
+            'wrapper' => ['class' => 'form-group col-md-6'],
+            'tab'     => 'Học kỳ 1',
+        ]);
+
+        // Tab: Học kỳ 2
+        CRUD::addField([
+            'name'    => 'start_date_two',
+            'type'    => 'date',
+            'label'   => 'Ngày bắt đầu HK2',
+            'wrapper' => ['class' => 'form-group col-md-6'],
+            'tab'     => 'Học kỳ 2',
+        ]);
+
+        CRUD::addField([
+            'name'    => 'end_date_two',
+            'type'    => 'date',
+            'label'   => 'Ngày kết thúc HK2',
+            'wrapper' => ['class' => 'form-group col-md-6'],
+            'tab'     => 'Học kỳ 2',
         ]);
     }
 
-    /**
-     * Define what happens when the Update operation is loaded.
-     * 
-     * @see https://backpackforlaravel.com/docs/crud-operation-update
-     * @return void
-     */
     protected function setupUpdateOperation()
     {
         $this->setupCreateOperation();

@@ -7,10 +7,15 @@ use App\Models\Lop;
 use App\Models\ClassTeacher;
 use App\Models\Holymanagement;
 use App\Models\Parish;
+use App\Models\ParishGroup;
 use App\Models\Parishioner;
+use App\Models\ParishNew;
 use App\Observers\LopObserver;
 use App\Observers\ClassTeacherObserver;
+use App\Observers\HolymanagementObserver;
+use App\Observers\ParishGroupObserver;
 use App\Observers\ParishionerObserver;
+use App\Observers\ParishNewObserver;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Route;
 use Livewire\Livewire;
@@ -41,6 +46,9 @@ class AppServiceProvider extends ServiceProvider
         Lop::observe(LopObserver::class);
         ClassTeacher::observe(ClassTeacherObserver::class);
         Parishioner::observe(ParishionerObserver::class);
+        ParishNew::observe(ParishNewObserver::class);
+        Holymanagement::observe(HolymanagementObserver::class);
+        ParishGroup::observe(ParishGroupObserver::class);
 
         if (
             app()->environment('local') &&

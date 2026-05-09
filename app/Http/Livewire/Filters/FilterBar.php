@@ -84,7 +84,7 @@ class FilterBar extends Component
     {
         $this->selectedKhoi = null;
         $this->selectedLop  = null;
-        $this->loadLops(); 
+        $this->loadLops();
         $this->emitFilter(); // notify lại cha để đồng bộ
     }
 
@@ -170,7 +170,8 @@ class FilterBar extends Component
             ->active()
             ->orderBy('grade_level_id')
             ->orderBy('name')
-            ->pluck('name', 'id');
+            ->get(['id', 'name'])
+            ->map(fn($lop) => ['id' => $lop->id, 'name' => $lop->name]);
     }
 
     public function updatedSelectedNamHoc(): void

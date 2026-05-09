@@ -60,8 +60,8 @@
                        disabled:bg-slate-100 disabled:text-slate-400">
             <option value="">-- Tất cả lớp --</option>
 
-            @foreach($lops as $id => $name)
-            <option value="{{ $id }}">{{ $name }}</option>
+            @foreach($lops as $lop)
+            <option value="{{ $lop['id'] }}">{{ $lop['name'] }}</option>
             @endforeach
         </select>
     </div>

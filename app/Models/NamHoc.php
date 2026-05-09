@@ -10,7 +10,6 @@ class NamHoc extends Model
 {
     use BelongsToParish;
     use CrudTrait;
-    use BelongsToParish;
 
     /*
     |--------------------------------------------------------------------------
@@ -114,7 +113,7 @@ class NamHoc extends Model
 
     public function parish()
     {
-        return $this->belongsTo(Parish::class, 'parish_id', 'id');
+        return $this->belongsTo(ParishNew::class, 'parish_id', 'id');
     }
 
     public function lops()
