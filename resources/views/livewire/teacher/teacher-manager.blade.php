@@ -1,35 +1,20 @@
-<div class="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 p-4 sm:p-6">
+@section('topbar')
+<x-breadcrumb :items="[
+        ['label' => 'Trang chủ', 'url' => route('dashboard')],
+        ['label' => 'Giáo lý viên']
+    ]" />
+@endsection
+
+<div class="min-h-screen bg-slate-50 p-2 sm:p-4 lg:p-6" style="min-height: calc(100vh - 56px - var(--bottom-offset));">
     <a href="#main-content" class="sr-only focus:not-sr-only">Bỏ qua tới nội dung</a>
 
-    <div id="main-content" class="mx-auto max-w-7xl space-y-5">
-
-        {{-- Breadcrumb --}}
-        <x-breadcrumb :items="[
-            ['label' => 'Trang chủ', 'url' => route('dashboard')],
-            ['label' => 'Giáo lý viên', 'url' => route('catechists.index')],
-        ]" separator="arrow" />
-
-        {{-- Toast --}}
-        <div role="status" aria-live="polite">
-            @if (session()->has('message'))
-            <x-toast-notification type="success" :duration="3500">{{ session('message') }}</x-toast-notification>
-            @endif
-            @if (session()->has('error'))
-            <x-toast-notification type="error" :duration="4000">{{ session('error') }}</x-toast-notification>
-            @endif
-            @if (session()->has('warning'))
-            <x-toast-notification type="warning" :duration="4000">{{ session('warning') }}</x-toast-notification>
-            @endif
-        </div>
-
+    <div id="main-content" class="mx-auto max-w-7xl space-y-6">
         {{-- Main Card --}}
         <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
             <x-page-header
-                title="Quản lý Giáo lý viên"
-                description="Danh sách giáo lý viên trong giáo xứ"
-                :stat-value="$teachers->total()"
-                stat-label="Giáo lý viên"
-                icon-type="teacher" />
+                class="rounded-t-2xl"
+                title="Danh sách Giáo lý viên"
+                :count="$teachers->total()" />
 
             {{-- Actions Bar --}}
             <div class="px-6 py-4 border-b border-slate-200 bg-slate-50/70">
@@ -156,7 +141,7 @@
                             <td class="px-6 py-4">
                                 @if($teacher->parishGroup)
                                 <span class="inline-flex items-center px-2.5 py-1 rounded-full
-                                             text-xs font-semibold bg-indigo-100 text-indigo-700">
+                                             text-xs font-semibold bg-primary-100 text-primary-700">
                                     {{ $teacher->parishGroup->name }}
                                 </span>
                                 @else
@@ -167,7 +152,7 @@
                             {{-- Trạng thái --}}
                             <td class="px-6 py-4 text-center">
                                 <span class="inline-flex items-center px-2.5 py-1 text-xs font-semibold rounded-full
-                                             {{ $teacher->is_active ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-200 text-slate-600' }}">
+                                             {{ $teacher->is_active ? 'bg-primary-100 text-primary-700' : 'bg-slate-200 text-slate-600' }}">
                                     {{ $teacher->is_active ? 'Hoạt động' : 'Đã nghỉ' }}
                                 </span>
                             </td>
@@ -229,7 +214,7 @@
                         {{ $editingId ? 'Cập nhật giáo lý viên' : 'Thêm giáo lý viên mới' }}
                     </h2>
                     <p class="text-sm text-slate-500 mt-1">
-                        {{ $editingId ? 'Chỉnh sửa thông tin' : 'Tạo tài khoản đăng nhập tự động' }}
+                        {{ $editingId ? 'Chỉnh sửa thông tin' : 'Tạo tài khoản đăng nhập' }}
                     </p>
                 </div>
 
@@ -339,13 +324,50 @@
                         </div>
                     </div>
 
-                    {{-- Info tạo tài khoản --}}
-                    @if(!$editingId)
-                    <div class="bg-blue-50 border-l-4 border-blue-400 rounded-xl p-4 text-sm text-blue-700">
-                        <strong>Tài khoản tự động:</strong> Email đăng nhập sẽ dùng email thật (nếu có),
-                        hoặc <code>SĐT@giaoly.local</code>. Mật khẩu mặc định là số điện thoại.
+                    {{-- Tài khoản đăng nhập --}}
+                    <div class="border border-slate-200 rounded-xl p-4 space-y-3 bg-slate-50">
+                        <p class="text-sm font-semibold text-slate-700">Tài khoản đăng nhập</p>
+
+                        @if(!$editingId)
+                        {{-- Thêm mới --}}
+                        <label class="flex items-center gap-3 cursor-pointer">
+                            <input type="checkbox" wire:model.defer="create_account"
+                                class="w-4 h-4 rounded border-slate-300 text-primary-600 focus:ring-primary-500">
+                            <span class="text-sm text-slate-700">Tạo tài khoản đăng nhập tự động</span>
+                        </label>
+
+                        @if($create_account)
+                        <p class="text-xs text-primary-600 bg-primary-50 rounded-lg px-3 py-2">
+                            Email đăng nhập: email thật (nếu có) hoặc <code>SĐT@giaoly.local</code>.
+                            Mật khẩu mặc định: số điện thoại (nếu có) hoặc 12345678.
+                        </p>
+                        @endif
+
+                        @else
+                        {{-- Đang edit --}}
+                        @if($has_account)
+                        <p class="text-xs text-primary-700 bg-primary-50 rounded-lg px-3 py-2">
+                            ✅ Giáo lý viên này đã có tài khoản đăng nhập.
+                        </p>
+                        <label class="flex items-center gap-3 cursor-pointer">
+                            <input type="checkbox" wire:model.defer="reset_password"
+                                class="w-4 h-4 rounded border-slate-300 text-amber-500 focus:ring-amber-400">
+                            <span class="text-sm text-slate-700">
+                                Reset mật khẩu về số điện thoại hiện tại
+                            </span>
+                        </label>
+                        @else
+                        <p class="text-xs text-amber-700 bg-amber-50 rounded-lg px-3 py-2">
+                            ⚠️ Giáo lý viên này chưa có tài khoản.
+                        </p>
+                        <label class="flex items-center gap-3 cursor-pointer">
+                            <input type="checkbox" wire:model.defer="create_account"
+                                class="w-4 h-4 rounded border-slate-300 text-primary-600 focus:ring-primary-500">
+                            <span class="text-sm text-slate-700">Tạo tài khoản đăng nhập ngay</span>
+                        </label>
+                        @endif
+                        @endif
                     </div>
-                    @endif
                 </div>
 
                 {{-- Footer --}}
@@ -359,16 +381,5 @@
         </div>
         @endif
 
-    </div>
-</div>
-
-{{-- Loading --}}
-<div wire:loading class="fixed inset-0 bg-gray-900/50 flex items-center justify-center z-50">
-    <div class="bg-white rounded-lg p-6 flex items-center gap-3">
-        <svg class="animate-spin h-6 w-6 text-primary-600" fill="none" viewBox="0 0 24 24">
-            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
-            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-        </svg>
-        <span class="text-gray-700">Đang xử lý...</span>
     </div>
 </div>

@@ -55,6 +55,9 @@ class TeacherManager extends BaseComponent
     public $parish_group_id = '';
     public $is_active   = true;
     public $note        = '';
+    public $create_account = true;   // checkbox tạo tài khoản khi thêm mới
+    public $reset_password = false;  // checkbox reset mật khẩu khi edit
+    public $has_account = false;
 
     // ==================== DATA ====================
 
@@ -177,6 +180,9 @@ class TeacherManager extends BaseComponent
             $this->parish_group_id  = $teacher->parish_group_id ?? '';
             $this->is_active        = $teacher->is_active;
             $this->note             = $teacher->note ?? '';
+            $this->has_account    = (bool) $teacher->user_id; // ← để view biết hiển thị gì
+            $this->create_account = false;   // khi edit default không tạo thêm
+            $this->reset_password = false;
 
             $this->showForm = true;
         } catch (ModelNotFoundException $e) {
@@ -260,29 +266,33 @@ class TeacherManager extends BaseComponent
 
     private function createTeacher(): void
     {
-        // Xác định email cho user account
-        $accountEmail = $this->email
-            ?: $this->phone_number . '@giaoly.local';
+        $user = null;
 
-        // Kiểm tra email đã tồn tại chưa
-        if (User::where('email', $accountEmail)->exists()) {
-            throw new \Exception('Email hoặc số điện thoại đã được dùng cho tài khoản khác');
+        if ($this->create_account) {
+            if (empty($this->phone_number) && empty($this->email)) {
+                throw new \Exception('Cần có SĐT hoặc email để tạo tài khoản');
+            }
+
+            $accountEmail = $this->email ?: ($this->phone_number . '@giaoly.local');
+
+            if (User::where('email', $accountEmail)->exists()) {
+                throw new \Exception('Email/SĐT này đã được dùng cho tài khoản khác');
+            }
+
+            $user = User::create([
+                'name'      => trim($this->last_name . ' ' . $this->first_name),
+                'email'     => $accountEmail,
+                'parish_id' => $this->parishId,
+                'password'  => $this->phone_number ?: '12345678',
+            ]);
+
+            $user->assignRole('catechist');
         }
-
-        // Tạo user account
-        $user = User::create([
-            'name'      => trim($this->last_name . ' ' . $this->first_name),
-            'email'     => $accountEmail,
-            'parish_id' => $this->parishId,
-            'password'  => $this->phone_number ?: '12345678',
-        ]);
-
-        $user->assignRole('catechist');
 
         // Tạo teacher
         Teacher::create([
             'parish_id'        => $this->parishId,
-            'user_id'          => $user->id,
+            'user_id'          => $user?->id,
             'last_name'        => $this->last_name,
             'first_name'       => $this->first_name,
             'gender'           => $this->gender ?: null,
@@ -315,11 +325,40 @@ class TeacherManager extends BaseComponent
             'note'             => $this->note ?: null,
         ]);
 
-        // Sync tên trên user account
-        $teacher->user?->update([
-            'name' => trim($this->last_name . ' ' . $this->first_name),
-            'parish_id' => $this->parishId, // đảm bảo đồng bộ giáo xứ nếu có thay đổi
-        ]);
+        if ($teacher->user) {
+            // Đã có tài khoản → sync tên, và reset mật khẩu nếu được yêu cầu
+            $userUpdate = [
+                'name'      => trim($this->last_name . ' ' . $this->first_name),
+                'parish_id' => $this->parishId,
+            ];
+
+            if ($this->reset_password && !empty($this->phone_number)) {
+                $userUpdate['password'] = Hash::make($this->phone_number);
+            }
+
+            $teacher->user->update($userUpdate);
+        } elseif ($this->create_account) {
+            // Chưa có tài khoản → tạo mới nếu manager tích vào
+            if (empty($this->phone_number) && empty($this->email)) {
+                throw new \Exception('Cần có SĐT hoặc email để tạo tài khoản');
+            }
+
+            $accountEmail = $this->email ?: ($this->phone_number . '@giaoly.local');
+
+            if (User::where('email', $accountEmail)->exists()) {
+                throw new \Exception('Email/SĐT này đã được dùng cho tài khoản khác');
+            }
+
+            $user = User::create([
+                'name'      => trim($this->last_name . ' ' . $this->first_name),
+                'email'     => $accountEmail,
+                'parish_id' => $this->parishId,
+                'password'  => $this->phone_number ?: '12345678',
+            ]);
+
+            $user->assignRole('catechist');
+            $teacher->update(['user_id' => $user->id]);
+        }
     }
 
     // ==================== DATA LOADING ====================
@@ -328,7 +367,7 @@ class TeacherManager extends BaseComponent
     {
         try {
             $query = Teacher::with(['parishGroup', 'saint', 'user']);
-                
+
 
             // Search
             if (!empty(trim($this->search))) {
@@ -389,9 +428,13 @@ class TeacherManager extends BaseComponent
             'saint_id',
             'parish_group_id',
             'note',
+            'create_account',
+            'reset_password',
         ]);
 
         $this->is_active = true;
+        $this->create_account = true;   // ← default true
+        $this->reset_password = false;
         $this->resetValidation();
     }
 
