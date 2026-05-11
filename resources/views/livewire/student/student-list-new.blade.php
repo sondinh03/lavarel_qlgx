@@ -51,9 +51,9 @@
                         {{-- <x-button
                             as="a"
                             href="{{ route('attendance.show') }}{{ $selectedLop ? '?classId='.$selectedLop : '' }}"
-                            variant="outline">
-                            <x-icon name="clipboard" />
-                            Điểm danh
+                        variant="outline">
+                        <x-icon name="clipboard" />
+                        Điểm danh
                         </x-button> --}}
                     </div>
                 </div>
@@ -102,12 +102,12 @@
                             {{-- <x-button
                                 as="a"
                                 href="{{ route('attendance.show') }}{{ $selectedLop ? '?classId='.$selectedLop : '' }}"
-                                variant="outline">
-                                <x-icon name="clipboard" />
-                                Điểm danh
+                            variant="outline">
+                            <x-icon name="clipboard" />
+                            Điểm danh
                             </x-button> --}}
 
-                            <x-button as="a" href="$this->importUrl" icon="upload" variant="outline">
+                            <x-button as="a" href="{{ route('students.import') }}" icon="upload" variant="outline">
                                 <x-icon name="upload" />
                                 Import Excel
                             </x-button>

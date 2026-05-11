@@ -380,6 +380,7 @@
                             <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
 
                                 {{-- Giáo xứ --}}
+                                <label class="block text-sm font-semibold text-slate-700 mb-1.5">Giáo xứ</label>
                                 <div>
                                     <x-searchable-select
                                         wireModel="parish_id"
@@ -394,6 +395,7 @@
                                 </div>
 
                                 {{-- Giáo họ --}}
+                                <label class="block text-sm font-semibold text-slate-700 mb-1.5">Giáo họ</label>
                                 <div>
                                     <x-searchable-select
                                         wireModel="parish_group_id"

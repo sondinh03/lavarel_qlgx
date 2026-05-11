@@ -48,6 +48,8 @@
                             <option value="female">Nữ</option>
                         </select>
 
+                        {{-- <x-filter-select wire:model.live="filterGender" placeholder="-- Tất cả giới tính --" :options="['male' => 'Nam', 'female' => 'Nữ']" /> --}}
+
                         {{-- Filter trạng thái --}}
                         <select wire:model="filterActive"
                             class="px-3 py-2 rounded-xl border border-slate-300 text-sm
@@ -191,12 +193,12 @@
 
             @else
             <div class="text-center py-16">
-                <div class="text-5xl mb-4">👨‍🏫</div>
-                <p class="text-lg text-slate-500">Chưa có giáo lý viên nào</p>
-                <button wire:click="create"
-                    class="mt-4 px-4 py-2 bg-primary-600 text-white rounded-xl hover:bg-primary-700 transition-all">
-                    Thêm giáo lý viên đầu tiên
-                </button>
+                <div class="text-5xl mb-4">
+                    {{ ($search || $filterParishGroup || $filterGender || $filterActive) ? '🔍' : '👨‍🏫' }}
+                </div>
+                <p class="text-lg text-slate-500">
+                    {{ ($search || $filterParishGroup || $filterGender || $filterActive) ? 'Không tìm thấy kết quả nào' : 'Chưa có giáo lý viên nào' }}
+                </p>
             </div>
             @endif
         </div>
@@ -279,27 +281,31 @@
                     {{-- Giáo họ & Tên thánh --}}
                     <div class="grid grid-cols-2 gap-4">
                         <div>
-                            <label class="block text-sm font-semibold text-slate-700 mb-1">Giáo họ</label>
-                            <select wire:model.defer="parish_group_id"
-                                class="w-full px-3 py-2 rounded-xl border border-slate-300
-                                       focus:outline-none focus:ring-2 focus:ring-primary-500">
-                                <option value="">-- Chọn giáo họ --</option>
-                                @foreach($parishGroups as $pg)
-                                <option value="{{ $pg->id }}">{{ $pg->name }}</option>
-                                @endforeach
-                            </select>
+                            <label class="block text-sm font-semibold text-slate-700 mb-1.5">Giáo họ</label>
+                            <x-searchable-select
+                                wireModel="parish_group_id"
+                                :options="$this->parishGroups"
+                                placeholder="-- Chọn giáo họ --"
+                                labelKey="name"
+                                valueKey="id"
+                                :value="$this->parish_group_id" />
+                            @error('parish_group_id')
+                            <p class="mt-1 text-xs text-red-500">{{ $message }}</p>
+                            @enderror
                         </div>
 
                         <div>
                             <label class="block text-sm font-semibold text-slate-700 mb-1">Tên thánh</label>
-                            <select wire:model.defer="saint_id"
-                                class="w-full px-3 py-2 rounded-xl border border-slate-300
-                                       focus:outline-none focus:ring-2 focus:ring-primary-500">
-                                <option value="">-- Chọn tên thánh --</option>
-                                @foreach($saints as $saint)
-                                <option value="{{ $saint->id }}">{{ $saint->name }}</option>
-                                @endforeach
-                            </select>
+                            <x-searchable-select
+                                wireModel="saint_id"
+                                :options="$this->saints"
+                                placeholder="-- Chọn --"
+                                labelKey="name"
+                                valueKey="id"
+                                :value="$this->saint_id" />
+                            @error('saint_id')
+                            <p class="mt-1 text-xs text-red-500">{{ $message }}</p>
+                            @enderror
                         </div>
                     </div>
 
@@ -337,10 +343,19 @@
                         </label>
 
                         @if($create_account)
-                        <p class="text-xs text-primary-600 bg-primary-50 rounded-lg px-3 py-2">
-                            Email đăng nhập: email thật (nếu có) hoặc <code>SĐT@giaoly.local</code>.
-                            Mật khẩu mặc định: số điện thoại (nếu có) hoặc 12345678.
-                        </p>
+                        <div class="flex gap-2 bg-primary-50 border border-primary-200 rounded-xl px-3 py-2.5 text-xs text-primary-700">
+                            <svg class="w-4 h-4 mt-0.5 shrink-0 text-primary-500" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd" />
+                            </svg>
+                            <div class="space-y-0.5">
+                                <p>Email đăng nhập: email thật (nếu có) hoặc
+                                    <code class="font-mono bg-primary-100 px-1 rounded">SĐT@giaoly.local</code>
+                                </p>
+                                <p>Mật khẩu mặc định: số điện thoại (nếu có) hoặc
+                                    <code class="font-mono bg-primary-100 px-1 rounded">12345678</code>
+                                </p>
+                            </div>
+                        </div>
                         @endif
 
                         @else
