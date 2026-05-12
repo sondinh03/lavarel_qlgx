@@ -6,19 +6,19 @@ use Illuminate\Support\ServiceProvider;
 use App\Models\Lop;
 use App\Models\ClassTeacher;
 use App\Models\Holymanagement;
-use App\Models\Parish;
 use App\Models\ParishGroup;
 use App\Models\Parishioner;
 use App\Models\ParishNew;
+use App\Models\StudentNew;
+use App\Models\Teacher;
 use App\Observers\LopObserver;
 use App\Observers\ClassTeacherObserver;
 use App\Observers\HolymanagementObserver;
 use App\Observers\ParishGroupObserver;
 use App\Observers\ParishionerObserver;
 use App\Observers\ParishNewObserver;
+use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Route;
-use Livewire\Livewire;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -61,6 +61,48 @@ class AppServiceProvider extends ServiceProvider
                 );
             });
         }
+
+        /**
+         * Morph map cho GroupMember
+         * Giúp database lưu 'teacher'/'student' thay vì full class name
+         * → Dễ đọc, không bị vỡ nếu đổi namespace
+         */
+        Relation::morphMap([
+            'teacher' => Teacher::class,
+            'student' => StudentNew::class,
+        ]);
+        // ==================== CÁCH DÙNG ====================
+
+        // Thêm GLV vào nhóm
+        // GroupMember::create([
+        //     'group_id'        => $group->id,
+        //     'memberable_type' => 'teacher',
+        //     'memberable_id'   => $teacher->id,
+        //     'role'            => 'Thành viên',
+        //     'joined_at'       => today(),
+        // ]);
+
+        // Thêm học sinh vào ca đoàn
+        // GroupMember::create([
+        //     'group_id'        => $group->id,
+        //     'memberable_type' => 'student',
+        //     'memberable_id'   => $student->id,
+        //     'joined_at'       => today(),
+        // ]);
+
+        // Load thành viên kèm hồ sơ
+        // $group->activeMembers()->with('memberable')->get()
+        //     ->each(fn($m) => dump($m->display_name));
+
+        // Báo cáo chuyên cần theo nam_hoc
+        // $namHoc = NamHoc::find($id);
+        // GroupSession::forGroup($groupId)
+        //     ->inDateRanges([
+        //         [$namHoc->start_date_one, $namHoc->end_date_one],
+        //         [$namHoc->start_date_two, $namHoc->end_date_two],
+        //     ])
+        //     ->with('attendanceRecords')
+        //     ->get();
     }
 
     protected function overrideConfigValues()

@@ -108,7 +108,7 @@ $genderLabel = $isMale ? 'Nam' : 'Nữ';
                 flex-shrink: 0;
             ">
                 @if(!empty($student->avatar_path))
-                <img src="{{ Storage::url($student->avatar_path) }}"
+                <img src="{{ asset($student->avatar_path) }}"
                     style="width: 100%; height: 100%; object-fit: cover;"
                     alt="{{ $fullName }}" />
                 @else

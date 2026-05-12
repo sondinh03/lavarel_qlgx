@@ -49,6 +49,10 @@ use App\Http\Livewire\CatechismClass\CatechismClassList;
 use App\Http\Livewire\ClassStudentManager;
 use App\Http\Livewire\Dashboard\AdminDashboard;
 use App\Http\Livewire\Dashboard\CatechistDashboard;
+use App\Http\Livewire\Group\GroupAttendance;
+use App\Http\Livewire\Group\GroupManager;
+use App\Http\Livewire\Group\GroupMemberManager;
+use App\Http\Livewire\Group\GroupSessionManager;
 use App\Http\Livewire\Holy\HolyManager;
 use App\Http\Livewire\Landing;
 use App\Http\Livewire\Lop\AssignTeacher;
@@ -188,6 +192,18 @@ Route::middleware('auth')->group(function () {
 
         Route::get('/parish-group', ParishGroupManager::class)
             ->name('parish-group.index');
+
+        Route::get('/groups', GroupManager::class)
+            ->name('groups.index');
+
+        Route::get('/{groupId}/members', GroupMemberManager::class)
+            ->name('groups.members');
+
+        Route::get('/{groupId}/sessions', GroupSessionManager::class)
+            ->name('groups.sessions');
+
+        Route::get('/{groupId}/sessions/{sessionId}/attendance', GroupAttendance::class)
+            ->name('groups.sessions.attendance');
     });
 });
 
