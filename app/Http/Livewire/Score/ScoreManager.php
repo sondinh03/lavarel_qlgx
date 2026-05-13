@@ -7,12 +7,10 @@ use App\Models\CatechismClass;
 use App\Models\GradeLevel;
 use App\Models\NamHoc;
 use App\Models\ScoreType;
-use App\Models\StudentsClass;
 use App\Models\StudentScore;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
-use Illuminate\Validation\ValidationException;
 
 /**
  * Component quản lý điểm học sinh
@@ -108,6 +106,8 @@ class ScoreManager extends BaseComponent
 
     /** @var bool Có thay đổi chưa lưu */
     public $hasDraft = false;
+
+    protected array $allowedSortFields = ['first_name', 'avg'];
 
     // ==================== VALIDATION RULES ====================
 
@@ -214,6 +214,8 @@ class ScoreManager extends BaseComponent
     }
 
     // ==================== DATA LOADING ====================
+
+
 
     protected function loadNamHocs(): void
     {
@@ -798,6 +800,19 @@ class ScoreManager extends BaseComponent
 
     // ==================== PAGINATED DATA ====================
 
+    protected function applySorting($query)
+    {
+        return match ($this->sortField) {
+            'first_name' => $query->orderByRaw(
+                "students.first_name {$this->sortDirection},
+             students.last_name  {$this->sortDirection}"
+            ),
+            default => $query->orderByRaw(
+                "students.first_name {$this->sortDirection}"
+            ),
+        };
+    }
+
     private function getStudentsPaginated()
     {
         if (!$this->selectedLop) {
@@ -805,7 +820,6 @@ class ScoreManager extends BaseComponent
         }
 
         try {
-            // Dùng bảng pivot trực tiếp, join sang bảng students
             $query = \App\Models\StudentNew::query()
                 ->with('saint')
                 ->join('students_class', 'students.id', '=', 'students_class.student_id')
@@ -820,18 +834,29 @@ class ScoreManager extends BaseComponent
                 $term = '%' . trim($this->search) . '%';
                 $query->where(function ($q) use ($term) {
                     $q->where('students.first_name', 'like', $term)
-                        ->orWhere('students.last_name', 'like', $term)
+                        ->orWhere('students.last_name',  'like', $term)
                         ->orWhere('students.student_code', 'like', $term);
                 });
             }
 
-            $query->orderByRaw("CONCAT(students.last_name, ' ', students.first_name)");
+            $this->applySorting($query);
 
             $students = $query->paginate($this->perPage);
 
-            // pivot_id là students_class.id — dùng cho score matrix
-            $this->loadScoresMatrix($students->pluck('pivot_id')->toArray());
-            $this->recalculateAllAverages($students->pluck('pivot_id')->toArray());
+            $pivotIds = $students->pluck('pivot_id')->toArray();
+            $this->loadScoresMatrix($pivotIds);
+            $this->recalculateAllAverages($pivotIds);
+
+            if ($this->sortField === 'avg') {
+                $sorted = collect($students->items())->sortBy(
+                    fn($s) => $this->averages[$s->pivot_id] ?? -1,
+                    SORT_REGULAR,
+                    $this->sortDirection === 'desc'
+                )->values();
+
+                // Ghi đè items trong paginator
+                $students->setCollection($sorted);
+            }
 
             return $students;
         } catch (\Exception $e) {

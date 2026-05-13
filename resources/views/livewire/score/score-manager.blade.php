@@ -151,23 +151,27 @@
                     <table class="w-full border-separate border-spacing-0 text-sm">
                         <thead class="bg-slate-50 sticky top-0 z-10">
                             <tr>
-                                <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wide
-                                sticky left-0 bg-slate-50 z-20 w-10">STT</th>
-                                <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wide
-                                sticky left-10 bg-slate-50 z-20 min-w-[180px]">Tên học sinh</th>
+                                <x-table-header>STT</x-table-header>
+                                <x-table-header :sortable="true" sort-field="first_name"
+                                    :current-sort="$sortField" :sort-direction="$sortDirection">
+                                    Học sinh
+                                </x-table-header>
 
                                 @foreach($scoreTypes as $type)
-                                <th class="px-3 py-3 text-center text-xs font-semibold text-slate-500
-                                uppercase tracking-wide min-w-[110px]">
-                                    <div class="flex flex-col items-center gap-0.5">
-                                        <span class="text-slate-700 normal-case font-semibold">{{ $type->name }}</span>
-                                        <span class="text-slate-400 font-normal">HS: {{ $type->coefficient }}</span>
-                                    </div>
-                                </th>
+                                <x-table-header align="center" class="min-w-[90px]">
+                                    <x-tooltip content="Hệ số: {{ $type->coefficient }}">
+                                        <span>{{ $type->name }}</span>
+                                    </x-tooltip>
+                                </x-table-header>
                                 @endforeach
 
-                                <th class="px-4 py-3 text-center text-xs font-bold text-primary-700 uppercase
-                                tracking-wide bg-primary-50 min-w-[90px]">TB HK</th>
+                                <x-table-header
+                                    :sortable="true" sort-field="avg"
+                                    :current-sort="$sortField" :sort-direction="$sortDirection"
+                                    align="center"
+                                    class="bg-primary-50 text-primary-700 font-bold">
+                                    Điểm<br>trung bình
+                                </x-table-header>
                             </tr>
                         </thead>
 
@@ -181,9 +185,16 @@
                                 </td>
 
                                 <td class="px-4 py-3 sticky left-10 bg-white">
-                                    <span class="font-semibold text-slate-900">
-                                        {{ $sc->full_name_with_saint }}
-                                    </span>
+                                    <div class="flex flex-col">
+                                        @if($sc->saint)
+                                        <span class="text-xs text-slate-400 mt-0.5">
+                                            {{ $sc->saint->name }}
+                                        </span>
+                                        @endif
+                                        <span class="font-semibold text-slate-900 leading-tight">
+                                            {{ $sc->last_name }} {{ $sc->first_name }}
+                                        </span>
+                                    </div>
                                 </td>
 
                                 @foreach($scoreTypes as $colIndex => $type)
@@ -234,7 +245,6 @@
                         </tbody>
                     </table>
                 </div>
-
             </div>
 
             {{-- Footer: pagination + nút lưu --}}
