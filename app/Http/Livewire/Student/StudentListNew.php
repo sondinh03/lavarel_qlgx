@@ -314,6 +314,10 @@ class StudentListNew extends BaseComponent
 
         try {
             $student = StudentNew::findOrFail($studentId);
+            if ($student->parishioner_id) {
+                $this->emit('toast', 'info', 'Học sinh này đã được liên kết với giáo dân. Vui lòng hủy liên kết trước khi liên kết mới.');
+                return;
+            }
             $this->linkingStudentId      = $studentId;
             $this->suggestedParishioners = $this->findSuggestedParishioners($student);
             $this->showLinkModal         = true;
@@ -654,6 +658,43 @@ class StudentListNew extends BaseComponent
                 'student_id' => $studentId,
             ]);
             $this->emit('toast', 'error', 'Có lỗi khi xóa học sinh khỏi lớp. Vui lòng thử lại.');
+        }
+    }
+
+    public function deleteProfile(int $studentId): void
+    {
+        try {
+            $student = StudentNew::findOrFail($studentId);
+
+            $this->authorize('delete', $student);
+
+            DB::beginTransaction();
+
+            // Xóa khỏi tất cả lớp học (pivot table students_class)
+            $student->classes()->detach();
+
+            // Xóa các bản ghi trong studentsClass (nếu có dữ liệu phụ)
+            $student->studentsClass()->delete();
+
+            // Xóa profile học sinh
+            $student->delete();
+
+            DB::commit();
+
+            $this->emit('toast', 'message', 'Đã xóa học sinh thành công');
+            $this->emit('refreshStudents');
+        } catch (\Illuminate\Auth\Access\AuthorizationException $e) {
+            DB::rollBack();
+            $this->emit('toast', 'error', 'Bạn không có quyền xóa học sinh này');
+        } catch (ModelNotFoundException $e) {
+            DB::rollBack();
+            $this->emit('toast', 'error', 'Không tìm thấy học sinh');
+        } catch (\Exception $e) {
+            DB::rollBack();
+            $this->logError($e, 'Error deleting StudentNew profile', [
+                'student_id' => $studentId,
+            ]);
+            $this->emit('toast', 'error', 'Có lỗi khi xóa học sinh. Vui lòng thử lại.');
         }
     }
 

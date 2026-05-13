@@ -609,6 +609,7 @@
                                         <th class="px-4 py-3 text-left text-xs font-semibold text-slate-700 uppercase">Họ tên</th>
                                         <th class="px-4 py-3 text-left text-xs font-semibold text-slate-700 uppercase">Ngày sinh</th>
                                         <th class="px-4 py-3 text-left text-xs font-semibold text-slate-700 uppercase">Giáo họ</th>
+                                        <th class="px-4 py-3 text-left text-xs font-semibold text-slate-700 uppercase">Thao tác</th>
                                     </tr>
                                 </thead>
                                 <tbody class="divide-y divide-slate-100">
@@ -621,7 +622,7 @@
                                                 value="{{ $student->id }}"
                                                 class="w-4 h-4 rounded border-slate-300 text-primary-600 focus:ring-primary-500">
                                         </td>
-                                        <td class="px-4 py-3 text-sm font-mono text-blue-600">
+                                        <td class="px-4 py-3 text-sm font-mono text-primary-600">
                                             {{ $student->student_code ?? '—' }}
                                         </td>
                                         <td class="px-4 py-3 text-sm text-slate-900">
@@ -636,6 +637,17 @@
                                         <td class="px-4 py-3 text-sm text-slate-600">
                                             {{ $student->parishGroup->name ?? 'Chưa xác định' }}
                                         </td>
+
+                                        <td class="px-4 py-3">
+                                            <x-tooltip content="Xóa hồ sơ">
+                                                <button wire:click="deleteProfile({{ $student->id }})"
+                                                    wire:confirm="Bạn có chắc muốn xóa hồ sơ học sinh {{ $student->full_name }}? Hành động này không thể hoàn tác!"
+                                                    class="p-2 hover:bg-red-50 text-red-600 rounded-lg transition-all">
+                                                    <x-icon name="trash" />
+                                                </button>
+                                            </x-tooltip>
+                                        </td>
+
                                     </tr>
                                     @endforeach
                                 </tbody>
@@ -671,12 +683,12 @@
                                 type="text"
                                 placeholder="Tìm kiếm giáo dân..."
                                 class="w-full px-4 py-2.5 rounded-xl border border-slate-300
-                                       focus:outline-none focus:ring-2 focus:ring-purple-500">
+                                       focus:outline-none focus:ring-2 focus:ring-primary-500">
 
                             <div class="flex items-center gap-2 flex-wrap">
                                 <select wire:model="parishionerBirthYear"
                                     class="flex-1 min-w-[140px] px-3 py-2.5 rounded-xl border border-slate-300
-                                           focus:outline-none focus:ring-2 focus:ring-purple-500 text-sm">
+                                           focus:outline-none focus:ring-2 focus:ring-primary-500 text-sm">
                                     <option value="">-- Tất cả năm sinh --</option>
                                     @foreach($this->getQuickYearOptions() as $year)
                                     <option value="{{ $year }}">{{ $year }}</option>
@@ -695,12 +707,12 @@
                                 <input type="number" wire:model.lazy="ageFrom"
                                     placeholder="Tuổi từ"
                                     class="w-28 px-3 py-2.5 rounded-xl border border-slate-300
-                                           focus:outline-none focus:ring-2 focus:ring-purple-500 text-sm">
+                                           focus:outline-none focus:ring-2 focus:ring-primary-500 text-sm">
 
                                 <input type="number" wire:model.lazy="ageTo"
                                     placeholder="đến"
                                     class="w-28 px-3 py-2.5 rounded-xl border border-slate-300
-                                           focus:outline-none focus:ring-2 focus:ring-purple-500 text-sm">
+                                           focus:outline-none focus:ring-2 focus:ring-primary-500 text-sm">
 
                                 @if($ageFrom || $ageTo)
                                 <button wire:click="$set('ageFrom', null); $set('ageTo', null);" type="button"
@@ -719,7 +731,7 @@
                                         <th class="px-4 py-3 text-left">
                                             <input type="checkbox"
                                                 wire:model="selectAllParishioners"
-                                                class="w-4 h-4 rounded border-slate-300 text-purple-600 focus:ring-purple-500">
+                                                class="w-4 h-4 rounded border-slate-300 text-primary-600 focus:ring-primary-500">
                                         </th>
                                         <th class="px-4 py-3 text-left text-xs font-semibold text-slate-700 uppercase">Họ</th>
                                         <th class="px-4 py-3 text-left text-xs font-semibold text-slate-700 uppercase">Tên</th>
@@ -736,7 +748,7 @@
                                             <input type="checkbox"
                                                 wire:model="selectedParishioners"
                                                 value="{{ $p->id }}"
-                                                class="w-4 h-4 rounded border-slate-300 text-purple-600 focus:ring-purple-500">
+                                                class="w-4 h-4 rounded border-slate-300 text-primary-600 focus:ring-primary-500">
                                         </td>
                                         <td class="px-4 py-3 text-sm font-semibold text-slate-900">
                                             {{ $p->last_name }}
@@ -758,8 +770,8 @@
                                         </td>
                                         <td class="px-4 py-3 text-sm">
                                             <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium
-                                                         {{ $p->sex == 'male' || $p->sex == 1 ? 'bg-blue-100 text-blue-700' : 'bg-pink-100 text-pink-700' }}">
-                                                {{ $p->sex == 'male' || $p->sex == 1 ? 'Nam' : 'Nữ' }}
+                                                         {{ $p->gender == 'male' || $p->gender == 1 ? 'bg-primary-100 text-primary-700' : 'bg-pink-100 text-pink-700' }}">
+                                                {{ $p->gender == 'male' || $p->gender == 1 ? 'Nam' : 'Nữ' }}
                                             </span>
                                         </td>
                                         <td class="px-4 py-3 text-sm text-slate-600">
@@ -825,7 +837,7 @@
                     @if($enrollTab === 'parishioner')
                     <div class="flex items-center justify-between">
                         <span class="text-sm text-slate-600">
-                            Đã chọn: <span class="font-semibold text-purple-600">{{ count($selectedParishioners) }}</span> giáo dân
+                            Đã chọn: <span class="font-semibold text-primary-600">{{ count($selectedParishioners) }}</span> giáo dân
                         </span>
                         <div class="flex gap-3">
                             <button wire:click="closeEnrollModal" type="button"
@@ -836,8 +848,8 @@
                             <button wire:click="importParishionersToStudents" type="button"
                                 @disabled(empty($selectedParishioners))
                                 wire:loading.attr="disabled"
-                                class="px-4 py-2.5 bg-gradient-to-r from-purple-500 to-purple-600 text-white
-                                       text-sm font-semibold rounded-xl hover:from-purple-600 hover:to-purple-700
+                                class="px-4 py-2.5 bg-gradient-to-r from-primary-500 to-primary-600 text-white
+                                       text-sm font-semibold rounded-xl hover:from-primary-600 hover:to-primary-700
                                        active:scale-95 transition-all disabled:opacity-50 disabled:cursor-not-allowed
                                        inline-flex items-center gap-2">
                                 <svg wire:loading wire:target="importParishionersToStudents"
