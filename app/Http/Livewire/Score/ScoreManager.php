@@ -189,7 +189,12 @@ class ScoreManager extends BaseComponent
         }
 
         if (!$this->selectedLop) {
-            $this->selectedLop = $this->getDefaultClassId();
+            // Catechist → dùng defaultClassId từ BaseComponent
+            // Không catechist → fallback lớp đầu tiên của năm học
+            $this->selectedLop = $this->defaultClassId
+                ?? CatechismClass::where('school_year_id', $this->selectedNamHoc)
+                ->orderBy('id')
+                ->value('id');
         }
 
         if ($this->selectedNamHoc) {
@@ -199,30 +204,6 @@ class ScoreManager extends BaseComponent
         if ($this->selectedLop) {
             $this->loadScoreTypes();
         }
-    }
-
-    protected function getDefaultClassId(): ?int
-    {
-        if (!$this->selectedNamHoc) {
-            return null;
-        }
-
-        $user = auth()->user();
-
-        // Catechist → lấy lớp mình phụ trách
-        if ($user?->isCatechist() && $user->catechist) {
-            $classId = CatechismClass::where('school_year_id', $this->selectedNamHoc)
-                ->whereHas('teachers', fn($q) => $q->where('catechist_id', $user->catechist->id))
-                ->orderBy('id')
-                ->value('id');
-
-            if ($classId) return $classId;
-        }
-
-        // Fallback → lớp đầu tiên của năm học
-        return CatechismClass::where('school_year_id', $this->selectedNamHoc)
-            ->orderBy('id')
-            ->value('id');
     }
 
     protected function sanitizeQueryString(): void

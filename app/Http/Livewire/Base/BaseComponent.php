@@ -2,6 +2,8 @@
 
 namespace App\Http\Livewire\Base;
 
+use App\Models\ClassTeacher;
+use App\Models\Teacher;
 use App\Traits\FilterTrait;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Support\Facades\Log;
@@ -33,6 +35,8 @@ abstract class BaseComponent extends Component
     // ==================== AUTHENTICATION ====================
     /** @var int|null Parish ID hiện tại */
     public ?int $parishId = null;
+
+    public ?int $defaultClassId = null;
 
     // ==================== PAGINATION & SEARCH ====================
 
@@ -107,8 +111,20 @@ abstract class BaseComponent extends Component
     {
         /** @var \App\Models\User $user */
         $user = auth()->user() ?? abort(401, 'Chưa đăng nhập');
+
         if (!$user->isSuperAdmin()) {
             $this->parishId = $user->parishId();
+        }
+
+        if ($user->isCatechist()) {
+            $teacher = Teacher::where('email', $user->email)->first();
+
+            if ($teacher) {
+                $this->defaultClassId = ClassTeacher::where('teacher_id', $teacher->id)
+                    ->where('status', true)
+                    ->orderByDesc('role')
+                    ->value('class_id');
+            }
         }
     }
 

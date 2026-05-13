@@ -721,7 +721,8 @@
                                                 wire:model="selectAllParishioners"
                                                 class="w-4 h-4 rounded border-slate-300 text-purple-600 focus:ring-purple-500">
                                         </th>
-                                        <th class="px-4 py-3 text-left text-xs font-semibold text-slate-700 uppercase">Họ tên</th>
+                                        <th class="px-4 py-3 text-left text-xs font-semibold text-slate-700 uppercase">Họ</th>
+                                        <th class="px-4 py-3 text-left text-xs font-semibold text-slate-700 uppercase">Tên</th>
                                         <th class="px-4 py-3 text-left text-xs font-semibold text-slate-700 uppercase">Ngày sinh</th>
                                         <th class="px-4 py-3 text-left text-xs font-semibold text-slate-700 uppercase">Tuổi</th>
                                         <th class="px-4 py-3 text-left text-xs font-semibold text-slate-700 uppercase">Giới tính</th>
@@ -738,8 +739,13 @@
                                                 class="w-4 h-4 rounded border-slate-300 text-purple-600 focus:ring-purple-500">
                                         </td>
                                         <td class="px-4 py-3 text-sm font-semibold text-slate-900">
-                                            {{ $p->last_name }} {{ $p->name }}
+                                            {{ $p->last_name }}
                                         </td>
+
+                                        <td class="px-4 py-3 text-sm font-semibold text-slate-900">
+                                            {{ $p->first_name }}
+                                        </td>
+
                                         <td class="px-4 py-3 text-sm text-slate-600">
                                             {{ $p->birthday?->format('d/m/Y') ?? '—' }}
                                         </td>

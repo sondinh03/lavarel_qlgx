@@ -115,6 +115,15 @@ class AttendanceManager extends BaseComponent
             $this->selectedNamHoc = $this->getDefaultNamHocId();
         }
 
+        if (!$this->selectedClassId && $this->selectedNamHoc) {
+            // Catechist → dùng defaultClassId từ BaseComponent
+            // Không catechist → fallback lớp đầu tiên của năm học
+            $this->selectedClassId = $this->defaultClassId
+                ?? CatechismClass::where('school_year_id', $this->selectedNamHoc)
+                ->orderBy('id')
+                ->value('id');
+        }
+
         if ($this->selectedClassId) {
             $class = CatechismClass::select('id', 'name', 'school_year_id', 'grade_level_id')
                 ->find($this->selectedClassId);
@@ -126,16 +135,6 @@ class AttendanceManager extends BaseComponent
                 // classId không hợp lệ → reset
                 $this->selectedClassId = null;
                 $this->emit('toast', 'warning', 'Lớp học không tồn tại');
-            }
-        }
-
-        if (!$this->selectedClassId && $this->selectedNamHoc) {
-            $this->selectedClassId = $this->getDefaultClassId();
-
-            if ($this->selectedClassId) {
-                $class = CatechismClass::select('id', 'name')
-                    ->find($this->selectedClassId);
-                $this->selectedClassName = $class?->name ?? '';
             }
         }
 
@@ -724,19 +723,6 @@ class AttendanceManager extends BaseComponent
         return NamHoc::where('parish_id', $this->parishId)
             ->where('status', true)
             ->orderByDesc('id')
-            ->value('id');
-    }
-
-    protected function getDefaultClassId(): ?int
-    {
-        if (!$this->selectedNamHoc) {
-            return null;
-        }
-
-        return CatechismClass::where('school_year_id', $this->selectedNamHoc)
-            ->where('is_active', true)
-            ->orderBy('grade_level_id')
-            ->orderBy('name')
             ->value('id');
     }
 
