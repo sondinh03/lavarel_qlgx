@@ -64,6 +64,11 @@
                     <x-action-button wire="create" icon="plus">
                         Thêm giáo lý viên
                     </x-action-button>
+
+                    <x-button as="a" href="{{ route('catechists.import') }}" variant="outline">
+                        <x-icon name="upload" />
+                        Import Excel
+                    </x-button>
                 </div>
             </div>
         </div>

@@ -203,7 +203,7 @@ Route::middleware('auth')->group(function () {
             ->name('groups.sessions');
 
         Route::get('/{groupId}/sessions/{sessionId}/attendance', GroupAttendance::class)
-            ->name('groups.sessions.attendance');
+            ->name('groups.attendance');
     });
 });
 

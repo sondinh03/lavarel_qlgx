@@ -316,6 +316,47 @@ $isDashboard = request()->routeIs('dashboard','catechist.dashboard','parish-admi
                 </div>
             </div>
 
+            {{-- ── SINH HOẠT (MỚI) ── --}}
+            @php $isActivitiesActive = request()->routeIs('groups.*'); @endphp
+            <div class="relative has-flyout">
+                <button @click="toggleGroup('activities')"
+                    class="relative w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition group
+                        {{ $isActivitiesActive ? 'text-primary-700 font-semibold' : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900' }}">
+                    {{-- Icon: music / users --}}
+                    <svg class="w-5 h-5 flex-shrink-0 {{ $isActivitiesActive ? 'text-primary-600' : 'text-slate-400 group-hover:text-slate-600' }}"
+                        fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                    </svg>
+                    <span class="sidebar-label flex-1 text-left truncate">Sinh Hoạt</span>
+                    <svg class="sidebar-chevron w-3.5 h-3.5 flex-shrink-0 transition-transform duration-200"
+                        :class="openGroups.includes('activities') ? 'rotate-180 text-primary-600' : 'text-slate-400'"
+                        fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                    </svg>
+                    @if($isActivitiesActive)
+                    <span class="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-6 bg-primary-500 rounded-r-full"></span>
+                    @endif
+                </button>
+
+                <div x-show="openGroups.includes('activities') && !sidebarMini"
+                    style="{{ $isActivitiesActive ? '' : 'display:none' }}"
+                    x-transition:enter="transition ease-out duration-150"
+                    x-transition:enter-start="opacity-0 -translate-y-1"
+                    x-transition:enter-end="opacity-100 translate-y-0"
+                    x-transition:leave="transition ease-in duration-100"
+                    x-transition:leave-start="opacity-100"
+                    x-transition:leave-end="opacity-0"
+                    class="mt-0.5 ml-4 pl-3 border-l border-slate-100 space-y-0.5">
+                    @include('frontend.layout.partials.sidebar-sub-item', ['route' => 'groups.index', 'label' => 'Quản lý nhóm'])
+                </div>
+
+                <div class="flyout-menu" x-cloak>
+                    <div class="px-3 py-2 text-xs font-semibold text-slate-400 uppercase tracking-wide">Sinh Hoạt</div>
+                    @include('frontend.layout.partials.flyout-item', ['route' => 'groups.index', 'label' => 'Quản lý nhóm'])
+                </div>
+            </div>
+
             {{-- ── Nhóm: NHÂN SỰ ── --}}
             @php $isStaffActive = request()->routeIs('catechists.*','parishioners.*'); @endphp
             <div class="relative has-flyout">
@@ -633,7 +674,7 @@ $isDashboard = request()->routeIs('dashboard','catechist.dashboard','parish-admi
 
     <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
     @livewireScripts
-    
+
     @stack('scripts')
 </body>
 
