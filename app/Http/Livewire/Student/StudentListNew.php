@@ -131,7 +131,7 @@ class StudentListNew extends BaseComponent
         $user = auth()->user();
 
         // Catechist → lấy lớp mình phụ trách
-        if ($user?->isCatechist()) {
+        if ($user?->isCatechist() && $user->catechist) {
             $classId = CatechismClass::where('school_year_id', $this->selectedNamHoc)
                 ->whereHas('teachers', fn($q) => $q->where('catechist_id', $user->catechist->id))
                 ->orderBy('id')
@@ -139,7 +139,7 @@ class StudentListNew extends BaseComponent
 
             if ($classId) return $classId;
         }
-      
+
         // Fallback → lớp đầu tiên của năm học
         return CatechismClass::where('school_year_id', $this->selectedNamHoc)
             ->orderBy('id')

@@ -210,7 +210,7 @@ class ScoreManager extends BaseComponent
         $user = auth()->user();
 
         // Catechist → lấy lớp mình phụ trách
-        if ($user?->isCatechist()) {
+        if ($user?->isCatechist() && $user->catechist) {
             $classId = CatechismClass::where('school_year_id', $this->selectedNamHoc)
                 ->whereHas('teachers', fn($q) => $q->where('catechist_id', $user->catechist->id))
                 ->orderBy('id')
