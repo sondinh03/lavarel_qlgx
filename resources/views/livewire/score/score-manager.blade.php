@@ -152,9 +152,11 @@
                         <thead class="bg-slate-50 sticky top-0 z-10">
                             <tr>
                                 <x-table-header>STT</x-table-header>
+                                <x-table-header>Tên thánh</x-table-header>
+                                <x-table-header>Họ & tên đệm</x-table-header>
                                 <x-table-header :sortable="true" sort-field="first_name"
                                     :current-sort="$sortField" :sort-direction="$sortDirection">
-                                    Học sinh
+                                    Tên
                                 </x-table-header>
 
                                 @foreach($scoreTypes as $type)
@@ -184,17 +186,16 @@
                                     {{ ($students->firstItem() ?? 0) + $index }}
                                 </td>
 
-                                <td class="px-4 py-3 sticky left-10 bg-white">
-                                    <div class="flex flex-col">
-                                        @if($sc->saint)
-                                        <span class="text-xs text-slate-400 mt-0.5">
-                                            {{ $sc->saint->name }}
-                                        </span>
-                                        @endif
-                                        <span class="font-semibold text-slate-900 leading-tight">
-                                            {{ $sc->last_name }} {{ $sc->first_name }}
-                                        </span>
-                                    </div>
+                                <td class="px-4 py-3 text-sm text-slate-900">
+                                    {{ $sc->saint->name ?? '—' }}
+                                </td>
+
+                                <td class="px-4 py-3 text-sm font-semibold text-slate-900 whitespace-nowrap">
+                                    {{ $sc->last_name }}
+                                </td>
+
+                                <td class="px-4 py-3 text-sm font-semibold text-slate-900">
+                                    {{ $sc->first_name }}
                                 </td>
 
                                 @foreach($scoreTypes as $colIndex => $type)
@@ -208,7 +209,7 @@
                                         wire:model.defer="draftScores.{{ $sc->pivot_id }}.{{ $type->id }}"
                                         data-row="{{ $index }}"
                                         data-col="{{ $colIndex }}"
-                                        class="score-input w-16 py-1.5 px-2 text-center rounded-lg text-sm font-semibold
+                                        class="score-input w-14 py-1.5 px-2 text-center rounded-lg text-sm font-semibold
                                         border transition-all outline-none
                                         placeholder:text-slate-300
                                         focus:ring-2 focus:ring-primary-400 focus:border-primary-400

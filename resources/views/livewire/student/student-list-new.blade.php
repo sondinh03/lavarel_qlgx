@@ -261,49 +261,49 @@
                         @foreach($students as $index => $student)
                         <tr class="hover:bg-slate-50 transition-colors overflow-visible" wire:key="student-{{ $student->id }}">
 
-                            <td class="px-4 py-4">
+                            <td class="px-4 py-3 text-sm text-slate-500">
                                 <input type="checkbox" wire:model="selectedStudents"
                                     value="{{ $student->id }}"
                                     class="w-4 h-4 rounded border-slate-300 text-primary-600 focus:ring-primary-500">
                             </td>
 
-                            <td class="px-4 py-4 text-sm font-semibold text-slate-500">
+                            <td class="px-4 py-3 text-sm font-semibold text-slate-500">
                                 {{ ($students->firstItem() ?? 0) + $index }}
                             </td>
 
-                            <td class="px-4 py-4 text-sm text-slate-900">
+                            <td class="px-4 py-3 text-sm text-slate-900">
                                 {{ $student->saint->name ?? '—' }}
                             </td>
 
-                            <td class="px-4 py-4 text-sm font-semibold text-slate-900 whitespace-nowrap">
+                            <td class="px-4 py-3 text-sm font-semibold text-slate-900 whitespace-nowrap">
                                 {{ $student->last_name }}
                             </td>
 
-                            <td class="px-4 py-4 text-sm font-semibold text-slate-900">
+                            <td class="px-4 py-3 text-sm font-semibold text-slate-900">
                                 {{ $student->first_name }}
                             </td>
 
-                            <td class="px-4 py-4 text-sm text-slate-600">
+                            <td class="px-4 py-3 text-sm text-slate-600">
                                 {{ $student->birthday?->format('d/m/Y') ?? '—' }}
                             </td>
 
-                            <td class="px-4 py-4 text-sm text-slate-600">
+                            <td class="px-4 py-3 text-sm text-slate-600">
                                 {{ $student->gender_text }}
                             </td>
 
-                            <td class="px-4 py-4 text-sm text-slate-700 whitespace-nowrap">
+                            <td class="px-4 py-3 text-sm text-slate-700 whitespace-nowrap">
                                 {{ $student->father_name ?? '—' }}
                             </td>
 
-                            <td class="px-4 py-4 text-sm text-slate-700">
+                            <td class="px-4 py-3 text-sm text-slate-700">
                                 {{ $student->phone ?? '—' }}
                             </td>
 
-                            <td class="px-4 py-4 text-sm text-slate-700 whitespace-nowrap">
+                            <td class="px-4 py-3 text-sm text-slate-700 whitespace-nowrap">
                                 {{ $student->parishGroup->name ?? '—' }}
                             </td>
 
-                            <td class="px-4 py-4 overflow-visible">
+                            <td class="px-4 py-3 overflow-visible">
                                 <div class="flex items-center justify-center gap-1">
                                     <x-tooltip content="Xem chi tiết">
                                         <a href="{{ route('students.show', $student->id) }}"

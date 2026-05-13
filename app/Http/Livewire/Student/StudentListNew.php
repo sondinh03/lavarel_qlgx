@@ -115,6 +115,35 @@ class StudentListNew extends BaseComponent
         if (!$this->selectedNamHoc) {
             $this->selectedNamHoc = $this->getDefaultNamHocId();
         }
+
+        if (!$this->selectedLop) {
+            $this->selectedLop = $this->getDefaultClassId();
+        }
+    }
+
+    // ==================== HELPERS ====================
+    protected function getDefaultClassId(): ?int
+    {
+        if (!$this->selectedNamHoc) {
+            return null;
+        }
+
+        $user = auth()->user();
+
+        // Catechist → lấy lớp mình phụ trách
+        if ($user?->isCatechist()) {
+            $classId = CatechismClass::where('school_year_id', $this->selectedNamHoc)
+                ->whereHas('teachers', fn($q) => $q->where('catechist_id', $user->catechist->id))
+                ->orderBy('id')
+                ->value('id');
+
+            if ($classId) return $classId;
+        }
+      
+        // Fallback → lớp đầu tiên của năm học
+        return CatechismClass::where('school_year_id', $this->selectedNamHoc)
+            ->orderBy('id')
+            ->value('id');
     }
 
     protected function sanitizeQueryString(): void
