@@ -1,30 +1,14 @@
+@section('topbar')
+<x-breadcrumb :items="[
+        ['label' => 'Trang chủ', 'url' => route('dashboard')],
+        ['label' => 'Học sinh', 'url' => route('students.index')],
+        ['label' => 'Import học sinh'],
+    ]" />
+@endsection
+
 <div class="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 p-4 sm:p-6">
 
     <div class="mx-auto max-w-6xl space-y-5">
-
-        {{-- Breadcrumb --}}
-        <x-breadcrumb :items="[
-            ['label' => 'Trang chủ', 'url' => route('dashboard')],
-            ['label' => 'Danh sách học sinh', 'url' => route('students.index')],
-            ['label' => 'Import học sinh'],
-        ]" separator="arrow" />
-
-        {{-- Toast --}}
-        <div role="status" aria-live="polite">
-            @if(session()->has('message'))
-            <x-toast-notification type="success" :duration="4000">{{ session('message') }}</x-toast-notification>
-            @endif
-            @if(session()->has('error'))
-            <x-toast-notification type="error" :duration="5000">{{ session('error') }}</x-toast-notification>
-            @endif
-            @if(session()->has('warning'))
-            <x-toast-notification type="warning" :duration="5000">{!! session('warning') !!}</x-toast-notification>
-            @endif
-            @if(session()->has('info'))
-            <x-toast-notification type="info" :duration="4000">{{ session('info') }}</x-toast-notification>
-            @endif
-        </div>
-
         {{-- Page header --}}
         <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
             <x-page-header
@@ -340,7 +324,7 @@
                 <ul class="space-y-1">
                     @foreach($warnings as $rowNum => $rowWarnings)
                     @foreach($rowWarnings as $w)
-                    <li class="text-xs text-amber-700">• Dòng {{ $rowNum }}: {{ $w }}</li>
+                    <li class="text-xs text-amber-700">• Dòng {{ $rowNum }}: {!! $w !!}</li>
                     @endforeach
                     @endforeach
                 </ul>
@@ -394,16 +378,5 @@
         </div>
         @endif
 
-    </div>
-</div>
-
-{{-- Loading overlay --}}
-<div wire:loading.delay class="fixed inset-0 bg-gray-900/50 flex items-center justify-center z-50">
-    <div class="bg-white rounded-xl p-5 flex items-center gap-3 shadow-xl">
-        <svg class="animate-spin h-5 w-5 text-primary-600" fill="none" viewBox="0 0 24 24">
-            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-        </svg>
-        <span class="text-sm font-medium text-gray-700">Đang xử lý...</span>
     </div>
 </div>

@@ -985,7 +985,7 @@ class StudentListNew extends BaseComponent
                 new StudentExport($this->selectedLop),
                 \Maatwebsite\Excel\Excel::XLSX
             );
-        }, 'Lop-' . $selectedNameClass . '-' . now()->format('dmY_His') . '.xlsx');
+        }, 'DanhSachLop_' . $selectedNameClass . '_' . now()->format('dmY_His') . '.xlsx');
     }
 
     // ==================== RENDER ====================

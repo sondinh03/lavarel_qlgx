@@ -24,7 +24,6 @@ class ImportStudentAction
     {
         $catechismClass = CatechismClass::findOrFail($classId);
 
-        // Cache lookups để tránh N+1
         $saintMap = Holymanagement::pluck('id', 'name')
             ->mapWithKeys(fn($id, $name) => [trim($name) => $id])
             ->toArray();
@@ -36,64 +35,43 @@ class ImportStudentAction
         $rows = Excel::toArray(new StudentPreviewImport, $file)[0] ?? [];
 
         $imported          = 0;
+        $updated           = 0;
         $skipped_empty     = 0;
         $skipped_duplicate = 0;
         $errors            = [];
 
         foreach ($rows as $index => $row) {
-            $rowNumber = $index + 2; // +2 vì row 1 là header
+            $rowNumber   = $index + 2;
+            $studentCode = trim($row['ma_hoc_sinh'] ?? '');
 
-            // Bỏ qua dòng trống
             if (empty(trim($row['ho_ten_dem'] ?? '')) && empty(trim($row['ten'] ?? ''))) {
                 $skipped_empty++;
                 continue;
             }
 
             try {
-                // Parse ngày sinh trước để dùng cho duplicate check
                 $birthday = null;
                 if (!empty($row['ngay_sinh'])) {
                     $birthday = ExcelDateParser::parse($row['ngay_sinh']);
                 }
 
-                // Kiểm tra trùng học sinh — skip nếu đã tồn tại
-                $fullName = mb_strtolower(trim(($row['ho_ten_dem'] ?? '') . ' ' . ($row['ten'] ?? '')), 'UTF-8');
-                $isDuplicate = StudentNew::whereRaw(
-                    "LOWER(CONCAT(TRIM(last_name), ' ', TRIM(first_name))) = ?",
-                    [$fullName]
-                )->where(function ($q) use ($birthday) {
-                    if ($birthday) {
-                        $q->whereDate('birthday', $birthday);
-                    } else {
-                        $q->whereNull('birthday');
-                    }
-                })->exists();
-
-                if ($isDuplicate) {
-                    $skipped_duplicate++;
-                    continue;
-                }
-
-                // Resolve saint_id từ tên thánh
                 $saintId = null;
                 if (!empty(trim($row['ten_thanh'] ?? ''))) {
                     $saintId = $saintMap[trim($row['ten_thanh'])] ?? null;
                 }
 
-                // Resolve parish_group_id từ tên giáo họ
                 $parishGroupId = null;
                 if (!empty(trim($row['giao_ho'] ?? ''))) {
                     $parishGroupId = $parishGroupMap[trim($row['giao_ho'])] ?? null;
                 }
 
-                // Parse giới tính
                 $gender      = 'male';
                 $gioiTinhRaw = mb_strtolower(trim($row['gioi_tinh'] ?? ''), 'UTF-8');
                 if (in_array($gioiTinhRaw, ['nữ', 'nu', 'female', 'f', '0'])) {
                     $gender = 'female';
                 }
 
-                $student = StudentNew::create([
+                $data = [
                     'last_name'       => trim($row['ho_ten_dem'] ?? ''),
                     'first_name'      => trim($row['ten'] ?? ''),
                     'saint_id'        => $saintId,
@@ -107,21 +85,49 @@ class ImportStudentAction
                     'phone'           => trim($row['so_dien_thoai'] ?? '') ?: null,
                     'email'           => trim($row['email'] ?? '') ?: null,
                     'note'            => trim($row['ghi_chu'] ?? '') ?: null,
-                ]);
+                ];
 
-                $student->classes()->attach($catechismClass->id, [
-                    'enrolled_at' => now(),
-                    'created_at'  => now(),
-                    'updated_at'  => now(),
-                ]);
+                if ($studentCode) {
+                    // Có mã → tìm và update
+                    $student = StudentNew::where('student_code', $studentCode)
+                        ->where('parish_id', $parishId)
+                        ->first();
 
-                $imported++;
+                    if (!$student) {
+                        $errors[] = "Dòng {$rowNumber}: Không tìm thấy học sinh với mã '{$studentCode}'";
+                        continue;
+                    }
+
+                    $student->update($data);
+                    $updated++;
+                } else {
+                    // Không có mã → check duplicate rồi create
+                    $fullName    = mb_strtolower(trim(($row['ho_ten_dem'] ?? '') . ' ' . ($row['ten'] ?? '')), 'UTF-8');
+                    $isDuplicate = StudentNew::whereRaw(
+                        "LOWER(CONCAT(TRIM(last_name), ' ', TRIM(first_name))) = ?",
+                        [$fullName]
+                    )->where(function ($q) use ($birthday) {
+                        $birthday ? $q->whereDate('birthday', $birthday) : $q->whereNull('birthday');
+                    })->exists();
+
+                    if ($isDuplicate) {
+                        $skipped_duplicate++;
+                        continue;
+                    }
+
+                    $student = StudentNew::create($data);
+                    $imported++;
+                }
+
+                $student->classes()->syncWithoutDetaching([
+                    $catechismClass->id => ['enrolled_at' => now(), 'updated_at' => now()],
+                ]);
             } catch (\Exception $e) {
                 $errors[] = "Dòng {$rowNumber}: " . $e->getMessage();
             }
         }
 
-        return compact('imported', 'skipped_empty', 'skipped_duplicate', 'errors');
+        return compact('imported', 'updated', 'skipped_empty', 'skipped_duplicate', 'errors');
     }
 
     public function handleFromArray(array $rows, int $parishId, int $classId): array
@@ -137,21 +143,22 @@ class ImportStudentAction
             ->toArray();
 
         $imported          = 0;
+        $updated           = 0;
         $skipped_empty     = 0;
         $skipped_duplicate = 0;
         $errors            = [];
 
         foreach ($rows as $row) {
-            $rowNumber = $row['row_number'] ?? '?';
+            $rowNumber   = $row['row_number'] ?? '?';
+            $studentCode = trim($row['ma_hoc_sinh'] ?? '');
 
-            // Bỏ qua dòng trống
             if (empty(trim($row['ho_ten_dem'] ?? '')) && empty(trim($row['ten'] ?? ''))) {
                 $skipped_empty++;
                 continue;
             }
 
-            // Bỏ qua duplicate đã được đánh dấu từ bước preview
-            if (!empty($row['is_duplicate'])) {
+            // Không có mã + đã đánh dấu duplicate từ preview → skip
+            if (!$studentCode && !empty($row['is_duplicate'])) {
                 $skipped_duplicate++;
                 continue;
             }
@@ -162,44 +169,23 @@ class ImportStudentAction
                     $birthday = ExcelDateParser::parse($row['ngay_sinh']);
                 }
 
-                // Double-check duplicate tại thời điểm import (tránh race condition)
-                $fullName = mb_strtolower(trim(($row['ho_ten_dem'] ?? '') . ' ' . ($row['ten'] ?? '')), 'UTF-8');
-                $isDuplicate = StudentNew::whereRaw(
-                    "LOWER(CONCAT(TRIM(last_name), ' ', TRIM(first_name))) = ?",
-                    [$fullName]
-                )->where(function ($q) use ($birthday) {
-                    if ($birthday) {
-                        $q->whereDate('birthday', $birthday);
-                    } else {
-                        $q->whereNull('birthday');
-                    }
-                })->exists();
-
-                if ($isDuplicate) {
-                    $skipped_duplicate++;
-                    continue;
-                }
-
-                // Resolve saint_id
                 $saintId = null;
                 if (!empty(trim($row['ten_thanh'] ?? ''))) {
                     $saintId = $saintMap[trim($row['ten_thanh'])] ?? null;
                 }
 
-                // Resolve parish_group_id
                 $parishGroupId = null;
                 if (!empty(trim($row['giao_ho'] ?? ''))) {
                     $parishGroupId = $parishGroupMap[trim($row['giao_ho'])] ?? null;
                 }
 
-                // Parse giới tính
                 $gender      = 'male';
                 $gioiTinhRaw = mb_strtolower(trim($row['gioi_tinh'] ?? ''), 'UTF-8');
                 if (in_array($gioiTinhRaw, ['nữ', 'nu', 'female', 'f', '0'])) {
                     $gender = 'female';
                 }
 
-                $student = StudentNew::create([
+                $data = [
                     'last_name'       => trim($row['ho_ten_dem'] ?? ''),
                     'first_name'      => trim($row['ten'] ?? ''),
                     'saint_id'        => $saintId,
@@ -213,20 +199,66 @@ class ImportStudentAction
                     'phone'           => trim($row['so_dien_thoai'] ?? '') ?: null,
                     'email'           => trim($row['email'] ?? '') ?: null,
                     'note'            => trim($row['ghi_chu'] ?? '') ?: null,
-                ]);
+                ];
 
-                $student->classes()->attach($catechismClass->id, [
-                    'enrolled_at' => now(),
-                    'created_at'  => now(),
-                    'updated_at'  => now(),
-                ]);
+                if ($studentCode) {
+                    // Có mã → update (will_update đã được đánh dấu từ preview)
+                    $student = StudentNew::where('student_code', $studentCode)
+                        ->where('parish_id', $parishId)
+                        ->first();
 
-                $imported++;
+                    if (!$student) {
+                        $errors[] = "Dòng {$rowNumber}: Không tìm thấy học sinh với mã '{$studentCode}'";
+                        continue;
+                    }
+
+                    $belongsToClass = $student->classes()
+                        ->where('class_id', $catechismClass->id)
+                        ->exists();
+
+                    if (!$belongsToClass) {
+                        $errors[] = "Dòng {$rowNumber}: Học sinh '{$studentCode}' không thuộc lớp này, không thể cập nhật";
+                        continue;
+                    }
+
+                    $belongsToClass = $student->classes()
+                        ->where('class_id', $catechismClass->id)
+                        ->exists();
+
+                    if (!$belongsToClass) {
+                        $errors[] = "Dòng {$rowNumber}: Học sinh '{$studentCode}' không thuộc lớp này, không thể cập nhật";
+                        continue;
+                    }
+
+                    $student->update($data);
+                    $updated++;
+                } else {
+                    // Không có mã → double-check duplicate rồi create
+                    $fullName    = mb_strtolower(trim(($row['ho_ten_dem'] ?? '') . ' ' . ($row['ten'] ?? '')), 'UTF-8');
+                    $isDuplicate = StudentNew::whereRaw(
+                        "LOWER(CONCAT(TRIM(last_name), ' ', TRIM(first_name))) = ?",
+                        [$fullName]
+                    )->where(function ($q) use ($birthday) {
+                        $birthday ? $q->whereDate('birthday', $birthday) : $q->whereNull('birthday');
+                    })->exists();
+
+                    if ($isDuplicate) {
+                        $skipped_duplicate++;
+                        continue;
+                    }
+
+                    $student = StudentNew::create($data);
+                    $imported++;
+                }
+
+                $student->classes()->syncWithoutDetaching([
+                    $catechismClass->id => ['enrolled_at' => now(), 'updated_at' => now()],
+                ]);
             } catch (\Exception $e) {
                 $errors[] = "Dòng {$rowNumber}: " . $e->getMessage();
             }
         }
 
-        return compact('imported', 'skipped_empty', 'skipped_duplicate', 'errors');
+        return compact('imported', 'updated', 'skipped_empty', 'skipped_duplicate', 'errors');
     }
 }

@@ -44,6 +44,7 @@ class StudentExport implements FromCollection, WithHeadings, WithMapping, WithSt
             'Số điện thoại',
             'Email',
             'Ghi chú',
+            'Mã học sinh',
         ];
     }
 
@@ -66,6 +67,7 @@ class StudentExport implements FromCollection, WithHeadings, WithMapping, WithSt
             $student->phone ?? '',
             $student->email ?? '',
             $student->note ?? '',
+            $student->student_code ?? '',
         ];
     }
 
@@ -106,7 +108,7 @@ class StudentExport implements FromCollection, WithHeadings, WithMapping, WithSt
 
                 $sheet->insertNewRowBefore(1, 3);
                 $sheet->setCellValue('A1', "Danh sách học sinh - Lớp $className");
-                $sheet->mergeCells("A1:L1");
+                $sheet->mergeCells("A1:M1");
 
                 $sheet->getStyle('A1')->applyFromArray([
                     'font' => [
@@ -125,9 +127,9 @@ class StudentExport implements FromCollection, WithHeadings, WithMapping, WithSt
                 // ========================
                 $sheet->setCellValue('H2', 'Ngày xuất: ' . now()->format('d/m/Y H:i:s'));
 
-                $sheet->mergeCells('H2:L2');
+                $sheet->mergeCells('H2:M2');
 
-                $sheet->getStyle('A2:L2')->applyFromArray([
+                $sheet->getStyle('A2:M2')->applyFromArray([
                     'font' => [
                         'size' => 12,
                         'name' => 'Times New Roman',
@@ -139,12 +141,12 @@ class StudentExport implements FromCollection, WithHeadings, WithMapping, WithSt
                 // ========================
 
                 // Căn giữa header
-                $sheet->getStyle("A{$headerRow}:L{$headerRow}")
+                $sheet->getStyle("A{$headerRow}:M{$headerRow}")
                     ->getAlignment()
                     ->setHorizontal('center');
 
                 // Background header
-                $sheet->getStyle("A{$headerRow}:L{$headerRow}")
+                $sheet->getStyle("A{$headerRow}:M{$headerRow}")
                     ->getFill()
                     ->applyFromArray([
                         'fillType' => 'solid',
@@ -158,7 +160,7 @@ class StudentExport implements FromCollection, WithHeadings, WithMapping, WithSt
                 // ========================
                 // 🔥 BORDER (CHUẨN)
                 // ========================
-                $sheet->getStyle("A{$headerRow}:L{$dataLastRow}")
+                $sheet->getStyle("A{$headerRow}:M{$dataLastRow}")
                     ->applyFromArray([
                         'borders' => [
                             'outline' => [
@@ -175,7 +177,7 @@ class StudentExport implements FromCollection, WithHeadings, WithMapping, WithSt
                 // ========================
                 // 🔹 AUTO WIDTH
                 // ========================
-                foreach (range('A', 'L') as $col) {
+                foreach (range('A', 'M') as $col) {
                     $sheet->getColumnDimension($col)->setAutoSize(true);
                 }
 

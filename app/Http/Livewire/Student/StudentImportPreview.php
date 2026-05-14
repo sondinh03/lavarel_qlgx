@@ -155,6 +155,10 @@ class StudentImportPreview extends BaseComponent
 
     public function preview(): void
     {
+        $existingCodes = StudentNew::whereNotNull('student_code')
+            ->pluck('student_code')
+            ->toArray();
+
         $this->validate($this->formRules, $this->messages);
 
         $this->resetPreview();
@@ -208,7 +212,13 @@ class StudentImportPreview extends BaseComponent
                 $tenThanh    = trim($row['ten_thanh'] ?? '');
                 $giaoHo      = trim($row['giao_ho'] ?? '');
                 $ngaySinh    = $row['ngay_sinh'] ?? '';
-                $soDienThoai = trim($row['so_dien_thoai'] ?? '');
+
+                $soDienThoai = null;
+                $phone = trim($row['so_dien_thoai'] ?? '');
+                if ($phone && strlen($phone) === 9 && is_numeric($phone)) {
+                    $soDienThoai = '0' . $phone;
+                }
+
                 $email       = trim($row['email'] ?? '');
                 $ghiChu      = trim($row['ghi_chu'] ?? '');
                 $gioi_tinh   = trim($row['gioi_tinh'] ?? '');
@@ -247,13 +257,29 @@ class StudentImportPreview extends BaseComponent
                     $rowWarnings[] = "Số điện thoại \"{$soDienThoai}\" không đúng định dạng";
                 }
 
-                // Kiểm tra trùng học sinh
+                // 
+                $studentCode = trim($row['ma_hoc_sinh'] ?? '');
                 $fullName    = strtolower(trim(($row['ho_ten_dem'] ?? '') . ' ' . ($row['ten'] ?? '')));
                 $key         = $fullName . '_' . ($parsedDate ?? '');
-                $isDuplicate = in_array($key, $existingStudents);
+                $isDuplicate = false;
+                $willUpdate  = false;
 
-                if ($isDuplicate) {
-                    $rowWarnings[] = "Học sinh đã tồn tại trong hệ thống — dòng này sẽ bị bỏ qua khi import. Vui lòng kiểm tra lại trong năm học hoặc ghi danh bằng phương thức khác.";
+                if ($studentCode && in_array($studentCode, $existingCodes)) {
+                    $belongsToClass = StudentNew::where('student_code', $studentCode)
+                        ->whereHas('classes', fn($q) => $q->where('class_id', $this->selectedLop))
+                        ->exists();
+
+                    if ($belongsToClass) {
+                        $willUpdate    = true;
+                        $rowWarnings[] = "Học sinh có mã <strong>{$studentCode}</strong> sẽ được <strong>cập nhật</strong>.";
+                    } else {
+                        $isDuplicate   = true; // block lại, không cho update
+                        $rowWarnings[] = "Học sinh có mã <strong>{$studentCode}</strong> không thuộc lớp này — dòng này sẽ bị bỏ qua.";
+                    }
+                } elseif (!$studentCode && in_array($key, $existingStudents)) {
+                    // Không có mã, trùng tên + ngày sinh → skip như cũ
+                    $isDuplicate = true;
+                    $rowWarnings[] = "Học sinh đã tồn tại trong hệ thống — dòng này sẽ bị bỏ qua khi import.";
                 }
 
                 if (!empty($rowWarnings)) {
@@ -273,8 +299,10 @@ class StudentImportPreview extends BaseComponent
                     'so_dien_thoai' => $soDienThoai,
                     'email'         => $email,
                     'ghi_chu'       => $ghiChu,
+                    'ma_hoc_sinh'   => $studentCode,
                     'has_warning'   => !empty($rowWarnings),
                     'is_duplicate'  => $isDuplicate,
+                    'will_update'   => $willUpdate,
                 ];
             }
 
@@ -282,18 +310,23 @@ class StudentImportPreview extends BaseComponent
 
             if ($this->readyToImport) {
                 $duplicateCount = collect($this->rows)->where('is_duplicate', true)->count();
-                $willImport     = count($this->rows) - $duplicateCount;
-                $warningCount   = count($this->warnings) - $duplicateCount;
+                $updateCount    = collect($this->rows)->where('will_update', true)->count();
+                $willImport     = count($this->rows) - $duplicateCount - $updateCount;
 
                 $msg = sprintf('Đã kiểm tra %d dòng dữ liệu.', count($this->rows));
-                $msg .= " Sẽ import {$willImport} học sinh mới.";
+                if ($updateCount > 0) {
+                    $msg .= " Sẽ cập nhật {$updateCount} học sinh có mã.";
+                }
+
+                if ($willImport > 0) {
+                    $msg .= " Sẽ thêm mới {$willImport} học sinh.";
+                }
+
                 if ($duplicateCount > 0) {
                     $msg .= " Bỏ qua {$duplicateCount} học sinh đã tồn tại.";
                 }
-                if ($warningCount > 0) {
-                    $msg .= " ({$warningCount} dòng có cảnh báo khác)";
-                }
-                session()->flash('info', $msg);
+
+                $this->emit('toast', 'info', $msg);
             }
         } catch (\Exception $e) {
             $this->logError($e, 'Error previewing student import');
@@ -326,7 +359,11 @@ class StudentImportPreview extends BaseComponent
                 ->handleFromArray($this->rows, $this->parishId, $this->selectedLop);
 
             // Build thông báo thành công
-            $message = "✅ Import thành công {$result['imported']} học sinh vào lớp **{$this->className}**";
+            $message = "Thêm thành công {$result['imported']} học sinh vào lớp **{$this->className}**";
+
+            if (($result['updated'] ?? 0) > 0) {
+                $message .= " | Cập nhật {$result['updated']} học sinh";
+            }
 
             if ($result['skipped_empty'] > 0) {
                 $message .= " | Bỏ qua {$result['skipped_empty']} dòng trống";
@@ -334,20 +371,21 @@ class StudentImportPreview extends BaseComponent
             if ($result['skipped_duplicate'] > 0) {
                 $message .= " | Bỏ qua {$result['skipped_duplicate']} học sinh đã tồn tại";
             }
+
             if (!empty($result['errors'])) {
                 $message .= " | ❌ " . count($result['errors']) . " dòng lỗi";
             }
 
             // Flash warning nếu có lỗi từng dòng
             if (!empty($result['errors'])) {
-                session()->flash('warning', implode('<br>', array_slice($result['errors'], 0, 5)));
+                $this->emit('toast', 'warning', implode('<br>', array_slice($result['errors'], 0, 5)));
             }
 
             // Reset form để cho upload lại, giữ nguyên filter lớp
             $this->resetUpload();
 
             // Hiển thị thông báo thành công trên trang
-            session()->flash('message', $message);
+            $this->emit('toast', 'success', $message);
         } catch (\Exception $e) {
             Log::error('[Import] Exception', [
                 'message' => $e->getMessage(),
