@@ -47,7 +47,7 @@
             </div>
 
             <div class="flex-1 pt-0.5">
-                <p class="text-sm font-medium text-slate-900" x-text="toast.message"></p>
+                <p class="text-sm font-medium text-slate-900" x-html="toast.message"></p>
             </div>
 
             <button @click="remove(toast.id)" class="flex-shrink-0 text-slate-400 hover:text-slate-600 transition-colors">

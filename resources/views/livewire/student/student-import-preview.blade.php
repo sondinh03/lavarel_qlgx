@@ -170,7 +170,10 @@
                     </h3>
                     @if(!empty($warnings))
                     <p class="text-xs text-amber-600 mt-0.5">
-                        ⚠ {{ count($warnings) }} dòng có cảnh báo — các giá trị không khớp sẽ được bỏ trống khi import
+                        ⚠ {{ count($warnings) }} dòng có cảnh báo
+                        @if($this->realWarningCount > 0)
+                            — {{ $this->realWarningCount }} dòng có giá trị không hợp lệ sẽ được bỏ trống khi import
+                        @endif
                     </p>
                     @endif
                 </div>
@@ -192,6 +195,7 @@
                     <thead class="bg-slate-50">
                         <tr>
                             <th class="px-4 py-3 text-left text-xs font-semibold text-slate-600 uppercase tracking-wide">Dòng</th>
+                            <th class="px-4 py-3 text-left text-xs font-semibold text-slate-600 uppercase tracking-wide">Mã học sinh</th>
                             <th class="px-4 py-3 text-left text-xs font-semibold text-slate-600 uppercase tracking-wide">Tên thánh</th>
                             <th class="px-4 py-3 text-left text-xs font-semibold text-slate-600 uppercase tracking-wide">Họ tên đệm</th>
                             <th class="px-4 py-3 text-left text-xs font-semibold text-slate-600 uppercase tracking-wide">Tên</th>
@@ -212,7 +216,7 @@
                             wire:key="preview-{{ $row['row_number'] }}">
 
                             <td class="px-4 py-3 text-xs text-slate-400 font-mono">{{ $row['row_number'] }}</td>
-
+                            <td class="px-4 py-3 text-sm text-slate-700">{{ $row['ma_hoc_sinh'] ?: '—' }}</td>
                             {{-- Tên thánh --}}
                             <td class="px-4 py-3 text-sm text-slate-700">
                                 @php
@@ -242,7 +246,7 @@
                                 <span class="text-amber-600 text-xs">{{ $row['gioi_tinh'] }} (?)</span>
                                 @else
                                 <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium
-                                                         {{ $isNam ? 'bg-blue-100 text-blue-700' : 'bg-pink-100 text-pink-700' }}">
+                                                         {{ $isNam ? 'bg-primary-100 text-primary-700' : 'bg-pink-100 text-pink-700' }}">
                                     {{ $isNam ? 'Nam' : 'Nữ' }}
                                 </span>
                                 @endif
@@ -296,13 +300,18 @@
                             <td class="px-4 py-3 text-center">
                                 @if($row['is_duplicate'])
                                 <span class="inline-flex items-center px-2 py-0.5 rounded-full
-                                                         text-xs font-medium bg-slate-200 text-slate-500">
+                                    text-xs font-medium bg-slate-200 text-slate-500">
                                     Bỏ qua
+                                </span>
+                                @elseif($row['will_update'])
+                                <span class="inline-flex items-center px-2 py-0.5 rounded-full
+                                    text-xs font-medium bg-primary-100 text-primary-700">
+                                    Cập nhật
                                 </span>
                                 @elseif($row['has_warning'])
                                 <span title="{{ implode(', ', $warnings[$row['row_number']] ?? []) }}"
                                     class="inline-flex items-center justify-center w-6 h-6
-                                                       bg-amber-100 text-amber-600 rounded-full cursor-help text-xs font-bold">
+                                    bg-amber-100 text-amber-600 rounded-full cursor-help text-xs font-bold">
                                     !
                                 </span>
                                 @else
@@ -334,17 +343,15 @@
             {{-- Action footer --}}
             <div class="px-6 py-4 border-t border-slate-200 bg-slate-50 flex items-center justify-between">
                 <div class="text-sm text-slate-600 space-y-0.5">
-                    @php $duplicateCount = collect($rows)->where('is_duplicate', true)->count(); @endphp
-                    <p>
-                        Sẽ import
-                        <span class="font-semibold text-slate-900">{{ count($rows) - $duplicateCount }} học sinh mới</span>
-                        @if($this->className)
-                        vào lớp <span class="font-semibold text-primary-700">{{ $this->className }}</span>
-                        @endif
-                    </p>
-                    @if($duplicateCount > 0)
+                    Sẽ thêm mới
+                    <span class="font-semibold text-slate-900">{{ $this->newCount }} học sinh</span>
+                    @if($this->updateCount > 0)
+                    và cập nhật <span class="font-semibold text-primary-700">{{ $this->updateCount }} học sinh</span>
+                    @endif
+
+                    @if($this->duplicateCount > 0)
                     <p class="text-xs text-slate-400">
-                        Bỏ qua {{ $duplicateCount }} học sinh đã tồn tại trong hệ thống
+                        Bỏ qua {{ $this->duplicateCount }} học sinh trùng hoặc không hợp lệ
                     </p>
                     @endif
                 </div>

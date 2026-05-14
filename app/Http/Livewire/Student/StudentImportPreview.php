@@ -153,6 +153,8 @@ class StudentImportPreview extends BaseComponent
 
     // ==================== ACTIONS ====================
 
+    // ==================== ACTIONS ====================
+
     public function preview(): void
     {
         $existingCodes = StudentNew::whereNotNull('student_code')
@@ -167,7 +169,7 @@ class StudentImportPreview extends BaseComponent
             $data = Excel::toArray(new StudentPreviewImport, $this->file)[0] ?? [];
 
             if (empty($data)) {
-                $this->errors[] = 'File Excel trống hoặc không đúng định dạng';
+                $this->errors[] = 'File Excel trống hoặc không đúng định dạng.';
                 return;
             }
 
@@ -176,7 +178,7 @@ class StudentImportPreview extends BaseComponent
 
             foreach ($requiredHeaders as $header) {
                 if (!array_key_exists($header, $firstRow)) {
-                    $this->errors[] = "Thiếu cột bắt buộc: <strong>{$header}</strong>";
+                    $this->errors[] = "Thiếu cột bắt buộc: <strong>{$header}</strong>.";
                 }
             }
 
@@ -203,7 +205,6 @@ class StudentImportPreview extends BaseComponent
             foreach ($data as $index => $row) {
                 $rowNumber = $index + 6;
 
-                // Bỏ qua dòng trống
                 if (empty(trim($row['ho_ten_dem'] ?? '')) && empty(trim($row['ten'] ?? ''))) {
                     continue;
                 }
@@ -212,30 +213,37 @@ class StudentImportPreview extends BaseComponent
                 $tenThanh    = trim($row['ten_thanh'] ?? '');
                 $giaoHo      = trim($row['giao_ho'] ?? '');
                 $ngaySinh    = $row['ngay_sinh'] ?? '';
-
-                $soDienThoai = null;
-                $phone = trim($row['so_dien_thoai'] ?? '');
-                if ($phone && strlen($phone) === 9 && is_numeric($phone)) {
-                    $soDienThoai = '0' . $phone;
-                }
-
                 $email       = trim($row['email'] ?? '');
                 $ghiChu      = trim($row['ghi_chu'] ?? '');
                 $gioi_tinh   = trim($row['gioi_tinh'] ?? '');
 
+                // Normalize SĐT
+                $soDienThoai = null;
+                $phoneRaw    = trim($row['so_dien_thoai'] ?? '');
+                if ($phoneRaw) {
+                    $phone = preg_replace('/\D/', '', (string) $phoneRaw);
+                    if (str_starts_with($phone, '84') && strlen($phone) === 11) {
+                        $phone = '0' . substr($phone, 2);
+                    }
+                    if (strlen($phone) === 9) {
+                        $phone = '0' . $phone;
+                    }
+                    $soDienThoai = $phone ?: null;
+                }
+
                 // Validate giới tính
                 if (!empty($gioi_tinh) && !in_array(strtolower($gioi_tinh), $validGenders)) {
-                    $rowWarnings[] = "Giới tính \"{$gioi_tinh}\" không hợp lệ (dùng: nam / nữ)";
+                    $rowWarnings[] = "Giới tính <strong>\"{$gioi_tinh}\"</strong> không hợp lệ — chỉ chấp nhận: nam / nữ.";
                 }
 
                 // Validate tên thánh
                 if (!empty($tenThanh) && !in_array(strtolower($tenThanh), $saintNames)) {
-                    $rowWarnings[] = "Tên thánh \"{$tenThanh}\" không tìm thấy trong hệ thống";
+                    $rowWarnings[] = "Tên thánh <strong>\"{$tenThanh}\"</strong> không tìm thấy trong hệ thống.";
                 }
 
                 // Validate giáo họ
                 if (!empty($giaoHo) && !in_array(strtolower($giaoHo), $groupNames)) {
-                    $rowWarnings[] = "Giáo họ \"{$giaoHo}\" không tìm thấy trong hệ thống";
+                    $rowWarnings[] = "Giáo họ <strong>\"{$giaoHo}\"</strong> không tìm thấy trong hệ thống.";
                 }
 
                 // Validate ngày sinh
@@ -243,43 +251,48 @@ class StudentImportPreview extends BaseComponent
                 if (!empty($ngaySinh)) {
                     $parsedDate = ExcelDateParser::parse($ngaySinh);
                     if ($parsedDate === null) {
-                        $rowWarnings[] = "Ngày sinh \"{$ngaySinh}\" không hợp lệ (định dạng: dd/MM/yyyy)";
+                        $rowWarnings[] = "Ngày sinh <strong>\"{$ngaySinh}\"</strong> không hợp lệ — định dạng yêu cầu: <strong>dd/MM/yyyy</strong>.";
                     }
                 }
 
                 // Validate email
                 if (!empty($email) && !filter_var($email, FILTER_VALIDATE_EMAIL)) {
-                    $rowWarnings[] = "Email \"{$email}\" không đúng định dạng";
+                    $rowWarnings[] = "Email <strong>\"{$email}\"</strong> không đúng định dạng.";
                 }
 
-                // Validate số điện thoại
-                if (!empty($soDienThoai) && !preg_match('/^[0-9]{9,11}$/', $soDienThoai)) {
-                    $rowWarnings[] = "Số điện thoại \"{$soDienThoai}\" không đúng định dạng";
+                // Validate SĐT
+                if ($soDienThoai && !preg_match('/^0[0-9]{9}$/', $soDienThoai)) {
+                    $rowWarnings[] = "Số điện thoại <strong>\"{$phoneRaw}\"</strong> không hợp lệ — yêu cầu 10 số, bắt đầu bằng 0.";
                 }
 
-                // 
+                // Kiểm tra mã học sinh & duplicate
                 $studentCode = trim($row['ma_hoc_sinh'] ?? '');
                 $fullName    = strtolower(trim(($row['ho_ten_dem'] ?? '') . ' ' . ($row['ten'] ?? '')));
                 $key         = $fullName . '_' . ($parsedDate ?? '');
                 $isDuplicate = false;
                 $willUpdate  = false;
 
-                if ($studentCode && in_array($studentCode, $existingCodes)) {
-                    $belongsToClass = StudentNew::where('student_code', $studentCode)
-                        ->whereHas('classes', fn($q) => $q->where('class_id', $this->selectedLop))
-                        ->exists();
+                if ($studentCode) {
+                    if (in_array($studentCode, $existingCodes)) {
+                        $belongsToClass = StudentNew::where('student_code', $studentCode)
+                            ->whereHas('classes', fn($q) => $q->where('class_id', $this->selectedLop))
+                            ->exists();
 
-                    if ($belongsToClass) {
-                        $willUpdate    = true;
-                        $rowWarnings[] = "Học sinh có mã <strong>{$studentCode}</strong> sẽ được <strong>cập nhật</strong>.";
+                        if ($belongsToClass) {
+                            $willUpdate    = true;
+                            $rowWarnings[] = "Học sinh mã <strong>{$studentCode}</strong> đã có trong lớp — thông tin sẽ được <strong>cập nhật</strong> khi xác nhận.";
+                        } else {
+                            $isDuplicate   = true;
+                            $rowWarnings[] = "Học sinh mã <strong>{$studentCode}</strong> không thuộc lớp này — dòng này sẽ bị <strong>bỏ qua</strong>.";
+                        }
                     } else {
-                        $isDuplicate   = true; // block lại, không cho update
-                        $rowWarnings[] = "Học sinh có mã <strong>{$studentCode}</strong> không thuộc lớp này — dòng này sẽ bị bỏ qua.";
+                        // Có mã nhưng không tồn tại trong hệ thống
+                        $isDuplicate   = true;
+                        $rowWarnings[] = "Mã học sinh <strong>{$studentCode}</strong> không tồn tại trong hệ thống — dòng này sẽ bị <strong>bỏ qua</strong>.";
                     }
-                } elseif (!$studentCode && in_array($key, $existingStudents)) {
-                    // Không có mã, trùng tên + ngày sinh → skip như cũ
-                    $isDuplicate = true;
-                    $rowWarnings[] = "Học sinh đã tồn tại trong hệ thống — dòng này sẽ bị bỏ qua khi import.";
+                } elseif (in_array($key, $existingStudents)) {
+                    $isDuplicate   = true;
+                    $rowWarnings[] = "Học sinh <strong>" . trim(($row['ho_ten_dem'] ?? '') . ' ' . ($row['ten'] ?? '')) . "</strong> đã tồn tại trong hệ thống — dòng này sẽ bị <strong>bỏ qua</strong>.";
                 }
 
                 if (!empty($rowWarnings)) {
@@ -313,20 +326,20 @@ class StudentImportPreview extends BaseComponent
                 $updateCount    = collect($this->rows)->where('will_update', true)->count();
                 $willImport     = count($this->rows) - $duplicateCount - $updateCount;
 
-                $msg = sprintf('Đã kiểm tra %d dòng dữ liệu.', count($this->rows));
-                if ($updateCount > 0) {
-                    $msg .= " Sẽ cập nhật {$updateCount} học sinh có mã.";
-                }
+                $parts   = [];
+                $parts[] = sprintf('Đã đọc %d dòng dữ liệu.', count($this->rows));
 
                 if ($willImport > 0) {
-                    $msg .= " Sẽ thêm mới {$willImport} học sinh.";
+                    $parts[] = "Thêm mới {$willImport} học sinh.";
                 }
-
+                if ($updateCount > 0) {
+                    $parts[] = "Cập nhật {$updateCount} học sinh.";
+                }
                 if ($duplicateCount > 0) {
-                    $msg .= " Bỏ qua {$duplicateCount} học sinh đã tồn tại.";
+                    $parts[] = "Bỏ qua {$duplicateCount} học sinh trùng hoặc không hợp lệ.";
                 }
 
-                $this->emit('toast', 'info', $msg);
+                $this->emit('toast', 'info', implode(' ', $parts));
             }
         } catch (\Exception $e) {
             $this->logError($e, 'Error previewing student import');
@@ -334,23 +347,20 @@ class StudentImportPreview extends BaseComponent
         }
     }
 
-    public function confirmImport()
+    public function confirmImport(): void
     {
         if (!$this->readyToImport) {
-            Log::warning('[Import] Blocked: readyToImport = false');
-            $this->addError('import', 'Dữ liệu chưa hợp lệ, không thể import');
+            $this->addError('import', 'Dữ liệu chưa hợp lệ, không thể import.');
             return;
         }
 
         if (!$this->selectedLop) {
-            Log::warning('[Import] Blocked: selectedLop is null');
-            $this->addError('import', 'Chưa chọn lớp');
+            $this->addError('import', 'Vui lòng chọn lớp trước khi import.');
             return;
         }
 
         if (empty($this->rows)) {
-            Log::warning('[Import] Blocked: rows is empty');
-            $this->addError('import', 'Không có dữ liệu để import, vui lòng upload lại file');
+            $this->addError('import', 'Không có dữ liệu để import, vui lòng upload lại file.');
             return;
         }
 
@@ -358,34 +368,36 @@ class StudentImportPreview extends BaseComponent
             $result = app(ImportStudentAction::class)
                 ->handleFromArray($this->rows, $this->parishId, $this->selectedLop);
 
-            // Build thông báo thành công
-            $message = "Thêm thành công {$result['imported']} học sinh vào lớp **{$this->className}**";
-
-            if (($result['updated'] ?? 0) > 0) {
-                $message .= " | Cập nhật {$result['updated']} học sinh";
+            // Toast lỗi từng dòng (nếu có)
+            if (!empty($result['errors'])) {
+                $errorMsg = implode('<br>', array_slice($result['errors'], 0, 5));
+                if (count($result['errors']) > 5) {
+                    $errorMsg .= '<br>... và ' . (count($result['errors']) - 5) . ' lỗi khác.';
+                }
+                $this->emit('toast', 'warning', $errorMsg);
             }
 
-            if ($result['skipped_empty'] > 0) {
-                $message .= " | Bỏ qua {$result['skipped_empty']} dòng trống";
+            $parts   = [];
+            $parts[] = "Import hoàn tất lớp {$this->className}.";
+
+            if ($result['imported'] > 0) {
+                $parts[] = "Thêm mới {$result['imported']} học sinh.";
+            }
+            if (($result['updated'] ?? 0) > 0) {
+                $parts[] = "Cập nhật {$result['updated']} học sinh.";
             }
             if ($result['skipped_duplicate'] > 0) {
-                $message .= " | Bỏ qua {$result['skipped_duplicate']} học sinh đã tồn tại";
+                $parts[] = "Bỏ qua {$result['skipped_duplicate']} học sinh trùng.";
             }
-
+            if ($result['skipped_empty'] > 0) {
+                $parts[] = "Bỏ qua {$result['skipped_empty']} dòng trống.";
+            }
             if (!empty($result['errors'])) {
-                $message .= " | ❌ " . count($result['errors']) . " dòng lỗi";
+                $parts[] = count($result['errors']) . " dòng có lỗi.";
             }
 
-            // Flash warning nếu có lỗi từng dòng
-            if (!empty($result['errors'])) {
-                $this->emit('toast', 'warning', implode('<br>', array_slice($result['errors'], 0, 5)));
-            }
-
-            // Reset form để cho upload lại, giữ nguyên filter lớp
             $this->resetUpload();
-
-            // Hiển thị thông báo thành công trên trang
-            $this->emit('toast', 'success', $message);
+            $this->emit('toast', 'success', implode(' ', $parts));
         } catch (\Exception $e) {
             Log::error('[Import] Exception', [
                 'message' => $e->getMessage(),
@@ -393,7 +405,7 @@ class StudentImportPreview extends BaseComponent
                 'line'    => $e->getLine(),
                 'trace'   => $e->getTraceAsString(),
             ]);
-            $this->addError('import', 'Có lỗi khi import: ' . $e->getMessage());
+            $this->addError('import', 'Có lỗi xảy ra khi import, vui lòng thử lại.');
         }
     }
 
@@ -411,6 +423,30 @@ class StudentImportPreview extends BaseComponent
         }
 
         return CatechismClass::where('id', $this->selectedLop)->value('name');
+    }
+
+    public function getDuplicateCountProperty(): int
+    {
+        return collect($this->rows)->where('is_duplicate', true)->count();
+    }
+
+    public function getUpdateCountProperty(): int
+    {
+        return collect($this->rows)->where('will_update', true)->count();
+    }
+
+    public function getNewCountProperty(): int
+    {
+        return count($this->rows) - $this->duplicateCount - $this->updateCount;
+    }
+
+    public function getRealWarningCountProperty(): int
+    {
+        return collect($this->rows)
+            ->where('has_warning', true)
+            ->where('is_duplicate', false)
+            ->where('will_update', false)
+            ->count();
     }
 
     // ==================== HELPERS ====================
