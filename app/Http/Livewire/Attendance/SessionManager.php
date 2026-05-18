@@ -8,10 +8,13 @@ use App\Models\CatechismClass;
 use App\Models\GradeLevel;
 use App\Models\NamHoc;
 use Carbon\Carbon;
+use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\ValidationException;
 
 /**
  * Component quản lý Phiên điểm danh (CRUD)
+ * Refactored theo chuẩn StudentListNew: pagination, queryString, property updaters.
  */
 class SessionManager extends BaseComponent
 {
@@ -20,20 +23,16 @@ class SessionManager extends BaseComponent
     /** @var int|null Selected năm học ID */
     public $selectedNamHoc = null;
 
-    /** @var int|null Selected khối ('' = all) */
+    /** @var int|null Selected khối */
     public $selectedKhoi = null;
 
     /** @var int|null Selected lớp */
     public $selectedClassId = null;
 
-    /** @var string Phạm vi tạo: class, grade, parish */
-    public $scope = 'class';
+    // ==================== FORM FIELDS ====================
 
-    // ==================== FORM STATE ====================
     /** @var int|null ID session đang edit (null = create) */
     public $editingId = null;
-
-    // ==================== FORM FIELDS ====================
 
     /** @var int Loại điểm danh (1: học, 2: lễ) */
     public $type = 1;
@@ -41,10 +40,10 @@ class SessionManager extends BaseComponent
     /** @var string Tiêu đề phiên */
     public $title = '';
 
-    /** @var string|null Ngày bắt đầu tạo */
+    /** @var string|null Ngày bắt đầu */
     public $startDate = null;
 
-    /** @var string|null Ngày kết thúc tạo */
+    /** @var string|null Ngày kết thúc */
     public $endDate = null;
 
     /** @var array Các ngày cụ thể được chọn */
@@ -53,38 +52,43 @@ class SessionManager extends BaseComponent
     /** @var string Chế độ tạo: single, weekly, custom */
     public $createMode = 'single';
 
-    /** @var array Các ngày trong tuần (0=CN, 1=T2...) */
+    /** @var array Các ngày trong tuần (0=CN … 6=T7) */
     public $weekDays = [];
 
-    /** @var string|null Start time */
+    /** @var string|null Giờ bắt đầu */
     public $startTime = null;
 
-    /** @var string|null End time */
+    /** @var string|null Giờ kết thúc */
     public $endTime = null;
 
-    // ==================== DATA ====================
-
-    /** @var \Illuminate\Support\Collection */
-    public $sessions;
+    // ==================== STATE ====================
 
     /** @var object|null Năm học hiện tại */
     public $currentNamHoc = null;
 
-    /** @var bool Không dùng pagination */
-    protected $usePagination = false;
+    // ==================== SORT ====================
+
+    protected array $allowedSortFields = ['date', 'type', 'status'];
+
+    public string $sortField    = 'date';
+    public string $sortDirection = 'desc';
 
     // ==================== VALIDATION ====================
 
     protected $rules = [
-        'type'           => 'required|integer|in:1,2',
-        'title'          => 'nullable|string|max:255',
-        'createMode'     => 'required|string|in:single,weekly,custom',
-        'weekDays'       => 'required_if:createMode,weekly|array',
-        'weekDays.*'     => 'integer|between:0,6',
-        'selectedDates'  => 'required_if:createMode,custom|array',
-        'startTime'      => 'nullable|date_format:H:i',
-        'endTime'        => 'nullable|date_format:H:i|after:startTime',
-        'scope'          => 'required|string|in:class,grade,parish',
+        'selectedNamHoc'   => 'nullable|integer|exists:nam_hoc,id',
+        'selectedKhoi'     => 'nullable|integer|exists:classes,grade_level_id',
+        'selectedClassId'  => 'nullable|integer|exists:classes,id',
+        'search'           => 'nullable|string|max:255',
+        'perPage'          => 'required|integer|in:10,15,25,50,100',
+        'type'             => 'required|integer|in:1,2',
+        'title'            => 'nullable|string|max:255',
+        'createMode'       => 'required|string|in:single,weekly,custom',
+        'weekDays'         => 'required_if:createMode,weekly|array',
+        'weekDays.*'       => 'integer|between:0,6',
+        'selectedDates'    => 'required_if:createMode,custom|array',
+        'startTime'        => 'nullable|date_format:H:i',
+        'endTime'          => 'nullable|date_format:H:i|after:startTime',
     ];
 
     protected $messages = [
@@ -93,17 +97,20 @@ class SessionManager extends BaseComponent
         'weekDays.required_if'       => 'Vui lòng chọn ít nhất 1 ngày trong tuần',
         'selectedDates.required_if'  => 'Vui lòng chọn ít nhất 1 ngày',
         'endTime.after'              => 'Giờ kết thúc phải sau giờ bắt đầu',
+        'search.max'                 => 'Tìm kiếm không được quá 255 ký tự',
+        'perPage.in'                 => 'Số mục trên trang không hợp lệ',
     ];
 
     // ==================== QUERY STRING ====================
 
-    protected function queryString()
+    protected function queryString(): array
     {
         return array_merge([
-            'selectedNamHoc'  => ['as' => 'namHoc', 'except' => null],
-            'selectedKhoi'    => ['as' => 'khoi', 'except' => null],
+            'selectedNamHoc'  => ['as' => 'namHoc',  'except' => null],
+            'selectedKhoi'    => ['as' => 'khoi',    'except' => null],
             'selectedClassId' => ['as' => 'classId', 'except' => null],
-            'scope' => ['as' => 'scope', 'except' => 'class'],
+            'sortField'       => ['as' => 'sort',    'except' => 'date'],
+            'sortDirection'   => ['as' => 'dir',     'except' => 'desc'],
         ], parent::queryString());
     }
 
@@ -112,20 +119,16 @@ class SessionManager extends BaseComponent
     protected $listeners = [
         'refresh'        => 'handleRefresh',
         'filterChanged'  => 'handleFilterChanged',
-        'sessionCreated' => 'loadSessions',
-        'sessionUpdated' => 'loadSessions',
+        'sessionCreated' => '$refresh',
+        'sessionUpdated' => '$refresh',
     ];
 
     // ==================== LIFECYCLE ====================
 
-    public function mount()
+    public function mount(): void
     {
-        // Khởi tạo collection trước parent::mount()
-        $this->sessions = collect();
-
+        $this->authorize('viewAny', AttendanceSession::class);
         parent::mount();
-
-        $this->requireManager();
         $this->requireParishId();
     }
 
@@ -136,8 +139,6 @@ class SessionManager extends BaseComponent
         }
 
         if (!$this->selectedClassId) {
-            // Catechist → dùng defaultClassId từ BaseComponent
-            // Không catechist → fallback lớp đầu tiên của năm học
             $this->selectedClassId = $this->defaultClassId
                 ?? CatechismClass::where('school_year_id', $this->selectedNamHoc)
                 ->orderBy('id')
@@ -146,13 +147,7 @@ class SessionManager extends BaseComponent
 
         if ($this->selectedClassId) {
             $this->loadClassInfo();
-            $this->startDate = $this->currentNamHoc?->start_date_one
-                ? $this->currentNamHoc->start_date_one->format('Y-m-d')
-                : null;
-            $this->endDate = $this->currentNamHoc?->end_date_one
-                ? $this->currentNamHoc->end_date_one->format('Y-m-d')
-                : null;
-            $this->loadSessions();
+            $this->syncDateDefaults();
         }
     }
 
@@ -170,10 +165,96 @@ class SessionManager extends BaseComponent
             ? (int) $this->selectedKhoi
             : null;
 
-        // ✅ Fix: đồng nhất kiểu với AttendanceManager (null thay vì '')
         $this->selectedClassId = is_numeric($this->selectedClassId)
             ? (int) $this->selectedClassId
             : null;
+    }
+
+    protected function resetToDefaults(): void
+    {
+        parent::resetToDefaults();
+        $this->selectedKhoi    = null;
+        $this->selectedClassId = null;
+    }
+
+    // ==================== PROPERTY UPDATERS ====================
+
+    public function updatedSearch(): void
+    {
+        $this->search = trim($this->search);
+
+        try {
+            $this->validateOnly('search');
+        } catch (ValidationException $e) {
+            $this->search = '';
+            $this->emit('toast', 'warning', 'Từ khóa tìm kiếm không hợp lệ.');
+        }
+
+        $this->resetPage();
+    }
+
+    public function updatedSelectedNamHoc(): void
+    {
+        $this->selectedNamHoc = is_numeric($this->selectedNamHoc)
+            ? (int) $this->selectedNamHoc
+            : null;
+
+        try {
+            $this->validateOnly('selectedNamHoc');
+        } catch (ValidationException $e) {
+            $this->selectedNamHoc = null;
+            $this->emit('toast', 'warning', 'Năm học không hợp lệ.');
+        }
+
+        $this->selectedKhoi    = null;
+        $this->selectedClassId = null;
+        $this->currentNamHoc   = null;
+        $this->search          = '';
+        $this->resetPage();
+    }
+
+    public function updatedSelectedKhoi(): void
+    {
+        $this->selectedKhoi = is_numeric($this->selectedKhoi)
+            ? (int) $this->selectedKhoi
+            : null;
+
+        if ($this->selectedKhoi) {
+            try {
+                $this->validateOnly('selectedKhoi');
+            } catch (ValidationException $e) {
+                $this->selectedKhoi = null;
+                $this->emit('toast', 'warning', 'Khối không hợp lệ.');
+            }
+        }
+
+        $this->selectedClassId = null;
+        $this->currentNamHoc   = null;
+        $this->resetPage();
+    }
+
+    public function updatedSelectedClassId(): void
+    {
+        $this->selectedClassId = is_numeric($this->selectedClassId)
+            ? (int) $this->selectedClassId
+            : null;
+
+        if ($this->selectedClassId) {
+            try {
+                $this->validateOnly('selectedClassId');
+            } catch (ValidationException $e) {
+                $this->selectedClassId = null;
+                $this->emit('toast', 'warning', 'Lớp không hợp lệ.');
+                return;
+            }
+
+            $this->loadClassInfo();
+            $this->syncDateDefaults();
+        } else {
+            $this->currentNamHoc = null;
+        }
+
+        $this->resetPage();
     }
 
     // ==================== DATA LOADING ====================
@@ -189,102 +270,153 @@ class SessionManager extends BaseComponent
                 ->findOrFail($this->selectedClassId);
 
             $this->selectedNamHoc = $class->school_year_id;
-            $this->selectedKhoi   = $class->grade_level_id;
             $this->currentNamHoc  = $class->schoolYear;
         } catch (\Exception $e) {
             $this->logError($e, 'Error loading class info');
-            $this->emit('toast',  'error', 'Không tìm thấy lớp học');
+            $this->emit('toast', 'error', 'Không tìm thấy lớp học');
         }
     }
 
-    public function loadSessions(): void
+    protected function syncDateDefaults(): void
     {
-        if (!$this->selectedClassId) {
-            $this->sessions = collect();
+        if (!$this->currentNamHoc) {
             return;
         }
 
-        try {
-            $query = AttendanceSession::where('class_id', $this->selectedClassId)
-                ->orderByDesc('date')
-                ->orderByDesc('type');
+        $this->startDate = $this->currentNamHoc->start_date_one
+            ? $this->currentNamHoc->start_date_one->format('Y-m-d')
+            : null;
 
-            if (!empty(trim($this->search))) {
-                $search = '%' . trim($this->search) . '%';
-                $query->where('title', 'like', $search);
-            }
+        $this->endDate = $this->currentNamHoc->end_date_one
+            ? $this->currentNamHoc->end_date_one->format('Y-m-d')
+            : null;
+    }
 
-            $this->sessions = $query->get()->map(function ($session) {
-                $stats = $session->getStatistics();
-                return [
-                    'id'          => $session->id,
-                    'dateStr'     => $session->date->format('Y-m-d'),
-                    'fullDate'    => $session->date->format('d/m/Y'),
-                    'dayName'     => $this->getVietnameseDayName($session->date),
-                    'type'        => $session->type,
-                    'typeLabel'   => $session->type == AttendanceSession::TYPE_CLASS ? 'Đi học' : 'Đi lễ',
-                    'title'       => $session->title,
-                    'status'      => $session->status,
-                    'statusLabel' => $this->getStatusLabel($session->status),
-                    'statusClass' => $this->getStatusClass($session->status),
-                    'locked'      => $session->status === AttendanceSession::STATUS_CLOSED,
-                    'start_time'  => $session->start_time?->format('H:i'),
-                    'end_time'    => $session->end_time?->format('H:i'),
-                    'stats'       => $stats,
-                ];
-            });
-        } catch (\Exception $e) {
-            $this->logError($e, 'Error loading sessions');
-            $this->sessions = collect();
+    // ==================== QUERY HELPERS ====================
+
+    /**
+     * Base query dùng chung cho cả paginate lẫn count / stats.
+     */
+    protected function getCurrentSessionsQuery()
+    {
+        $query = AttendanceSession::query();
+
+        if ($this->selectedClassId) {
+            $query->where('class_id', $this->selectedClassId);
+        } elseif ($this->selectedNamHoc) {
+            // Nếu không chọn lớp cụ thể, lọc theo tất cả lớp trong năm học
+            $classIds = CatechismClass::where('school_year_id', $this->selectedNamHoc)
+                ->when($this->selectedKhoi, fn($q) => $q->where('grade_level_id', $this->selectedKhoi))
+                ->pluck('id');
+
+            $query->whereIn('class_id', $classIds);
         }
+
+
+
+        if (!empty(trim($this->search))) {
+            $search = trim($this->search);
+            $query->where(function ($q) use ($search) {
+                $q->where('fullDate', 'like', "%{$search}%")
+                    ->orWhere('title', 'like', "%{$search}%");
+            });
+        }
+
+        $this->applySorting($query);
+
+        return $query;
+    }
+
+    protected function getSessionsPaginated(): LengthAwarePaginator
+    {
+        try {
+            return $this->getCurrentSessionsQuery()
+                ->paginate($this->perPage);
+        } catch (\Exception $e) {
+            $this->logError($e, 'Error loading sessions', [
+                'namhoc'  => $this->selectedNamHoc,
+                'classId' => $this->selectedClassId,
+                'search'  => $this->search,
+            ]);
+            $this->emit('toast', 'error', 'Có lỗi khi tải danh sách phiên điểm danh.');
+            return new LengthAwarePaginator([], 0, $this->perPage, $this->page ?? 1);
+        }
+    }
+
+    // ==================== SESSION STATS HELPER ====================
+
+    /**
+     * Map một AttendanceSession model sang array hiển thị (dùng trong blade).
+     */
+    protected function mapSession(AttendanceSession $session): array
+    {
+        $stats = $session->getStatistics();
+
+        return [
+            'id'          => $session->id,
+            'dateStr'     => $session->date->format('Y-m-d'),
+            'fullDate'    => $session->date->format('d/m/Y'),
+            'dayName'     => $this->getVietnameseDayName($session->date),
+            'type'        => $session->type,
+            'typeLabel'   => $session->type == AttendanceSession::TYPE_CLASS ? 'Đi học' : 'Đi lễ',
+            'title'       => $session->title ?? $session->note,
+            'status'      => $session->status,
+            'statusLabel' => $this->getStatusLabel($session->status),
+            'statusClass' => $this->getStatusClass($session->status),
+            'locked'      => $session->status === AttendanceSession::STATUS_CLOSED,
+            'start_time'  => $session->start_time?->format('H:i'),
+            'end_time'    => $session->end_time?->format('H:i'),
+            'stats'       => $stats,
+        ];
     }
 
     // ==================== EVENT HANDLERS ====================
 
-    public function handleFilterChanged($filters): void
+    public function handleFilterChanged(array $filters): void
     {
         if (!is_array($filters)) {
             return;
         }
 
-        $namHocChanged = false;
-
         if (array_key_exists('namHoc', $filters)) {
             $newNamHoc = is_numeric($filters['namHoc']) ? (int) $filters['namHoc'] : null;
             if ($newNamHoc !== $this->selectedNamHoc) {
-                $this->selectedNamHoc = $newNamHoc;
-                $namHocChanged = true;
+                $this->selectedNamHoc  = $newNamHoc;
+                $this->selectedKhoi    = null;
+                $this->selectedClassId = null;
+                $this->currentNamHoc   = null;
+                $this->search          = '';
             }
         }
 
         if (array_key_exists('khoi', $filters)) {
-            $this->selectedKhoi = is_numeric($filters['khoi'])
-                ? (int) $filters['khoi']
-                : null;
+            $newKhoi = is_numeric($filters['khoi']) ? (int) $filters['khoi'] : null;
+            if ($newKhoi !== $this->selectedKhoi) {
+                $this->selectedKhoi    = $newKhoi;
+                $this->selectedClassId = null;
+                $this->currentNamHoc   = null;
+            }
         }
 
         if (array_key_exists('lop', $filters)) {
             $newClassId = is_numeric($filters['lop']) ? (int) $filters['lop'] : null;
-
             if ($newClassId !== $this->selectedClassId) {
                 $this->selectedClassId = $newClassId;
-
                 if ($this->selectedClassId) {
                     $this->loadClassInfo();
-                    $this->loadSessions();
+                    $this->syncDateDefaults();
                 } else {
-                    $this->sessions     = collect();
                     $this->currentNamHoc = null;
                 }
             }
         }
 
-        // Reset class khi đổi năm học
-        if ($namHocChanged) {
-            $this->selectedClassId = null;
-            $this->sessions        = collect();
-            $this->currentNamHoc   = null;
-        }
+        $this->resetPage();
+    }
+
+    public function handleRefresh(): void
+    {
+        $this->resetPage();
     }
 
     // ==================== CRUD ACTIONS ====================
@@ -293,22 +425,16 @@ class SessionManager extends BaseComponent
     {
         $this->authorize('create', AttendanceSession::class);
 
-        // if (!$this->selectedClassId || !$this->selectedKhoi) {
-        //     $this->emit('toast',  'warning', 'Vui lòng chọn lớp hoặc khối trước');
-        //     return;
-        // }
-
         $this->currentNamHoc = NamHoc::find($this->selectedNamHoc);
 
         if (!$this->currentNamHoc) {
-            $this->emit('toast',  'warning', 'Không tìm thấy thông tin năm học');
+            $this->emit('toast', 'warning', 'Không tìm thấy thông tin năm học');
             return;
         }
 
         $this->resetForm();
-        $this->emit('openModal');
 
-        $today          = Carbon::today();
+        $today           = Carbon::today();
         $currentSemester = $this->getCurrentSemester();
 
         if ($currentSemester === 1 && $this->currentNamHoc->start_date_one) {
@@ -320,34 +446,8 @@ class SessionManager extends BaseComponent
         } else {
             $this->startDate = $today->format('Y-m-d');
         }
-    }
 
-    protected function resolveClassIds(): array
-    {
-        if (!$this->selectedNamHoc) {
-            return [];
-        }
-
-        $query = CatechismClass::query()
-            ->where('school_year_id', $this->selectedNamHoc);
-
-        // 🎯 1. Nếu có lớp → chỉ lấy lớp đó
-        if ($this->selectedClassId !== null) {
-            return [$this->selectedClassId];
-        }
-
-        // 🎯 2. Nếu có khối → lấy tất cả lớp trong khối
-        if ($this->selectedKhoi !== null && $this->selectedClassId === null) {
-            return (clone $query)
-                ->where('grade_level_id', $this->selectedKhoi)
-                ->pluck('id')
-                ->toArray();
-        }
-
-        // 🎯 3. Còn lại → toàn xứ (theo năm học)
-        return (clone $query)
-            ->pluck('id')
-            ->toArray();
+        $this->emit('openModal');
     }
 
     public function save(): void
@@ -355,17 +455,17 @@ class SessionManager extends BaseComponent
         $this->authorize('create', AttendanceSession::class);
 
         if ($this->createMode === 'weekly' && empty($this->weekDays)) {
-            $this->emit('toast',  'error', 'Vui lòng chọn ít nhất 1 ngày trong tuần');
+            $this->emit('toast', 'error', 'Vui lòng chọn ít nhất 1 ngày trong tuần');
             return;
         }
 
         if ($this->createMode === 'custom' && empty($this->selectedDates)) {
-            $this->emit('toast',  'error', 'Vui lòng chọn ít nhất 1 ngày');
+            $this->emit('toast', 'error', 'Vui lòng chọn ít nhất 1 ngày');
             return;
         }
 
         if (!$this->startDate) {
-            $this->emit('toast',  'error', 'Vui lòng chọn ngày bắt đầu');
+            $this->emit('toast', 'error', 'Vui lòng chọn ngày bắt đầu');
             return;
         }
 
@@ -421,7 +521,7 @@ class SessionManager extends BaseComponent
                             'type'       => $this->type,
                             'status'     => AttendanceSession::STATUS_OPENING,
                             'start_time' => $this->startTime ? Carbon::parse($this->startTime) : null,
-                            'end_time'   => $this->endTime ? Carbon::parse($this->endTime) : null,
+                            'end_time'   => $this->endTime   ? Carbon::parse($this->endTime)   : null,
                             'note'       => $this->title ?: null,
                         ]);
                         $created++;
@@ -430,31 +530,27 @@ class SessionManager extends BaseComponent
                             'class_id' => $classId,
                             'date'     => $date,
                         ]);
-                        continue;
                     }
                 }
             }
 
             DB::commit();
 
-            $classCount = count($classIds);
             $message = "Đã tạo {$created} phiên điểm danh";
-
             if ($skipped > 0) {
                 $message .= " ({$skipped} phiên đã tồn tại, bỏ qua)";
             }
 
             $this->emit('toast', 'success', $message);
-            $this->resetForm();
-            $this->loadSessions();
-            $this->emit('sessionCreated');
+            $this->closeModal();
+            $this->resetPage();
         } catch (\Exception $e) {
             DB::rollBack();
             $this->logError($e, 'Error creating sessions', [
                 'class_id' => $this->selectedClassId,
                 'mode'     => $this->createMode,
             ]);
-            $this->emit('toast',  'error', 'Có lỗi khi tạo phiên điểm danh. Vui lòng thử lại.');
+            $this->emit('toast', 'error', 'Có lỗi khi tạo phiên điểm danh. Vui lòng thử lại.');
         }
     }
 
@@ -463,9 +559,7 @@ class SessionManager extends BaseComponent
         $this->authorize('update', AttendanceSession::class);
 
         try {
-            // ✅ Fix: bỏ filter parish_id vì AttendanceSession không có cột này
-            $session = AttendanceSession::where('class_id', $this->selectedClassId)
-                ->findOrFail($id);
+            $session = AttendanceSession::findOrFail($id);
 
             $newStatus = $session->status === AttendanceSession::STATUS_OPENING
                 ? AttendanceSession::STATUS_CLOSED
@@ -473,15 +567,14 @@ class SessionManager extends BaseComponent
 
             $session->update(['status' => $newStatus]);
 
-            $message = $newStatus === AttendanceSession::STATUS_CLOSED
+            $label = $newStatus === AttendanceSession::STATUS_CLOSED
                 ? 'Đã khóa phiên điểm danh'
                 : 'Đã mở lại phiên điểm danh';
 
-            $this->emit('toast', 'success', $message);
-            $this->loadSessions();
+            $this->emit('toast', 'success', $label);
         } catch (\Exception $e) {
             $this->logError($e, 'Error toggling session status', ['id' => $id]);
-            $this->emit('toast',  'error', 'Có lỗi khi thay đổi trạng thái');
+            $this->emit('toast', 'error', 'Có lỗi khi thay đổi trạng thái');
         }
     }
 
@@ -490,14 +583,11 @@ class SessionManager extends BaseComponent
         $this->authorize('delete', AttendanceSession::class);
 
         try {
-            $session = AttendanceSession::where('class_id', $this->selectedClassId)
-                ->findOrFail($id);
+            $session = AttendanceSession::findOrFail($id);
 
-            $hasRecords = $session->records()->whereNotNull('status')->exists();
-
-            if ($hasRecords) {
+            if ($session->records()->whereNotNull('status')->exists()) {
                 $this->emit('toast', 'error', 'Không thể xóa phiên đã có dữ liệu điểm danh');
-                return; // return sạch, không có transaction nào mở
+                return;
             }
 
             DB::beginTransaction();
@@ -505,15 +595,67 @@ class SessionManager extends BaseComponent
             DB::commit();
 
             $this->emit('toast', 'success', 'Đã xóa phiên điểm danh');
-            $this->loadSessions();
         } catch (\Exception $e) {
             DB::rollBack();
             $this->logError($e, 'Error deleting session', ['id' => $id]);
-            $this->emit('toast',  'error', 'Có lỗi khi xóa phiên điểm danh');
+            $this->emit('toast', 'error', 'Có lỗi khi xóa phiên điểm danh');
         }
     }
 
-    // ==================== HELPER METHODS ====================
+    // ==================== MODAL ====================
+
+    public function closeModal(): void
+    {
+        $this->resetForm();
+        $this->resetValidation();
+        $this->emit('closeModal');
+    }
+
+    protected function resetForm(): void
+    {
+        $this->reset([
+            'editingId',
+            'type',
+            'title',
+            'startDate',
+            'endDate',
+            'selectedDates',
+            'createMode',
+            'weekDays',
+            'startTime',
+            'endTime',
+        ]);
+
+        $this->type       = 1;
+        $this->createMode = 'single';
+        $this->resetValidation();
+    }
+
+    // ==================== SCOPE / CLASS RESOLUTION ====================
+
+    protected function resolveClassIds(): array
+    {
+        if (!$this->selectedNamHoc) {
+            return [];
+        }
+
+        $query = CatechismClass::where('school_year_id', $this->selectedNamHoc);
+
+        if ($this->selectedClassId !== null) {
+            return [$this->selectedClassId];
+        }
+
+        if ($this->selectedKhoi !== null) {
+            return (clone $query)
+                ->where('grade_level_id', $this->selectedKhoi)
+                ->pluck('id')
+                ->toArray();
+        }
+
+        return (clone $query)->pluck('id')->toArray();
+    }
+
+    // ==================== DATE HELPERS ====================
 
     protected function generateDates(): array
     {
@@ -559,24 +701,19 @@ class SessionManager extends BaseComponent
         $hk2Start = $this->currentNamHoc->start_date_two;
         $hk2End   = $this->currentNamHoc->end_date_two;
 
-        // Không có date range nào thì cho qua hết
+        // Không có khoảng nào → cho qua hết
         if (!$hk1Start && !$hk1End && !$hk2Start && !$hk2End) {
             return $dates;
         }
 
         return array_values(array_filter($dates, function ($date) use ($hk1Start, $hk1End, $hk2Start, $hk2End) {
             $carbon = Carbon::parse($date);
-
-            $inHk1 = $hk1Start && $hk1End && $carbon->between($hk1Start, $hk1End);
-            $inHk2 = $hk2Start && $hk2End && $carbon->between($hk2Start, $hk2End);
-
+            $inHk1  = $hk1Start && $hk1End && $carbon->between($hk1Start, $hk1End);
+            $inHk2  = $hk2Start && $hk2End && $carbon->between($hk2Start, $hk2End);
             return $inHk1 || $inHk2;
         }));
     }
 
-    /**
-     * Lấy học kỳ của một ngày cụ thể (1, 2, hoặc null nếu ngoài khoảng)
-     */
     protected function getSemesterForDate(string|Carbon $date): ?int
     {
         if (!$this->currentNamHoc) {
@@ -600,25 +737,33 @@ class SessionManager extends BaseComponent
         return null;
     }
 
-    /**
-     * Lấy học kỳ hiện tại (dựa theo ngày hôm nay)
-     */
     protected function getCurrentSemester(): ?int
     {
         return $this->getSemesterForDate(Carbon::today());
     }
 
+    // ==================== LOOKUP HELPERS ====================
+
     protected function getDefaultNamHocId(): ?int
     {
-        return NamHoc::where('parish_id', $this->parishId)
-            ->where('status', true)
+        $current = NamHoc::ofParish($this->parishId)
+            ->active()
+            ->current()
+            ->value('id');
+
+        if ($current) {
+            return $current;
+        }
+
+        return NamHoc::ofParish($this->parishId)
+            ->active()
             ->orderByDesc('name')
             ->value('id');
     }
 
     protected function getVietnameseDayName(Carbon $date): string
     {
-        return ['CN', 'T2', 'T3', 'T4', 'T5', 'T6', 'T7'][$date->dayOfWeek];
+        return ['Chúa Nhật', 'Thứ Hai', 'Thứ Ba', 'Thứ Tư', 'Thứ Năm', 'Thứ Sáu', 'Thứ Bảy'][$date->dayOfWeek];
     }
 
     protected function getStatusLabel(int $status): string
@@ -641,37 +786,6 @@ class SessionManager extends BaseComponent
         };
     }
 
-    public function closeModal(): void
-    {
-        // $this->showForm = false;
-        $this->resetForm();
-        $this->resetValidation();
-        $this->emit('closeModal');
-    }
-
-    protected function resetForm(): void
-    {
-        $this->reset([
-            'editingId',
-            'type',
-            'title',
-            'startDate',
-            'endDate',
-            'selectedDates',
-            'createMode',
-            'weekDays',
-            'startTime',
-            'endTime',
-            'scope',
-        ]);
-
-        $this->type       = 1;
-        $this->createMode = 'single';
-        // $this->showForm   = false;
-        $this->resetValidation();
-        $this->emit('closeModal');
-    }
-
     // ==================== COMPUTED PROPERTIES ====================
 
     public function getSelectedClassNameProperty(): string
@@ -689,16 +803,22 @@ class SessionManager extends BaseComponent
             return 'Chọn khối';
         }
 
-        return GradeLevel::where('id', $this->selectedKhoi)
-            ->value('name') ?? 'Chọn khối';
+        return GradeLevel::where('id', $this->selectedKhoi)->value('name') ?? 'Chọn khối';
     }
 
     // ==================== RENDER ====================
 
     public function render()
     {
+        $paginator = $this->getSessionsPaginated();
+
+        // Map model → array hiển thị (giữ nguyên cấu trúc blade cũ)
+        $sessions = $paginator->through(fn($session) => $this->mapSession($session));
+
         return view('livewire.attendance.session-manager', [
-            'parishId' => $this->parishId,
+            'parishId'  => $this->parishId,
+            'sessions'  => $sessions,   // LengthAwarePaginator (đã map)
+            'total'     => $paginator->total(),
         ])
             ->extends('frontend.layout.main')
             ->section('content');
