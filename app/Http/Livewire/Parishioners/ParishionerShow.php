@@ -210,11 +210,23 @@ class ParishionerShow extends Component
     {
         $this->authorize('view', $parishioner);
         $this->parishioner = $parishioner->load([
-            'saint', 'parishGroup', 'parish', 'deanery', 'diocese',
-            'family', 'father', 'mother',
-            'baptism', 'communion', 'confirmation', 'holyOrders', 'anointing',
-            'marriageAsHusband.wife', 'marriageAsWife.husband',
-            'sacraments', 'transferredFromParish',
+            'saint',
+            'parishGroup',
+            'parish',
+            'deanery',
+            'diocese',
+            'family',
+            'father',
+            'mother',
+            'baptism',
+            'communion',
+            'confirmation',
+            'holyOrders',
+            'anointing',
+            'marriageAsHusband.wife',
+            'marriageAsWife.husband',
+            'sacraments',
+            'transferredFromParish',
         ]);
 
         $this->is_deceased = $this->parishioner->death_date !== null;
@@ -616,10 +628,18 @@ class ParishionerShow extends Component
     private function resetMarriageForm(): void
     {
         $this->reset([
-            'marriage_id', 'spouse_id', 'married_date', 'certificate_number',
-            'marriage_parish_id', 'marriage_parish_name',
-            'place_province', 'place_ward_id', 'priest_witness',
-            'witness_1', 'witness_2', 'marriage_note',
+            'marriage_id',
+            'spouse_id',
+            'married_date',
+            'certificate_number',
+            'marriage_parish_id',
+            'marriage_parish_name',
+            'place_province',
+            'place_ward_id',
+            'priest_witness',
+            'witness_1',
+            'witness_2',
+            'marriage_note',
         ]);
         $this->marriage_status = 'valid';
     }
@@ -636,6 +656,16 @@ class ParishionerShow extends Component
         $this->resetValidation();
     }
 
+    // ==================== COMPUTED PROPERTIES ====================
+
+    public function getChildrenProperty()
+    {
+        return \App\Models\Parishioner::where('father_id', $this->parishioner->id)
+            ->orWhere('mother_id', $this->parishioner->id)
+            ->orderBy('birth_order')
+            ->get();
+    }
+
     // ==================== RENDER ====================
 
     public function render()
@@ -643,6 +673,6 @@ class ParishionerShow extends Component
         return view('livewire.parishioners.parishioner-show', [
             'marriage' => $this->parishioner->marriageAsHusband
                 ?? $this->parishioner->marriageAsWife,
-        ])->extends('frontend.layout.main')->section('content');
+        ])->extends('frontend.layout.parishioner')->section('content');
     }
 }

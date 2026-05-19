@@ -214,7 +214,7 @@ class ParishGroupManager extends BaseComponent
         return view('livewire.parish.parish-group-manager', [
             'groups' => $groups,
         ])
-            ->extends('frontend.layout.main')
+            ->extends('frontend.layout.parishioner')
             ->section('content');
     }
 }

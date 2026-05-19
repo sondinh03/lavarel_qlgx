@@ -56,7 +56,7 @@ class HolyManager extends BaseComponent
         return view('livewire.holy.holy-manager', [
             'holies' => $holies,
         ])
-            ->extends('frontend.layout.main')
+            ->extends('frontend.layout.parishioner')
             ->section('content');
     }
 

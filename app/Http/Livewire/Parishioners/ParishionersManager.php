@@ -205,12 +205,30 @@ class ParishionersManager extends BaseComponent
 
     // ==================== PROPERTY UPDATERS ====================
 
-    public function updatedSelectedGender(): void   { $this->resetPage(); }
-    public function updatedSelectedAgeGroup(): void { $this->resetPage(); }
-    public function updatedSelectedMarried(): void  { $this->resetPage(); }
-    public function updatedSelectedStatus(): void   { $this->resetPage(); }
-    public function updatedSelectedGroup(): void    { $this->resetPage(); }
-    public function updatedSelectedDeceased(): void { $this->resetPage(); }
+    public function updatedSelectedGender(): void
+    {
+        $this->resetPage();
+    }
+    public function updatedSelectedAgeGroup(): void
+    {
+        $this->resetPage();
+    }
+    public function updatedSelectedMarried(): void
+    {
+        $this->resetPage();
+    }
+    public function updatedSelectedStatus(): void
+    {
+        $this->resetPage();
+    }
+    public function updatedSelectedGroup(): void
+    {
+        $this->resetPage();
+    }
+    public function updatedSelectedDeceased(): void
+    {
+        $this->resetPage();
+    }
 
     public function updatedIsDeceased(): void
     {
@@ -320,13 +338,90 @@ class ParishionersManager extends BaseComponent
         $this->activeTab = $tab;
     }
 
+    // ==================== TAB VALIDATION ====================
+
+    private array $tabFields = [
+        'basic' => [
+            'last_name',
+            'first_name',
+            'gender',
+            'birthday',
+            'birth_order',
+            'cccd',
+            'phone',
+            'email',
+            'avatar',
+        ],
+        'address' => [
+            'origin',
+            'permanent_residence',
+            'permanent_province',
+            'temporary_residence',
+            'temporary_province',
+        ],
+        'family' => [
+            'married',
+            'father_id',
+            'mother_id',
+            'family_id',
+            'father_name',
+            'mother_name',
+        ],
+        'classify' => [
+            'specialist_level',
+            'catechism_major',
+            'ethnic',
+            'career',
+            'education_level',
+            'catechism_level',
+            'position',
+            'language',
+            'holy_order_status',
+        ],
+        'other' => [
+            'note',
+            'status',
+            'is_active',
+            'is_new_convert',
+            'is_included_in_stats',
+            'death_date',
+            'death_book_number',
+            'death_place',
+            'burial_place',
+        ],
+    ];
+
+    private function validateCurrentTab(): bool
+    {
+        $fields = $this->tabFields[$this->activeTab] ?? [];
+        if (empty($fields)) return true;
+
+        // Chỉ lấy rules của các field thuộc tab hiện tại
+        $rules = array_intersect_key($this->formRules, array_flip($fields));
+        if (empty($rules)) return true;
+
+        try {
+            $this->validate($rules, $this->messages);
+            return true;
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return false;
+        }
+    }
+
     public function save(): void
     {
+        // Validate tab hiện tại trước khi cho phép next
+        if (!$this->validateCurrentTab()) {
+            return; // Dừng lại, lỗi đã được set bởi validate()
+        }
+
+        // Nếu chưa đến tab cuối → chuyển tab
         if ($this->activeTab !== 'other') {
             $this->activeTab = $this->nextTab();
             return;
         }
 
+        // Tab cuối → validate toàn bộ rồi save
         $this->validate($this->formRules, $this->messages);
 
         if ($this->editingId) {
@@ -344,7 +439,6 @@ class ParishionersManager extends BaseComponent
             DB::beginTransaction();
 
             $data = [
-                // Cơ bản
                 'last_name'             => $this->last_name,
                 'first_name'            => $this->first_name,
                 'gender'                => $this->gender,
@@ -356,8 +450,6 @@ class ParishionersManager extends BaseComponent
                 'email'                 => $this->email,
                 'note'                  => $this->note,
                 'parish_id'             => $this->parishId,
-
-                // Địa chỉ
                 'origin'                => $this->origin,
                 'permanent_province'    => $this->permanent_province,
                 'permanent_ward_id'     => $this->permanent_ward_id,
@@ -365,16 +457,12 @@ class ParishionersManager extends BaseComponent
                 'temporary_province'    => $this->temporary_province,
                 'temporary_ward_id'     => $this->temporary_ward_id,
                 'temporary_residence'   => $this->temporary_residence,
-
-                // Gia đình
                 'father_name'           => $this->father_name,
                 'mother_name'           => $this->mother_name,
                 'father_id'             => $this->father_id,
                 'mother_id'             => $this->mother_id,
                 'family_id'             => $this->family_id,
                 'married'               => $this->married,
-
-                // Phân loại
                 'ethnic'                => $this->ethnic,
                 'career'                => $this->career,
                 'education_level'       => $this->education_level,
@@ -384,14 +472,10 @@ class ParishionersManager extends BaseComponent
                 'position'              => $this->position,
                 'language'              => $this->language,
                 'holy_order_status'     => $this->holy_order_status,
-
-                // Trạng thái
                 'status'                => $this->status,
                 'is_active'             => $this->is_active,
                 'is_new_convert'        => $this->is_new_convert,
                 'is_included_in_stats'  => $this->is_included_in_stats,
-
-                // Tử vong — nếu bỏ tick thì clear hết
                 'death_date'            => $this->is_deceased ? ($this->death_date ?: null) : null,
                 'death_book_number'     => $this->is_deceased ? $this->death_book_number : null,
                 'death_place'           => $this->is_deceased ? $this->death_place : null,
@@ -409,7 +493,8 @@ class ParishionersManager extends BaseComponent
 
             DB::commit();
 
-            $this->emit('toast', 
+            $this->emit(
+                'toast',
                 'message',
                 $this->editingId ? 'Cập nhật giáo dân thành công' : 'Thêm giáo dân thành công'
             );
@@ -520,6 +605,7 @@ class ParishionersManager extends BaseComponent
         $this->selectedStatus   = '';
         $this->selectedGroup    = '';
         $this->selectedDeceased = '';
+        $this->selectedDeceased = '0';
         $this->search           = '';
         $this->resetPage();
         $this->emit('toast', 'message', 'Đã đặt lại bộ lọc');
@@ -586,16 +672,42 @@ class ParishionersManager extends BaseComponent
     {
         $this->reset([
             'editingId',
-            'last_name', 'first_name', 'saint_id', 'birthday', 'birth_order',
-            'cccd', 'phone', 'email', 'note', 'avatar', 'currentAvatarPath',
+            'last_name',
+            'first_name',
+            'saint_id',
+            'birthday',
+            'birth_order',
+            'cccd',
+            'phone',
+            'email',
+            'note',
+            'avatar',
+            'currentAvatarPath',
             'origin',
-            'permanent_province', 'permanent_ward_id', 'permanent_residence',
-            'temporary_province', 'temporary_ward_id', 'temporary_residence',
-            'father_name', 'mother_name', 'father_id', 'mother_id', 'family_id',
-            'ethnic', 'career', 'education_level', 'specialist_level',
-            'catechism_level', 'catechism_major',
-            'position', 'language', 'holy_order_status',
-            'death_date', 'death_book_number', 'death_place', 'burial_place',
+            'permanent_province',
+            'permanent_ward_id',
+            'permanent_residence',
+            'temporary_province',
+            'temporary_ward_id',
+            'temporary_residence',
+            'father_name',
+            'mother_name',
+            'father_id',
+            'mother_id',
+            'family_id',
+            'ethnic',
+            'career',
+            'education_level',
+            'specialist_level',
+            'catechism_level',
+            'catechism_major',
+            'position',
+            'language',
+            'holy_order_status',
+            'death_date',
+            'death_book_number',
+            'death_place',
+            'burial_place',
         ]);
 
         $this->gender               = 'male';
@@ -620,6 +732,6 @@ class ParishionersManager extends BaseComponent
     public function render()
     {
         return view('livewire.parishioners.parishioners-manager')
-            ->extends('frontend.layout.main')->section('content');
+            ->extends('frontend.layout.parishioner')->section('content');
     }
 }

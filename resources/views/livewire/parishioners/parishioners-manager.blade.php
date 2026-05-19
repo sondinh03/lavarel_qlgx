@@ -115,9 +115,15 @@
                             </span>
                             @endif
 
-                            @if($selectedDeceased !== null && $selectedDeceased !== '')
-                            <span class="px-2.5 py-1 text-xs bg-slate-100 rounded-full">
-                                {{ $selectedDeceased ? 'Đã qua đời' : 'Còn sống' }}
+                            @if($selectedDeceased === '1')
+                            <span class="inline-flex items-center gap-1 px-2.5 py-1 text-xs bg-slate-100 rounded-full">
+                                Đã qua đời
+                                <button wire:click="$set('selectedDeceased', '0')" class="ml-1 text-slate-400 hover:text-slate-600">✕</button>
+                            </span>
+                            @elseif($selectedDeceased === '')
+                            <span class="inline-flex items-center gap-1 px-2.5 py-1 text-xs bg-blue-100 text-blue-700 rounded-full">
+                                Hiển thị tất cả
+                                <button wire:click="$set('selectedDeceased', '0')" class="ml-1 text-blue-400 hover:text-blue-600">✕</button>
                             </span>
                             @endif
 
@@ -329,13 +335,33 @@
                 {{-- Tabs --}}
                 <div class="border-b border-slate-200 px-6 flex-shrink-0">
                     <nav class="flex gap-1 -mb-px">
-                        @foreach(['basic' => 'Cơ bản', 'address' => 'Địa chỉ', 'family' => 'Gia đình', 'classify' => 'Phân loại', 'other' => 'Khác'] as $tab => $label)
+                        @foreach([
+                            'basic'    => 'Cơ bản',
+                            'address'  => 'Địa chỉ',
+                            'family'   => 'Gia đình',
+                            'classify' => 'Phân loại',
+                            'other'    => 'Khác',
+                        ] as $tab => $label)
+                        @php
+                        $tabHasError = match($tab) {
+                            'basic'    => $errors->hasAny(['last_name','first_name','gender','birthday','email','avatar']),
+                            'address'  => $errors->hasAny(['origin','permanent_residence','temporary_residence']),
+                            'family'   => $errors->hasAny(['married','father_id','mother_id','family_id']),
+                            'classify' => $errors->hasAny(['specialist_level','catechism_major']),
+                            'other'    => $errors->hasAny(['note','death_date']),
+                            default    => false,
+                        };
+                        @endphp
                         <button wire:click="goToTab('{{ $tab }}')"
-                            class="px-4 py-2.5 text-sm font-medium border-b-2 transition-all duration-200
+                            class="relative px-4 py-2.5 text-sm font-medium border-b-2 transition-all duration-200
                                 {{ $activeTab === $tab
                                     ? 'border-primary-500 text-primary-600'
                                     : 'border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300' }}">
                             {{ $label }}
+                            {{-- Dot đỏ khi tab có lỗi --}}
+                            @if($tabHasError)
+                            <span class="absolute top-2 right-1 w-1.5 h-1.5 bg-red-500 rounded-full"></span>
+                            @endif
                         </button>
                         @endforeach
                     </nav>
