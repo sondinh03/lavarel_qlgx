@@ -121,7 +121,7 @@ class SacramentsManager extends Component
             $this->note               = $s->note;
             $this->showForm           = true;
         } catch (ModelNotFoundException) {
-            session()->flash('sacrament_error', 'Không tìm thấy bí tích');
+            $this->emit('toast','sacrament_error', 'Không tìm thấy bí tích');
         }
     }
 
@@ -169,7 +169,7 @@ class SacramentsManager extends Component
 
             DB::commit();
 
-            session()->flash(
+            $this->emit('toast',
                 'sacrament_message',
                 $this->editingId ? 'Cập nhật bí tích thành công' : 'Thêm bí tích thành công'
             );
@@ -178,7 +178,7 @@ class SacramentsManager extends Component
             $this->closeForm();
         } catch (\Exception $e) {
             DB::rollBack();
-            session()->flash('sacrament_error', 'Có lỗi khi lưu. Vui lòng thử lại.');
+            $this->emit('toast','sacrament_error', 'Có lỗi khi lưu. Vui lòng thử lại.');
         }
     }
 
@@ -194,9 +194,9 @@ class SacramentsManager extends Component
             $s = Sacrament::where('parishioner_id', $this->parishionerId)
                 ->findOrFail($this->deleteId);
             $s->delete();
-            session()->flash('sacrament_message', 'Đã xóa bí tích');
+            $this->emit('toast','sacrament_message', 'Đã xóa bí tích');
         } catch (ModelNotFoundException) {
-            session()->flash('sacrament_error', 'Không tìm thấy bí tích');
+            $this->emit('toast','sacrament_error', 'Không tìm thấy bí tích');
         }
 
         $this->showDeleteConfirm = false;

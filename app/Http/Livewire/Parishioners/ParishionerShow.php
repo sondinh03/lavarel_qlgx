@@ -212,21 +212,6 @@ class ParishionerShow extends Component
         $this->parishioner = $parishioner->load([
             'saint',
             'parishGroup',
-            'parish',
-            'deanery',
-            'diocese',
-            'family',
-            'father',
-            'mother',
-            'baptism',
-            'communion',
-            'confirmation',
-            'holyOrders',
-            'anointing',
-            'marriageAsHusband.wife',
-            'marriageAsWife.husband',
-            'sacraments',
-            'transferredFromParish',
         ]);
 
         $this->is_deceased = $this->parishioner->death_date !== null;
@@ -235,6 +220,26 @@ class ParishionerShow extends Component
     public function goToTab(string $tab): void
     {
         $this->activeTab = $tab;
+        $this->loadRelationsForTab($tab);
+    }
+
+    private function loadRelationsForTab(string $tab): void
+    {
+        $map = [
+            'basic'     => ['saint'],
+            'parish'    => ['parishGroup', 'parish', 'deanery', 'diocese', 'transferredFromParish'],
+            'sacrament' => [], // SacramentsManager tự lo
+            'marriage'  => ['marriageAsHusband.wife', 'marriageAsWife.husband'],
+            'family'    => ['family', 'father', 'mother'],
+            'deceased'  => [], // dùng field trực tiếp, không cần relation
+        ];
+
+        $relations = $map[$tab] ?? [];
+
+        if (!empty($relations)) {
+            // loadMissing: chỉ query những relation chưa load, không query lại
+            $this->parishioner->loadMissing($relations);
+        }
     }
 
     // ==================== EDIT: CƠ BẢN ====================
@@ -242,6 +247,7 @@ class ParishionerShow extends Component
     public function openEditBasic(): void
     {
         $this->authorize('update', $this->parishioner);
+        $this->parishioner->loadMissing(['saint']);
         $p = $this->parishioner;
 
         $this->last_name         = $p->last_name;
@@ -319,13 +325,13 @@ class ParishionerShow extends Component
             $this->parishioner->refresh()->load(['saint', 'parishGroup']);
 
             DB::commit();
-            session()->flash('message', 'Cập nhật thông tin cơ bản thành công');
+            $this->emit('toast','message', 'Cập nhật thông tin cơ bản thành công');
             $this->showEditBasic = false;
             $this->resetValidation();
         } catch (\Exception $e) {
             DB::rollBack();
             Log::error(self::class . ': saveBasic - ' . $e->getMessage(), ['id' => $this->parishioner->id]);
-            session()->flash('error', 'Có lỗi khi lưu. Vui lòng thử lại.');
+            $this->emit('toast','error', 'Có lỗi khi lưu. Vui lòng thử lại.');
         }
     }
 
@@ -364,12 +370,12 @@ class ParishionerShow extends Component
             ]);
 
             $this->parishioner->refresh();
-            session()->flash('message', 'Cập nhật địa chỉ thành công');
+            $this->emit('toast','message', 'Cập nhật địa chỉ thành công');
             $this->showEditAddress = false;
             $this->resetValidation();
         } catch (\Exception $e) {
             Log::error(self::class . ': saveAddress - ' . $e->getMessage(), ['id' => $this->parishioner->id]);
-            session()->flash('error', 'Có lỗi khi lưu địa chỉ.');
+            $this->emit('toast','error', 'Có lỗi khi lưu địa chỉ.');
         }
     }
 
@@ -406,12 +412,12 @@ class ParishionerShow extends Component
             ]);
 
             $this->parishioner->refresh()->load(['family', 'father', 'mother']);
-            session()->flash('message', 'Cập nhật thông tin gia đình thành công');
+            $this->emit('toast','message', 'Cập nhật thông tin gia đình thành công');
             $this->showEditFamily = false;
             $this->resetValidation();
         } catch (\Exception $e) {
             Log::error(self::class . ': saveFamily - ' . $e->getMessage(), ['id' => $this->parishioner->id]);
-            session()->flash('error', 'Có lỗi khi lưu thông tin gia đình.');
+            $this->emit('toast','error', 'Có lỗi khi lưu thông tin gia đình.');
         }
     }
 
@@ -456,12 +462,12 @@ class ParishionerShow extends Component
             ]);
 
             $this->parishioner->refresh()->load(['parishGroup', 'transferredFromParish']);
-            session()->flash('message', 'Cập nhật sinh hoạt giáo xứ thành công');
+            $this->emit('toast','message', 'Cập nhật sinh hoạt giáo xứ thành công');
             $this->showEditParish = false;
             $this->resetValidation();
         } catch (\Exception $e) {
             Log::error(self::class . ': saveParish - ' . $e->getMessage(), ['id' => $this->parishioner->id]);
-            session()->flash('error', 'Có lỗi khi lưu.');
+            $this->emit('toast','error', 'Có lỗi khi lưu.');
         }
     }
 
@@ -532,13 +538,13 @@ class ParishionerShow extends Component
             DB::commit();
             $this->parishioner->refresh()->load(['marriageAsHusband.wife', 'marriageAsWife.husband']);
 
-            session()->flash('message', 'Cập nhật hôn phối thành công');
+            $this->emit('toast','message', 'Cập nhật hôn phối thành công');
             $this->showEditMarriage = false;
             $this->resetValidation();
         } catch (\Exception $e) {
             DB::rollBack();
             Log::error(self::class . ': saveMarriage - ' . $e->getMessage(), ['id' => $this->parishioner->id]);
-            session()->flash('error', 'Có lỗi khi lưu hôn phối.');
+            $this->emit('toast','error', 'Có lỗi khi lưu hôn phối.');
         }
     }
 
@@ -550,11 +556,11 @@ class ParishionerShow extends Component
         try {
             Marriage::findOrFail($this->marriage_id)->delete();
             $this->parishioner->refresh()->load(['marriageAsHusband.wife', 'marriageAsWife.husband']);
-            session()->flash('message', 'Đã xóa hôn phối');
+            $this->emit('toast','message', 'Đã xóa hôn phối');
             $this->showEditMarriage = false;
         } catch (\Exception $e) {
             Log::error(self::class . ': deleteMarriage - ' . $e->getMessage(), ['id' => $this->marriage_id]);
-            session()->flash('error', 'Có lỗi khi xóa hôn phối.');
+            $this->emit('toast','error', 'Có lỗi khi xóa hôn phối.');
         }
     }
 
@@ -590,12 +596,12 @@ class ParishionerShow extends Component
             $this->parishioner->refresh();
             $this->is_deceased = $this->parishioner->death_date !== null;
 
-            session()->flash('message', 'Cập nhật thông tin tử vong thành công');
+            $this->emit('toast','message', 'Cập nhật thông tin tử vong thành công');
             $this->showEditDeceased = false;
             $this->resetValidation();
         } catch (\Exception $e) {
             Log::error(self::class . ': saveDeceased - ' . $e->getMessage(), ['id' => $this->parishioner->id]);
-            session()->flash('error', 'Có lỗi khi lưu.');
+            $this->emit('toast','error', 'Có lỗi khi lưu.');
         }
     }
 
@@ -612,12 +618,12 @@ class ParishionerShow extends Component
             }
             $this->parishioner->delete();
             DB::commit();
-            session()->flash('message', 'Đã xóa giáo dân thành công');
+            $this->emit('toast','message', 'Đã xóa giáo dân thành công');
             return redirect()->route('parishioners.index');
         } catch (\Exception $e) {
             DB::rollBack();
             Log::error(self::class . ': delete - ' . $e->getMessage(), ['id' => $this->parishioner->id]);
-            session()->flash('error', 'Có lỗi khi xóa giáo dân.');
+            $this->emit('toast','error', 'Có lỗi khi xóa giáo dân.');
         }
 
         return null;

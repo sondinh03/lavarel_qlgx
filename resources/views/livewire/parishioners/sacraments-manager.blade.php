@@ -1,16 +1,4 @@
 <div class="p-6 space-y-6">
-
-    @if(session('sacrament_message'))
-    <div class="px-4 py-3 bg-primary-50 border border-primary-200 text-primary-700 rounded-xl text-sm">
-        {{ session('sacrament_message') }}
-    </div>
-    @endif
-    @if(session('sacrament_error'))
-    <div class="px-4 py-3 bg-red-50 border border-red-200 text-red-700 rounded-xl text-sm">
-        {{ session('sacrament_error') }}
-    </div>
-    @endif
-
     {{-- Danh sách bí tích --}}
     @foreach($groupedSacraments as $type => $group)
     <div class="bg-white rounded-2xl shadow-sm hover:shadow-md transition-all border border-slate-200 overflow-hidden"
