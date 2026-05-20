@@ -479,9 +479,9 @@ $isDashboard = request()->routeIs('dashboard','catechist.dashboard','parish-admi
                     @click.outside="open = false"
                     class="absolute bottom-full left-0 right-0 mb-1 bg-white border border-slate-200 rounded-xl shadow-lg overflow-hidden z-50"
                     x-cloak>
-                    <a href="{{ route('dashboard') }}"
+                    <a href="{{ route('module.select') }}"
                         class="block px-4 py-2.5 text-sm text-slate-700 hover:bg-slate-50">
-                        Trang quản trị
+                        Chọn phân hệ
                     </a>
                     <div class="border-t border-slate-100"></div>
                     <form method="POST" action="{{ route('logout') }}">

@@ -42,18 +42,20 @@ class LoginController extends Controller
         if ($request->filled('remember')) {
             config(['session.remember_expire' => 60 * 24 * 30]);
         }
-        
+
         if (!$user->hasRole('super_admin') && !$user->parish_id) {
-            return $this->logoutWithError('Tài khoản chưa được gán giáo xứ. Vui lòng liên hệ admin.');
+            return $this->logoutWithError('Tài khoản chưa được gán giáo xứ. Vui lòng liên hệ quản trị hệ thống.');
         }
 
-        return match (true) {
-            $user->hasRole('super_admin') => redirect('/admin/dashboard'),
-            $user->hasRole('parish_admin') => redirect()->route('parish-admin.dashboard'),
-            $user->hasRole('catechist') => redirect()->route('catechist.dashboard'),
+        if ($user->isSuperAdmin()) {
+            return redirect('/admin/dashboard');
+        }
 
-            default => $this->logoutWithError('Tài khoản không có quyền truy cập hệ thống. Vui lòng liên hệ admin.'),
-        };
+        if ($user->isParishAdmin() || $user->isCatechist()) {
+            return redirect()->route('module.select');
+        }
+
+        return $this->logoutWithError('Tài khoản không có quyền truy cập. Vui lòng liên hệ quản trị hệ thống.');
     }
 
     /**

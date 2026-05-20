@@ -29,8 +29,7 @@ class ModuleSelect extends Component
                 'description' => 'Quản lý hồ sơ giáo dân, gia đình, bí tích, hôn phối',
                 'route'       => 'parishioners.index',
                 'icon'        => 'parishioner',
-                'roles'       => ['parish_admin', 'secretary'],
-                'color'       => 'blue',
+                'roles'       => ['parish_admin'],         // chỉ parish_admin
             ],
             [
                 'key'         => 'catechism',
@@ -38,21 +37,17 @@ class ModuleSelect extends Component
                 'description' => 'Quản lý lớp học, học sinh, giáo viên, điểm số',
                 'route'       => 'parish-admin.dashboard',
                 'icon'        => 'catechism',
-                'roles'       => ['parish_admin', 'catechism_admin', 'catechist'],
-                'color'       => 'green',
+                'roles'       => ['parish_admin', 'catechist'], // cả 2
             ],
-            // Thêm module mới tại đây
         ];
 
-        return array_values(array_filter($all, function ($module) use ($user) {
-            return $user->hasAnyRole($module['roles']);
-        }));
+        return array_values(array_filter($all, fn($m) => $user->hasAnyRole($m['roles'])));
     }
 
     public function render()
     {
         return view('livewire.module-select')
-            ->extends('frontend.layout.main')
+            ->extends('frontend.layout.blank') 
             ->section('content');
     }
 }

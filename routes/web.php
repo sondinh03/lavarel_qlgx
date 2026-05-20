@@ -49,6 +49,9 @@ use App\Http\Livewire\CatechismClass\CatechismClassList;
 use App\Http\Livewire\ClassStudentManager;
 use App\Http\Livewire\Dashboard\AdminDashboard;
 use App\Http\Livewire\Dashboard\CatechistDashboard;
+use App\Http\Livewire\Family\FamilyDetail;
+use App\Http\Livewire\Family\FamilyEdit;
+use App\Http\Livewire\Family\FamilyList;
 use App\Http\Livewire\Group\GroupAttendance;
 use App\Http\Livewire\Group\GroupManager;
 use App\Http\Livewire\Group\GroupMemberManager;
@@ -90,29 +93,21 @@ Route::get('/select-module', ModuleSelect::class)
 Auth::routes();
 
 Route::middleware('auth')->group(function () {
+
+    Route::get('/dashboard', function () {
+        $user = auth()->user();
+
+        if ($user?->isSuperAdmin()) {
+            return redirect('/admin/dashboard');
+        }
+        return redirect()->route('module.select');
+    })->name('dashboard');
+
     Route::get('/parish-admin-dashboard', AdminDashboard::class)
         ->name('parish-admin.dashboard');
 
     Route::get('/catechist-dashboard', CatechistDashboard::class)
         ->name('catechist.dashboard');
-
-    Route::get('/dashboard', function () {
-        $user = auth()->user();
-
-        if ($user?->isCatechist()) {
-            return redirect()->route('catechist.dashboard');
-        }
-
-        if ($user?->isParishAdmin()) {
-            return redirect()->route('parish-admin.dashboard');
-        }
-
-        if ($user?->isSuperAdmin()) {
-            return redirect('/admin/dashboard');
-        }
-
-        abort(403);
-    })->middleware('auth')->name('dashboard');
 
     Route::get('/parishioner', ParishionersManager::class)
         ->name('parishioners.index');
@@ -204,6 +199,21 @@ Route::middleware('auth')->group(function () {
 
         Route::get('/{groupId}/sessions/{sessionId}/attendance', GroupAttendance::class)
             ->name('groups.attendance');
+
+        Route::prefix('families')->name('families.')->group(function () {
+
+            Route::get('/', FamilyList::class)
+                ->name('index');
+
+            Route::get('/create', FamilyEdit::class)
+                ->name('create');
+
+            Route::get('/{id}', FamilyDetail::class)
+                ->name('show');
+
+            Route::get('/{id}/edit', FamilyEdit::class)
+                ->name('edit');
+        });
     });
 });
 

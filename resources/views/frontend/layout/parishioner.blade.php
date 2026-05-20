@@ -291,7 +291,7 @@ $isDashboard = request()->routeIs('parishioner.dashboard', 'parish-admin.dashboa
                     x-transition:leave-end="opacity-0"
                     class="mt-0.5 ml-4 pl-3 border-l border-slate-100 space-y-0.5">
                     @include('frontend.layout.partials.sidebar-sub-item', ['route' => 'parishioners.index', 'label' => 'Danh sách giáo dân'])
-                    {{-- @include('frontend.layout.partials.sidebar-sub-item', ['route' => 'families.index', 'label' => 'Gia đình']) --}}
+                    @include('frontend.layout.partials.sidebar-sub-item', ['route' => 'families.index', 'label' => 'Gia đình'])
                     {{-- @include('frontend.layout.partials.sidebar-sub-item', ['route' => 'parishioners.import', 'label' => 'Import giáo dân']) --}}
                 </div>
 
@@ -299,7 +299,7 @@ $isDashboard = request()->routeIs('parishioner.dashboard', 'parish-admin.dashboa
                 <div class="flyout-menu" x-cloak>
                     <div class="px-3 py-2 text-xs font-semibold text-slate-400 uppercase tracking-wide">Giáo Dân</div>
                     @include('frontend.layout.partials.flyout-item', ['route' => 'parishioners.index', 'label' => 'Danh sách giáo dân'])
-                    {{-- @include('frontend.layout.partials.flyout-item', ['route' => 'families.index', 'label' => 'Gia đình']) --}}
+                    @include('frontend.layout.partials.flyout-item', ['route' => 'families.index', 'label' => 'Gia đình'])
                     {{-- @include('frontend.layout.partials.flyout-item', ['route' => 'parishioners.import', 'label' => 'Import giáo dân']) --}}
                 </div>
             </div>

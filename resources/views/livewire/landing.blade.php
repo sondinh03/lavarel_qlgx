@@ -5,15 +5,24 @@
         <div class="relative py-8">
             <div class="absolute top-0 right-0">
                 <a href="{{ route('login') }}"
-                    class="inline-flex items-center gap-2 px-4 py-2
-                   text-sm font-semibold text-slate-600
-                   border border-slate-300 rounded-xl
-                   hover:bg-slate-50 transition-colors">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    class="inline-flex items-center gap-2 px-5 py-2.5
+                        text-sm font-bold text-white
+                        bg-primary-600 rounded-xl
+                        shadow-sm hover:bg-primary-700
+                        hover:shadow-md transition-all">
+
+                    <svg class="w-4 h-4"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24">
+
+                        <path stroke-linecap="round"
+                            stroke-linejoin="round"
+                            stroke-width="2"
                             d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1" />
                     </svg>
-                    Đăng nhập
+
+                    Đăng nhập hệ thống
                 </a>
             </div>
 
