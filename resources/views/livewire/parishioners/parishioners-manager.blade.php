@@ -29,7 +29,7 @@
                     </div>
 
                     {{-- ===== FILTERS (Refactored) ===== --}}
-                    <div x-data="{ open: @entangle('showAdvancedFilters') }" class="space-y-4">
+                    <div x-data="{ open: false }" class="space-y-4">
 
                         {{-- Top row: Search + Quick filters + Actions --}}
                         <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3">
@@ -336,20 +336,20 @@
                 <div class="border-b border-slate-200 px-6 flex-shrink-0">
                     <nav class="flex gap-1 -mb-px">
                         @foreach([
-                            'basic'    => 'Cơ bản',
-                            'address'  => 'Địa chỉ',
-                            'family'   => 'Gia đình',
-                            'classify' => 'Phân loại',
-                            'other'    => 'Khác',
+                        'basic' => 'Cơ bản',
+                        'address' => 'Địa chỉ',
+                        'family' => 'Gia đình',
+                        'classify' => 'Phân loại',
+                        'other' => 'Khác',
                         ] as $tab => $label)
                         @php
                         $tabHasError = match($tab) {
-                            'basic'    => $errors->hasAny(['last_name','first_name','gender','birthday','email','avatar']),
-                            'address'  => $errors->hasAny(['origin','permanent_residence','temporary_residence']),
-                            'family'   => $errors->hasAny(['married','father_id','mother_id','family_id']),
-                            'classify' => $errors->hasAny(['specialist_level','catechism_major']),
-                            'other'    => $errors->hasAny(['note','death_date']),
-                            default    => false,
+                        'basic' => $errors->hasAny(['last_name','first_name','gender','birthday','email','avatar']),
+                        'address' => $errors->hasAny(['origin','permanent_residence','temporary_residence']),
+                        'family' => $errors->hasAny(['married','father_id','mother_id','family_id']),
+                        'classify' => $errors->hasAny(['specialist_level','catechism_major']),
+                        'other' => $errors->hasAny(['note','death_date']),
+                        default => false,
                         };
                         @endphp
                         <button wire:click="goToTab('{{ $tab }}')"

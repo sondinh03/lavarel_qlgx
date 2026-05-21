@@ -162,6 +162,7 @@ class FamilyEdit extends BaseComponent
         }
 
         $this->parishionerOptions = $query
+            ->with('saint')
             ->orderBy('last_name')
             ->orderBy('first_name')
             ->get([
@@ -170,10 +171,11 @@ class FamilyEdit extends BaseComponent
                 'first_name',
                 'gender',
                 'birthday',
+                'saint_id',
             ])
             ->map(fn($p) => [
                 'id'       => $p->id,
-                'name'     => trim($p->last_name . ' ' . $p->first_name),
+                'name'     => $p->full_name_with_saint,
                 'gender'   => $p->gender,
                 'birthday' => optional($p->birthday)?->format('d/m/Y'),
             ])
@@ -263,7 +265,7 @@ class FamilyEdit extends BaseComponent
                 ->get();
 
             // ===== FAMILY NAME =====
-            $familyName = 'Gia đình ' . $head->last_name;
+            $familyName = 'Gia đình ' . $head->full_name_with_saint;
 
             // ===== FAMILY DATA =====
 

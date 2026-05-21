@@ -6,6 +6,7 @@ use App\Http\Livewire\Base\BaseComponent;
 use App\Models\Parishioner;
 use App\Models\Student;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
+use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 
@@ -106,6 +107,8 @@ class ParishionersManager extends BaseComponent
 
     public $linkedStudents;
 
+    private ?LengthAwarePaginator $_parishionersCache = null;
+
     // ==================== VALIDATION ====================
 
     protected array $formRules = [
@@ -166,9 +169,7 @@ class ParishionersManager extends BaseComponent
 
     // ==================== LISTENERS ====================
 
-    protected $listeners = [
-        'refresh' => 'handleRefresh',
-    ];
+    protected $listeners = ['refresh' => '$refresh'];
 
     // ==================== LIFECYCLE ====================
 
@@ -335,7 +336,20 @@ class ParishionersManager extends BaseComponent
 
     public function goToTab(string $tab): void
     {
-        $this->activeTab = $tab;
+        $valid = [
+            'basic',
+            'address',
+            'family',
+            'classify',
+            'other',
+            'parish',
+            'sacrament',
+            'marriage',
+            'deceased'
+        ];
+        if (in_array($tab, $valid, true)) {
+            $this->activeTab = $tab;
+        }
     }
 
     // ==================== TAB VALIDATION ====================
@@ -722,9 +736,9 @@ class ParishionersManager extends BaseComponent
         $this->resetValidation();
     }
 
-    public function getParishionersProperty()
+    public function getParishionersProperty(): LengthAwarePaginator
     {
-        return $this->getParishioners();
+        return $this->_parishionersCache ??= $this->getParishioners();
     }
 
     // ==================== RENDER ====================
