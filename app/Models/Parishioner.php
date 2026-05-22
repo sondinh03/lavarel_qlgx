@@ -77,6 +77,7 @@ class Parishioner extends Model
         'father_id',            // FK → parishioners (cha)
         'mother_id',            // FK → parishioners (mẹ)
         'family_id',            // FK → families
+        'family_role',          // Vai trò trong gia đình: husband=chồng, wife=vợ, child=con, other=khác
 
         // Gia nhập / chuyển xứ
         'joined_date',          // Ngày gia nhập giáo xứ
@@ -105,11 +106,7 @@ class Parishioner extends Model
         'married'              => 'integer',
         'birth_order'          => 'integer',
         'specialist_level'     => 'integer',
-    ];
-
-    protected $appends = [
-        'full_name',
-        'age',
+        'family_role'          => 'string',
     ];
 
     /*
@@ -245,14 +242,6 @@ class Parishioner extends Model
     | SCOPES
     |--------------------------------------------------------------------------
     */
-
-    public function scopeOfParish(Builder $query, ?int $parishId): Builder
-    {
-        if ($parishId === null) {
-            return $query;
-        }
-        return $query->where('parish_id', $parishId);
-    }
 
     public function scopeActive(Builder $query): Builder
     {
@@ -423,13 +412,6 @@ class Parishioner extends Model
     public function getMarriageAttribute(): ?Marriage
     {
         return $this->marriageAsHusband ?? $this->marriageAsWife;
-    }
-
-    public function getChildrenAttribute()
-    {
-        return Parishioner::where('father_id', $this->id)
-            ->orWhere('mother_id', $this->id)
-            ->get();
     }
 
     /*

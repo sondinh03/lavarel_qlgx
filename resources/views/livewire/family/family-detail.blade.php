@@ -114,41 +114,37 @@
         @if($family['member_count'] > 0)
         <div class="space-y-4">
 
-            {{-- CHA --}}
-            @if($family['father'])
-            @include('livewire.family._member-card', ['member' => $family['father'], 'roleColor' => 'blue'])
+            {{-- CHỒNG --}}
+            @if($family['husband'])
+            @include('livewire.family._member-card', [
+            'member' => $family['husband'],
+            'roleColor' => 'blue',
+            ])
             @endif
 
-            {{-- MẸ --}}
-            @if($family['mother'])
-            @include('livewire.family._member-card', ['member' => $family['mother'], 'roleColor' => 'pink'])
+            {{-- VỢ --}}
+            @if($family['wife'])
+            @include('livewire.family._member-card', [
+            'member' => $family['wife'],
+            'roleColor' => 'pink',
+            ])
             @endif
 
             {{-- CON CÁI --}}
-            @if(count($family['children']) > 0)
-            <div class="space-y-3">
-                @foreach($family['children'] as $child)
-                @include('livewire.family._member-card', ['member' => $child, 'roleColor' => 'green'])
-                @endforeach
-            </div>
-            @endif
+            @foreach($family['children'] as $child)
+            @include('livewire.family._member-card', [
+            'member' => $child,
+            'roleColor' => 'green',
+            ])
+            @endforeach
 
-            {{-- Thành viên không xác định vai trò --}}
-            @php
-                $knownIds = collect([
-                    $family['father']['id'] ?? null,
-                    $family['mother']['id'] ?? null,
-                ])->merge(collect($family['children'])->pluck('id'))->filter()->toArray();
-
-                $others = collect($family['members'])->filter(fn($m) => !in_array($m['id'], $knownIds));
-            @endphp
-            @if($others->count() > 0)
-            <div class="space-y-3">
-                @foreach($others as $member)
-                @include('livewire.family._member-card', ['member' => $member, 'roleColor' => 'gray'])
-                @endforeach
-            </div>
-            @endif
+            {{-- THÀNH VIÊN KHÁC (chưa có role) --}}
+            @foreach($family['others'] as $other)
+            @include('livewire.family._member-card', [
+            'member' => $other,
+            'roleColor' => 'gray',
+            ])
+            @endforeach
 
         </div>
         @else
@@ -187,7 +183,8 @@
                         <div>
                             <p class="text-xs font-semibold text-slate-400 uppercase tracking-wide">Trạng thái</p>
                             <div class="mt-2">
-                                <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold {{ $family['status_badge'] }}">
+                                <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold
+                                             {{ $family['status_badge'] }}">
                                     {{ $family['status_label'] }}
                                 </span>
                             </div>
@@ -244,8 +241,7 @@
         x-transition:leave-start="opacity-100"
         x-transition:leave-end="opacity-0"
         class="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50 p-4"
-        role="dialog"
-        aria-modal="true"
+        role="dialog" aria-modal="true"
         @click="showAddModal = false; $wire.closeAddMemberModal()"
         @keydown.escape.window="showAddModal = false; $wire.closeAddMemberModal()">
 
@@ -275,7 +271,7 @@
                     </button>
                 </div>
                 <div class="mt-4">
-                    <x-search-input wireModel="memberSearch" placeholder="Tìm kiếm giáo dân..." />
+                    <x-search-input wire-model="memberSearch" placeholder="Tìm kiếm giáo dân..." debounce="500ms" />
                 </div>
             </div>
 
@@ -336,13 +332,54 @@
         </div>
     </div>
 
+    {{-- ══ MODAL: Đổi vai trò thành viên ══ --}}
+    @if($showRoleModal)
+    <div
+        class="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50 p-4"
+        role="dialog" aria-modal="true"
+        @keydown.escape.window="$wire.closeRoleModal()">
+        <div class="bg-white rounded-2xl shadow-xl w-full max-w-sm overflow-hidden"
+            @click.outside="$wire.closeRoleModal()">
+
+            <div class="p-6 border-b border-slate-200 bg-gradient-to-br from-primary-50 to-white">
+                <h3 class="text-base font-bold text-slate-900">Đổi vai trò</h3>
+                <p class="text-sm text-slate-500 mt-1">
+                    {{ $roleMemberName }}
+                </p>
+            </div>
+
+            <div class="p-6 space-y-3">
+                @foreach([
+                'husband' => ['label' => 'Cha', 'color' => 'bg-blue-50 border-blue-200 text-blue-700'],
+                'wife' => ['label' => 'Mẹ', 'color' => 'bg-pink-50 border-pink-200 text-pink-700'],
+                'child' => ['label' => 'Con', 'color' => 'bg-emerald-50 border-emerald-200 text-emerald-700'],
+                'other' => ['label' => 'Khác', 'color' => 'bg-slate-50 border-slate-200 text-slate-600'],
+                ] as $value => $opt)
+                <label class="flex items-center gap-3 p-3 rounded-xl border cursor-pointer transition-all
+                              {{ $roleValue === $value ? $opt['color'] : 'border-slate-200 hover:bg-slate-50' }}">
+                    <input type="radio" wire:model="roleValue" value="{{ $value }}"
+                        class="text-primary-600 focus:ring-primary-500">
+                    <span class="text-sm font-semibold">{{ $opt['label'] }}</span>
+                </label>
+                @endforeach
+            </div>
+
+            <div class="px-6 py-4 border-t border-slate-200 bg-slate-50 flex justify-end gap-3">
+                <x-action-button wire:click="closeRoleModal" variant="secondary">Hủy</x-action-button>
+                <x-action-button wire:click="saveRole" icon="save" :loading="true">Lưu vai trò</x-action-button>
+            </div>
+        </div>
+    </div>
+    @endif
+
     {{-- ══ MODAL: Xác nhận xóa thành viên ══ --}}
     @if($showRemoveModal)
     <div
         class="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50 p-4"
         role="dialog" aria-modal="true"
         @keydown.escape.window="$wire.closeRemoveModal()">
-        <div class="bg-white rounded-2xl shadow-xl w-full max-w-sm overflow-hidden" @click.outside="$wire.closeRemoveModal()">
+        <div class="bg-white rounded-2xl shadow-xl w-full max-w-sm overflow-hidden"
+            @click.outside="$wire.closeRemoveModal()">
             <div class="p-6 space-y-4">
                 <div class="flex items-center gap-4">
                     <div class="w-12 h-12 rounded-full bg-red-100 flex items-center justify-center flex-shrink-0">
@@ -363,7 +400,9 @@
                 </p>
                 <div class="flex justify-end gap-3 pt-2">
                     <x-action-button wire:click="closeRemoveModal" variant="secondary">Hủy</x-action-button>
-                    <x-action-button wire:click="removeMember" variant="danger" :loading="true">Xóa khỏi gia đình</x-action-button>
+                    <x-action-button wire:click="removeMember" variant="danger" :loading="true">
+                        Xóa khỏi gia đình
+                    </x-action-button>
                 </div>
             </div>
         </div>

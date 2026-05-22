@@ -27,6 +27,12 @@ class FamilyDetail extends BaseComponent
     public bool   $selectAllParishioners = false;
     public string $memberSearch          = '';
 
+    // ==================== SET ROLE MODAL ====================
+    public bool   $showRoleModal    = false;
+    public ?int   $roleParishionerId = null;
+    public string $roleValue         = '';
+    public string $roleMemberName    = '';
+
     // ==================== REMOVE MODAL ====================
     public bool   $showRemoveModal    = false;
     public ?int   $removingMemberId   = null;
@@ -74,8 +80,8 @@ class FamilyDetail extends BaseComponent
             $family->load([
                 'parish',
                 'parishGroup',
-                'head',
                 'members' => fn($q) => $q->with(['saint'])
+                    ->orderByRaw("FIELD(family_role, 'husband', 'wife', 'child', 'other')")
                     ->orderBy('birth_order')
                     ->orderBy('birthday'),
             ]);
@@ -97,39 +103,16 @@ class FamilyDetail extends BaseComponent
 
     protected function mapFamilyData(Family $family): array
     {
-        $members   = $family->members;
-        $memberIds = $members->pluck('id')->toArray();
+        $members = $family->members;
 
-        // ── Xác định cha/mẹ ──
-        // Cha/mẹ: không có father_id hoặc mother_id trỏ vào thành viên khác trong gia đình
-        $parents = $members->filter(
-            fn($m) => !in_array($m->father_id, $memberIds)
-                   && !in_array($m->mother_id, $memberIds)
-        );
-
-        $father = $parents->firstWhere('gender', 'male');
-        $mother = $parents->firstWhere('gender', 'female');
-
-        // Fallback: nếu không tìm được qua gender, dùng head_id làm cha/mẹ
-        if (!$father && !$mother && $family->head_id) {
-            $head = $members->firstWhere('id', $family->head_id);
-            if ($head?->gender === 'male') {
-                $father = $head;
-            } else {
-                $mother = $head;
-            }
-        }
-
-        $parentIds = collect([$father?->id, $mother?->id])->filter()->toArray();
-
-        // ── Xác định con: member còn lại, sắp xếp theo birth_order rồi birthday ──
+        $husband  = $members->firstWhere('family_role', 'husband');
+        $wife     = $members->firstWhere('family_role', 'wife');
         $children = $members
-            ->filter(fn($m) => !in_array($m->id, $parentIds))
-            ->sortBy([
-                fn($a, $b) => ($a->birth_order ?? 99) <=> ($b->birth_order ?? 99),
-                fn($a, $b) => ($a->birthday?->timestamp ?? PHP_INT_MAX)
-                           <=> ($b->birthday?->timestamp ?? PHP_INT_MAX),
-            ])
+            ->filter(fn($m) => $m->family_role === 'child')
+            ->sortBy('birth_order')
+            ->values();
+        $others   = $members
+            ->filter(fn($m) => !in_array($m->family_role, ['husband', 'wife', 'child']))
             ->values();
 
         return [
@@ -147,31 +130,23 @@ class FamilyDetail extends BaseComponent
             'parish_group_name' => $family->parishGroup->name ?? '',
             'note'              => $family->note ?? '',
 
-            'head_id'   => $family->head_id,
-            'head_name' => $family->head
-                ? trim(($family->head->last_name ?? '') . ' ' . ($family->head->first_name ?? ''))
-                : '',
-            'head_url' => $family->head_id
-                ? route('parishioners.show', $family->head_id)
-                : null,
-
             'member_count' => $members->count(),
 
-            // ── Thành viên theo vai trò (cho blade mới) ──
-            'father' => $father ? $this->mapMember($father, 'Cha', $family->head_id) : null,
-            'mother' => $mother ? $this->mapMember($mother, 'Mẹ', $family->head_id) : null,
-            'children' => $children->map(function ($child, $index) use ($family) {
+            // Vai trò rõ ràng
+            'husband'  => $husband  ? $this->mapMember($husband,  'Cha') : null,
+            'wife'     => $wife     ? $this->mapMember($wife,     'Mẹ')    : null,
+            'children' => $children->map(function ($child, $index) {
                 $order = $child->birth_order ?? ($index + 1);
-                return $this->mapMember($child, 'Con thứ ' . $order, $family->head_id);
+                $label = $order === 1 ? 'Con đầu' : 'Con thứ ' . $order;
+                return $this->mapMember($child, $label);
             })->toArray(),
+            'others' => $others->map(
+                fn($m) => $this->mapMember($m, 'Thành viên')
+            )->toArray(),
 
-            // ── Flat list (giữ lại để tương thích nếu cần) ──
+            // Flat list (dùng cho @php $knownIds trong blade)
             'members' => $members->map(
-                fn($m) => $this->mapMember(
-                    $m,
-                    $this->resolveRole($m, $father, $mother, $parentIds),
-                    $family->head_id
-                )
+                fn($m) => $this->mapMember($m, $this->resolveRoleLabel($m))
             )->toArray(),
 
             'created_at' => $family->created_at?->format('d/m/Y H:i') ?? '',
@@ -179,16 +154,17 @@ class FamilyDetail extends BaseComponent
         ];
     }
 
-    private function mapMember(Parishioner $m, string $role, ?int $headId): array
+    private function mapMember(Parishioner $m, string $role): array
     {
         return [
             'id'          => $m->id,
             'role'        => $role,
+            'family_role' => $m->family_role ?? '',
             'name'        => trim(($m->last_name ?? '') . ' ' . ($m->first_name ?? '')),
             'full_name'   => trim(
                 ($m->saint?->name ?? '') . ' ' .
-                ($m->last_name ?? '') . ' ' .
-                ($m->first_name ?? '')
+                    ($m->last_name ?? '') . ' ' .
+                    ($m->first_name ?? '')
             ),
             'saint_name'  => $m->saint?->name ?? '',
             'gender'      => $m->gender === 'male' ? 'Nam' : 'Nữ',
@@ -197,33 +173,24 @@ class FamilyDetail extends BaseComponent
             'age'         => $m->birthday ? (int) $m->birthday->age : null,
             'phone'       => $m->phone ?? '',
             'avatar'      => $m->avatar_path ?? '',
-            'is_head'     => $m->id === $headId,
             'birth_order' => $m->birth_order,
             'status'      => (bool) ($m->is_active ?? true),
             'url'         => route('parishioners.show', $m->id),
             'initials'    => strtoupper(
                 mb_substr($m->last_name ?? '', 0, 1) .
-                mb_substr($m->first_name ?? '', 0, 1)
+                    mb_substr($m->first_name ?? '', 0, 1)
             ),
         ];
     }
 
-    private function resolveRole(
-        Parishioner $m,
-        ?Parishioner $father,
-        ?Parishioner $mother,
-        array $parentIds
-    ): string {
-        if ($father && $m->id === $father->id) {
-            return 'Cha';
-        }
-        if ($mother && $m->id === $mother->id) {
-            return 'Mẹ';
-        }
-        if (!in_array($m->id, $parentIds)) {
-            return 'Con' . ($m->birth_order ? ' thứ ' . $m->birth_order : '');
-        }
-        return 'Thành viên';
+    private function resolveRoleLabel(Parishioner $m): string
+    {
+        return match ($m->family_role) {
+            'husband' => 'Chồng',
+            'wife'    => 'Vợ',
+            'child'   => $m->birth_order ? 'Con thứ ' . $m->birth_order : 'Con',
+            default   => 'Thành viên',
+        };
     }
 
     // ==================== TABS ====================
@@ -232,6 +199,68 @@ class FamilyDetail extends BaseComponent
         if (in_array($tab, ['info', 'members'])) {
             $this->activeTab = $tab;
         }
+    }
+
+    // ==================== SET ROLE ====================
+    public function openRoleModal(int $parishionerId, string $name, string $currentRole): void
+    {
+        $this->authorize('update', $this->getFamily());
+        $this->roleParishionerId = $parishionerId;
+        $this->roleMemberName    = $name;
+        $this->roleValue         = $currentRole;
+        $this->showRoleModal     = true;
+    }
+
+    public function saveRole(): void
+    {
+        $this->authorize('update', $this->getFamily());
+
+        if (!in_array($this->roleValue, ['husband', 'wife', 'child', 'other'])) {
+            $this->emit('toast', 'warning', 'Vai trò không hợp lệ.');
+            return;
+        }
+
+        try {
+            $parishioner = Parishioner::where('family_id', $this->familyId)
+                ->findOrFail($this->roleParishionerId);
+
+            // Nếu gán husband/wife → kiểm tra đã có người giữ vai đó chưa
+            if (in_array($this->roleValue, ['husband', 'wife'])) {
+                $exists = Parishioner::where('family_id', $this->familyId)
+                    ->where('family_role', $this->roleValue)
+                    ->where('id', '!=', $parishioner->id)
+                    ->exists();
+
+                if ($exists) {
+                    $label = $this->roleValue === 'husband' ? 'chồng' : 'vợ';
+                    $this->emit('toast', 'warning', "Gia đình đã có người giữ vai trò {$label}.");
+                    return;
+                }
+            }
+
+            $parishioner->update(['family_role' => $this->roleValue]);
+
+            $this->emit('toast', 'message', "Đã cập nhật vai trò của {$this->roleMemberName}.");
+            $this->closeRoleModal();
+            $this->loadFamilyData();
+        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+            $this->emit('toast', 'error', 'Không tìm thấy thành viên.');
+            $this->closeRoleModal();
+        } catch (\Exception $e) {
+            $this->logError($e, 'Error updating member role', [
+                'family_id'      => $this->familyId,
+                'parishioner_id' => $this->roleParishionerId,
+            ]);
+            $this->emit('toast', 'error', 'Có lỗi khi cập nhật vai trò.');
+        }
+    }
+
+    public function closeRoleModal(): void
+    {
+        $this->showRoleModal     = false;
+        $this->roleParishionerId = null;
+        $this->roleMemberName    = '';
+        $this->roleValue         = '';
     }
 
     // ==================== ADD MEMBER MODAL ====================
@@ -302,31 +331,6 @@ class FamilyDetail extends BaseComponent
         }
     }
 
-    // ==================== SET HEAD ====================
-    public function setAsHead(int $parishionerId): void
-    {
-        $this->authorize('update', $this->getFamily());
-
-        try {
-            $parishioner = Parishioner::where('family_id', $this->familyId)
-                ->findOrFail($parishionerId);
-
-            $this->getFamily()->update(['head_id' => $parishioner->id]);
-
-            $name = trim(($parishioner->last_name ?? '') . ' ' . ($parishioner->first_name ?? ''));
-            $this->emit('toast', 'message', "Đã đặt {$name} làm chủ hộ.");
-            $this->loadFamilyData();
-        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
-            $this->emit('toast', 'error', 'Không tìm thấy thành viên.');
-        } catch (\Exception $e) {
-            $this->logError($e, 'Error setting family head', [
-                'family_id'      => $this->familyId,
-                'parishioner_id' => $parishionerId,
-            ]);
-            $this->emit('toast', 'error', 'Có lỗi khi cập nhật chủ hộ.');
-        }
-    }
-
     // ==================== REMOVE MEMBER ====================
     public function confirmRemoveMember(int $parishionerId, string $name): void
     {
@@ -348,15 +352,11 @@ class FamilyDetail extends BaseComponent
             $parishioner = Parishioner::where('family_id', $this->familyId)
                 ->findOrFail($this->removingMemberId);
 
-            if ($this->getFamily()->head_id === $parishioner->id) {
-                $this->getFamily()->update(['head_id' => null]);
-                $this->cachedFamily = null;
-            }
-
             $parishioner->update([
-                'family_id' => null,
-                'father_id' => null,
-                'mother_id' => null,
+                'family_id'   => null,
+                'family_role' => null,
+                'father_id'   => null,
+                'mother_id'   => null,
             ]);
 
             $this->emit('toast', 'message', "Đã xóa {$this->removingMemberName} khỏi gia đình.");
@@ -388,7 +388,7 @@ class FamilyDetail extends BaseComponent
 
         try {
             if ($this->getFamily()->members()->count() > 0) {
-                $this->emit('toast', 'warning', 'Không thể xóa gia đình còn thành viên. Vui lòng xóa thành viên trước.');
+                $this->emit('toast', 'warning', 'Không thể xóa gia đình còn thành viên.');
                 return;
             }
 
@@ -408,19 +408,17 @@ class FamilyDetail extends BaseComponent
     // ==================== QUERY HELPERS ====================
     protected function getAvailableParishionersQuery()
     {
-        $parishId = $this->familyData['parish_id'] ?? $this->parishId;
 
-        return Parishioner::ofParish($parishId)
-            ->whereNull('family_id')
+        return Parishioner::whereNull('family_id')
             ->when(trim($this->memberSearch), function ($q, $search) {
                 $q->where(function ($q2) use ($search) {
                     $q2->where('first_name', 'like', "%{$search}%")
-                       ->orWhere('last_name', 'like', "%{$search}%")
-                       ->orWhereRaw("CONCAT(last_name, ' ', first_name) LIKE ?", ["%{$search}%"]);
+                        ->orWhere('last_name', 'like', "%{$search}%")
+                        ->orWhereRaw("CONCAT(last_name, ' ', first_name) LIKE ?", ["%{$search}%"]);
                 });
             })
-            ->orderBy('last_name')
-            ->orderBy('first_name');
+            ->orderBy('first_name')
+            ->orderBy('last_name');
     }
 
     protected function getAvailableParishionersPaginated(): LengthAwarePaginator
