@@ -6,57 +6,16 @@
     ]" />
 @endsection
 
-@push('styles')
-<style>
-    /* ===== SCOPE SELECTOR ===== */
-    .scope-btn {
-        @apply px-5 py-2 rounded-xl text-sm font-semibold transition-all border;
-    }
-    .scope-btn.active {
-        @apply bg-primary-600 text-white border-primary-600 shadow-sm;
-    }
-    .scope-btn:not(.active) {
-        @apply bg-white text-slate-600 border-slate-300 hover:border-primary-400 hover:text-primary-600;
-    }
-
-    /* ===== SUMMARY CARDS ===== */
-    .stat-card {
-        @apply bg-white rounded-2xl border border-slate-200 shadow-sm p-5 flex flex-col gap-1;
-    }
-
-    /* ===== CHART CARD ===== */
-    .chart-card {
-        @apply bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden;
-    }
-    .chart-card-header {
-        @apply px-6 py-4 border-b border-slate-100 flex items-center justify-between;
-    }
-    .chart-card-title {
-        @apply text-base font-bold text-slate-800;
-    }
-    .chart-card-body {
-        @apply p-6;
-    }
-
-    /* ===== COMPARISON TABLE ===== */
-    .compare-row {
-        @apply flex items-center gap-3 py-2.5 border-b border-slate-100 last:border-0;
-    }
-    .compare-bar {
-        @apply h-3 rounded-full transition-all duration-700;
-    }
-</style>
-@endpush
-
 <div class="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 p-4 sm:p-6">
-
     <div class="mx-auto max-w-7xl space-y-5">
 
         {{-- ===================== HEADER ===================== --}}
         <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+
+            {{-- Title row --}}
             <div class="px-6 py-5 flex items-center justify-between gap-4 flex-wrap border-b border-slate-100">
                 <div class="flex items-center gap-3">
-                    <div class="w-10 h-10 rounded-xl bg-primary-100 flex items-center justify-center">
+                    <div class="w-10 h-10 rounded-xl bg-primary-100 flex items-center justify-center flex-shrink-0">
                         <svg class="w-5 h-5 text-primary-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                 d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
@@ -78,39 +37,71 @@
                 </a>
             </div>
 
-            {{-- Filter + Scope --}}
-            <div class="px-6 py-4 bg-slate-50/60 flex flex-wrap items-center justify-between gap-4">
-                {{-- Filter Bar --}}
-                <livewire:filters.filter-bar
-                    :parish-id="$parishId"
-                    :show-nam-hoc="true"
-                    :show-khoi="true"
-                    :show-lop="true"
-                    :show-ky="true"
-                    :selected-nam-hoc="$selectedNamHoc"
-                    :selected-khoi="$selectedKhoi"
-                    :selected-lop="$selectedLop"
-                    :selected-ky="$selectedSemester" />
+            {{-- Filter + Scope + ViewMode --}}
+            <div class="px-6 py-4 bg-slate-50/60 border-b border-slate-100">
+                <div class="flex flex-col gap-4">
+                    {{-- Row 1: Filters --}}
+                    <livewire:filters.filter-bar
+                        :parish-id="$parishId"
+                        :show-nam-hoc="true"
+                        :show-khoi="true"
+                        :show-lop="true"
+                        :show-ky="$viewMode === 'semester'"
+                        :selected-nam-hoc="$selectedNamHoc"
+                        :selected-khoi="$selectedKhoi"
+                        :selected-lop="$selectedLop"
+                        :selected-ky="$selectedSemester" />
 
-                {{-- Scope Switcher --}}
-                <div class="flex items-center gap-1.5">
-                    <span class="text-xs font-semibold text-slate-400 uppercase tracking-wide mr-1">Phạm vi:</span>
-                    @if($selectedLop)
-                    <button wire:click="setScope('class')"
-                        class="scope-btn {{ $scope === 'class' ? 'active' : '' }}">
-                        Lớp
-                    </button>
-                    @endif
-                    @if($selectedKhoi || $selectedLop)
-                    <button wire:click="setScope('grade')"
-                        class="scope-btn {{ $scope === 'grade' ? 'active' : '' }}">
-                        Khối
-                    </button>
-                    @endif
-                    <button wire:click="setScope('parish')"
-                        class="scope-btn {{ $scope === 'parish' ? 'active' : '' }}">
-                        Toàn xứ
-                    </button>
+                    {{-- Row 2: Scope + ViewMode selectors --}}
+                    <div class="flex items-center justify-between gap-3 flex-wrap">
+                        {{-- Scope switcher --}}
+                        <div class="flex items-center gap-1.5">
+                            <span class="text-xs font-semibold text-slate-400 uppercase tracking-wide mr-1">Phạm vi:</span>
+                            @if($selectedLop)
+                            <button wire:click="setScope('class')"
+                                class="px-3 py-1.5 rounded-xl text-sm font-semibold border transition-all
+                                       {{ $scope === 'class'
+                                           ? 'bg-primary-600 text-white border-primary-600 shadow-sm'
+                                           : 'bg-white text-slate-600 border-slate-300 hover:border-primary-400 hover:text-primary-600' }}">
+                                Lớp
+                            </button>
+                            @endif
+                            @if($selectedKhoi || $selectedLop)
+                            <button wire:click="setScope('grade')"
+                                class="px-3 py-1.5 rounded-xl text-sm font-semibold border transition-all
+                                       {{ $scope === 'grade'
+                                           ? 'bg-primary-600 text-white border-primary-600 shadow-sm'
+                                           : 'bg-white text-slate-600 border-slate-300 hover:border-primary-400 hover:text-primary-600' }}">
+                                Khối
+                            </button>
+                            @endif
+                            <button wire:click="setScope('parish')"
+                                class="px-3 py-1.5 rounded-xl text-sm font-semibold border transition-all
+                                       {{ $scope === 'parish'
+                                           ? 'bg-primary-600 text-white border-primary-600 shadow-sm'
+                                           : 'bg-white text-slate-600 border-slate-300 hover:border-primary-400 hover:text-primary-600' }}">
+                                Toàn xứ
+                            </button>
+                        </div>
+
+                        {{-- ViewMode toggle --}}
+                        <div class="flex gap-1 bg-slate-200 p-1 rounded-xl">
+                            <button wire:click="setViewMode('semester')"
+                                class="px-3 py-1.5 rounded-lg text-sm font-semibold transition-all
+                                       {{ $viewMode === 'semester'
+                                           ? 'bg-white text-primary-600 shadow-sm'
+                                           : 'text-slate-600 hover:text-slate-900' }}">
+                                Theo kỳ
+                            </button>
+                            <button wire:click="setViewMode('year')"
+                                class="px-3 py-1.5 rounded-lg text-sm font-semibold transition-all
+                                       {{ $viewMode === 'year'
+                                           ? 'bg-white text-primary-600 shadow-sm'
+                                           : 'text-slate-600 hover:text-slate-900' }}">
+                                Cả năm
+                            </button>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -146,7 +137,7 @@
         <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
 
             {{-- Điểm TB --}}
-            <div class="stat-card">
+            <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-5 flex flex-col gap-1">
                 <div class="text-xs font-semibold text-slate-400 uppercase tracking-wide">Điểm TB chung</div>
                 <div class="text-3xl font-extrabold
                     {{ ($summary['avg'] ?? 0) >= 8 ? 'text-emerald-600' : (($summary['avg'] ?? 0) >= 5 ? 'text-primary-600' : 'text-red-500') }}">
@@ -156,7 +147,7 @@
             </div>
 
             {{-- Số học sinh có điểm --}}
-            <div class="stat-card">
+            <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-5 flex flex-col gap-1">
                 <div class="text-xs font-semibold text-slate-400 uppercase tracking-wide">Học sinh có điểm</div>
                 <div class="text-3xl font-extrabold text-slate-800">
                     {{ $totalStudentsWithScore }}
@@ -167,8 +158,8 @@
                 </div>
             </div>
 
-            {{-- Tỉ lệ đậu --}}
-            <div class="stat-card">
+            {{-- Tỉ lệ đạt --}}
+            <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-5 flex flex-col gap-1">
                 <div class="text-xs font-semibold text-slate-400 uppercase tracking-wide">Tỉ lệ đạt (≥5)</div>
                 <div class="text-3xl font-extrabold text-emerald-600">
                     {{ $totalStudentsWithScore > 0
@@ -179,7 +170,7 @@
             </div>
 
             {{-- Cao nhất / Thấp nhất --}}
-            <div class="stat-card">
+            <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-5 flex flex-col gap-1">
                 <div class="text-xs font-semibold text-slate-400 uppercase tracking-wide">Cao nhất / Thấp nhất</div>
                 <div class="flex items-baseline gap-2">
                     <span class="text-2xl font-extrabold text-emerald-600">{{ number_format($summary['max'] ?? 0, 1) }}</span>
@@ -190,21 +181,21 @@
             </div>
         </div>
 
-        {{-- ===================== BIỂU ĐỒ CHÍNH ===================== --}}
+        {{-- ===================== CHARTS ===================== --}}
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-5">
 
-            {{-- ===== BIỂU ĐỒ TRÒN XẾP LOẠI ===== --}}
-            <div class="chart-card">
-                <div class="chart-card-header">
-                    <h2 class="chart-card-title">Phân bố xếp loại</h2>
+            {{-- DONUT: Phân bố xếp loại --}}
+            <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+                <div class="px-6 py-4 border-b border-slate-100 flex items-center justify-between">
+                    <h2 class="text-base font-bold text-slate-800">Phân bố xếp loại</h2>
                     <span class="text-xs text-slate-400">{{ $totalStudentsWithScore }} học sinh</span>
                 </div>
-                <div class="chart-card-body">
-                    <div class="flex flex-col sm:flex-row items-center gap-6">
-                        {{-- Donut canvas --}}
+                <div class="p-6">
+                    <div class="flex flex-col sm:flex-row lg:flex-col xl:flex-row items-center gap-6">
+                        {{-- Donut --}}
                         <div class="relative flex-shrink-0 w-48 h-48">
                             <canvas id="ratingDonutChart" width="192" height="192"></canvas>
-                            {{-- Center label --}}
+                            {{-- Center --}}
                             <div class="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
                                 <span class="text-2xl font-extrabold text-slate-800">
                                     {{ number_format($summary['avg'] ?? 0, 1) }}
@@ -214,102 +205,90 @@
                         </div>
 
                         {{-- Legend --}}
-                        <div class="flex-1 space-y-2 w-full">
+                        <div class="flex-1 space-y-3 w-full">
                             @foreach($ratingChartData as $item)
-                            @if($item['count'] > 0)
                             <div class="flex items-center justify-between gap-2">
                                 <div class="flex items-center gap-2 min-w-0">
                                     <span class="w-3 h-3 rounded-full flex-shrink-0"
                                           style="background:{{ $item['color'] }}"></span>
-                                    <span class="text-sm text-slate-700 font-medium truncate">{{ $item['label'] }}</span>
+                                    <span class="text-sm text-slate-600 truncate">{{ $item['label'] }}</span>
                                 </div>
                                 <div class="flex items-center gap-2 flex-shrink-0">
                                     <span class="text-sm font-bold text-slate-800">{{ $item['count'] }}</span>
-                                    <span class="text-xs text-slate-400 w-12 text-right">{{ $item['percentage'] }}%</span>
+                                    <span class="text-xs text-slate-400 w-10 text-right">{{ $item['percentage'] }}%</span>
                                 </div>
                             </div>
-                            @endif
+                            {{-- Mini bar --}}
+                            <div class="w-full h-1 rounded-full bg-slate-100 overflow-hidden -mt-1">
+                                <div class="h-full rounded-full transition-all duration-700"
+                                     style="width:{{ $item['percentage'] }}%; background:{{ $item['color'] }}"></div>
+                            </div>
                             @endforeach
                         </div>
                     </div>
                 </div>
             </div>
 
-            {{-- ===== BIỂU ĐỒ CỘT PHÂN PHỐI ĐIỂM ===== --}}
-            <div class="chart-card">
-                <div class="chart-card-header">
-                    <h2 class="chart-card-title">Phân phối điểm trung bình</h2>
+            {{-- BAR CHART: Phân phối điểm --}}
+            <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+                <div class="px-6 py-4 border-b border-slate-100 flex items-center justify-between">
+                    <h2 class="text-base font-bold text-slate-800">Phân phối điểm trung bình</h2>
                     <span class="text-xs text-slate-400">Phân bố theo khoảng điểm</span>
                 </div>
-                <div class="chart-card-body">
+                <div class="p-6">
                     <canvas id="distributionBarChart" height="192"></canvas>
                 </div>
             </div>
         </div>
 
-        {{-- ===================== SO SÁNH GIỮA CÁC LỚP (scope ≠ class) ===================== --}}
+        {{-- ===================== CLASS COMPARISON (scope ≠ class) ===================== --}}
         @if($scope !== 'class' && !empty($classComparisonData))
-        <div class="chart-card">
-            <div class="chart-card-header">
-                <h2 class="chart-card-title">
+        <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+            <div class="px-6 py-4 border-b border-slate-100 flex items-center justify-between">
+                <h2 class="text-base font-bold text-slate-800">
                     So sánh điểm TB giữa các lớp
                     <span class="text-xs font-normal text-slate-400 ml-2">
-                        ({{ $scope === 'grade' ? 'theo khối' : 'toàn xứ' }}, học kỳ {{ $selectedSemester }})
+                        ({{ $scope === 'grade' ? 'theo khối' : 'toàn xứ' }}{{ $viewMode === 'year' ? ', cả năm' : ', kỳ ' . $selectedSemester }})
                     </span>
                 </h2>
                 <span class="text-xs text-slate-400">{{ count($classComparisonData) }} lớp</span>
             </div>
-            <div class="chart-card-body">
-                {{-- Horizontal bar chart bằng CSS --}}
-                <div class="space-y-1">
-                    @php
-                        $maxAvg = collect($classComparisonData)->max('avg') ?: 10;
-                    @endphp
-                    @foreach($classComparisonData as $classData)
-                    @php
-                        $barWidth = $maxAvg > 0 ? round(($classData['avg'] / 10) * 100, 1) : 0;
-                        $barColor = $classData['avg'] >= 8 ? '#10b981'
-                            : ($classData['avg'] >= 6.5 ? '#3b82f6'
-                            : ($classData['avg'] >= 5 ? '#f59e0b' : '#ef4444'));
-                    @endphp
-                    <div class="compare-row">
-                        {{-- Tên lớp --}}
-                        <div class="w-24 flex-shrink-0 text-sm font-semibold text-slate-700 text-right pr-2 truncate"
-                             title="{{ $classData['class_name'] }}">
-                            {{ $classData['class_name'] }}
-                        </div>
-
-                        {{-- Bar --}}
-                        <div class="flex-1 bg-slate-100 rounded-full h-4 overflow-hidden">
-                            <div class="compare-bar h-4 rounded-full"
-                                 style="width: {{ $barWidth }}%; background: {{ $barColor }};">
-                            </div>
-                        </div>
-
-                        {{-- Stats --}}
-                        <div class="flex-shrink-0 flex items-center gap-3 text-right">
-                            <span class="text-sm font-bold text-slate-800 w-10">
-                                {{ number_format($classData['avg'], 2) }}
-                            </span>
-                            <span class="text-xs text-slate-400 hidden sm:inline w-16">
-                                {{ $classData['count'] }} hs
-                            </span>
-                            <span class="text-xs font-semibold w-14 hidden sm:inline
-                                {{ $classData['pass_rate'] >= 80 ? 'text-emerald-600' : ($classData['pass_rate'] >= 50 ? 'text-amber-500' : 'text-red-500') }}">
-                                {{ $classData['pass_rate'] }}% đạt
-                            </span>
-                        </div>
-                    </div>
-                    @endforeach
-                </div>
-
-                {{-- Canvas chart phụ --}}
-                <div class="mt-6">
-                    <canvas id="classComparisonChart" height="80"></canvas>
-                </div>
+            <div class="p-6">
+                <canvas id="classComparisonChart"></canvas>
             </div>
         </div>
         @endif
+
+        {{-- ===================== NOTES ===================== --}}
+        <div class="bg-white rounded-2xl border border-slate-200 shadow-sm px-6 py-4">
+            <div class="flex flex-wrap items-center gap-x-6 gap-y-2 text-xs text-slate-500">
+                <span class="font-semibold text-slate-700">Ghi chú:</span>
+                <span class="flex items-center gap-1.5">
+                    <span class="w-3 h-3 rounded-full bg-emerald-500 inline-block"></span>
+                    Xuất sắc (9.5-10)
+                </span>
+                <span class="flex items-center gap-1.5">
+                    <span class="w-3 h-3 rounded-full bg-blue-500 inline-block"></span>
+                    Giỏi (8-9.5)
+                </span>
+                <span class="flex items-center gap-1.5">
+                    <span class="w-3 h-3 rounded-full bg-amber-400 inline-block"></span>
+                    Khá (6.5-8)
+                </span>
+                <span class="flex items-center gap-1.5">
+                    <span class="w-3 h-3 rounded-full bg-yellow-400 inline-block"></span>
+                    Trung bình (5-6.5)
+                </span>
+                <span class="flex items-center gap-1.5">
+                    <span class="w-3 h-3 rounded-full bg-orange-500 inline-block"></span>
+                    Yếu (3.5-5)
+                </span>
+                <span class="flex items-center gap-1.5">
+                    <span class="w-3 h-3 rounded-full bg-red-500 inline-block"></span>
+                    Kém (0-3.5)
+                </span>
+            </div>
+        </div>
 
         @endif {{-- end empty check --}}
 
@@ -317,22 +296,17 @@
 </div>
 
 @push('scripts')
-{{-- <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script> --}}
 <script>
-    // ============================================================
-    //  DỮ LIỆU TỪ LIVEWIRE
-    // ============================================================
     const ratingData        = @json($ratingChartData);
     const distributionData  = @json($distributionChartData);
     const comparisonData    = @json($classComparisonData);
 
-    // Palette
     Chart.defaults.font.family = "'Inter', sans-serif";
     Chart.defaults.color       = '#64748b';
 
-    // ============================================================
-    //  1. DONUT CHART — XẾP LOẠI
-    // ============================================================
+    // ════════════════════════════════════════════════════════════
+    // 1. DONUT — XẾP LOẠI
+    // ════════════════════════════════════════════════════════════
     (function() {
         const canvas = document.getElementById('ratingDonutChart');
         if (!canvas || !ratingData.length) return;
@@ -364,7 +338,6 @@
                     }
                 },
                 animation: {
-                    animateRotate: true,
                     duration: 800,
                     easing: 'easeOutQuart',
                 }
@@ -372,9 +345,9 @@
         });
     })();
 
-    // ============================================================
-    //  2. BAR CHART — PHÂN PHỐI ĐIỂM
-    // ============================================================
+    // ════════════════════════════════════════════════════════════
+    // 2. BAR — PHÂN PHỐI ĐIỂM
+    // ════════════════════════════════════════════════════════════
     (function() {
         const canvas = document.getElementById('distributionBarChart');
         if (!canvas || !distributionData.length) return;
@@ -438,9 +411,9 @@
         });
     })();
 
-    // ============================================================
-    //  3. BAR CHART — SO SÁNH CÁC LỚP
-    // ============================================================
+    // ════════════════════════════════════════════════════════════
+    // 3. BAR — SO SÁNH LỚP
+    // ════════════════════════════════════════════════════════════
     (function() {
         const canvas = document.getElementById('classComparisonChart');
         if (!canvas || !comparisonData.length) return;
@@ -504,12 +477,8 @@
         });
     })();
 
-    // ============================================================
-    //  RE-RENDER CHARTS SAU KHI LIVEWIRE UPDATE
-    // ============================================================
+    // Re-init charts on Livewire update
     document.addEventListener('livewire:update', () => {
-        // Chart.js instances sẽ bị destroy và tạo lại bởi Livewire re-render
-        // Cần delay nhỏ để DOM kịp cập nhật
         setTimeout(() => {
             ['ratingDonutChart', 'distributionBarChart', 'classComparisonChart'].forEach(id => {
                 const canvas = document.getElementById(id);

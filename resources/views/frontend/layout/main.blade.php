@@ -123,14 +123,18 @@
 </head>
 
 @php
-if (request()->routeIs('students.*','attendance.*','scores.*','session.*')) {
-$activeGroup = 'students';
+if (request()->routeIs('attendance.*','scores.*','session.*')) {
+    $activeGroup = 'learning';
+} elseif (request()->routeIs('students.*')) {
+    $activeGroup = 'students';
+} elseif (request()->routeIs('groups.*')) {
+    $activeGroup = 'activities';
 } elseif (request()->routeIs('catechists.*','parishioners.*')) {
-$activeGroup = 'staff';
+    $activeGroup = 'staff';
 } elseif (request()->routeIs('school-years.*','parish-group.*','holy-names.*','classes.*')) {
-$activeGroup = 'system';
+    $activeGroup = 'system';
 } else {
-$activeGroup = null;
+    $activeGroup = null;
 }
 $isDashboard = request()->routeIs('dashboard','catechist.dashboard','parish-admin.dashboard');
 @endphp
@@ -264,8 +268,60 @@ $isDashboard = request()->routeIs('dashboard','catechist.dashboard','parish-admi
                 @endif
             </a>
 
+            {{-- ── Nhóm: HỌC TẬP & ĐIỂM DANH (MỚI) ── --}}
+            @php $isLearningActive = request()->routeIs('attendance.*','scores.*','session.*'); @endphp
+            <div class="relative has-flyout">
+                {{-- Group header --}}
+                <button @click="toggleGroup('learning')"
+                    class="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition group
+                        {{ $isLearningActive ? 'text-primary-700 font-semibold' : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900' }}">
+                    <svg class="w-5 h-5 flex-shrink-0
+                        {{ $isLearningActive ? 'text-primary-600' : 'text-slate-400 group-hover:text-slate-600' }}"
+                        fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M12 6.253v13m0-13C6.5 6.75 3.519 10.033 3.519 13.26c0 2.592.3 5.193 1.019 7.665m0-13c5.5-.5 8.481-3.782 8.481-7.007 0-2.592-.3-5.193-1.019-7.665M12 6.253L9 4m3 2.253l3-2m0 0V4m0 2.253V4m0 0s-3 .75-3 4.26" />
+                    </svg>
+                    <span class="sidebar-label flex-1 text-left truncate">Học Tập & Điểm Danh</span>
+                    <svg class="sidebar-chevron w-3.5 h-3.5 flex-shrink-0 text-slate-400 transition-transform duration-200"
+                        :class="openGroups.includes('learning') ? 'rotate-180 text-primary-600' : 'text-slate-400'"
+                        fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                    </svg>
+                    @if($isLearningActive)
+                    <span class="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-6 bg-primary-500 rounded-r-full"></span>
+                    @endif
+                </button>
+
+                {{-- Accordion submenu (full sidebar) --}}
+                <div x-show="openGroups.includes('learning') && !sidebarMini"
+                    style="{{ $isLearningActive ? '' : 'display:none' }}"
+                    x-transition:enter="transition ease-out duration-150"
+                    x-transition:enter-start="opacity-0 -translate-y-1"
+                    x-transition:enter-end="opacity-100 translate-y-0"
+                    x-transition:leave="transition ease-in duration-100"
+                    x-transition:leave-start="opacity-100"
+                    x-transition:leave-end="opacity-0"
+                    class="mt-0.5 ml-4 pl-3 border-l border-slate-100 space-y-0.5">
+                    @include('frontend.layout.partials.sidebar-sub-item', ['route' => 'attendance.show', 'label' => 'Điểm danh'])
+                    @include('frontend.layout.partials.sidebar-sub-item', ['route' => 'session.index', 'label' => 'Phiên điểm danh'])
+                    @include('frontend.layout.partials.sidebar-sub-item', ['route' => 'attendance.statistics', 'label' => 'Thống kê điểm danh'])
+                    @include('frontend.layout.partials.sidebar-sub-item', ['route' => 'scores.index', 'label' => 'Kết quả học tập'])
+                    @include('frontend.layout.partials.sidebar-sub-item', ['route' => 'scores.statistics', 'label' => 'Thống kê điểm'])
+                </div>
+
+                {{-- Flyout (mini sidebar) --}}
+                <div class="flyout-menu" x-cloak>
+                    <div class="px-3 py-2 text-xs font-semibold text-slate-400 uppercase tracking-wide">Học Tập & Điểm Danh</div>
+                    @include('frontend.layout.partials.flyout-item', ['route' => 'attendance.show', 'label' => 'Điểm danh'])
+                    @include('frontend.layout.partials.flyout-item', ['route' => 'session.index', 'label' => 'Phiên điểm danh'])
+                    @include('frontend.layout.partials.flyout-item', ['route' => 'attendance.statistics', 'label' => 'Thống kê điểm danh'])
+                    @include('frontend.layout.partials.flyout-item', ['route' => 'scores.index', 'label' => 'Kết quả học tập'])
+                    @include('frontend.layout.partials.flyout-item', ['route' => 'scores.statistics', 'label' => 'Thống kê điểm'])
+                </div>
+            </div>
+
             {{-- ── Nhóm: HỌC SINH ── --}}
-            @php $isStudentActive = request()->routeIs('students.*','attendance.*','classes.*','scores.*','session.*'); @endphp
+            @php $isStudentActive = request()->routeIs('students.*'); @endphp
             <div class="relative has-flyout">
                 {{-- Group header --}}
                 <button @click="toggleGroup('students')"
@@ -299,20 +355,12 @@ $isDashboard = request()->routeIs('dashboard','catechist.dashboard','parish-admi
                     x-transition:leave-end="opacity-0"
                     class="mt-0.5 ml-4 pl-3 border-l border-slate-100 space-y-0.5">
                     @include('frontend.layout.partials.sidebar-sub-item', ['route' => 'students.index', 'label' => 'Quản lý học sinh'])
-                    {{-- @include('frontend.layout.partials.sidebar-sub-item', ['route' => 'classes.index', 'label' => 'Danh sách lớp']) --}}
-                    @include('frontend.layout.partials.sidebar-sub-item', ['route' => 'attendance.show', 'label' => 'Điểm danh'])
-                    @include('frontend.layout.partials.sidebar-sub-item', ['route' => 'session.index', 'label' => 'Phiên điểm danh'])
-                    @include('frontend.layout.partials.sidebar-sub-item', ['route' => 'scores.index', 'label' => 'Kết quả học tập'])
                 </div>
 
                 {{-- Flyout (mini sidebar) --}}
                 <div class="flyout-menu" x-cloak>
                     <div class="px-3 py-2 text-xs font-semibold text-slate-400 uppercase tracking-wide">Học Sinh</div>
                     @include('frontend.layout.partials.flyout-item', ['route' => 'students.index', 'label' => 'Quản lý học sinh'])
-                    {{-- @include('frontend.layout.partials.flyout-item', ['route' => 'classes.index', 'label' => 'Danh sách lớp']) --}}
-                    @include('frontend.layout.partials.flyout-item', ['route' => 'attendance.show', 'label' => 'Điểm danh'])
-                    @include('frontend.layout.partials.flyout-item', ['route' => 'session.index', 'label' => 'Phiên điểm danh'])
-                    @include('frontend.layout.partials.flyout-item', ['route' => 'scores.index', 'label' => 'Kết quả học tập'])
                 </div>
             </div>
 

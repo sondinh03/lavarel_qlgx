@@ -43,6 +43,9 @@ class ScoreStatistics extends BaseComponent
     /** @var string Phạm vi thống kê: 'class' | 'grade' | 'parish' */
     public $scope = 'class';
 
+    /** @var string Chế độ xem: 'semester' | 'year' */
+    public $viewMode = 'semester';
+
     // ==================== DATA ====================
 
     public $availableNamHocs;
@@ -75,6 +78,7 @@ class ScoreStatistics extends BaseComponent
             'selectedLop'      => ['as' => 'lop',      'except' => null],
             'selectedSemester' => ['as' => 'semester', 'except' => 1],
             'scope'            => ['as' => 'scope',    'except' => 'class'],
+            'viewMode'         => ['as' => 'view',     'except' => 'semester'],
         ], parent::queryString());
     }
 
@@ -134,6 +138,10 @@ class ScoreStatistics extends BaseComponent
 
         if (!in_array($this->scope, ['class', 'grade', 'parish'])) {
             $this->scope = 'parish';
+        }
+
+        if (!in_array($this->viewMode, ['semester', 'year'])) {
+            $this->viewMode = 'semester';
         }
     }
 
@@ -230,9 +238,12 @@ class ScoreStatistics extends BaseComponent
             return [];
         }
 
+        // Determine which semesters to include
+        $semesters = $this->viewMode === 'year' ? [1, 2] : [$this->selectedSemester];
+
         // Load score types cho các lớp này
         $scoreTypes = ScoreType::whereIn('class_id', $classIds)
-            ->where('semester', $this->selectedSemester)
+            ->whereIn('semester', $semesters)
             ->where('is_active', true)
             ->get()
             ->groupBy('class_id');
@@ -242,7 +253,7 @@ class ScoreStatistics extends BaseComponent
             ->join('students_class', 'student_scores.student_class_id', '=', 'students_class.id')
             ->whereIn('students_class.class_id', $classIds)
             ->whereIn('student_scores.score_type_id', ScoreType::whereIn('class_id', $classIds)
-                ->where('semester', $this->selectedSemester)
+                ->whereIn('semester', $semesters)
                 ->where('is_active', true)
                 ->pluck('id'))
             ->select(
@@ -286,8 +297,8 @@ class ScoreStatistics extends BaseComponent
                     $scoreRow = $scScores->firstWhere('score_type_id', $st->id);
 
                     if (!$scoreRow) {
-                        // Thiếu điểm cuối/giữa kỳ → chưa tính được
-                        if (in_array($st->type, [4, 5])) {
+                        // Thiếu điểm cuối/giữa kỳ → chưa tính được (chỉ kiểm tra nếu xem theo kỳ)
+                        if ($this->viewMode === 'semester' && in_array($st->type, [4, 5])) {
                             $hasRequired = false;
                             break;
                         }
@@ -427,6 +438,8 @@ class ScoreStatistics extends BaseComponent
             return;
         }
 
+        $semesters = $this->viewMode === 'year' ? [1, 2] : [$this->selectedSemester];
+
         $classes = CatechismClass::whereIn('id', $classIds)
             ->orderBy('name')
             ->get(['id', 'name']);
@@ -435,7 +448,7 @@ class ScoreStatistics extends BaseComponent
 
         foreach ($classes as $class) {
             $scoreTypeIds = ScoreType::where('class_id', $class->id)
-                ->where('semester', $this->selectedSemester)
+                ->whereIn('semester', $semesters)
                 ->where('is_active', true)
                 ->pluck('id');
 
@@ -531,6 +544,20 @@ class ScoreStatistics extends BaseComponent
             return;
         }
         $this->scope = $scope;
+        $this->reloadChartData();
+    }
+
+    public function setViewMode(string $mode): void
+    {
+        if (!in_array($mode, ['semester', 'year'])) {
+            return;
+        }
+        $this->viewMode = $mode;
+        $this->reloadChartData();
+    }
+
+    public function updatedViewMode(): void
+    {
         $this->reloadChartData();
     }
 
