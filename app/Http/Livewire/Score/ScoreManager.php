@@ -2,6 +2,7 @@
 
 namespace App\Http\Livewire\Score;
 
+use App\Exports\ScoreExport;
 use App\Http\Livewire\Base\BaseComponent;
 use App\Models\CatechismClass;
 use App\Models\GradeLevel;
@@ -22,6 +23,17 @@ use Illuminate\Database\Eloquent\ModelNotFoundException;
  */
 class ScoreManager extends BaseComponent
 {
+    // ==================== RATING LEVELS ====================
+
+    private const RATING_LEVELS = [
+        'XUAT_SAC'   => ['min' => 9.5, 'max' => 10,  'label' => 'Xuất sắc',   'color' => 'emerald'],
+        'GIOI'       => ['min' => 8.0, 'max' => 9.5,  'label' => 'Giỏi',       'color' => 'blue'],
+        'KHA'        => ['min' => 6.5, 'max' => 8.0,  'label' => 'Khá',        'color' => 'amber'],
+        'TRUNG_BINH' => ['min' => 5.0, 'max' => 6.5,  'label' => 'Trung bình', 'color' => 'yellow'],
+        'YEU'        => ['min' => 3.5, 'max' => 5.0,  'label' => 'Yếu',        'color' => 'orange'],
+        'KEM'        => ['min' => 0,   'max' => 3.5,  'label' => 'Kém',        'color' => 'red'],
+    ];
+
     // ==================== FILTERS ====================
 
     /** @var int|null Selected năm học ID */
@@ -36,10 +48,18 @@ class ScoreManager extends BaseComponent
     /** @var int Selected học kỳ (1 hoặc 2) */
     public $selectedSemester = 1;
 
+    /** @var string|null Selected rating filter */
+    public $filterByRating = null;
+
     // ==================== TABS ====================
 
     /** @var string Tab hiện tại: 'scores' | 'config' */
     public $activeTab = 'scores';
+
+    // ==================== STATISTICS ====================
+
+    /** @var array Thống kê học sinh theo xếp loại */
+    public $ratingStats = [];
 
     // ==================== SCORE TYPE CONFIG FORM ====================
 
@@ -155,6 +175,7 @@ class ScoreManager extends BaseComponent
             'selectedLop'      => ['as' => 'lop',      'except' => null],
             'selectedSemester' => ['as' => 'semester', 'except' => 1],
             'activeTab'        => ['as' => 'tab',      'except' => 'scores'],
+            'filterByRating'   => ['as' => 'rating',   'except' => null],
         ], parent::queryString());
     }
 
@@ -169,7 +190,6 @@ class ScoreManager extends BaseComponent
 
     public function mount(): void
     {
-
         $this->availableNamHocs = collect();
         $this->availableGrades  = collect();
         $this->availableLops    = collect();
@@ -223,8 +243,6 @@ class ScoreManager extends BaseComponent
     }
 
     // ==================== DATA LOADING ====================
-
-
 
     protected function loadNamHocs(): void
     {
@@ -359,6 +377,12 @@ class ScoreManager extends BaseComponent
         $this->loadScoreTypes();
     }
 
+    public function updatedFilterByRating(): void
+    {
+        $this->resetPage();
+        $this->recalculateRatingStats();
+    }
+
     public function confirmDiscard(string $action, $value): void
     {
         $this->draftScores = [];
@@ -445,7 +469,7 @@ class ScoreManager extends BaseComponent
                 foreach ($types as $scoreTypeId => $value) {
                     $hasOriginal = isset($this->scoresMatrix[$studentClassId][$scoreTypeId]);
                     if (($value === '' || $value === null) && !$hasOriginal) {
-                        continue; // ← skip ngay, không cần log
+                        continue;
                     }
 
                     $original = $hasOriginal
@@ -454,7 +478,7 @@ class ScoreManager extends BaseComponent
 
                     $draft = ($value === '' || $value === null) ? null : (float) $value;
 
-                    if ($draft === $original) continue; // không đổi → bỏ qua
+                    if ($draft === $original) continue;
 
                     if ($draft === null) {
                         StudentScore::where('student_class_id', $studentClassId)
@@ -856,6 +880,17 @@ class ScoreManager extends BaseComponent
             $this->loadScoresMatrix($pivotIds);
             $this->recalculateAllAverages($pivotIds);
 
+            // Apply rating filter
+            if ($this->filterByRating) {
+                $filtered = collect($students->items())->filter(function ($student) {
+                    $avg = $this->averages[$student->pivot_id] ?? null;
+                    if ($avg === null) return false;
+                    return $this->getStudentRating($avg) === $this->filterByRating;
+                })->values();
+
+                $students->setCollection($filtered);
+            }
+
             if ($this->sortField === 'avg') {
                 $sorted = collect($students->items())->sortBy(
                     fn($s) => $this->averages[$s->pivot_id] ?? -1,
@@ -863,9 +898,11 @@ class ScoreManager extends BaseComponent
                     $this->sortDirection === 'desc'
                 )->values();
 
-                // Ghi đè items trong paginator
                 $students->setCollection($sorted);
             }
+
+            // Tính stats từ averages đã load — KHÔNG gọi lại getStudentsPaginated()
+            $this->recalculateRatingStats();
 
             return $students;
         } catch (\Exception $e) {
@@ -1012,6 +1049,92 @@ class ScoreManager extends BaseComponent
         return $this->getStudentsPaginated();
     }
 
+    public function exportScores()
+    {
+        if (!$this->selectedLop) {
+            $this->emit('toast', 'warning', 'Vui lòng chọn lớp trước khi xuất file');
+            return;
+        }
+
+        $selectedNameClass = CatechismClass::findOrFail($this->selectedLop)->name;
+
+        return response()->streamDownload(function () {
+            echo \Maatwebsite\Excel\Facades\Excel::raw(
+                new ScoreExport($this->selectedLop, $this->selectedSemester, $this->filterByRating),
+                \Maatwebsite\Excel\Excel::XLSX
+            );
+        }, 'BangDiem_' . $selectedNameClass . '_HK' . $this->selectedSemester . '_' . now()->format('dmY_His') . '.xlsx');
+    }
+
+    // ==================== RATING & STATISTICS ====================
+
+    private function getStudentRating(?float $average): ?string
+    {
+        if ($average === null || $average < 0) {
+            return null;
+        }
+
+        foreach (self::RATING_LEVELS as $key => $rating) {
+            if ($average >= $rating['min'] && $average < $rating['max']) {
+                return $key;
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * Tính thống kê xếp loại từ $this->averages đã có sẵn.
+     * KHÔNG gọi getStudentsPaginated() để tránh vòng lặp vô tận.
+     */
+    private function recalculateRatingStats(): void
+    {
+        $this->ratingStats = [];
+
+        $totalStudents = 0;
+        $statsByRating = [];
+
+        foreach ($this->averages as $studentClassId => $avg) {
+            if ($avg !== null) {
+                $rating = $this->getStudentRating($avg);
+                if ($rating) {
+                    $statsByRating[$rating] = ($statsByRating[$rating] ?? 0) + 1;
+                    $totalStudents++;
+                }
+            }
+        }
+
+        foreach (self::RATING_LEVELS as $key => $ratingInfo) {
+            $count      = $statsByRating[$key] ?? 0;
+            $percentage = $totalStudents > 0
+                ? round(($count / $totalStudents) * 100, 1)
+                : 0;
+
+            $this->ratingStats[$key] = [
+                'label'      => $ratingInfo['label'],
+                'color'      => $ratingInfo['color'],
+                'range'      => "{$ratingInfo['min']} - {$ratingInfo['max']}",
+                'count'      => $count,
+                'percentage' => $percentage,
+            ];
+        }
+    }
+
+    public function getRatingStats()
+    {
+        return $this->ratingStats;
+    }
+
+    public function setFilterByRating(?string $rating): void
+    {
+        $this->filterByRating = $rating;
+    }
+
+    public function clearRatingFilter(): void
+    {
+        $this->filterByRating = null;
+    }
+
     // ==================== RENDER ====================
 
     public function render()
@@ -1021,8 +1144,8 @@ class ScoreManager extends BaseComponent
             : new \Illuminate\Pagination\LengthAwarePaginator([], 0, $this->perPage, 1);
 
         return view('livewire.score.score-manager', [
-            'students'       => $students,
-            'parishId'       => $this->parishId,
+            'students'  => $students,
+            'parishId'  => $this->parishId,
         ])
             ->extends('frontend.layout.main')
             ->section('content');

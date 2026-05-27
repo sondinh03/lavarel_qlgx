@@ -1,51 +1,26 @@
 @section('topbar')
 <x-breadcrumb :items="[
     ['label' => 'Trang chủ', 'url' => route('dashboard')],
-    ['label' => 'Gia đình'],
+    ['label' => 'Gia đình']
 ]" />
 @endsection
 
-<div
-    class="min-h-screen bg-slate-50 p-2 sm:p-4 lg:p-6"
-    style="min-height: calc(100vh - 56px - var(--bottom-offset));"
-    x-data="{ showModal: false }"
-    x-init="
-        document.addEventListener('livewire:load', () => {
-            Livewire.on('openModal', () => { showModal = true; });
-            Livewire.on('closeModal', () => { showModal = false; });
-        });
-    ">
-
+<div class="min-h-screen bg-slate-50 p-2 sm:p-4 lg:p-6" style="min-height: calc(100vh - 56px - var(--bottom-offset));">
     <a href="#main-content" class="sr-only focus:not-sr-only">Bỏ qua tới nội dung</a>
 
-    <div id="main-content" class="mx-auto max-w-7xl space-y-5">
+    <div class="mx-auto max-w-7xl space-y-6">
 
-        {{-- ══ HEADER CARD ══ --}}
-        <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+        {{-- Main Card --}}
+        <div class="bg-white rounded-2xl shadow-sm border border-slate-200">
             <x-page-header
                 title="Danh sách gia đình"
-                :stat-value="$families->total()"
-                stat-label="gia đình">
+                :count="$families->total()">
             </x-page-header>
 
-            {{-- Stats bar --}}
-            <div class="px-6 py-2.5 border-b border-slate-100 bg-slate-50/60 flex items-center gap-6 flex-wrap text-sm">
-                <span class="text-slate-500">
-                    Tổng: <strong class="text-slate-800">{{ $stats['total'] }}</strong>
-                </span>
-                <span class="text-emerald-600">
-                    Hoạt động: <strong>{{ $stats['active'] }}</strong>
-                </span>
-                <span class="text-slate-400">
-                    Không hoạt động: <strong>{{ $stats['inactive'] }}</strong>
-                </span>
-            </div>
+            <div class="p-4 lg:p-6 border-b border-slate-200 bg-slate-50/70">
+                <div class="flex flex-col gap-4">
 
-            {{-- Actions Bar --}}
-            <div class="px-4 py-3 border-b border-slate-200 bg-slate-50/70">
-                <div class="flex flex-col gap-3">
-
-                    {{-- Row 1: filters --}}
+                    {{-- Filters row --}}
                     <div class="flex items-end gap-3 flex-wrap">
                         <div class="flex-1 min-w-[160px]">
                             <label class="block text-xs font-semibold text-slate-500 mb-1 uppercase tracking-wide">Giáo họ</label>
@@ -78,8 +53,8 @@
                         </div>
                     </div>
 
-                    {{-- Row 2: search + actions --}}
-                    <div class="flex items-center justify-between gap-3">
+                    {{-- Search + actions --}}
+                    <div class="flex items-center justify-between gap-3 flex-wrap">
                         <x-search-input
                             wireModel="search"
                             placeholder="Tìm theo tên gia đình, chủ hộ..."
@@ -93,11 +68,24 @@
 
                 </div>
             </div>
+
+            {{-- Stats bar --}}
+            <div class="px-4 lg:px-6 py-3 border-b border-slate-100 bg-slate-50/60 flex items-center gap-6 flex-wrap text-sm">
+                <span class="text-slate-500">
+                    Tổng: <strong class="text-slate-800">{{ $stats['total'] }}</strong>
+                </span>
+                <span class="text-emerald-600">
+                    Hoạt động: <strong>{{ $stats['active'] }}</strong>
+                </span>
+                <span class="text-slate-400">
+                    Không hoạt động: <strong>{{ $stats['inactive'] }}</strong>
+                </span>
+            </div>
         </div>
 
-        {{-- ══ TABLE CARD ══ --}}
+        {{-- Table Card --}}
         <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
-
+            @if($families && $families->count() > 0)
             <div class="overflow-x-auto">
                 <table class="w-full border-separate border-spacing-0">
                     <thead class="bg-slate-50 border-b border-slate-200">
@@ -135,7 +123,7 @@
                     </thead>
 
                     <tbody class="divide-y divide-slate-100">
-                        @forelse($families as $index => $family)
+                        @foreach($families as $index => $family)
                         <tr class="hover:bg-slate-50 transition-colors" wire:key="family-{{ $family->id }}">
 
                             <td class="px-4 py-3">
@@ -196,7 +184,6 @@
 
                             <td class="px-4 py-3">
                                 <div class="flex items-center justify-center gap-1">
-
                                     <x-tooltip content="Xem chi tiết">
                                         <a href="{{ route('families.show', $family->id) }}"
                                             class="p-2 hover:bg-slate-100 text-slate-600 rounded-lg transition-all">
@@ -205,40 +192,29 @@
                                     </x-tooltip>
 
                                     <x-tooltip content="Chỉnh sửa nhanh">
-                                        <x-table-action
-                                            wire="edit({{ $family->id }})"
-                                            icon="edit"
-                                            :icon-only="true" />
+                                        <button wire:click="edit({{ $family->id }})"
+                                            class="p-2 hover:bg-primary-50 text-primary-600 rounded-lg transition-all">
+                                            <x-icon name="edit" />
+                                        </button>
                                     </x-tooltip>
 
-                                    <x-tooltip content="{{ $family->members_count > 0 ? 'Không thể xóa gia đình còn thành viên' : 'Xóa gia đình' }}">
-                                        <x-table-action
-                                            wire="delete({{ $family->id }})"
+                                    <x-dropdown icon="more-vertical" align="right" variant="subtle" position="fixed">
+                                        <x-dropdown-item
+                                            x-on:click="$dispatch('open-confirm', {
+                                                message: 'Xóa gia đình {{ $family->name }}?',
+                                                description: 'Chỉ có thể xóa gia đình không có thành viên.',
+                                                wireMethod: 'delete({{ $family->id }})'
+                                            })"
                                             icon="trash"
-                                            color="danger"
-                                            :confirm="$family->members_count === 0 ? 'Xóa gia đình ' . $family->name . '?' : null"
-                                            :loading="true"
                                             :disabled="$family->members_count > 0"
-                                            :icon-only="true" />
-                                    </x-tooltip>
-
+                                            class="{{ $family->members_count > 0 ? 'opacity-50 cursor-not-allowed' : 'text-red-600 hover:bg-red-50' }}">
+                                            Xóa gia đình
+                                        </x-dropdown-item>
+                                    </x-dropdown>
                                 </div>
                             </td>
                         </tr>
-                        @empty
-                        <tr>
-                            <td colspan="8" class="px-6 py-12">
-                                <x-empty-state
-                                    icon="home"
-                                    title="Chưa có gia đình nào"
-                                    description="Hãy thêm gia đình đầu tiên cho giáo xứ">
-                                    <x-action-button wire="create" icon="plus">
-                                        Thêm gia đình
-                                    </x-action-button>
-                                </x-empty-state>
-                            </td>
-                        </tr>
-                        @endforelse
+                        @endforeach
                     </tbody>
                 </table>
             </div>
@@ -271,109 +247,71 @@
 
             {{-- Pagination --}}
             @if($families->hasPages())
-            <div class="border-t border-slate-200">
+            <div class="p-6 border-t border-slate-200">
                 <x-pagination :paginator="$families" :per-page-options="[10, 15, 25, 50, 100]" />
             </div>
             @endif
 
-        </div>
-    </div>
-
-    {{-- ══ MODAL: Thêm / Chỉnh sửa nhanh ══ --}}
-    <div
-        x-show="showModal"
-        x-transition:enter="transition ease-out duration-200"
-        x-transition:enter-start="opacity-0"
-        x-transition:enter-end="opacity-100"
-        x-transition:leave="transition ease-in duration-150"
-        x-transition:leave-start="opacity-100"
-        x-transition:leave-end="opacity-0"
-        class="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50 p-4"
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="family-modal-title"
-        @click="showModal = false; $wire.closeModal()"
-        @keydown.escape.window="showModal = false; $wire.closeModal()"
-        @keydown.enter.window="if(showModal) $wire.save()">
-
-        <div
-            x-show="showModal"
-            x-transition:enter="transition ease-out duration-200"
-            x-transition:enter-start="opacity-0 translate-y-4 scale-95"
-            x-transition:enter-end="opacity-100 translate-y-0 scale-100"
-            x-transition:leave="transition ease-in duration-150"
-            x-transition:leave-start="opacity-100 translate-y-0 scale-100"
-            x-transition:leave-end="opacity-0 translate-y-4 scale-95"
-            class="bg-white rounded-2xl shadow-xl w-full max-w-md overflow-hidden flex flex-col"
-            @click.stop>
-
-            {{-- Header --}}
-            <div class="flex-shrink-0 p-6 border-b border-slate-200 bg-gradient-to-br from-primary-50 to-white">
-                <div class="flex items-start justify-between gap-4">
-                    <div>
-                        <h2 id="family-modal-title" class="text-xl font-bold text-slate-900">
-                            {{ $editingId ? 'Cập nhật gia đình' : 'Thêm gia đình mới' }}
-                        </h2>
-                        <p class="text-sm text-slate-500 mt-1">
-                            {{ $editingId ? 'Chỉnh sửa tên gia đình' : 'Nhập tên gia đình để bắt đầu' }}
-                        </p>
-                    </div>
-                    <button
-                        @click="showModal = false; $wire.closeModal()"
-                        class="p-1 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-                        </svg>
-                    </button>
-                </div>
-            </div>
-
-            {{-- Body --}}
-            <div class="p-6 space-y-4">
-
-                @if($errors->has('modalName'))
-                <div class="bg-red-50 border-l-4 border-red-500 rounded-xl p-4">
-                    <div class="flex items-start gap-3">
-                        <svg class="w-5 h-5 text-red-500 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                        </svg>
-                        <p class="text-sm text-red-700">{{ $errors->first('modalName') }}</p>
-                    </div>
-                </div>
-                @endif
-
-                <x-form-input
-                    label="Tên gia đình"
-                    name="modalName"
-                    wire:model.defer="modalName"
-                    placeholder="VD: Gia đình ông Nguyễn Văn A..."
-                    required />
-
-                <p class="text-xs text-slate-400">
-                    Để chỉnh sửa đầy đủ thông tin (giáo họ, chủ hộ, ghi chú...) hãy dùng
-                    <a href="{{ $editingId ? route('families.edit', $editingId) : '#' }}"
-                        class="text-primary-600 font-medium hover:underline">
-                        trang chỉnh sửa chi tiết
-                    </a>.
-                </p>
-            </div>
-
-            {{-- Footer --}}
-            <div class="px-6 py-4 border-t border-slate-200 bg-slate-50 flex justify-end gap-3">
-                <x-action-button
-                    @click="showModal = false; $wire.closeModal()"
-                    variant="secondary">
-                    Hủy
+            @else
+            <x-empty-state
+                icon="home"
+                title="Chưa có gia đình nào"
+                description="Hãy thêm gia đình đầu tiên cho giáo xứ">
+                <x-action-button as="a" href="{{ route('families.create') }}" icon="plus">
+                    Thêm gia đình
                 </x-action-button>
-                <x-action-button wire:click="save" icon="save" :loading="true">
-                    {{ $editingId ? 'Cập nhật' : 'Thêm mới' }}
-                </x-action-button>
-            </div>
+            </x-empty-state>
+            @endif
 
         </div>
-    </div>
 
+        {{-- Modal: Chỉnh sửa nhanh --}}
+        @if($editingId)
+        <div class="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50 p-4"
+            role="dialog" aria-modal="true" wire:click="closeModal">
+            <div class="bg-white rounded-2xl shadow-xl w-full max-w-md overflow-hidden flex flex-col"
+                wire:click.stop>
+
+                <div class="flex-shrink-0 p-6 border-b border-slate-200 bg-gradient-to-br from-primary-50 to-white">
+                    <div class="flex items-start justify-between gap-4">
+                        <div>
+                            <h2 class="text-xl font-bold text-slate-900">Cập nhật gia đình</h2>
+                            <p class="text-sm text-slate-500 mt-1">Chỉnh sửa tên gia đình</p>
+                        </div>
+                        <button wire:click="closeModal" type="button"
+                            class="p-1 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors">
+                            <x-icon name="x" class="w-5 h-5" />
+                        </button>
+                    </div>
+                </div>
+
+                <div class="p-6 space-y-4">
+                    @if($errors->has('modalName'))
+                    <div class="bg-red-50 border-l-4 border-red-500 rounded-xl p-4">
+                        <div class="flex items-start gap-3">
+                            <x-icon name="alert-circle" class="w-5 h-5 text-red-500 flex-shrink-0 mt-0.5" />
+                            <p class="text-sm text-red-700">{{ $errors->first('modalName') }}</p>
+                        </div>
+                    </div>
+                    @endif
+
+                    <x-form-input
+                        label="Tên gia đình"
+                        name="modalName"
+                        wire:model.defer="modalName"
+                        placeholder="VD: Gia đình ông Nguyễn Văn A..."
+                        required />
+                </div>
+
+                <div class="px-6 py-4 border-t border-slate-200 bg-slate-50 flex justify-end gap-3">
+                    <x-action-button wire:click="closeModal" variant="secondary">Hủy</x-action-button>
+                    <x-action-button wire:click="save" icon="save" :loading="true">Cập nhật</x-action-button>
+                </div>
+            </div>
+        </div>
+        @endif
+
+    </div>
 </div>
 
 @push('page-title')

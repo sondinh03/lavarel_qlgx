@@ -143,36 +143,26 @@ class FamilyEdit extends BaseComponent
 
     protected function loadParishionerOptions(): void
     {
-        $query = Parishioner::ofParish($this->parishId);
+        $allowedIds = $this->isEdit && $this->familyId
+            ? Parishioner::where('family_id', $this->familyId)->pluck('id')
+            : collect();
 
-        if ($this->isEdit) {
+        $query = Parishioner::ofParish($this->parishId)
+            ->with('saint')
+            ->orderBy('last_name')
+            ->orderBy('first_name');
 
-            $family = Family::find($this->familyId);
-
-            $allowedIds = Parishioner::where('family_id', $family?->id)
-                ->pluck('id');
-
+        if ($allowedIds->isNotEmpty()) {
             $query->where(function ($q) use ($allowedIds) {
-                $q->whereNull('family_id')
-                    ->orWhereIn('id', $allowedIds);
+                $q->whereNull('family_id')->orWhereIn('id', $allowedIds);
             });
         } else {
-
             $query->whereNull('family_id');
         }
 
-        $this->parishionerOptions = $query
-            ->with('saint')
-            ->orderBy('last_name')
-            ->orderBy('first_name')
-            ->get([
-                'id',
-                'last_name',
-                'first_name',
-                'gender',
-                'birthday',
-                'saint_id',
-            ])
+        $this->parishionerOptions = $query->get([
+            'id', 'last_name', 'first_name', 'gender', 'birthday', 'saint_id',
+        ])
             ->map(fn($p) => [
                 'id'       => $p->id,
                 'name'     => $p->full_name_with_saint,
@@ -338,28 +328,12 @@ class FamilyEdit extends BaseComponent
             // ===== CHILDREN =====
 
             foreach ($children as $child) {
-
-                $child->update([
+                $childData = [
                     'family_id' => $family->id,
-
-                    // cha
-                    'father_id' => $head->gender === 'male'
-                        ? $head->id
-                        : (
-                            $mother?->gender === 'male'
-                            ? $mother->id
-                            : null
-                        ),
-
-                    // mẹ
-                    'mother_id' => $head->gender === 'female'
-                        ? $head->id
-                        : (
-                            $mother?->gender === 'female'
-                            ? $mother->id
-                            : null
-                        ),
-                ]);
+                    'father_id' => $head->gender === 'male' ? $head->id : ($mother?->gender === 'male' ? $mother->id : null),
+                    'mother_id' => $head->gender === 'female' ? $head->id : ($mother?->gender === 'female' ? $mother->id : null),
+                ];
+                $child->update($childData);
             }
 
             // ===== MEMBER COUNT =====

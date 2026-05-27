@@ -30,6 +30,7 @@
   'parishioners.parishioners-manager' => 'App\\Http\\Livewire\\Parishioners\\ParishionersManager',
   'parishioners.sacraments-manager' => 'App\\Http\\Livewire\\Parishioners\\SacramentsManager',
   'score.score-manager' => 'App\\Http\\Livewire\\Score\\ScoreManager',
+  'score.score-statistics' => 'App\\Http\\Livewire\\Score\\ScoreStatistics',
   'student.print-cards' => 'App\\Http\\Livewire\\Student\\PrintCards',
   'student.student-detail' => 'App\\Http\\Livewire\\Student\\StudentDetail',
   'student.student-edit' => 'App\\Http\\Livewire\\Student\\StudentEdit',

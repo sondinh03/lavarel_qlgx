@@ -408,17 +408,19 @@ class FamilyDetail extends BaseComponent
     // ==================== QUERY HELPERS ====================
     protected function getAvailableParishionersQuery()
     {
+        $query = Parishioner::whereNull('family_id')
+            ->ofParish($this->parishId);
 
-        return Parishioner::whereNull('family_id')
-            ->when(trim($this->memberSearch), function ($q, $search) {
-                $q->where(function ($q2) use ($search) {
-                    $q2->where('first_name', 'like', "%{$search}%")
-                        ->orWhere('last_name', 'like', "%{$search}%")
-                        ->orWhereRaw("CONCAT(last_name, ' ', first_name) LIKE ?", ["%{$search}%"]);
-                });
-            })
-            ->orderBy('first_name')
-            ->orderBy('last_name');
+        if (trim($this->memberSearch)) {
+            $search = trim($this->memberSearch);
+            $query->where(function ($q) use ($search) {
+                $q->where('first_name', 'like', "%{$search}%")
+                    ->orWhere('last_name', 'like', "%{$search}%")
+                    ->orWhereRaw("CONCAT(last_name, ' ', first_name) LIKE ?", ["%{$search}%"]);
+            });
+        }
+
+        return $query->orderBy('last_name')->orderBy('first_name');
     }
 
     protected function getAvailableParishionersPaginated(): LengthAwarePaginator

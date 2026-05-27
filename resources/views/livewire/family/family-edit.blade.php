@@ -6,22 +6,11 @@
 ]" />
 @endsection
 
-<div
-    class="min-h-screen bg-slate-50 p-2 sm:p-4 lg:p-6"
-    style="min-height: calc(100vh - 56px - var(--bottom-offset));">
+<div class="min-h-screen bg-slate-50 p-2 sm:p-4 lg:p-6" style="min-height: calc(100vh - 56px - var(--bottom-offset));">
 
-    <div class="max-w-5xl mx-auto space-y-6">
+    <div class="max-w-4xl mx-auto space-y-6">
 
-        {{-- Loading --}}
-        @if($isLoading)
-        <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-10">
-            <div class="flex items-center justify-center">
-                <div class="w-8 h-8 border-4 border-primary-200 border-t-primary-500 rounded-full animate-spin"></div>
-            </div>
-        </div>
-        @else
-
-        {{-- HEADER --}}
+        {{-- Header Card --}}
         <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
             <div class="p-6 bg-gradient-to-br from-primary-50 to-white">
                 <div class="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
@@ -34,7 +23,7 @@
                         </p>
                     </div>
 
-                    @if($isEdit)
+                    @if($isEdit && !$isLoading)
                     <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold w-fit
                         {{ $status ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-600' }}">
                         {{ $status ? 'Hoạt động' : 'Không hoạt động' }}
@@ -44,14 +33,20 @@
             </div>
         </div>
 
+        @if($isLoading)
+        {{-- Loading state --}}
+        <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-12">
+            <div class="flex items-center justify-center">
+                <div class="w-8 h-8 border-4 border-primary-200 border-t-primary-500 rounded-full animate-spin"></div>
+            </div>
+        </div>
+        @else
+
         {{-- Error summary --}}
         @if($errors->any())
         <div class="bg-red-50 border border-red-200 rounded-2xl p-5">
             <div class="flex items-start gap-3">
-                <svg class="w-5 h-5 text-red-500 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                        d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
+                <x-icon name="alert-circle" class="w-5 h-5 text-red-500 flex-shrink-0 mt-0.5" />
                 <div>
                     <p class="text-sm font-semibold text-red-800 mb-1">Vui lòng kiểm tra lại thông tin</p>
                     <ul class="text-sm text-red-700 space-y-0.5">
@@ -64,10 +59,10 @@
         </div>
         @endif
 
-        {{-- FORM --}}
+        {{-- Form --}}
         <div class="space-y-6">
 
-            {{-- THÔNG TIN CƠ BẢN --}}
+            {{-- Thông tin cơ bản --}}
             <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
                 <div class="px-6 py-4 border-b border-slate-200 bg-slate-50">
                     <h2 class="text-base font-semibold text-slate-900">Thông tin cơ bản</h2>
@@ -76,7 +71,6 @@
                 <div class="p-6 space-y-5">
                     <div class="grid grid-cols-1 lg:grid-cols-2 gap-5">
 
-                        {{-- Tên gia đình --}}
                         <div class="lg:col-span-2">
                             <x-form-input
                                 label="Tên gia đình"
@@ -86,11 +80,8 @@
                                 required />
                         </div>
 
-                        {{-- Giáo họ --}}
                         <div>
-                            <label class="block text-sm font-semibold text-slate-700 mb-2">
-                                Giáo họ
-                            </label>
+                            <label class="block text-sm font-semibold text-slate-700 mb-2">Giáo họ</label>
                             <select
                                 wire:model.defer="parishGroupId"
                                 class="w-full px-3 py-2 rounded-xl border border-slate-300 bg-white text-sm
@@ -106,11 +97,8 @@
                             @enderror
                         </div>
 
-                        {{-- Trạng thái --}}
                         <div>
-                            <label class="block text-sm font-semibold text-slate-700 mb-2">
-                                Trạng thái
-                            </label>
+                            <label class="block text-sm font-semibold text-slate-700 mb-2">Trạng thái</label>
                             <label class="flex items-center gap-3 px-4 py-3 rounded-xl border border-slate-200
                                           cursor-pointer hover:bg-slate-50 transition-all">
                                 <input
@@ -128,24 +116,20 @@
                 </div>
             </div>
 
-            {{-- CHỦ HỘ --}}
+            {{-- Thành viên gia đình --}}
             <div class="bg-white rounded-2xl shadow-sm border border-slate-200">
 
                 <div class="px-6 py-4 border-b border-slate-200 bg-slate-50">
-                    <h2 class="text-base font-semibold text-slate-900">
-                        Thành viên gia đình
-                    </h2>
+                    <h2 class="text-base font-semibold text-slate-900">Thành viên gia đình</h2>
                 </div>
 
-                <div class="p-6">
+                <div class="p-6 space-y-6">
 
                     <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
 
-                        {{-- CHA --}}
+                        {{-- Người cha --}}
                         <div class="space-y-2 relative z-20">
-                            <label class="block text-sm font-semibold text-slate-700">
-                                Người cha
-                            </label>
+                            <label class="block text-sm font-semibold text-slate-700">Người cha</label>
 
                             <x-searchable-select
                                 wireModel="fatherId"
@@ -160,11 +144,9 @@
                             @enderror
                         </div>
 
-                        {{-- MẸ --}}
+                        {{-- Người mẹ --}}
                         <div class="space-y-2 relative z-20">
-                            <label class="block text-sm font-semibold text-slate-700">
-                                Người mẹ
-                            </label>
+                            <label class="block text-sm font-semibold text-slate-700">Người mẹ</label>
 
                             <x-searchable-select
                                 wireModel="motherId"
@@ -181,16 +163,13 @@
 
                     </div>
 
-                    {{-- CON CÁI --}}
-                    <div class="mt-6 relative z-10">
+                    {{-- Con cái --}}
+                    <div class="relative z-10 space-y-3">
 
-                        <label class="block text-sm font-semibold text-slate-700 mb-2">
-                            Con cái
-                        </label>
+                        <label class="block text-sm font-semibold text-slate-700">Con cái</label>
 
-                        {{-- Select --}}
+                        {{-- Select + Button --}}
                         <div class="flex gap-2">
-
                             <div class="flex-1">
                                 <x-searchable-select
                                     wireModel="selectedChildId"
@@ -200,50 +179,39 @@
                                     valueKey="id"
                                     :value="$selectedChildId" />
                             </div>
-
                             <button
                                 type="button"
                                 wire:click="addChild"
-                                class="px-4 py-2 rounded-xl bg-primary-500 text-white text-sm font-medium hover:bg-primary-600">
-                                Thêm
+                                class="px-4 py-2 rounded-xl bg-primary-500 text-white text-sm font-medium
+                                       hover:bg-primary-600 active:scale-95 transition-all flex-shrink-0">
+                                <x-icon name="plus" class="w-4 h-4" />
                             </button>
-
                         </div>
 
                         @error('childrenIds')
-                        <p class="mt-1 text-xs text-red-500">{{ $message }}</p>
+                        <p class="text-xs text-red-500">{{ $message }}</p>
                         @enderror
 
                         {{-- Danh sách con --}}
-                        @if(count($childrenIds))
-                        <div class="mt-4 flex flex-wrap gap-2">
-
+                        @if(count($childrenIds) > 0)
+                        <div class="flex flex-wrap gap-2 mt-3 pt-3 border-t border-slate-200">
                             @foreach($childrenIds as $childId)
-
                             @php
-                            $child = collect($parishionerOptions)
-                            ->firstWhere('id', $childId);
+                            $child = collect($parishionerOptions)->firstWhere('id', $childId);
                             @endphp
 
                             @if($child)
                             <div class="inline-flex items-center gap-2 px-3 py-2 rounded-xl bg-primary-50 border border-primary-100">
-
-                                <span class="text-sm text-slate-700">
-                                    {{ $child['name'] }}
-                                </span>
-
+                                <span class="text-sm text-slate-700">{{ $child['name'] }}</span>
                                 <button
                                     type="button"
                                     wire:click="removeChild({{ $childId }})"
-                                    class="text-slate-400 hover:text-red-500">
-                                    ✕
+                                    class="text-slate-400 hover:text-red-500 transition">
+                                    <x-icon name="x" class="w-4 h-4" />
                                 </button>
-
                             </div>
                             @endif
-
                             @endforeach
-
                         </div>
                         @endif
 
@@ -252,7 +220,7 @@
                 </div>
             </div>
 
-            {{-- GHI CHÚ --}}
+            {{-- Ghi chú --}}
             <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
                 <div class="px-6 py-4 border-b border-slate-200 bg-slate-50">
                     <h2 class="text-base font-semibold text-slate-900">Ghi chú</h2>
@@ -263,7 +231,7 @@
                         wire:model.defer="note"
                         rows="5"
                         placeholder="Thông tin thêm về gia đình..."
-                        class="w-full px-4 py-3 rounded-2xl border border-slate-300 text-sm resize-none
+                        class="w-full px-4 py-3 rounded-xl border border-slate-300 text-sm resize-none
                                focus:outline-none focus:ring-2 focus:ring-primary-500
                                @error('note') border-red-400 @enderror"></textarea>
                     @error('note')
@@ -274,7 +242,7 @@
 
         </div>
 
-        {{-- STICKY ACTION BAR --}}
+        {{-- Sticky action bar --}}
         <div class="sticky bottom-[calc(var(--bottom-offset)+12px)] z-30">
             <div class="bg-white/90 backdrop-blur rounded-2xl border border-slate-200 shadow-lg p-4">
                 <div class="flex flex-col-reverse sm:flex-row items-stretch sm:items-center justify-end gap-3">

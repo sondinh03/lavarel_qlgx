@@ -10,7 +10,8 @@
     <a href="#main-content" class="sr-only focus:not-sr-only">Bỏ qua tới nội dung</a>
 
     <div id="main-content" class="mx-auto max-w-7xl space-y-5">
-        {{-- Header Card --}}
+
+        {{-- ===================== HEADER CARD ===================== --}}
         <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
             <x-page-header
                 title="Quản lý điểm"
@@ -41,7 +42,7 @@
             </div>
 
             {{-- Tabs + Actions --}}
-            <div class="px-6 py-3 border-b border-slate-200 flex items-center justify-between gap-4">
+            <div class="px-6 py-3 border-b border-slate-200 flex items-center justify-between gap-4 flex-wrap">
                 {{-- Tabs --}}
                 <div class="flex gap-1 bg-slate-100 p-1 rounded-xl">
                     <button
@@ -63,24 +64,30 @@
                 </div>
 
                 {{-- Actions --}}
-                <div class="flex items-center gap-2">
+                <div class="flex items-center gap-2 flex-wrap">
                     @if($activeTab === 'scores')
-                    <x-button
-                        wire:click="saveAllScores"
-                        variant="primary">
+                    {{-- Nút đến trang thống kê --}}
+                    <a
+                        href="{{ route('scores.statistics', ['namHoc' => $selectedNamHoc, 'khoi' => $selectedKhoi, 'lop' => $selectedLop, 'semester' => $selectedSemester]) }}"
+                        class="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl border border-slate-300
+                               text-sm font-semibold text-slate-600 hover:bg-slate-50 hover:border-slate-400 transition-all">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                        </svg>
+                        Thống kê
+                    </a>
+                    <x-button wire:click="saveAllScores" variant="primary">
                         <x-icon name="save" />
                         Lưu tất cả
                     </x-button>
-                    <x-button
-                        wire:click="exportScores"
-                        variant="outline">
+                    <x-button wire:click="exportScores" variant="outline">
                         <x-icon name="file-export" />
                         Xuất Excel
                     </x-button>
                     @endif
                     @if($activeTab === 'config')
-                    <x-button
-                        wire:click="createScoreType" variant="primary">
+                    <x-button wire:click="createScoreType" variant="primary">
                         <x-icon name="plus" />
                         Thêm loại điểm
                     </x-button>
@@ -115,11 +122,11 @@
         </div>
 
         @else
+
+        {{-- Confirm discard draft --}}
         <div
             x-data="{ show: false, action: '', value: '' }"
             x-on:confirm-discard-draft.window="show = true; action = $event.detail.action; value = $event.detail.value">
-
-            {{-- Overlay confirm --}}
             <div x-show="show" x-cloak
                 class="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4">
                 <div class="bg-white rounded-2xl shadow-xl w-full max-w-sm p-6 space-y-4">
@@ -128,16 +135,12 @@
                         Nếu tiếp tục, điểm đã nhập nhưng chưa lưu sẽ bị mất.
                     </p>
                     <div class="flex justify-end gap-3">
-                        <button
-                            @click="show = false"
-                            class="px-4 py-2 text-sm font-semibold text-slate-600
-                           hover:bg-slate-100 rounded-xl transition">
+                        <button @click="show = false"
+                            class="px-4 py-2 text-sm font-semibold text-slate-600 hover:bg-slate-100 rounded-xl transition">
                             Ở lại
                         </button>
-                        <button
-                            @click="show = false; $wire.confirmDiscard(action, value)"
-                            class="px-4 py-2 text-sm font-semibold text-white
-                           bg-red-500 hover:bg-red-600 rounded-xl transition">
+                        <button @click="show = false; $wire.confirmDiscard(action, value)"
+                            class="px-4 py-2 text-sm font-semibold text-white bg-red-500 hover:bg-red-600 rounded-xl transition">
                             Bỏ thay đổi
                         </button>
                     </div>
@@ -145,7 +148,9 @@
             </div>
         </div>
 
+        {{-- ===================== BẢNG ĐIỂM ===================== --}}
         <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+
             <div class="max-h-[70vh] overflow-y-auto">
                 <div class="overflow-x-auto">
                     <table class="w-full border-separate border-spacing-0 text-sm">
@@ -154,7 +159,8 @@
                                 <x-table-header>STT</x-table-header>
                                 <x-table-header>Tên thánh</x-table-header>
                                 <x-table-header>Họ & tên đệm</x-table-header>
-                                <x-table-header :sortable="true" sort-field="first_name"
+                                <x-table-header
+                                    :sortable="true" sort-field="first_name"
                                     :current-sort="$sortField" :sort-direction="$sortDirection">
                                     Tên
                                 </x-table-header>
@@ -174,13 +180,39 @@
                                     class="bg-primary-50 text-primary-700 font-bold">
                                     Điểm<br>trung bình
                                 </x-table-header>
+
+                                <x-table-header align="center" class="bg-primary-50 text-primary-700 font-bold">
+                                    Xếp loại
+                                </x-table-header>
                             </tr>
                         </thead>
 
                         <tbody class="divide-y divide-slate-100">
                             @forelse($students as $index => $sc)
-                            <tr class="hover:bg-slate-50/70 transition-colors"
-                                wire:key="sc-{{ $sc->pivot_id }}">
+                            @php
+                                $avg    = $this->getAverage($sc->pivot_id);
+                                $rating = null;
+                                $ratingLabel = null;
+                                $ratingColor = null;
+                                if ($avg !== null) {
+                                    if ($avg >= 9.5)      { $rating = 'XUAT_SAC';   $ratingLabel = 'Xuất sắc';   $ratingColor = 'emerald'; }
+                                    elseif ($avg >= 8.0)  { $rating = 'GIOI';       $ratingLabel = 'Giỏi';       $ratingColor = 'blue'; }
+                                    elseif ($avg >= 6.5)  { $rating = 'KHA';        $ratingLabel = 'Khá';        $ratingColor = 'amber'; }
+                                    elseif ($avg >= 5.0)  { $rating = 'TRUNG_BINH'; $ratingLabel = 'Trung bình'; $ratingColor = 'yellow'; }
+                                    elseif ($avg >= 3.5)  { $rating = 'YEU';        $ratingLabel = 'Yếu';        $ratingColor = 'orange'; }
+                                    else                  { $rating = 'KEM';        $ratingLabel = 'Kém';        $ratingColor = 'red'; }
+                                }
+                                $badgeClass = match($ratingColor) {
+                                    'emerald' => 'bg-emerald-100 text-emerald-700',
+                                    'blue'    => 'bg-blue-100 text-blue-700',
+                                    'amber'   => 'bg-amber-100 text-amber-700',
+                                    'yellow'  => 'bg-yellow-100 text-yellow-700',
+                                    'orange'  => 'bg-orange-100 text-orange-700',
+                                    'red'     => 'bg-red-100 text-red-700',
+                                    default   => 'bg-slate-100 text-slate-400',
+                                };
+                            @endphp
+                            <tr class="hover:bg-slate-50/70 transition-colors" wire:key="sc-{{ $sc->pivot_id }}">
 
                                 <td class="px-4 py-3 text-slate-400 sticky left-0 bg-white">
                                     {{ ($students->firstItem() ?? 0) + $index }}
@@ -210,34 +242,43 @@
                                         data-row="{{ $index }}"
                                         data-col="{{ $colIndex }}"
                                         class="score-input w-14 py-1.5 px-2 text-center rounded-lg text-sm font-semibold
-                                        border transition-all outline-none
-                                        placeholder:text-slate-300
-                                        focus:ring-2 focus:ring-primary-400 focus:border-primary-400
-                                        [appearance:textfield]
-                                        [&::-webkit-outer-spin-button]:appearance-none
-                                        [&::-webkit-inner-spin-button]:appearance-none
-                                        {{ isset($scoresMatrix[$sc->pivot_id][$type->id])
-                                            ? 'border-emerald-200 bg-emerald-50 text-emerald-700'
-                                            : 'border-slate-200 bg-white text-slate-500' }}" />
+                                               border transition-all outline-none placeholder:text-slate-300
+                                               focus:ring-2 focus:ring-primary-400 focus:border-primary-400
+                                               [appearance:textfield]
+                                               [&::-webkit-outer-spin-button]:appearance-none
+                                               [&::-webkit-inner-spin-button]:appearance-none
+                                               {{ isset($scoresMatrix[$sc->pivot_id][$type->id])
+                                                   ? 'border-emerald-200 bg-emerald-50 text-emerald-700'
+                                                   : 'border-slate-200 bg-white text-slate-500' }}" />
                                 </td>
                                 @endforeach
 
+                                {{-- Điểm TB --}}
                                 <td class="px-4 py-3 text-center bg-primary-50">
-                                    @php $avg = $this->getAverage($sc->pivot_id); @endphp
                                     @if($avg !== null)
                                     <span class="font-bold text-lg
-                                     {{ $avg >= 8 ? 'text-emerald-600'
-                                         : ($avg >= 5 ? 'text-primary-600' : 'text-red-500') }}">
+                                         {{ $avg >= 8 ? 'text-emerald-600' : ($avg >= 5 ? 'text-primary-600' : 'text-red-500') }}">
                                         {{ number_format($avg, 1) }}
                                     </span>
                                     @else
                                     <span class="text-slate-300 text-lg font-bold">—</span>
                                     @endif
                                 </td>
+
+                                {{-- Xếp loại --}}
+                                <td class="px-4 py-3 text-center bg-primary-50">
+                                    @if($ratingLabel)
+                                    <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold {{ $badgeClass }}">
+                                        {{ $ratingLabel }}
+                                    </span>
+                                    @else
+                                    <span class="text-slate-300 text-xs">—</span>
+                                    @endif
+                                </td>
                             </tr>
                             @empty
                             <tr>
-                                <td colspan="{{ 3 + $scoreTypes->count() }}"
+                                <td colspan="{{ 5 + $scoreTypes->count() }}"
                                     class="px-6 py-12 text-center text-slate-400">
                                     Chưa có học sinh trong lớp này
                                 </td>
@@ -248,17 +289,15 @@
                 </div>
             </div>
 
-            {{-- Footer: pagination + nút lưu --}}
+            {{-- Footer: pagination --}}
             <div class="px-6 py-4 border-t border-slate-200">
-                <div>
-                    @if($students->hasPages())
-                    <x-pagination :paginator="$students" :per-page-options="[10, 15, 25, 50, 100]" />
-                    @endif
-                </div>
+                @if($students->hasPages())
+                <x-pagination :paginator="$students" :per-page-options="[10, 15, 25, 50, 100]" />
+                @endif
             </div>
         </div>
 
-
+        {{-- Keyboard nav script --}}
         <script>
             document.addEventListener('keydown', function(e) {
                 if (!e.target.classList.contains('score-input')) return;
@@ -270,36 +309,25 @@
 
                 const row = parseInt(e.target.dataset.row);
                 const col = parseInt(e.target.dataset.col);
-
-                let nextRow = row;
-                let nextCol = col;
+                let nextRow = row, nextCol = col;
 
                 switch (key) {
                     case 'Enter':
-                    case 'ArrowDown':
-                        nextRow = row + 1;
-                        break;
-                    case 'ArrowUp':
-                        nextRow = row - 1;
-                        break;
-                    case 'Tab':
-                        e.shiftKey ? nextCol = col - 1 : nextCol = col + 1;
-                        break;
+                    case 'ArrowDown':  nextRow = row + 1; break;
+                    case 'ArrowUp':    nextRow = row - 1; break;
+                    case 'Tab': e.shiftKey ? nextCol = col - 1 : nextCol = col + 1; break;
                 }
 
                 const next = document.querySelector(
                     `.score-input[data-row="${nextRow}"][data-col="${nextCol}"]`
                 );
-
-                if (next) {
-                    next.focus();
-                    next.select(); // bôi đen giá trị sẵn để gõ đè luôn
-                }
+                if (next) { next.focus(); next.select(); }
             });
         </script>
 
-        @endif
-        @endif
+        @endif {{-- end scoreTypes check --}}
+        @endif {{-- end activeTab === scores --}}
+
 
         {{-- ===================== TAB: CẤU HÌNH ===================== --}}
         @if($activeTab === 'config')
@@ -308,7 +336,6 @@
             <p class="text-lg text-slate-500">Vui lòng chọn năm học để cấu hình loại điểm</p>
         </div>
         @else
-        {{-- Nếu chưa chọn lớp: hiện thông báo nhẹ nhàng, vẫn cho thêm --}}
         @if(!$selectedLop)
         <div class="bg-amber-50 border border-amber-200 rounded-2xl px-6 py-4 flex items-center gap-3">
             <svg class="w-5 h-5 text-amber-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -316,7 +343,7 @@
                     d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
             <p class="text-sm text-amber-700">
-                Chưa chọn lớp cụ thể — loại điểm sẽ được tạo cho <strong>theo khối</strong> hoặc <strong>toàn xứ</strong>.
+                Chưa chọn lớp cụ thể — loại điểm sẽ được tạo theo <strong>khối</strong> hoặc <strong>toàn xứ</strong>.
                 Chọn lớp ở trên nếu muốn cấu hình riêng từng lớp.
             </p>
         </div>
@@ -341,8 +368,7 @@
                     <tr class="hover:bg-slate-50 transition-colors" wire:key="st-{{ $st->id }}">
                         <td class="px-6 py-4 font-semibold text-slate-900">{{ $st->name }}</td>
                         <td class="px-6 py-4">
-                            <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold
-                                                 bg-indigo-100 text-indigo-700">
+                            <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-indigo-100 text-indigo-700">
                                 {{ $st->type_label }}
                             </span>
                         </td>
@@ -351,7 +377,7 @@
                         <td class="px-6 py-4 text-center text-slate-600">{{ $st->max_score }}</td>
                         <td class="px-6 py-4 text-center">
                             <span class="inline-flex items-center px-2.5 py-1 text-xs font-semibold rounded-full
-                                                 {{ $st->is_active ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-200 text-slate-500' }}">
+                                {{ $st->is_active ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-200 text-slate-500' }}">
                                 {{ $st->is_active ? 'Đang dùng' : 'Tắt' }}
                             </span>
                         </td>
@@ -384,6 +410,7 @@
         @endif
         @endif
 
+
         {{-- ===================== MODAL: CẤU HÌNH LOẠI ĐIỂM ===================== --}}
         @if($showScoreTypeForm)
         <div
@@ -401,16 +428,16 @@
                     <p class="text-sm text-slate-500 mt-0.5">
                         Học kỳ {{ $selectedSemester }}
                         @if($editingScoreTypeId)
-                        &middot; {{ $availableLops->firstWhere('id', $selectedLop)?->name ?? '' }}
+                            &middot; {{ $availableLops->firstWhere('id', $selectedLop)?->name ?? '' }}
                         @else
-                        &middot;
-                        @if($createScope === 'class' && $selectedLop)
-                        Lớp: {{ $availableLops->firstWhere('id', $selectedLop)?->name ?? '' }}
-                        @elseif($createScope === 'grade')
-                        Khối: {{ $availableGrades->firstWhere('id', $createScopeGradeId)?->name ?? '(chưa chọn)' }}
-                        @else
-                        Toàn giáo xứ
-                        @endif
+                            &middot;
+                            @if($createScope === 'class' && $selectedLop)
+                                Lớp: {{ $availableLops->firstWhere('id', $selectedLop)?->name ?? '' }}
+                            @elseif($createScope === 'grade')
+                                Khối: {{ $availableGrades->firstWhere('id', $createScopeGradeId)?->name ?? '(chưa chọn)' }}
+                            @else
+                                Toàn giáo xứ
+                            @endif
                         @endif
                     </p>
                 </div>
@@ -422,12 +449,9 @@
                     </div>
                     @endif
 
-                    {{-- Phạm vi áp dụng — chỉ hiện khi TẠO MỚI --}}
                     @if(!$editingScoreTypeId)
                     <div>
-                        <label class="block text-sm font-semibold text-slate-700 mb-2">
-                            Áp dụng cho
-                        </label>
+                        <label class="block text-sm font-semibold text-slate-700 mb-2">Áp dụng cho</label>
                         <div class="grid grid-cols-3 gap-2">
                             @if($selectedLop)
                             <label class="flex flex-col items-center gap-1 p-3 rounded-xl border cursor-pointer
@@ -462,7 +486,6 @@
                             </label>
                         </div>
 
-                        {{-- Chọn khối khi scope = grade --}}
                         @if($createScope === 'grade')
                         <div class="mt-3">
                             <select wire:model="createScopeGradeId"
@@ -477,6 +500,7 @@
                         @endif
                     </div>
                     @endif
+
                     <div>
                         <label class="block text-sm font-semibold text-slate-700 mb-1">
                             Loại điểm <span class="text-red-500">*</span>
@@ -507,7 +531,6 @@
                             name="typeOrder"
                             type="number" min="0" max="99"
                             wire:model.defer="typeOrder" />
-
                         <x-form-input
                             label="Hệ số"
                             name="typeCoefficient"
@@ -537,16 +560,6 @@
             </div>
         </div>
         @endif
-    </div>
-</div>
 
-{{-- Loading overlay --}}
-<div wire:loading.delay class="fixed inset-0 bg-black/30 flex items-center justify-center z-50">
-    <div class="bg-white rounded-xl p-5 flex items-center gap-3 shadow-xl">
-        <svg class="animate-spin h-5 w-5 text-primary-600" fill="none" viewBox="0 0 24 24">
-            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
-            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-        </svg>
-        <span class="text-sm font-medium text-slate-700">Đang xử lý...</span>
     </div>
 </div>

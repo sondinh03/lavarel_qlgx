@@ -70,6 +70,7 @@ use App\Http\Livewire\Parishioners\ParishionerShow;
 use App\Http\Livewire\Parishioners\ParishionersManager;
 use App\Http\Livewire\Parishioners\SacramentsManager;
 use App\Http\Livewire\Score\ScoreManager;
+use App\Http\Livewire\Score\ScoreStatistics;
 use App\Http\Livewire\Student\PrintCards;
 use App\Http\Livewire\Student\StudentDetail;
 use App\Http\Livewire\Student\StudentEdit;
@@ -175,6 +176,9 @@ Route::middleware('auth')->group(function () {
 
         Route::get('/scores', ScoreManager::class)
             ->name('scores.index');
+
+        Route::get('/scores/statistics', ScoreStatistics::class)
+            ->name('scores.statistics');
 
         Route::get('/school-years', NamHocManager::class)
             ->name('school-years.index');
