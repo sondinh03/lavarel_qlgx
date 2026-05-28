@@ -254,7 +254,7 @@ class ParishionersManager extends BaseComponent
     public function edit(int $id): void
     {
         try {
-            $p = Parishioner::ofParish($this->parishId)->findOrFail($id);
+            $p = Parishioner::query()->findOrFail($id);
             $this->authorize('update', $p);
 
             $this->editingId         = $p->id;
@@ -439,7 +439,7 @@ class ParishionersManager extends BaseComponent
         $this->validate($this->formRules, $this->messages);
 
         if ($this->editingId) {
-            $p = Parishioner::ofParish($this->parishId)->find($this->editingId);
+            $p = Parishioner::query()->find($this->editingId);
             if (!$p) {
                 $this->emit('toast', 'error', 'Không tìm thấy giáo dân');
                 return;
@@ -524,7 +524,7 @@ class ParishionersManager extends BaseComponent
     public function toggleStatus(int $id): void
     {
         try {
-            $p = Parishioner::ofParish($this->parishId)->findOrFail($id);
+            $p = Parishioner::query()->findOrFail($id);
             $this->authorize('update', $p);
             $p->update(['status' => !$p->status]);
             $this->emit('toast', 'message', $p->status ? 'Đã kích hoạt' : 'Đã tắt');
@@ -541,7 +541,7 @@ class ParishionersManager extends BaseComponent
         try {
             DB::beginTransaction();
 
-            $p = Parishioner::ofParish($this->parishId)->findOrFail($id);
+            $p = Parishioner::query()->findOrFail($id);
             $this->authorize('delete', $p);
 
             if (Student::where('parishioner_id', $p->id)->exists()) {
@@ -572,7 +572,7 @@ class ParishionersManager extends BaseComponent
     public function openStudentLink(int $parishionerId): void
     {
         try {
-            Parishioner::ofParish($this->parishId)->findOrFail($parishionerId);
+            Parishioner::query()->findOrFail($parishionerId);
             $this->linkingParishionerId = $parishionerId;
             $this->linkedStudents = Student::where('parishioner_id', $parishionerId)
                 ->with(['lop', 'lop.schoolYear'])
@@ -595,7 +595,7 @@ class ParishionersManager extends BaseComponent
     public function openSacraments(int $parishionerId): void
     {
         try {
-            Parishioner::ofParish($this->parishId)->findOrFail($parishionerId);
+            Parishioner::query()->findOrFail($parishionerId);
             $this->sacramentParishionerId = $parishionerId;
             $this->showSacraments = true;
         } catch (ModelNotFoundException) {
@@ -630,7 +630,7 @@ class ParishionersManager extends BaseComponent
     private function getParishioners()
     {
         try {
-            $query = Parishioner::ofParish($this->parishId)
+            $query = Parishioner::query()
                 ->with(['saint', 'parishGroup', 'student']);
 
             // Mặc định chỉ hiển thị người còn sống

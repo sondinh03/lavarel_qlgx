@@ -22,7 +22,7 @@
     {{-- Input --}}
     <input
         type="text"
-        wire:model.live.debounce.{{ $debounce }}="{{ $wireModel }}"
+        wire:model.debounce.{{ $debounce }}="{{ $wireModel }}"
         placeholder="{{ $placeholder }}"
         x-on:input="hasValue = $event.target.value.length > 0"
         {{ $attributes->merge([

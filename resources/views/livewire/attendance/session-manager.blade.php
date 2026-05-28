@@ -48,7 +48,7 @@
                     {{-- Row 2: Search + Actions --}}
                     <div class="flex items-center justify-between gap-4">
                         <x-search-input
-                            placeholder="Tìm kiếm theo tiêu đề phiên..."
+                            placeholder="Tìm kiếm theo ngày (vd: 12/03/2026)..."
                             wire-model="search"
                             debounce="500ms"
                             class="max-w-md" />
@@ -112,7 +112,6 @@
                                 :current-sort="$sortField" :sort-direction="$sortDirection">
                                 Loại
                             </x-table-header>
-                            <x-table-header>Tiêu đề</x-table-header>
                             <x-table-header>Thời gian</x-table-header>
                             <x-table-header class="text-center">Điểm danh</x-table-header>
                             <x-table-header
@@ -149,11 +148,6 @@
                                         : 'bg-purple-100 text-purple-700' }}">
                                     {{ $session['typeLabel'] }}
                                 </span>
-                            </td>
-
-                            {{-- Tiêu đề --}}
-                            <td class="px-4 py-3 text-sm text-slate-700">
-                                {{ $session['title'] ?: '—' }}
                             </td>
 
                             {{-- Thời gian --}}

@@ -408,8 +408,7 @@ class FamilyDetail extends BaseComponent
     // ==================== QUERY HELPERS ====================
     protected function getAvailableParishionersQuery()
     {
-        $query = Parishioner::whereNull('family_id')
-            ->ofParish($this->parishId);
+        $query = Parishioner::whereNull('family_id');
 
         if (trim($this->memberSearch)) {
             $search = trim($this->memberSearch);

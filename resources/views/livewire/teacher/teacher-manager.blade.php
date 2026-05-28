@@ -5,7 +5,15 @@
     ]" />
 @endsection
 
-<div class="min-h-screen bg-slate-50 p-2 sm:p-4 lg:p-6" style="min-height: calc(100vh - 56px - var(--bottom-offset));">
+<div class="min-h-screen bg-slate-50 p-2 sm:p-4 lg:p-6"
+    style="min-height: calc(100vh - 56px - var(--bottom-offset));"
+    x-data="{ showForm: false }"
+    x-init="
+        document.addEventListener('livewire:load', () => {
+            Livewire.on('openModal', () => { showForm = true; });
+            Livewire.on('closeModal', () => { showForm = false; });
+        });
+    ">
     <a href="#main-content" class="sr-only focus:not-sr-only">Bỏ qua tới nội dung</a>
 
     <div id="main-content" class="mx-auto max-w-7xl space-y-6">
@@ -13,21 +21,22 @@
         <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
             <x-page-header
                 class="rounded-t-2xl"
-                title="Danh sách Giáo lý viên"
-                :count="$teachers->total()" />
+                title="Danh sách giáo lý viên"
+                description="Quản lý hồ sơ và tài khoản giáo lý viên"
+                :stat-value="$teachers->total()"
+                stat-label="Giáo lý viên"
+                icon-type="students" />
 
             {{-- Actions Bar --}}
-            <div class="px-6 py-4 border-b border-slate-200 bg-slate-50/70">
-                <div class="flex flex-wrap items-center justify-between gap-3">
-                    {{-- LEFT: Filters --}}
-                    <div class="flex flex-wrap items-center gap-3">
+            <div class="p-4 lg:p-6 border-t border-slate-200 bg-slate-50/70 rounded-b-2xl">
+                <div class="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-4">
+                    <div class="flex flex-wrap items-end gap-3 flex-1 min-w-0">
 
-                        {{-- Search --}}
-                        <input
-                            wire:model.debounce.500ms="search"
+                        <x-search-input
+                            wireModel="search"
                             placeholder="Tìm tên, SĐT, email..."
-                            class="w-56 px-3 py-2 rounded-xl border border-slate-300
-                                   text-sm focus:outline-none focus:ring-2 focus:ring-primary-500" />
+                            debounce="500ms"
+                            class="max-w-xs" />
 
                         {{-- Filter giáo họ --}}
                         <select wire:model="filterParishGroup"
@@ -60,15 +69,16 @@
                         </select>
                     </div>
 
-                    {{-- RIGHT: Add button --}}
-                    <x-action-button wire="create" icon="plus">
-                        Thêm giáo lý viên
-                    </x-action-button>
-
-                    <x-button as="a" href="{{ route('catechists.import') }}" variant="outline">
-                        <x-icon name="upload" />
-                        Import Excel
-                    </x-button>
+                    <div class="flex flex-wrap items-center gap-2 flex-shrink-0">
+                        <x-button as="a" href="{{ route('catechists.import') }}" variant="outline">
+                            <x-icon name="upload" />
+                            Import Excel
+                        </x-button>
+                        <x-button wire:click="create" variant="primary">
+                            <x-icon name="plus" />
+                            Thêm giáo lý viên
+                        </x-button>
+                    </div>
                 </div>
             </div>
         </div>
@@ -197,33 +207,60 @@
             @endif
 
             @else
-            <div class="text-center py-16">
-                <div class="text-5xl mb-4">
-                    {{ ($search || $filterParishGroup || $filterGender || $filterActive) ? '🔍' : '👨‍🏫' }}
-                </div>
-                <p class="text-lg text-slate-500">
-                    {{ ($search || $filterParishGroup || $filterGender || $filterActive) ? 'Không tìm thấy kết quả nào' : 'Chưa có giáo lý viên nào' }}
-                </p>
-            </div>
+            <x-stats.page-empty
+                tone="primary"
+                :title="($search || $filterParishGroup || $filterGender || $filterActive) ? 'Không tìm thấy kết quả' : 'Chưa có giáo lý viên'"
+                :description="($search || $filterParishGroup || $filterGender || $filterActive) ? 'Thử đổi bộ lọc hoặc từ khóa tìm kiếm' : 'Thêm giáo lý viên đầu tiên hoặc import từ Excel'">
+                <x-slot name="icon">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+                        d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
+                </x-slot>
+                @if(!($search || $filterParishGroup || $filterGender || $filterActive))
+                <x-button wire:click="create" variant="primary">
+                    <x-icon name="plus" />
+                    Thêm giáo lý viên
+                </x-button>
+                @endif
+            </x-stats.page-empty>
             @endif
         </div>
 
-        {{-- Modal Form --}}
-        @if($showForm)
-        <div class="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4"
-            role="dialog" aria-modal="true" wire:click="closeModal">
-            <div class="bg-white rounded-2xl shadow-xl w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col"
-                wire:click.stop>
+    </div>
 
-                {{-- Header --}}
-                <div class="flex-shrink-0 p-6 border-b border-slate-200 bg-gradient-to-br from-primary-50 to-white">
-                    <h2 class="text-xl font-bold text-slate-900">
-                        {{ $editingId ? 'Cập nhật giáo lý viên' : 'Thêm giáo lý viên mới' }}
-                    </h2>
-                    <p class="text-sm text-slate-500 mt-1">
-                        {{ $editingId ? 'Chỉnh sửa thông tin' : 'Tạo tài khoản đăng nhập' }}
-                    </p>
+    {{-- Modal Form --}}
+    <div
+        x-show="showForm"
+        x-cloak
+        x-transition.opacity
+        class="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50 p-4"
+        role="dialog"
+        aria-modal="true"
+        @click="showForm = false; $wire.closeModal()"
+        @keydown.escape.window="showForm = false; $wire.closeModal()">
+
+        <div
+            x-show="showForm"
+            x-transition
+            class="bg-white rounded-2xl shadow-xl w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col"
+            @click.stop>
+
+            <div class="flex-shrink-0 p-6 border-b border-slate-200 bg-gradient-to-br from-primary-50 to-white">
+                <div class="flex items-start justify-between gap-4">
+                    <div>
+                        <h2 class="text-xl font-bold text-slate-900">
+                            {{ $editingId ? 'Cập nhật giáo lý viên' : 'Thêm giáo lý viên mới' }}
+                        </h2>
+                        <p class="text-sm text-slate-500 mt-1">
+                            {{ $editingId ? 'Chỉnh sửa thông tin' : 'Tạo tài khoản đăng nhập' }}
+                        </p>
+                    </div>
+                    <button type="button"
+                        @click="showForm = false; $wire.closeModal()"
+                        class="p-1 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors">
+                        <x-icon name="cancel" class="w-5 h-5" />
+                    </button>
                 </div>
+            </div>
 
                 {{-- Body --}}
                 <div class="flex-1 overflow-y-auto p-6 space-y-5">
@@ -390,16 +427,13 @@
                     </div>
                 </div>
 
-                {{-- Footer --}}
-                <div class="flex-shrink-0 px-6 py-4 border-t border-slate-200 bg-slate-50 flex justify-end gap-3">
-                    <x-action-button wire="closeModal" variant="secondary">Hủy</x-action-button>
-                    <x-action-button wire="save" icon="save" :loading="true">
-                        {{ $editingId ? 'Cập nhật' : 'Thêm giáo lý viên' }}
-                    </x-action-button>
-                </div>
+            <div class="flex-shrink-0 px-6 py-4 border-t border-slate-200 bg-slate-50 flex justify-end gap-3">
+                <x-button variant="outline" @click="showForm = false; $wire.closeModal()">Hủy</x-button>
+                <x-button variant="primary" wire:click="save" :loading="true" loading-target="save">
+                    <x-icon name="save" />
+                    {{ $editingId ? 'Cập nhật' : 'Thêm giáo lý viên' }}
+                </x-button>
             </div>
         </div>
-        @endif
-
     </div>
 </div>

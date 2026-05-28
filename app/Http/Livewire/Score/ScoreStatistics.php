@@ -18,7 +18,7 @@ use Illuminate\Support\Facades\DB;
  * - Thống kê xếp loại: biểu đồ tròn (donut)
  * - Phân phối điểm TB: biểu đồ cột (histogram)
  * - So sánh TB giữa các lớp/khối: biểu đồ cột ngang
- * - Phạm vi: lớp / khối / toàn xứ (chuyển đổi linh hoạt)
+ * - Phạm vi tự động theo filter: lớp → khối → toàn xứ
  */
 class ScoreStatistics extends BaseComponent
 {
@@ -38,13 +38,8 @@ class ScoreStatistics extends BaseComponent
     public $selectedNamHoc   = null;
     public $selectedKhoi     = null;
     public $selectedLop      = null;
+    /** 0 = cả năm, 1|2 = theo kỳ */
     public $selectedSemester = 1;
-
-    /** @var string Phạm vi thống kê: 'class' | 'grade' | 'parish' */
-    public $scope = 'class';
-
-    /** @var string Chế độ xem: 'semester' | 'year' */
-    public $viewMode = 'semester';
 
     // ==================== DATA ====================
 
@@ -77,8 +72,6 @@ class ScoreStatistics extends BaseComponent
             'selectedKhoi'     => ['as' => 'khoi',     'except' => null],
             'selectedLop'      => ['as' => 'lop',      'except' => null],
             'selectedSemester' => ['as' => 'semester', 'except' => 1],
-            'scope'            => ['as' => 'scope',    'except' => 'class'],
-            'viewMode'         => ['as' => 'view',     'except' => 'semester'],
         ], parent::queryString());
     }
 
@@ -113,15 +106,6 @@ class ScoreStatistics extends BaseComponent
             $this->loadLops();
         }
 
-        // Auto-detect scope từ filter ban đầu
-        if (!$this->selectedLop && !$this->selectedKhoi) {
-            $this->scope = 'parish';
-        } elseif (!$this->selectedLop && $this->selectedKhoi) {
-            $this->scope = 'grade';
-        } else {
-            $this->scope = 'class';
-        }
-
         $this->reloadChartData();
     }
 
@@ -134,15 +118,7 @@ class ScoreStatistics extends BaseComponent
         $this->selectedLop    = $this->toInt($this->selectedLop);
 
         $sem = (int) $this->selectedSemester;
-        $this->selectedSemester = in_array($sem, [1, 2]) ? $sem : 1;
-
-        if (!in_array($this->scope, ['class', 'grade', 'parish'])) {
-            $this->scope = 'parish';
-        }
-
-        if (!in_array($this->viewMode, ['semester', 'year'])) {
-            $this->viewMode = 'semester';
-        }
+        $this->selectedSemester = in_array($sem, [0, 1, 2], true) ? $sem : 1;
     }
 
     // ==================== DATA LOADING ====================
@@ -150,7 +126,7 @@ class ScoreStatistics extends BaseComponent
     protected function loadNamHocs(): void
     {
         try {
-            $this->availableNamHocs = NamHoc::ofParish($this->parishId)
+            $this->availableNamHocs = NamHoc::query()
                 ->active()
                 ->orderByDesc('start_date_one')
                 ->get(['id', 'name']);
@@ -238,8 +214,7 @@ class ScoreStatistics extends BaseComponent
             return [];
         }
 
-        // Determine which semesters to include
-        $semesters = $this->viewMode === 'year' ? [1, 2] : [$this->selectedSemester];
+        $semesters = $this->getIncludedSemesters();
 
         // Load score types cho các lớp này
         $scoreTypes = ScoreType::whereIn('class_id', $classIds)
@@ -298,7 +273,7 @@ class ScoreStatistics extends BaseComponent
 
                     if (!$scoreRow) {
                         // Thiếu điểm cuối/giữa kỳ → chưa tính được (chỉ kiểm tra nếu xem theo kỳ)
-                        if ($this->viewMode === 'semester' && in_array($st->type, [4, 5])) {
+                        if (!$this->isFullYear() && in_array($st->type, [4, 5])) {
                             $hasRequired = false;
                             break;
                         }
@@ -336,7 +311,7 @@ class ScoreStatistics extends BaseComponent
             ->where('parish_id', $this->parishId)
             ->active();
 
-        return match ($this->scope) {
+        return match ($this->resolveScope()) {
             'class'  => $this->selectedLop
                 ? collect([$this->selectedLop])
                 : collect(),
@@ -345,6 +320,45 @@ class ScoreStatistics extends BaseComponent
                 : collect(),
             'parish' => $query->pluck('id'),
             default  => collect(),
+        };
+    }
+
+    /** Lớp đã chọn → lớp; chỉ khối → khối; còn lại → toàn xứ. */
+    protected function resolveScope(): string
+    {
+        if ($this->selectedLop) {
+            return 'class';
+        }
+
+        if ($this->selectedKhoi) {
+            return 'grade';
+        }
+
+        return 'parish';
+    }
+
+    protected function isFullYear(): bool
+    {
+        return (int) $this->selectedSemester === 0;
+    }
+
+    /** @return int[] */
+    protected function getIncludedSemesters(): array
+    {
+        return $this->isFullYear() ? [1, 2] : [(int) $this->selectedSemester];
+    }
+
+    protected function getSemesterLabel(): string
+    {
+        return $this->isFullYear() ? 'cả năm' : ('kỳ ' . $this->selectedSemester);
+    }
+
+    protected function getScopeLabel(): string
+    {
+        return match ($this->resolveScope()) {
+            'class'  => 'theo lớp',
+            'grade'  => 'theo khối',
+            default  => 'toàn xứ',
         };
     }
 
@@ -426,7 +440,7 @@ class ScoreStatistics extends BaseComponent
      */
     protected function buildClassComparison(): void
     {
-        if ($this->scope === 'class') {
+        if ($this->resolveScope() === 'class') {
             $this->classComparisonData = [];
             return;
         }
@@ -438,9 +452,10 @@ class ScoreStatistics extends BaseComponent
             return;
         }
 
-        $semesters = $this->viewMode === 'year' ? [1, 2] : [$this->selectedSemester];
+        $semesters = $this->getIncludedSemesters();
 
         $classes = CatechismClass::whereIn('id', $classIds)
+            ->orderBy('grade_level_id')
             ->orderBy('name')
             ->get(['id', 'name']);
 
@@ -529,35 +544,7 @@ class ScoreStatistics extends BaseComponent
     public function updatedSelectedSemester(): void
     {
         $sem = (int) $this->selectedSemester;
-        $this->selectedSemester = in_array($sem, [1, 2]) ? $sem : 1;
-        $this->reloadChartData();
-    }
-
-    public function updatedScope(): void
-    {
-        $this->reloadChartData();
-    }
-
-    public function setScope(string $scope): void
-    {
-        if (!in_array($scope, ['class', 'grade', 'parish'])) {
-            return;
-        }
-        $this->scope = $scope;
-        $this->reloadChartData();
-    }
-
-    public function setViewMode(string $mode): void
-    {
-        if (!in_array($mode, ['semester', 'year'])) {
-            return;
-        }
-        $this->viewMode = $mode;
-        $this->reloadChartData();
-    }
-
-    public function updatedViewMode(): void
-    {
+        $this->selectedSemester = in_array($sem, [0, 1, 2], true) ? $sem : 1;
         $this->reloadChartData();
     }
 
@@ -590,8 +577,11 @@ class ScoreStatistics extends BaseComponent
         }
 
         if (array_key_exists('ky', $filters)) {
-            $sem = (int) $filters['ky'];
-            $this->selectedSemester = in_array($sem, [1, 2]) ? $sem : 1;
+            $ky = $filters['ky'];
+            if ($ky !== '' && $ky !== null) {
+                $sem = (int) $ky;
+                $this->selectedSemester = in_array($sem, [0, 1, 2], true) ? $sem : 1;
+            }
         }
 
         $this->reloadChartData();
@@ -607,7 +597,7 @@ class ScoreStatistics extends BaseComponent
 
     protected function getDefaultNamHocId(): ?int
     {
-        return NamHoc::ofParish($this->parishId)
+        return NamHoc::query()
             ->active()
             ->orderByDesc('start_date_one')
             ->value('id');
@@ -645,7 +635,10 @@ class ScoreStatistics extends BaseComponent
     public function render()
     {
         return view('livewire.score.score-statistics', [
-            'parishId' => $this->parishId,
+            'parishId'      => $this->parishId,
+            'effectiveScope' => $this->resolveScope(),
+            'scopeLabel'    => $this->getScopeLabel(),
+            'semesterLabel' => $this->getSemesterLabel(),
         ])
             ->extends('frontend.layout.main')
             ->section('content');

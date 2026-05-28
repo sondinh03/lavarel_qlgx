@@ -70,6 +70,7 @@ class AppServiceProvider extends ServiceProvider
         Relation::morphMap([
             'teacher' => Teacher::class,
             'student' => StudentNew::class,
+            'parishioner' => \App\Models\Parishioner::class,
         ]);
         // ==================== CÁCH DÙNG ====================
 

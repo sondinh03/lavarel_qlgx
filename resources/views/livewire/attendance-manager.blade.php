@@ -19,6 +19,7 @@
             records: {},
             draft: {},
             isSaving: false,
+            context: @js('class:' . ($selectedClassId ?? 'none') . '|type:' . ($attendanceType ?? 'none') . '|mode:' . ($this->viewMode ?? 'none') . '|date:' . ($selectedDate ?? 'all') . '|ky:' . ($selectedKy ?? 'all')),
 
             getStatus(studentId, sessionId) {
                 const key = studentId + '_' + sessionId;
@@ -51,7 +52,7 @@
             },
 
             openNote(studentId, sessionId) {
-                $this.getLivwire().call('openNote', studentId, sessionId);
+                this.getLivewire().call('openNote', studentId, sessionId);
 
             },
 
@@ -75,7 +76,8 @@
 
             discard() { this.draft = {}; },
 
-            onSaved(detail) { 
+            onSaved(detail) {
+                if (detail?.context && detail.context !== this.context) return;
                 this.draft = {}; 
                 this.isSaving = false;
                 if (detail && detail.records) {
@@ -85,8 +87,9 @@
                 }
             },
 
-            onRecordsLoaded(newRecords) {
-            // Tương tự
+            onRecordsLoaded(detail) {
+            if (detail?.context && detail.context !== this.context) return;
+            const newRecords = detail?.records || {};
             Object.keys(this.records).forEach(k => delete this.records[k]);
             Object.assign(this.records, newRecords);
             },
@@ -167,7 +170,7 @@
                 window.removeEventListener('pagehide', guardUnload);
             });
         "
-        x-on:attendance-records-loaded.window="onRecordsLoaded($event.detail.records)"
+        x-on:attendance-records-loaded.window="onRecordsLoaded($event.detail)"
         x-on:attendance-saved.window="onSaved($event.detail)"
         x-on:attendance-state-cleared.window="onCleared()"
         x-on:note-saved.window="onNoteSaved($event.detail)"
@@ -187,7 +190,7 @@
                     icon-type="attendance">
                 </x-page-header>
                 @else
-                <div id="page-big-title" class="px-4 pt-5 pb-3 transition-opacity duration-300">
+                <div id="page-big-title" class="px-4 sm:px-6 pt-5 pb-3 transition-opacity duration-300">
                     <h1 class="text-2xl font-bold text-slate-800">
                         Điểm danh{{ $selectedClassId ? ' · ' . $selectedClassName : '' }}
                     </h1>
@@ -199,11 +202,12 @@
                 @endif
 
                 {{-- Actions Bar --}}
-                <div class="px-6 py-4 border-b border-slate-200 bg-slate-50/70">
-                    <div class="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4">
-                        {{-- LEFT: Filters --}}
-                        <div class="flex flex-col gap-3 w-full lg:flex-row lg:items-center">
-                            @php $isAdmin = !auth()->user()->isCatechist(); @endphp
+                <div class="px-4 sm:px-6 py-4 bg-slate-50/70 border-t border-slate-100">
+                    @php $isAdmin = !auth()->user()->isCatechist(); @endphp
+
+                    <div class="flex flex-col gap-4">
+                        {{-- LEFT: Filters + search --}}
+                        <div class="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-3 lg:gap-4">
                             <livewire:filters.filter-bar
                                 :parish-id="$parishId"
                                 :show-nam-hoc="$isAdmin"
@@ -215,53 +219,52 @@
                                 :selected-lop="$selectedClassId"
                                 :selected-ky="$selectedKy" />
 
-                            <input
-                                wire:model.live.debounce.500ms="search"
-                                placeholder="Tìm học sinh..."
-                                class="hidden lg:block w-56 px-3 py-2 rounded-xl
-                                border border-slate-300 text-sm focus:outline-none
-                                focus:ring-2 focus:ring-primary-500" />
+                            <div class="hidden lg:block w-72">
+                                <x-search-input
+                                    placeholder="Tìm học sinh..."
+                                    wire-model="search"
+                                    debounce="500ms" />
+                            </div>
                         </div>
 
-                        {{-- RIGHT: Actions desktop — Alpine quản lý trạng thái --}}
-                        @if($selectedClassId)
-                        <div class="hidden lg:flex items-center gap-3">
+                        {{-- Mobile search --}}
+                        <div class="lg:hidden">
+                            <x-search-input
+                                placeholder="Tìm học sinh..."
+                                wire-model="search"
+                                debounce="500ms" />
+                        </div>
 
-                        <a href="{{ route('attendance.statistics', [
-                                'namHoc'  => $selectedNamHoc,
-                                'classId' => $selectedClassId,
-                                'khoi'    => $selectedKhoi,
-                                'ky'      => $selectedKy,
-                                'type'    => $attendanceType,
-                        ]) }}"
-                        class="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl border border-slate-300
-                                text-sm font-semibold text-slate-600 hover:bg-slate-50 hover:border-slate-400 transition-all">
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-                            </svg>
-                            Thống kê
-                        </a>
-    
-                            <button
-                                x-show="hasDraft()"
-                                x-cloak
-                                x-on:click="discard()"
-                                class="px-4 py-2 border border-red-300 text-red-700 rounded-xl hover:bg-red-50
-                                   transition-colors text-sm font-medium flex items-center gap-2">
+                        {{-- RIGHT: Actions (desktop) --}}
+                        @if($selectedClassId)
+                        <div class="hidden lg:flex items-center justify-end gap-3">
+                            <x-button as="a" variant="outline" href="{{ route('attendance.statistics', [
+                                    'namHoc'  => $selectedNamHoc,
+                                    'classId' => $selectedClassId,
+                                    'khoi'    => $selectedKhoi,
+                                    'ky'      => $selectedKy,
+                                    'type'    => $attendanceType,
+                            ]) }}">
                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                        d="M6 18L18 6M6 6l12 12" />
+                                        d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
                                 </svg>
-                                Hủy
-                            </button>
+                                Thống kê
+                            </x-button>
+
+                            <div x-show="hasDraft()" x-cloak>
+                                <x-button variant="danger" x-on:click="discard()">
+                                    <x-icon name="x" />
+                                    Hủy
+                                </x-button>
+                            </div>
 
                             <button
                                 x-on:click="save()"
                                 :disabled="!hasDraft() || isSaving"
                                 :class="!hasDraft() || isSaving
-                                ? 'bg-slate-200 text-slate-400 cursor-not-allowed'
-                                : 'bg-primary-600 hover:bg-primary-700 text-white cursor-pointer'"
+                                    ? 'bg-slate-200 text-slate-400 cursor-not-allowed'
+                                    : 'bg-primary-600 hover:bg-primary-700 text-white cursor-pointer'"
                                 class="px-4 py-2 rounded-xl text-sm font-semibold transition-colors flex items-center gap-2">
                                 <svg x-show="!isSaving" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -278,46 +281,52 @@
                         </div>
                         @endif
                     </div>
-                </div>
 
-                {{-- Tabs --}}
-                @if($selectedClassId)
-                <div class="flex rounded-b-xl bg-slate-200 p-1 text-sm font-medium">
-                    <button
-                        wire:click="switchType(1)"
-                        class="flex-1 py-2 rounded-lg text-sm font-semibold transition-all
-                        {{ $attendanceType == 1 ? 'bg-white text-primary-600 shadow-sm' : 'text-slate-600 hover:text-slate-900' }}">
-                        Điểm danh đi học
-                    </button>
-                    <button
-                        wire:click="switchType(2)"
-                        class="flex-1 py-2 rounded-lg text-sm font-semibold transition-all
-                        {{ $attendanceType == 2 ? 'bg-white text-primary-600 shadow-sm' : 'text-slate-600 hover:text-slate-900' }}">
-                        Điểm danh đi lễ
-                    </button>
+                    {{-- Tabs --}}
+                    @if($selectedClassId)
+                    <div class="pt-2">
+                        <div class="flex bg-slate-200 p-1 rounded-xl text-sm font-medium">
+                            <button
+                                wire:click="switchType(1)"
+                                class="flex-1 py-2 rounded-lg text-sm font-semibold transition-all
+                                {{ $attendanceType == 1 ? 'bg-white text-primary-600 shadow-sm' : 'text-slate-600 hover:text-slate-900' }}">
+                                Điểm danh đi học
+                            </button>
+                            <button
+                                wire:click="switchType(2)"
+                                class="flex-1 py-2 rounded-lg text-sm font-semibold transition-all
+                                {{ $attendanceType == 2 ? 'bg-white text-primary-600 shadow-sm' : 'text-slate-600 hover:text-slate-900' }}">
+                                Điểm danh đi lễ
+                            </button>
+                        </div>
+                    </div>
+                    @endif
                 </div>
-                @endif
             </div>
 
             {{-- ==================== CONTENT ==================== --}}
 
             @if (!$selectedClassId)
-            <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-12 text-center">
-                <svg class="mx-auto w-16 h-16 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+            <x-stats.page-empty
+                :title="'Vui lòng chọn lớp để bắt đầu điểm danh'"
+                description="Chọn lớp ở bộ lọc phía trên để xem danh sách học sinh."
+                tone="primary">
+                <x-slot name="icon">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
                         d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
-                </svg>
-                <p class="mt-4 text-lg text-slate-500">Vui lòng chọn lớp để bắt đầu điểm danh</p>
-            </div>
+                </x-slot>
+            </x-stats.page-empty>
 
             @elseif ($students->isEmpty())
-            <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-12 text-center">
-                <svg class="mx-auto w-16 h-16 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+            <x-stats.page-empty
+                :title="'Lớp chưa có học sinh'"
+                description="Hãy thêm học sinh vào lớp trước khi điểm danh."
+                tone="primary">
+                <x-slot name="icon">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
                         d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
-                </svg>
-                <p class="mt-4 text-lg text-slate-500">Lớp chưa có học sinh</p>
-            </div>
+                </x-slot>
+            </x-stats.page-empty>
 
             @else
             <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
@@ -371,6 +380,17 @@
                                 <td class="px-6 py-4 sticky left-12 bg-white z-10">
                                     <div class="text-xs text-slate-500">{{ $student->saint_name }}</div>
                                     <div class="font-semibold text-slate-900">{{ $student->full_name }}</div>
+                                    <div class="text-xs text-slate-500 mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-0.5">
+                                        @if($student->birthday)
+                                            <span>{{ optional($student->birthday)->format('d/m/Y') }}</span>
+                                        @endif
+                                        @if($student->parishGroup?->name)
+                                            <span class="text-slate-300">•</span>
+                                            <span class="truncate max-w-[180px]" title="{{ $student->parishGroup->name }}">
+                                                {{ $student->parishGroup->name }}
+                                            </span>
+                                        @endif
+                                    </div>
                                 </td>
 
                                 @foreach($sessions as $session)
@@ -664,6 +684,17 @@
                                                 <div class="text-sm font-semibold text-slate-900 leading-tight">
                                                     {{ $student->full_name }}
                                                 </div>
+                                                <div class="text-xs text-slate-500 mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-0.5">
+                                                    @if($student->birthday)
+                                                        <span>{{ optional($student->birthday)->format('d/m/Y') }}</span>
+                                                    @endif
+                                                    @if($student->parishGroup?->name)
+                                                        <span class="text-slate-300">•</span>
+                                                        <span class="truncate max-w-[160px]" title="{{ $student->parishGroup->name }}">
+                                                            {{ $student->parishGroup->name }}
+                                                        </span>
+                                                    @endif
+                                                </div>
                                             </div>
                                         </div>
                                     </td>
@@ -807,14 +838,16 @@
                 </div>
 
                 @else
-                <div class="text-center py-12">
-                    <svg class="mx-auto w-16 h-16 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
-                    </svg>
-                    <p class="mt-4 text-lg text-slate-500">
-                        {{ empty($sessions) ? 'Chưa có buổi điểm danh nào' : 'Không có dữ liệu để hiển thị' }}
-                    </p>
+                <div class="p-10">
+                    <x-stats.page-empty
+                        :title="empty($sessions) ? 'Chưa có buổi điểm danh nào' : 'Không có dữ liệu để hiển thị'"
+                        description="Vui lòng kiểm tra lại bộ lọc hoặc tạo buổi điểm danh."
+                        tone="slate">
+                        <x-slot name="icon">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+                                d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
+                        </x-slot>
+                    </x-stats.page-empty>
                 </div>
                 @endif
             </div>
@@ -908,7 +941,7 @@
             </div>
         </div>
     </div>
-</div>>
+</div>
 
 @push('page-title')
 <span class="text-slate-800 font-semibold text-sm">Điểm danh</span>

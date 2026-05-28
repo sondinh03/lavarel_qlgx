@@ -1,0 +1,77 @@
+Project stack:
+- Laravel 8
+- PHP 8
+- Livewire 2
+- Alpine.js 3
+- TailwindCSS 3
+
+General rules:
+- Follow Laravel conventions
+- Write clean and maintainable code
+- Prefer readability over clever code
+- Keep components small and reusable
+- Avoid duplicated code
+- Use meaningful variable and method names
+- Prefer Eloquent relationships over raw queries
+- Avoid N+1 queries
+- Use eager loading when appropriate
+- Keep business logic out of Blade files
+- Prefer service/action classes for complex logic
+
+Livewire rules:
+- Use Livewire 2 syntax only
+- Keep Livewire components focused and modular
+- Avoid excessive public properties
+- Use proper loading states
+- Minimize unnecessary re-renders
+- Prefer computed/accessor style methods when appropriate
+
+Frontend rules:
+- All frontend UI must follow docs/design-system.pdf
+- Use iOS-inspired admin design
+- UI must be:
+  - clean
+  - airy
+  - subtle
+  - consistent
+
+Design system requirements:
+- Use rounded-xl for inputs/buttons
+- Use rounded-2xl for cards/modals
+- Use soft shadows only
+- Use spacious spacing
+- Use slate color palette
+- Use primary color system from design-system.pdf
+- Use hover states for web interactions
+- Avoid cramped layouts
+- Avoid heavy borders
+- Avoid heavy shadows
+- Avoid inconsistent spacing
+- Avoid inconsistent input styles
+
+Tailwind rules:
+- Prefer Tailwind utility classes
+- Avoid inline styles
+- Reuse common UI patterns
+- Keep class structures readable
+
+Blade rules:
+- Prefer reusable Blade partials/components
+- Keep Blade templates clean
+- Avoid large monolithic Blade files
+
+Table/UI rules:
+- Tables should be responsive and readable
+- Use subtle hover states
+- Prioritize content readability
+- Maintain consistent spacing and alignment
+
+Code style:
+- Prefer explicit and readable code
+- Avoid over-engineering
+- Keep naming consistent across the project
+
+Architecture:
+- Respect existing project architecture
+- Do not rename core structures unless requested
+- Preserve backward compatibility when possible

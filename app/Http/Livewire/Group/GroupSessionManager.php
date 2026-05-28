@@ -101,6 +101,7 @@ class GroupSessionManager extends BaseComponent
     {
         $this->resetForm();
         $this->showForm = true;
+        $this->emit('openModal');
     }
 
     public function save(): void
@@ -232,6 +233,7 @@ class GroupSessionManager extends BaseComponent
         $this->showForm = false;
         $this->resetForm();
         $this->resetValidation();
+        $this->emit('closeModal');
     }
 
     public function resetForm(): void

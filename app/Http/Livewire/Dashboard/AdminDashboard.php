@@ -14,12 +14,19 @@ class AdminDashboard extends BaseComponent
     protected $usePagination = false;
     const CACHE_TTL = 600;
 
-    public $activeSchoolYear = null;
+    public $currentSchoolYear = null;
     public $stats = ['students' => 0, 'classes' => 0, 'teachers' => 0, 'attendance' => null];
     public $todos = [];
     public $todayAttendance = [];
     public $studentsByGrade = [];
     public $genderStats = ['male' => 0, 'female' => 0];
+    public $attendanceWeek = [
+        'rate' => null,
+        'present' => 0,
+        'total' => 0,
+        'days' => [],
+    ];
+    public $recentAttendanceSessions = [];
 
     // ==================== LIFECYCLE ====================
 
@@ -56,7 +63,9 @@ class AdminDashboard extends BaseComponent
 
 
             $data = Cache::remember($this->cacheKey(), self::CACHE_TTL, function () use ($parishId) {
-                $schoolYear = NamHoc::active()
+                // Lấy năm học "hiện tại" theo ngày (không phải status hoạt động)
+                $schoolYear = NamHoc::ofParish($parishId)
+                    ->current()
                     ->orderByDesc('id')
                     ->first();
 
@@ -70,18 +79,23 @@ class AdminDashboard extends BaseComponent
                     'todos'           => $this->buildTodos($schoolYear, $parishId),
                     'studentsByGrade' => $this->buildStudentsByGrade($schoolYear, $parishId),
                     'genderStats'     => $this->buildGenderStats($schoolYear, $parishId),
+                    'attendanceWeek'  => $this->buildAttendanceWeek($schoolYear, $parishId),
+                    'recentSessions'  => $this->buildRecentAttendanceSessions($schoolYear, $parishId),
                 ];
             });
 
-            $this->activeSchoolYear = $data['schoolYear'];
-            $this->stats            = $data['stats'];
-            $this->todos            = $data['todos'];
-            $this->studentsByGrade  = $data['studentsByGrade'];
-            $this->genderStats      = $data['genderStats'];
+            // Fallback an toàn khi cache đang chứa cấu trúc cũ (tránh Undefined array key)
+            $this->currentSchoolYear = $data['schoolYear'] ?? null;
+            $this->stats            = $data['stats'] ?? $this->stats;
+            $this->todos            = $data['todos'] ?? [];
+            $this->studentsByGrade  = $data['studentsByGrade'] ?? [];
+            $this->genderStats      = $data['genderStats'] ?? $this->genderStats;
+            $this->attendanceWeek   = $data['attendanceWeek'] ?? $this->attendanceWeek;
+            $this->recentAttendanceSessions = $data['recentSessions'] ?? [];
 
-            if ($this->activeSchoolYear) {
+            if ($this->currentSchoolYear) {
                 $this->todayAttendance = $this->buildTodayAttendance(
-                    $this->activeSchoolYear,
+                    $this->currentSchoolYear,
                     $parishId
                 );
             }
@@ -267,14 +281,127 @@ class AdminDashboard extends BaseComponent
 
     private function getWeeklyAttendanceRate(NamHoc $schoolYear, int $parishId): ?float
     {
-        return null; // TODO: tích hợp khi có bảng attendance
+        $weekStart = now()->startOfWeek();
+        $weekEnd   = now()->endOfWeek();
+
+        $row = DB::table('attendance_sessions')
+            ->join('classes', 'attendance_sessions.class_id', '=', 'classes.id')
+            ->leftJoin('attendance_records', 'attendance_sessions.id', '=', 'attendance_records.session_id')
+            ->where('classes.parish_id', $parishId)
+            ->where('classes.school_year_id', $schoolYear->id)
+            ->whereBetween('attendance_sessions.date', [$weekStart->toDateString(), $weekEnd->toDateString()])
+            ->where('attendance_sessions.status', '!=', 3) // cancelled
+            ->selectRaw('
+                COUNT(attendance_records.id) as total,
+                SUM(CASE WHEN attendance_records.status = 1 THEN 1 ELSE 0 END) as present
+            ')
+            ->first();
+
+        $total = (int) ($row->total ?? 0);
+        $present = (int) ($row->present ?? 0);
+
+        if ($total === 0) {
+            return null;
+        }
+
+        return round(($present / $total) * 100, 1);
+    }
+
+    private function buildAttendanceWeek(NamHoc $schoolYear, int $parishId): array
+    {
+        $weekStart = now()->startOfWeek();
+        $weekEnd   = now()->endOfWeek();
+
+        $rows = DB::table('attendance_sessions')
+            ->join('classes', 'attendance_sessions.class_id', '=', 'classes.id')
+            ->leftJoin('attendance_records', 'attendance_sessions.id', '=', 'attendance_records.session_id')
+            ->where('classes.parish_id', $parishId)
+            ->where('classes.school_year_id', $schoolYear->id)
+            ->whereBetween('attendance_sessions.date', [$weekStart->toDateString(), $weekEnd->toDateString()])
+            ->where('attendance_sessions.status', '!=', 3)
+            ->groupBy('attendance_sessions.date')
+            ->orderBy('attendance_sessions.date')
+            ->selectRaw('
+                attendance_sessions.date as date,
+                COUNT(attendance_records.id) as total,
+                SUM(CASE WHEN attendance_records.status = 1 THEN 1 ELSE 0 END) as present
+            ')
+            ->get();
+
+        $days = [];
+        $presentAll = 0;
+        $totalAll = 0;
+
+        foreach ($rows as $r) {
+            $total = (int) ($r->total ?? 0);
+            $present = (int) ($r->present ?? 0);
+            $rate = $total > 0 ? round(($present / $total) * 100, 1) : null;
+
+            $days[] = [
+                'date' => \Illuminate\Support\Carbon::parse($r->date)->format('d/m'),
+                'rate' => $rate,
+                'present' => $present,
+                'total' => $total,
+            ];
+
+            $presentAll += $present;
+            $totalAll += $total;
+        }
+
+        $rateAll = $totalAll > 0 ? round(($presentAll / $totalAll) * 100, 1) : null;
+
+        return [
+            'rate' => $rateAll,
+            'present' => $presentAll,
+            'total' => $totalAll,
+            'days' => $days,
+        ];
+    }
+
+    private function buildRecentAttendanceSessions(NamHoc $schoolYear, int $parishId): array
+    {
+        $rows = DB::table('attendance_sessions')
+            ->join('classes', 'attendance_sessions.class_id', '=', 'classes.id')
+            ->where('classes.parish_id', $parishId)
+            ->where('classes.school_year_id', $schoolYear->id)
+            ->where('attendance_sessions.status', '!=', 3)
+            ->orderByDesc('attendance_sessions.date')
+            ->orderByDesc('attendance_sessions.id')
+            ->limit(8)
+            ->select([
+                'attendance_sessions.id',
+                'attendance_sessions.date',
+                'attendance_sessions.type',
+                'attendance_sessions.status',
+                'classes.name as class_name',
+            ])
+            ->get();
+
+        return $rows->map(function ($r) {
+            $typeLabel = ((int) $r->type) === 2 ? 'Thánh lễ' : 'Giáo lý';
+            $statusLabel = match ((int) $r->status) {
+                1 => 'Đang mở',
+                2 => 'Đã đóng',
+                3 => 'Đã hủy',
+                default => '—',
+            };
+
+            return [
+                'id' => (int) $r->id,
+                'date' => \Illuminate\Support\Carbon::parse($r->date)->format('d/m/Y'),
+                'class_name' => $r->class_name,
+                'type' => $typeLabel,
+                'status' => $statusLabel,
+            ];
+        })->toArray();
     }
 
     // ==================== HELPERS ====================
 
     private function cacheKey(): string
     {
-        return "home_dashboard_{$this->parishId}";
+        // bump version để tránh dùng cache cũ thiếu key
+        return "home_dashboard_v2_{$this->parishId}";
     }
 
     private function emptyData(): array
@@ -285,6 +412,8 @@ class AdminDashboard extends BaseComponent
             'todos'           => [],
             'studentsByGrade' => [],
             'genderStats'     => ['male' => 0, 'female' => 0],
+            'attendanceWeek'  => ['rate' => null, 'present' => 0, 'total' => 0, 'days' => []],
+            'recentSessions'  => [],
         ];
     }
 
@@ -310,13 +439,29 @@ class AdminDashboard extends BaseComponent
         return $days[now()->dayOfWeek] . ', ' . now()->format('d/m/Y');
     }
 
+    public function getCurrentSchoolYearProperty(): ?NamHoc
+    {
+        // Lấy năm học hiện tại theo today (scopeCurrent) + đúng giáo xứ
+        return NamHoc::ofParish($this->parishId)
+            ->current()
+            ->orderByDesc('id')
+            ->first();
+    }
+
+    public function getCurrentSchoolYearLabelProperty(): string
+    {
+        $schoolYear = $this->currentSchoolYear ?? $this->getCurrentSchoolYearProperty();
+
+        return $schoolYear?->name ?? '';
+    }
+
     public function getCurrentSemesterLabelProperty(): string
     {
-        if (!$this->activeSchoolYear) {
+        if (!$this->currentSchoolYear) {
             return '';
         }
 
-        $semester = $this->activeSchoolYear->current_semester;
+        $semester = $this->currentSchoolYear->current_semester;
 
         return $semester ? "Học kỳ {$semester}" : 'Chưa xác định học kỳ';
     }

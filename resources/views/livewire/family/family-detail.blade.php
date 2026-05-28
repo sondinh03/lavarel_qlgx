@@ -7,8 +7,9 @@
 @endsection
 
 <div class="min-h-screen bg-slate-50 p-2 sm:p-4 lg:p-6" style="min-height: calc(100vh - 56px - var(--bottom-offset));">
+    <a href="#main-content" class="sr-only focus:not-sr-only">Bỏ qua tới nội dung</a>
 
-    <div class="max-w-5xl mx-auto space-y-6">
+    <div id="main-content" class="max-w-5xl mx-auto space-y-6">
 
         @if($isLoading)
         {{-- Loading state --}}
@@ -108,16 +109,18 @@
             @endforeach
         </div>
         @else
-        <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-12">
-            <x-empty-state
-                icon="users"
-                title="Chưa có thành viên"
-                description="Gia đình này chưa có giáo dân nào">
-                <x-action-button wire="openAddMemberModal" icon="plus">
-                    Thêm thành viên
-                </x-action-button>
-            </x-empty-state>
-        </div>
+        <x-stats.page-empty
+            tone="primary"
+            title="Chưa có thành viên"
+            description="Gia đình này chưa có giáo dân nào">
+            <x-slot name="icon">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+                    d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
+            </x-slot>
+            <x-action-button wire="openAddMemberModal" icon="plus">
+                Thêm thành viên
+            </x-action-button>
+        </x-stats.page-empty>
         @endif
         @endif
 

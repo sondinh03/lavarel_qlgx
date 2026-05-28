@@ -315,11 +315,7 @@ class SessionManager extends BaseComponent
 
 
         if (!empty(trim($this->search))) {
-            $search = trim($this->search);
-            $query->where(function ($q) use ($search) {
-                $q->where('fullDate', 'like', "%{$search}%")
-                    ->orWhere('title', 'like', "%{$search}%");
-            });
+            $query->searchByDate($this->search);
         }
 
         $this->applySorting($query);
@@ -746,7 +742,7 @@ class SessionManager extends BaseComponent
 
     protected function getDefaultNamHocId(): ?int
     {
-        $current = NamHoc::ofParish($this->parishId)
+        $current = NamHoc::query()
             ->active()
             ->current()
             ->value('id');
@@ -755,7 +751,7 @@ class SessionManager extends BaseComponent
             return $current;
         }
 
-        return NamHoc::ofParish($this->parishId)
+        return NamHoc::query()
             ->active()
             ->orderByDesc('name')
             ->value('id');

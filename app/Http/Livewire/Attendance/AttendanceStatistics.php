@@ -17,9 +17,9 @@ use Illuminate\Support\Collection;
  *
  * Features:
  * - Donut chart: phân bố trạng thái (có mặt / vắng phép / không phép / chưa điểm danh)
- * - Line chart: tỷ lệ có mặt theo từng buổi
+ * - Line chart: tỷ lệ có mặt theo ngày/tuần/tháng/khoảng thời gian
  * - Summary cards: tổng quan toàn lớp/khối/xứ
- * - Phạm vi: lớp / khối / toàn xứ
+ * - Phạm vi tự động theo filter: lớp → khối → toàn xứ
  * - Hỗ trợ cả đi học (type=1) và đi lễ (type=2)
  */
 class AttendanceStatistics extends BaseComponent
@@ -32,8 +32,13 @@ class AttendanceStatistics extends BaseComponent
     public $selectedKy       = null;
     public int $attendanceType = 1; // 1 = đi học, 2 = đi lễ
 
-    /** @var string Phạm vi: 'class' | 'grade' | 'parish' */
-    public string $scope = 'class';
+    /** @var string groupBy: 'day' | 'week' | 'month' | 'range' */
+    public string $groupBy = 'day';
+
+    /** @var string|null yyyy-mm-dd */
+    public ?string $dateFrom = null;
+    /** @var string|null yyyy-mm-dd */
+    public ?string $dateTo = null;
 
     // ==================== DATA ====================
 
@@ -60,7 +65,9 @@ class AttendanceStatistics extends BaseComponent
             'selectedClassId' => ['as' => 'classId', 'except' => null],
             'selectedKy'      => ['as' => 'ky',      'except' => null],
             'attendanceType'  => ['as' => 'type',    'except' => 1],
-            'scope'           => ['as' => 'scope',   'except' => 'class'],
+            'groupBy'         => ['as' => 'groupBy', 'except' => 'day'],
+            'dateFrom'        => ['as' => 'from',    'except' => null],
+            'dateTo'          => ['as' => 'to',      'except' => null],
         ], parent::queryString());
     }
 
@@ -95,15 +102,6 @@ class AttendanceStatistics extends BaseComponent
             $this->loadLops();
         }
 
-        // Auto-detect scope từ filter ban đầu
-        if (!$this->selectedClassId && !$this->selectedKhoi) {
-            $this->scope = 'parish';
-        } elseif (!$this->selectedClassId && $this->selectedKhoi) {
-            $this->scope = 'grade';
-        } else {
-            $this->scope = 'class';
-        }
-
         $this->reloadChartData();
     }
 
@@ -119,8 +117,22 @@ class AttendanceStatistics extends BaseComponent
         $this->attendanceType = in_array((int) $this->attendanceType, [1, 2])
             ? (int) $this->attendanceType : 1;
 
-        if (!in_array($this->scope, ['class', 'grade', 'parish'])) {
-            $this->scope = 'parish';
+        if (!in_array($this->groupBy, ['day', 'week', 'month', 'range'], true)) {
+            $this->groupBy = 'day';
+        }
+
+        $this->dateFrom = $this->normalizeDate($this->dateFrom);
+        $this->dateTo   = $this->normalizeDate($this->dateTo);
+
+        if ($this->dateFrom && $this->dateTo) {
+            try {
+                if (Carbon::parse($this->dateFrom)->gt(Carbon::parse($this->dateTo))) {
+                    [$this->dateFrom, $this->dateTo] = [$this->dateTo, $this->dateFrom];
+                }
+            } catch (\Exception $e) {
+                $this->dateFrom = null;
+                $this->dateTo   = null;
+            }
         }
     }
 
@@ -129,7 +141,7 @@ class AttendanceStatistics extends BaseComponent
     protected function loadNamHocs(): void
     {
         try {
-            $this->availableNamHocs = NamHoc::ofParish($this->parishId)
+            $this->availableNamHocs = NamHoc::query()
                 ->active()
                 ->orderByDesc('start_date_one')
                 ->get(['id', 'name']);
@@ -217,7 +229,7 @@ class AttendanceStatistics extends BaseComponent
             ->where('parish_id', $this->parishId)
             ->active();
 
-        return match ($this->scope) {
+        return match ($this->resolveScope()) {
             'class'  => $this->selectedClassId ? collect([$this->selectedClassId]) : collect(),
             'grade'  => $this->selectedKhoi
                 ? $query->where('grade_level_id', $this->selectedKhoi)->pluck('id')
@@ -225,6 +237,19 @@ class AttendanceStatistics extends BaseComponent
             'parish' => $query->pluck('id'),
             default  => collect(),
         };
+    }
+
+    protected function resolveScope(): string
+    {
+        if ($this->selectedClassId) {
+            return 'class';
+        }
+
+        if ($this->selectedKhoi) {
+            return 'grade';
+        }
+
+        return 'parish';
     }
 
     protected function fetchSessions(Collection $classIds): Collection
@@ -235,6 +260,13 @@ class AttendanceStatistics extends BaseComponent
 
         if ($this->selectedKy) {
             $query->where('semester', $this->selectedKy);
+        }
+
+        if ($this->dateFrom) {
+            $query->whereDate('date', '>=', $this->dateFrom);
+        }
+        if ($this->dateTo) {
+            $query->whereDate('date', '<=', $this->dateTo);
         }
 
         return $query->get(['id', 'date', 'class_id', 'status']);
@@ -277,8 +309,8 @@ class AttendanceStatistics extends BaseComponent
     }
 
     /**
-     * Line chart: tỷ lệ có mặt (%) theo từng buổi.
-     * Khi scope > class: gộp các buổi cùng ngày → trung bình.
+     * Line chart: tỷ lệ có mặt (%) theo ngày / tuần / tháng (hoặc theo khoảng thời gian).
+     * Khi scope > class: gộp các buổi theo group key → tính có trọng số.
      */
     protected function buildTrendChart(Collection $records, Collection $sessions, Collection $classIds): void
     {
@@ -291,9 +323,7 @@ class AttendanceStatistics extends BaseComponent
 
         $recordsBySession = $records->groupBy('session_id');
 
-        // Gộp theo ngày: nhiều lớp cùng ngày → lấy trung bình có trọng số
-        $byDate = [];
-
+        $byBucket = [];
         foreach ($sessions as $session) {
             $sessionRecords = $recordsBySession->get($session->id, collect());
             $presentCount   = $sessionRecords->where('status', AttendanceRecord::STATUS_PRESENT)->count();
@@ -301,18 +331,19 @@ class AttendanceStatistics extends BaseComponent
 
             if ($totalStudents === 0) continue;
 
-            $dateStr = Carbon::parse($session->date)->format('Y-m-d');
-            $label   = Carbon::parse($session->date)->format('d/m');
+            $d = Carbon::parse($session->date);
 
-            if (!isset($byDate[$dateStr])) {
-                $byDate[$dateStr] = ['label' => $label, 'present' => 0, 'total' => 0];
+            [$key, $label] = $this->getTrendBucketKeyAndLabel($d);
+
+            if (!isset($byBucket[$key])) {
+                $byBucket[$key] = ['label' => $label, 'present' => 0, 'total' => 0];
             }
 
-            $byDate[$dateStr]['present'] += $presentCount;
-            $byDate[$dateStr]['total']   += $totalStudents;
+            $byBucket[$key]['present'] += $presentCount;
+            $byBucket[$key]['total']   += $totalStudents;
         }
 
-        ksort($byDate);
+        ksort($byBucket);
 
         $this->trendChartData = array_values(array_map(function ($data) {
             return [
@@ -321,7 +352,7 @@ class AttendanceStatistics extends BaseComponent
                     ? round($data['present'] / $data['total'] * 100, 1)
                     : 0,
             ];
-        }, $byDate));
+        }, $byBucket));
     }
 
     protected function buildSummary(Collection $records, Collection $sessions, Collection $classIds): void
@@ -398,14 +429,9 @@ class AttendanceStatistics extends BaseComponent
 
     public function updatedSelectedKy(): void   { $this->reloadChartData(); }
     public function updatedAttendanceType(): void { $this->reloadChartData(); }
-    public function updatedScope(): void          { $this->reloadChartData(); }
-
-    public function setScope(string $scope): void
-    {
-        if (!in_array($scope, ['class', 'grade', 'parish'])) return;
-        $this->scope = $scope;
-        $this->reloadChartData();
-    }
+    public function updatedGroupBy(): void         { $this->reloadChartData(); }
+    public function updatedDateFrom(): void        { $this->reloadChartData(); }
+    public function updatedDateTo(): void          { $this->reloadChartData(); }
 
     public function setType(int $type): void
     {
@@ -457,9 +483,63 @@ class AttendanceStatistics extends BaseComponent
         return is_numeric($value) ? (int) $value : null;
     }
 
+    private function normalizeDate(?string $value): ?string
+    {
+        if (!$value) {
+            return null;
+        }
+
+        try {
+            return Carbon::parse($value)->format('Y-m-d');
+        } catch (\Exception $e) {
+            return null;
+        }
+    }
+
+    /**
+     * @return array{0:string,1:string} [key,label]
+     */
+    protected function getTrendBucketKeyAndLabel(Carbon $date): array
+    {
+        return match ($this->groupBy) {
+            'week' => $this->bucketWeek($date),
+            'month' => $this->bucketMonth($date),
+            default => $this->bucketDay($date), // day | range
+        };
+    }
+
+    /**
+     * @return array{0:string,1:string}
+     */
+    protected function bucketDay(Carbon $date): array
+    {
+        return [$date->format('Y-m-d'), $date->format('d/m')];
+    }
+
+    /**
+     * ISO week, label as dd/mm–dd/mm.
+     * @return array{0:string,1:string}
+     */
+    protected function bucketWeek(Carbon $date): array
+    {
+        $start = $date->copy()->startOfWeek(Carbon::MONDAY);
+        $end   = $date->copy()->endOfWeek(Carbon::SUNDAY);
+        $key   = $start->format('Y-m-d');
+        $label = $start->format('d/m') . '–' . $end->format('d/m');
+        return [$key, $label];
+    }
+
+    /**
+     * @return array{0:string,1:string}
+     */
+    protected function bucketMonth(Carbon $date): array
+    {
+        return [$date->format('Y-m'), $date->format('m/Y')];
+    }
+
     protected function getDefaultNamHocId(): ?int
     {
-        return NamHoc::ofParish($this->parishId)
+        return NamHoc::query()
             ->active()
             ->orderByDesc('start_date_one')
             ->value('id');

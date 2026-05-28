@@ -94,7 +94,7 @@ class StudentImportPreview extends BaseComponent
     protected function loadInitialData(): void
     {
         if (!$this->selectedNamHoc) {
-            $this->selectedNamHoc = NamHoc::ofParish($this->parishId)
+            $this->selectedNamHoc = NamHoc::query()
                 ->active()
                 ->orderByDesc('name')
                 ->value('id');

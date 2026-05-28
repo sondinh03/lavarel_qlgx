@@ -5,6 +5,7 @@ namespace App\Http\Livewire\Group;
 use App\Http\Livewire\Base\BaseComponent;
 use App\Models\Group;
 use App\Models\GroupMember;
+use App\Models\Parishioner;
 use App\Models\Teacher;
 use App\Models\Student;
 use Illuminate\Support\Facades\DB;
@@ -208,10 +209,18 @@ class GroupMemberManager extends BaseComponent
                         ->orWhere('last_name', 'like', $term)
                         ->orWhere('phone_number', 'like', $term);
                 });
-            } else {
+            } elseif ($this->group->member_type === 'student') {
                 $query->whereHasMorph('memberable', [Student::class], function ($q) use ($term) {
                     $q->where('first_name', 'like', $term)
                         ->orWhere('last_name', 'like', $term);
+                });
+            } else {
+                // parishioner
+                $query->whereHasMorph('memberable', [Parishioner::class], function ($q) use ($term) {
+                    $q->where('first_name', 'like', $term)
+                        ->orWhere('last_name', 'like', $term)
+                        ->orWhere('phone', 'like', $term)
+                        ->orWhere('cccd', 'like', $term);
                 });
             }
         }
@@ -251,15 +260,32 @@ class GroupMemberManager extends BaseComponent
             return $query->orderBy('last_name')->orderBy('first_name')->paginate(10);
         }
 
-        // Student
-        $query = Student::where('parish_id', $this->parishId)
-            ->where('is_active', true)
+        if ($this->group->member_type === 'student') {
+            $query = Student::where('parish_id', $this->parishId)
+                ->where('is_active', true)
+                ->whereNotIn('id', $existingIds);
+
+            if ($term) {
+                $query->where(function ($q) use ($term) {
+                    $q->where('first_name', 'like', $term)
+                        ->orWhere('last_name', 'like', $term);
+                });
+            }
+
+            return $query->orderBy('last_name')->orderBy('first_name')->paginate(10);
+        }
+
+        // Parishioner
+        $query = Parishioner::where('parish_id', $this->parishId)
+            ->where('status', true)
             ->whereNotIn('id', $existingIds);
 
         if ($term) {
             $query->where(function ($q) use ($term) {
                 $q->where('first_name', 'like', $term)
-                    ->orWhere('last_name', 'like', $term);
+                    ->orWhere('last_name', 'like', $term)
+                    ->orWhere('phone', 'like', $term)
+                    ->orWhere('cccd', 'like', $term);
             });
         }
 

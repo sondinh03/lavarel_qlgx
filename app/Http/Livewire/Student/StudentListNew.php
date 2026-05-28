@@ -106,6 +106,7 @@ class StudentListNew extends BaseComponent
     public function mount(): void
     {
         $this->authorize('viewAny', StudentNew::class);
+        $this->suggestedParishioners = collect();
         parent::mount();
         $this->requireParishId();
     }
@@ -164,22 +165,46 @@ class StudentListNew extends BaseComponent
             $this->emit('toast', 'warning', 'Từ khóa tìm kiếm không hợp lệ.');
         }
 
-        $this->resetPage();
-        $this->resetSelection();
+        $this->finalizeFilterChange();
     }
 
     public function updatedModalSearch(): void
     {
-        $this->modalSearch      = trim($this->modalSearch);
-        $this->selectAllInModal = false;
-        $this->studentsToAdd    = [];
+        $this->modalSearch = trim($this->modalSearch);
+        $this->resetEnrollModalSelection();
         $this->resetPage('modal_page');
     }
 
     public function updatedBirthYear(): void
     {
         $this->validateOnly('birthYear');
+        $this->resetEnrollModalSelection();
         $this->resetPage('modal_page');
+    }
+
+    public function updatedParishionerSearch(): void
+    {
+        $this->parishionerSearch = trim($this->parishionerSearch);
+        $this->resetParishionerModalSelection();
+        $this->resetPage('parishioner_page');
+    }
+
+    public function updatedParishionerBirthYear(): void
+    {
+        $this->resetParishionerModalSelection();
+        $this->resetPage('parishioner_page');
+    }
+
+    public function updatedAgeFrom(): void
+    {
+        $this->resetParishionerModalSelection();
+        $this->resetPage('parishioner_page');
+    }
+
+    public function updatedAgeTo(): void
+    {
+        $this->resetParishionerModalSelection();
+        $this->resetPage('parishioner_page');
     }
 
     public function updatedSelectedNamHoc(): void
@@ -197,9 +222,8 @@ class StudentListNew extends BaseComponent
 
         $this->selectedKhoi = null;
         $this->selectedLop  = null;
-        $this->search       = '';
-        $this->resetPage();
-        $this->resetSelection();
+        $this->search = '';
+        $this->finalizeFilterChange();
     }
 
     public function updatedSelectedKhoi(): void
@@ -218,8 +242,7 @@ class StudentListNew extends BaseComponent
         }
 
         $this->selectedLop = null;
-        $this->resetPage();
-        $this->resetSelection();
+        $this->finalizeFilterChange();
     }
 
     public function updatedSelectedLop(): void
@@ -238,72 +261,64 @@ class StudentListNew extends BaseComponent
             }
         }
 
-        $this->resetPage();
-        $this->resetSelection();
+        $this->finalizeFilterChange();
     }
 
     public function updatedSelectAll($value): void
     {
+        $pageIds = $this->getCurrentPageStudentIds();
+
         if ($value) {
-            $this->selectedStudents = $this->getCurrentStudentsQuery()
-                ->pluck('id')
-                ->map(fn($id) => (int) $id)
-                ->toArray();
+            $this->selectedStudents = array_values(array_unique(array_merge($this->selectedStudents, $pageIds)));
         } else {
-            $this->selectedStudents = [];
+            $this->selectedStudents = array_values(array_diff($this->selectedStudents, $pageIds));
         }
+
+        $this->syncSelectAllForCurrentPage();
     }
 
     public function updatedSelectedStudents(): void
     {
-        $this->selectedStudents = array_values(
-            array_unique(
-                array_map('intval', array_filter($this->selectedStudents, 'is_numeric'))
-            )
-        );
-
-        $totalCount    = $this->getCurrentStudentsQuery()->count();
-        $selectedCount = count($this->selectedStudents);
-
-        $this->selectAll = $totalCount > 0 && $selectedCount >= $totalCount;
+        $this->selectedStudents = $this->normalizeIdList($this->selectedStudents);
+        $this->syncSelectAllForCurrentPage();
     }
 
     public function updatedSelectAllInModal($value): void
     {
+        $pageIds = $this->getCurrentPageAvailableStudentIds();
+
         if ($value) {
-            $this->studentsToAdd = $this->getAvailableStudentsQuery()
-                ->pluck('id')
-                ->map(fn($id) => (int) $id)
-                ->toArray();
+            $this->studentsToAdd = array_values(array_unique(array_merge($this->studentsToAdd, $pageIds)));
         } else {
-            $this->studentsToAdd = [];
+            $this->studentsToAdd = array_values(array_diff($this->studentsToAdd, $pageIds));
         }
+
+        $this->syncSelectAllInModalForCurrentPage();
     }
 
     public function updatedStudentsToAdd(): void
     {
-        $this->studentsToAdd = array_values(
-            array_unique(
-                array_map('intval', array_filter($this->studentsToAdd, 'is_numeric'))
-            )
-        );
-
-        $availableIds  = $this->getAvailableStudentsQuery()->pluck('id')->toArray();
-        $selectedCount = count(array_intersect($this->studentsToAdd, $availableIds));
-        $totalCount    = count($availableIds);
-
-        $this->selectAllInModal = $totalCount > 0 && $selectedCount === $totalCount;
+        $this->studentsToAdd = $this->normalizeIdList($this->studentsToAdd);
+        $this->syncSelectAllInModalForCurrentPage();
     }
 
     public function updatedSelectAllParishioners($value): void
     {
+        $pageIds = $this->getCurrentPageParishionerIds();
+
         if ($value) {
-            $this->selectedParishioners = $this->getAvailableParishionersQuery()
-                ->pluck('id')
-                ->toArray();
+            $this->selectedParishioners = array_values(array_unique(array_merge($this->selectedParishioners, $pageIds)));
         } else {
-            $this->selectedParishioners = [];
+            $this->selectedParishioners = array_values(array_diff($this->selectedParishioners, $pageIds));
         }
+
+        $this->syncSelectAllParishionersForCurrentPage();
+    }
+
+    public function updatedSelectedParishioners(): void
+    {
+        $this->selectedParishioners = $this->normalizeIdList($this->selectedParishioners);
+        $this->syncSelectAllParishionersForCurrentPage();
     }
 
     // ==================== PARISHIONER LINKING ====================
@@ -313,7 +328,7 @@ class StudentListNew extends BaseComponent
         $this->authorize('update', StudentNew::findOrFail($studentId));
 
         try {
-            $student = StudentNew::findOrFail($studentId);
+            $student = StudentNew::with('saint')->findOrFail($studentId);
             if ($student->parishioner_id) {
                 $this->emit('toast', 'info', 'Học sinh này đã được liên kết với giáo dân. Vui lòng hủy liên kết trước khi liên kết mới.');
                 return;
@@ -321,6 +336,7 @@ class StudentListNew extends BaseComponent
             $this->linkingStudentId      = $studentId;
             $this->suggestedParishioners = $this->findSuggestedParishioners($student);
             $this->showLinkModal         = true;
+            $this->emit('openLinkModal');
         } catch (ModelNotFoundException $e) {
             $this->emit('toast', 'error', 'Không tìm thấy học sinh này');
         }
@@ -328,11 +344,8 @@ class StudentListNew extends BaseComponent
 
     protected function findSuggestedParishioners(StudentNew $student): \Illuminate\Support\Collection
     {
-        $linkedIds = StudentNew::whereNotNull('parishioner_id')
-            ->pluck('parishioner_id');
-
-        $candidates = Parishioner::ofParish($this->parishId)
-            ->whereNotIn('id', $linkedIds)
+        $candidates = Parishioner::query()
+            ->whereDoesntHave('student')
             ->where(function ($q) use ($student) {
                 $q->whereRaw(
                     "LOWER(CONCAT(last_name, ' ', first_name)) LIKE ?",
@@ -356,7 +369,7 @@ class StudentListNew extends BaseComponent
             DB::beginTransaction();
 
             $student     = StudentNew::findOrFail($this->linkingStudentId);
-            $parishioner = Parishioner::ofParish($this->parishId)->findOrFail($parishionerId);
+            $parishioner = Parishioner::query()->findOrFail($parishionerId);
 
             $student->update(['parishioner_id' => $parishioner->id]);
 
@@ -395,9 +408,15 @@ class StudentListNew extends BaseComponent
 
     public function closeLinkModal(): void
     {
+        $this->resetLinkModalState();
+    }
+
+    protected function resetLinkModalState(): void
+    {
         $this->showLinkModal         = false;
         $this->linkingStudentId      = null;
         $this->suggestedParishioners = collect();
+        $this->emit('closeLinkModal');
     }
 
     // ==================== IMPORT FROM PARISHIONERS ====================
@@ -543,13 +562,20 @@ class StudentListNew extends BaseComponent
         $this->enrollTab = $tab;
         $this->resetEnrollForm();
         $this->showEnrollNewModal = true;
+        $this->emit('openEnrollModal');
     }
 
     public function closeEnrollModal(): void
     {
+        $this->resetEnrollModalState();
+    }
+
+    protected function resetEnrollModalState(): void
+    {
         $this->showEnrollNewModal = false;
         $this->resetEnrollForm();
         $this->resetValidation();
+        $this->emit('closeEnrollModal');
     }
 
     public function switchEnrollTab(string $tab): void
@@ -559,12 +585,28 @@ class StudentListNew extends BaseComponent
         $this->resetValidation();
     }
 
-    private function resetEnrollForm(): void
+    protected function resetEnrollForm(): void
     {
-        $this->studentsToAdd     = [];
-        $this->selectAllInModal  = false;
-        $this->modalSearch       = '';
-        $this->birthYear         = null;
+        $this->resetEnrollModalSelection();
+        $this->modalSearch           = '';
+        $this->birthYear             = null;
+        $this->parishionerSearch     = '';
+        $this->parishionerBirthYear  = null;
+        $this->ageFrom               = null;
+        $this->ageTo                 = null;
+        $this->resetParishionerModalSelection();
+    }
+
+    protected function resetEnrollModalSelection(): void
+    {
+        $this->studentsToAdd    = [];
+        $this->selectAllInModal = false;
+    }
+
+    protected function resetParishionerModalSelection(): void
+    {
+        $this->selectedParishioners    = [];
+        $this->selectAllParishioners = false;
     }
 
     // ==================== ADD STUDENTS MODAL ====================
@@ -700,41 +742,41 @@ class StudentListNew extends BaseComponent
 
     // ==================== QUERY HELPERS ====================
 
-    protected function getCurrentStudentsQuery()
+    /**
+     * Lọc danh sách học sinh theo năm học / khối / lớp / từ khóa (dùng chung list + stats).
+     */
+    protected function applyListFilters($query, bool $withSearch = true): void
     {
-        $query = StudentNew::with(['saint', 'parishGroup']);
-
-        if ($this->selectedNamHoc) {
+        if ($this->selectedNamHoc || $this->selectedKhoi || $this->selectedLop) {
             $query->whereHas('classes', function ($q) {
-                $q->where('classes.school_year_id', $this->selectedNamHoc);
+                if ($this->selectedNamHoc) {
+                    $q->where('classes.school_year_id', $this->selectedNamHoc);
+                }
+                if ($this->selectedKhoi) {
+                    $q->where('classes.grade_level_id', $this->selectedKhoi);
+                }
+                if ($this->selectedLop) {
+                    $q->where('classes.id', $this->selectedLop);
+                }
             });
         }
 
-        if ($this->selectedKhoi) {
-            $query->whereHas('classes', function ($q) {
-                $q->where('classes.grade_level_id', $this->selectedKhoi);
-            });
-        }
-
-        if ($this->selectedLop) {
-            $query->whereHas('classes', function ($q) {
-                $q->where('classes.id', $this->selectedLop);
-            });
-        }
-
-        if (!empty(trim($this->search))) {
+        if ($withSearch && !empty(trim($this->search))) {
             $search = trim($this->search);
             $query->where(function ($q) use ($search) {
                 $q->where('first_name', 'like', "%{$search}%")
                     ->orWhere('last_name', 'like', "%{$search}%")
                     ->orWhere('student_code', 'like', "%{$search}%")
                     ->orWhereRaw("CONCAT(last_name, ' ', first_name) LIKE ?", ["%{$search}%"])
-                    ->orWhereHas('saint', function ($q2) use ($search) {
-                        $q2->where('name', 'like', "%{$search}%");
-                    });
+                    ->orWhereHas('saint', fn ($q2) => $q2->where('name', 'like', "%{$search}%"));
             });
         }
+    }
 
+    protected function getCurrentStudentsQuery()
+    {
+        $query = StudentNew::with(['saint', 'parishGroup']);
+        $this->applyListFilters($query);
         $this->applySorting($query);
 
         return $query;
@@ -829,7 +871,10 @@ class StudentListNew extends BaseComponent
     protected function getGenderStats(): array
     {
         try {
-            $stats = $this->getCurrentStudentsQuery()
+            $query = StudentNew::query();
+            $this->applyListFilters($query);
+
+            $stats = $query
                 ->selectRaw('gender, COUNT(*) as total')
                 ->groupBy('gender')
                 ->pluck('total', 'gender');
@@ -896,12 +941,14 @@ class StudentListNew extends BaseComponent
         }
 
         if (array_key_exists('lop', $filters)) {
-            $this->selectedLop = is_numeric($filters['lop']) ? (int) $filters['lop'] : null;
-            $this->search      = '';
+            $newLop = is_numeric($filters['lop']) ? (int) $filters['lop'] : null;
+            if ($newLop !== $this->selectedLop) {
+                $this->selectedLop = $newLop;
+                $this->search      = '';
+            }
         }
 
-        $this->resetPage();
-        $this->resetSelection();
+        $this->finalizeFilterChange();
     }
 
     public function resetFilters(): void
@@ -914,20 +961,97 @@ class StudentListNew extends BaseComponent
         $this->selectedKhoi = null;
         $this->selectedLop  = null;
         $this->search       = '';
-        $this->resetPage();
-        $this->resetSelection();
+        $this->finalizeFilterChange();
         $this->emitTo('filters.filter-bar', 'resetFilters');
         $this->emit('toast', 'success', 'Đã đặt lại bộ lọc');
     }
 
     public function handleRefresh(): void
     {
+        $this->finalizeFilterChange();
+    }
+
+    // ==================== HELPERS ====================
+
+    protected function finalizeFilterChange(): void
+    {
         $this->lopCache = null;
         $this->resetPage();
         $this->resetSelection();
     }
 
-    // ==================== HELPERS ====================
+    protected function getListContext(): string
+    {
+        return implode('|', [
+            'nam:' . ($this->selectedNamHoc ?? 'none'),
+            'khoi:' . ($this->selectedKhoi ?? 'none'),
+            'lop:' . ($this->selectedLop ?? 'none'),
+            'search:' . md5(trim($this->search ?? '')),
+            'page:' . ($this->page ?? 1),
+            'sort:' . $this->sortField . '-' . $this->sortDirection,
+            'per:' . $this->perPage,
+        ]);
+    }
+
+    protected function normalizeIdList(array $ids): array
+    {
+        return array_values(
+            array_unique(
+                array_map('intval', array_filter($ids, 'is_numeric'))
+            )
+        );
+    }
+
+    protected function getCurrentPageStudentIds(): array
+    {
+        return $this->getCurrentStudentsQuery()
+            ->paginate($this->perPage, ['id'], 'page', $this->page ?? 1)
+            ->getCollection()
+            ->pluck('id')
+            ->map(fn ($id) => (int) $id)
+            ->toArray();
+    }
+
+    protected function getCurrentPageAvailableStudentIds(): array
+    {
+        return $this->getAvailableStudentsQuery()
+            ->paginate(15, ['id'], 'modal_page')
+            ->getCollection()
+            ->pluck('id')
+            ->map(fn ($id) => (int) $id)
+            ->toArray();
+    }
+
+    protected function getCurrentPageParishionerIds(): array
+    {
+        return $this->getAvailableParishionersQuery()
+            ->paginate(15, ['id'], 'parishioner_page')
+            ->getCollection()
+            ->pluck('id')
+            ->map(fn ($id) => (int) $id)
+            ->toArray();
+    }
+
+    protected function syncSelectAllForCurrentPage(): void
+    {
+        $pageIds = $this->getCurrentPageStudentIds();
+        $this->selectAll = !empty($pageIds)
+            && count(array_intersect($this->selectedStudents, $pageIds)) === count($pageIds);
+    }
+
+    protected function syncSelectAllInModalForCurrentPage(): void
+    {
+        $pageIds = $this->getCurrentPageAvailableStudentIds();
+        $this->selectAllInModal = !empty($pageIds)
+            && count(array_intersect($this->studentsToAdd, $pageIds)) === count($pageIds);
+    }
+
+    protected function syncSelectAllParishionersForCurrentPage(): void
+    {
+        $pageIds = $this->getCurrentPageParishionerIds();
+        $this->selectAllParishioners = !empty($pageIds)
+            && count(array_intersect($this->selectedParishioners, $pageIds)) === count($pageIds);
+    }
 
     protected function resetSelection(): void
     {
@@ -938,7 +1062,7 @@ class StudentListNew extends BaseComponent
     protected function getDefaultNamHocId(): ?int
     {
         // Ưu tiên 1: năm học đang trong khoảng thời gian hiện tại
-        $current = \App\Models\NamHoc::ofParish($this->parishId)
+        $current = \App\Models\NamHoc::query()
             ->active()
             ->current()
             ->value('id');
@@ -948,7 +1072,7 @@ class StudentListNew extends BaseComponent
         }
 
         // Ưu tiên 2: fallback về năm học mới nhất nếu không có năm học hiện tại
-        return \App\Models\NamHoc::ofParish($this->parishId)
+        return \App\Models\NamHoc::query()
             ->active()
             ->orderByDesc('name')
             ->value('id');
@@ -957,6 +1081,7 @@ class StudentListNew extends BaseComponent
     public function clearBirthYearFilters(): void
     {
         $this->birthYear = null;
+        $this->resetEnrollModalSelection();
         $this->resetPage('modal_page');
     }
 
@@ -1011,6 +1136,7 @@ class StudentListNew extends BaseComponent
         return view('livewire.student.student-list-new', [
             'lop'                   => $lop,
             'students'              => $students,
+            'listContext'           => $this->getListContext(),
             'total'                 => $stats['total'],
             'countnam'              => $stats['countnam'],
             'countnu'               => $stats['countnu'],

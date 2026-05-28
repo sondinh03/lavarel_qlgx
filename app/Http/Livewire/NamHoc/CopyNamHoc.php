@@ -72,7 +72,7 @@ class CopyNamHoc extends BaseComponent
 
     protected function loadInitialData(): void
     {
-        $this->namHocs = NamHoc::ofParish($this->parishId)
+        $this->namHocs = NamHoc::query()
             ->orderByDesc('name')
             ->get(['id', 'name']);
 

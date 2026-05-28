@@ -37,22 +37,27 @@ class Group extends Model
     const TYPE_CHOIR_YOUTH   = 2;
     const TYPE_CHOIR_ADULT   = 3;
     const TYPE_OTHER         = 4;
+    const TYPE_VOCATION      = 5;
+    const TYPE_CLUB          = 6;
 
     const MEMBER_TYPE_TEACHER = 'teacher';
     const MEMBER_TYPE_STUDENT = 'student';
+    const MEMBER_TYPE_PARISHIONER = 'parishioner';
 
     const TYPE_LABELS = [
         self::TYPE_TEACHER_GROUP => 'Nhóm Giáo lý viên',
         self::TYPE_CHOIR_YOUTH   => 'Ca đoàn thiếu nhi',
         self::TYPE_CHOIR_ADULT   => 'Ca đoàn người lớn',
         self::TYPE_OTHER         => 'Khác',
+        self::TYPE_VOCATION      => 'Lớp ơn gọi',
+        self::TYPE_CLUB          => 'Câu lạc bộ / Tiện ích',
     ];
 
     // ==================== RELATIONSHIPS ====================
 
     public function parish()
     {
-        return $this->belongsTo(Parish::class);
+        return $this->belongsTo(ParishNew::class, 'parish_id');
     }
 
     public function members()

@@ -4,6 +4,7 @@ namespace App\Http\Livewire\Student;
 
 use App\Http\Livewire\Base\BaseComponent;
 use App\Models\CatechismClass;
+use App\Models\ParishNew;
 use App\Models\StudentNew;
 
 /**
@@ -25,6 +26,14 @@ class PrintCards extends BaseComponent
 
     /** @var int|null Lớp học — dùng khi in cả lớp */
     public ?int $classId = null;
+
+    /**
+     * Loại thẻ: permanent = không lớp/năm (dùng nhiều năm), annual = có lớp + năm học.
+     */
+    public string $cardType = 'permanent';
+
+    /** Tên giáo xứ (ParishNew) hiển thị trên thẻ */
+    public string $parishName = '';
 
     // ==================== DATA ====================
 
@@ -52,14 +61,23 @@ class PrintCards extends BaseComponent
         }
 
         $this->loadStudents();
+        $this->resolveParishName();
     }
 
     protected function queryString(): array
     {
         return array_merge([
-            'ids'     => ['except' => null],
-            'classId' => ['except' => null],
+            'ids'      => ['except' => null],
+            'classId'  => ['except' => null],
+            'cardType' => ['except' => 'permanent'],
         ], parent::queryString());
+    }
+
+    public function updatedCardType(string $value): void
+    {
+        if (!in_array($value, ['permanent', 'annual'], true)) {
+            $this->cardType = 'permanent';
+        }
     }
 
     // ==================== DATA LOADING ====================
@@ -102,10 +120,28 @@ class PrintCards extends BaseComponent
             'birthday',
             'gender',
             'saint_id',
+            'parish_id',
             'parish_group_id',
             'avatar_path',
             'qr_token',
         ]);
+    }
+
+    protected function resolveParishName(): void
+    {
+        $parishId = $this->parishId;
+
+        if (!$parishId && $this->lop?->parish_id) {
+            $parishId = (int) $this->lop->parish_id;
+        }
+
+        if (!$parishId && $this->students->isNotEmpty()) {
+            $parishId = (int) $this->students->first()->parish_id;
+        }
+
+        $this->parishName = $parishId
+            ? (ParishNew::query()->whereKey($parishId)->value('name') ?? '')
+            : '';
     }
 
     // ==================== ACTIONS ====================
@@ -125,8 +161,10 @@ class PrintCards extends BaseComponent
     public function render()
     {
         return view('livewire.student.print-cards', [
-            'students' => $this->students,
-            'lop'      => $this->lop,
+            'students'   => $this->students,
+            'lop'        => $this->lop,
+            'cardType'   => $this->cardType,
+            'parishName' => $this->parishName,
         ])
             ->extends('frontend.layout.main')
             ->section('content');

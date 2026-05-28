@@ -215,6 +215,7 @@ class CatechismClassList extends BaseComponent
 
         $this->resetForm();
         $this->showForm = true;
+        $this->emit('openModal');
     }
 
     public function edit(int $id): void
@@ -234,6 +235,7 @@ class CatechismClassList extends BaseComponent
             $this->isActive        = (bool) $class->is_active;
 
             $this->showForm = true;
+            $this->emit('openModal');
         } catch (ModelNotFoundException $e) {
             session()->flash('error', 'Không tìm thấy lớp học này');
         } catch (\Exception $e) {
@@ -444,6 +446,7 @@ class CatechismClassList extends BaseComponent
     public function closeModal(): void
     {
         $this->showForm = false;
+        $this->emit('closeModal');
         $this->resetForm();
         $this->resetValidation();
     }
@@ -471,7 +474,7 @@ class CatechismClassList extends BaseComponent
 
     protected function getDefaultNamHocId(): ?int
     {
-        return NamHoc::ofParish($this->parishId)
+        return NamHoc::query()
             ->active()
             ->orderByDesc('name')
             ->value('id');

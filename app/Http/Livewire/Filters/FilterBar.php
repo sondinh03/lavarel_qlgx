@@ -34,6 +34,7 @@ class FilterBar extends Component
     /** @var Collection<int, string> */
     // public $kys;
     public $kys = [
+        '0' => 'Cả năm',
         '1' => 'Kỳ 1',
         '2' => 'Kỳ 2',
     ];
@@ -137,7 +138,7 @@ class FilterBar extends Component
 
     public function loadNamHocs()
     {
-        $this->namHocs = NamHoc::ofParish($this->parish_id)
+        $this->namHocs = NamHoc::where('parish_id', $this->parish_id)
             ->active()
             ->orderByDesc('name')
             ->pluck('name', 'id');
@@ -212,8 +213,12 @@ class FilterBar extends Component
         $this->emitFilter();
     }
 
-    public function updatedSelectedKy()
+    public function updatedSelectedKy(): void
     {
+        if ($this->selectedKy !== '' && $this->selectedKy !== null) {
+            $this->selectedKy = (int) $this->selectedKy;
+        }
+
         $this->emitFilter();
     }
 

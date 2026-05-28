@@ -5,17 +5,28 @@
 ]" />
 @endsection
 
-<div class="min-h-screen bg-slate-50 p-2 sm:p-4 lg:p-6" style="min-height: calc(100vh - 56px - var(--bottom-offset));">
+<div class="min-h-screen bg-slate-50 p-2 sm:p-4 lg:p-6"
+    style="min-height: calc(100vh - 56px - var(--bottom-offset));"
+    x-data="{ showForm: false }"
+    x-init="
+        document.addEventListener('livewire:load', () => {
+            Livewire.on('openModal', () => { showForm = true; });
+            Livewire.on('closeModal', () => { showForm = false; });
+        });
+    ">
     <a href="#main-content" class="sr-only focus:not-sr-only">Bỏ qua tới nội dung</a>
 
-    <div class="mx-auto max-w-7xl space-y-6">
+    <div id="main-content" class="mx-auto max-w-7xl space-y-6">
 
         {{-- Main Card --}}
-        <div class="bg-white rounded-2xl shadow-sm border border-slate-200">
+        <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
             <x-page-header
+                class="rounded-t-2xl"
                 title="Danh sách gia đình"
-                :count="$families->total()">
-            </x-page-header>
+                description="Quản lý hồ sơ gia đình trong giáo xứ"
+                :stat-value="$families->total()"
+                stat-label="Gia đình"
+                icon-type="default" />
 
             <div class="p-4 lg:p-6 border-b border-slate-200 bg-slate-50/70">
                 <div class="flex flex-col gap-4">
@@ -84,8 +95,8 @@
         </div>
 
         {{-- Table Card --}}
+        @if($families && $families->count() > 0)
         <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
-            @if($families && $families->count() > 0)
             <div class="overflow-x-auto">
                 <table class="w-full border-separate border-spacing-0">
                     <thead class="bg-slate-50 border-b border-slate-200">
@@ -251,66 +262,80 @@
                 <x-pagination :paginator="$families" :per-page-options="[10, 15, 25, 50, 100]" />
             </div>
             @endif
-
-            @else
-            <x-empty-state
-                icon="home"
-                title="Chưa có gia đình nào"
-                description="Hãy thêm gia đình đầu tiên cho giáo xứ">
-                <x-action-button as="a" href="{{ route('families.create') }}" icon="plus">
-                    Thêm gia đình
-                </x-action-button>
-            </x-empty-state>
-            @endif
-
         </div>
 
-        {{-- Modal: Chỉnh sửa nhanh --}}
-        @if($editingId)
-        <div class="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50 p-4"
-            role="dialog" aria-modal="true" wire:click="closeModal">
-            <div class="bg-white rounded-2xl shadow-xl w-full max-w-md overflow-hidden flex flex-col"
-                wire:click.stop>
-
-                <div class="flex-shrink-0 p-6 border-b border-slate-200 bg-gradient-to-br from-primary-50 to-white">
-                    <div class="flex items-start justify-between gap-4">
-                        <div>
-                            <h2 class="text-xl font-bold text-slate-900">Cập nhật gia đình</h2>
-                            <p class="text-sm text-slate-500 mt-1">Chỉnh sửa tên gia đình</p>
-                        </div>
-                        <button wire:click="closeModal" type="button"
-                            class="p-1 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors">
-                            <x-icon name="x" class="w-5 h-5" />
-                        </button>
-                    </div>
-                </div>
-
-                <div class="p-6 space-y-4">
-                    @if($errors->has('modalName'))
-                    <div class="bg-red-50 border-l-4 border-red-500 rounded-xl p-4">
-                        <div class="flex items-start gap-3">
-                            <x-icon name="alert-circle" class="w-5 h-5 text-red-500 flex-shrink-0 mt-0.5" />
-                            <p class="text-sm text-red-700">{{ $errors->first('modalName') }}</p>
-                        </div>
-                    </div>
-                    @endif
-
-                    <x-form-input
-                        label="Tên gia đình"
-                        name="modalName"
-                        wire:model.defer="modalName"
-                        placeholder="VD: Gia đình ông Nguyễn Văn A..."
-                        required />
-                </div>
-
-                <div class="px-6 py-4 border-t border-slate-200 bg-slate-50 flex justify-end gap-3">
-                    <x-action-button wire:click="closeModal" variant="secondary">Hủy</x-action-button>
-                    <x-action-button wire:click="save" icon="save" :loading="true">Cập nhật</x-action-button>
-                </div>
-            </div>
-        </div>
+        @else
+        <x-stats.page-empty
+            tone="primary"
+            title="Chưa có gia đình nào"
+            description="Hãy thêm gia đình đầu tiên cho giáo xứ">
+            <x-slot name="icon">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+                    d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+            </x-slot>
+            <x-button as="a" href="{{ route('families.create') }}" variant="primary">
+                <x-icon name="plus" />
+                Thêm gia đình
+            </x-button>
+        </x-stats.page-empty>
         @endif
 
+    </div>
+
+    {{-- Modal: Chỉnh sửa nhanh --}}
+    <div
+        x-show="showForm"
+        x-cloak
+        x-transition.opacity
+        class="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50 p-4"
+        role="dialog"
+        aria-modal="true"
+        @click="showForm = false; $wire.closeModal()"
+        @keydown.escape.window="showForm = false; $wire.closeModal()">
+
+        <div
+            x-show="showForm"
+            x-transition
+            class="bg-white rounded-2xl shadow-xl w-full max-w-md overflow-hidden flex flex-col"
+            @click.stop>
+
+            <div class="flex-shrink-0 p-6 border-b border-slate-200 bg-gradient-to-br from-primary-50 to-white">
+                <div class="flex items-start justify-between gap-4">
+                    <div>
+                        <h2 class="text-xl font-bold text-slate-900">Cập nhật gia đình</h2>
+                        <p class="text-sm text-slate-500 mt-1">Chỉnh sửa tên gia đình</p>
+                    </div>
+                    <button type="button"
+                        @click="showForm = false; $wire.closeModal()"
+                        class="p-1 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors">
+                        <x-icon name="cancel" class="w-5 h-5" />
+                    </button>
+                </div>
+            </div>
+
+            <div class="p-6 space-y-4">
+                @if($errors->has('modalName'))
+                <div class="bg-red-50 border-l-4 border-red-500 rounded-xl p-4">
+                    <p class="text-sm text-red-700">{{ $errors->first('modalName') }}</p>
+                </div>
+                @endif
+
+                <x-form-input
+                    label="Tên gia đình"
+                    name="modalName"
+                    wire:model.defer="modalName"
+                    placeholder="VD: Gia đình ông Nguyễn Văn A..."
+                    required />
+            </div>
+
+            <div class="px-6 py-4 border-t border-slate-200 bg-slate-50 flex justify-end gap-3">
+                <x-button variant="outline" @click="showForm = false; $wire.closeModal()">Hủy</x-button>
+                <x-button variant="primary" wire:click="save" :loading="true" loading-target="save">
+                    <x-icon name="save" />
+                    Cập nhật
+                </x-button>
+            </div>
+        </div>
     </div>
 </div>
 

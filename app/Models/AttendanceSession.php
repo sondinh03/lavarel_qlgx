@@ -71,6 +71,24 @@ class AttendanceSession extends Model
     }
 
     /**
+     * Tìm theo ngày (cột date). Hỗ trợ gõ một phần: 12, 12/03, 12/03/2026 hoặc 2026-03-12.
+     */
+    public function scopeSearchByDate($query, ?string $term)
+    {
+        $term = trim((string) $term);
+        if ($term === '') {
+            return $query;
+        }
+
+        $like = '%' . addcslashes($term, '%_\\') . '%';
+
+        return $query->where(function ($q) use ($like) {
+            $q->whereRaw("DATE_FORMAT(date, '%d/%m/%Y') LIKE ?", [$like])
+                ->orWhereRaw("DATE_FORMAT(date, '%Y-%m-%d') LIKE ?", [$like]);
+        });
+    }
+
+    /**
      * ======================
      *  RELATIONS
      * ======================

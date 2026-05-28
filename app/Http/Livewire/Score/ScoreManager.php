@@ -247,7 +247,7 @@ class ScoreManager extends BaseComponent
     protected function loadNamHocs(): void
     {
         try {
-            $this->availableNamHocs = NamHoc::ofParish($this->parishId)
+            $this->availableNamHocs = NamHoc::query()
                 ->active()
                 ->orderByDesc('start_date_one')
                 ->get(['id', 'name']);
@@ -1028,7 +1028,7 @@ class ScoreManager extends BaseComponent
 
     protected function getDefaultNamHocId(): ?int
     {
-        return NamHoc::ofParish($this->parishId)
+        return NamHoc::query()
             ->active()
             ->orderByDesc('start_date_one')
             ->value('id');

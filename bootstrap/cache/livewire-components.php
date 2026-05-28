@@ -37,6 +37,7 @@
   'student.student-edit' => 'App\\Http\\Livewire\\Student\\StudentEdit',
   'student.student-import-preview' => 'App\\Http\\Livewire\\Student\\StudentImportPreview',
   'student.student-list-new' => 'App\\Http\\Livewire\\Student\\StudentListNew',
+  'student.student-statistics' => 'App\\Http\\Livewire\\Student\\StudentStatistics',
   'teacher.teacher-import-preview' => 'App\\Http\\Livewire\\Teacher\\TeacherImportPreview',
   'teacher.teacher-manager' => 'App\\Http\\Livewire\\Teacher\\TeacherManager',
 );

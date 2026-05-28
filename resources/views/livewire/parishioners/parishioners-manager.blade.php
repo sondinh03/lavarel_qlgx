@@ -5,27 +5,28 @@
         ]" />
     @endsection
 
-    <div class="min-h-screen bg-slate-50 p-6">
-        <div class="max-w-7xl mx-auto space-y-6">
+<div class="min-h-screen bg-slate-50 p-2 sm:p-4 lg:p-6" style="min-height: calc(100vh - 56px - var(--bottom-offset));">
+    <a href="#main-content" class="sr-only focus:not-sr-only">Bỏ qua tới nội dung</a>
+
+    <div id="main-content" class="mx-auto max-w-7xl space-y-6">
             {{-- Header + Actions --}}
             <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
                 <x-page-header
                     class="rounded-t-2xl"
                     title="Danh sách giáo dân"
-                    :count="$this->parishioners->total()">
-                </x-page-header>
+                description="Quản lý hồ sơ giáo dân trong giáo xứ"
+                :stat-value="$this->parishioners->total()"
+                stat-label="Giáo dân"
+                icon-type="default" />
 
                 <div class="px-6 py-4 border-b border-slate-200 bg-slate-50 space-y-4">
 
                     {{-- Search + Add --}}
                     <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-                        <button wire:click="create"
-                            class="inline-flex items-center gap-2 px-4 py-2 bg-primary-500 text-white text-sm font-medium rounded-xl hover:bg-primary-600 transition-all duration-200">
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
-                            </svg>
+                    <x-button wire:click="create" variant="primary">
+                        <x-icon name="plus" />
                             Thêm giáo dân
-                        </button>
+                    </x-button>
                     </div>
 
                     {{-- ===== FILTERS (Refactored) ===== --}}
@@ -38,10 +39,11 @@
                             <div class="flex flex-col sm:flex-row sm:items-center gap-3 flex-1">
 
                                 {{-- Search --}}
-                                <input wire:model.debounce.400ms="search" type="search"
+                                <x-search-input
+                                    wireModel="search"
                                     placeholder="Tìm theo tên, CCCD, SĐT..."
-                                    class="w-full sm:w-72 px-3 py-2 rounded-xl border border-slate-300 text-sm 
-                       focus:outline-none focus:ring-2 focus:ring-primary-500 transition-all" />
+                                    debounce="400ms"
+                                    class="sm:w-72" />
 
                                 {{-- Quick filters --}}
                                 <div class="flex flex-wrap items-center gap-2">
@@ -93,11 +95,10 @@
                                 </button>
 
                                 {{-- Reset --}}
-                                <button wire:click="resetFilters"
-                                    class="px-3 py-2 text-sm text-slate-600 hover:text-slate-900 
-                       border border-slate-300 rounded-xl hover:bg-slate-100 transition-all">
+                                <x-button wire:click="resetFilters" variant="subtle">
+                                    <x-icon name="refresh" />
                                     Xóa bộ lọc
-                                </button>
+                                </x-button>
                             </div>
                         </div>
 

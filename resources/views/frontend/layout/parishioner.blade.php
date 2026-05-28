@@ -132,7 +132,7 @@ if (request()->routeIs('parishioners.*', 'families.*')) {
 } else {
     $activeGroup = null;
 }
-$isDashboard = request()->routeIs('parishioner.dashboard', 'parish-admin.dashboard');
+$isDashboard = request()->routeIs('parishioners.dashboard');
 @endphp
 
 <body class="min-h-screen bg-slate-50 text-slate-800 antialiased"
@@ -238,8 +238,7 @@ $isDashboard = request()->routeIs('parishioner.dashboard', 'parish-admin.dashboa
         <nav id="sidebar-nav" class="flex-1 overflow-y-auto overflow-x-hidden min-h-0 py-3 px-2 space-y-0.5">
 
             {{-- ── Trang chủ Giáo dân ── --}}
-            {{-- <a href="{{ route('parishioner.dashboard') }}" --}}
-            <a href="#"
+            <a href="{{ route('parishioners.dashboard') }}"
                 class="relative flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition group
                     {{ $isDashboard ? 'text-primary-700 font-semibold' : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900' }}">
                 <svg class="w-5 h-5 flex-shrink-0

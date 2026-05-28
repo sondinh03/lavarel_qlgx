@@ -1,12 +1,17 @@
 {{--
-    Partial: student-card
+    Partial: thẻ học sinh CR80 (in / preview)
     Props:
-      - $student  : StudentNew (with saint, parishGroup)
-      - $lop      : CatechismClass|null
-      - $forPrint : bool (default false)
+      - $student
+      - $lop (nullable)
+      - $cardType: permanent | annual
+      - $parishName: tên giáo xứ (ParishNew)
+      - $forPrint (bool, default false)
 --}}
 @php
 $forPrint = $forPrint ?? false;
+$cardType = $cardType ?? 'permanent';
+$showClassYear = $cardType === 'annual';
+$parishName = trim($parishName ?? '');
 $fullName = trim(($student->last_name ?? '') . ' ' . ($student->first_name ?? ''));
 $saintName = $student->saint->name ?? '';
 $className = $lop->name ?? '';
@@ -14,13 +19,14 @@ $yearName = $lop->schoolYear->name ?? '';
 $birthday = $student->birthday?->format('d/m/Y') ?? '';
 $code = $student->student_code ?? ('HS-' . $student->id);
 $qrToken = $student->qr_token ?? '';
-$isMale = in_array($student->gender, ['male', 1, '1']);
-$genderColor = $isMale ? '#1d4ed8' : '#be185d';
+$isMale = in_array($student->gender, ['male', 1, '1'], true);
+$genderColor = $isMale ? '#2AA14A' : '#be185d';
 $genderLabel = $isMale ? 'Nam' : 'Nữ';
 @endphp
 
 <div class="student-card"
     data-student-id="{{ $student->id }}"
+    data-card-type="{{ $cardType }}"
     style="
         width: 85.6mm;
         height: 54mm;
@@ -35,17 +41,16 @@ $genderLabel = $isMale ? 'Nam' : 'Nữ';
         flex-shrink: 0;
     ">
 
-    {{-- ── Dải màu bên trái ── --}}
     <div style="
         position: absolute;
         left: 0; top: 0; bottom: 0;
         width: 3mm;
-        background: linear-gradient(180deg, #1e40af 0%, #3b82f6 50%, #06b6d4 100%);
+        background: linear-gradient(180deg, #145224 0%, #34C759 50%, #57C37F 100%);
     "></div>
 
-    {{-- ── Header ── --}}
+    {{-- Header --}}
     <div style="
-        background: linear-gradient(135deg, #0f172a 0%, #1e3a8a 60%, #1d4ed8 100%);
+        background: linear-gradient(135deg, #0f172a 0%, #145224 55%, #2AA14A 100%);
         padding: 2.5mm 3mm 2mm 5mm;
         display: flex;
         align-items: center;
@@ -54,17 +59,16 @@ $genderLabel = $isMale ? 'Nam' : 'Nữ';
         flex-shrink: 0;
     ">
         <div style="flex: 1; min-width: 0;">
-            <div style="color: #93c5fd; font-size: 5pt; letter-spacing: 1.5px; text-transform: uppercase; font-weight: 600;">
+            <div style="color: #ABE1BF; font-size: 5pt; letter-spacing: 1.5px; text-transform: uppercase; font-weight: 600;">
                 Thẻ Học Sinh Giáo Lý
             </div>
-            @if($className || $yearName)
+            @if($showClassYear && ($className || $yearName))
             <div style="color: #fff; font-size: 6.5pt; font-weight: 700; margin-top: 0.5mm; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
                 {{ implode(' · ', array_filter([$className, $yearName])) }}
             </div>
             @endif
         </div>
 
-        {{-- Badge giới tính --}}
         <div style="
             background: {{ $genderColor }};
             color: white;
@@ -77,7 +81,7 @@ $genderLabel = $isMale ? 'Nam' : 'Nữ';
         ">{{ $genderLabel }}</div>
     </div>
 
-    {{-- ── Body ── --}}
+    {{-- Body --}}
     <div style="
         flex: 1;
         display: flex;
@@ -85,7 +89,6 @@ $genderLabel = $isMale ? 'Nam' : 'Nữ';
         padding: 2.5mm 3mm 2.5mm 5mm;
         overflow: hidden;
     ">
-        {{-- Cột trái: Ảnh + QR --}}
         <div style="
             display: flex;
             flex-direction: column;
@@ -94,14 +97,13 @@ $genderLabel = $isMale ? 'Nam' : 'Nữ';
             flex-shrink: 0;
             width: 19mm;
         ">
-            {{-- Ảnh đại diện --}}
             <div style="
                 width: 14mm;
                 height: 16mm;
                 border-radius: 1.5mm;
                 overflow: hidden;
-                background: #e2e8f0;
-                border: 0.5mm solid #cbd5e1;
+                background: #EAF7EF;
+                border: 0.5mm solid #ABE1BF;
                 display: flex;
                 align-items: center;
                 justify-content: center;
@@ -112,43 +114,39 @@ $genderLabel = $isMale ? 'Nam' : 'Nữ';
                     style="width: 100%; height: 100%; object-fit: cover;"
                     alt="{{ $fullName }}" />
                 @else
-                {{-- Placeholder avatar --}}
-                <svg style="width: 8mm; height: 8mm; color: #94a3b8;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg style="width: 8mm; height: 8mm; color: #57C37F;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
                         d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                 </svg>
                 @endif
             </div>
 
-            {{-- QR Code --}}
+            @if($qrToken)
             <img
-                src="https://api.qrserver.com/v1/create-qr-code/?size=53x53&data={{ urlencode($qrToken) }}&color=0f172a&bgcolor=ffffff"
+                src="https://api.qrserver.com/v1/create-qr-code/?size=53x53&data={{ urlencode($qrToken) }}&color=145224&bgcolor=ffffff"
                 style="
                     width: 14mm;
                     height: 14mm;
-                    border: 0.3mm solid #e2e8f0;
+                    border: 0.3mm solid #D5F0DF;
                     border-radius: 1mm;
                     display: block;
                     flex-shrink: 0;
                 "
                 alt="QR {{ $code }}"
                 crossorigin="anonymous" />
+            @endif
         </div>
 
-        {{-- Divider dọc --}}
         <div style="width: 0.3mm; background: #e2e8f0; margin: 0 2.5mm; flex-shrink: 0;"></div>
 
-        {{-- Cột phải: Thông tin --}}
         <div style="flex: 1; min-width: 0; display: flex; flex-direction: column; justify-content: center; gap: 1.5mm;">
 
-            {{-- Tên thánh --}}
             @if($saintName)
-            <div style="color: #2563eb; font-size: 6pt; font-weight: 600; font-style: italic;">
+            <div style="color: #2AA14A; font-size: 6pt; font-weight: 600; font-style: italic;">
                 {{ $saintName }}
             </div>
             @endif
 
-            {{-- Họ tên --}}
             <div style="
                 color: #0f172a;
                 font-size: 10pt;
@@ -159,10 +157,8 @@ $genderLabel = $isMale ? 'Nam' : 'Nữ';
                 text-overflow: ellipsis;
             ">{{ $fullName }}</div>
 
-            {{-- Separator --}}
-            <div style="height: 0.3mm; background: linear-gradient(90deg, #3b82f6, transparent); width: 70%;"></div>
+            <div style="height: 0.3mm; background: linear-gradient(90deg, #34C759, transparent); width: 70%;"></div>
 
-            {{-- Ngày sinh --}}
             @if($birthday)
             <div style="display: flex; align-items: center; gap: 1.5mm;">
                 <span style="color: #64748b; font-size: 5.5pt;">Sinh ngày</span>
@@ -170,40 +166,44 @@ $genderLabel = $isMale ? 'Nam' : 'Nữ';
             </div>
             @endif
 
-            {{-- Mã học sinh --}}
             <div style="
                 display: inline-flex;
                 align-items: center;
                 gap: 1.5mm;
-                background: #eff6ff;
-                border: 0.3mm solid #bfdbfe;
+                background: #EAF7EF;
+                border: 0.3mm solid #ABE1BF;
                 border-radius: 1mm;
                 padding: 1mm 2mm;
                 width: fit-content;
+                max-width: 100%;
             ">
-                <span style="color: #64748b; font-size: 5pt; text-transform: uppercase; letter-spacing: 0.5px;">Mã HS</span>
-                <span style="color: #1d4ed8; font-size: 6pt; font-weight: 700; font-family: monospace; letter-spacing: 0.5px;">{{ $code }}</span>
+                <span style="color: #64748b; font-size: 5pt; text-transform: uppercase; letter-spacing: 0.5px; flex-shrink: 0;">Mã HS</span>
+                <span style="color: #2AA14A; font-size: 6.5pt; font-weight: 700; font-family: monospace; letter-spacing: 0.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{ $code }}</span>
             </div>
 
         </div>
     </div>
 
-    {{-- ── Footer ── --}}
+    {{-- Footer: tên giáo xứ (ParishNew) --}}
     <div style="
-        background: linear-gradient(135deg, #0f172a, #1e3a8a);
+        background: linear-gradient(135deg, #0f172a, #145224);
         padding: 1.5mm 5mm;
         display: flex;
         align-items: center;
-        justify-content: space-between;
+        justify-content: center;
         flex-shrink: 0;
+        min-height: 5mm;
     ">
-        <span style="color: #60a5fa; font-size: 4.5pt; letter-spacing: 1.5px; text-transform: uppercase; font-weight: 600;">
-            Giáo Xứ
-        </span>
-        <div style="height: 0.3mm; flex: 1; background: rgba(255,255,255,0.15); margin: 0 2mm;"></div>
-        <span style="color: #93c5fd; font-size: 4.5pt; letter-spacing: 1px; text-transform: uppercase;">
-            {{ $yearName ?: 'Năm Học' }}
-        </span>
+        <span style="
+            color: #EAF7EF;
+            font-size: 5.5pt;
+            font-weight: 700;
+            letter-spacing: 0.3px;
+            text-align: center;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 100%;
+        ">{{ $parishName ?: 'Giáo Xứ' }}</span>
     </div>
-
 </div>

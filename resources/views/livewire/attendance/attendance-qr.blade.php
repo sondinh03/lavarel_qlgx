@@ -1,4 +1,5 @@
-<div class="min-h-screen bg-slate-900 flex flex-col">
+<div class="min-h-screen bg-slate-950 flex flex-col"
+    style="min-height: calc(100vh - var(--bottom-offset));">
 
     {{-- Loading bar --}}
     <div wire:loading wire:loading.delay.shortest
@@ -9,8 +10,8 @@
     </div>
 
     {{-- Header --}}
-    <div class="flex-shrink-0 flex items-center justify-between px-4 py-3
-                bg-slate-800 border-b border-slate-700">
+    <div class="sticky top-0 z-40 flex-shrink-0 flex items-center justify-between px-3 py-3
+                bg-slate-900/95 backdrop-blur border-b border-slate-800">
         <div class="flex items-center gap-3">
             <a href="{{ route('dashboard') }}"
                 class="w-9 h-9 rounded-lg bg-slate-700 flex items-center justify-center
@@ -19,7 +20,10 @@
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
                 </svg>
             </a>
-            <div class="text-white font-semibold text-sm">Điểm danh QR</div>
+            <div class="text-white font-semibold text-sm leading-tight">
+                Điểm danh QR
+                <div class="text-[11px] text-slate-400 font-medium">Mở camera · Quét liên tục</div>
+            </div>
         </div>
 
         {{-- Type toggle --}}
@@ -29,39 +33,44 @@
                        {{ $type === 1
                            ? 'bg-primary-500 text-white'
                            : 'text-slate-400 hover:text-slate-200' }}">
-                Học
+                Đi học
             </button>
             <button wire:click="setType(2)"
                 class="px-3 py-1.5 rounded-md text-sm font-medium transition-colors
                        {{ $type === 2
                            ? 'bg-primary-500 text-white'
                            : 'text-slate-400 hover:text-slate-200' }}">
-                Lễ
+                Đi lễ
             </button>
         </div>
     </div>
 
     {{-- Camera View --}}
     <div id="camera-container" class="relative flex-shrink-0 bg-black"
-        style="height: 60vw; max-height: 320px;">
+        style="height: min(62vw, 360px);">
 
         {{-- Video element — JS inject stream vào đây --}}
         <video id="qr-video"
             class="w-full h-full object-cover"
             playsinline autoplay muted></video>
 
-        {{-- Viewfinder overlay --}}
-        <div class="absolute inset-0 flex items-center justify-center pointer-events-none">
-            <div class="relative w-52 h-52">
-                <div class="absolute top-0 left-0 w-8 h-8 border-t-4 border-l-4 border-primary-400 rounded-tl-lg"></div>
-                <div class="absolute top-0 right-0 w-8 h-8 border-t-4 border-r-4 border-primary-400 rounded-tr-lg"></div>
-                <div class="absolute bottom-0 left-0 w-8 h-8 border-b-4 border-l-4 border-primary-400 rounded-bl-lg"></div>
-                <div class="absolute bottom-0 right-0 w-8 h-8 border-b-4 border-r-4 border-primary-400 rounded-br-lg"></div>
-                <div class="absolute left-2 right-2 h-0.5 bg-primary-400/70
-                            animate-[scan-line_2s_ease-in-out_infinite]"
-                    style="top: 50%"></div>
+            {{-- Viewfinder overlay --}}
+            <div class="absolute inset-0 flex items-center justify-center pointer-events-none">
+                <div class="relative w-[min(68vw,16rem)] h-[min(68vw,16rem)] max-w-[85%] max-h-[85%]">
+                    {{-- Góc trên trái --}}
+                    <div class="absolute top-0 left-0 w-8 h-8 border-t-4 border-l-4 border-primary-400 rounded-tl-lg"></div>
+                    {{-- Góc trên phải --}}
+                    <div class="absolute top-0 right-0 w-8 h-8 border-t-4 border-r-4 border-primary-400 rounded-tr-lg"></div>
+                    {{-- Góc dưới trái --}}
+                    <div class="absolute bottom-0 left-0 w-8 h-8 border-b-4 border-l-4 border-primary-400 rounded-bl-lg"></div>
+                    {{-- Góc dưới phải --}}
+                    <div class="absolute bottom-0 right-0 w-8 h-8 border-b-4 border-r-4 border-primary-400 rounded-br-lg"></div>
+                    {{-- Scan line --}}
+                    <div class="absolute left-2 right-2 h-0.5 bg-primary-400/70
+                                animate-[scan-line_2s_ease-in-out_infinite]"
+                        style="top: 50%"></div>
+                </div>
             </div>
-        </div>
 
         {{-- Result overlay --}}
         @if($lastResult)
@@ -91,11 +100,11 @@
                 </div>
                 @endif
 
-                @if(isset($lastResult['student_name']))
-                <div class="text-white font-bold text-lg">{{ $lastResult['student_name'] }}</div>
                 @if(isset($lastResult['saint_name']) && $lastResult['saint_name'])
                 <div class="text-white/70 text-sm">{{ $lastResult['saint_name'] }}</div>
                 @endif
+                @if(isset($lastResult['student_name']))
+                <div class="text-white font-bold text-lg">{{ $lastResult['student_name'] }}</div>
                 @if(isset($lastResult['class_name']))
                 <div class="text-white/60 text-xs mt-0.5">{{ $lastResult['class_name'] }}</div>
                 @endif
@@ -112,8 +121,8 @@
     </div>
 
     {{-- Hint --}}
-    <div class="flex-shrink-0 py-2 text-center text-xs text-slate-500">
-        Đưa mã QR của học sinh vào khung hình
+    <div class="flex-shrink-0 py-2.5 text-center text-xs text-slate-500">
+        Đưa mã QR vào khung hình · Giữ ổn định 1–2 giây
     </div>
 
     {{-- Scanned Log --}}
@@ -137,7 +146,7 @@
                 <div class="flex-1 min-w-0">
                     <div class="text-white text-sm font-medium">{{ $log['student_name'] }}</div>
                     <div class="text-slate-500 text-xs">
-                        {{ $log['saint_name'] ? $log['saint_name'] . ' · ' : '' }}{{ $log['class_name'] }}
+                        {{ $log['saint_name'] ? $log['saint_name'] . ' · ' : '' }}{{ $log['student_name'] }} {{ $log['class_name'] }}
                     </div>
                 </div>
                 <div class="text-slate-500 text-xs flex-shrink-0">{{ $log['time'] }}</div>
@@ -145,14 +154,17 @@
             @endforeach
         </div>
         @else
-        <div class="flex items-center justify-center h-32">
-            <p class="text-slate-600 text-sm">Chưa có học sinh nào được quét</p>
+        <div class="flex items-center justify-center h-32 px-4">
+            <p class="text-slate-600 text-sm text-center">
+                Chưa có ai được quét. Hãy đưa QR vào khung và chờ hệ thống nhận diện.
+            </p>
         </div>
         @endif
     </div>
 
     {{-- Footer: nút hoàn thành --}}
-    <div class="flex-shrink-0 px-4 py-3 bg-slate-800 border-t border-slate-700">
+    <div class="sticky bottom-0 z-40 flex-shrink-0 px-4 py-3 bg-slate-900/95 backdrop-blur border-t border-slate-800"
+        style="padding-bottom: calc(12px + var(--safe-bottom));">
         <div class="flex items-center justify-between mb-1">
             <span class="text-xs text-slate-400">
                 Đã quét <span class="text-white font-semibold">{{ count($scannedLog) }}</span> học sinh
@@ -174,15 +186,14 @@
 @push('styles')
 <style>
     @keyframes scan-line {
-
         0%,
         100% {
-            transform: translateY(-96px);
-            opacity: 0.3;
+            top: 12%;
+            opacity: 0.35;
         }
 
         50% {
-            transform: translateY(96px);
+            top: 88%;
             opacity: 1;
         }
     }
@@ -209,7 +220,6 @@
         document.addEventListener('livewire:navigating', window.stopCamera);
         window.addEventListener('pagehide', window.stopCamera);
         document.addEventListener('livewire:load', function() {
-
             // ── Camera setup ──────────────────────────────────────────────
             waitForElement('qr-video', function(video) {
                 startCamera(video);
@@ -319,7 +329,10 @@
 
                     if (code && !cooldown) {
                         cooldown = true;
-                        @this.call('handleQrScanned', code.data);
+                        // Giữ logic quét kiểu cũ (emit event cho Livewire listener)
+                        if (window.Livewire) {
+                            window.Livewire.emit('qrScanned', code.data);
+                        }
                     }
                 }
 

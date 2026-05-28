@@ -73,7 +73,15 @@
                         </span>
                         <span class="text-slate-400">·</span>
                         <span>Thành viên:
-                            <strong>{{ $group->member_type === 'teacher' ? 'Giáo lý viên' : 'Học sinh' }}</strong>
+                            <strong>
+                                @if($group->member_type === 'teacher')
+                                    Giáo lý viên
+                                @elseif($group->member_type === 'student')
+                                    Học sinh
+                                @else
+                                    Giáo dân
+                                @endif
+                            </strong>
                         </span>
                         @if($group->note)
                             <span class="text-slate-400">· {{ $group->note }}</span>
@@ -84,8 +92,8 @@
         </div>
 
         {{-- Table --}}
+        @if($members->count() > 0)
         <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
-            @if($members->count() > 0)
                 <div class="overflow-x-auto">
                     <table class="w-full border-separate border-spacing-0">
                         <thead class="bg-slate-50 border-b border-slate-200">
@@ -95,8 +103,11 @@
                                 @if($group->member_type === 'teacher')
                                     <x-table-header>Số điện thoại</x-table-header>
                                     <x-table-header>Giáo họ</x-table-header>
-                                @else
+                                @elseif($group->member_type === 'student')
                                     <x-table-header>Ngày sinh</x-table-header>
+                                    <x-table-header>Giáo họ</x-table-header>
+                                @else
+                                    <x-table-header>Số điện thoại</x-table-header>
                                     <x-table-header>Giáo họ</x-table-header>
                                 @endif
                                 <x-table-header>Vai trò</x-table-header>
@@ -141,9 +152,16 @@
                                     <td class="px-4 py-4 text-sm text-slate-600">
                                         {{ $person?->parishGroup?->name ?? '—' }}
                                     </td>
-                                @else
+                                @elseif($group->member_type === 'student')
                                     <td class="px-4 py-4 text-sm text-slate-600">
                                         {{ $person?->birthday?->format('d/m/Y') ?? '—' }}
+                                    </td>
+                                    <td class="px-4 py-4 text-sm text-slate-600">
+                                        {{ $person?->parishGroup?->name ?? '—' }}
+                                    </td>
+                                @else
+                                    <td class="px-4 py-4 text-sm text-slate-600">
+                                        {{ $person?->phone ?? '—' }}
                                     </td>
                                     <td class="px-4 py-4 text-sm text-slate-600">
                                         {{ $person?->parishGroup?->name ?? '—' }}
@@ -208,15 +226,22 @@
                     <x-pagination :paginator="$members" :per-page-options="[10, 15, 25, 50]" />
                 </div>
                 @endif
-
-            @else
-                <x-empty-state
-                    icon="users"
-                    :colspan="8"
-                    title="Chưa có thành viên nào"
-                    description="Thêm {{ $group->member_type === 'teacher' ? 'giáo lý viên' : 'học sinh' }} vào nhóm để bắt đầu" />
-            @endif
         </div>
+
+        @else
+        <x-stats.page-empty
+            tone="primary"
+            title="Chưa có thành viên nào"
+            :description="'Thêm ' . ($group->member_type === 'teacher'
+                ? 'giáo lý viên'
+                : ($group->member_type === 'student' ? 'học sinh' : 'giáo dân')
+            ) . ' vào nhóm để bắt đầu'">
+            <x-slot name="icon">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+                    d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
+            </x-slot>
+        </x-stats.page-empty>
+        @endif
 
     </div>{{-- /max-w --}}
 
@@ -233,7 +258,10 @@
                 <div class="flex items-start justify-between">
                     <div>
                         <h2 class="text-xl font-bold text-slate-900">
-                            Thêm {{ $group->member_type === 'teacher' ? 'giáo lý viên' : 'học sinh' }}
+                            Thêm
+                            {{ $group->member_type === 'teacher'
+                                ? 'giáo lý viên'
+                                : ($group->member_type === 'student' ? 'học sinh' : 'giáo dân') }}
                         </h2>
                         <p class="text-sm text-slate-500 mt-1">
                             Chọn từ danh sách — chỉ hiển thị người chưa có trong nhóm
@@ -276,9 +304,13 @@
                                     <th class="px-4 py-3 text-left text-xs font-semibold text-slate-600 uppercase">
                                         Số điện thoại
                                     </th>
-                                @else
+                                @elseif($group->member_type === 'student')
                                     <th class="px-4 py-3 text-left text-xs font-semibold text-slate-600 uppercase">
                                         Ngày sinh
+                                    </th>
+                                @else
+                                    <th class="px-4 py-3 text-left text-xs font-semibold text-slate-600 uppercase">
+                                        Số điện thoại
                                     </th>
                                 @endif
                                 <th class="px-4 py-3 text-left text-xs font-semibold text-slate-600 uppercase">
@@ -317,9 +349,13 @@
                                     <td class="px-4 py-3 text-sm text-slate-600">
                                         {{ $candidate->phone_number ?? '—' }}
                                     </td>
-                                @else
+                                @elseif($group->member_type === 'student')
                                     <td class="px-4 py-3 text-sm text-slate-600">
                                         {{ $candidate->birthday?->format('d/m/Y') ?? '—' }}
+                                    </td>
+                                @else
+                                    <td class="px-4 py-3 text-sm text-slate-600">
+                                        {{ $candidate->phone ?? '—' }}
                                     </td>
                                 @endif
                                 <td class="px-4 py-3 text-sm text-slate-600">

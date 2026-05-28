@@ -156,7 +156,7 @@ class BlockManager extends BaseComponent
 
     protected function getDefaultNamHocId(): ?int
     {
-        return NamHoc::ofParish($this->parishId)
+        return NamHoc::query()
             ->active()
             ->orderByDesc('name')
             ->value('id');
@@ -191,7 +191,6 @@ class BlockManager extends BaseComponent
 
         try {
             $query = Block::with('namHocRelation')
-                ->ofParish($this->parishId)
                 ->where('namhoc', $this->selectedNamHoc)
                 ->orderBy('weight', 'asc');
 

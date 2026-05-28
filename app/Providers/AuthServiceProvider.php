@@ -8,7 +8,6 @@ use App\Models\Family;
 use App\Models\Holymanagement;
 use App\Models\Lop;
 use App\Models\NamHoc;
-use App\Models\Parish;
 use App\Models\ParishGroup;
 use App\Models\Parishioner;
 use App\Models\Parishioners;

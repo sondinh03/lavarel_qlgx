@@ -125,7 +125,7 @@
         <div class="flex items-center gap-2">
             <label class="text-sm text-slate-600 whitespace-nowrap">Hiển thị:</label>
             <select
-                wire:model.live="perPage"
+                wire:model="perPage"
                 class="px-3 py-2 text-sm border border-slate-300 rounded-lg
                        focus:ring-2 focus:ring-primary-500
                        focus:border-transparent transition-all">

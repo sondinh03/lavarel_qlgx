@@ -159,6 +159,7 @@ class TeacherManager extends BaseComponent
         $this->requireManager();
         $this->resetForm();
         $this->showForm = true;
+        $this->emit('openModal');
     }
 
     public function edit(int $id): void
@@ -185,6 +186,7 @@ class TeacherManager extends BaseComponent
             $this->reset_password = false;
 
             $this->showForm = true;
+            $this->emit('openModal');
         } catch (ModelNotFoundException $e) {
             session()->flash('error', 'Không tìm thấy giáo lý viên này');
         } catch (\Exception $e) {
@@ -412,6 +414,7 @@ class TeacherManager extends BaseComponent
         $this->showForm = false;
         $this->resetForm();
         $this->resetValidation();
+        $this->emit('closeModal');
     }
 
     public function resetForm(): void

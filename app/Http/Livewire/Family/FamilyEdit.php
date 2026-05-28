@@ -147,7 +147,7 @@ class FamilyEdit extends BaseComponent
             ? Parishioner::where('family_id', $this->familyId)->pluck('id')
             : collect();
 
-        $query = Parishioner::ofParish($this->parishId)
+        $query = Parishioner::query()
             ->with('saint')
             ->orderBy('last_name')
             ->orderBy('first_name');
@@ -247,10 +247,10 @@ class FamilyEdit extends BaseComponent
 
             // ===== VALIDATE MEMBERS =====
 
-            $head = Parishioner::ofParish($this->parishId)
+            $head = Parishioner::query()
                 ->findOrFail($this->fatherId);
 
-            $children = Parishioner::ofParish($this->parishId)
+            $children = Parishioner::query()
                 ->whereIn('id', $this->childrenIds)
                 ->get();
 
@@ -317,7 +317,7 @@ class FamilyEdit extends BaseComponent
 
             if ($this->motherId) {
 
-                $mother = Parishioner::ofParish($this->parishId)
+                $mother = Parishioner::query()
                     ->findOrFail($this->motherId);
 
                 $mother->update([

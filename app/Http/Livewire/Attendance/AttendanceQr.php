@@ -107,8 +107,8 @@ class AttendanceQr extends BaseComponent
                 $typeLabel = $this->type === 1 ? 'học' : 'lễ';
                 $this->setResult('error', [
                     'message'      => "Lớp {$class->name} hôm nay không có buổi {$typeLabel}",
-                    'student_name' => $student->full_name,
                     'saint_name'   => $student->saint_name,
+                    'student_name' => $student->full_name,
                 ]);
                 return;
             }

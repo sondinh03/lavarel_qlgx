@@ -8,7 +8,14 @@
 ]" separator="arrow" />
 @endsection
 
-<div class="min-h-screen bg-slate-50 p-2 sm:p-4 lg:p-6">
+<div class="min-h-screen bg-slate-50 p-2 sm:p-4 lg:p-6"
+    x-data="{ showForm: false }"
+    x-init="
+        document.addEventListener('livewire:load', () => {
+            Livewire.on('openModal', () => { showForm = true; });
+            Livewire.on('closeModal', () => { showForm = false; });
+        });
+    ">
     <a href="#main-content" class="sr-only focus:not-sr-only">Bỏ qua tới nội dung</a>
 
     <div id="main-content" class="mx-auto max-w-7xl space-y-6">
@@ -65,8 +72,8 @@
         </div>
 
         {{-- Table --}}
+        @if($sessions->count() > 0)
         <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
-            @if($sessions->count() > 0)
                 <div class="overflow-x-auto">
                     <table class="w-full border-separate border-spacing-0">
                         <thead class="bg-slate-50 border-b border-slate-200">
@@ -224,25 +231,39 @@
                     <x-pagination :paginator="$sessions" :per-page-options="[10, 15, 25, 50]" />
                 </div>
                 @endif
-
-            @else
-                <x-empty-state
-                    icon="calendar"
-                    :colspan="8"
-                    title="Chưa có buổi sinh hoạt nào"
-                    description="Tạo buổi đầu tiên để bắt đầu điểm danh" />
-            @endif
         </div>
+
+        @else
+        <x-stats.page-empty
+            tone="primary"
+            title="Chưa có buổi sinh hoạt nào"
+            description="Tạo buổi đầu tiên để bắt đầu điểm danh">
+            <x-slot name="icon">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+                    d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+            </x-slot>
+        </x-stats.page-empty>
+        @endif
 
     </div>{{-- /max-w --}}
 
     {{-- ===================== MODAL TẠO BUỔI ===================== --}}
-    @if($showForm)
-    <div class="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4"
-        role="dialog" aria-modal="true" wire:click="closeModal">
-        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-lg max-h-[90vh]
+    <div
+        x-show="showForm"
+        x-cloak
+        x-transition.opacity
+        class="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4"
+        role="dialog"
+        aria-modal="true"
+        @click="showForm = false; $wire.closeModal()"
+        @keydown.escape.window="showForm = false; $wire.closeModal()">
+
+        <div
+            x-show="showForm"
+            x-transition
+            class="bg-white rounded-2xl shadow-2xl w-full max-w-lg max-h-[90vh]
                     overflow-hidden flex flex-col"
-            wire:click.stop>
+            @click.stop>
 
             {{-- Header --}}
             <div class="flex-shrink-0 p-6 border-b border-slate-200 bg-gradient-to-br from-primary-50 to-white">
@@ -251,11 +272,10 @@
                         <h2 class="text-xl font-bold text-slate-900">Tạo buổi sinh hoạt</h2>
                         <p class="text-sm text-slate-500 mt-1">{{ $group->name }}</p>
                     </div>
-                    <button wire:click="closeModal" type="button"
-                        class="text-slate-400 hover:text-slate-600 transition p-1">
-                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-                        </svg>
+                    <button type="button"
+                        @click="showForm = false; $wire.closeModal()"
+                        class="p-1 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors">
+                        <x-icon name="cancel" class="w-5 h-5" />
                     </button>
                 </div>
             </div>
@@ -407,7 +427,7 @@
 
             {{-- Footer --}}
             <div class="flex-shrink-0 px-6 py-4 border-t border-slate-200 bg-slate-50 flex justify-end gap-3">
-                <x-button wire:click="closeModal" variant="subtle">Hủy</x-button>
+                <x-button variant="outline" @click="showForm = false; $wire.closeModal()">Hủy</x-button>
                 <x-button
                     wire:click="save"
                     wire:loading.attr="disabled"
@@ -426,7 +446,7 @@
 
         </div>
     </div>
-    @endif
+    {{-- /modal --}}
 
 </div>
 

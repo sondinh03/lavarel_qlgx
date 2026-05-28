@@ -212,30 +212,43 @@
                             </td>
                         </tr>
                         @empty
-                        <x-empty-state
-                            icon="class"
-                            :colspan="7"
-                            :title="$selectedNamHoc ? 'Không tìm thấy lớp học' : 'Chưa chọn năm học'"
-                            :description="!$selectedNamHoc
-                                    ? 'Vui lòng chọn năm học để xem danh sách lớp'
-                                    : ($selectedKhoi
-                                        ? 'Không có lớp nào trong khối này'
-                                        : 'Chưa có lớp học nào trong năm học này')">
-                            @if($isAdmin && $selectedNamHoc)
-                            <button @click="openCreateModal()"
-                                class="inline-flex items-center gap-2 px-6 py-2.5
-                                              bg-gradient-to-r from-primary-500 to-primary-600
-                                              hover:from-primary-600 hover:to-primary-700
-                                              text-white rounded-xl font-semibold
-                                              active:scale-[0.98] transition-all shadow-sm">
-                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                        d="M12 4v16m8-8H4" />
-                                </svg>
-                                Tạo lớp học mới
-                            </button>
-                            @endif
-                        </x-empty-state>
+                        <tr>
+                            <td colspan="7" class="p-0 border-none">
+                                <x-stats.page-empty
+                                    :tone="$selectedNamHoc ? 'primary' : 'slate'"
+                                    :title="$selectedNamHoc ? 'Không tìm thấy lớp học' : 'Chưa chọn năm học'"
+                                    :description="!$selectedNamHoc
+                                        ? 'Vui lòng chọn năm học để xem danh sách lớp'
+                                        : ($selectedKhoi
+                                            ? 'Không có lớp nào trong khối này'
+                                            : 'Chưa có lớp học nào trong năm học này')">
+                                    <x-slot name="icon">
+                                        @if($selectedNamHoc)
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+                                            d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                                        @else
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+                                            d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                        @endif
+                                    </x-slot>
+                                    @if($isAdmin && $selectedNamHoc)
+                                    <button @click="openCreateModal()"
+                                        type="button"
+                                        class="inline-flex items-center gap-2 px-6 py-2.5 mt-4
+                                               bg-gradient-to-r from-primary-500 to-primary-600
+                                               hover:from-primary-600 hover:to-primary-700
+                                               text-white rounded-xl font-semibold
+                                               active:scale-[0.98] transition-all shadow-sm">
+                                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                d="M12 4v16m8-8H4" />
+                                        </svg>
+                                        Tạo lớp học mới
+                                    </button>
+                                    @endif
+                                </x-stats.page-empty>
+                            </td>
+                        </tr>
                         @endforelse
                     </tbody>
                 </table>

@@ -260,6 +260,7 @@ class AttendanceManager extends BaseComponent
                     $q->select(
                         'students.id',
                         'students.saint_id',   // bắt buộc cho eager load saint
+                        'students.parish_group_id',
                         'students.last_name',
                         'students.first_name',
                         'students.birthday',
@@ -278,6 +279,7 @@ class AttendanceManager extends BaseComponent
                     }
                 },
                 'students.saint:id,name', // chỉ lấy 2 cột cần thiết
+                'students.parishGroup:id,name',
             ])->find($this->selectedClassId);
 
 
@@ -414,6 +416,18 @@ class AttendanceManager extends BaseComponent
 
         $this->dispatchBrowserEvent('attendance-records-loaded', [
             'records' => $this->attendanceRecords,
+            'context' => $this->getClientContext(),
+        ]);
+    }
+
+    protected function getClientContext(): string
+    {
+        return implode('|', [
+            'class:' . ($this->selectedClassId ?? 'none'),
+            'type:' . ($this->attendanceType ?? 'none'),
+            'mode:' . ($this->viewMode ?? 'none'),
+            'date:' . ($this->selectedDate ?? 'all'),
+            'ky:' . ($this->selectedKy ?? 'all'),
         ]);
     }
 
@@ -490,6 +504,7 @@ class AttendanceManager extends BaseComponent
 
                 $this->dispatchBrowserEvent('attendance-saved', [
                     'records' => $this->attendanceRecords,
+                    'context' => $this->getClientContext(),
                 ]);
             } else {
                 $this->emit('toast', 'error', $result['message']);
@@ -526,7 +541,11 @@ class AttendanceManager extends BaseComponent
             return;
         }
 
-        $student = \App\Models\StudentNew::find((int) $studentId);
+        // Prefer already-loaded students list (avoid extra query)
+        $student = collect($this->students)->firstWhere('id', (int) $studentId);
+        if (!$student) {
+            $student = \App\Models\StudentNew::find((int) $studentId);
+        }
 
         if (!$student) {
             $this->emit('toast', 'error', 'Không tìm thấy học sinh');

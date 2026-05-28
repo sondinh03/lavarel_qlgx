@@ -276,8 +276,7 @@ class FamilyList extends BaseComponent
     protected function getCurrentFamiliesQuery()
     {
         $query = Family::with(['parishGroup', 'head'])
-            ->withCount('members')
-            ->ofParish($this->parishId);
+            ->withCount('members');
 
         if ($this->statusFilter !== '') {
             $query->where('status', (bool) $this->statusFilter);
@@ -322,7 +321,7 @@ class FamilyList extends BaseComponent
     protected function getStats(): array
     {
         try {
-            $base = Family::ofParish($this->parishId);
+            $base = Family::query();
             return [
                 'total'    => (clone $base)->count(),
                 'active'   => (clone $base)->active()->count(),

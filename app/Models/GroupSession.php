@@ -72,7 +72,7 @@ class GroupSession extends Model
 
     public function parish()
     {
-        return $this->belongsTo(Parish::class);
+        return $this->belongsTo(ParishNew::class, 'parish_id');
     }
 
     public function attendanceRecords()

@@ -38,8 +38,8 @@ class GroupManager extends BaseComponent
 
     protected $rules = [
         'name'        => 'required|string|max:255',
-        'type'        => 'required|integer|in:1,2,3,4',
-        'member_type' => 'required|in:teacher,student',
+        'type'        => 'required|integer|in:1,2,3,4,5,6',
+        'member_type' => 'required|in:teacher,student,parishioner',
         'is_active'   => 'boolean',
         'note'        => 'nullable|string|max:255',
     ];
@@ -118,6 +118,7 @@ class GroupManager extends BaseComponent
         $this->requireManager();
         $this->resetForm();
         $this->showForm = true;
+        $this->emit('openModal');
     }
 
     public function edit(int $id): void
@@ -135,6 +136,7 @@ class GroupManager extends BaseComponent
             $this->note        = $group->note ?? '';
 
             $this->showForm = true;
+            $this->emit('openModal');
         } catch (ModelNotFoundException $e) {
             session()->flash('error', 'Không tìm thấy nhóm này');
         } catch (\Exception $e) {
@@ -266,6 +268,7 @@ class GroupManager extends BaseComponent
         $this->showForm = false;
         $this->resetForm();
         $this->resetValidation();
+        $this->emit('closeModal');
     }
 
     public function resetForm(): void

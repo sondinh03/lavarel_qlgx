@@ -5,27 +5,21 @@
             ['label' => 'Quản lý nhóm'],
         ]" />
 @endsection
-<div class="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 p-4 sm:p-6">
+<div class="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 p-4 sm:p-6"
+    x-data="{ showForm: false }"
+    x-init="
+        const register = () => {
+            if (!window.Livewire) return;
+            Livewire.on('openModal', () => { showForm = true; });
+            Livewire.on('closeModal', () => { showForm = false; });
+        };
+        register();
+        document.addEventListener('livewire:load', register);
+        document.addEventListener('livewire:navigated', register);
+    ">
     <a href="#main-content" class="sr-only focus:not-sr-only">Bỏ qua tới nội dung</a>
 
     <div id="main-content" class="mx-auto max-w-7xl space-y-5">
-
-        {{-- Breadcrumb --}}
-        <x-breadcrumb :items="[
-            ['label' => 'Trang chủ', 'url' => route('dashboard')],
-            ['label' => 'Sinh hoạt',  'url' => '#'],
-            ['label' => 'Quản lý nhóm'],
-        ]" separator="arrow" />
-
-        {{-- Toast --}}
-        <div role="status" aria-live="polite">
-            @if(session()->has('message'))
-            <x-toast-notification type="success" :duration="3500">{{ session('message') }}</x-toast-notification>
-            @endif
-            @if(session()->has('error'))
-            <x-toast-notification type="error" :duration="4000">{{ session('error') }}</x-toast-notification>
-            @endif
-        </div>
 
         {{-- Main Card --}}
         <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
@@ -41,11 +35,11 @@
                 <div class="flex flex-wrap items-center justify-between gap-3">
                     {{-- LEFT: Filters --}}
                     <div class="flex flex-wrap items-center gap-3">
-                        <input
-                            wire:model.debounce.500ms="search"
+                        <x-search-input
+                            wireModel="search"
                             placeholder="Tìm tên nhóm..."
-                            class="w-56 px-3 py-2 rounded-xl border border-slate-300
-                                   text-sm focus:outline-none focus:ring-2 focus:ring-primary-500" />
+                            debounce="500ms"
+                            class="w-56" />
 
                         <select wire:model="filterType"
                             class="px-3 py-2 rounded-xl border border-slate-300 text-sm
@@ -58,9 +52,10 @@
                     </div>
 
                     {{-- RIGHT --}}
-                    <x-action-button wire="create" icon="plus">
+                    <x-button wire:click="create" variant="primary">
+                        <x-icon name="plus" />
                         Thêm nhóm
-                    </x-action-button>
+                    </x-button>
                 </div>
             </div>
         </div>
@@ -201,33 +196,56 @@
             @endif
 
             @else
-            <div class="text-center py-16">
-                <div class="text-5xl mb-4">👥</div>
-                <p class="text-lg text-slate-500">Chưa có nhóm nào</p>
-                <button wire:click="create"
-                    class="mt-4 px-4 py-2 bg-primary-600 text-white rounded-xl
-                               hover:bg-primary-700 transition-all">
+            <x-stats.page-empty
+                tone="primary"
+                title="Chưa có nhóm nào"
+                description="Tạo nhóm đầu tiên để bắt đầu quản lý buổi sinh hoạt và điểm danh">
+                <x-slot name="icon">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+                        d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                </x-slot>
+                <x-button wire:click="create" variant="primary">
+                    <x-icon name="plus" />
                     Thêm nhóm đầu tiên
-                </button>
-            </div>
+                </x-button>
+            </x-stats.page-empty>
             @endif
         </div>
 
         {{-- Modal Form --}}
-        @if($showForm)
-        <div class="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4"
-            role="dialog" aria-modal="true" wire:click="closeModal">
-            <div class="bg-white rounded-2xl shadow-xl w-full max-w-lg overflow-hidden flex flex-col"
-                wire:click.stop>
+        <div
+            x-show="showForm"
+            x-cloak
+            x-transition.opacity
+            class="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4"
+            role="dialog"
+            aria-modal="true"
+            @click="showForm = false; $wire.closeModal()"
+            @keydown.escape.window="showForm = false; $wire.closeModal()">
+
+            <div
+                x-show="showForm"
+                x-transition
+                class="bg-white rounded-2xl shadow-xl w-full max-w-lg overflow-hidden flex flex-col"
+                @click.stop>
 
                 {{-- Header --}}
                 <div class="flex-shrink-0 p-6 border-b border-slate-200 bg-gradient-to-br from-primary-50 to-white">
-                    <h2 class="text-xl font-bold text-slate-900">
-                        {{ $editingId ? 'Cập nhật nhóm' : 'Thêm nhóm mới' }}
-                    </h2>
-                    <p class="text-sm text-slate-500 mt-1">
-                        {{ $editingId ? 'Chỉnh sửa thông tin nhóm' : 'Tạo nhóm sinh hoạt trong giáo xứ' }}
-                    </p>
+                    <div class="flex items-start justify-between gap-4">
+                        <div>
+                            <h2 class="text-xl font-bold text-slate-900">
+                                {{ $editingId ? 'Cập nhật nhóm' : 'Thêm nhóm mới' }}
+                            </h2>
+                            <p class="text-sm text-slate-500 mt-1">
+                                {{ $editingId ? 'Chỉnh sửa thông tin nhóm' : 'Tạo nhóm sinh hoạt trong giáo xứ' }}
+                            </p>
+                        </div>
+                        <button type="button"
+                            @click="showForm = false; $wire.closeModal()"
+                            class="p-1 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors">
+                            <x-icon name="cancel" class="w-5 h-5" />
+                        </button>
+                    </div>
                 </div>
 
                 {{-- Body --}}
@@ -311,6 +329,20 @@
                                     <div class="text-xs text-slate-400">Từ danh sách học sinh</div>
                                 </div>
                             </label>
+                            <label class="flex items-center gap-3 px-4 py-3 rounded-xl border cursor-pointer
+                                transition-all
+                                {{ $member_type == 'parishioner'
+                                    ? 'border-emerald-500 bg-emerald-50 text-emerald-700'
+                                    : 'border-slate-200 hover:border-slate-300 text-slate-700' }}">
+                                <input type="radio"
+                                    wire:model="member_type"
+                                    value="parishioner"
+                                    class="text-emerald-600 focus:ring-emerald-500">
+                                <div>
+                                    <div class="text-sm font-medium">Giáo dân</div>
+                                    <div class="text-xs text-slate-400">Từ danh sách giáo dân</div>
+                                </div>
+                            </label>
                         </div>
                         @error('member_type')
                         <p class="text-xs text-red-600 mt-1">{{ $message }}</p>
@@ -343,14 +375,15 @@
                 {{-- Footer --}}
                 <div class="flex-shrink-0 px-6 py-4 border-t border-slate-200 bg-slate-50
                             flex justify-end gap-3">
-                    <x-action-button wire="closeModal" variant="secondary">Hủy</x-action-button>
-                    <x-action-button wire="save" icon="save" :loading="true">
+                    <x-button variant="outline" @click="showForm = false; $wire.closeModal()">Hủy</x-button>
+                    <x-button variant="primary" wire:click="save" :loading="true" loading-target="save">
+                        <x-icon name="save" />
                         {{ $editingId ? 'Cập nhật' : 'Thêm nhóm' }}
-                    </x-action-button>
+                    </x-button>
                 </div>
             </div>
         </div>
-        @endif
+        {{-- /modal --}}
 
     </div>
 </div>

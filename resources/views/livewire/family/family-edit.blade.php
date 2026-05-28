@@ -7,30 +7,25 @@
 @endsection
 
 <div class="min-h-screen bg-slate-50 p-2 sm:p-4 lg:p-6" style="min-height: calc(100vh - 56px - var(--bottom-offset));">
+    <a href="#main-content" class="sr-only focus:not-sr-only">Bỏ qua tới nội dung</a>
 
-    <div class="max-w-4xl mx-auto space-y-6">
+    <div id="main-content" class="max-w-4xl mx-auto space-y-6">
 
-        {{-- Header Card --}}
         <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
-            <div class="p-6 bg-gradient-to-br from-primary-50 to-white">
-                <div class="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-                    <div>
-                        <h1 class="text-2xl font-bold text-slate-900">
-                            {{ $isEdit ? 'Chỉnh sửa gia đình' : 'Thêm gia đình mới' }}
-                        </h1>
-                        <p class="mt-1 text-sm text-slate-500">
-                            {{ $isEdit ? 'Cập nhật thông tin gia đình trong giáo xứ' : 'Tạo hồ sơ gia đình mới' }}
-                        </p>
-                    </div>
-
-                    @if($isEdit && !$isLoading)
-                    <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold w-fit
+            <x-page-header
+                class="rounded-t-2xl"
+                :title="$isEdit ? 'Chỉnh sửa gia đình' : 'Thêm gia đình mới'"
+                :description="$isEdit ? 'Cập nhật thông tin gia đình trong giáo xứ' : 'Tạo hồ sơ gia đình mới'"
+                icon-type="default">
+                @if($isEdit && !$isLoading)
+                <x-slot name="actions">
+                    <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold
                         {{ $status ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-600' }}">
                         {{ $status ? 'Hoạt động' : 'Không hoạt động' }}
                     </span>
-                    @endif
-                </div>
-            </div>
+                </x-slot>
+                @endif
+            </x-page-header>
         </div>
 
         @if($isLoading)

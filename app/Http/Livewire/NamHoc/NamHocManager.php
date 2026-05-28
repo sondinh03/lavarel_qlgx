@@ -95,7 +95,7 @@ class NamHocManager extends BaseComponent
     public function loadNamHocs(): void
     {
         try {
-            $query = NamHoc::ofParish($this->parishId)
+            $query = NamHoc::query()
                 ->when($this->search, fn($q) => $q->where('name', 'like', '%' . $this->search . '%'));
 
             $this->applySorting($query);
@@ -175,7 +175,7 @@ class NamHocManager extends BaseComponent
         try {
             DB::beginTransaction();
 
-            $exists = NamHoc::ofParish($this->parishId)
+            $exists = NamHoc::query()
                 ->where('name', $this->name)
                 ->when($this->editingId, fn($q) => $q->where('id', '!=', $this->editingId))
                 ->exists();
@@ -225,7 +225,7 @@ class NamHocManager extends BaseComponent
         $this->requireManager();
 
         try {
-            $namHoc = NamHoc::ofParish($this->parishId)->findOrFail($id);
+            $namHoc = NamHoc::query()->findOrFail($id);
             $namHoc->update(['status' => !$namHoc->status]);
 
             $this->emit('toast', 
@@ -251,7 +251,7 @@ class NamHocManager extends BaseComponent
         try {
             DB::beginTransaction();
 
-            $namHoc = NamHoc::ofParish($this->parishId)->findOrFail($id);
+            $namHoc = NamHoc::query()->findOrFail($id);
 
             if (CatechismClass::where('school_year_id', $namHoc->id)->exists()) {
                 $this->emit('toast', 'error', 'Không thể xóa năm học đang có lớp học');

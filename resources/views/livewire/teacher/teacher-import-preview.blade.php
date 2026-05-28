@@ -1,12 +1,15 @@
-<div class="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 p-4 sm:p-6">
-    <div class="mx-auto max-w-7xl space-y-5">
+@section('topbar')
+<x-breadcrumb :items="[
+    ['label' => 'Trang chủ', 'url' => route('dashboard')],
+    ['label' => 'Giáo lý viên', 'url' => route('catechists.index')],
+    ['label' => 'Import danh sách'],
+]" />
+@endsection
 
-        {{-- Breadcrumb --}}
-        <x-breadcrumb :items="[
-            ['label' => 'Trang chủ', 'url' => route('dashboard')],
-            ['label' => 'Quản lý Giáo lý viên', 'url' => route('catechists.index')],
-            ['label' => 'Import danh sách'],
-        ]" separator="arrow" />
+<div class="min-h-screen bg-slate-50 p-2 sm:p-4 lg:p-6" style="min-height: calc(100vh - 56px - var(--bottom-offset));">
+    <a href="#main-content" class="sr-only focus:not-sr-only">Bỏ qua tới nội dung</a>
+
+    <div id="main-content" class="mx-auto max-w-7xl space-y-6">
 
         {{-- Toast --}}
         <div role="status" aria-live="polite">

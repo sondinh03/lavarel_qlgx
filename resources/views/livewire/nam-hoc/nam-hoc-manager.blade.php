@@ -146,16 +146,20 @@
                     </tr>
                     @empty
                     <tr>
-                        <td colspan="7" class="px-6 py-12">
-                            <x-empty-state
-                                icon="calendar"
+                        <td colspan="7" class="p-0 border-none">
+                            <x-stats.page-empty
+                                tone="primary"
                                 title="Chưa có năm học"
                                 description="Hãy tạo năm học đầu tiên cho giáo xứ">
+                                <x-slot name="icon">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+                                        d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                </x-slot>
                                 <x-button wire:click="create" variant="primary">
                                     <x-icon name="plus" />
                                     Thêm năm học
                                 </x-button>
-                            </x-empty-state>
+                            </x-stats.page-empty>
                         </td>
                     </tr>
                     @endforelse

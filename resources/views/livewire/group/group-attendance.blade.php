@@ -207,8 +207,8 @@
         </div>
 
         {{-- Attendance Table --}}
+        @if($members->count() > 0)
         <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
-            @if($members->count() > 0)
                 <div class="overflow-x-auto">
                     <table class="w-full border-separate border-spacing-0">
                         <thead class="bg-slate-50 border-b border-slate-200">
@@ -367,18 +367,22 @@
                             <span class="w-6 h-6 rounded-lg bg-orange-400 flex items-center justify-center
                                          font-bold text-white text-xs">T</span>
                             Đi trễ
-        </span>
+                        </span>
                     </div>
                 </div>
-
-            @else
-                <x-empty-state
-                    icon="users"
-                    :colspan="4"
-                    title="Nhóm chưa có thành viên"
-                    description="Thêm thành viên vào nhóm trước khi điểm danh" />
-            @endif
         </div>
+
+        @else
+        <x-stats.page-empty
+            tone="primary"
+            title="Nhóm chưa có thành viên"
+            description="Thêm thành viên vào nhóm trước khi điểm danh">
+            <x-slot name="icon">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+                    d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
+            </x-slot>
+        </x-stats.page-empty>
+        @endif
 
         {{-- Mobile sticky save bar --}}
         <div class="lg:hidden fixed left-0 right-0 z-20 bg-white border-t border-slate-200 shadow-lg px-4"

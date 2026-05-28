@@ -50,6 +50,7 @@ use App\Http\Livewire\CatechismClass\CatechismClassList;
 use App\Http\Livewire\ClassStudentManager;
 use App\Http\Livewire\Dashboard\AdminDashboard;
 use App\Http\Livewire\Dashboard\CatechistDashboard;
+use App\Http\Livewire\Dashboard\ParishionerDashboard;
 use App\Http\Livewire\Family\FamilyDetail;
 use App\Http\Livewire\Family\FamilyEdit;
 use App\Http\Livewire\Family\FamilyList;
@@ -77,6 +78,7 @@ use App\Http\Livewire\Student\StudentDetail;
 use App\Http\Livewire\Student\StudentEdit;
 use App\Http\Livewire\Student\StudentImportPreview;
 use App\Http\Livewire\Student\StudentListNew;
+use App\Http\Livewire\Student\StudentStatistics;
 use App\Http\Livewire\Teacher\TeacherImportPreview;
 use App\Http\Livewire\Teacher\TeacherManager;
 use Illuminate\Support\Facades\Auth;
@@ -108,6 +110,9 @@ Route::middleware('auth')->group(function () {
     Route::get('/parish-admin-dashboard', AdminDashboard::class)
         ->name('parish-admin.dashboard');
 
+    Route::get('/parishioner-dashboard', ParishionerDashboard::class)
+        ->name('parishioners.dashboard');
+
     Route::get('/catechist-dashboard', CatechistDashboard::class)
         ->name('catechist.dashboard');
 
@@ -131,6 +136,9 @@ Route::middleware('auth')->group(function () {
 
         Route::get('/students', StudentListNew::class)
             ->name('students.index');
+
+        Route::get('/students/statistics', StudentStatistics::class)
+            ->name('students.statistics');
 
         Route::get('/students/create', StudentEdit::class)
             ->middleware('role:parish_admin')

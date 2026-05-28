@@ -21,7 +21,7 @@ class CatechistDashboard extends BaseComponent
             ->locale('vi')
             ->isoFormat('dddd, D/M/YYYY');
 
-        $this->activeSchoolYear = NamHoc::ofParish($this->parishId)
+        $this->activeSchoolYear = NamHoc::query()
             ->active()
             ->orderByDesc('name')
             ->first();
@@ -54,7 +54,6 @@ class CatechistDashboard extends BaseComponent
         }
 
         $this->myClasses = Lop::with(['blockRelation', 'activeStudents'])
-            ->ofParish($this->parishId)
             ->where('schoolyear', $this->activeSchoolYear->id)
             ->whereHas('catechists', fn($q) => $q->where('teacher_id', $teacherId))
             ->active()

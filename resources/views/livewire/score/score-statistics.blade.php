@@ -23,7 +23,7 @@
                     </div>
                     <div>
                         <h1 class="text-xl font-bold text-slate-900">Thống kê điểm</h1>
-                        <p class="text-sm text-slate-500">Phân tích kết quả học tập theo lớp, khối và toàn xứ</p>
+                        <p class="text-sm text-slate-500">Phạm vi tự động theo bộ lọc lớp / khối</p>
                     </div>
                 </div>
 
@@ -37,160 +37,81 @@
                 </a>
             </div>
 
-            {{-- Filter + Scope + ViewMode --}}
+            {{-- Filters --}}
             <div class="px-6 py-4 bg-slate-50/60 border-b border-slate-100">
-                <div class="flex flex-col gap-4">
-                    {{-- Row 1: Filters --}}
-                    <livewire:filters.filter-bar
-                        :parish-id="$parishId"
-                        :show-nam-hoc="true"
-                        :show-khoi="true"
-                        :show-lop="true"
-                        :show-ky="$viewMode === 'semester'"
-                        :selected-nam-hoc="$selectedNamHoc"
-                        :selected-khoi="$selectedKhoi"
-                        :selected-lop="$selectedLop"
-                        :selected-ky="$selectedSemester" />
-
-                    {{-- Row 2: Scope + ViewMode selectors --}}
-                    <div class="flex items-center justify-between gap-3 flex-wrap">
-                        {{-- Scope switcher --}}
-                        <div class="flex items-center gap-1.5">
-                            <span class="text-xs font-semibold text-slate-400 uppercase tracking-wide mr-1">Phạm vi:</span>
-                            @if($selectedLop)
-                            <button wire:click="setScope('class')"
-                                class="px-3 py-1.5 rounded-xl text-sm font-semibold border transition-all
-                                       {{ $scope === 'class'
-                                           ? 'bg-primary-600 text-white border-primary-600 shadow-sm'
-                                           : 'bg-white text-slate-600 border-slate-300 hover:border-primary-400 hover:text-primary-600' }}">
-                                Lớp
-                            </button>
-                            @endif
-                            @if($selectedKhoi || $selectedLop)
-                            <button wire:click="setScope('grade')"
-                                class="px-3 py-1.5 rounded-xl text-sm font-semibold border transition-all
-                                       {{ $scope === 'grade'
-                                           ? 'bg-primary-600 text-white border-primary-600 shadow-sm'
-                                           : 'bg-white text-slate-600 border-slate-300 hover:border-primary-400 hover:text-primary-600' }}">
-                                Khối
-                            </button>
-                            @endif
-                            <button wire:click="setScope('parish')"
-                                class="px-3 py-1.5 rounded-xl text-sm font-semibold border transition-all
-                                       {{ $scope === 'parish'
-                                           ? 'bg-primary-600 text-white border-primary-600 shadow-sm'
-                                           : 'bg-white text-slate-600 border-slate-300 hover:border-primary-400 hover:text-primary-600' }}">
-                                Toàn xứ
-                            </button>
-                        </div>
-
-                        {{-- ViewMode toggle --}}
-                        <div class="flex gap-1 bg-slate-200 p-1 rounded-xl">
-                            <button wire:click="setViewMode('semester')"
-                                class="px-3 py-1.5 rounded-lg text-sm font-semibold transition-all
-                                       {{ $viewMode === 'semester'
-                                           ? 'bg-white text-primary-600 shadow-sm'
-                                           : 'text-slate-600 hover:text-slate-900' }}">
-                                Theo kỳ
-                            </button>
-                            <button wire:click="setViewMode('year')"
-                                class="px-3 py-1.5 rounded-lg text-sm font-semibold transition-all
-                                       {{ $viewMode === 'year'
-                                           ? 'bg-white text-primary-600 shadow-sm'
-                                           : 'text-slate-600 hover:text-slate-900' }}">
-                                Cả năm
-                            </button>
-                        </div>
-                    </div>
-                </div>
+                <livewire:filters.filter-bar
+                    :parish-id="$parishId"
+                    :show-nam-hoc="true"
+                    :show-khoi="true"
+                    :show-lop="true"
+                    :show-ky="true"
+                    :selected-nam-hoc="$selectedNamHoc"
+                    :selected-khoi="$selectedKhoi"
+                    :selected-lop="$selectedLop"
+                    :selected-ky="$selectedSemester" />
             </div>
         </div>
 
         {{-- ===================== EMPTY STATE ===================== --}}
         @if(empty($ratingChartData) || $totalStudentsWithScore === 0)
-        <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-16 text-center">
-            <svg class="mx-auto w-16 h-16 text-slate-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <x-stats.page-empty
+            tone="primary"
+            :title="!$selectedNamHoc ? 'Vui lòng chọn năm học' : ('Chưa có dữ liệu điểm (' . $scopeLabel . ', ' . $semesterLabel . ')')"
+            description="Hãy nhập điểm tại trang quản lý điểm trước">
+            <x-slot name="icon">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
                     d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
-            </svg>
-            <p class="mt-4 text-lg font-semibold text-slate-400">
-                @if(!$selectedNamHoc)
-                    Vui lòng chọn năm học
-                @elseif($scope === 'class' && !$selectedLop)
-                    Vui lòng chọn lớp để xem thống kê
-                @elseif($scope === 'grade' && !$selectedKhoi)
-                    Vui lòng chọn khối để xem thống kê
-                @else
-                    Chưa có dữ liệu điểm cho phạm vi này
-                @endif
-            </p>
-            <p class="mt-1 text-sm text-slate-400">
-                Hãy nhập điểm tại
-                <a href="{{ route('scores.index') }}" class="text-primary-500 underline hover:text-primary-700">trang quản lý điểm</a>
-                trước
-            </p>
-        </div>
+            </x-slot>
+
+            <a href="{{ route('scores.index') }}" class="text-primary-500 underline hover:text-primary-700">trang quản lý điểm</a>
+        </x-stats.page-empty>
 
         @else
 
         {{-- ===================== SUMMARY CARDS ===================== --}}
         <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
 
-            {{-- Điểm TB --}}
-            <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-5 flex flex-col gap-1">
-                <div class="text-xs font-semibold text-slate-400 uppercase tracking-wide">Điểm TB chung</div>
-                <div class="text-3xl font-extrabold
-                    {{ ($summary['avg'] ?? 0) >= 8 ? 'text-emerald-600' : (($summary['avg'] ?? 0) >= 5 ? 'text-primary-600' : 'text-red-500') }}">
-                    {{ number_format($summary['avg'] ?? 0, 2) }}
-                </div>
-                <div class="text-xs text-slate-400">/ 10.00</div>
-            </div>
+            {{-- Điểm trung bình --}}
+            <x-stats.stat-card
+                label="Điểm trung bình chung"
+                :value="number_format($summary['avg'] ?? 0, 2)"
+                subline="/ 10.00"
+                :value-class="(($summary['avg'] ?? 0) >= 8 ? 'text-emerald-600' : ((($summary['avg'] ?? 0) >= 5) ? 'text-primary-600' : 'text-red-500'))" />
 
             {{-- Số học sinh có điểm --}}
-            <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-5 flex flex-col gap-1">
-                <div class="text-xs font-semibold text-slate-400 uppercase tracking-wide">Học sinh có điểm</div>
-                <div class="text-3xl font-extrabold text-slate-800">
-                    {{ $totalStudentsWithScore }}
-                    <span class="text-lg text-slate-400 font-normal">/ {{ $totalStudents }}</span>
+            <x-stats.stat-card
+                label="Học sinh có điểm"
+                :value="$totalStudentsWithScore"
+                value-class="text-slate-800"
+                :subline="($totalStudents > 0 ? round($totalStudentsWithScore / $totalStudents * 100, 1) : 0) . '% đã nhập điểm'">
+                <div class="text-lg text-slate-400 font-normal -mt-8 ml-24">
+                    / {{ $totalStudents }}
                 </div>
-                <div class="text-xs text-slate-400">
-                    {{ $totalStudents > 0 ? round($totalStudentsWithScore / $totalStudents * 100, 1) : 0 }}% đã nhập điểm
-                </div>
-            </div>
+            </x-stats.stat-card>
 
             {{-- Tỉ lệ đạt --}}
-            <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-5 flex flex-col gap-1">
-                <div class="text-xs font-semibold text-slate-400 uppercase tracking-wide">Tỉ lệ đạt (≥5)</div>
-                <div class="text-3xl font-extrabold text-emerald-600">
-                    {{ $totalStudentsWithScore > 0
-                        ? round(($summary['pass'] ?? 0) / $totalStudentsWithScore * 100, 1)
-                        : 0 }}%
-                </div>
-                <div class="text-xs text-slate-400">{{ $summary['pass'] ?? 0 }} / {{ $totalStudentsWithScore }} học sinh</div>
-            </div>
+            <x-stats.stat-card
+                label="Tỉ lệ đạt (≥5)"
+                :value="($totalStudentsWithScore > 0 ? round(($summary['pass'] ?? 0) / $totalStudentsWithScore * 100, 1) : 0)"
+                suffix="%"
+                :subline="($summary['pass'] ?? 0) . ' / ' . $totalStudentsWithScore . ' học sinh'"
+                value-class="text-emerald-600" />
 
             {{-- Cao nhất / Thấp nhất --}}
-            <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-5 flex flex-col gap-1">
-                <div class="text-xs font-semibold text-slate-400 uppercase tracking-wide">Cao nhất / Thấp nhất</div>
+            <x-stats.stat-card label="Cao nhất / Thấp nhất" :value="null" value-class="text-slate-800" subline="Điểm trung bình cá nhân">
                 <div class="flex items-baseline gap-2">
                     <span class="text-2xl font-extrabold text-emerald-600">{{ number_format($summary['max'] ?? 0, 1) }}</span>
                     <span class="text-slate-300">/</span>
                     <span class="text-2xl font-extrabold text-red-500">{{ number_format($summary['min'] ?? 0, 1) }}</span>
                 </div>
-                <div class="text-xs text-slate-400">Điểm TB cá nhân</div>
-            </div>
+            </x-stats.stat-card>
         </div>
 
         {{-- ===================== CHARTS ===================== --}}
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-5">
 
             {{-- DONUT: Phân bố xếp loại --}}
-            <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
-                <div class="px-6 py-4 border-b border-slate-100 flex items-center justify-between">
-                    <h2 class="text-base font-bold text-slate-800">Phân bố xếp loại</h2>
-                    <span class="text-xs text-slate-400">{{ $totalStudentsWithScore }} học sinh</span>
-                </div>
-                <div class="p-6">
+            <x-stats.chart-card title="Phân bố xếp loại" :right="$totalStudentsWithScore . ' học sinh'">
                     <div class="flex flex-col sm:flex-row lg:flex-col xl:flex-row items-center gap-6">
                         {{-- Donut --}}
                         <div class="relative flex-shrink-0 w-48 h-48">
@@ -200,17 +121,27 @@
                                 <span class="text-2xl font-extrabold text-slate-800">
                                     {{ number_format($summary['avg'] ?? 0, 1) }}
                                 </span>
-                                <span class="text-xs text-slate-400">Điểm TB</span>
+                                <span class="text-xs text-slate-400">Điểm trung bình</span>
                             </div>
                         </div>
 
                         {{-- Legend --}}
                         <div class="flex-1 space-y-3 w-full">
                             @foreach($ratingChartData as $item)
+                            @php
+                                $dotClass = match ($item['color'] ?? '') {
+                                    '#10b981' => 'bg-emerald-500',
+                                    '#3b82f6' => 'bg-blue-500',
+                                    '#f59e0b' => 'bg-amber-400',
+                                    '#eab308' => 'bg-yellow-500',
+                                    '#f97316' => 'bg-orange-500',
+                                    '#ef4444' => 'bg-red-500',
+                                    default   => 'bg-slate-300',
+                                };
+                            @endphp
                             <div class="flex items-center justify-between gap-2">
                                 <div class="flex items-center gap-2 min-w-0">
-                                    <span class="w-3 h-3 rounded-full flex-shrink-0"
-                                          style="background:{{ $item['color'] }}"></span>
+                                    <span class="w-3 h-3 rounded-full flex-shrink-0 {{ $dotClass }}"></span>
                                     <span class="text-sm text-slate-600 truncate">{{ $item['label'] }}</span>
                                 </div>
                                 <div class="flex items-center gap-2 flex-shrink-0">
@@ -218,45 +149,24 @@
                                     <span class="text-xs text-slate-400 w-10 text-right">{{ $item['percentage'] }}%</span>
                                 </div>
                             </div>
-                            {{-- Mini bar --}}
-                            <div class="w-full h-1 rounded-full bg-slate-100 overflow-hidden -mt-1">
-                                <div class="h-full rounded-full transition-all duration-700"
-                                     style="width:{{ $item['percentage'] }}%; background:{{ $item['color'] }}"></div>
-                            </div>
                             @endforeach
                         </div>
                     </div>
-                </div>
-            </div>
+            </x-stats.chart-card>
 
             {{-- BAR CHART: Phân phối điểm --}}
-            <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
-                <div class="px-6 py-4 border-b border-slate-100 flex items-center justify-between">
-                    <h2 class="text-base font-bold text-slate-800">Phân phối điểm trung bình</h2>
-                    <span class="text-xs text-slate-400">Phân bố theo khoảng điểm</span>
-                </div>
-                <div class="p-6">
-                    <canvas id="distributionBarChart" height="192"></canvas>
-                </div>
-            </div>
+            <x-stats.chart-card title="Phân phối điểm trung bình" right="Phân bố theo khoảng điểm">
+                <canvas id="distributionBarChart" height="192"></canvas>
+            </x-stats.chart-card>
         </div>
 
-        {{-- ===================== CLASS COMPARISON (scope ≠ class) ===================== --}}
-        @if($scope !== 'class' && !empty($classComparisonData))
-        <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
-            <div class="px-6 py-4 border-b border-slate-100 flex items-center justify-between">
-                <h2 class="text-base font-bold text-slate-800">
-                    So sánh điểm TB giữa các lớp
-                    <span class="text-xs font-normal text-slate-400 ml-2">
-                        ({{ $scope === 'grade' ? 'theo khối' : 'toàn xứ' }}{{ $viewMode === 'year' ? ', cả năm' : ', kỳ ' . $selectedSemester }})
-                    </span>
-                </h2>
-                <span class="text-xs text-slate-400">{{ count($classComparisonData) }} lớp</span>
-            </div>
-            <div class="p-6">
-                <canvas id="classComparisonChart"></canvas>
-            </div>
-        </div>
+        {{-- ===================== CLASS COMPARISON (nhiều lớp) ===================== --}}
+        @if($effectiveScope !== 'class' && !empty($classComparisonData))
+        <x-stats.chart-card
+            title="So sánh điểm trung bình giữa các lớp ({{ $scopeLabel }}, {{ $semesterLabel }})"
+            :right="count($classComparisonData) . ' lớp'">
+            <canvas id="classComparisonChart"></canvas>
+        </x-stats.chart-card>
         @endif
 
         {{-- ===================== NOTES ===================== --}}
@@ -292,202 +202,173 @@
 
         @endif {{-- end empty check --}}
 
+        @if($selectedNamHoc)
+        <div id="score-stats-chart-payload" class="hidden" aria-hidden="true">@json(['rating' => $ratingChartData, 'distribution' => $distributionChartData, 'comparison' => $classComparisonData])</div>
+        @endif
+
     </div>
 </div>
 
+@include('livewire.partials.chart-livewire-bridge')
+
 @push('scripts')
 <script>
-    const ratingData        = @json($ratingChartData);
-    const distributionData  = @json($distributionChartData);
-    const comparisonData    = @json($classComparisonData);
-
+(function () {
     Chart.defaults.font.family = "'Inter', sans-serif";
     Chart.defaults.color       = '#64748b';
 
-    // ════════════════════════════════════════════════════════════
-    // 1. DONUT — XẾP LOẠI
-    // ════════════════════════════════════════════════════════════
-    (function() {
-        const canvas = document.getElementById('ratingDonutChart');
-        if (!canvas || !ratingData.length) return;
+    window.qlgxChartBridge.register('score-stats', {
+        payloadId: 'score-stats-chart-payload',
+        canvasIds: ['ratingDonutChart', 'distributionBarChart', 'classComparisonChart'],
+        render(payload) {
+            const ratingData       = payload.rating || [];
+            const distributionData = payload.distribution || [];
+            const comparisonData   = payload.comparison || [];
 
-        const filtered = ratingData.filter(d => d.count > 0);
-        if (!filtered.length) return;
-
-        new Chart(canvas, {
-            type: 'doughnut',
-            data: {
-                labels:   filtered.map(d => d.label),
-                datasets: [{
-                    data:            filtered.map(d => d.count),
-                    backgroundColor: filtered.map(d => d.color),
-                    borderColor:     '#ffffff',
-                    borderWidth:     3,
-                    hoverOffset:     6,
-                }]
-            },
-            options: {
-                cutout:     '68%',
-                responsive: false,
-                plugins: {
-                    legend: { display: false },
-                    tooltip: {
-                        callbacks: {
-                            label: ctx => ` ${ctx.label}: ${ctx.raw} học sinh (${filtered[ctx.dataIndex]?.percentage ?? 0}%)`
-                        }
-                    }
-                },
-                animation: {
-                    duration: 800,
-                    easing: 'easeOutQuart',
-                }
-            }
-        });
-    })();
-
-    // ════════════════════════════════════════════════════════════
-    // 2. BAR — PHÂN PHỐI ĐIỂM
-    // ════════════════════════════════════════════════════════════
-    (function() {
-        const canvas = document.getElementById('distributionBarChart');
-        if (!canvas || !distributionData.length) return;
-
-        new Chart(canvas, {
-            type: 'bar',
-            data: {
-                labels:   distributionData.map(d => d.label),
-                datasets: [{
-                    label:           'Số học sinh',
-                    data:            distributionData.map(d => d.count),
-                    backgroundColor: distributionData.map(d => d.color + 'cc'),
-                    borderColor:     distributionData.map(d => d.color),
-                    borderWidth:     2,
-                    borderRadius:    6,
-                    borderSkipped:   false,
-                }]
-            },
-            options: {
-                responsive: true,
-                plugins: {
-                    legend: { display: false },
-                    tooltip: {
-                        callbacks: {
-                            title: ctx => `Điểm ${ctx[0].label}`,
-                            label: ctx => ` ${ctx.raw} học sinh`,
-                        }
-                    }
-                },
-                scales: {
-                    x: {
-                        grid: { display: false },
-                        ticks: { font: { size: 11 } },
-                        title: {
-                            display: true,
-                            text: 'Khoảng điểm trung bình',
-                            font: { size: 11 },
-                            color: '#94a3b8',
-                        }
-                    },
-                    y: {
-                        beginAtZero: true,
-                        ticks: {
-                            stepSize: 1,
-                            font: { size: 11 },
+            const donutCanvas = document.getElementById('ratingDonutChart');
+            if (donutCanvas && ratingData.length) {
+                const filtered = ratingData.filter(d => d.count > 0);
+                if (filtered.length) {
+                    new Chart(donutCanvas, {
+                        type: 'doughnut',
+                        data: {
+                            labels:   filtered.map(d => d.label),
+                            datasets: [{
+                                data:            filtered.map(d => d.count),
+                                backgroundColor: filtered.map(d => d.color),
+                                borderColor:     '#ffffff',
+                                borderWidth:     3,
+                                hoverOffset:     6,
+                            }]
                         },
-                        grid: { color: '#f1f5f9' },
-                        title: {
-                            display: true,
-                            text: 'Số học sinh',
-                            font: { size: 11 },
-                            color: '#94a3b8',
+                        options: {
+                            cutout: '68%',
+                            responsive: false,
+                            plugins: {
+                                legend: { display: false },
+                                tooltip: {
+                                    callbacks: {
+                                        label: ctx => ` ${ctx.label}: ${ctx.raw} học sinh (${filtered[ctx.dataIndex]?.percentage ?? 0}%)`
+                                    }
+                                }
+                            },
+                            animation: { duration: 800, easing: 'easeOutQuart' }
                         }
-                    }
-                },
-                animation: {
-                    duration: 700,
-                    easing: 'easeOutQuart',
+                    });
                 }
             }
-        });
-    })();
 
-    // ════════════════════════════════════════════════════════════
-    // 3. BAR — SO SÁNH LỚP
-    // ════════════════════════════════════════════════════════════
-    (function() {
-        const canvas = document.getElementById('classComparisonChart');
-        if (!canvas || !comparisonData.length) return;
-
-        const colors = comparisonData.map(d =>
-            d.avg >= 8    ? '#10b981' :
-            d.avg >= 6.5  ? '#3b82f6' :
-            d.avg >= 5    ? '#f59e0b' : '#ef4444'
-        );
-
-        new Chart(canvas, {
-            type: 'bar',
-            data: {
-                labels:   comparisonData.map(d => d.class_name),
-                datasets: [{
-                    label:           'Điểm TB',
-                    data:            comparisonData.map(d => d.avg),
-                    backgroundColor: colors.map(c => c + 'bb'),
-                    borderColor:     colors,
-                    borderWidth:     2,
-                    borderRadius:    6,
-                    borderSkipped:   false,
-                }]
-            },
-            options: {
-                responsive: true,
-                plugins: {
-                    legend: { display: false },
-                    tooltip: {
-                        callbacks: {
-                            label: ctx => ` Điểm TB: ${ctx.raw}  |  ${comparisonData[ctx.dataIndex]?.count} học sinh`,
-                        }
-                    }
-                },
-                scales: {
-                    x: {
-                        grid: { display: false },
-                        ticks: { font: { size: 11 } },
+            const barCanvas = document.getElementById('distributionBarChart');
+            if (barCanvas && distributionData.length) {
+                new Chart(barCanvas, {
+                    type: 'bar',
+                    data: {
+                        labels:   distributionData.map(d => d.label),
+                        datasets: [{
+                            label:           'Số học sinh',
+                            data:            distributionData.map(d => d.count),
+                            backgroundColor: distributionData.map(d => d.color + 'cc'),
+                            borderColor:     distributionData.map(d => d.color),
+                            borderWidth:     2,
+                            borderRadius:    6,
+                            borderSkipped:   false,
+                        }]
                     },
-                    y: {
-                        min: 0,
-                        max: 10,
-                        ticks: {
-                            stepSize: 2,
-                            font: { size: 11 },
+                    options: {
+                        responsive: true,
+                        plugins: {
+                            legend: { display: false },
+                            tooltip: {
+                                callbacks: {
+                                    title: ctx => `Điểm ${ctx[0].label}`,
+                                    label: ctx => ` ${ctx.raw} học sinh`,
+                                }
+                            }
                         },
-                        grid: { color: '#f1f5f9' },
-                        title: {
-                            display: true,
-                            text: 'Điểm TB',
-                            font: { size: 11 },
-                            color: '#94a3b8',
-                        }
+                        scales: {
+                            x: {
+                                grid: { display: false },
+                                ticks: { font: { size: 11 } },
+                                title: {
+                                    display: true,
+                                    text: 'Khoảng điểm trung bình',
+                                    font: { size: 11 },
+                                    color: '#94a3b8',
+                                }
+                            },
+                            y: {
+                                beginAtZero: true,
+                                ticks: { stepSize: 1, font: { size: 11 } },
+                                grid: { color: '#f1f5f9' },
+                                title: {
+                                    display: true,
+                                    text: 'Số học sinh',
+                                    font: { size: 11 },
+                                    color: '#94a3b8',
+                                }
+                            }
+                        },
+                        animation: { duration: 700, easing: 'easeOutQuart' }
                     }
-                },
-                animation: {
-                    duration: 700,
-                    easing: 'easeOutQuart',
-                }
+                });
             }
-        });
-    })();
 
-    // Re-init charts on Livewire update
-    document.addEventListener('livewire:update', () => {
-        setTimeout(() => {
-            ['ratingDonutChart', 'distributionBarChart', 'classComparisonChart'].forEach(id => {
-                const canvas = document.getElementById(id);
-                if (canvas) {
-                    const existing = Chart.getChart(canvas);
-                    if (existing) existing.destroy();
-                }
-            });
-        }, 10);
+            const compareCanvas = document.getElementById('classComparisonChart');
+            if (compareCanvas && comparisonData.length) {
+                const colors = comparisonData.map(d =>
+                    d.avg >= 8   ? '#10b981' :
+                    d.avg >= 6.5 ? '#3b82f6' :
+                    d.avg >= 5   ? '#f59e0b' : '#ef4444'
+                );
+
+                new Chart(compareCanvas, {
+                    type: 'bar',
+                    data: {
+                        labels:   comparisonData.map(d => d.class_name),
+                        datasets: [{
+                            label:           'Điểm trung bình',
+                            data:            comparisonData.map(d => d.avg),
+                            backgroundColor: colors.map(c => c + 'bb'),
+                            borderColor:     colors,
+                            borderWidth:     2,
+                            borderRadius:    6,
+                            borderSkipped:   false,
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        plugins: {
+                            legend: { display: false },
+                            tooltip: {
+                                callbacks: {
+                                    label: ctx => ` Điểm trung bình: ${ctx.raw}  |  ${comparisonData[ctx.dataIndex]?.count} học sinh`,
+                                }
+                            }
+                        },
+                        scales: {
+                            x: {
+                                grid: { display: false },
+                                ticks: { font: { size: 11 } },
+                            },
+                            y: {
+                                min: 0,
+                                max: 10,
+                                ticks: { stepSize: 2, font: { size: 11 } },
+                                grid: { color: '#f1f5f9' },
+                                title: {
+                                    display: true,
+                                    text: 'Điểm trung bình',
+                                    font: { size: 11 },
+                                    color: '#94a3b8',
+                                }
+                            }
+                        },
+                        animation: { duration: 700, easing: 'easeOutQuart' }
+                    }
+                });
+            }
+        },
     });
+})();
 </script>
 @endpush
