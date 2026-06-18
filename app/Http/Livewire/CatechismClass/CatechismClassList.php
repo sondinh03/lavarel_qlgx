@@ -6,7 +6,9 @@ use App\Http\Livewire\Base\BaseComponent;
 use App\Models\CatechismClass;
 use App\Models\GradeLevel;
 use App\Models\NamHoc;
+use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
+use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
@@ -310,14 +312,19 @@ class CatechismClassList extends BaseComponent
 
     public function delete(int $id): void
     {
-        $class = CatechismClass::where('school_year_id', $this->selectedNamHoc)
-            ->findOrFail($id);
-
-        $this->authorize('delete', $class);
-
         try {
-            if ($class->students()->exists()) {
-                session()->flash('error', 'Không thể xóa lớp còn học sinh. Vui lòng chuyển học sinh trước.');
+            $class = CatechismClass::where('school_year_id', $this->selectedNamHoc)
+                ->findOrFail($id);
+
+            $this->authorize('delete', $class);
+
+            $studentCount = $class->students()->count();
+            if ($studentCount > 0) {
+                $this->emit(
+                    'toast',
+                    'error',
+                    "Không thể xóa lớp «{$class->name}» vì còn {$studentCount} học sinh. Vui lòng chuyển học sinh sang lớp khác trước."
+                );
                 return;
             }
 
@@ -325,14 +332,28 @@ class CatechismClassList extends BaseComponent
             $class->delete();
             DB::commit();
 
-            session()->flash('message', 'Xóa lớp học thành công');
-            $this->emit('classDeleted');
+            $this->emit('toast', 'success', "Đã xóa lớp «{$class->name}» thành công");
+        } catch (AuthorizationException $e) {
+            $this->emit('toast', 'error', 'Bạn không có quyền xóa lớp học này');
         } catch (ModelNotFoundException $e) {
-            session()->flash('error', 'Không tìm thấy lớp học này');
+            $this->emit('toast', 'error', 'Không tìm thấy lớp học này');
+        } catch (QueryException $e) {
+            DB::rollBack();
+            $this->logError($e, 'Error deleting class', ['id' => $id]);
+
+            if ((string) $e->getCode() === '23000' || str_contains($e->getMessage(), 'foreign key constraint')) {
+                $this->emit(
+                    'toast',
+                    'error',
+                    'Không thể xóa lớp vì còn dữ liệu liên quan (học sinh, điểm danh hoặc điểm số).'
+                );
+            } else {
+                $this->emit('toast', 'error', 'Có lỗi khi xóa lớp học. Vui lòng thử lại.');
+            }
         } catch (\Exception $e) {
             DB::rollBack();
             $this->logError($e, 'Error deleting class', ['id' => $id]);
-            session()->flash('error', 'Có lỗi khi xóa lớp học');
+            $this->emit('toast', 'error', 'Có lỗi khi xóa lớp học. Vui lòng thử lại.');
         }
     }
 

@@ -109,6 +109,12 @@ class ParishionersManager extends BaseComponent
 
     private ?LengthAwarePaginator $_parishionersCache = null;
 
+    /**
+     * Dropdown data
+     * @var array<int, string>
+     */
+    public array $parishGroups = [];
+
     // ==================== VALIDATION ====================
 
     protected array $formRules = [
@@ -179,9 +185,26 @@ class ParishionersManager extends BaseComponent
         parent::mount();
         $this->requireParishId();
         $this->linkedStudents = collect();
+
+        // preload parish groups for filter dropdown
+        $this->parishGroups = $this->loadParishGroups();
     }
 
     protected function loadInitialData(): void {}
+
+    private function loadParishGroups(): array
+    {
+        if (!$this->parishId) {
+            return [];
+        }
+
+        // Table `parish_groups`: used across parishioner module
+        return DB::table('parish_groups')
+            ->where('parish_id', $this->parishId)
+            ->orderBy('name')
+            ->pluck('name', 'id')
+            ->toArray();
+    }
 
     protected function sanitizeQueryString(): void
     {
@@ -745,7 +768,9 @@ class ParishionersManager extends BaseComponent
 
     public function render()
     {
-        return view('livewire.parishioners.parishioners-manager')
+        return view('livewire.parishioners.parishioners-manager', [
+            'parishGroups' => $this->parishGroups,
+        ])
             ->extends('frontend.layout.parishioner')->section('content');
     }
 }

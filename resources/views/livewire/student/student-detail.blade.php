@@ -1,6 +1,6 @@
 @section('topbar')
 <x-breadcrumb :items="[
-    ['label' => 'Trang chủ', 'url' => route('dashboard')],
+    ['label' => 'Trang chủ', 'url' => auth()->user()->isCatechist() ? route('catechist.dashboard') : route('parish-admin.dashboard')],
     ['label' => 'Học sinh', 'url' => route('students.index')],
     ['label' => $student['full_name_with_saint'] ?? 'Chi tiết'],
 ]" />

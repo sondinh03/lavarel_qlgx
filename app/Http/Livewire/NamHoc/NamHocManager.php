@@ -246,12 +246,11 @@ class NamHocManager extends BaseComponent
 
     public function delete(int $id): void
     {
-        $this->authorize('delete', NamHoc::class);
-
         try {
             DB::beginTransaction();
 
             $namHoc = NamHoc::query()->findOrFail($id);
+            $this->authorize('delete', $namHoc);
 
             if (CatechismClass::where('school_year_id', $namHoc->id)->exists()) {
                 $this->emit('toast', 'error', 'Không thể xóa năm học đang có lớp học');

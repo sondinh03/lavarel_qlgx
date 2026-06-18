@@ -8,7 +8,7 @@
             :items="[
                 [
                     'label' => 'Trang chủ',
-                    'url' => route('dashboard'),
+                    'url' => route('parish-admin.dashboard'),
                 ],
                 [
                     'label' => 'Quản lý khối học',

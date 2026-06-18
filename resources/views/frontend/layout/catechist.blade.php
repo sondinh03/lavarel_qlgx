@@ -363,6 +363,7 @@
         });
     </script>
     @livewireScripts
+    @include('frontend.layout.partials.livewire-alpine-bridge')
 </body>
 
 </html>

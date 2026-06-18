@@ -3,7 +3,7 @@
 
         {{-- Breadcrumb --}}
         <x-breadcrumb :items="[
-            ['label' => 'Dashboard', 'url' => route('dashboard')],
+            ['label' => 'Dashboard', 'url' => route('parish-admin.dashboard')],
             ['label' => 'Quản lý năm học', 'url' => route('school-years.index')],
             ['label' => 'Copy cấu trúc lớp'],
         ]" separator="arrow" />

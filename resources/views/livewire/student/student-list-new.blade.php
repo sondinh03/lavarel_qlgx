@@ -1,6 +1,6 @@
 @section('topbar')
 <x-breadcrumb :items="[
-        ['label' => 'Trang chủ', 'url' => route('dashboard')],
+        ['label' => 'Trang chủ', 'url' => auth()->user()->isCatechist() ? route('catechist.dashboard') : route('parish-admin.dashboard')],
         ['label' => 'Học sinh']
     ]" />
 @endsection
@@ -315,7 +315,7 @@
 
                                         <x-dropdown-item
                                             x-on:click="$dispatch('open-confirm', {
-                                                message: 'Xóa học sinh {{ $student->full_name_with_saint }}?',
+                                                message: 'Xóa học sinh {{ $student->full_name_with_saint }} khỏi lớp?',
                                                 wireMethod: 'delete({{ $student->id }})'
                                             })"
                                             icon="trash"

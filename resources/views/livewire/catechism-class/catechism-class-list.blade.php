@@ -1,6 +1,6 @@
 @section('topbar')
 <x-breadcrumb :items="[
-    ['label' => 'Trang chủ', 'url' => route('dashboard')],
+    ['label' => 'Trang chủ', 'url' => route('parish-admin.dashboard')],
     ['label' => 'Quản lý lớp học'],
 ]" />
 @endsection
@@ -109,7 +109,7 @@
                             <td class="px-6 py-4 relative">
                                 @if(($class->teachers_count ?? 0) > 0)
                                 <div x-data="{ open: false }" class="inline-block">
-                                    <button type="button"
+                                    <a href="{{ route('classes.catechists', ['id' => $class->id]) }}"
                                         @mouseenter="open = true"
                                         @mouseleave="open = false"
                                         class="flex items-center gap-2 text-sm font-medium text-slate-800 hover:text-primary-600 transition-colors">
@@ -119,7 +119,7 @@
                                             +{{ $class->teachers_count - 1 }}
                                         </span>
                                         @endif
-                                    </button>
+                                    </a>
                                     <div x-show="open" x-transition x-cloak
                                         class="absolute left-0 top-full mt-2 min-w-48 p-3 bg-white rounded-xl shadow-md border border-slate-200 z-20">
                                         @foreach($class->teacher_names ?? [] as $teacherName)
@@ -128,9 +128,11 @@
                                     </div>
                                 </div>
                                 @else
-                                <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold bg-amber-50 text-amber-700">
-                                    Chưa có GLV
-                                </span>
+                                <a href="{{ route('classes.catechists', ['id' => $class->id]) }}"
+                                    class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold
+                                           bg-amber-50 text-amber-700 hover:bg-amber-100 transition-colors">
+                                    Chưa có GLV — Phân công
+                                </a>
                                 @endif
                             </td>
                             <td class="px-6 py-4 text-center">
@@ -139,7 +141,7 @@
                                     {{ $class->is_active ? 'Hoạt động' : 'Tắt' }}
                                 </span>
                             </td>
-                            <td class="px-6 py-4">
+                            <td class="px-4 py-3 overflow-visible">
                                 <div class="flex items-center justify-center gap-1">
                                     <x-tooltip content="Danh sách học sinh">
                                         <a href="{{ route('students.index', ['class' => $class->id]) }}"
@@ -147,15 +149,31 @@
                                             <x-icon name="users" class="w-4 h-4" />
                                         </a>
                                     </x-tooltip>
-                                    <x-tooltip content="Danh sách GLV">
+                                    <x-tooltip content="Phân công GLV">
                                         <a href="{{ route('classes.catechists', ['id' => $class->id]) }}"
                                             class="p-2 hover:bg-primary-50 text-primary-600 rounded-lg transition-all">
                                             <x-icon name="catechists" class="w-4 h-4" />
                                         </a>
                                     </x-tooltip>
                                     <x-tooltip content="Chỉnh sửa">
-                                        <x-table-action wire="edit({{ $class->id }})" icon="edit" :icon-only="true" />
+                                        <button
+                                            wire:click="edit({{ $class->id }})"
+                                            class="p-2 hover:bg-primary-50 text-primary-600 rounded-lg transition-all">
+                                            <x-icon name="edit" />
+                                        </button>
                                     </x-tooltip>
+
+                                    <x-dropdown icon="more-vertical" align="right" variant="subtle" position="fixed">
+                                        <x-dropdown-item
+                                            x-on:click="$dispatch('open-confirm', {
+                                                message: 'Xóa lớp {{ $class->name }}?',
+                                                wireMethod: 'delete({{ $class->id }})'
+                                            })"
+                                            icon="trash"
+                                            class="text-red-600 hover:bg-red-50">
+                                            Xóa lớp học
+                                        </x-dropdown-item>
+                                    </x-dropdown>
                                 </div>
                             </td>
                         </tr>
@@ -288,7 +306,11 @@
 
                 @if($editingId)
                 <div class="bg-primary-50 border border-primary-100 rounded-xl p-4 text-sm text-primary-700">
-                    Sau khi lưu, bạn có thể phân công GLV trong trang chi tiết lớp.
+                    Sau khi lưu, nhấn icon GLV ở cột <strong>Thao tác</strong> để phân công giáo lý viên.
+                </div>
+                @else
+                <div class="bg-slate-50 border border-slate-200 rounded-xl p-4 text-sm text-slate-600">
+                    Sau khi tạo lớp, nhấn <strong>Chưa có GLV — Phân công</strong> hoặc icon GLV ở cột Thao tác.
                 </div>
                 @endif
             </div>

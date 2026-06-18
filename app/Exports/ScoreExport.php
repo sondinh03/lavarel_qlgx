@@ -11,6 +11,7 @@ use Maatwebsite\Excel\Concerns\WithHeadings;
 use Maatwebsite\Excel\Concerns\WithMapping;
 use Maatwebsite\Excel\Concerns\WithStyles;
 use Maatwebsite\Excel\Events\AfterSheet;
+use PhpOffice\PhpSpreadsheet\Style\Border;
 use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
 
 class ScoreExport implements FromCollection, WithHeadings, WithMapping, WithStyles, WithEvents
@@ -40,9 +41,9 @@ class ScoreExport implements FromCollection, WithHeadings, WithMapping, WithStyl
             ->whereHas('classes', fn($q) => $q->where('classes.id', $this->classId))
             ->join('students_class', 'students.id', '=', 'students_class.student_id')
             ->where('students_class.class_id', $this->classId)
-            ->with(['saint'])
-            ->orderBy('students.last_name')
+            ->with(['saint', 'parishGroup'])
             ->orderBy('students.first_name')
+            ->orderBy('students.last_name')
             ->select('students.*', 'students_class.id as pivot_id')
             ->get();
 
@@ -65,11 +66,13 @@ class ScoreExport implements FromCollection, WithHeadings, WithMapping, WithStyl
 
         $headings = [
             'STT',
+            'Mã học sinh',
             'Tên thánh',
             'Họ tên đệm',
             'Tên',
             'Ngày sinh',
             'Giới tính',
+            'Giáo họ',
         ];
 
         if ($this->scoreTypes !== null) {
@@ -78,7 +81,7 @@ class ScoreExport implements FromCollection, WithHeadings, WithMapping, WithStyl
             }
         }
 
-        $headings[] = 'Điểm TB';
+        $headings[] = 'Điểm trung bình';
 
         return $headings;
     }
@@ -90,6 +93,7 @@ class ScoreExport implements FromCollection, WithHeadings, WithMapping, WithStyl
 
         $row = [
             ++$this->rowIndex,
+            $student->student_code ?? '',
             $student->saint?->name ?? '',
             $student->last_name,
             $student->first_name,
@@ -99,6 +103,7 @@ class ScoreExport implements FromCollection, WithHeadings, WithMapping, WithStyl
                 'female' => 'Nữ',
                 default => '',
             },
+            $student->parishGroup?->name ?? '',
         ];
 
         $totalWeight = 0;
@@ -157,7 +162,10 @@ class ScoreExport implements FromCollection, WithHeadings, WithMapping, WithStyl
                     : $headerRow;
 
                 $scoreTypeCount = $this->scoreTypes !== null ? $this->scoreTypes->count() : 0;
-                $lastCol = chr(65 + 5 + $scoreTypeCount);
+                // 8 cột cố định + loại điểm + Điểm trung bình (cột cuối)
+                $lastColIndex = 8 + $scoreTypeCount;
+                $lastCol      = chr(65 + $lastColIndex);
+                $avgCol       = $lastCol;
 
                 $sheet->insertNewRowBefore(1, 3);
                 $sheet->setCellValue('A1', "Bảng điểm - Lớp $className - Học kỳ {$this->semester}");
@@ -211,6 +219,39 @@ class ScoreExport implements FromCollection, WithHeadings, WithMapping, WithStyl
                     ->getAlignment()
                     ->setHorizontal('center');
 
+                // Cột Điểm trung bình — viền nổi bật
+                $sheet->getStyle("{$avgCol}{$headerRow}:{$avgCol}{$dataLastRow}")
+                    ->applyFromArray([
+                        'font' => [
+                            'bold' => true,
+                        ],
+                        'alignment' => [
+                            'horizontal' => 'center',
+                        ],
+                        'fill' => [
+                            'fillType'   => 'solid',
+                            'startColor' => ['rgb' => 'FFF7ED'],
+                        ],
+                        'borders' => [
+                            'left' => [
+                                'borderStyle' => Border::BORDER_MEDIUM,
+                                'color'       => ['rgb' => '000000'],
+                            ],
+                            'right' => [
+                                'borderStyle' => Border::BORDER_MEDIUM,
+                                'color'       => ['rgb' => '000000'],
+                            ],
+                            'top' => [
+                                'borderStyle' => Border::BORDER_MEDIUM,
+                                'color'       => ['rgb' => '000000'],
+                            ],
+                            'bottom' => [
+                                'borderStyle' => Border::BORDER_MEDIUM,
+                                'color'       => ['rgb' => '000000'],
+                            ],
+                        ],
+                    ]);
+
                 $sheet->freezePane("A" . ($headerRow + 1));
             },
         ];
@@ -252,5 +293,46 @@ class ScoreExport implements FromCollection, WithHeadings, WithMapping, WithStyl
                 'value' => (float) $score->score_value,
             ];
         }
+    }
+
+    private function calculateAverage(int $studentClassId): ?float
+    {
+        if ($this->scoreTypes === null || $this->scoreTypes->isEmpty()) {
+            return null;
+        }
+
+        $totalWeight = 0.0;
+        $totalScore  = 0.0;
+
+        foreach ($this->scoreTypes as $type) {
+            $score = $this->scoresMap[$studentClassId][$type->id]['value'] ?? null;
+
+            if ($score === null) {
+                if (in_array($type->type, [\App\Models\ScoreType::TYPE_GIUA_KY, \App\Models\ScoreType::TYPE_CUOI_KY])) {
+                    return null;
+                }
+                continue;
+            }
+
+            $totalScore  += $score * $type->coefficient;
+            $totalWeight += $type->coefficient;
+        }
+
+        return $totalWeight > 0 ? round($totalScore / $totalWeight, 1) : null;
+    }
+
+    private function getStudentRating(?float $average): ?string
+    {
+        if ($average === null || $average < 0) {
+            return null;
+        }
+
+        foreach (self::RATING_LEVELS as $key => $rating) {
+            if ($average >= $rating['min'] && $average < $rating['max']) {
+                return $key;
+            }
+        }
+
+        return null;
     }
 }

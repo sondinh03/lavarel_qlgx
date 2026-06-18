@@ -211,6 +211,23 @@ class StudentEdit extends BaseComponent
     {
         $this->validate($this->formRules, $this->messages);
 
+        if (!$this->isEdit) {
+            $duplicate = $this->findDuplicateStudent();
+            if ($duplicate) {
+                $label = $duplicate->full_name_with_saint;
+                $code  = $duplicate->student_code ?? '—';
+
+                $this->addError('first_name', "Học sinh \"{$label}\" đã tồn tại trong hệ thống.");
+                $this->emit(
+                    'toast',
+                    'error',
+                    "Hồ sơ trùng: {$label} (mã {$code}). Vui lòng kiểm tra danh sách học sinh."
+                );
+
+                return;
+            }
+        }
+
         try {
             DB::beginTransaction();
 
@@ -270,8 +287,6 @@ class StudentEdit extends BaseComponent
 
             if (!$this->isEdit && $this->classId) {
                 $this->redirect(route('students.index', ['class' => $this->classId]));
-            } else {
-                $this->redirect(route('students.show', $student->id));
             }
         } catch (\Illuminate\Auth\Access\AuthorizationException $e) {
             DB::rollBack();
@@ -310,6 +325,37 @@ class StudentEdit extends BaseComponent
         $this->isEdit
             ? $this->redirect(route('students.show', $this->studentId))
             : $this->redirect(route('classes.index'));
+    }
+
+    /**
+     * Tìm học sinh trùng — họ + tên + ngày sinh + tên thánh.
+     */
+    private function findDuplicateStudent(?int $exceptId = null): ?StudentNew
+    {
+        $fullName = mb_strtolower(trim($this->last_name . ' ' . $this->first_name), 'UTF-8');
+        $birthday = $this->birthday ?: null;
+
+        $query = StudentNew::query()
+            ->whereRaw(
+                "LOWER(CONCAT(TRIM(last_name), ' ', TRIM(first_name))) = ?",
+                [$fullName]
+            )
+            ->where(function ($q) use ($birthday) {
+                $birthday
+                    ? $q->whereDate('birthday', $birthday)
+                    : $q->whereNull('birthday');
+            })
+            ->where(function ($q) {
+                $this->saint_id
+                    ? $q->where('saint_id', $this->saint_id)
+                    : $q->whereNull('saint_id');
+            });
+
+        if ($exceptId) {
+            $query->where('id', '!=', $exceptId);
+        }
+
+        return $query->first();
     }
 
     // ==================== RENDER ====================

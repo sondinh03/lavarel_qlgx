@@ -1,7 +1,7 @@
 @section('topbar')
 <x-breadcrumb :items="[
-    [ 'label' => 'Trang chủ', 'url' => route('dashboard')],
-    ['label' => 'năm học']
+    [ 'label' => 'Trang chủ', 'url' => route('parish-admin.dashboard')],
+    ['label' => 'Năm học']
 ]" />
 @endsection
 
@@ -54,7 +54,7 @@
                         </x-table-header>
                         <x-table-header class="w-28 text-center">Học kỳ I</x-table-header>
                         <x-table-header class="w-28 text-center">Học kỳ II</x-table-header>
-                        <x-table-header class="w-24 text-center">HK hiện tại</x-table-header>
+                        <x-table-header class="w-24 text-center">Học kỳ hiện tại</x-table-header>
                         <x-table-header class="w-24 text-center" :sortable="true" sort-field="status"
                             :current-sort="$sortField" :sort-direction="$sortDirection">
                             Trạng thái
@@ -110,37 +110,42 @@
                                 {{ $nh->status_label }}
                             </span>
                         </td>
-                        <td class="px-6 py-4">
-                            <div class="flex items-center justify-center gap-3">
+                        <td class="px-4 py-3 overflow-visible">
+                            <div class="flex items-center justify-center gap-1">
                                 <x-tooltip content="Chỉnh sửa">
-                                    <x-table-action wire="edit({{ $nh->id }})" icon="edit" :icon-only="true">
-                                    </x-table-action>
+                                    <button
+                                        wire:click="edit({{ $nh->id }})"
+                                        class="p-2 hover:bg-primary-50 text-primary-600 rounded-lg transition-all">
+                                        <x-icon name="edit" />
+                                    </button>
                                 </x-tooltip>
 
-                                <span class="text-slate-300">|</span>
+                                <x-dropdown icon="more-vertical" align="right" variant="subtle" position="fixed">
+                                    <x-dropdown-item
+                                        wire:click.debounce.500ms="toggleStatus({{ $nh->id }})"
+                                        :icon="$nh->status ? 'archive' : 'check'">
+                                        {{ $nh->status ? 'Lưu trữ năm học' : 'Kích hoạt năm học' }}
+                                    </x-dropdown-item>
 
-                                <x-tooltip :content="$nh->status ? 'Lưu trữ năm học' : 'Kích hoạt năm học'">
-                                    <x-table-action
-                                        wire="toggleStatus({{ $nh->id }})"
-                                        :icon="$nh->status ? 'archive' : 'check'"
-                                        :color="$nh->status ? 'warning' : 'success'"
-                                        :loading="true"
-                                        debounce="500">
-                                    </x-table-action>
-                                </x-tooltip>
+                                    <x-dropdown-item
+                                        as="a"
+                                        :href="route('school-years.copy', ['target' => $nh->id])"
+                                        icon="copy">
+                                        Sao chép năm học
+                                    </x-dropdown-item>
 
-                                <span class="text-slate-300">|</span>
+                                    <div class="h-px bg-slate-100 my-1"></div>
 
-                                <x-tooltip content="Sao chép năm học">
-                                    <a href="{{ route('school-years.copy', ['target' => $nh->id]) }}"
-                                        class="inline-flex items-center gap-1 text-primary-600 hover:text-primary-800 text-sm font-medium transition-colors">
-                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
-                                        </svg>
-                                    </a>
-                                </x-tooltip>
-
+                                    <x-dropdown-item
+                                        x-on:click="$dispatch('open-confirm', {
+                                            message: 'Xóa năm học {{ $nh->name }}?',
+                                            wireMethod: 'delete({{ $nh->id }})'
+                                        })"
+                                        icon="trash"
+                                        class="text-red-600 hover:bg-red-50">
+                                        Xóa năm học
+                                    </x-dropdown-item>
+                                </x-dropdown>
                             </div>
                         </td>
                     </tr>

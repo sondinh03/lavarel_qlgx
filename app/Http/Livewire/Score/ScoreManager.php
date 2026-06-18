@@ -129,6 +129,8 @@ class ScoreManager extends BaseComponent
 
     protected array $allowedSortFields = ['first_name', 'avg'];
 
+    public string $sortField = 'first_name';
+
     // ==================== VALIDATION RULES ====================
 
     protected $rules = [
@@ -176,7 +178,12 @@ class ScoreManager extends BaseComponent
             'selectedSemester' => ['as' => 'semester', 'except' => 1],
             'activeTab'        => ['as' => 'tab',      'except' => 'scores'],
             'filterByRating'   => ['as' => 'rating',   'except' => null],
-        ], parent::queryString());
+            'sortField'        => ['except' => 'first_name', 'as' => 'sort'],
+            'sortDirection'    => ['except' => 'asc',      'as' => 'dir'],
+        ], array_diff_key(parent::queryString(), [
+            'sortField'     => true,
+            'sortDirection' => true,
+        ]));
     }
 
     // ==================== LISTENERS ====================
@@ -239,6 +246,14 @@ class ScoreManager extends BaseComponent
 
         if (!in_array($this->activeTab, ['scores', 'config'])) {
             $this->activeTab = 'scores';
+        }
+
+        if (!in_array($this->sortField, $this->allowedSortFields, true)) {
+            $this->sortField = 'first_name';
+        }
+
+        if (!in_array($this->sortDirection, ['asc', 'desc'], true)) {
+            $this->sortDirection = 'asc';
         }
     }
 
@@ -835,15 +850,70 @@ class ScoreManager extends BaseComponent
 
     protected function applySorting($query)
     {
-        return match ($this->sortField) {
-            'first_name' => $query->orderByRaw(
-                "students.first_name {$this->sortDirection},
-             students.last_name  {$this->sortDirection}"
-            ),
-            default => $query->orderByRaw(
-                "students.first_name {$this->sortDirection}"
-            ),
-        };
+        return $query->orderByRaw(
+            "students.first_name {$this->sortDirection},
+             students.last_name {$this->sortDirection}"
+        );
+    }
+
+    /**
+     * Query học sinh trong lớp (chưa phân trang).
+     */
+    private function buildStudentsQuery()
+    {
+        $query = \App\Models\StudentNew::query()
+            ->with('saint')
+            ->join('students_class', 'students.id', '=', 'students_class.student_id')
+            ->where('students_class.class_id', $this->selectedLop)
+            ->select(
+                'students_class.id as pivot_id',
+                'students_class.student_id',
+                'students.*',
+            );
+
+        if (!empty(trim($this->search ?? ''))) {
+            $term = '%' . trim($this->search) . '%';
+            $query->where(function ($q) use ($term) {
+                $q->where('students.first_name', 'like', $term)
+                    ->orWhere('students.last_name', 'like', $term)
+                    ->orWhere('students.student_code', 'like', $term);
+            });
+        }
+
+        return $query;
+    }
+
+    /**
+     * Phân trang thủ công sau khi filter/sort trên collection.
+     */
+    private function paginateCollection(Collection $items): \Illuminate\Pagination\LengthAwarePaginator
+    {
+        $page    = max(1, (int) ($this->page ?? 1));
+        $perPage = $this->perPage;
+        $total   = $items->count();
+        $slice   = $items->slice(($page - 1) * $perPage, $perPage)->values();
+
+        return new \Illuminate\Pagination\LengthAwarePaginator(
+            $slice,
+            $total,
+            $perPage,
+            $page,
+            [
+                'path'  => \Illuminate\Pagination\Paginator::resolveCurrentPath(),
+                'query' => request()->query(),
+            ]
+        );
+    }
+
+    /**
+     * Load điểm + TB cho toàn bộ học sinh (phục vụ sort/filter theo điểm).
+     */
+    private function loadScoresForStudents(Collection $students): void
+    {
+        $pivotIds = $students->pluck('pivot_id')->toArray();
+        $this->scoresLoaded = false;
+        $this->loadScoresMatrix($pivotIds);
+        $this->recalculateAllAverages($pivotIds);
     }
 
     private function getStudentsPaginated()
@@ -853,56 +923,51 @@ class ScoreManager extends BaseComponent
         }
 
         try {
-            $query = \App\Models\StudentNew::query()
-                ->with('saint')
-                ->join('students_class', 'students.id', '=', 'students_class.student_id')
-                ->where('students_class.class_id', $this->selectedLop)
-                ->select(
-                    'students_class.id as pivot_id',
-                    'students_class.student_id',
-                    'students.*',
-                );
+            $needsFullList = $this->sortField === 'avg' || $this->filterByRating;
 
-            if (!empty(trim($this->search ?? ''))) {
-                $term = '%' . trim($this->search) . '%';
-                $query->where(function ($q) use ($term) {
-                    $q->where('students.first_name', 'like', $term)
-                        ->orWhere('students.last_name',  'like', $term)
-                        ->orWhere('students.student_code', 'like', $term);
-                });
+            if ($needsFullList) {
+                $query = $this->buildStudentsQuery();
+                $this->applySorting($query);
+                $allStudents = $query->get();
+
+                $this->loadScoresForStudents($allStudents);
+
+                $collection = $allStudents;
+
+                if ($this->filterByRating) {
+                    $collection = $collection->filter(function ($student) {
+                        $avg = $this->averages[$student->pivot_id] ?? null;
+                        if ($avg === null) {
+                            return false;
+                        }
+
+                        return $this->getStudentRating($avg) === $this->filterByRating;
+                    })->values();
+                }
+
+                if ($this->sortField === 'avg') {
+                    $collection = $collection->sortBy(
+                        fn ($s) => $this->averages[$s->pivot_id] ?? -1,
+                        SORT_REGULAR,
+                        $this->sortDirection === 'desc'
+                    )->values();
+                }
+
+                $this->recalculateRatingStatsFromClass();
+
+                return $this->paginateCollection($collection);
             }
 
+            $query = $this->buildStudentsQuery();
             $this->applySorting($query);
-
             $students = $query->paginate($this->perPage);
 
             $pivotIds = $students->pluck('pivot_id')->toArray();
+            $this->scoresLoaded = false;
             $this->loadScoresMatrix($pivotIds);
             $this->recalculateAllAverages($pivotIds);
 
-            // Apply rating filter
-            if ($this->filterByRating) {
-                $filtered = collect($students->items())->filter(function ($student) {
-                    $avg = $this->averages[$student->pivot_id] ?? null;
-                    if ($avg === null) return false;
-                    return $this->getStudentRating($avg) === $this->filterByRating;
-                })->values();
-
-                $students->setCollection($filtered);
-            }
-
-            if ($this->sortField === 'avg') {
-                $sorted = collect($students->items())->sortBy(
-                    fn($s) => $this->averages[$s->pivot_id] ?? -1,
-                    SORT_REGULAR,
-                    $this->sortDirection === 'desc'
-                )->values();
-
-                $students->setCollection($sorted);
-            }
-
-            // Tính stats từ averages đã load — KHÔNG gọi lại getStudentsPaginated()
-            $this->recalculateRatingStats();
+            $this->recalculateRatingStatsFromClass();
 
             return $students;
         } catch (\Exception $e) {
@@ -1056,6 +1121,11 @@ class ScoreManager extends BaseComponent
             return;
         }
 
+        if ($this->scoreTypes->isEmpty()) {
+            $this->emit('toast', 'warning', 'Lớp chưa có cấu hình loại điểm');
+            return;
+        }
+
         $selectedNameClass = CatechismClass::findOrFail($this->selectedLop)->name;
 
         return response()->streamDownload(function () {
@@ -1084,40 +1154,114 @@ class ScoreManager extends BaseComponent
     }
 
     /**
-     * Tính thống kê xếp loại từ $this->averages đã có sẵn.
-     * KHÔNG gọi getStudentsPaginated() để tránh vòng lặp vô tận.
+     * Tính thống kê xếp loại cho cả lớp (không chỉ trang hiện tại).
      */
-    private function recalculateRatingStats(): void
+    private function recalculateRatingStatsFromClass(): void
     {
-        $this->ratingStats = [];
+        if (!$this->selectedLop || $this->scoreTypes->isEmpty()) {
+            $this->ratingStats = [];
+            return;
+        }
 
-        $totalStudents = 0;
-        $statsByRating = [];
+        try {
+            $allPivotIds = \App\Models\StudentsClass::query()
+                ->where('class_id', $this->selectedLop)
+                ->pluck('id')
+                ->toArray();
 
-        foreach ($this->averages as $studentClassId => $avg) {
-            if ($avg !== null) {
+            if (empty($allPivotIds)) {
+                $this->ratingStats = [];
+                return;
+            }
+
+            $scoreTypeIds = $this->scoreTypes->pluck('id')->toArray();
+            $scores = StudentScore::whereIn('student_class_id', $allPivotIds)
+                ->whereIn('score_type_id', $scoreTypeIds)
+                ->get();
+
+            $matrix = [];
+            foreach ($scores as $score) {
+                $matrix[$score->student_class_id][$score->score_type_id] = [
+                    'value' => (float) $score->score_value,
+                ];
+            }
+
+            $classAverages = [];
+            foreach ($allPivotIds as $pivotId) {
+                $classAverages[$pivotId] = $this->calculateAverageFromMatrix($matrix, $pivotId);
+            }
+
+            $this->ratingStats = [];
+            $totalStudents   = 0;
+            $statsByRating   = [];
+
+            foreach ($classAverages as $avg) {
+                if ($avg === null) {
+                    continue;
+                }
+
                 $rating = $this->getStudentRating($avg);
                 if ($rating) {
                     $statsByRating[$rating] = ($statsByRating[$rating] ?? 0) + 1;
                     $totalStudents++;
                 }
             }
+
+            foreach (self::RATING_LEVELS as $key => $ratingInfo) {
+                $count      = $statsByRating[$key] ?? 0;
+                $percentage = $totalStudents > 0
+                    ? round(($count / $totalStudents) * 100, 1)
+                    : 0;
+
+                $this->ratingStats[$key] = [
+                    'label'      => $ratingInfo['label'],
+                    'color'      => $ratingInfo['color'],
+                    'range'      => "{$ratingInfo['min']} - {$ratingInfo['max']}",
+                    'count'      => $count,
+                    'percentage' => $percentage,
+                ];
+            }
+        } catch (\Exception $e) {
+            $this->logError($e, 'Error calculating rating stats');
+            $this->ratingStats = [];
+        }
+    }
+
+    /**
+     * Tính TB từ ma trận điểm tạm (không ghi vào $this->averages).
+     */
+    private function calculateAverageFromMatrix(array $matrix, int $studentClassId): ?float
+    {
+        if ($this->scoreTypes->isEmpty()) {
+            return null;
         }
 
-        foreach (self::RATING_LEVELS as $key => $ratingInfo) {
-            $count      = $statsByRating[$key] ?? 0;
-            $percentage = $totalStudents > 0
-                ? round(($count / $totalStudents) * 100, 1)
-                : 0;
+        $totalWeight = 0.0;
+        $totalScore  = 0.0;
 
-            $this->ratingStats[$key] = [
-                'label'      => $ratingInfo['label'],
-                'color'      => $ratingInfo['color'],
-                'range'      => "{$ratingInfo['min']} - {$ratingInfo['max']}",
-                'count'      => $count,
-                'percentage' => $percentage,
-            ];
+        foreach ($this->scoreTypes as $st) {
+            $score = $matrix[$studentClassId][$st->id]['value'] ?? null;
+
+            if ($score === null) {
+                if (in_array($st->type, [ScoreType::TYPE_GIUA_KY, ScoreType::TYPE_CUOI_KY])) {
+                    return null;
+                }
+                continue;
+            }
+
+            $totalScore  += $score * $st->coefficient;
+            $totalWeight += $st->coefficient;
         }
+
+        return $totalWeight > 0 ? round($totalScore / $totalWeight, 1) : null;
+    }
+
+    /**
+     * @deprecated Dùng recalculateRatingStatsFromClass() — stats theo cả lớp
+     */
+    private function recalculateRatingStats(): void
+    {
+        $this->recalculateRatingStatsFromClass();
     }
 
     public function getRatingStats()

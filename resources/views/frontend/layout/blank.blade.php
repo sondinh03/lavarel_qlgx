@@ -19,6 +19,7 @@
     <script src="{{ mix('js/app.js') }}"></script>
     <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
     @livewireScripts
+    @include('frontend.layout.partials.livewire-alpine-bridge')
     @stack('scripts')
 </body>
 </html>

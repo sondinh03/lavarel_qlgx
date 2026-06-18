@@ -125,20 +125,21 @@
 @php
 if (request()->routeIs('attendance.statistics', 'scores.statistics', 'students.statistics')) {
     $activeGroup = 'statistics';
-} elseif (request()->routeIs('attendance.*','scores.*','session.*')) {
+} elseif (
+    request()->routeIs('attendance.*', 'scores.*', 'session.*')
+    || (request()->routeIs('students.*') && !request()->routeIs('students.statistics'))
+) {
     $activeGroup = 'learning';
-} elseif (request()->routeIs('students.*')) {
-    $activeGroup = 'students';
 } elseif (request()->routeIs('groups.*')) {
     $activeGroup = 'activities';
 } elseif (request()->routeIs('catechists.*')) {
     $activeGroup = 'staff';
-} elseif (request()->routeIs('school-years.*','classes.*')) {
+} elseif (request()->routeIs('school-years.*', 'classes.*')) {
     $activeGroup = 'system';
 } else {
     $activeGroup = null;
 }
-$isDashboard = request()->routeIs('dashboard','catechist.dashboard','parish-admin.dashboard','parishioners.dashboard');
+$isDashboard = request()->routeIs('parish-admin.dashboard');
 @endphp
 
 <body class="min-h-screen bg-slate-50 text-slate-800 antialiased"
@@ -147,19 +148,13 @@ $isDashboard = request()->routeIs('dashboard','catechist.dashboard','parish-admi
         mobileOpen: false,
         openGroups: (function() {
             const active = '{{ $activeGroup }}';
-            console.log('[INIT] activeGroup from Blade =', active);
 
             if (active) return [active];
 
-            const ls = JSON.parse(localStorage.getItem('openGroups') || '[]');
-            console.log('[INIT] openGroups from localStorage =', ls);
-
-            return ls;
+            return JSON.parse(localStorage.getItem('openGroups') || '[]');
         })(),
 
         toggleGroup(name) {
-            console.log('[CLICK GROUP]', name);
-
             if (this.sidebarMini) return;
 
             if (this.openGroups.includes(name)) {
@@ -167,8 +162,6 @@ $isDashboard = request()->routeIs('dashboard','catechist.dashboard','parish-admi
             } else {
                 this.openGroups.push(name);
             }
-
-            console.log('[AFTER TOGGLE]', this.openGroups);
 
             localStorage.setItem('openGroups', JSON.stringify(this.openGroups));
         }
@@ -216,7 +209,7 @@ $isDashboard = request()->routeIs('dashboard','catechist.dashboard','parish-admi
 
         {{-- ── Logo ── --}}
         <div class="flex items-center gap-3 px-4 h-16 border-b border-slate-100 flex-shrink-0">
-            <a href="{{ route('dashboard') }}" class="flex items-center gap-3 min-w-0">
+            <a href="{{ route('parish-admin.dashboard') }}" class="flex items-center gap-3 min-w-0">
                 <img src="{{ url(config('settings.logo')) }}"
                     class="h-8 w-8 rounded-lg object-contain flex-shrink-0" alt="Logo">
                 <span class="logo-text text-sm font-bold text-primary-700 truncate leading-tight sidebar-label">
@@ -236,7 +229,7 @@ $isDashboard = request()->routeIs('dashboard','catechist.dashboard','parish-admi
                     }, 220);
                     const nextMini = !sidebarMini;
                     sidebarMini = nextMini;
-                    openGroup = nextMini ? null : '{{ $activeGroup }}';
+                    openGroups = nextMini ? [] : (('{{ $activeGroup }}' ? ['{{ $activeGroup }}'] : []));
                     localStorage.setItem('sidebarMini', nextMini);
                     wrapper.style.marginLeft = nextMini ? '64px' : '256px';
                 "
@@ -254,7 +247,7 @@ $isDashboard = request()->routeIs('dashboard','catechist.dashboard','parish-admi
         <nav id="sidebar-nav" class="flex-1 overflow-y-auto overflow-x-hidden min-h-0 py-3 px-2 space-y-0.5">
 
             {{-- Trang chủ --}}
-            <a href="{{ route('dashboard') }}"
+            <a href="{{ route('parish-admin.dashboard') }}"
                 class="relative flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition group
                     {{ $isDashboard ? 'text-primary-700 font-semibold' : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900' }}">
                 <svg class="w-5 h-5 flex-shrink-0
@@ -270,10 +263,13 @@ $isDashboard = request()->routeIs('dashboard','catechist.dashboard','parish-admi
                 @endif
             </a>
 
-            {{-- ── Nhóm: HỌC TẬP & ĐIỂM DANH ── --}}
+            {{-- ── Nhóm: GIÁO LÝ ── --}}
             @php
                 $isStatisticsActive = request()->routeIs('attendance.statistics', 'scores.statistics', 'students.statistics');
-                $isLearningActive = request()->routeIs('attendance.*','scores.*','session.*') && ! $isStatisticsActive;
+                $isLearningActive = (
+                    request()->routeIs('attendance.*', 'scores.*', 'session.*', 'students.*')
+                    && ! $isStatisticsActive
+                );
             @endphp
             <div class="relative has-flyout">
                 {{-- Group header --}}
@@ -284,9 +280,9 @@ $isDashboard = request()->routeIs('dashboard','catechist.dashboard','parish-admi
                         {{ $isLearningActive ? 'text-primary-600' : 'text-slate-400 group-hover:text-slate-600' }}"
                         fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M12 6.253v13m0-13C6.5 6.75 3.519 10.033 3.519 13.26c0 2.592.3 5.193 1.019 7.665m0-13c5.5-.5 8.481-3.782 8.481-7.007 0-2.592-.3-5.193-1.019-7.665M12 6.253L9 4m3 2.253l3-2m0 0V4m0 2.253V4m0 0s-3 .75-3 4.26" />
+                            d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />    
                     </svg>
-                    <span class="sidebar-label flex-1 text-left truncate">Học Tập & Điểm Danh</span>
+                    <span class="sidebar-label flex-1 text-left truncate">Giáo lý</span>
                     <svg class="sidebar-chevron w-3.5 h-3.5 flex-shrink-0 text-slate-400 transition-transform duration-200"
                         :class="openGroups.includes('learning') ? 'rotate-180 text-primary-600' : 'text-slate-400'"
                         fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -307,6 +303,7 @@ $isDashboard = request()->routeIs('dashboard','catechist.dashboard','parish-admi
                     x-transition:leave-start="opacity-100"
                     x-transition:leave-end="opacity-0"
                     class="mt-0.5 ml-4 pl-3 border-l border-slate-100 space-y-0.5">
+                    @include('frontend.layout.partials.sidebar-sub-item', ['route' => 'students.index', 'label' => 'Quản lý học sinh'])
                     @include('frontend.layout.partials.sidebar-sub-item', ['route' => 'attendance.show', 'label' => 'Điểm danh'])
                     @include('frontend.layout.partials.sidebar-sub-item', ['route' => 'session.index', 'label' => 'Phiên điểm danh'])
                     @include('frontend.layout.partials.sidebar-sub-item', ['route' => 'scores.index', 'label' => 'Kết quả học tập'])
@@ -314,54 +311,11 @@ $isDashboard = request()->routeIs('dashboard','catechist.dashboard','parish-admi
 
                 {{-- Flyout (mini sidebar) --}}
                 <div class="flyout-menu" x-cloak>
-                    <div class="px-3 py-2 text-xs font-semibold text-slate-400 uppercase tracking-wide">Học Tập & Điểm Danh</div>
+                    <div class="px-3 py-2 text-xs font-semibold text-slate-400 uppercase tracking-wide">Giáo lý</div>
+                    @include('frontend.layout.partials.flyout-item', ['route' => 'students.index', 'label' => 'Quản lý học sinh'])
                     @include('frontend.layout.partials.flyout-item', ['route' => 'attendance.show', 'label' => 'Điểm danh'])
                     @include('frontend.layout.partials.flyout-item', ['route' => 'session.index', 'label' => 'Phiên điểm danh'])
                     @include('frontend.layout.partials.flyout-item', ['route' => 'scores.index', 'label' => 'Kết quả học tập'])
-                </div>
-            </div>
-
-            {{-- ── Nhóm: HỌC SINH ── --}}
-            @php $isStudentActive = request()->routeIs('students.*') && ! $isStatisticsActive; @endphp
-            <div class="relative has-flyout">
-                {{-- Group header --}}
-                <button @click="toggleGroup('students')"
-                    class="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition group
-                        {{ $isStudentActive ? 'text-primary-700 font-semibold' : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900' }}">
-                    <svg class="w-5 h-5 flex-shrink-0
-                        {{ $isStudentActive ? 'text-primary-600' : 'text-slate-400 group-hover:text-slate-600' }}"
-                        fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
-                    </svg>
-                    <span class="sidebar-label flex-1 text-left truncate">Học Sinh</span>
-                    <svg class="sidebar-chevron w-3.5 h-3.5 flex-shrink-0 text-slate-400 transition-transform duration-200"
-                        :class="openGroups.includes('students') ? 'rotate-180 text-primary-600' : 'text-slate-400'"
-                        fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
-                    </svg>
-                    @if($isStudentActive)
-                    <span class="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-6 bg-primary-500 rounded-r-full"></span>
-                    @endif
-                </button>
-
-                {{-- Accordion submenu (full sidebar) --}}
-                <div x-show="openGroups.includes('students') && !sidebarMini"
-                    style="{{ $isStudentActive ? '' : 'display:none' }}"
-                    x-transition:enter="transition ease-out duration-150"
-                    x-transition:enter-start="opacity-0 -translate-y-1"
-                    x-transition:enter-end="opacity-100 translate-y-0"
-                    x-transition:leave="transition ease-in duration-100"
-                    x-transition:leave-start="opacity-100"
-                    x-transition:leave-end="opacity-0"
-                    class="mt-0.5 ml-4 pl-3 border-l border-slate-100 space-y-0.5">
-                    @include('frontend.layout.partials.sidebar-sub-item', ['route' => 'students.index', 'label' => 'Quản lý học sinh'])
-                </div>
-
-                {{-- Flyout (mini sidebar) --}}
-                <div class="flyout-menu" x-cloak>
-                    <div class="px-3 py-2 text-xs font-semibold text-slate-400 uppercase tracking-wide">Học Sinh</div>
-                    @include('frontend.layout.partials.flyout-item', ['route' => 'students.index', 'label' => 'Quản lý học sinh'])
                 </div>
             </div>
 
@@ -409,7 +363,7 @@ $isDashboard = request()->routeIs('dashboard','catechist.dashboard','parish-admi
                 </div>
             </div>
 
-            {{-- ── SINH HOẠT ── --}}
+            {{-- ── TIỆN ÍCH ── --}}
             @php $isActivitiesActive = request()->routeIs('groups.*'); @endphp
             <div class="relative has-flyout">
                 <button @click="toggleGroup('activities')"
@@ -421,7 +375,7 @@ $isDashboard = request()->routeIs('dashboard','catechist.dashboard','parish-admi
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                             d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
                     </svg>
-                    <span class="sidebar-label flex-1 text-left truncate">Sinh Hoạt</span>
+                    <span class="sidebar-label flex-1 text-left truncate">Tiện ích</span>
                     <svg class="sidebar-chevron w-3.5 h-3.5 flex-shrink-0 transition-transform duration-200"
                         :class="openGroups.includes('activities') ? 'rotate-180 text-primary-600' : 'text-slate-400'"
                         fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -445,7 +399,7 @@ $isDashboard = request()->routeIs('dashboard','catechist.dashboard','parish-admi
                 </div>
 
                 <div class="flyout-menu" x-cloak>
-                    <div class="px-3 py-2 text-xs font-semibold text-slate-400 uppercase tracking-wide">Sinh Hoạt</div>
+                    <div class="px-3 py-2 text-xs font-semibold text-slate-400 uppercase tracking-wide">Tiện ích</div>
                     @include('frontend.layout.partials.flyout-item', ['route' => 'groups.index', 'label' => 'Quản lý nhóm'])
                 </div>
             </div>
@@ -483,13 +437,11 @@ $isDashboard = request()->routeIs('dashboard','catechist.dashboard','parish-admi
                     x-transition:leave-end="opacity-0"
                     class="mt-0.5 ml-4 pl-3 border-l border-slate-100 space-y-0.5">
                     @include('frontend.layout.partials.sidebar-sub-item', ['route' => 'catechists.index', 'label' => 'Giáo lý viên'])
-                    @include('frontend.layout.partials.sidebar-sub-item', ['route' => 'catechists.import', 'label' => 'Import GLV'])
                 </div>
 
                 <div class="flyout-menu" x-cloak>
                     <div class="px-3 py-2 text-xs font-semibold text-slate-400 uppercase tracking-wide">Nhân Sự</div>
                     @include('frontend.layout.partials.flyout-item', ['route' => 'catechists.index', 'label' => 'Giáo lý viên'])
-                    @include('frontend.layout.partials.flyout-item', ['route' => 'catechists.import', 'label' => 'Import GLV'])
                 </div>
             </div>
 
@@ -536,6 +488,22 @@ $isDashboard = request()->routeIs('dashboard','catechist.dashboard','parish-admi
                     @include('frontend.layout.partials.flyout-item', ['route' => 'classes.index', 'label' => 'Lớp học'])
                 </div>
             </div>
+
+            {{-- Chuyển sang module Giáo dân --}}
+            @canany(['parish_admin', 'catechism_admin'])
+            <div class="pt-2 mt-2 border-t border-slate-100">
+                <a href="{{ route('parishioners.dashboard') }}"
+                    class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition group
+                           text-slate-500 hover:bg-slate-50 hover:text-slate-900">
+                    <svg class="w-5 h-5 flex-shrink-0 text-slate-400 group-hover:text-slate-600"
+                        fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                    </svg>
+                    <span class="sidebar-label truncate">Sang module Giáo dân</span>
+                </a>
+            </div>
+            @endcanany
         </nav>
 
         {{-- ── User info (bottom) ── --}}
@@ -582,9 +550,9 @@ $isDashboard = request()->routeIs('dashboard','catechist.dashboard','parish-admi
                     <div class="px-3 py-2 text-xs font-semibold text-slate-400 uppercase tracking-wide">
                         {{ Auth::user()->name }}
                     </div>
-                    <a href="{{ route('dashboard') }}"
+                    <a href="{{ route('parish-admin.dashboard') }}"
                         class="block px-4 py-2 text-sm text-slate-700 hover:bg-slate-50">
-                        Trang quản trị
+                        Dashboard Giáo lý
                     </a>
                     <div class="border-t border-slate-100 my-1"></div>
                     <form method="POST" action="{{ route('logout') }}">
@@ -607,11 +575,9 @@ $isDashboard = request()->routeIs('dashboard','catechist.dashboard','parish-admi
         class="min-h-screen flex flex-col"
         x-init="
             localStorage.setItem('openGroups', JSON.stringify(openGroups));
-            
-                console.log('[ALPINE INIT DONE]', openGroups);
 
             $watch('openGroups', value => {
-                console.log('[WATCH openGroups]', value);
+                localStorage.setItem('openGroups', JSON.stringify(value));
             });
 
             if (window.innerWidth >= 1024) {
@@ -706,12 +672,6 @@ $isDashboard = request()->routeIs('dashboard','catechist.dashboard','parish-admi
         document.addEventListener('DOMContentLoaded', function() {
             document.querySelectorAll('#sidebar-nav a[href]').forEach(function(link) {
                 link.addEventListener('click', function() {
-                    console.log('--- CLICK LINK ---');
-                    console.log('href:', link.href);
-                    console.log('openGroups BEFORE click:', JSON.parse(localStorage.getItem('openGroups')));
-                });
-
-                link.addEventListener('click', function() {
                     // Xoá active cũ
                     document.querySelectorAll('#sidebar-nav a[href]').forEach(function(el) {
                         el.classList.remove('bg-primary-50', 'text-primary-700');
@@ -726,12 +686,6 @@ $isDashboard = request()->routeIs('dashboard','catechist.dashboard','parish-admi
                     if (dot) dot.classList.replace('bg-slate-300', 'bg-primary-500');
                 });
             });
-        });
-
-        console.log('--- PAGE LOAD START ---');
-
-        window.addEventListener('beforeunload', () => {
-            console.log('--- BEFORE UNLOAD ---');
         });
     </script>
 
@@ -758,6 +712,7 @@ $isDashboard = request()->routeIs('dashboard','catechist.dashboard','parish-admi
 
     <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
     @livewireScripts
+    @include('frontend.layout.partials.livewire-alpine-bridge')
 
     @stack('scripts')
 </body>

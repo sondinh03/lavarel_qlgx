@@ -1,6 +1,6 @@
 @section('topbar')
 <x-breadcrumb :items="[
-        ['label' => 'Trang chủ', 'url' => route('dashboard')],
+        ['label' => 'Trang chủ', 'url' => route('parish-admin.dashboard')],
         ['label' => 'Học sinh', 'url' => route('students.index')],
         ['label' => 'Import học sinh'],
     ]" />
