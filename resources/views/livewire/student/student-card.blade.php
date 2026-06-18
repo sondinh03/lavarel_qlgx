@@ -123,7 +123,7 @@ $genderLabel = $isMale ? 'Nam' : 'Nữ';
 
             @if($qrToken)
             <img
-                src="https://api.qrserver.com/v1/create-qr-code/?size=53x53&data={{ urlencode($qrToken) }}&color=145224&bgcolor=ffffff"
+                src="{{ route('students.qr-image', ['token' => $qrToken, 'size' => 200]) }}"
                 style="
                     width: 14mm;
                     height: 14mm;
@@ -132,8 +132,7 @@ $genderLabel = $isMale ? 'Nam' : 'Nữ';
                     display: block;
                     flex-shrink: 0;
                 "
-                alt="QR {{ $code }}"
-                crossorigin="anonymous" />
+                alt="QR {{ $code }}" />
             @endif
         </div>
 

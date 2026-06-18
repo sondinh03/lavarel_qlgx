@@ -75,7 +75,7 @@ class StudentExport implements FromCollection, WithHeadings, WithMapping, WithSt
     {
         return [
             // 🔹 Toàn bộ sheet: Times New Roman
-            'A1:L1000' => [
+            'A1:M1000' => [
                 'font' => [
                     'name' => 'Times New Roman',
                     'size' => 12,

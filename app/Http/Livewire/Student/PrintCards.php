@@ -86,8 +86,8 @@ class PrintCards extends BaseComponent
     {
         $query = StudentNew::with(['saint', 'parishGroup'])
             ->where('is_active', true)
-            ->orderBy('last_name')
-            ->orderBy('first_name');
+            ->orderBy('first_name')
+            ->orderBy('last_name');
 
         if ($this->ids) {
             // Ưu tiên: danh sách IDs cụ thể

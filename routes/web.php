@@ -42,6 +42,7 @@ use App\Http\Controllers\TeacherImportController;
 use App\Http\Controllers\KetQuaExportController;
 use App\Http\Controllers\HonPhoiExportController;
 use App\Http\Controllers\StudentImportController;
+use App\Http\Controllers\StudentQrController;
 use App\Http\Livewire\Attendance\AttendanceQr as AttendanceAttendanceQr;
 use App\Http\Livewire\Attendance\AttendanceStatistics;
 use App\Http\Livewire\Attendance\SessionManager;
@@ -139,6 +140,10 @@ Route::middleware('auth')->group(function () {
 
         Route::get('/students/statistics', StudentStatistics::class)
             ->name('students.statistics');
+
+        Route::get('/students/qr/{token}', [StudentQrController::class, 'show'])
+            ->where('token', '[0-9a-fA-F-]{36}')
+            ->name('students.qr-image');
 
         Route::get('/students/create', StudentEdit::class)
             ->middleware('role:parish_admin')
