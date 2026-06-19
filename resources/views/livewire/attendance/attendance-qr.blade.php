@@ -65,12 +65,27 @@
                     <div class="absolute bottom-0 left-0 w-8 h-8 border-b-4 border-l-4 border-primary-400 rounded-bl-lg"></div>
                     {{-- Góc dưới phải --}}
                     <div class="absolute bottom-0 right-0 w-8 h-8 border-b-4 border-r-4 border-primary-400 rounded-br-lg"></div>
-                    {{-- Scan line --}}
-                    <div class="absolute left-2 right-2 h-0.5 bg-primary-400/70
-                                animate-[scan-line_2s_ease-in-out_infinite]"
-                        style="top: 50%"></div>
+                    {{-- Scan line (animate trong track — ổn định trên Safari) --}}
+                    <div class="absolute inset-x-2 top-[12%] bottom-[12%]">
+                        <div class="qr-scan-line absolute left-0 right-0 h-0.5 bg-primary-400/70"></div>
+                    </div>
                 </div>
             </div>
+
+        {{-- Đổi camera trước / sau --}}
+        <button type="button"
+            id="camera-flip-btn"
+            onclick="if(window.switchCamera) window.switchCamera()"
+            class="absolute bottom-3 right-3 z-10 w-10 h-10 rounded-full
+                   bg-slate-900/70 border border-slate-600 text-slate-200
+                   flex items-center justify-center touch-feedback active:scale-95
+                   hover:bg-slate-800 transition-colors"
+            aria-label="Đổi camera">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+            </svg>
+        </button>
 
         {{-- Result overlay --}}
         @if($lastResult)
@@ -146,7 +161,10 @@
                 <div class="flex-1 min-w-0">
                     <div class="text-white text-sm font-medium">{{ $log['student_name'] }}</div>
                     <div class="text-slate-500 text-xs">
-                        {{ $log['saint_name'] ? $log['saint_name'] . ' · ' : '' }}{{ $log['student_name'] }} {{ $log['class_name'] }}
+                        @php
+                            $saint = ($log['saint_name'] ?? '') && ($log['saint_name'] ?? '') !== '-' ? $log['saint_name'] : '';
+                        @endphp
+                        {{ $saint ? $saint . ' · ' : '' }}{{ $log['class_name'] }}
                     </div>
                 </div>
                 <div class="text-slate-500 text-xs flex-shrink-0">{{ $log['time'] }}</div>
@@ -185,15 +203,21 @@
 
 @push('styles')
 <style>
-    @keyframes scan-line {
+    .qr-scan-line {
+        top: 0;
+        will-change: top, opacity;
+        animation: qr-scan-line 2s ease-in-out infinite;
+    }
+
+    @keyframes qr-scan-line {
         0%,
         100% {
-            top: 12%;
+            top: 0;
             opacity: 0.35;
         }
 
         50% {
-            top: 88%;
+            top: calc(100% - 2px);
             opacity: 1;
         }
     }
@@ -208,6 +232,8 @@
         let scanning = true;
         let currentStream = null;
         let qrDoneListenerAdded = false;
+        let facingMode = 'environment';
+        let activeVideo = null;
 
         window.stopCamera = function() {
             scanning = false;
@@ -217,24 +243,41 @@
             }
         };
 
+        window.switchCamera = function() {
+            const video = document.getElementById('qr-video');
+            if (!video) return;
+
+            if (currentStream) {
+                currentStream.getTracks().forEach(t => t.stop());
+                currentStream = null;
+            }
+
+            facingMode = facingMode === 'environment' ? 'user' : 'environment';
+            scanning = true;
+            startCamera(video, facingMode);
+        };
+
         document.addEventListener('livewire:navigating', window.stopCamera);
         window.addEventListener('pagehide', window.stopCamera);
+        document.addEventListener('livewire:request-error', function() {
+            cooldown = false;
+        });
+
         document.addEventListener('livewire:load', function() {
-            // ── Camera setup ──────────────────────────────────────────────
             waitForElement('qr-video', function(video) {
-                startCamera(video);
+                activeVideo = video;
+                startCamera(video, facingMode);
 
                 document.addEventListener('visibilitychange', function() {
                     if (document.hidden) {
                         scanning = false;
-                    } else if (currentStream) {
+                    } else if (currentStream && activeVideo) {
                         scanning = true;
-                        requestAnimationFrame(() => tick(video));
+                        requestAnimationFrame(() => tick(activeVideo));
                     }
                 });
             });
 
-            // ── qr-done listener (chỉ đăng ký 1 lần) ────────────────────
             if (!qrDoneListenerAdded) {
                 qrDoneListenerAdded = true;
                 window.addEventListener('qr-done', function() {
@@ -244,7 +287,6 @@
                 });
             }
 
-            // ── Helpers ───────────────────────────────────────────────────
             function waitForElement(id, callback, maxTries = 20) {
                 const el = document.getElementById(id);
                 if (el) {
@@ -254,30 +296,33 @@
                 }
             }
 
-            function startCamera(video) {
-                if (!navigator.mediaDevices?.getUserMedia) {
-                    showCameraError('Trình duyệt không hỗ trợ camera');
-                    return;
-                }
-
-                const constraints = [{
+            function buildConstraints(mode) {
+                return [{
                         video: {
                             facingMode: {
-                                exact: 'environment'
+                                exact: mode
                             }
                         }
                     },
                     {
                         video: {
-                            facingMode: 'environment'
+                            facingMode: mode
                         }
                     },
                     {
                         video: true
                     },
                 ];
+            }
 
-                tryGetUserMedia(constraints, 0, video);
+            function startCamera(video, mode) {
+                if (!navigator.mediaDevices?.getUserMedia) {
+                    showCameraError('Trình duyệt không hỗ trợ camera');
+                    return;
+                }
+
+                facingMode = mode || facingMode;
+                tryGetUserMedia(buildConstraints(facingMode), 0, video);
             }
 
             function tryGetUserMedia(constraints, index, video) {
@@ -329,10 +374,7 @@
 
                     if (code && !cooldown) {
                         cooldown = true;
-                        // Giữ logic quét kiểu cũ (emit event cho Livewire listener)
-                        if (window.Livewire) {
-                            window.Livewire.emit('qrScanned', code.data);
-                        }
+                        @this.call('handleQrScanned', code.data);
                     }
                 }
 
