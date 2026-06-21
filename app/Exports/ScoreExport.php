@@ -71,7 +71,6 @@ class ScoreExport implements FromCollection, WithHeadings, WithMapping, WithStyl
             'Họ tên đệm',
             'Tên',
             'Ngày sinh',
-            'Giới tính',
             'Giáo họ',
         ];
 
@@ -98,11 +97,6 @@ class ScoreExport implements FromCollection, WithHeadings, WithMapping, WithStyl
             $student->last_name,
             $student->first_name,
             $student->birthday?->format('d/m/Y') ?? '',
-            match ($student->gender) {
-                'male' => 'Nam',
-                'female' => 'Nữ',
-                default => '',
-            },
             $student->parishGroup?->name ?? '',
         ];
 
@@ -162,8 +156,8 @@ class ScoreExport implements FromCollection, WithHeadings, WithMapping, WithStyl
                     : $headerRow;
 
                 $scoreTypeCount = $this->scoreTypes !== null ? $this->scoreTypes->count() : 0;
-                // 8 cột cố định + loại điểm + Điểm trung bình (cột cuối)
-                $lastColIndex = 8 + $scoreTypeCount;
+                // 7 cột cố định + loại điểm + Điểm trung bình (cột cuối)
+                $lastColIndex = 7 + $scoreTypeCount;
                 $lastCol      = chr(65 + $lastColIndex);
                 $avgCol       = $lastCol;
 

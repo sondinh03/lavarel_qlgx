@@ -26,6 +26,14 @@ class FamilyEdit extends BaseComponent
     public array $childrenIds = [];
     public string $note          = '';
     public bool   $status        = true;
+    public string $activeTab     = 'info';
+
+    public ?string $address              = null;
+    public ?string $province             = null;
+    public ?int    $wardId               = null;
+    public ?int    $level                = null;
+    public bool    $isTransferred        = false;
+    public bool    $isIncludedInStats    = true;
 
     // ==================== HEAD SEARCH ====================
     public array $parishionerOptions = [];
@@ -35,13 +43,16 @@ class FamilyEdit extends BaseComponent
 
     // ==================== VALIDATION ====================
     protected array $formRules = [
+        'name'          => 'nullable|string|max:255',
         'parishGroupId' => 'nullable|integer|exists:parish_groups,id',
-
+        'address'       => 'nullable|string|max:255',
+        'province'      => 'nullable|string|max:100',
+        'wardId'        => 'nullable|integer',
+        'level'         => 'nullable|integer',
         'childrenIds'   => 'array',
-        'childrenIds.*' => 'integer|exists:parishioners,id',
-
-        'note'   => 'nullable|string|max:2000',
-        'status' => 'boolean',
+        'childrenIds.*' => 'integer|exists:parishioners_new,id',
+        'note'          => 'nullable|string|max:2000',
+        'status'        => 'boolean',
     ];
 
     protected $messages = [
@@ -111,6 +122,12 @@ class FamilyEdit extends BaseComponent
         $this->parishGroupId = $family->parish_group_id;
         $this->note          = $family->note ?? '';
         $this->status        = (bool) $family->status;
+        $this->address       = $family->address;
+        $this->province      = $family->province;
+        $this->wardId        = $family->ward_id;
+        $this->level         = $family->level;
+        $this->isTransferred     = (bool) ($family->is_transferred ?? false);
+        $this->isIncludedInStats = (bool) ($family->is_included_in_stats ?? true);
 
         $members = Parishioner::where('family_id', $family->id)
             ->get(['id', 'gender', 'father_id', 'mother_id']);
@@ -255,17 +272,24 @@ class FamilyEdit extends BaseComponent
                 ->get();
 
             // ===== FAMILY NAME =====
-            $familyName = 'Gia đình ' . $head->full_name_with_saint;
+            $familyName = trim($this->name)
+                ?: ('Gia đình ' . $head->full_name_with_saint);
 
             // ===== FAMILY DATA =====
 
             $data = [
-                'parish_id'       => $this->parishId,
-                'parish_group_id' => $this->parishGroupId,
-                'head_id'         => $head->id,
-                'name'            => $familyName,
-                'note'            => trim($this->note) ?: null,
-                'status'          => $this->status,
+                'parish_id'            => $this->parishId,
+                'parish_group_id'      => $this->parishGroupId,
+                'head_id'              => $head->id,
+                'name'                 => $familyName,
+                'note'                 => trim($this->note) ?: null,
+                'status'               => $this->status,
+                'address'              => $this->address ?: null,
+                'province'             => $this->province ?: null,
+                'ward_id'              => $this->wardId,
+                'level'                => $this->level,
+                'is_transferred'       => $this->isTransferred,
+                'is_included_in_stats' => $this->isIncludedInStats,
             ];
 
             // ===== CREATE / UPDATE =====
@@ -304,15 +328,17 @@ class FamilyEdit extends BaseComponent
             Parishioner::whereIn('id', $oldMemberIds)
                 ->whereNotIn('id', $newMemberIds)
                 ->update([
-                    'family_id' => null,
-                    'father_id' => null,
-                    'mother_id' => null,
+                    'family_id'   => null,
+                    'father_id'   => null,
+                    'mother_id'   => null,
+                    'family_role' => null,
                 ]);
 
             // ===== HEAD + SPOUSE =====
 
             $head->update([
-                'family_id' => $family->id,
+                'family_id'   => $family->id,
+                'family_role' => 'husband',
             ]);
 
             if ($this->motherId) {
@@ -321,7 +347,8 @@ class FamilyEdit extends BaseComponent
                     ->findOrFail($this->motherId);
 
                 $mother->update([
-                    'family_id' => $family->id,
+                    'family_id'   => $family->id,
+                    'family_role' => 'wife',
                 ]);
             }
 
@@ -329,9 +356,10 @@ class FamilyEdit extends BaseComponent
 
             foreach ($children as $child) {
                 $childData = [
-                    'family_id' => $family->id,
-                    'father_id' => $head->gender === 'male' ? $head->id : ($mother?->gender === 'male' ? $mother->id : null),
-                    'mother_id' => $head->gender === 'female' ? $head->id : ($mother?->gender === 'female' ? $mother->id : null),
+                    'family_id'   => $family->id,
+                    'family_role' => 'child',
+                    'father_id'   => $head->gender === 'male' ? $head->id : ($mother?->gender === 'male' ? $mother->id : null),
+                    'mother_id'   => $head->gender === 'female' ? $head->id : ($mother?->gender === 'female' ? $mother->id : null),
                 ];
                 $child->update($childData);
             }
@@ -366,6 +394,13 @@ class FamilyEdit extends BaseComponent
                 'error',
                 'Có lỗi khi lưu gia đình.'
             );
+        }
+    }
+
+    public function switchTab(string $tab): void
+    {
+        if (in_array($tab, ['info', 'members'], true)) {
+            $this->activeTab = $tab;
         }
     }
 

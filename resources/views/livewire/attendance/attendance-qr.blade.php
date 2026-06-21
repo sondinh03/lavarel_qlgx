@@ -374,7 +374,7 @@
 
                     if (code && !cooldown) {
                         cooldown = true;
-                        @this.call('handleQrScanned', code.data);
+                        @this.call('handleQrScanned', String(code.data).trim());
                     }
                 }
 

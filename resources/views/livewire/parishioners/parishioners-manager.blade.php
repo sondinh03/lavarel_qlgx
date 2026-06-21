@@ -1,6 +1,6 @@
     @section('topbar')
     <x-breadcrumb :items="[
-            ['label' => 'Trang chủ', 'url' => route('dashboard')],
+            ['label' => 'Trang chủ', 'url' => route('parishioners.dashboard')],
             ['label' => 'Quản lý giáo dân'],
         ]" />
     @endsection
@@ -72,10 +72,21 @@
 
                             {{-- RIGHT --}}
                             <div class="flex items-center gap-2 flex-wrap justify-end">
-                                <x-button wire:click="create">
+                                <x-button as="a" href="{{ route('parishioners.create') }}">
                                     <x-icon name="plus" />
                                     Thêm giáo dân
                                 </x-button>
+
+                                @can('create', App\Models\Parishioner::class)
+                                <x-button as="a" href="{{ route('parishioners.import') }}" variant="outline">
+                                    <x-icon name="upload" />
+                                    Import Excel
+                                </x-button>
+                                <x-button as="a" href="{{ route('parishioners.import.family-register') }}" variant="outline">
+                                    <x-icon name="upload" />
+                                    Sổ Gia Đình
+                                </x-button>
+                                @endcan
 
                                 {{-- Toggle advanced --}}
                                 <x-button type="button" variant="outline" @click="open = !open">
@@ -200,15 +211,15 @@
                     <table class="w-full border-separate border-spacing-0">
                         <thead class="bg-slate-50 border-b border-slate-200">
                             <tr>
-                                <th class="px-4 py-3 text-left text-xs font-semibold text-slate-600 uppercase tracking-wide">STT</th>
-                                <th class="px-4 py-3 text-left text-xs font-semibold text-slate-600 uppercase tracking-wide">Ảnh</th>
-                                <th class="px-4 py-3 text-left text-xs font-semibold text-slate-600 uppercase tracking-wide">Họ và tên</th>
-                                <th class="px-4 py-3 text-center text-xs font-semibold text-slate-600 uppercase tracking-wide">Giới tính</th>
-                                <th class="px-4 py-3 text-center text-xs font-semibold text-slate-600 uppercase tracking-wide">Ngày sinh</th>
-                                <th class="px-4 py-3 text-left text-xs font-semibold text-slate-600 uppercase tracking-wide">Điện thoại</th>
-                                <th class="px-4 py-3 text-left text-xs font-semibold text-slate-600 uppercase tracking-wide">Giáo họ</th>
-                                <th class="px-4 py-3 text-center text-xs font-semibold text-slate-600 uppercase tracking-wide">Trạng thái</th>
-                                <th class="px-4 py-3 text-center text-xs font-semibold text-slate-600 uppercase tracking-wide">Thao tác</th>
+                                <x-table-header>STT</x-table-header>
+                                <x-table-header>Ảnh</x-table-header>
+                                <x-table-header>Họ và tên</x-table-header>
+                                <x-table-header class="text-center">Giới tính</x-table-header>
+                                <x-table-header class="text-center">Ngày sinh</x-table-header>
+                                <x-table-header>Điện thoại</x-table-header>
+                                <x-table-header>Giáo họ</x-table-header>
+                                <x-table-header class="text-center">Trạng thái</x-table-header>
+                                <x-table-header class="text-center">Thao tác</x-table-header>
                             </tr>
                         </thead>
                         <tbody class="divide-y divide-slate-100">
@@ -246,7 +257,7 @@
 
                                 <td class="px-4 py-3 text-center">
                                     <span class="inline-flex px-2 py-0.5 rounded-full text-xs font-semibold
-                                        {{ $p->gender === 'male' ? 'bg-blue-100 text-blue-700' : 'bg-pink-100 text-pink-700' }}">
+                                        {{ $p->gender === 'male' ? 'bg-primary-100 text-primary-700' : 'bg-pink-100 text-pink-700' }}">
                                         {{ $p->gender_name }}
                                     </span>
                                 </td>
@@ -274,16 +285,33 @@
                                     </span>
                                 </td>
 
-                                <td class="px-4 py-3 text-center">
-                                    <div class="inline-flex items-center gap-2">
-                                        <a href="{{ route('parishioners.show', $p->id) }}"
-                                            class="text-sm text-slate-600 hover:text-slate-900 font-medium transition-colors duration-200">Xem</a>
-                                        <span class="text-slate-300">|</span>
-                                        <button wire:click="delete({{ $p->id }})"
-                                            wire:confirm="Bạn có chắc muốn xóa giáo dân này không?"
-                                            class="text-sm text-red-500 hover:text-red-600 font-medium transition-colors duration-200">
-                                            Xóa
-                                        </button>
+                                <td class="px-4 py-3">
+                                    <div class="flex items-center justify-center gap-1">
+                                        <x-tooltip content="Xem chi tiết">
+                                            <a href="{{ route('parishioners.show', $p->id) }}"
+                                                class="p-2 hover:bg-slate-100 text-slate-600 rounded-lg transition-all">
+                                                <x-icon name="eye" />
+                                            </a>
+                                        </x-tooltip>
+
+                                        <x-tooltip content="Chỉnh sửa">
+                                            <a href="{{ route('parishioners.edit', $p->id) }}"
+                                                class="p-2 hover:bg-primary-50 text-primary-600 rounded-lg transition-all inline-flex">
+                                                <x-icon name="edit" />
+                                            </a>
+                                        </x-tooltip>
+
+                                        <x-dropdown icon="more-vertical" align="right" variant="subtle" position="fixed">
+                                            <x-dropdown-item
+                                                x-on:click="$dispatch('open-confirm', {
+                                                    message: 'Xóa giáo dân {{ $p->full_name_with_saint }}?',
+                                                    wireMethod: 'delete({{ $p->id }})'
+                                                })"
+                                                icon="trash"
+                                                class="text-red-600 hover:bg-red-50">
+                                                Xóa giáo dân
+                                            </x-dropdown-item>
+                                        </x-dropdown>
                                     </div>
                                 </td>
                             </tr>
@@ -299,345 +327,26 @@
                 @endif
 
                 @else
-                <div class="text-center py-16">
-                    <svg class="w-12 h-12 text-slate-300 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" />
-                    </svg>
-                    <p class="text-slate-500 text-sm">Chưa có giáo dân nào</p>
-                    <button wire:click="create" class="mt-4 px-4 py-2 bg-primary-500 text-white rounded-xl hover:bg-primary-600 transition-all duration-200 text-sm font-medium">
-                        Thêm giáo dân đầu tiên
-                    </button>
-                </div>
+                <x-stats.page-empty
+                    tone="primary"
+                    title="Chưa có giáo dân nào"
+                    description="Hãy thêm giáo dân đầu tiên cho giáo xứ">
+                    <x-slot name="icon">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+                            d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" />
+                    </x-slot>
+                    <x-button as="a" href="{{ route('parishioners.create') }}" variant="primary">
+                        <x-icon name="plus" />
+                        Thêm giáo dân
+                    </x-button>
+                </x-stats.page-empty>
                 @endif
             </div>
 
         </div>
 
-        {{-- ===== MODAL: Form thêm/sửa ===== --}}
-        @if($showForm)
-        <div class="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4" wire:click="closeModal">
-            <div class="bg-white rounded-2xl shadow-lg w-full max-w-3xl max-h-[90vh] flex flex-col" wire:click.stop>
-
-                {{-- Header --}}
-                <div class="flex items-center justify-between px-6 py-4 border-b border-slate-200 bg-gradient-to-br from-primary-50 to-white flex-shrink-0 rounded-t-2xl">
-                    <h2 class="text-base font-semibold text-slate-900">
-                        {{ $editingId ? 'Cập nhật giáo dân' : 'Thêm giáo dân mới' }}
-                    </h2>
-                    <button wire:click="closeModal" class="text-slate-400 hover:text-slate-600 transition-colors duration-200">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-                        </svg>
-                    </button>
-                </div>
-
-                {{-- Tabs --}}
-                <div class="border-b border-slate-200 px-6 flex-shrink-0">
-                    <nav class="flex gap-1 -mb-px">
-                        @foreach([
-                        'basic' => 'Cơ bản',
-                        'address' => 'Địa chỉ',
-                        'family' => 'Gia đình',
-                        'classify' => 'Phân loại',
-                        'other' => 'Khác',
-                        ] as $tab => $label)
-                        @php
-                        $tabHasError = match($tab) {
-                        'basic' => $errors->hasAny(['last_name','first_name','gender','birthday','email','avatar']),
-                        'address' => $errors->hasAny(['origin','permanent_residence','temporary_residence']),
-                        'family' => $errors->hasAny(['married','father_id','mother_id','family_id']),
-                        'classify' => $errors->hasAny(['specialist_level','catechism_major']),
-                        'other' => $errors->hasAny(['note','death_date']),
-                        default => false,
-                        };
-                        @endphp
-                        <button wire:click="goToTab('{{ $tab }}')"
-                            class="relative px-4 py-2.5 text-sm font-medium border-b-2 transition-all duration-200
-                                {{ $activeTab === $tab
-                                    ? 'border-primary-500 text-primary-600'
-                                    : 'border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300' }}">
-                            {{ $label }}
-                            {{-- Dot đỏ khi tab có lỗi --}}
-                            @if($tabHasError)
-                            <span class="absolute top-2 right-1 w-1.5 h-1.5 bg-red-500 rounded-full"></span>
-                            @endif
-                        </button>
-                        @endforeach
-                    </nav>
-                </div>
-
-                {{-- Body --}}
-                <div class="flex-1 overflow-y-auto p-6">
-
-                    @php
-                    $input = "w-full px-3 py-2 rounded-xl border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 transition-all duration-200";
-                    @endphp
-
-                    {{-- Tab: Cơ bản --}}
-                    @if($activeTab === 'basic')
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div>
-                            <label class="block text-sm font-medium text-slate-700 mb-1">Họ <span class="text-red-500">*</span></label>
-                            <input wire:model.defer="last_name" type="text" class="{{ $input }} @error('last_name') border-red-400 @enderror" />
-                            @error('last_name') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
-                        </div>
-                        <div>
-                            <label class="block text-sm font-medium text-slate-700 mb-1">Tên <span class="text-red-500">*</span></label>
-                            <input wire:model.defer="first_name" type="text" class="{{ $input }} @error('first_name') border-red-400 @enderror" />
-                            @error('first_name') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
-                        </div>
-                        <div>
-                            <label class="block text-sm font-medium text-slate-700 mb-1">Giới tính <span class="text-red-500">*</span></label>
-                            <select wire:model.defer="gender" class="{{ $input }}">
-                                <option value="male">Nam</option>
-                                <option value="female">Nữ</option>
-                            </select>
-                        </div>
-                        <div>
-                            <label class="block text-sm font-medium text-slate-700 mb-1">Ngày sinh</label>
-                            <input wire:model.defer="birthday" type="date" class="{{ $input }} @error('birthday') border-red-400 @enderror" />
-                            @error('birthday') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
-                        </div>
-                        <div>
-                            <label class="block text-sm font-medium text-slate-700 mb-1">Con thứ</label>
-                            <input wire:model.defer="birth_order" type="number" min="1" placeholder="1, 2, 3..." class="{{ $input }}" />
-                        </div>
-                        <div>
-                            <label class="block text-sm font-medium text-slate-700 mb-1">CCCD</label>
-                            <input wire:model.defer="cccd" type="text" maxlength="12" class="{{ $input }}" />
-                        </div>
-                        <div>
-                            <label class="block text-sm font-medium text-slate-700 mb-1">Điện thoại</label>
-                            <input wire:model.defer="phone" type="tel" class="{{ $input }}" />
-                        </div>
-                        <div>
-                            <label class="block text-sm font-medium text-slate-700 mb-1">Email</label>
-                            <input wire:model.defer="email" type="email" class="{{ $input }} @error('email') border-red-400 @enderror" />
-                            @error('email') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
-                        </div>
-                        <div class="md:col-span-2">
-                            <label class="block text-sm font-medium text-slate-700 mb-1">Ảnh đại diện</label>
-                            <input wire:model="avatar" type="file" accept="image/*" class="w-full text-sm text-slate-600" />
-                            @if($currentAvatarPath)
-                            <img src="{{ asset('storage/' . $currentAvatarPath) }}" class="w-12 h-12 rounded-full mt-2 object-cover" />
-                            @endif
-                            @error('avatar') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
-                        </div>
-                    </div>
-                    @endif
-
-                    {{-- Tab: Địa chỉ --}}
-                    @if($activeTab === 'address')
-                    <div class="space-y-4">
-                        <div>
-                            <label class="block text-sm font-medium text-slate-700 mb-1">Quê quán</label>
-                            <input wire:model.defer="origin" type="text" class="{{ $input }}" />
-                        </div>
-                        <p class="text-xs font-semibold text-slate-500 uppercase tracking-wide pt-2">Thường trú</p>
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div>
-                                <label class="block text-sm font-medium text-slate-700 mb-1">Tỉnh/TP</label>
-                                <input wire:model.defer="permanent_province" type="text" class="{{ $input }}" />
-                            </div>
-                            <div>
-                                <label class="block text-sm font-medium text-slate-700 mb-1">Địa chỉ chi tiết</label>
-                                <input wire:model.defer="permanent_residence" type="text" class="{{ $input }}" />
-                            </div>
-                        </div>
-                        <p class="text-xs font-semibold text-slate-500 uppercase tracking-wide pt-2">Tạm trú</p>
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div>
-                                <label class="block text-sm font-medium text-slate-700 mb-1">Tỉnh/TP</label>
-                                <input wire:model.defer="temporary_province" type="text" class="{{ $input }}" />
-                            </div>
-                            <div>
-                                <label class="block text-sm font-medium text-slate-700 mb-1">Địa chỉ chi tiết</label>
-                                <input wire:model.defer="temporary_residence" type="text" class="{{ $input }}" />
-                            </div>
-                        </div>
-                    </div>
-                    @endif
-
-                    {{-- Tab: Gia đình --}}
-                    @if($activeTab === 'family')
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div>
-                            <label class="block text-sm font-medium text-slate-700 mb-1">Tên cha</label>
-                            <input wire:model.defer="father_name" type="text" class="{{ $input }}" />
-                        </div>
-                        <div>
-                            <label class="block text-sm font-medium text-slate-700 mb-1">Tên mẹ</label>
-                            <input wire:model.defer="mother_name" type="text" class="{{ $input }}" />
-                        </div>
-                        <div>
-                            <label class="block text-sm font-medium text-slate-700 mb-1">Tình trạng hôn nhân</label>
-                            <select wire:model.defer="married" class="{{ $input }}">
-                                <option value="0">Độc thân</option>
-                                <option value="1">Đã kết hôn</option>
-                                <option value="2">Góa</option>
-                                <option value="3">Ly hôn</option>
-                            </select>
-                        </div>
-                        <div>
-                            <label class="block text-sm font-medium text-slate-700 mb-1">Thuộc hộ gia đình</label>
-                            <input wire:model.defer="family_id" type="number" placeholder="ID hộ gia đình" class="{{ $input }}" />
-                        </div>
-                    </div>
-                    @endif
-
-                    {{-- Tab: Phân loại --}}
-                    @if($activeTab === 'classify')
-                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                        <div>
-                            <label class="block text-sm font-medium text-slate-700 mb-1">Nghề nghiệp</label>
-                            <select wire:model.defer="career" class="{{ $input }}">
-                                <option value="">-- Chọn --</option>
-                                @foreach(config('parishioner.career', []) as $k => $v)
-                                <option value="{{ $k }}">{{ $v }}</option>
-                                @endforeach
-                            </select>
-                        </div>
-                        <div>
-                            <label class="block text-sm font-medium text-slate-700 mb-1">Học vấn</label>
-                            <select wire:model.defer="education_level" class="{{ $input }}">
-                                <option value="">-- Chọn --</option>
-                                @foreach(config('parishioner.education_level', []) as $k => $v)
-                                <option value="{{ $k }}">{{ $v }}</option>
-                                @endforeach
-                            </select>
-                        </div>
-                        <div>
-                            <label class="block text-sm font-medium text-slate-700 mb-1">Trình độ chuyên môn</label>
-                            <select wire:model.defer="specialist_level" class="{{ $input }}">
-                                <option value="">-- Chọn --</option>
-                                @foreach(config('parishioner.specialist_level', []) as $k => $v)
-                                <option value="{{ $k }}">{{ $v }}</option>
-                                @endforeach
-                            </select>
-                        </div>
-                        <div>
-                            <label class="block text-sm font-medium text-slate-700 mb-1">Trình độ giáo lý</label>
-                            <select wire:model.defer="catechism_level" class="{{ $input }}">
-                                <option value="">-- Chọn --</option>
-                                @foreach(config('parishioner.catechism_level', []) as $k => $v)
-                                <option value="{{ $k }}">{{ $v }}</option>
-                                @endforeach
-                            </select>
-                        </div>
-                        <div>
-                            <label class="block text-sm font-medium text-slate-700 mb-1">Chuyên ngành giáo lý</label>
-                            <input wire:model.defer="catechism_major" type="text" class="{{ $input }}" placeholder="Vd: Giáo lý hôn nhân..." />
-                        </div>
-                        <div>
-                            <label class="block text-sm font-medium text-slate-700 mb-1">Dân tộc</label>
-                            <select wire:model.defer="ethnic" class="{{ $input }}">
-                                <option value="">-- Chọn --</option>
-                                @foreach(config('parishioner.ethnic', []) as $k => $v)
-                                <option value="{{ $k }}">{{ $v }}</option>
-                                @endforeach
-                            </select>
-                        </div>
-                        <div>
-                            <label class="block text-sm font-medium text-slate-700 mb-1">Chức vụ</label>
-                            <select wire:model.defer="position" class="{{ $input }}">
-                                <option value="">-- Chọn --</option>
-                                @foreach(config('parishioner.position', []) as $k => $v)
-                                <option value="{{ $k }}">{{ $v }}</option>
-                                @endforeach
-                            </select>
-                        </div>
-                    </div>
-                    @endif
-
-                    {{-- Tab: Khác --}}
-                    @if($activeTab === 'other')
-                    <div class="space-y-5">
-                        <div>
-                            <label class="block text-sm font-medium text-slate-700 mb-1">Ghi chú</label>
-                            <textarea wire:model.defer="note" rows="3" class="{{ $input }}" placeholder="Ghi chú..."></textarea>
-                        </div>
-
-                        <div class="grid grid-cols-2 gap-3">
-                            <label class="flex items-center gap-2 cursor-pointer select-none">
-                                <input wire:model.defer="status" type="checkbox" class="w-4 h-4 rounded text-primary-500" />
-                                <span class="text-sm text-slate-700">Kích hoạt</span>
-                            </label>
-                            <label class="flex items-center gap-2 cursor-pointer select-none">
-                                <input wire:model.defer="is_active" type="checkbox" class="w-4 h-4 rounded text-primary-500" />
-                                <span class="text-sm text-slate-700">Đang sinh hoạt tại xứ</span>
-                            </label>
-                            <label class="flex items-center gap-2 cursor-pointer select-none">
-                                <input wire:model.defer="is_new_convert" type="checkbox" class="w-4 h-4 rounded text-primary-500" />
-                                <span class="text-sm text-slate-700">Tân tòng</span>
-                            </label>
-                            <label class="flex items-center gap-2 cursor-pointer select-none">
-                                <input wire:model.defer="is_included_in_stats" type="checkbox" class="w-4 h-4 rounded text-primary-500" />
-                                <span class="text-sm text-slate-700">Tính vào thống kê</span>
-                            </label>
-                        </div>
-
-                        {{-- Tử vong --}}
-                        <div class="pt-4 border-t border-slate-200">
-                            <label class="flex items-center gap-2 cursor-pointer select-none mb-3">
-                                <input wire:model="is_deceased" type="checkbox" class="w-4 h-4 rounded text-red-500" />
-                                <span class="text-sm font-medium text-slate-700">Đã qua đời</span>
-                            </label>
-
-                            @if($is_deceased)
-                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 bg-red-50 border border-red-100 rounded-xl">
-                                <div>
-                                    <label class="block text-sm font-medium text-slate-700 mb-1">Ngày mất <span class="text-red-500">*</span></label>
-                                    <input wire:model.defer="death_date" type="date" class="{{ $input }} @error('death_date') border-red-400 @enderror" />
-                                    @error('death_date') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
-                                </div>
-                                <div>
-                                    <label class="block text-sm font-medium text-slate-700 mb-1">Số sổ mất</label>
-                                    <input wire:model.defer="death_book_number" type="text" class="{{ $input }}" />
-                                </div>
-                                <div>
-                                    <label class="block text-sm font-medium text-slate-700 mb-1">Nơi qua đời</label>
-                                    <input wire:model.defer="death_place" type="text" class="{{ $input }}" />
-                                </div>
-                                <div>
-                                    <label class="block text-sm font-medium text-slate-700 mb-1">Nơi an táng</label>
-                                    <input wire:model.defer="burial_place" type="text" class="{{ $input }}" />
-                                </div>
-                            </div>
-                            @endif
-                        </div>
-                    </div>
-                    @endif
-
-                </div>
-
-                {{-- Footer --}}
-                <div class="flex items-center justify-between px-6 py-4 border-t border-slate-200 bg-slate-50 flex-shrink-0 rounded-b-2xl">
-                    <button wire:click="closeModal"
-                        class="px-4 py-2 text-sm font-medium text-slate-700 bg-white border border-slate-300 rounded-xl hover:bg-slate-100 transition-all duration-200">
-                        Hủy
-                    </button>
-                    <div class="flex items-center gap-3">
-                        @if($activeTab !== 'basic')
-                        <button wire:click="goToTab('{{ ['address' => 'basic', 'family' => 'address', 'classify' => 'family', 'other' => 'classify'][$activeTab] ?? 'basic' }}')"
-                            class="px-4 py-2 text-sm font-medium text-slate-700 bg-white border border-slate-300 rounded-xl hover:bg-slate-100 transition-all duration-200">
-                            Quay lại
-                        </button>
-                        @endif
-                        <button wire:click="save" wire:loading.attr="disabled"
-                            class="px-6 py-2 text-sm font-medium text-white bg-primary-500 rounded-xl hover:bg-primary-600 transition-all duration-200 disabled:opacity-60">
-                            <span wire:loading.remove wire:target="save">
-                                {{ $activeTab === 'other' ? 'Lưu' : 'Tiếp theo' }}
-                            </span>
-                            <span wire:loading wire:target="save">Đang lưu...</span>
-                        </button>
-                    </div>
-                </div>
-
-            </div>
-        </div>
-        @endif
-
         {{-- Loading overlay --}}
-        <div wire:loading.delay wire:target="save,delete,toggleStatus"
+        <div wire:loading.delay wire:target="delete,toggleStatus"
             class="fixed inset-0 bg-black/20 flex items-center justify-center z-[60]">
             <div class="bg-white rounded-2xl px-6 py-4 flex items-center gap-3 shadow-md">
                 <svg class="animate-spin h-5 w-5 text-primary-500" fill="none" viewBox="0 0 24 24">

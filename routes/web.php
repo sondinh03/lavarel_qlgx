@@ -42,6 +42,9 @@ use App\Http\Controllers\TeacherImportController;
 use App\Http\Controllers\KetQuaExportController;
 use App\Http\Controllers\HonPhoiExportController;
 use App\Http\Controllers\StudentImportController;
+use App\Http\Controllers\FamilyRegisterImportController;
+use App\Http\Controllers\ParishionerImportController;
+use App\Http\Controllers\ParishionerLyLichExportController;
 use App\Http\Controllers\StudentQrController;
 use App\Http\Livewire\Attendance\AttendanceQr as AttendanceAttendanceQr;
 use App\Http\Livewire\Attendance\AttendanceStatistics;
@@ -69,8 +72,12 @@ use App\Http\Livewire\NamHoc\NamHocManager;
 use App\Http\Livewire\Parish\ParishChild;
 use App\Http\Livewire\Parish\ParishGroup;
 use App\Http\Livewire\Parish\ParishGroupManager;
+use App\Http\Livewire\Parishioners\ParishionerCreate;
+use App\Http\Livewire\Parishioners\ParishionerEdit;
 use App\Http\Livewire\Parishioners\ParishionerShow;
 use App\Http\Livewire\Parishioners\ParishionersManager;
+use App\Http\Livewire\Parishioners\FamilyRegisterImportPreview;
+use App\Http\Livewire\Parishioners\ParishionerImportPreview;
 use App\Http\Livewire\Parishioners\SacramentsManager;
 use App\Http\Livewire\Score\ScoreManager;
 use App\Http\Livewire\Score\ScoreStatistics;
@@ -119,8 +126,26 @@ Route::middleware('auth')->group(function () {
 
     Route::get('/parishioner', ParishionersManager::class)
         ->name('parishioners.index');
+    Route::get('/parishioner/import', ParishionerImportPreview::class)
+        ->middleware('role:parish_admin')
+        ->name('parishioners.import');
+    Route::get('/parishioner/import/family-register', FamilyRegisterImportPreview::class)
+        ->middleware('role:parish_admin')
+        ->name('parishioners.import.family-register');
+    Route::get('/parishioner/download-template', [ParishionerImportController::class, 'template'])
+        ->middleware('role:parish_admin')
+        ->name('parishioners.import.template');
+    Route::get('/parishioner/import/family-register/template', [FamilyRegisterImportController::class, 'template'])
+        ->middleware('role:parish_admin')
+        ->name('parishioners.import.family-register.template');
     Route::get('/parishioner/sacrament', SacramentsManager::class)
         ->name('parishioners.sacrament');
+    Route::get('/parishioners/create', ParishionerCreate::class)
+        ->name('parishioners.create');
+    Route::get('/parishioners/{parishioner}/export-lylich', ParishionerLyLichExportController::class)
+        ->name('parishioners.export-lylich');
+    Route::get('/parishioners/{parishioner}/edit', ParishionerEdit::class)
+        ->name('parishioners.edit');
     Route::get('/parishioners/{parishioner}', ParishionerShow::class)
         ->name('parishioners.show');
 

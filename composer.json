@@ -29,6 +29,7 @@
         "maatwebsite/excel": "^3.1",
         "nesbot/carbon": "^2.73",
         "phpoffice/phpspreadsheet": "^1.29",
+        "phpoffice/phpword": "^1.4",
         "predis/predis": "^3.4",
         "simplesoftwareio/simple-qrcode": "4.2",
         "spatie/laravel-settings": "^3.4",

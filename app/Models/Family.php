@@ -26,10 +26,19 @@ class Family extends Model
         'head_id',
         'note',
         'status',
+        'member_count',
+        'address',
+        'ward_id',
+        'province',
+        'is_transferred',
+        'level',
+        'is_included_in_stats',
     ];
 
     protected $casts = [
-        'status' => 'boolean',
+        'status'               => 'boolean',
+        'is_transferred'       => 'boolean',
+        'is_included_in_stats' => 'boolean',
     ];
 
     /*

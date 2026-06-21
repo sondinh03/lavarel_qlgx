@@ -1,6 +1,6 @@
 @section('topbar')
 <x-breadcrumb :items="[
-    ['label' => 'Trang chủ', 'url' => route('dashboard')],
+    ['label' => 'Trang chủ', 'url' => route('parishioners.dashboard')],
     ['label' => 'Gia đình', 'url' => route('families.index')],
     ['label' => $family['name'] ?? 'Chi tiết'],
 ]" />
@@ -9,7 +9,7 @@
 <div class="min-h-screen bg-slate-50 p-2 sm:p-4 lg:p-6" style="min-height: calc(100vh - 56px - var(--bottom-offset));">
     <a href="#main-content" class="sr-only focus:not-sr-only">Bỏ qua tới nội dung</a>
 
-    <div id="main-content" class="max-w-5xl mx-auto space-y-6">
+    <div id="main-content" class="mx-auto max-w-7xl space-y-6">
 
         @if($isLoading)
         {{-- Loading state --}}
@@ -22,25 +22,35 @@
 
         {{-- Header Card --}}
         <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
-            <div class="bg-gradient-to-br from-primary-50 to-white p-6">
-                <div class="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-6">
+            <div class="p-4 lg:p-6 border-b border-slate-200">
+                <div class="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4">
 
-                    <div class="min-w-0">
+                    <div class="min-w-0 flex-1">
                         <div class="flex items-center gap-3 flex-wrap">
-                            <h1 class="text-2xl font-bold text-slate-900 truncate">
+                            <h1 class="text-xl sm:text-2xl font-bold text-slate-900 truncate">
                                 {{ $family['name'] }}
                             </h1>
-                            <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold
+                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold
                                          {{ $family['status_badge'] }}">
                                 {{ $family['status_label'] }}
                             </span>
                         </div>
 
-                        <div class="mt-3 flex flex-wrap items-center gap-4 text-sm text-slate-600">
+                        <div class="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-slate-600">
                             <span class="flex items-center gap-1.5">
                                 <x-icon name="users" class="w-4 h-4 text-slate-400" />
                                 {{ $family['member_count'] }} thành viên
                             </span>
+                            @if($family['parish_name'])
+                            <span>{{ $family['parish_name'] }}</span>
+                            @endif
+                            @if($family['head'])
+                            <span>Chủ hộ:
+                                <a href="{{ $family['head']['url'] }}" class="font-semibold text-primary-600 hover:text-primary-700">
+                                    {{ $family['head']['name'] }}
+                                </a>
+                            </span>
+                            @endif
                             @if($family['parish_group_name'])
                             <span class="flex items-center gap-1.5">
                                 <x-icon name="home" class="w-4 h-4 text-slate-400" />
@@ -53,7 +63,7 @@
                     <div class="flex items-center gap-2 flex-wrap flex-shrink-0">
                         @if($familyModel)
                         @can('update', $familyModel)
-                        <x-button as="a" href="{{ route('families.edit', $family['id']) }}" variant="secondary">
+                        <x-button as="a" href="{{ route('families.edit', $family['id']) }}" variant="outline">
                             <x-icon name="edit" />
                             Chỉnh sửa
                         </x-button>
@@ -83,17 +93,23 @@
             </div>
 
             {{-- Tabs --}}
-            <div class="border-t border-slate-200 px-4 bg-slate-50/50">
-                <div class="flex items-center gap-1 py-3">
+            <div class="px-4 lg:px-6 py-4 border-b border-slate-200 bg-slate-50/70">
+                <div class="inline-flex w-full sm:w-auto max-w-full rounded-xl bg-slate-200 p-1 text-sm font-medium">
                     <button wire:click="switchTab('members')"
-                        class="px-4 py-2 rounded-lg text-sm font-semibold transition-all
-                               {{ $activeTab === 'members' ? 'bg-white text-primary-700 shadow-sm' : 'text-slate-500 hover:bg-white/50' }}">
+                        type="button"
+                        class="flex-1 inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg transition-all whitespace-nowrap
+                               {{ $activeTab === 'members'
+                                   ? 'bg-white shadow-sm text-primary-600 font-semibold'
+                                   : 'text-slate-600 hover:text-primary-600 hover:bg-white/50' }}">
                         Thành viên
-                        <span class="ml-1 text-xs font-normal opacity-60">({{ $family['member_count'] }})</span>
+                        <span class="text-xs font-normal opacity-70">({{ $family['member_count'] }})</span>
                     </button>
                     <button wire:click="switchTab('info')"
-                        class="px-4 py-2 rounded-lg text-sm font-semibold transition-all
-                               {{ $activeTab === 'info' ? 'bg-white text-primary-700 shadow-sm' : 'text-slate-500 hover:bg-white/50' }}">
+                        type="button"
+                        class="flex-1 inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg transition-all whitespace-nowrap
+                               {{ $activeTab === 'info'
+                                   ? 'bg-white shadow-sm text-primary-600 font-semibold'
+                                   : 'text-slate-600 hover:text-primary-600 hover:bg-white/50' }}">
                         Thông tin
                     </button>
                 </div>
@@ -103,9 +119,30 @@
         {{-- Tab: Members --}}
         @if($activeTab === 'members')
         @if($family['member_count'] > 0)
-        <div class="space-y-4">
-            @foreach($family['members'] as $member)
-            @include('livewire.family._member-card', ['member' => $member])
+        <div class="space-y-6">
+            @foreach([
+                'husband' => 'Chồng',
+                'wife' => 'Vợ',
+                'children' => 'Con cái',
+                'others' => 'Khác',
+            ] as $groupKey => $groupLabel)
+            @php
+                $groupMembers = $groupKey === 'husband' && $family['husband']
+                    ? [$family['husband']]
+                    : ($groupKey === 'wife' && $family['wife']
+                        ? [$family['wife']]
+                        : ($family[$groupKey] ?? []));
+            @endphp
+            @if(!empty($groupMembers))
+            <div>
+                <h3 class="text-sm font-semibold text-slate-500 uppercase tracking-wide mb-3">{{ $groupLabel }}</h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    @foreach($groupMembers as $member)
+                    @include('livewire.family._member-card', ['member' => $member])
+                    @endforeach
+                </div>
+            </div>
+            @endif
             @endforeach
         </div>
         @else
@@ -155,6 +192,34 @@
                         <div>
                             <p class="text-xs font-semibold text-slate-400 uppercase tracking-wide">Số thành viên</p>
                             <p class="mt-1 text-sm text-slate-700">{{ $family['member_count'] }} người</p>
+                        </div>
+                        @if($family['head'])
+                        <div>
+                            <p class="text-xs font-semibold text-slate-400 uppercase tracking-wide">Chủ hộ</p>
+                            <a href="{{ $family['head']['url'] }}" class="mt-1 text-sm font-semibold text-primary-600 hover:text-primary-700">
+                                {{ $family['head']['name'] }}
+                            </a>
+                        </div>
+                        @endif
+                        @if($family['address'] || $family['province'])
+                        <div class="md:col-span-2">
+                            <p class="text-xs font-semibold text-slate-400 uppercase tracking-wide">Địa chỉ</p>
+                            <p class="mt-1 text-sm text-slate-700">{{ implode(', ', array_filter([$family['address'], $family['province']])) ?: '—' }}</p>
+                        </div>
+                        @endif
+                        @if($family['level'])
+                        <div>
+                            <p class="text-xs font-semibold text-slate-400 uppercase tracking-wide">Diện gia đình</p>
+                            <p class="mt-1 text-sm text-slate-700">{{ $family['level_label'] ?: $family['level'] }}</p>
+                        </div>
+                        @endif
+                        <div>
+                            <p class="text-xs font-semibold text-slate-400 uppercase tracking-wide">Chuyển xứ</p>
+                            <p class="mt-1 text-sm text-slate-700">{{ $family['is_transferred'] ? 'Đã chuyển' : 'Đang sinh hoạt' }}</p>
+                        </div>
+                        <div>
+                            <p class="text-xs font-semibold text-slate-400 uppercase tracking-wide">Thống kê</p>
+                            <p class="mt-1 text-sm text-slate-700">{{ $family['is_included_in_stats'] ? 'Được thống kê' : 'Không thống kê' }}</p>
                         </div>
                     </div>
                 </div>

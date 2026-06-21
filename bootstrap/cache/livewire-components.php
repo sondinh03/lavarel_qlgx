@@ -1,6 +1,5 @@
 <?php return array (
   'attendance-manager' => 'App\\Http\\Livewire\\AttendanceManager',
-  'attendance-qr' => 'App\\Http\\Livewire\\AttendanceQr',
   'attendance.attendance-qr' => 'App\\Http\\Livewire\\Attendance\\AttendanceQr',
   'attendance.attendance-statistics' => 'App\\Http\\Livewire\\Attendance\\AttendanceStatistics',
   'attendance.session-manager' => 'App\\Http\\Livewire\\Attendance\\SessionManager',
@@ -9,6 +8,7 @@
   'class-student-manager' => 'App\\Http\\Livewire\\ClassStudentManager',
   'dashboard.admin-dashboard' => 'App\\Http\\Livewire\\Dashboard\\AdminDashboard',
   'dashboard.catechist-dashboard' => 'App\\Http\\Livewire\\Dashboard\\CatechistDashboard',
+  'dashboard.parishioner-dashboard' => 'App\\Http\\Livewire\\Dashboard\\ParishionerDashboard',
   'family.family-detail' => 'App\\Http\\Livewire\\Family\\FamilyDetail',
   'family.family-edit' => 'App\\Http\\Livewire\\Family\\FamilyEdit',
   'family.family-list' => 'App\\Http\\Livewire\\Family\\FamilyList',
@@ -27,6 +27,8 @@
   'nam-hoc.copy-nam-hoc' => 'App\\Http\\Livewire\\NamHoc\\CopyNamHoc',
   'nam-hoc.nam-hoc-manager' => 'App\\Http\\Livewire\\NamHoc\\NamHocManager',
   'parish.parish-group-manager' => 'App\\Http\\Livewire\\Parish\\ParishGroupManager',
+  'parishioners.family-register-import-preview' => 'App\\Http\\Livewire\\Parishioners\\FamilyRegisterImportPreview',
+  'parishioners.parishioner-import-preview' => 'App\\Http\\Livewire\\Parishioners\\ParishionerImportPreview',
   'parishioners.parishioner-show' => 'App\\Http\\Livewire\\Parishioners\\ParishionerShow',
   'parishioners.parishioners-manager' => 'App\\Http\\Livewire\\Parishioners\\ParishionersManager',
   'parishioners.sacraments-manager' => 'App\\Http\\Livewire\\Parishioners\\SacramentsManager',

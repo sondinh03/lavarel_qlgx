@@ -66,18 +66,25 @@ class AttendanceQr extends BaseComponent
      */
     public function handleQrScanned(string $token): void
     {
+        $token = trim($token);
+
         Log::info('QR scanned', [
             'token' => substr($token, 0, 8),
             'type'  => $this->type,
         ]);
 
         try {
-            // 1. Tìm học sinh theo qr_token
+            if (!$this->isStudentQrToken($token)) {
+                $this->setResult('error', ['message' => 'Không phải thẻ học sinh']);
+                return;
+            }
+
+            // 1. Tìm học sinh theo qr_token (scope giáo xứ hiện tại)
             $student = StudentNew::where('qr_token', $token)->first();
             Log::info('Student found', ['student' => $student?->id]);
 
             if (!$student) {
-                $this->setResult('error', ['message' => 'Mã QR không hợp lệ']);
+                $this->setResult('error', ['message' => 'Không tìm thấy học sinh']);
                 return;
             }
 
@@ -171,6 +178,14 @@ class AttendanceQr extends BaseComponent
     {
         $this->lastResultType = $type;
         $this->lastResult     = $data;
+    }
+
+    private function isStudentQrToken(string $token): bool
+    {
+        return (bool) preg_match(
+            '/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i',
+            $token
+        );
     }
 
     // ==================== RENDER ====================

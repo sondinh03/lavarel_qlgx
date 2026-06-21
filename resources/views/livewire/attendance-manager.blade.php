@@ -252,6 +252,13 @@
                                 Thống kê
                             </x-button>
 
+                            @if($isAdmin)
+                            <x-button wire:click="exportAttendance" variant="outline">
+                                <x-icon name="file-export" />
+                                Xuất Excel
+                            </x-button>
+                            @endif
+
                             <div x-show="hasDraft()" x-cloak>
                                 <x-button variant="danger" x-on:click="discard()">
                                     <x-icon name="x" />

@@ -1,12 +1,13 @@
 @section('topbar')
 <x-breadcrumb :items="[
-    [ 'label' => 'Trang chủ', 'url' => route('dashboard')],
+    ['label' => 'Trang chủ', 'url' => route('parishioners.dashboard')],
     ['label' => 'Giáo họ']
 ]" />
 @endsection
 
 <div
-    class="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 p-4 sm:p-6"
+    class="min-h-screen bg-slate-50 p-2 sm:p-4 lg:p-6"
+    style="min-height: calc(100vh - 56px - var(--bottom-offset));"
     x-data="{ showForm: false }"
     x-init="
         document.addEventListener('livewire:load', () => {
@@ -21,7 +22,7 @@
 
     <a href="#main-content" class="sr-only focus:not-sr-only">Bỏ qua tới nội dung</a>
 
-    <div id="main-content" class="mx-auto max-w-7xl space-y-5">
+    <div id="main-content" class="mx-auto max-w-7xl space-y-6">
         {{-- Main Card --}}
         <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
 
@@ -35,11 +36,12 @@
             </x-page-header>
 
             {{-- Actions Bar --}}
-            <div class="px-4 py-3 border-b border-slate-200 bg-slate-50/70">
-                <div class="flex items-center gap-4">
+            <div class="p-4 lg:p-6 border-b border-slate-200 bg-slate-50/70 rounded-b-2xl">
+                <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                     <x-search-input
                         wireModel="search"
-                        placeholder="Tìm kiếm giáo họ..." />
+                        placeholder="Tìm kiếm giáo họ..."
+                        class="max-w-md" />
 
                     <x-button wire:click="create" variant="primary">
                         <x-icon name="plus" />
@@ -183,17 +185,19 @@
             </div>
             @endif
             @else
-            <div class="p-12 text-center">
-                <svg class="mx-auto w-16 h-16 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+            <x-stats.page-empty
+                tone="primary"
+                title="Chưa có giáo họ nào"
+                description="Hãy thêm giáo họ đầu tiên cho giáo xứ">
+                <x-slot name="icon">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
                         d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
-                </svg>
-                <p class="mt-4 text-lg text-slate-500">Chưa có giáo họ nào</p>
-                <button wire:click="create"
-                    class="mt-4 px-4 py-2 bg-primary-600 text-white rounded-xl hover:bg-primary-700 transition-all">
-                    + Thêm giáo họ đầu tiên
-                </button>
-            </div>
+                </x-slot>
+                <x-button wire:click="create" variant="primary">
+                    <x-icon name="plus" />
+                    Thêm giáo họ
+                </x-button>
+            </x-stats.page-empty>
             @endif
         </div>
     </div>

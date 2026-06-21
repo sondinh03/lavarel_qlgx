@@ -2,6 +2,7 @@
 
 namespace App\Http\Livewire;
 
+use App\Exports\AttendanceExport;
 use App\Http\Livewire\Base\BaseComponent;
 use App\Models\AttendanceRecord;
 use App\Models\AttendanceSession;
@@ -528,6 +529,39 @@ class AttendanceManager extends BaseComponent
 
         $this->loadSessions();
         $this->loadAttendanceRecords();
+    }
+
+    public function exportAttendance()
+    {
+        if (!$this->selectedClassId) {
+            $this->emit('toast', 'warning', 'Vui lòng chọn lớp trước khi xuất file');
+            return;
+        }
+
+        if (!$this->selectedKy) {
+            $this->emit('toast', 'warning', 'Vui lòng chọn học kỳ trước khi xuất file');
+            return;
+        }
+
+        $sessions = AttendanceSession::where('class_id', $this->selectedClassId)
+            ->where('type', $this->attendanceType)
+            ->where('semester', $this->selectedKy)
+            ->count();
+
+        if ($sessions === 0) {
+            $this->emit('toast', 'warning', 'Chưa có buổi điểm danh trong học kỳ này');
+            return;
+        }
+
+        $className = CatechismClass::findOrFail($this->selectedClassId)->name;
+        $typeSlug  = $this->attendanceType === 2 ? 'DiLe' : 'DiHoc';
+
+        return response()->streamDownload(function () {
+            echo \Maatwebsite\Excel\Facades\Excel::raw(
+                new AttendanceExport($this->selectedClassId, $this->selectedKy, $this->attendanceType),
+                \Maatwebsite\Excel\Excel::XLSX
+            );
+        }, 'DiemDanh_' . $className . '_HK' . $this->selectedKy . '_' . $typeSlug . '_' . now()->format('dmY_His') . '.xlsx');
     }
 
     // ==================== NOTE MODAL ====================

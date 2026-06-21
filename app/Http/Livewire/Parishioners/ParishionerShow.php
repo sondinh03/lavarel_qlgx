@@ -2,6 +2,7 @@
 
 namespace App\Http\Livewire\Parishioners;
 
+use App\Http\Livewire\Parishioners\Concerns\ManagesParishionerForm;
 use App\Models\Marriage;
 use App\Models\Parishioner;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
@@ -15,13 +16,10 @@ class ParishionerShow extends Component
 {
     use WithFileUploads;
     use AuthorizesRequests;
-
-    // ==================== PROPS ====================
+    use ManagesParishionerForm;
 
     public Parishioner $parishioner;
     public string $activeTab = 'basic';
-
-    // ==================== UI STATE ====================
 
     public bool $showEditBasic     = false;
     public bool $showEditAddress   = false;
@@ -30,68 +28,6 @@ class ParishionerShow extends Component
     public bool $showEditMarriage  = false;
     public bool $showEditDeceased  = false;
     public bool $showDeleteConfirm = false;
-
-    // ==================== FORM: CƠ BẢN ====================
-
-    public string  $last_name   = '';
-    public string  $first_name  = '';
-    public string  $gender      = 'male';
-    public ?string $birthday    = null;
-    public ?int    $birth_order = null;
-    public ?int    $saint_id    = null;
-    public ?string $cccd        = null;
-    public ?string $phone       = null;
-    public ?string $email       = null;
-    public ?string $note        = null;
-    public         $avatar      = null;
-    public ?string $currentAvatarPath = null;
-
-    // Phân loại cá nhân - xã hội
-    public ?int    $ethnic            = null;
-    public ?int    $career            = null;
-    public ?int    $education_level   = null;
-    public ?int    $specialist_level  = null;
-    public ?int    $catechism_level   = null;
-    public ?string $catechism_major   = null;
-    public ?int    $position          = null;
-    public ?int    $language          = null;
-    public ?int    $holy_order_status = null;
-
-    // Trạng thái — dùng chung giữa form cơ bản và form giáo xứ
-    public bool $status               = true;
-    public bool $is_active            = true;
-    public bool $is_new_convert       = false;
-    public bool $is_included_in_stats = true;
-
-    // ==================== FORM: ĐỊA CHỈ ====================
-
-    public ?string $origin              = null;
-    public ?string $permanent_province  = null;
-    public ?int    $permanent_ward_id   = null;
-    public ?string $permanent_residence = null;
-    public ?string $temporary_province  = null;
-    public ?int    $temporary_ward_id   = null;
-    public ?string $temporary_residence = null;
-
-    // ==================== FORM: GIA ĐÌNH ====================
-
-    public ?string $father_name = null;
-    public ?string $mother_name = null;
-    public ?int    $father_id   = null;
-    public ?int    $mother_id   = null;
-    public ?int    $family_id   = null;
-    public int     $married     = 0;
-
-    // ==================== FORM: SINH HOẠT GIÁO XỨ ====================
-
-    public ?int    $parish_area_id   = null;   // Giáo họ
-    public ?int    $level            = null;   // Cấp bậc
-    public ?string $joined_date      = null;   // Ngày gia nhập xứ
-    public ?int    $transferred_from = null;   // Chuyển từ xứ (FK parishes)
-    public ?string $transferred_date = null;   // Ngày chuyển đến
-    public ?string $left_reason      = null;   // Lý do rời xứ
-
-    // ==================== FORM: HÔN PHỐI ====================
 
     public ?int    $marriage_id          = null;
     public ?int    $spouse_id            = null;
@@ -107,79 +43,45 @@ class ParishionerShow extends Component
     public ?string $witness_2            = null;
     public ?string $marriage_note        = null;
 
-    // ==================== FORM: TỬ VONG ====================
-
-    public bool    $is_deceased       = false;
-    public ?string $death_date        = null;
-    public ?string $death_book_number = null;
-    public ?string $death_place       = null;
-    public ?string $burial_place      = null;
-
-    // ==================== VALIDATION ====================
-
     protected function rulesBasic(): array
     {
-        return [
-            'last_name'         => 'required|string|max:100',
-            'first_name'        => 'required|string|max:100',
-            'gender'            => 'required|in:male,female',
-            'birthday'          => 'nullable|date|before:today',
-            'birth_order'       => 'nullable|integer|min:1',
-            'saint_id'          => 'nullable|integer|exists:holymanagements,id',
-            'cccd'              => 'nullable|string|max:20',
-            'phone'             => 'nullable|string|max:20',
-            'email'             => 'nullable|email|max:255',
-            'note'              => 'nullable|string|max:1000',
-            'avatar'            => 'nullable|image|max:2048',
-            'specialist_level'  => 'nullable|integer',
-            'catechism_major'   => 'nullable|string|max:100',
-            'language'          => 'nullable|integer',
-            'holy_order_status' => 'nullable|integer',
-        ];
+        return array_intersect_key($this->parishionerFormRules(), array_flip([
+            'last_name', 'first_name', 'gender', 'birthday', 'birth_place', 'birth_order',
+            'saint_id', 'cccd', 'phone', 'email', 'note', 'avatar',
+            'ethnic', 'career', 'education_level', 'specialist_level', 'catechism_level',
+            'catechism_major', 'position', 'language', 'holy_order_status',
+            'status', 'is_active', 'is_new_convert', 'is_included_in_stats',
+        ]));
     }
 
     protected function rulesAddress(): array
     {
-        return [
-            'origin'              => 'nullable|string|max:255',
-            'permanent_province'  => 'nullable|string|max:255',
-            'permanent_residence' => 'nullable|string|max:255',
-            'temporary_province'  => 'nullable|string|max:255',
-            'temporary_residence' => 'nullable|string|max:255',
-        ];
+        return array_intersect_key($this->parishionerFormRules(), array_flip([
+            'origin', 'permanent_province', 'permanent_residence',
+            'temporary_province', 'temporary_residence',
+        ]));
     }
 
     protected function rulesFamily(): array
     {
-        return [
-            'father_name' => 'nullable|string|max:255',
-            'mother_name' => 'nullable|string|max:255',
-            'father_id'   => 'nullable|integer|exists:parishioners_new,id',
-            'mother_id'   => 'nullable|integer|exists:parishioners_new,id',
-            'family_id'   => 'nullable|integer|exists:families,id',
-            'married'     => 'required|integer|in:0,1,2,3',
-        ];
+        return array_intersect_key($this->parishionerFormRules(), array_flip([
+            'father_name', 'mother_name', 'father_id', 'mother_id',
+            'family_id', 'family_role', 'married',
+        ]));
     }
 
     protected function rulesParish(): array
     {
-        return [
-            'parish_area_id'       => 'nullable|integer|exists:parish_groups,id',
-            'level'                => 'nullable|integer',
-            'joined_date'          => 'nullable|date',
-            'transferred_from'     => 'nullable|integer|exists:parishes,id',
-            'transferred_date'     => 'nullable|date',
-            'left_reason'          => 'nullable|string|max:255',
-            'status'               => 'required|boolean',
-            'is_active'            => 'required|boolean',
-            'is_new_convert'       => 'required|boolean',
-            'is_included_in_stats' => 'required|boolean',
-        ];
+        return array_intersect_key($this->parishionerFormRules(), array_flip([
+            'parish_area_id', 'level', 'joined_date', 'transferred_from',
+            'transferred_date', 'left_reason',
+        ]));
     }
 
     protected function rulesMarriage(): array
     {
         return [
+            'spouse_id'            => 'nullable|integer|exists:parishioners_new,id',
             'married_date'         => 'nullable|date',
             'certificate_number'   => 'nullable|string|max:50',
             'marriage_parish_id'   => 'nullable|integer|exists:parishes,id',
@@ -196,24 +98,15 @@ class ParishionerShow extends Component
 
     protected function rulesDeceased(): array
     {
-        return [
-            'death_date'        => 'required_if:is_deceased,true|nullable|date',
-            'death_book_number' => 'nullable|string|max:20',
-            'death_place'       => 'nullable|string|max:255',
-            'burial_place'      => 'nullable|string|max:255',
-        ];
+        return array_intersect_key($this->parishionerFormRules(), array_flip([
+            'death_date', 'death_book_number', 'death_place', 'burial_place',
+        ]));
     }
-
-    // ==================== LIFECYCLE ====================
 
     public function mount(Parishioner $parishioner): void
     {
         $this->authorize('view', $parishioner);
-        $this->parishioner = $parishioner->load([
-            'saint',
-            'parishGroup',
-        ]);
-
+        $this->parishioner = $parishioner->load(['saint', 'parishGroup', 'student']);
         $this->is_deceased = $this->parishioner->death_date !== null;
     }
 
@@ -226,137 +119,79 @@ class ParishionerShow extends Component
     private function loadRelationsForTab(string $tab): void
     {
         $map = [
-            'basic'     => ['saint'],
+            'basic'     => ['saint', 'student'],
             'parish'    => ['parishGroup', 'parish', 'deanery', 'diocese', 'transferredFromParish'],
-            'sacrament' => [], // SacramentsManager tự lo
+            'sacrament' => [],
             'marriage'  => ['marriageAsHusband.wife', 'marriageAsWife.husband'],
-            'family'    => ['family', 'father', 'mother'],
-            'deceased'  => [], // dùng field trực tiếp, không cần relation
+            'family'    => ['family.parishGroup', 'family.head', 'father', 'mother'],
+            'deceased'  => [],
         ];
 
         $relations = $map[$tab] ?? [];
-
         if (!empty($relations)) {
-            // loadMissing: chỉ query những relation chưa load, không query lại
             $this->parishioner->loadMissing($relations);
         }
     }
 
-    // ==================== EDIT: CƠ BẢN ====================
+    protected function loadModalDropdowns(): void
+    {
+        $this->loadParishionerDropdowns($this->parishioner->parish_id);
+        $this->loadParishionerSearchOptions($this->parishioner->parish_id, $this->parishioner->id);
+    }
 
     public function openEditBasic(): void
     {
         $this->authorize('update', $this->parishioner);
-        $this->parishioner->loadMissing(['saint']);
-        $p = $this->parishioner;
-
-        $this->last_name         = $p->last_name;
-        $this->first_name        = $p->first_name;
-        $this->gender            = $p->gender ?? 'male';
-        $this->birthday          = $p->birthday?->format('Y-m-d');
-        $this->birth_order       = $p->birth_order;
-        $this->saint_id          = $p->saint_id;
-        $this->cccd              = $p->cccd;
-        $this->phone             = $p->phone;
-        $this->email             = $p->email;
-        $this->note              = $p->note;
-        $this->currentAvatarPath = $p->avatar_path;
-
-        $this->ethnic            = $p->ethnic;
-        $this->career            = $p->career;
-        $this->education_level   = $p->education_level;
-        $this->specialist_level  = $p->specialist_level;
-        $this->catechism_level   = $p->catechism_level;
-        $this->catechism_major   = $p->catechism_major;
-        $this->position          = $p->position;
-        $this->language          = $p->language;
-        $this->holy_order_status = $p->holy_order_status;
-
-        $this->status               = (bool) $p->status;
-        $this->is_active            = (bool) $p->is_active;
-        $this->is_new_convert       = (bool) $p->is_new_convert;
-        $this->is_included_in_stats = (bool) $p->is_included_in_stats;
-
+        $this->loadModalDropdowns();
+        $this->mapParishionerToForm($this->parishioner);
         $this->showEditBasic = true;
     }
 
     public function saveBasic(): void
     {
         $this->authorize('update', $this->parishioner);
-        $this->validate($this->rulesBasic());
+        $this->validate($this->rulesBasic(), $this->parishionerFormMessages());
 
         try {
             DB::beginTransaction();
 
-            $data = [
-                'last_name'             => $this->last_name,
-                'first_name'            => $this->first_name,
-                'gender'                => $this->gender,
-                'birthday'              => $this->birthday ?: null,
-                'birth_order'           => $this->birth_order,
-                'saint_id'              => $this->saint_id,
-                'cccd'                  => $this->cccd,
-                'phone'                 => $this->phone,
-                'email'                 => $this->email,
-                'note'                  => $this->note,
-                'ethnic'                => $this->ethnic,
-                'career'                => $this->career,
-                'education_level'       => $this->education_level,
-                'specialist_level'      => $this->specialist_level,
-                'catechism_level'       => $this->catechism_level,
-                'catechism_major'       => $this->catechism_major,
-                'position'              => $this->position,
-                'language'              => $this->language,
-                'holy_order_status'     => $this->holy_order_status,
-                'status'                => $this->status,
-                'is_active'             => $this->is_active,
-                'is_new_convert'        => $this->is_new_convert,
-                'is_included_in_stats'  => $this->is_included_in_stats,
-            ];
+            $data = array_intersect_key(
+                $this->buildParishionerSaveData($this->parishioner->parish_id),
+                array_flip([
+                    'last_name', 'first_name', 'gender', 'birthday', 'birth_place', 'birth_order',
+                    'saint_id', 'cccd', 'phone', 'email', 'note',
+                    'ethnic', 'career', 'education_level', 'specialist_level', 'catechism_level',
+                    'catechism_major', 'position', 'language', 'holy_order_status',
+                    'status', 'is_active', 'is_new_convert', 'is_included_in_stats',
+                ])
+            );
 
-            if ($this->avatar) {
-                if ($this->currentAvatarPath) {
-                    Storage::disk('public')->delete($this->currentAvatarPath);
-                }
-                $data['avatar_path'] = $this->avatar->store('parishioners', 'public');
-            }
-
+            $this->persistParishionerAvatar($data);
             $this->parishioner->update($data);
             $this->parishioner->refresh()->load(['saint', 'parishGroup']);
 
             DB::commit();
-            $this->emit('toast','message', 'Cập nhật thông tin cơ bản thành công');
+            $this->emit('toast', 'message', 'Cập nhật thông tin cơ bản thành công');
             $this->showEditBasic = false;
             $this->resetValidation();
         } catch (\Exception $e) {
             DB::rollBack();
             Log::error(self::class . ': saveBasic - ' . $e->getMessage(), ['id' => $this->parishioner->id]);
-            $this->emit('toast','error', 'Có lỗi khi lưu. Vui lòng thử lại.');
+            $this->emit('toast', 'error', 'Có lỗi khi lưu. Vui lòng thử lại.');
         }
     }
-
-    // ==================== EDIT: ĐỊA CHỈ ====================
 
     public function openEditAddress(): void
     {
         $this->authorize('update', $this->parishioner);
-        $p = $this->parishioner;
-
-        $this->origin              = $p->origin;
-        $this->permanent_province  = $p->permanent_province;
-        $this->permanent_ward_id   = $p->permanent_ward_id;
-        $this->permanent_residence = $p->permanent_residence;
-        $this->temporary_province  = $p->temporary_province;
-        $this->temporary_ward_id   = $p->temporary_ward_id;
-        $this->temporary_residence = $p->temporary_residence;
-
+        $this->mapParishionerToForm($this->parishioner);
         $this->showEditAddress = true;
     }
 
     public function saveAddress(): void
     {
         $this->authorize('update', $this->parishioner);
-        $this->validate($this->rulesAddress());
+        $this->validate($this->rulesAddress(), $this->parishionerFormMessages());
 
         try {
             $this->parishioner->update([
@@ -370,36 +205,27 @@ class ParishionerShow extends Component
             ]);
 
             $this->parishioner->refresh();
-            $this->emit('toast','message', 'Cập nhật địa chỉ thành công');
+            $this->emit('toast', 'message', 'Cập nhật địa chỉ thành công');
             $this->showEditAddress = false;
             $this->resetValidation();
         } catch (\Exception $e) {
             Log::error(self::class . ': saveAddress - ' . $e->getMessage(), ['id' => $this->parishioner->id]);
-            $this->emit('toast','error', 'Có lỗi khi lưu địa chỉ.');
+            $this->emit('toast', 'error', 'Có lỗi khi lưu địa chỉ.');
         }
     }
-
-    // ==================== EDIT: GIA ĐÌNH ====================
 
     public function openEditFamily(): void
     {
         $this->authorize('update', $this->parishioner);
-        $p = $this->parishioner;
-
-        $this->father_name = $p->father_name;
-        $this->mother_name = $p->mother_name;
-        $this->father_id   = $p->father_id;
-        $this->mother_id   = $p->mother_id;
-        $this->family_id   = $p->family_id;
-        $this->married     = $p->married ?? 0;
-
+        $this->loadModalDropdowns();
+        $this->mapParishionerToForm($this->parishioner);
         $this->showEditFamily = true;
     }
 
     public function saveFamily(): void
     {
         $this->authorize('update', $this->parishioner);
-        $this->validate($this->rulesFamily());
+        $this->validate($this->rulesFamily(), $this->parishionerFormMessages());
 
         try {
             $this->parishioner->update([
@@ -408,92 +234,75 @@ class ParishionerShow extends Component
                 'father_id'   => $this->father_id,
                 'mother_id'   => $this->mother_id,
                 'family_id'   => $this->family_id,
+                'family_role' => $this->family_role ?: null,
                 'married'     => $this->married,
             ]);
 
             $this->parishioner->refresh()->load(['family', 'father', 'mother']);
-            $this->emit('toast','message', 'Cập nhật thông tin gia đình thành công');
+            $this->emit('toast', 'message', 'Cập nhật thông tin gia đình thành công');
             $this->showEditFamily = false;
             $this->resetValidation();
         } catch (\Exception $e) {
             Log::error(self::class . ': saveFamily - ' . $e->getMessage(), ['id' => $this->parishioner->id]);
-            $this->emit('toast','error', 'Có lỗi khi lưu thông tin gia đình.');
+            $this->emit('toast', 'error', 'Có lỗi khi lưu thông tin gia đình.');
         }
     }
-
-    // ==================== EDIT: SINH HOẠT GIÁO XỨ ====================
 
     public function openEditParish(): void
     {
         $this->authorize('update', $this->parishioner);
-        $p = $this->parishioner;
-
-        $this->parish_area_id   = $p->parish_area_id;
-        $this->level            = $p->level;
-        $this->joined_date      = $p->joined_date?->format('Y-m-d');
-        $this->transferred_from = $p->transferred_from;
-        $this->transferred_date = $p->transferred_date?->format('Y-m-d');
-        $this->left_reason      = $p->left_reason;
-        $this->status           = (bool) $p->status;
-        $this->is_active        = (bool) $p->is_active;
-        $this->is_new_convert   = (bool) $p->is_new_convert;
-        $this->is_included_in_stats = (bool) $p->is_included_in_stats;
-
+        $this->loadModalDropdowns();
+        $this->mapParishionerToForm($this->parishioner);
         $this->showEditParish = true;
     }
 
     public function saveParish(): void
     {
         $this->authorize('update', $this->parishioner);
-        $this->validate($this->rulesParish());
+        $this->validate($this->rulesParish(), $this->parishionerFormMessages());
 
         try {
             $this->parishioner->update([
-                'parish_area_id'       => $this->parish_area_id,
-                'level'                => $this->level,
-                'joined_date'          => $this->joined_date ?: null,
-                'transferred_from'     => $this->transferred_from,
-                'transferred_date'     => $this->transferred_date ?: null,
-                'left_reason'          => $this->left_reason,
-                'status'               => $this->status,
-                'is_active'            => $this->is_active,
-                'is_new_convert'       => $this->is_new_convert,
-                'is_included_in_stats' => $this->is_included_in_stats,
+                'parish_area_id'   => $this->parish_area_id,
+                'level'            => $this->level,
+                'joined_date'      => $this->joined_date ?: null,
+                'transferred_from' => $this->transferred_from,
+                'transferred_date' => $this->transferred_date ?: null,
+                'left_reason'      => $this->left_reason,
             ]);
 
             $this->parishioner->refresh()->load(['parishGroup', 'transferredFromParish']);
-            $this->emit('toast','message', 'Cập nhật sinh hoạt giáo xứ thành công');
+            $this->emit('toast', 'message', 'Cập nhật sinh hoạt giáo xứ thành công');
             $this->showEditParish = false;
             $this->resetValidation();
         } catch (\Exception $e) {
             Log::error(self::class . ': saveParish - ' . $e->getMessage(), ['id' => $this->parishioner->id]);
-            $this->emit('toast','error', 'Có lỗi khi lưu.');
+            $this->emit('toast', 'error', 'Có lỗi khi lưu.');
         }
     }
-
-    // ==================== EDIT: HÔN PHỐI ====================
 
     public function openEditMarriage(): void
     {
         $this->authorize('update', $this->parishioner);
+        $this->loadModalDropdowns();
 
         $marriage = $this->parishioner->marriageAsHusband
             ?? $this->parishioner->marriageAsWife;
 
         if ($marriage) {
-            $this->marriage_id           = $marriage->id;
-            $this->married_date          = $marriage->married_date?->format('Y-m-d');
-            $this->certificate_number    = $marriage->certificate_number;
-            $this->marriage_parish_id    = $marriage->parish_id;
-            $this->marriage_parish_name  = $marriage->parish_name;
-            $this->place_province        = $marriage->place_province;
-            $this->place_ward_id         = $marriage->place_ward_id;
-            $this->priest_witness        = $marriage->priest_witness;
-            $this->marriage_status       = $marriage->status;
-            $this->witness_1             = $marriage->witness_1;
-            $this->witness_2             = $marriage->witness_2;
-            $this->marriage_note         = $marriage->note;
-            $this->spouse_id             = $this->parishioner->gender === 'male'
+            $this->marriage_id          = $marriage->id;
+            $this->married_date         = $marriage->married_date?->format('Y-m-d');
+            $this->certificate_number   = $marriage->certificate_number;
+            $this->marriage_parish_id   = $marriage->parish_id;
+            $this->marriage_parish_name = $marriage->parish_name;
+            $this->place_province       = $marriage->place_province;
+            $this->place_ward_id        = $marriage->place_ward_id;
+            $this->priest_witness       = $marriage->priest_witness;
+            $this->marriage_status      = $marriage->status;
+            $this->witness_1            = $marriage->witness_1;
+            $this->witness_2            = $marriage->witness_2;
+            $this->marriage_note        = $marriage->note;
+            $this->spouse_id            = $this->parishioner->gender === 'male'
                 ? $marriage->wife_id
                 : $marriage->husband_id;
         } else {
@@ -512,21 +321,29 @@ class ParishionerShow extends Component
             DB::beginTransaction();
 
             $data = [
-                'married_date'        => $this->married_date ?: null,
-                'certificate_number'  => $this->certificate_number,
-                'parish_id'           => $this->marriage_parish_id,
-                'parish_name'         => $this->marriage_parish_name,
-                'place_province'      => $this->place_province,
-                'place_ward_id'       => $this->place_ward_id,
-                'priest_witness'      => $this->priest_witness,
-                'status'              => $this->marriage_status,
-                'witness_1'           => $this->witness_1,
-                'witness_2'           => $this->witness_2,
-                'note'                => $this->marriage_note,
+                'married_date'       => $this->married_date ?: null,
+                'certificate_number' => $this->certificate_number,
+                'parish_id'          => $this->marriage_parish_id,
+                'parish_name'        => $this->marriage_parish_name,
+                'place_province'     => $this->place_province,
+                'place_ward_id'      => $this->place_ward_id,
+                'priest_witness'     => $this->priest_witness,
+                'status'             => $this->marriage_status,
+                'witness_1'          => $this->witness_1,
+                'witness_2'          => $this->witness_2,
+                'note'               => $this->marriage_note,
             ];
 
             if ($this->marriage_id) {
-                Marriage::findOrFail($this->marriage_id)->update($data);
+                $marriage = Marriage::findOrFail($this->marriage_id);
+                $marriage->update($data);
+                if ($this->spouse_id) {
+                    if ($this->parishioner->gender === 'male') {
+                        $marriage->update(['wife_id' => $this->spouse_id, 'husband_id' => $this->parishioner->id]);
+                    } else {
+                        $marriage->update(['husband_id' => $this->spouse_id, 'wife_id' => $this->parishioner->id]);
+                    }
+                }
             } else {
                 $data['husband_id'] = $this->parishioner->gender === 'male'
                     ? $this->parishioner->id : $this->spouse_id;
@@ -538,52 +355,45 @@ class ParishionerShow extends Component
             DB::commit();
             $this->parishioner->refresh()->load(['marriageAsHusband.wife', 'marriageAsWife.husband']);
 
-            $this->emit('toast','message', 'Cập nhật hôn phối thành công');
+            $this->emit('toast', 'message', 'Cập nhật hôn phối thành công');
             $this->showEditMarriage = false;
             $this->resetValidation();
         } catch (\Exception $e) {
             DB::rollBack();
             Log::error(self::class . ': saveMarriage - ' . $e->getMessage(), ['id' => $this->parishioner->id]);
-            $this->emit('toast','error', 'Có lỗi khi lưu hôn phối.');
+            $this->emit('toast', 'error', 'Có lỗi khi lưu hôn phối.');
         }
     }
 
     public function deleteMarriage(): void
     {
         $this->authorize('update', $this->parishioner);
-        if (!$this->marriage_id) return;
+        if (!$this->marriage_id) {
+            return;
+        }
 
         try {
             Marriage::findOrFail($this->marriage_id)->delete();
             $this->parishioner->refresh()->load(['marriageAsHusband.wife', 'marriageAsWife.husband']);
-            $this->emit('toast','message', 'Đã xóa hôn phối');
+            $this->emit('toast', 'message', 'Đã xóa hôn phối');
             $this->showEditMarriage = false;
         } catch (\Exception $e) {
             Log::error(self::class . ': deleteMarriage - ' . $e->getMessage(), ['id' => $this->marriage_id]);
-            $this->emit('toast','error', 'Có lỗi khi xóa hôn phối.');
+            $this->emit('toast', 'error', 'Có lỗi khi xóa hôn phối.');
         }
     }
-
-    // ==================== EDIT: TỬ VONG ====================
 
     public function openEditDeceased(): void
     {
         $this->authorize('update', $this->parishioner);
-        $p = $this->parishioner;
-
-        $this->is_deceased       = $p->death_date !== null;
-        $this->death_date        = $p->death_date?->format('Y-m-d');
-        $this->death_book_number = $p->death_book_number;
-        $this->death_place       = $p->death_place;
-        $this->burial_place      = $p->burial_place;
-
+        $this->mapParishionerToForm($this->parishioner);
         $this->showEditDeceased = true;
     }
 
     public function saveDeceased(): void
     {
         $this->authorize('update', $this->parishioner);
-        $this->validate($this->rulesDeceased());
+        $this->validate($this->rulesDeceased(), $this->parishionerFormMessages());
 
         try {
             $this->parishioner->update([
@@ -596,16 +406,14 @@ class ParishionerShow extends Component
             $this->parishioner->refresh();
             $this->is_deceased = $this->parishioner->death_date !== null;
 
-            $this->emit('toast','message', 'Cập nhật thông tin tử vong thành công');
+            $this->emit('toast', 'message', 'Cập nhật thông tin tử vong thành công');
             $this->showEditDeceased = false;
             $this->resetValidation();
         } catch (\Exception $e) {
             Log::error(self::class . ': saveDeceased - ' . $e->getMessage(), ['id' => $this->parishioner->id]);
-            $this->emit('toast','error', 'Có lỗi khi lưu.');
+            $this->emit('toast', 'error', 'Có lỗi khi lưu.');
         }
     }
-
-    // ==================== XÓA GIÁO DÂN ====================
 
     public function delete(): mixed
     {
@@ -618,61 +426,42 @@ class ParishionerShow extends Component
             }
             $this->parishioner->delete();
             DB::commit();
-            $this->emit('toast','message', 'Đã xóa giáo dân thành công');
+            $this->emit('toast', 'message', 'Đã xóa giáo dân thành công');
             return redirect()->route('parishioners.index');
         } catch (\Exception $e) {
             DB::rollBack();
             Log::error(self::class . ': delete - ' . $e->getMessage(), ['id' => $this->parishioner->id]);
-            $this->emit('toast','error', 'Có lỗi khi xóa giáo dân.');
+            $this->emit('toast', 'error', 'Có lỗi khi xóa giáo dân.');
         }
 
         return null;
     }
 
-    // ==================== HELPERS ====================
-
     private function resetMarriageForm(): void
     {
         $this->reset([
-            'marriage_id',
-            'spouse_id',
-            'married_date',
-            'certificate_number',
-            'marriage_parish_id',
-            'marriage_parish_name',
-            'place_province',
-            'place_ward_id',
-            'priest_witness',
-            'witness_1',
-            'witness_2',
-            'marriage_note',
+            'marriage_id', 'spouse_id', 'married_date', 'certificate_number',
+            'marriage_parish_id', 'marriage_parish_name', 'place_province',
+            'place_ward_id', 'priest_witness', 'witness_1', 'witness_2', 'marriage_note',
         ]);
         $this->marriage_status = 'valid';
     }
 
-    public function closeAllModals(): void
-    {
-        $this->showEditBasic     = false;
-        $this->showEditAddress   = false;
-        $this->showEditFamily    = false;
-        $this->showEditParish    = false;
-        $this->showEditMarriage  = false;
-        $this->showEditDeceased  = false;
-        $this->showDeleteConfirm = false;
-        $this->resetValidation();
-    }
-
-    // ==================== COMPUTED PROPERTIES ====================
-
     public function getChildrenProperty()
     {
-        return \App\Models\Parishioner::where('father_id', $this->parishioner->id)
-            ->orWhere('mother_id', $this->parishioner->id)
+        if (!$this->parishioner->family_id) {
+            return collect();
+        }
+
+        return Parishioner::query()
+            ->with('saint')
+            ->where('family_id', $this->parishioner->family_id)
+            ->where('family_role', 'child')
+            ->where('id', '!=', $this->parishioner->id)
             ->orderBy('birth_order')
+            ->orderBy('birthday')
             ->get();
     }
-
-    // ==================== RENDER ====================
 
     public function render()
     {

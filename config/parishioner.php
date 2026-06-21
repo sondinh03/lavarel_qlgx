@@ -60,4 +60,33 @@ return [
         3 => 'Tiếng dân tộc',
         4 => 'Khác',
     ],
+
+    'married' => [
+        0 => 'Độc thân',
+        1 => 'Đã kết hôn',
+        2 => 'Góa',
+        3 => 'Ly hôn',
+    ],
+
+    'level' => [
+        1 => 'Cấp I',
+        2 => 'Cấp II',
+        3 => 'Cấp III',
+        4 => 'Cấp IV',
+    ],
+
+    'specialist_level' => [
+        1 => 'Sơ cấp',
+        2 => 'Trung cấp',
+        3 => 'Cao đẳng',
+        4 => 'Đại học',
+        5 => 'Sau đại học',
+    ],
+
+    'holy_order_status' => [
+        0 => 'Không',
+        1 => 'Phó tế',
+        2 => 'Linh mục',
+        3 => 'Giám mục',
+    ],
 ];

@@ -1,6 +1,6 @@
 @section('topbar')
 <x-breadcrumb :items="[
-    ['label' => 'Trang chủ', 'url' => route('dashboard')],
+    ['label' => 'Trang chủ', 'url' => route('parishioners.dashboard')],
     ['label' => 'Gia đình', 'url' => route('families.index')],
     ['label' => $isEdit ? 'Chỉnh sửa' : 'Thêm mới'],
 ]" />
@@ -55,15 +55,24 @@
         @endif
 
         {{-- Form --}}
-        <div class="space-y-6">
-
-            {{-- Thông tin cơ bản --}}
-            <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
-                <div class="px-6 py-4 border-b border-slate-200 bg-slate-50">
-                    <h2 class="text-base font-semibold text-slate-900">Thông tin cơ bản</h2>
+        <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+            <div class="px-4 lg:px-6 py-4 border-b border-slate-200 bg-slate-50/70 overflow-x-auto">
+                <div class="inline-flex rounded-xl bg-slate-200 p-1 text-sm font-medium">
+                    <button type="button" wire:click="switchTab('info')"
+                        class="px-4 py-2.5 rounded-lg transition-all {{ $activeTab === 'info' ? 'bg-white shadow-sm text-primary-600 font-semibold' : 'text-slate-600' }}">
+                        Thông tin hộ
+                    </button>
+                    <button type="button" wire:click="switchTab('members')"
+                        class="px-4 py-2.5 rounded-lg transition-all {{ $activeTab === 'members' ? 'bg-white shadow-sm text-primary-600 font-semibold' : 'text-slate-600' }}">
+                        Thành viên
+                    </button>
                 </div>
+            </div>
 
-                <div class="p-6 space-y-5">
+        <div class="space-y-6 p-4 lg:p-6">
+
+            @if($activeTab === 'info')
+            <div class="space-y-5">
                     <div class="grid grid-cols-1 lg:grid-cols-2 gap-5">
 
                         <div class="lg:col-span-2">
@@ -71,54 +80,65 @@
                                 label="Tên gia đình"
                                 name="name"
                                 wire:model.defer="name"
-                                placeholder="VD: Gia đình ông Nguyễn Văn A..."
-                                required />
+                                placeholder="Để trống sẽ tự đặt theo tên chủ hộ"
+                                />
                         </div>
 
                         <div>
                             <label class="block text-sm font-semibold text-slate-700 mb-2">Giáo họ</label>
-                            <select
-                                wire:model.defer="parishGroupId"
-                                class="w-full px-3 py-2 rounded-xl border border-slate-300 bg-white text-sm
-                                       focus:outline-none focus:ring-2 focus:ring-primary-500
-                                       @error('parishGroupId') border-red-400 @enderror">
+                            <select wire:model.defer="parishGroupId"
+                                class="w-full px-3 py-2 rounded-xl border border-slate-300 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-primary-500">
                                 <option value="">-- Chưa chọn giáo họ --</option>
                                 @foreach($parishGroups as $group)
                                 <option value="{{ $group->id }}">{{ $group->name }}</option>
                                 @endforeach
                             </select>
-                            @error('parishGroupId')
-                            <p class="mt-1 text-xs text-red-500">{{ $message }}</p>
-                            @enderror
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-semibold text-slate-700 mb-2">Diện gia đình</label>
+                            <input wire:model.defer="level" type="number" min="1" class="w-full px-3 py-2 rounded-xl border border-slate-300 text-sm" />
+                        </div>
+
+                        <div class="lg:col-span-2">
+                            <label class="block text-sm font-semibold text-slate-700 mb-2">Địa chỉ</label>
+                            <input wire:model.defer="address" type="text" class="w-full px-3 py-2 rounded-xl border border-slate-300 text-sm" />
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-semibold text-slate-700 mb-2">Tỉnh/TP</label>
+                            <input wire:model.defer="province" type="text" class="w-full px-3 py-2 rounded-xl border border-slate-300 text-sm" />
                         </div>
 
                         <div>
                             <label class="block text-sm font-semibold text-slate-700 mb-2">Trạng thái</label>
-                            <label class="flex items-center gap-3 px-4 py-3 rounded-xl border border-slate-200
-                                          cursor-pointer hover:bg-slate-50 transition-all">
-                                <input
-                                    type="checkbox"
-                                    wire:model.defer="status"
-                                    class="w-4 h-4 rounded border-slate-300 text-primary-600 focus:ring-primary-500">
-                                <div>
-                                    <p class="text-sm font-medium text-slate-800">Gia đình đang hoạt động</p>
-                                    <p class="text-xs text-slate-500">Hiển thị trong hệ thống quản lý</p>
-                                </div>
+                            <label class="flex items-center gap-3 px-4 py-3 rounded-xl border border-slate-200 cursor-pointer">
+                                <input type="checkbox" wire:model.defer="status" class="w-4 h-4 rounded text-primary-600">
+                                <span class="text-sm text-slate-800">Gia đình đang hoạt động</span>
                             </label>
                         </div>
 
+                        <div class="lg:col-span-2 grid grid-cols-1 sm:grid-cols-2 gap-3">
+                            <label class="flex items-center gap-2 p-3 rounded-xl border border-slate-200 cursor-pointer">
+                                <input type="checkbox" wire:model.defer="isTransferred" class="rounded text-primary-600">
+                                <span class="text-sm text-slate-700">Đã chuyển xứ</span>
+                            </label>
+                            <label class="flex items-center gap-2 p-3 rounded-xl border border-slate-200 cursor-pointer">
+                                <input type="checkbox" wire:model.defer="isIncludedInStats" class="rounded text-primary-600">
+                                <span class="text-sm text-slate-700">Được thống kê</span>
+                            </label>
+                        </div>
+
+                        <div class="lg:col-span-2">
+                            <label class="block text-sm font-semibold text-slate-700 mb-2">Ghi chú</label>
+                            <textarea wire:model.defer="note" rows="4" class="w-full px-4 py-3 rounded-xl border border-slate-300 text-sm"></textarea>
+                        </div>
                     </div>
-                </div>
             </div>
+            @endif
 
-            {{-- Thành viên gia đình --}}
-            <div class="bg-white rounded-2xl shadow-sm border border-slate-200">
-
-                <div class="px-6 py-4 border-b border-slate-200 bg-slate-50">
-                    <h2 class="text-base font-semibold text-slate-900">Thành viên gia đình</h2>
-                </div>
-
-                <div class="p-6 space-y-6">
+            @if($activeTab === 'members')
+            <div class="space-y-6">
 
                     <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
 
@@ -212,29 +232,10 @@
 
                     </div>
 
-                </div>
             </div>
+            @endif
 
-            {{-- Ghi chú --}}
-            <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
-                <div class="px-6 py-4 border-b border-slate-200 bg-slate-50">
-                    <h2 class="text-base font-semibold text-slate-900">Ghi chú</h2>
-                </div>
-
-                <div class="p-6">
-                    <textarea
-                        wire:model.defer="note"
-                        rows="5"
-                        placeholder="Thông tin thêm về gia đình..."
-                        class="w-full px-4 py-3 rounded-xl border border-slate-300 text-sm resize-none
-                               focus:outline-none focus:ring-2 focus:ring-primary-500
-                               @error('note') border-red-400 @enderror"></textarea>
-                    @error('note')
-                    <p class="mt-1 text-xs text-red-500">{{ $message }}</p>
-                    @enderror
-                </div>
-            </div>
-
+        </div>
         </div>
 
         {{-- Sticky action bar --}}

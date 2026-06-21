@@ -1,12 +1,13 @@
 @section('topbar')
 <x-breadcrumb :items="[
-    [ 'label' => 'Trang chủ', 'url' => route('dashboard')],
-    [ 'label' => 'Tên thánh']
+    ['label' => 'Trang chủ', 'url' => route('parishioners.dashboard')],
+    ['label' => 'Tên thánh']
 ]" />
 @endsection
 
 <div
-    class="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 p-4 sm:p-6"
+    class="min-h-screen bg-slate-50 p-2 sm:p-4 lg:p-6"
+    style="min-height: calc(100vh - 56px - var(--bottom-offset));"
     x-data="{ showModal: false }"
     x-init="
         document.addEventListener('livewire:load', () => {
@@ -21,7 +22,7 @@
 
     <a href="#main-content" class="sr-only focus:not-sr-only">Bỏ qua tới nội dung</a>
 
-    <div id="main-content" class="mx-auto max-w-3xl space-y-5">
+    <div id="main-content" class="mx-auto max-w-7xl space-y-6">
         {{-- Main Card --}}
         <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
             {{-- Header --}}
@@ -34,20 +35,17 @@
             </x-page-header>
 
             {{-- Actions Bar --}}
-            <div class="px-4 py-3 border-b border-slate-200 bg-slate-50/70">
-                <div class="flex items-center gap-3">
-
-                    {{-- SEARCH --}}
+            <div class="p-4 lg:p-6 border-b border-slate-200 bg-slate-50/70 rounded-b-2xl">
+                <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                     <x-search-input
                         wireModel="search"
-                        placeholder="Tìm kiếm tên thánh..." />
+                        placeholder="Tìm kiếm tên thánh..."
+                        class="max-w-md" />
 
-                    {{-- BUTTON --}}
                     <x-button wire:click="create" variant="primary">
                         <x-icon name="plus"/>
                         Thêm Tên thánh
                     </x-button>
-
                 </div>
             </div>
         </div>

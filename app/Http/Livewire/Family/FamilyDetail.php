@@ -80,6 +80,7 @@ class FamilyDetail extends BaseComponent
             $family->load([
                 'parish',
                 'parishGroup',
+                'head.saint',
                 'members' => fn($q) => $q->with(['saint'])
                     ->orderByRaw("FIELD(family_role, 'husband', 'wife', 'child', 'other')")
                     ->orderBy('birth_order')
@@ -129,6 +130,20 @@ class FamilyDetail extends BaseComponent
             'parish_name'       => $family->parish->name ?? '',
             'parish_group_name' => $family->parishGroup->name ?? '',
             'note'              => $family->note ?? '',
+
+            'address'              => $family->address ?? '',
+            'province'             => $family->province ?? '',
+            'ward_id'              => $family->ward_id,
+            'level'                => $family->level,
+            'level_label'          => config('family.level.' . $family->level, $family->level ? (string) $family->level : ''),
+            'is_transferred'       => (bool) ($family->is_transferred ?? false),
+            'is_included_in_stats' => (bool) ($family->is_included_in_stats ?? true),
+
+            'head' => $family->head ? [
+                'id'   => $family->head->id,
+                'name' => $family->head->full_name_with_saint,
+                'url'  => route('parishioners.show', $family->head->id),
+            ] : null,
 
             'member_count' => $members->count(),
 

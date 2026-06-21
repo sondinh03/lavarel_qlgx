@@ -28,6 +28,7 @@ class Parishioner extends Model
         'first_name',           // Tên
         'gender',               // Giới tính: male | female
         'birthday',             // Ngày sinh (dương lịch)
+        'birth_place',          // Nơi sinh
         'birth_order',          // Con thứ mấy trong gia đình
         'saint_id',             // Tên thánh (FK → holymanagements)
         'phone',                // Số điện thoại
@@ -412,6 +413,54 @@ class Parishioner extends Model
     public function getMarriageAttribute(): ?Marriage
     {
         return $this->marriageAsHusband ?? $this->marriageAsWife;
+    }
+
+    public function getCareerNameAttribute(): ?string
+    {
+        return config('parishioner.career.' . $this->career);
+    }
+
+    public function getLevelNameAttribute(): ?string
+    {
+        return config('parishioner.level.' . $this->level);
+    }
+
+    public function getEthnicNameAttribute(): ?string
+    {
+        return config('parishioner.ethnic.' . $this->ethnic);
+    }
+
+    public function getEducationLevelNameAttribute(): ?string
+    {
+        return config('parishioner.education_level.' . $this->education_level);
+    }
+
+    public function getPermanentWardNameAttribute(): ?string
+    {
+        return \App\Support\VietnamAddressResolver::wardName($this->permanent_ward_id);
+    }
+
+    public function getTemporaryWardNameAttribute(): ?string
+    {
+        return \App\Support\VietnamAddressResolver::wardName($this->temporary_ward_id);
+    }
+
+    public function getFullAddressPermanentAttribute(): string
+    {
+        return \App\Support\VietnamAddressResolver::formatAddressLine(
+            $this->permanent_residence,
+            $this->permanent_ward_id,
+            $this->permanent_province
+        );
+    }
+
+    public function getFullAddressTemporaryAttribute(): string
+    {
+        return \App\Support\VietnamAddressResolver::formatAddressLine(
+            $this->temporary_residence,
+            $this->temporary_ward_id,
+            $this->temporary_province
+        );
     }
 
     /*
