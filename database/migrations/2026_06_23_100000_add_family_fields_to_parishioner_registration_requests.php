@@ -9,17 +9,27 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('parishioner_registration_requests', function (Blueprint $table) {
-            $table->json('marriages')->nullable()->after('sacraments');
-            $table->foreignId('family_id')->nullable()->after('parishioner_id')
-                ->constrained('families')->nullOnDelete();
+            if (! Schema::hasColumn('parishioner_registration_requests', 'marriages')) {
+                $table->json('marriages')->nullable()->after('sacraments');
+            }
+
+            if (! Schema::hasColumn('parishioner_registration_requests', 'family_id')) {
+                $table->foreignId('family_id')->nullable()->after('parishioner_id')
+                    ->constrained('families')->nullOnDelete();
+            }
         });
     }
 
     public function down(): void
     {
         Schema::table('parishioner_registration_requests', function (Blueprint $table) {
-            $table->dropConstrainedForeignId('family_id');
-            $table->dropColumn('marriages');
+            if (Schema::hasColumn('parishioner_registration_requests', 'family_id')) {
+                $table->dropConstrainedForeignId('family_id');
+            }
+
+            if (Schema::hasColumn('parishioner_registration_requests', 'marriages')) {
+                $table->dropColumn('marriages');
+            }
         });
     }
 };
