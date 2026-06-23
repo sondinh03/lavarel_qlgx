@@ -62,7 +62,7 @@ class StudentNew extends Model
         });
     }
 
-    private static  function generateCode(int $parishId): string
+    private static function generateCode($parishId): string
     {
         $parishCode = ParishNew::find($parishId)?->code ?? 'GXU';
 

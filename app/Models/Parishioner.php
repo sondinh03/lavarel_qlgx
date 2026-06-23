@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Support\ParishionerCodeGenerator;
 use App\Traits\BelongsToParish;
 use Backpack\CRUD\app\Models\Traits\CrudTrait;
 use Illuminate\Database\Eloquent\Model;
@@ -23,6 +24,7 @@ class Parishioner extends Model
     protected $guarded = ['id'];
 
     protected $fillable = [
+        'code',
         // Thông tin cá nhân
         'last_name',            // Họ và tên đệm
         'first_name',           // Tên
@@ -109,6 +111,15 @@ class Parishioner extends Model
         'specialist_level'     => 'integer',
         'family_role'          => 'string',
     ];
+
+    protected static function booted(): void
+    {
+        static::creating(function (Parishioner $parishioner) {
+            if (empty($parishioner->code)) {
+                $parishioner->code = ParishionerCodeGenerator::generate($parishioner->parish_id);
+            }
+        });
+    }
 
     /*
     |--------------------------------------------------------------------------
@@ -317,6 +328,7 @@ class Parishioner extends Model
         return $query->where(function ($q) use ($searchTerm) {
             $q->where('last_name', 'like', $searchTerm)
                 ->orWhere('first_name', 'like', $searchTerm)
+                ->orWhere('code', 'like', $searchTerm)
                 ->orWhere('cccd', 'like', $searchTerm)
                 ->orWhere('phone', 'like', $searchTerm)
                 ->orWhereRaw("CONCAT(last_name, ' ', first_name) LIKE ?", [$searchTerm]);

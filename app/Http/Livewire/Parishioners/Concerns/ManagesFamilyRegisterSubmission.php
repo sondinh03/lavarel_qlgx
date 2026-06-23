@@ -569,7 +569,7 @@ trait ManagesFamilyRegisterSubmission
     {
         return [
             'targetParishId'        => 'required|integer|exists:parishes,id',
-            'family_name'           => 'required|string|max:255',
+            'family_name'           => 'string|max:255',
             'contact_phone'         => 'required|string|max:20',
             'submitter_ref'         => 'required|string|max:20',
             'members'               => 'required|array|min:1',
@@ -583,7 +583,6 @@ trait ManagesFamilyRegisterSubmission
     {
         return [
             'targetParishId.required' => 'Vui lòng chọn giáo xứ',
-            'family_name.required'    => 'Vui lòng nhập tên hộ gia đình',
             'contact_phone.required'  => 'Vui lòng nhập số điện thoại liên hệ',
             'submitter_ref.required'  => 'Vui lòng chọn người đăng ký',
             'members.required'        => 'Cần ít nhất một thành viên trong hộ',

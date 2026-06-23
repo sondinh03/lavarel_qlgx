@@ -30,6 +30,8 @@
     {{-- FOOTER (optional) --}}
     @include('frontend.layout.footer')
 
+    <x-toast-manager />
+
     {{-- Scripts --}}
     <script src="{{ mix('js/manifest.js') }}"></script>
     <script src="{{ mix('js/vendor.js') }}"></script>
@@ -39,6 +41,15 @@
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
     @livewireScripts
     @include('frontend.layout.partials.livewire-alpine-bridge')
+    <script>
+        document.addEventListener('livewire:load', () => {
+            Livewire.on('toast', (type, message) => {
+                window.dispatchEvent(new CustomEvent('toast', {
+                    detail: [type === 'message' ? 'success' : type, message]
+                }));
+            });
+        });
+    </script>
 </body>
 
 </html>

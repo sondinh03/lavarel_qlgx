@@ -2,6 +2,7 @@
 
 <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-6">
     <x-parishioner-section-card title="Nhân thân" edit-action="openEditBasic">
+        <x-info-row label="Mã giáo dân" :value="$parishioner->code" />
         <x-info-row label="Họ và tên" :value="$parishioner->full_name" />
         <x-info-row label="Tên thánh" :value="$parishioner->saint?->name" />
         <x-info-row label="Giới tính" :value="$parishioner->gender_name" />

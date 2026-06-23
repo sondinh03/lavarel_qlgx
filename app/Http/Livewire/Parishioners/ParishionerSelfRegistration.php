@@ -9,6 +9,7 @@ use App\Models\ParishNew;
 use App\Models\Sacrament;
 use App\Support\FamilyCodeGenerator;
 use Illuminate\Support\Facades\RateLimiter;
+use Illuminate\Validation\ValidationException;
 use Livewire\Component;
 
 class ParishionerSelfRegistration extends Component
@@ -110,38 +111,63 @@ class ParishionerSelfRegistration extends Component
         $key = 'parishioner-registration:' . request()->ip();
 
         if (RateLimiter::tooManyAttempts($key, 5)) {
-            $this->addError('submit', 'Bạn đã gửi quá nhiều lần. Vui lòng thử lại sau ' . RateLimiter::availableIn($key) . ' giây.');
+            $seconds = RateLimiter::availableIn($key);
+            $message = 'Bạn đã gửi quá nhiều lần. Vui lòng thử lại sau ' . $seconds . ' giây.';
+            $this->addError('submit', $message);
+            $this->emit('toast', 'error', $message);
 
             return;
         }
 
-        $this->validate($this->familyRegisterSubmitRules(), $this->familyRegisterSubmitMessages());
+        try {
+            $this->validate($this->familyRegisterSubmitRules(), $this->familyRegisterSubmitMessages());
+        } catch (ValidationException $e) {
+            $this->emit('toast', 'error', 'Không thể gửi đăng ký: ' . $e->validator->errors()->first());
+            throw $e;
+        }
 
         $submitter = collect($this->members)->firstWhere('ref', $this->submitter_ref);
         if (! $submitter) {
-            $this->addError('submitter_ref', 'Người đăng ký không hợp lệ');
+            $message = 'Người đăng ký không hợp lệ';
+            $this->addError('submitter_ref', $message);
+            $this->emit('toast', 'error', $message);
 
             return;
         }
 
         $payload = $this->buildFamilyRegisterPayload();
 
-        $request = ParishionerRegistrationRequest::create([
-            'reference_code'  => $this->family_code,
-            'parish_id'       => $this->targetParishId,
-            'status'          => ParishionerRegistrationRequest::STATUS_PENDING,
-            'submitted_name'  => trim(($submitter['last_name'] ?? '') . ' ' . ($submitter['first_name'] ?? '')),
-            'submitted_phone' => $this->contact_phone,
-            'payload'         => $payload,
-            'sacraments'      => $this->familySacraments ?: null,
-            'marriages'       => $this->familyMarriages ?: null,
-            'ip_address'      => request()->ip(),
-        ]);
+        try {
+            $request = ParishionerRegistrationRequest::create([
+                'reference_code'  => $this->family_code,
+                'parish_id'       => $this->targetParishId,
+                'status'          => ParishionerRegistrationRequest::STATUS_PENDING,
+                'submitted_name'  => trim(($submitter['last_name'] ?? '') . ' ' . ($submitter['first_name'] ?? '')),
+                'submitted_phone' => $this->contact_phone,
+                'payload'         => $payload,
+                'sacraments'      => $this->familySacraments ?: null,
+                'marriages'       => $this->familyMarriages ?: null,
+                'ip_address'      => request()->ip(),
+            ]);
+        } catch (\Throwable $e) {
+            report($e);
+            $message = 'Có lỗi khi gửi đăng ký. Vui lòng thử lại sau.';
+            $this->addError('submit', $message);
+            $this->emit('toast', 'error', $message);
+
+            return;
+        }
 
         RateLimiter::hit($key, 3600);
 
         $this->submitted = true;
         $this->referenceCode = $request->reference_code;
+
+        $this->emit(
+            'toast',
+            'message',
+            'Đã gửi yêu cầu đăng ký thành công. Mã theo dõi: <strong>' . e($request->reference_code) . '</strong>'
+        );
     }
 
     public function render()
