@@ -28,6 +28,13 @@
                 stat-label="Gia đình"
                 icon-type="default" />
 
+            @if($addParishionerId)
+            <div class="mx-4 lg:mx-6 mt-4 px-4 py-3 rounded-xl bg-primary-50 border border-primary-100 text-sm text-primary-800">
+                Chọn gia đình bên dưới để thêm giáo dân vào hộ.
+                <a href="{{ route('parishioners.show', $addParishionerId) }}" class="font-semibold underline ml-1">Xem hồ sơ giáo dân</a>
+            </div>
+            @endif
+
             <div class="p-4 lg:p-6 border-b border-slate-200 bg-slate-50/70">
                 <div class="flex flex-col gap-4">
 
@@ -148,7 +155,7 @@
                             </td>
 
                             <td class="px-4 py-3">
-                                <a href="{{ route('families.show', $family->id) }}"
+                                <a href="{{ route('families.show', array_filter(['id' => $family->id, 'add' => $addParishionerId])) }}"
                                     class="text-sm font-semibold text-slate-900 hover:text-primary-600 transition-colors">
                                     {{ $family->name }}
                                 </a>
@@ -196,7 +203,7 @@
                             <td class="px-4 py-3">
                                 <div class="flex items-center justify-center gap-1">
                                     <x-tooltip content="Xem chi tiết">
-                                        <a href="{{ route('families.show', $family->id) }}"
+                                        <a href="{{ route('families.show', array_filter(['id' => $family->id, 'add' => $addParishionerId])) }}"
                                             class="p-2 hover:bg-slate-100 text-slate-600 rounded-lg transition-all">
                                             <x-icon name="eye" />
                                         </a>

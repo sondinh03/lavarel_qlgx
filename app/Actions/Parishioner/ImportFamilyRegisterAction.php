@@ -2,6 +2,7 @@
 
 namespace App\Actions\Parishioner;
 
+use App\Actions\Family\FamilyMembershipService;
 use App\Models\Family;
 use App\Models\Holymanagement;
 use App\Models\Marriage;
@@ -192,6 +193,14 @@ class ImportFamilyRegisterAction
                 $marriagesCreated++;
 
                 Parishioner::whereIn('id', [$husbandId, $wifeId])->update(['married' => 1]);
+            }
+
+            $membershipService = app(FamilyMembershipService::class);
+            foreach (array_unique(array_values($familyTempMap)) as $familyId) {
+                $family = Family::find($familyId);
+                if ($family) {
+                    $membershipService->recount($family);
+                }
             }
         });
 

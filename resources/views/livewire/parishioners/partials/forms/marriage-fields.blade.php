@@ -1,12 +1,17 @@
 @php $input = "w-full px-3 py-2 rounded-xl border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"; @endphp
 
 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-    @if(!empty($parishionerSearchOptions))
     <div class="md:col-span-2">
-        <x-searchable-select wire:model="spouse_id" label="Vợ/Chồng (trong hệ thống)" placeholder="Tìm giáo dân..."
-            :options="$parishionerSearchOptions" option-value="id" option-label="name" />
+        <label class="block text-sm font-medium text-slate-700 mb-1">Vợ/Chồng (trong hệ thống)</label>
+        <x-searchable-select
+            wireModel="spouse_id"
+            :options="$parishionerSearchOptions"
+            placeholder="Tìm giáo dân..."
+            labelKey="name"
+            valueKey="id"
+            :value="$spouse_id" />
+        @error('spouse_id') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
     </div>
-    @endif
     <div>
         <label class="block text-sm font-medium text-slate-700 mb-1">Ngày hôn phối</label>
         <input wire:model.defer="married_date" type="date" class="{{ $input }}" />
@@ -28,7 +33,7 @@
         <input wire:model.defer="priest_witness" type="text" class="{{ $input }}" />
     </div>
     <div>
-        <label class="block text-sm font-medium text-slate-700 mb-1">Trạng thái hôn nhân</label>
+        <label class="block text-sm font-medium text-slate-700 mb-1">Trạng thái hôn phối (giáo hội)</label>
         <select wire:model.defer="marriage_status" class="{{ $input }}">
             <option value="valid">Hợp lệ</option>
             <option value="invalid">Không hợp lệ</option>

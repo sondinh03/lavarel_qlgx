@@ -29,6 +29,8 @@ class FamilyList extends BaseComponent
     public ?int   $editingId = null;
     public string $modalName = '';
 
+    public ?int $addParishionerId = null;
+
     // ==================== VALIDATION ====================
     protected $rules = [
         'search'             => 'nullable|string|max:255',
@@ -56,6 +58,7 @@ class FamilyList extends BaseComponent
             'parishGroupFilter' => ['except' => '', 'as' => 'group'],
             'sortField'         => ['except' => 'name', 'as' => 'sort'],
             'sortDirection'     => ['except' => 'asc', 'as' => 'dir'],
+            'addParishionerId'  => ['except' => null, 'as' => 'add'],
         ], parent::queryString());
     }
 
@@ -69,6 +72,9 @@ class FamilyList extends BaseComponent
     public function mount(): void
     {
         $this->authorize('viewAny', Family::class);
+        $this->addParishionerId = request()->query('add')
+            ? (int) request()->query('add')
+            : null;
         parent::mount();
         $this->requireParishId();
     }

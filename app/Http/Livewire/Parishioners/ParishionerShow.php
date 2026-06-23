@@ -30,7 +30,7 @@ class ParishionerShow extends Component
     public bool $showDeleteConfirm = false;
 
     public ?int    $marriage_id          = null;
-    public ?int    $spouse_id            = null;
+    public         $spouse_id            = null;
     public ?string $married_date         = null;
     public ?string $certificate_number   = null;
     public ?int    $marriage_parish_id   = null;
@@ -45,37 +45,22 @@ class ParishionerShow extends Component
 
     protected function rulesBasic(): array
     {
-        return array_intersect_key($this->parishionerFormRules(), array_flip([
-            'last_name', 'first_name', 'gender', 'birthday', 'birth_place', 'birth_order',
-            'saint_id', 'cccd', 'phone', 'email', 'note', 'avatar',
-            'ethnic', 'career', 'education_level', 'specialist_level', 'catechism_level',
-            'catechism_major', 'position', 'language', 'holy_order_status',
-            'status', 'is_active', 'is_new_convert', 'is_included_in_stats',
-        ]));
+        return $this->parishionerFormRulesForSection('basic');
     }
 
     protected function rulesAddress(): array
     {
-        return array_intersect_key($this->parishionerFormRules(), array_flip([
-            'origin', 'permanent_province', 'permanent_residence',
-            'temporary_province', 'temporary_residence',
-        ]));
+        return $this->parishionerFormRulesForSection('address');
     }
 
     protected function rulesFamily(): array
     {
-        return array_intersect_key($this->parishionerFormRules(), array_flip([
-            'father_name', 'mother_name', 'father_id', 'mother_id',
-            'family_id', 'family_role', 'married',
-        ]));
+        return $this->parishionerFormRulesForSection('family');
     }
 
     protected function rulesParish(): array
     {
-        return array_intersect_key($this->parishionerFormRules(), array_flip([
-            'parish_area_id', 'level', 'joined_date', 'transferred_from',
-            'transferred_date', 'left_reason',
-        ]));
+        return $this->parishionerFormRulesForSection('parish');
     }
 
     protected function rulesMarriage(): array
@@ -98,9 +83,7 @@ class ParishionerShow extends Component
 
     protected function rulesDeceased(): array
     {
-        return array_intersect_key($this->parishionerFormRules(), array_flip([
-            'death_date', 'death_book_number', 'death_place', 'burial_place',
-        ]));
+        return $this->parishionerFormRulesForSection('deceased');
     }
 
     public function mount(Parishioner $parishioner): void
@@ -108,6 +91,28 @@ class ParishionerShow extends Component
         $this->authorize('view', $parishioner);
         $this->parishioner = $parishioner->load(['saint', 'parishGroup', 'student']);
         $this->is_deceased = $this->parishioner->death_date !== null;
+
+        $this->openEditModalFromQuery(request()->query('edit'));
+    }
+
+    protected function openEditModalFromQuery(?string $edit): void
+    {
+        if (!$edit || !auth()->user()?->can('update', $this->parishioner)) {
+            return;
+        }
+
+        $map = [
+            'basic'    => 'openEditBasic',
+            'address'  => 'openEditAddress',
+            'parish'   => 'openEditParish',
+            'family'   => 'openEditFamily',
+            'marriage' => 'openEditMarriage',
+            'deceased' => 'openEditDeceased',
+        ];
+
+        if (isset($map[$edit]) && method_exists($this, $map[$edit])) {
+            $this->{$map[$edit]}();
+        }
     }
 
     public function goToTab(string $tab): void
@@ -150,26 +155,13 @@ class ParishionerShow extends Component
     public function saveBasic(): void
     {
         $this->authorize('update', $this->parishioner);
-        $this->validate($this->rulesBasic(), $this->parishionerFormMessages());
+
+        $data = $this->applyParishionerSectionSave($this->parishioner, 'basic');
 
         try {
             DB::beginTransaction();
-
-            $data = array_intersect_key(
-                $this->buildParishionerSaveData($this->parishioner->parish_id),
-                array_flip([
-                    'last_name', 'first_name', 'gender', 'birthday', 'birth_place', 'birth_order',
-                    'saint_id', 'cccd', 'phone', 'email', 'note',
-                    'ethnic', 'career', 'education_level', 'specialist_level', 'catechism_level',
-                    'catechism_major', 'position', 'language', 'holy_order_status',
-                    'status', 'is_active', 'is_new_convert', 'is_included_in_stats',
-                ])
-            );
-
-            $this->persistParishionerAvatar($data);
             $this->parishioner->update($data);
             $this->parishioner->refresh()->load(['saint', 'parishGroup']);
-
             DB::commit();
             $this->emit('toast', 'message', 'Cập nhật thông tin cơ bản thành công');
             $this->showEditBasic = false;
@@ -184,6 +176,9 @@ class ParishionerShow extends Component
     public function openEditAddress(): void
     {
         $this->authorize('update', $this->parishioner);
+        if (empty($this->provinces)) {
+            $this->loadAddressDropdowns();
+        }
         $this->mapParishionerToForm($this->parishioner);
         $this->showEditAddress = true;
     }
@@ -191,19 +186,10 @@ class ParishionerShow extends Component
     public function saveAddress(): void
     {
         $this->authorize('update', $this->parishioner);
-        $this->validate($this->rulesAddress(), $this->parishionerFormMessages());
 
         try {
-            $this->parishioner->update([
-                'origin'              => $this->origin,
-                'permanent_province'  => $this->permanent_province,
-                'permanent_ward_id'   => $this->permanent_ward_id,
-                'permanent_residence' => $this->permanent_residence,
-                'temporary_province'  => $this->temporary_province,
-                'temporary_ward_id'   => $this->temporary_ward_id,
-                'temporary_residence' => $this->temporary_residence,
-            ]);
-
+            $data = $this->applyParishionerSectionSave($this->parishioner, 'address');
+            $this->parishioner->update($data);
             $this->parishioner->refresh();
             $this->emit('toast', 'message', 'Cập nhật địa chỉ thành công');
             $this->showEditAddress = false;
@@ -225,19 +211,10 @@ class ParishionerShow extends Component
     public function saveFamily(): void
     {
         $this->authorize('update', $this->parishioner);
-        $this->validate($this->rulesFamily(), $this->parishionerFormMessages());
 
         try {
-            $this->parishioner->update([
-                'father_name' => $this->father_name,
-                'mother_name' => $this->mother_name,
-                'father_id'   => $this->father_id,
-                'mother_id'   => $this->mother_id,
-                'family_id'   => $this->family_id,
-                'family_role' => $this->family_role ?: null,
-                'married'     => $this->married,
-            ]);
-
+            $data = $this->applyParishionerSectionSave($this->parishioner, 'family');
+            $this->parishioner->update($data);
             $this->parishioner->refresh()->load(['family', 'father', 'mother']);
             $this->emit('toast', 'message', 'Cập nhật thông tin gia đình thành công');
             $this->showEditFamily = false;
@@ -259,19 +236,11 @@ class ParishionerShow extends Component
     public function saveParish(): void
     {
         $this->authorize('update', $this->parishioner);
-        $this->validate($this->rulesParish(), $this->parishionerFormMessages());
 
         try {
-            $this->parishioner->update([
-                'parish_area_id'   => $this->parish_area_id,
-                'level'            => $this->level,
-                'joined_date'      => $this->joined_date ?: null,
-                'transferred_from' => $this->transferred_from,
-                'transferred_date' => $this->transferred_date ?: null,
-                'left_reason'      => $this->left_reason,
-            ]);
-
-            $this->parishioner->refresh()->load(['parishGroup', 'transferredFromParish']);
+            $data = $this->applyParishionerSectionSave($this->parishioner, 'parish');
+            $this->parishioner->update($data);
+            $this->parishioner->refresh()->load(['parishGroup', 'diocese', 'deanery', 'parish', 'transferredFromParish']);
             $this->emit('toast', 'message', 'Cập nhật sinh hoạt giáo xứ thành công');
             $this->showEditParish = false;
             $this->resetValidation();
@@ -315,6 +284,9 @@ class ParishionerShow extends Component
     public function saveMarriage(): void
     {
         $this->authorize('update', $this->parishioner);
+        if ($this->spouse_id === '') {
+            $this->spouse_id = null;
+        }
         $this->validate($this->rulesMarriage());
 
         try {
@@ -393,16 +365,10 @@ class ParishionerShow extends Component
     public function saveDeceased(): void
     {
         $this->authorize('update', $this->parishioner);
-        $this->validate($this->rulesDeceased(), $this->parishionerFormMessages());
 
         try {
-            $this->parishioner->update([
-                'death_date'        => $this->is_deceased ? ($this->death_date ?: null) : null,
-                'death_book_number' => $this->is_deceased ? $this->death_book_number : null,
-                'death_place'       => $this->is_deceased ? $this->death_place : null,
-                'burial_place'      => $this->is_deceased ? $this->burial_place : null,
-            ]);
-
+            $data = $this->applyParishionerSectionSave($this->parishioner, 'deceased');
+            $this->parishioner->update($data);
             $this->parishioner->refresh();
             $this->is_deceased = $this->parishioner->death_date !== null;
 
@@ -449,7 +415,7 @@ class ParishionerShow extends Component
 
     public function getChildrenProperty()
     {
-        if (!$this->parishioner->family_id) {
+        if ($this->parishioner->family_role === 'child' || !$this->parishioner->family_id) {
             return collect();
         }
 

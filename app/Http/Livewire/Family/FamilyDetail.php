@@ -2,11 +2,12 @@
 
 namespace App\Http\Livewire\Family;
 
+use App\Actions\Family\FamilyMembershipService;
 use App\Http\Livewire\Base\BaseComponent;
 use App\Models\Family;
 use App\Models\Parishioner;
 use Illuminate\Pagination\LengthAwarePaginator;
-use Illuminate\Support\Facades\DB;
+use InvalidArgumentException;
 
 class FamilyDetail extends BaseComponent
 {
@@ -26,6 +27,7 @@ class FamilyDetail extends BaseComponent
     public array  $selectedParishioners  = [];
     public bool   $selectAllParishioners = false;
     public string $memberSearch          = '';
+    public ?int   $preselectParishionerId = null;
 
     // ==================== SET ROLE MODAL ====================
     public bool   $showRoleModal    = false;
@@ -43,6 +45,7 @@ class FamilyDetail extends BaseComponent
     {
         return [
             'activeTab' => ['except' => 'members', 'as' => 'tab'],
+            'preselectParishionerId' => ['except' => null, 'as' => 'add'],
         ];
     }
 
@@ -56,6 +59,9 @@ class FamilyDetail extends BaseComponent
     public function mount($id = null): void
     {
         $this->familyId = (int) $id;
+        $this->preselectParishionerId = request()->query('add')
+            ? (int) request()->query('add')
+            : null;
         parent::mount();
     }
 
@@ -148,8 +154,8 @@ class FamilyDetail extends BaseComponent
             'member_count' => $members->count(),
 
             // Vai trò rõ ràng
-            'husband'  => $husband  ? $this->mapMember($husband,  'Cha') : null,
-            'wife'     => $wife     ? $this->mapMember($wife,     'Mẹ')    : null,
+            'husband'  => $husband  ? $this->mapMember($husband,  'Chồng') : null,
+            'wife'     => $wife     ? $this->mapMember($wife,     'Vợ')    : null,
             'children' => $children->map(function ($child, $index) {
                 $order = $child->birth_order ?? ($index + 1);
                 $label = $order === 1 ? 'Con đầu' : 'Con thứ ' . $order;
@@ -239,25 +245,17 @@ class FamilyDetail extends BaseComponent
             $parishioner = Parishioner::where('family_id', $this->familyId)
                 ->findOrFail($this->roleParishionerId);
 
-            // Nếu gán husband/wife → kiểm tra đã có người giữ vai đó chưa
-            if (in_array($this->roleValue, ['husband', 'wife'])) {
-                $exists = Parishioner::where('family_id', $this->familyId)
-                    ->where('family_role', $this->roleValue)
-                    ->where('id', '!=', $parishioner->id)
-                    ->exists();
-
-                if ($exists) {
-                    $label = $this->roleValue === 'husband' ? 'chồng' : 'vợ';
-                    $this->emit('toast', 'warning', "Gia đình đã có người giữ vai trò {$label}.");
-                    return;
-                }
-            }
-
-            $parishioner->update(['family_role' => $this->roleValue]);
+            app(FamilyMembershipService::class)->setRole(
+                $this->getFamily(),
+                $parishioner,
+                $this->roleValue
+            );
 
             $this->emit('toast', 'message', "Đã cập nhật vai trò của {$this->roleMemberName}.");
             $this->closeRoleModal();
             $this->loadFamilyData();
+        } catch (InvalidArgumentException $e) {
+            $this->emit('toast', 'warning', $e->getMessage());
         } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
             $this->emit('toast', 'error', 'Không tìm thấy thành viên.');
             $this->closeRoleModal();
@@ -283,12 +281,23 @@ class FamilyDetail extends BaseComponent
     {
         $this->authorize('update', $this->getFamily());
         $this->resetAddMemberForm();
-        $this->emit('openModal');
+
+        if ($this->preselectParishionerId) {
+            $exists = Parishioner::where('id', $this->preselectParishionerId)
+                ->whereNull('family_id')
+                ->exists();
+
+            if ($exists) {
+                $this->selectedParishioners = [$this->preselectParishionerId];
+            }
+        }
+
+        $this->showAddMemberModal = true;
     }
 
     public function closeAddMemberModal(): void
     {
-        $this->emit('closeModal');
+        $this->showAddMemberModal = false;
         $this->resetAddMemberForm();
     }
 
@@ -325,19 +334,16 @@ class FamilyDetail extends BaseComponent
         }
 
         try {
-            DB::beginTransaction();
-
-            $count = Parishioner::whereIn('id', $this->selectedParishioners)
-                ->whereNull('family_id')
-                ->update(['family_id' => $this->familyId]);
-
-            DB::commit();
+            $count = app(FamilyMembershipService::class)->addMembers(
+                $this->getFamily(),
+                $this->selectedParishioners
+            );
 
             $this->emit('toast', 'message', "Đã thêm {$count} thành viên vào gia đình.");
+            $this->preselectParishionerId = null;
             $this->closeAddMemberModal();
             $this->loadFamilyData();
         } catch (\Exception $e) {
-            DB::rollBack();
             $this->logError($e, 'Error adding members to family', [
                 'family_id'             => $this->familyId,
                 'selected_parishioners' => $this->selectedParishioners,
@@ -367,12 +373,10 @@ class FamilyDetail extends BaseComponent
             $parishioner = Parishioner::where('family_id', $this->familyId)
                 ->findOrFail($this->removingMemberId);
 
-            $parishioner->update([
-                'family_id'   => null,
-                'family_role' => null,
-                'father_id'   => null,
-                'mother_id'   => null,
-            ]);
+            app(FamilyMembershipService::class)->removeMember(
+                $this->getFamily(),
+                $parishioner
+            );
 
             $this->emit('toast', 'message', "Đã xóa {$this->removingMemberName} khỏi gia đình.");
             $this->closeRemoveModal();
@@ -423,7 +427,7 @@ class FamilyDetail extends BaseComponent
     // ==================== QUERY HELPERS ====================
     protected function getAvailableParishionersQuery()
     {
-        $query = Parishioner::whereNull('family_id');
+        $query = Parishioner::whereNull('family_id')->with('saint');
 
         if (trim($this->memberSearch)) {
             $search = trim($this->memberSearch);
@@ -455,11 +459,19 @@ class FamilyDetail extends BaseComponent
             ? $this->getAvailableParishionersPaginated()
             : null;
 
+        $familyModel = $this->isLoading ? null : $this->getFamily();
+
+        $preselectParishioner = $this->preselectParishionerId
+            ? Parishioner::with('saint')->find($this->preselectParishionerId)
+            : null;
+
         return view('livewire.family.family-detail', [
-            'family'                => $this->familyData,
-            'isLoading'             => $this->isLoading,
-            'availableParishioners' => $availableParishioners,
-            'familyModel'           => $this->isLoading ? null : $this->getFamily(),
+            'family'                  => $this->familyData,
+            'isLoading'               => $this->isLoading,
+            'availableParishioners'   => $availableParishioners,
+            'familyModel'             => $familyModel,
+            'canManageMembers'        => $familyModel && auth()->user()?->can('update', $familyModel),
+            'preselectParishioner'    => $preselectParishioner,
         ])
             ->extends('frontend.layout.parishioner')
             ->section('content');

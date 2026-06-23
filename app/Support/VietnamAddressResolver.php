@@ -13,13 +13,22 @@ class VietnamAddressResolver
             return '';
         }
 
-        if (!is_numeric($idOrName)) {
-            return trim((string) $idOrName);
-        }
-
         self::loadProvinces();
 
-        return self::$provinces[$idOrName] ?? self::$provinces[(string) $idOrName] ?? '';
+        $key = (string) $idOrName;
+
+        if (isset(self::$provinces[$key])) {
+            return self::$provinces[$key];
+        }
+
+        $needle = mb_strtolower($key, 'UTF-8');
+        foreach (self::$provinces as $label) {
+            if (mb_strtolower($label, 'UTF-8') === $needle) {
+                return $label;
+            }
+        }
+
+        return trim($key);
     }
 
     public static function wardName(mixed $idOrName): string
@@ -81,15 +90,56 @@ class VietnamAddressResolver
         return $name;
     }
 
+    public static function provincesForSelect(): array
+    {
+        self::loadProvinces();
+
+        $options = [];
+        foreach (self::$provinces as $key => $label) {
+            $options[] = ['id' => (string) $key, 'name' => $label];
+        }
+
+        usort($options, fn ($a, $b) => strcmp($a['name'], $b['name']));
+
+        return $options;
+    }
+
+    public static function wardsForSelect(?string $provinceKey): array
+    {
+        if (empty($provinceKey)) {
+            return [];
+        }
+
+        self::loadWards();
+
+        $options = [];
+        foreach (self::$wards as $ward) {
+            if (($ward['matp'] ?? null) !== $provinceKey) {
+                continue;
+            }
+
+            $options[] = [
+                'id'   => (string) ($ward['xaid'] ?? ''),
+                'name' => $ward['name'] ?? '',
+            ];
+        }
+
+        usort($options, fn ($a, $b) => strcmp($a['name'], $b['name']));
+
+        return $options;
+    }
+
     public static function formatAddressLine(?string $detail, mixed $ward, mixed $province, bool $trailingComma = false): string
     {
         $parts = array_filter([
-            $detail ? rtrim($detail, ',') . ($trailingComma ? ',' : '') : null,
-            ($w = self::wardName($ward)) ? $w . ($trailingComma ? ',' : '') : null,
-            self::provinceName($province),
+            $detail ? rtrim(trim($detail), ',') : null,
+            ($w = self::wardName($ward)) ? $w : null,
+            ($p = self::provinceName($province)) ? $p : null,
         ]);
 
-        return implode(' ', $parts);
+        $line = implode(', ', $parts);
+
+        return $trailingComma && $line !== '' ? $line . ',' : $line;
     }
 
     private static function loadProvinces(): void

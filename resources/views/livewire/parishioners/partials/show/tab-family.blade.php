@@ -26,7 +26,7 @@
 
     <x-parishioner-section-card title="Vai trò & Hôn nhân" edit-action="openEditFamily">
         <x-info-row label="Vai trò trong gia đình" :value="$roleLabels[$parishioner->family_role] ?? null" />
-        <x-info-row label="Tình trạng hôn nhân" :value="$parishioner->married_status_name" />
+        <x-info-row label="Tình trạng hôn nhân (dân sự)" :value="$parishioner->married_status_name" />
     </x-parishioner-section-card>
 
     @if($parishioner->family)
@@ -40,6 +40,24 @@
                 {{ $parishioner->family->member_count ? $parishioner->family->member_count . ' thành viên' : '' }}
                 @if($parishioner->family->parishGroup) · {{ $parishioner->family->parishGroup->name }} @endif
             </p>
+            @can('update', $parishioner->family)
+            <a href="{{ route('families.show', $parishioner->family_id) }}"
+                class="inline-flex items-center mt-3 text-xs font-medium text-primary-600 hover:text-primary-700">
+                Quản lý hộ gia đình →
+            </a>
+            @endcan
+        </div>
+    </x-parishioner-section-card>
+    @else
+    <x-parishioner-section-card title="Hộ gia đình">
+        <div class="px-4 py-4 text-center">
+            <p class="text-sm text-slate-500">Chưa thuộc hộ gia đình nào</p>
+            @can('create', \App\Models\Family::class)
+            <a href="{{ route('families.index', ['add' => $parishioner->id]) }}"
+                class="inline-flex items-center mt-3 px-4 py-2 text-sm font-medium text-primary-600 bg-primary-50 rounded-xl hover:bg-primary-100 transition">
+                Thêm vào gia đình
+            </a>
+            @endcan
         </div>
     </x-parishioner-section-card>
     @endif

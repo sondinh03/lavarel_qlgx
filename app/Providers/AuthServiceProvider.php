@@ -7,6 +7,7 @@ use App\Models\CatechismClass;
 use App\Models\Family;
 use App\Models\Holymanagement;
 use App\Models\Lop;
+use App\Models\MarriageAnnouncement;
 use App\Models\NamHoc;
 use App\Models\ParishGroup;
 use App\Models\Parishioner;
@@ -20,6 +21,7 @@ use App\Policies\CatechismClassPolicy;
 use App\Policies\FamilyPolicy;
 use App\Policies\HolymanagementPolicy;
 use App\Policies\LopPolicy;
+use App\Policies\MarriageAnnouncementPolicy;
 use App\Policies\ParishGroupPolicy;
 use App\Policies\ParishionerPolicy;
 use App\Policies\ParishionersPolicy;
@@ -47,6 +49,7 @@ class AuthServiceProvider extends ServiceProvider
         Holymanagement::class => HolymanagementPolicy::class,
         AttendanceSession::class => AttendanceSessionPolicy::class,
         Family::class => FamilyPolicy::class,
+        MarriageAnnouncement::class => MarriageAnnouncementPolicy::class,
     ];
 
     /**

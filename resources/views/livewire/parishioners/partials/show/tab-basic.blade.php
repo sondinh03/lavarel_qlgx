@@ -60,8 +60,8 @@
     <div class="lg:col-span-2">
         <x-parishioner-section-card title="Quê quán & Địa chỉ" edit-action="openEditAddress">
             <x-info-row label="Quê quán" :value="$parishioner->origin" />
-            <x-info-row label="Thường trú" :value="implode(', ', array_filter([$parishioner->permanent_residence, $parishioner->permanent_province]))" />
-            <x-info-row label="Tạm trú" :value="implode(', ', array_filter([$parishioner->temporary_residence, $parishioner->temporary_province]))" />
+            <x-info-row label="Thường trú" :value="$parishioner->full_address_permanent ?: null" />
+            <x-info-row label="Tạm trú" :value="$parishioner->full_address_temporary ?: null" />
         </x-parishioner-section-card>
     </div>
 </div>

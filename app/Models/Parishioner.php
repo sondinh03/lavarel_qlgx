@@ -156,6 +156,13 @@ class Parishioner extends Model
         return $this->hasMany(Parishioner::class, 'father_id');
     }
 
+    /** Con trong cùng hộ gia đình (theo family_role). */
+    public function childrenInFamily(): HasMany
+    {
+        return $this->hasMany(Parishioner::class, 'family_id', 'family_id')
+            ->where('family_role', 'child');
+    }
+
     public function transferredFromParish(): BelongsTo
     {
         return $this->belongsTo(ParishNew::class, 'transferred_from');

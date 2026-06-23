@@ -2,11 +2,12 @@
 
 namespace App\Http\Livewire\Family;
 
+use App\Actions\Family\FamilyMembershipService;
 use App\Http\Livewire\Base\BaseComponent;
 use App\Models\Family;
 use App\Models\ParishGroup;
 use App\Models\Parishioner;
-use Illuminate\Support\Facades\DB;
+use InvalidArgumentException;
 
 class FamilyEdit extends BaseComponent
 {
@@ -44,6 +45,7 @@ class FamilyEdit extends BaseComponent
     // ==================== VALIDATION ====================
     protected array $formRules = [
         'name'          => 'nullable|string|max:255',
+        'fatherId'      => 'required|integer|exists:parishioners_new,id',
         'parishGroupId' => 'nullable|integer|exists:parish_groups,id',
         'address'       => 'nullable|string|max:255',
         'province'      => 'nullable|string|max:100',
@@ -58,6 +60,8 @@ class FamilyEdit extends BaseComponent
     protected $messages = [
         'name.required'        => 'Tên gia đình không được để trống.',
         'name.max'             => 'Tên gia đình không được quá 100 ký tự.',
+        'fatherId.required'    => 'Vui lòng chọn chủ hộ (chồng).',
+        'fatherId.exists'      => 'Giáo dân không tồn tại.',
         'parishGroupId.exists' => 'Giáo họ không tồn tại.',
         'note.max'             => 'Ghi chú không được quá 2000 ký tự.',
     ];
@@ -130,30 +134,16 @@ class FamilyEdit extends BaseComponent
         $this->isIncludedInStats = (bool) ($family->is_included_in_stats ?? true);
 
         $members = Parishioner::where('family_id', $family->id)
-            ->get(['id', 'gender', 'father_id', 'mother_id']);
+            ->get(['id', 'family_role']);
 
-        $memberIds = $members->pluck('id');
+        $husband = $members->firstWhere('family_role', 'husband');
+        $wife    = $members->firstWhere('family_role', 'wife');
 
-        // Cha: male, không có father_id trỏ vào thành viên khác trong gia đình
-        $father = $members
-            ->where('gender', 'male')
-            ->filter(fn($m) => !$memberIds->contains($m->father_id))
-            ->first();
-
-        // Mẹ: female, không có mother_id trỏ vào thành viên khác trong gia đình  
-        $mother = $members
-            ->where('gender', 'female')
-            ->filter(fn($m) => !$memberIds->contains($m->mother_id))
-            ->first();
-
-        $this->fatherId = $father?->id;
-        $this->motherId = $mother?->id;
-
-        // Con: member còn lại (không phải cha, không phải mẹ)
-        $parentIds = collect([$this->fatherId, $this->motherId])->filter();
+        $this->fatherId = $husband?->id;
+        $this->motherId = $wife?->id;
 
         $this->childrenIds = $members
-            ->whereNotIn('id', $parentIds)
+            ->where('family_role', 'child')
             ->pluck('id')
             ->toArray();
     }
@@ -259,28 +249,14 @@ class FamilyEdit extends BaseComponent
         $this->validate($this->formRules, $this->messages);
 
         try {
+            $head = Parishioner::query()->findOrFail($this->fatherId);
 
-            DB::beginTransaction();
-
-            // ===== VALIDATE MEMBERS =====
-
-            $head = Parishioner::query()
-                ->findOrFail($this->fatherId);
-
-            $children = Parishioner::query()
-                ->whereIn('id', $this->childrenIds)
-                ->get();
-
-            // ===== FAMILY NAME =====
             $familyName = trim($this->name)
                 ?: ('Gia đình ' . $head->full_name_with_saint);
-
-            // ===== FAMILY DATA =====
 
             $data = [
                 'parish_id'            => $this->parishId,
                 'parish_group_id'      => $this->parishGroupId,
-                'head_id'              => $head->id,
                 'name'                 => $familyName,
                 'note'                 => trim($this->note) ?: null,
                 'status'               => $this->status,
@@ -292,85 +268,32 @@ class FamilyEdit extends BaseComponent
                 'is_included_in_stats' => $this->isIncludedInStats,
             ];
 
-            // ===== CREATE / UPDATE =====
-
             if ($this->isEdit) {
-
                 $family = Family::findOrFail($this->familyId);
-
                 $this->authorize('update', $family);
-
-                $oldMemberIds = Parishioner::where('family_id', $family->id)
-                    ->pluck('id');
-
+                $oldMemberIds = Parishioner::where('family_id', $family->id)->pluck('id');
                 $family->update($data);
             } else {
                 $this->authorize('create', Family::class);
-
                 $family = Family::create($data);
-
                 $oldMemberIds = collect();
             }
 
-            // ===== NEW MEMBER IDS =====
+            $otherMemberIds = $this->isEdit
+                ? Parishioner::where('family_id', $family->id)
+                    ->where('family_role', 'other')
+                    ->pluck('id')
+                    ->toArray()
+                : [];
 
-            $newMemberIds = collect([
+            app(FamilyMembershipService::class)->assignMembers(
+                $family,
                 $this->fatherId,
                 $this->motherId,
-            ])
-                ->merge($this->childrenIds)
-                ->filter()
-                ->unique()
-                ->values();
-
-            // ===== REMOVE OLD MEMBERS =====
-
-            Parishioner::whereIn('id', $oldMemberIds)
-                ->whereNotIn('id', $newMemberIds)
-                ->update([
-                    'family_id'   => null,
-                    'father_id'   => null,
-                    'mother_id'   => null,
-                    'family_role' => null,
-                ]);
-
-            // ===== HEAD + SPOUSE =====
-
-            $head->update([
-                'family_id'   => $family->id,
-                'family_role' => 'husband',
-            ]);
-
-            if ($this->motherId) {
-
-                $mother = Parishioner::query()
-                    ->findOrFail($this->motherId);
-
-                $mother->update([
-                    'family_id'   => $family->id,
-                    'family_role' => 'wife',
-                ]);
-            }
-
-            // ===== CHILDREN =====
-
-            foreach ($children as $child) {
-                $childData = [
-                    'family_id'   => $family->id,
-                    'family_role' => 'child',
-                    'father_id'   => $head->gender === 'male' ? $head->id : ($mother?->gender === 'male' ? $mother->id : null),
-                    'mother_id'   => $head->gender === 'female' ? $head->id : ($mother?->gender === 'female' ? $mother->id : null),
-                ];
-                $child->update($childData);
-            }
-
-            // ===== MEMBER COUNT =====
-
-            $family->update([
-                'member_count' => $newMemberIds->count(),
-            ]);
-
-            DB::commit();
+                $this->childrenIds,
+                $oldMemberIds,
+                $otherMemberIds
+            );
 
             $this->emit(
                 'toast',
@@ -380,20 +303,12 @@ class FamilyEdit extends BaseComponent
                     : 'Đã tạo gia đình.'
             );
 
-            $this->redirect(
-                route('families.show', $family->id)
-            );
+            $this->redirect(route('families.show', $family->id));
+        } catch (InvalidArgumentException $e) {
+            $this->emit('toast', 'warning', $e->getMessage());
         } catch (\Exception $e) {
-
-            DB::rollBack();
-
             $this->logError($e, 'Error saving family');
-
-            $this->emit(
-                'toast',
-                'error',
-                'Có lỗi khi lưu gia đình.'
-            );
+            $this->emit('toast', 'error', 'Có lỗi khi lưu gia đình.');
         }
     }
 

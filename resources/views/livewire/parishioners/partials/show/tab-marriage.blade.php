@@ -26,7 +26,7 @@
 
         <x-parishioner-section-card title="Chi tiết hôn phối" edit-action="openEditMarriage">
             <x-info-row label="Ngày kết hôn" :value="$marriage->married_date?->format('d/m/Y')" />
-            <x-info-row label="Trạng thái" :value="$marriage->status_name" />
+            <x-info-row label="Trạng thái hôn phối (giáo hội)" :value="$marriage->status_name" />
             <x-info-row label="Số chứng chỉ" :value="$marriage->certificate_number" />
             <x-info-row label="Nơi kết hôn" :value="$marriage->parish?->name ?? $marriage->parish_name" />
             <x-info-row label="Tỉnh/TP" :value="$marriage->place_province" />

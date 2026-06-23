@@ -58,6 +58,10 @@ use App\Http\Livewire\Dashboard\ParishionerDashboard;
 use App\Http\Livewire\Family\FamilyDetail;
 use App\Http\Livewire\Family\FamilyEdit;
 use App\Http\Livewire\Family\FamilyList;
+use App\Http\Livewire\MarriageAnnouncement\MarriageAnnouncementEdit;
+use App\Http\Livewire\MarriageAnnouncement\MarriageAnnouncementList;
+use App\Http\Livewire\MarriageAnnouncement\MarriageAnnouncementShow;
+use App\Http\Livewire\MarriageAnnouncement\MarriageCreateFromAnnouncement;
 use App\Http\Livewire\Group\GroupAttendance;
 use App\Http\Livewire\Group\GroupManager;
 use App\Http\Livewire\Group\GroupMemberManager;
@@ -73,7 +77,6 @@ use App\Http\Livewire\Parish\ParishChild;
 use App\Http\Livewire\Parish\ParishGroup;
 use App\Http\Livewire\Parish\ParishGroupManager;
 use App\Http\Livewire\Parishioners\ParishionerCreate;
-use App\Http\Livewire\Parishioners\ParishionerEdit;
 use App\Http\Livewire\Parishioners\ParishionerShow;
 use App\Http\Livewire\Parishioners\ParishionersManager;
 use App\Http\Livewire\Parishioners\FamilyRegisterImportPreview;
@@ -144,8 +147,9 @@ Route::middleware('auth')->group(function () {
         ->name('parishioners.create');
     Route::get('/parishioners/{parishioner}/export-lylich', ParishionerLyLichExportController::class)
         ->name('parishioners.export-lylich');
-    Route::get('/parishioners/{parishioner}/edit', ParishionerEdit::class)
-        ->name('parishioners.edit');
+    Route::get('/parishioners/{parishioner}/edit', function (\App\Models\Parishioner $parishioner) {
+        return redirect()->route('parishioners.show', ['parishioner' => $parishioner], 301);
+    })->name('parishioners.edit');
     Route::get('/parishioners/{parishioner}', ParishionerShow::class)
         ->name('parishioners.show');
 
@@ -176,6 +180,42 @@ Route::middleware('auth')->group(function () {
 
         Route::get('/students/{id}', StudentDetail::class)
             ->name('students.show');
+    });
+
+    Route::middleware('role:parish_admin|catechist')->prefix('families')->name('families.')->group(function () {
+        Route::get('/create', FamilyEdit::class)
+            ->middleware('role:parish_admin')
+            ->name('create');
+
+        Route::get('/', FamilyList::class)
+            ->name('index');
+
+        Route::get('/{id}/edit', FamilyEdit::class)
+            ->middleware('role:parish_admin')
+            ->name('edit');
+
+        Route::get('/{id}', FamilyDetail::class)
+            ->name('show');
+    });
+
+    Route::middleware('role:parish_admin|catechist')->prefix('marriage-announcements')->name('marriage-announcements.')->group(function () {
+        Route::get('/', MarriageAnnouncementList::class)
+            ->name('index');
+
+        Route::get('/create', MarriageAnnouncementEdit::class)
+            ->middleware('role:parish_admin')
+            ->name('create');
+
+        Route::get('/{id}/edit', MarriageAnnouncementEdit::class)
+            ->middleware('role:parish_admin')
+            ->name('edit');
+
+        Route::get('/{id}/marriage/create', MarriageCreateFromAnnouncement::class)
+            ->middleware('role:parish_admin')
+            ->name('create-marriage');
+
+        Route::get('/{id}', MarriageAnnouncementShow::class)
+            ->name('show');
     });
 
     Route::middleware('role:parish_admin')->group(function () {
@@ -245,21 +285,6 @@ Route::middleware('auth')->group(function () {
 
         Route::get('/{groupId}/sessions/{sessionId}/attendance', GroupAttendance::class)
             ->name('groups.attendance');
-
-        Route::prefix('families')->name('families.')->group(function () {
-
-            Route::get('/', FamilyList::class)
-                ->name('index');
-
-            Route::get('/create', FamilyEdit::class)
-                ->name('create');
-
-            Route::get('/{id}', FamilyDetail::class)
-                ->name('show');
-
-            Route::get('/{id}/edit', FamilyEdit::class)
-                ->name('edit');
-        });
     });
 });
 

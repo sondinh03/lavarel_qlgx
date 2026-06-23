@@ -123,7 +123,7 @@
 
 @php
 // ── Active group detection cho module Giáo dân ──
-if (request()->routeIs('parishioners.*', 'families.*')) {
+if (request()->routeIs('parishioners.*', 'families.*', 'marriage-announcements.*')) {
     $activeGroup = 'parishioners';
 } elseif (request()->routeIs('sacraments.*', 'baptisms.*', 'confirmations.*', 'marriages.*')) {
     $activeGroup = 'sacraments';
@@ -257,7 +257,7 @@ $isDashboard = request()->routeIs('parishioners.dashboard');
             {{-- ══════════════════════════════════════════
                  Nhóm: GIÁO DÂN
             ══════════════════════════════════════════ --}}
-            @php $isParishionersActive = request()->routeIs('parishioners.*', 'families.*'); @endphp
+            @php $isParishionersActive = request()->routeIs('parishioners.*', 'families.*', 'marriage-announcements.*'); @endphp
             <div class="relative has-flyout">
                 <button @click="toggleGroup('parishioners')"
                     class="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition group
@@ -291,6 +291,7 @@ $isDashboard = request()->routeIs('parishioners.dashboard');
                     class="mt-0.5 ml-4 pl-3 border-l border-slate-100 space-y-0.5">
                     @include('frontend.layout.partials.sidebar-sub-item', ['route' => 'parishioners.index', 'label' => 'Danh sách giáo dân'])
                     @include('frontend.layout.partials.sidebar-sub-item', ['route' => 'families.index', 'label' => 'Gia đình'])
+                    @include('frontend.layout.partials.sidebar-sub-item', ['route' => 'marriage-announcements.index', 'label' => 'Rao hôn phối'])
                     {{-- @include('frontend.layout.partials.sidebar-sub-item', ['route' => 'parishioners.import', 'label' => 'Import giáo dân']) --}}
                 </div>
 
@@ -299,6 +300,7 @@ $isDashboard = request()->routeIs('parishioners.dashboard');
                     <div class="px-3 py-2 text-xs font-semibold text-slate-400 uppercase tracking-wide">Giáo Dân</div>
                     @include('frontend.layout.partials.flyout-item', ['route' => 'parishioners.index', 'label' => 'Danh sách giáo dân'])
                     @include('frontend.layout.partials.flyout-item', ['route' => 'families.index', 'label' => 'Gia đình'])
+                    @include('frontend.layout.partials.flyout-item', ['route' => 'marriage-announcements.index', 'label' => 'Rao hôn phối'])
                     {{-- @include('frontend.layout.partials.flyout-item', ['route' => 'parishioners.import', 'label' => 'Import giáo dân']) --}}
                 </div>
             </div>

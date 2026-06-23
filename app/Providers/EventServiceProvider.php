@@ -48,6 +48,9 @@ class EventServiceProvider extends ServiceProvider
         Registered::class => [
             SendEmailVerificationNotification::class,
         ],
+        \App\Events\MarriageCreated::class => [
+            \App\Listeners\CreateFamilyOnMarriage::class,
+        ],
     ];
 
     /**

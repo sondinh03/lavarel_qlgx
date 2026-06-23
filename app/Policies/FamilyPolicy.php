@@ -77,4 +77,12 @@ class FamilyPolicy
         return $user->hasRole('parish_admin')
             && $user->parish_id === $family->parish_id;
     }
+
+    /**
+     * Xóa hàng loạt — parish_admin trong cùng xứ
+     */
+    public function deleteAny(User $user): bool
+    {
+        return $user->hasRole('parish_admin');
+    }
 }

@@ -79,12 +79,6 @@
                     </div>
 
                     <div class="flex items-center gap-2 flex-shrink-0 flex-wrap">
-                        @can('update', $parishioner)
-                        <x-button as="a" href="{{ route('parishioners.edit', $parishioner) }}" variant="primary">
-                            <x-icon name="edit" />
-                            Chỉnh sửa đầy đủ
-                        </x-button>
-                        @endcan
                         <x-button as="a" href="{{ route('parishioners.export-lylich', $parishioner) }}" variant="outline">
                             <x-icon name="download" />
                             Lý lịch cá nhân

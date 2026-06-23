@@ -4,7 +4,10 @@ namespace App\Http\Livewire\Parishioners;
 
 use App\Http\Livewire\Base\BaseComponent;
 use App\Http\Livewire\Parishioners\Concerns\ManagesParishionerForm;
+use App\Http\Livewire\Parishioners\Concerns\ManagesPendingSacraments;
 use App\Models\Parishioner;
+use App\Models\ParishNew;
+use App\Models\Sacrament;
 use Illuminate\Support\Facades\DB;
 use Livewire\WithFileUploads;
 
@@ -12,6 +15,7 @@ class ParishionerCreate extends BaseComponent
 {
     use WithFileUploads;
     use ManagesParishionerForm;
+    use ManagesPendingSacraments;
 
     public string $activeTab = 'basic';
     protected $usePagination = false;
@@ -27,13 +31,21 @@ class ParishionerCreate extends BaseComponent
     {
         $this->authorize('create', Parishioner::class);
         $this->requireParishId();
+
+        $parish = ParishNew::find($this->parishId);
+        if ($parish) {
+            $this->diocese_id = $parish->diocese_id;
+            $this->deanery_id = $parish->deanery_id;
+            $this->parish_id  = $parish->id;
+        }
+
         $this->loadParishionerDropdowns($this->parishId);
         $this->loadParishionerSearchOptions($this->parishId);
     }
 
     public function switchTab(string $tab): void
     {
-        $valid = ['basic', 'address', 'classify', 'parish', 'family', 'deceased'];
+        $valid = ['basic', 'address', 'parish', 'family', 'sacrament', 'deceased'];
         if (in_array($tab, $valid, true)) {
             $this->activeTab = $tab;
         }
@@ -41,20 +53,25 @@ class ParishionerCreate extends BaseComponent
 
     public function save(): void
     {
+        $this->normalizeParishionerFormValues();
         $this->validate($this->parishionerFormRules(), $this->parishionerFormMessages());
         $this->authorize('create', Parishioner::class);
 
         try {
             DB::beginTransaction();
 
-            $data = $this->buildParishionerSaveData($this->parishId);
+            $data = $this->buildParishionerSaveData($this->nullableFormInt($this->parish_id) ?? $this->parishId);
             $this->persistParishionerAvatar($data);
 
             $parishioner = Parishioner::create($data);
 
+            if (! empty($this->pendingSacraments)) {
+                $this->persistPendingSacraments($parishioner->id);
+            }
+
             DB::commit();
 
-            $this->emit('toast', 'message', 'Thêm giáo dân thành công');
+            $this->emit('toast', 'message', 'Thêm giáo dân thành công. Bạn có thể thêm vào hộ gia đình tại menu Gia đình.');
             $this->redirect(route('parishioners.show', $parishioner));
         } catch (\Exception $e) {
             DB::rollBack();
@@ -71,8 +88,9 @@ class ParishionerCreate extends BaseComponent
     public function render()
     {
         return view('livewire.parishioners.parishioner-form', [
-            'isEdit' => false,
-            'parishioner' => null,
-        ])->extends('frontend.layout.parishioner')->section('content');
+            'typeOptions'              => Sacrament::typeOptions(),
+            'groupedPendingSacraments' => $this->getGroupedPendingSacraments(),
+        ])
+            ->extends('frontend.layout.parishioner')->section('content');
     }
 }

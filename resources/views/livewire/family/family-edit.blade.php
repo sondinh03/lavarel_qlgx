@@ -86,13 +86,16 @@
 
                         <div>
                             <label class="block text-sm font-semibold text-slate-700 mb-2">Giáo họ</label>
-                            <select wire:model.defer="parishGroupId"
-                                class="w-full px-3 py-2 rounded-xl border border-slate-300 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-primary-500">
-                                <option value="">-- Chưa chọn giáo họ --</option>
-                                @foreach($parishGroups as $group)
-                                <option value="{{ $group->id }}">{{ $group->name }}</option>
-                                @endforeach
-                            </select>
+                            <x-searchable-select
+                                wireModel="parishGroupId"
+                                :options="$parishGroups"
+                                placeholder="-- Chưa chọn giáo họ --"
+                                labelKey="name"
+                                valueKey="id"
+                                :value="$parishGroupId" />
+                            @error('parishGroupId')
+                            <p class="mt-1 text-xs text-red-500">{{ $message }}</p>
+                            @enderror
                         </div>
 
                         <div>

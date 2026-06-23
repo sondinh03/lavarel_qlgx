@@ -470,6 +470,69 @@ class MarriageAnnouncement extends Model
 
     /*
     |--------------------------------------------------------------------------
+    | RELATIONS (Livewire)
+    |--------------------------------------------------------------------------
+    */
+
+    public function parishioners()
+    {
+        return $this->hasMany(MarriageAnnouncementParishioners::class, 'idannouncement');
+    }
+
+    public function assignedPriest()
+    {
+        return $this->belongsTo(Priest::class, 'priest');
+    }
+
+    public function groomParticipant(): ?MarriageAnnouncementParishioners
+    {
+        return $this->parishioners->firstWhere('sex', config('marriage-announcement.sex_groom'))
+            ?? $this->parishioners()->where('sex', config('marriage-announcement.sex_groom'))->first();
+    }
+
+    public function brideParticipant(): ?MarriageAnnouncementParishioners
+    {
+        return $this->parishioners->firstWhere('sex', config('marriage-announcement.sex_bride'))
+            ?? $this->parishioners()->where('sex', config('marriage-announcement.sex_bride'))->first();
+    }
+
+    public function getStatusLabelAttribute(): string
+    {
+        return config('marriage-announcement.status.' . (int) $this->status, '—');
+    }
+
+    public function getStatusBadgeAttribute(): string
+    {
+        return config('marriage-announcement.status_badges.' . (int) $this->status, 'bg-slate-100 text-slate-600');
+    }
+
+    public function scopeForParish($query, int $parishId)
+    {
+        return $query->where('pid', $parishId);
+    }
+
+    public function announcementsCompletedCount(): int
+    {
+        return (int) $this->announcements_one_done
+            + (int) $this->announcements_two_done
+            + (int) $this->announcements_three_done;
+    }
+
+    public function hasAllAnnouncementsCompleted(): bool
+    {
+        return $this->announcements_one_done
+            && $this->announcements_two_done
+            && $this->announcements_three_done;
+    }
+
+    protected $casts = [
+        'announcements_one_done'   => 'boolean',
+        'announcements_two_done'   => 'boolean',
+        'announcements_three_done' => 'boolean',
+    ];
+
+    /*
+    |--------------------------------------------------------------------------
     | SCOPES
     |--------------------------------------------------------------------------
     */

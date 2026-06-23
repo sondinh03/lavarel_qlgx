@@ -51,6 +51,7 @@ class ParishionerEdit extends BaseComponent
 
     public function save(): void
     {
+        $this->normalizeParishionerFormValues();
         $this->validate($this->parishionerFormRules(), $this->parishionerFormMessages());
         $this->authorize('update', $this->parishioner);
 
