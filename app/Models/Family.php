@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Support\FamilyCodeGenerator;
 use App\Traits\BelongsToParish;
 use Backpack\CRUD\app\Models\Traits\CrudTrait;
 use Illuminate\Database\Eloquent\Model;
@@ -20,6 +21,7 @@ class Family extends Model
     protected $guarded = ['id'];
 
     protected $fillable = [
+        'code',
         'parish_id',
         'parish_group_id',
         'name',
@@ -40,6 +42,15 @@ class Family extends Model
         'is_transferred'       => 'boolean',
         'is_included_in_stats' => 'boolean',
     ];
+
+    protected static function booted(): void
+    {
+        static::creating(function (Family $family) {
+            if (empty($family->code)) {
+                $family->code = FamilyCodeGenerator::generate();
+            }
+        });
+    }
 
     /*
     |--------------------------------------------------------------------------

@@ -77,6 +77,9 @@ use App\Http\Livewire\Parish\ParishChild;
 use App\Http\Livewire\Parish\ParishGroup;
 use App\Http\Livewire\Parish\ParishGroupManager;
 use App\Http\Livewire\Parishioners\ParishionerCreate;
+use App\Http\Livewire\Parishioners\ParishionerRegistrationList;
+use App\Http\Livewire\Parishioners\ParishionerRegistrationShow;
+use App\Http\Livewire\Parishioners\ParishionerSelfRegistration;
 use App\Http\Livewire\Parishioners\ParishionerShow;
 use App\Http\Livewire\Parishioners\ParishionersManager;
 use App\Http\Livewire\Parishioners\FamilyRegisterImportPreview;
@@ -100,6 +103,12 @@ Paginator::useBootstrap();
 Route::middleware('redirect.auth.dashboard')->group(function () {
     Route::get('/', Landing::class)->name('landing');
 });
+
+Route::get('/dang-ky-giao-dan', ParishionerSelfRegistration::class)
+    ->name('parishioners.register.public');
+Route::get('/dang-ky-giao-dan/{parish}', ParishionerSelfRegistration::class)
+    ->whereNumber('parish')
+    ->name('parishioners.register.public.parish');
 
 Route::get('/select-module', ModuleSelect::class)
     ->middleware('auth')
@@ -145,6 +154,12 @@ Route::middleware('auth')->group(function () {
         ->name('parishioners.sacrament');
     Route::get('/parishioners/create', ParishionerCreate::class)
         ->name('parishioners.create');
+    Route::get('/parishioner/dang-ky', ParishionerRegistrationList::class)
+        ->middleware('role:parish_admin')
+        ->name('parishioners.registrations.index');
+    Route::get('/parishioner/dang-ky/{registration}', ParishionerRegistrationShow::class)
+        ->middleware('role:parish_admin')
+        ->name('parishioners.registrations.show');
     Route::get('/parishioners/{parishioner}/export-lylich', ParishionerLyLichExportController::class)
         ->name('parishioners.export-lylich');
     Route::get('/parishioners/{parishioner}/edit', function (\App\Models\Parishioner $parishioner) {

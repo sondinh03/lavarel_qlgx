@@ -90,6 +90,13 @@
                                 </x-button>
                                 @endcan
 
+                                @can('viewAny', App\Models\ParishionerRegistrationRequest::class)
+                                <x-button as="a" href="{{ route('parishioners.registrations.index') }}" variant="outline">
+                                    <x-icon name="user" />
+                                    Duyệt đăng ký
+                                </x-button>
+                                @endcan
+
                                 {{-- Toggle advanced --}}
                                 <x-button type="button" variant="outline" @click="open = !open">
                                     <x-icon name="filter" />

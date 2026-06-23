@@ -11,6 +11,7 @@ use App\Models\MarriageAnnouncement;
 use App\Models\NamHoc;
 use App\Models\ParishGroup;
 use App\Models\Parishioner;
+use App\Models\ParishionerRegistrationRequest;
 use App\Models\Parishioners;
 use App\Models\ScoreType;
 use App\Models\Student;
@@ -24,6 +25,7 @@ use App\Policies\LopPolicy;
 use App\Policies\MarriageAnnouncementPolicy;
 use App\Policies\ParishGroupPolicy;
 use App\Policies\ParishionerPolicy;
+use App\Policies\ParishionerRegistrationRequestPolicy;
 use App\Policies\ParishionersPolicy;
 use App\Policies\SchoolYearPolicy;
 use App\Policies\ScoreTypePolicy;
@@ -50,6 +52,7 @@ class AuthServiceProvider extends ServiceProvider
         AttendanceSession::class => AttendanceSessionPolicy::class,
         Family::class => FamilyPolicy::class,
         MarriageAnnouncement::class => MarriageAnnouncementPolicy::class,
+        ParishionerRegistrationRequest::class => ParishionerRegistrationRequestPolicy::class,
     ];
 
     /**

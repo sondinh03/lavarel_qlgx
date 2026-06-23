@@ -290,6 +290,9 @@ $isDashboard = request()->routeIs('parishioners.dashboard');
                     x-transition:leave-end="opacity-0"
                     class="mt-0.5 ml-4 pl-3 border-l border-slate-100 space-y-0.5">
                     @include('frontend.layout.partials.sidebar-sub-item', ['route' => 'parishioners.index', 'label' => 'Danh sách giáo dân'])
+                    @can('viewAny', \App\Models\ParishionerRegistrationRequest::class)
+                    @include('frontend.layout.partials.sidebar-sub-item', ['route' => 'parishioners.registrations.index', 'label' => 'Duyệt đăng ký'])
+                    @endcan
                     @include('frontend.layout.partials.sidebar-sub-item', ['route' => 'families.index', 'label' => 'Gia đình'])
                     @include('frontend.layout.partials.sidebar-sub-item', ['route' => 'marriage-announcements.index', 'label' => 'Rao hôn phối'])
                     {{-- @include('frontend.layout.partials.sidebar-sub-item', ['route' => 'parishioners.import', 'label' => 'Import giáo dân']) --}}
@@ -299,6 +302,9 @@ $isDashboard = request()->routeIs('parishioners.dashboard');
                 <div class="flyout-menu" x-cloak>
                     <div class="px-3 py-2 text-xs font-semibold text-slate-400 uppercase tracking-wide">Giáo Dân</div>
                     @include('frontend.layout.partials.flyout-item', ['route' => 'parishioners.index', 'label' => 'Danh sách giáo dân'])
+                    @can('viewAny', \App\Models\ParishionerRegistrationRequest::class)
+                    @include('frontend.layout.partials.flyout-item', ['route' => 'parishioners.registrations.index', 'label' => 'Duyệt đăng ký'])
+                    @endcan
                     @include('frontend.layout.partials.flyout-item', ['route' => 'families.index', 'label' => 'Gia đình'])
                     @include('frontend.layout.partials.flyout-item', ['route' => 'marriage-announcements.index', 'label' => 'Rao hôn phối'])
                     {{-- @include('frontend.layout.partials.flyout-item', ['route' => 'parishioners.import', 'label' => 'Import giáo dân']) --}}

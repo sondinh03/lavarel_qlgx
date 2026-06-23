@@ -26,6 +26,11 @@
                     <div class="min-w-0 flex-1">
                         <div class="flex items-center gap-2 flex-wrap">
                             <h1 class="text-xl sm:text-2xl font-bold text-slate-900">{{ $family['name'] }}</h1>
+                            @if(!empty($family['code']))
+                            <span class="inline-flex px-2.5 py-0.5 rounded-lg text-xs font-mono font-semibold bg-slate-100 text-slate-700">
+                                {{ $family['code'] }}
+                            </span>
+                            @endif
                             <span class="inline-flex px-2.5 py-0.5 rounded-full text-xs font-semibold {{ $family['status_badge'] }}">
                                 {{ $family['status_label'] }}
                             </span>

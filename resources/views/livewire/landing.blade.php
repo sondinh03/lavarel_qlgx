@@ -1,27 +1,31 @@
 <div class="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 p-4 sm:p-6">
     <div class="mx-auto max-w-6xl space-y-6">
 
-        {{-- Header with Login Button --}}
+        {{-- Header with Login + Registration --}}
         <div class="relative py-8">
-            <div class="absolute top-0 right-0">
+            <div class="absolute top-0 right-0 flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
+                <a href="{{ route('parishioners.register.public') }}"
+                    class="inline-flex items-center justify-center gap-2 px-5 py-2.5
+                        text-sm font-bold text-white
+                        bg-emerald-500 rounded-xl
+                        shadow-sm hover:opacity-90
+                        hover:shadow-md transition-all">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
+                    </svg>
+                    Đăng ký giáo dân
+                </a>
                 <a href="{{ route('login') }}"
-                    class="inline-flex items-center gap-2 px-5 py-2.5
+                    class="inline-flex items-center justify-center gap-2 px-5 py-2.5
                         text-sm font-bold text-white
                         bg-primary-600 rounded-xl
                         shadow-sm hover:bg-primary-700
                         hover:shadow-md transition-all">
-
-                    <svg class="w-4 h-4"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24">
-
-                        <path stroke-linecap="round"
-                            stroke-linejoin="round"
-                            stroke-width="2"
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                             d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1" />
                     </svg>
-
                     Đăng nhập hệ thống
                 </a>
             </div>
@@ -60,6 +64,31 @@
 
         {{-- Main Grid --}}
         <div class="grid grid-cols-1 gap-6 max-w-2xl mx-auto">
+
+            {{-- ĐĂNG KÝ GIÁO DÂN --}}
+            <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+                <div class="px-6 py-4 border-b border-slate-200 bg-gradient-to-br from-emerald-50 to-white">
+                    <div class="flex items-center gap-3">
+                        <svg class="w-6 h-6 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
+                        </svg>
+                        <div>
+                            <h2 class="text-lg font-bold text-slate-900">Đăng ký sổ gia đình</h2>
+                            <p class="text-sm text-slate-600 mt-0.5">Khai báo hộ, thành viên, hôn phối và bí tích</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="p-6">
+                    <p class="text-sm text-slate-600 mb-4">
+                        Điền đầy đủ thông tin hộ gia đình, thành viên, hôn phối cha–mẹ và bí tích theo sổ gia đình công giáo.
+                    </p>
+                    <a href="{{ route('parishioners.register.public') }}"
+                        class="inline-flex items-center justify-center w-full px-5 py-3 rounded-xl bg-emerald-500 text-white font-semibold hover:opacity-90 transition">
+                        Mở form đăng ký
+                    </a>
+                </div>
+            </div>
 
             {{-- PHỤ HUYNH TRA CỨU --}}
             <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">

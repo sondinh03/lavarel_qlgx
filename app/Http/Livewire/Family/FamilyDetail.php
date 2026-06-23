@@ -124,6 +124,7 @@ class FamilyDetail extends BaseComponent
 
         return [
             'id'        => $family->id,
+            'code'      => $family->code,
             'name'      => $family->name,
             'parish_id' => $family->parish_id,
 

@@ -116,6 +116,16 @@
                     <div class="text-sm font-semibold text-slate-800">Tên thánh</div>
                     <div class="text-xs text-slate-400 mt-0.5">Danh mục tên thánh</div>
                 </a>
+                @can('viewAny', \App\Models\ParishionerRegistrationRequest::class)
+                <a href="{{ route('parishioners.registrations.index') }}" class="px-4 py-3 rounded-2xl bg-amber-50 hover:bg-amber-100 border border-amber-200 transition">
+                    <div class="text-sm font-semibold text-amber-900">Duyệt đăng ký</div>
+                    <div class="text-xs text-amber-700 mt-0.5">Yêu cầu từ giáo dân</div>
+                </a>
+                @endcan
+                <a href="{{ route('parishioners.register.public') }}" target="_blank" class="px-4 py-3 rounded-2xl bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 transition">
+                    <div class="text-sm font-semibold text-emerald-900">Form đăng ký</div>
+                    <div class="text-xs text-emerald-700 mt-0.5">Link công khai</div>
+                </a>
             </div>
         </x-stats.chart-card>
     </div>

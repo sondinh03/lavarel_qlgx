@@ -113,6 +113,7 @@
                                     class="w-4 h-4 rounded border-slate-300 text-primary-600 focus:ring-primary-500">
                             </x-table-header>
                             <x-table-header class="w-12">STT</x-table-header>
+                            <x-table-header>Mã</x-table-header>
                             <x-table-header wire:click="sortBy('name')" class="cursor-pointer select-none">
                                 <div class="flex items-center gap-1">
                                     Tên gia đình
@@ -152,6 +153,10 @@
 
                             <td class="px-4 py-3 text-sm font-semibold text-slate-400">
                                 {{ ($families->firstItem() ?? 0) + $index }}
+                            </td>
+
+                            <td class="px-4 py-3 text-xs font-mono font-semibold text-slate-600 whitespace-nowrap">
+                                {{ $family->code ?? '—' }}
                             </td>
 
                             <td class="px-4 py-3">

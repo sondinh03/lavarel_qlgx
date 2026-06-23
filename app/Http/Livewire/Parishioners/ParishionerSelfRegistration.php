@@ -1,0 +1,162 @@
+<?php
+
+namespace App\Http\Livewire\Parishioners;
+
+use App\Http\Livewire\Parishioners\Concerns\ManagesFamilyRegisterSubmission;
+use App\Models\Marriage;
+use App\Models\ParishionerRegistrationRequest;
+use App\Models\ParishNew;
+use App\Models\Sacrament;
+use App\Support\FamilyCodeGenerator;
+use Illuminate\Support\Facades\RateLimiter;
+use Livewire\Component;
+
+class ParishionerSelfRegistration extends Component
+{
+    use ManagesFamilyRegisterSubmission;
+
+    public ?int $targetParishId = null;
+
+    public string $parishName = '';
+
+    public bool $submitted = false;
+
+    public ?string $referenceCode = null;
+
+    public string $activeStep = 'household';
+
+    public array $parishOptions = [];
+
+    public function mount(?int $parish = null): void
+    {
+        $activeParishes = ParishNew::query()
+            ->where('status', 1)
+            ->orderBy('name')
+            ->get(['id', 'name']);
+
+        $this->parishOptions = $activeParishes
+            ->map(fn ($row) => ['id' => (string) $row->id, 'name' => $row->name])
+            ->values()
+            ->toArray();
+
+        if ($parish && $activeParishes->contains('id', $parish)) {
+            $this->targetParishId = $parish;
+        } elseif ($activeParishes->count() === 1) {
+            $this->targetParishId = $activeParishes->first()->id;
+        }
+
+        $this->syncParishContext();
+        $this->family_code = FamilyCodeGenerator::generate();
+        $this->seedDefaultMember();
+    }
+
+    public function updatedTargetParishId(): void
+    {
+        $this->family_parish_area_id = null;
+        $this->syncParishContext();
+    }
+
+    protected function syncParishContext(): void
+    {
+        if (! $this->targetParishId) {
+            $this->parishName = '';
+            $this->parishGroups = [];
+            $this->saints = \App\Models\Holymanagement::query()
+                ->orderBy('name')
+                ->get(['id', 'name'])
+                ->toArray();
+
+            return;
+        }
+
+        $parish = ParishNew::find($this->targetParishId);
+        $this->parishName = $parish?->name ?? '';
+        $this->loadFamilyRegisterDropdowns($this->targetParishId);
+    }
+
+    public function goToStep(string $step): void
+    {
+        $valid = ['household', 'members', 'marriages', 'sacraments', 'contact'];
+        if (in_array($step, $valid, true)) {
+            $this->activeStep = $step;
+        }
+    }
+
+    protected function stepOrder(): array
+    {
+        return ['household', 'members', 'marriages', 'sacraments', 'contact'];
+    }
+
+    public function nextStep(): void
+    {
+        $order = $this->stepOrder();
+        $index = array_search($this->activeStep, $order, true);
+        if ($index !== false && isset($order[$index + 1])) {
+            $this->activeStep = $order[$index + 1];
+        }
+    }
+
+    public function prevStep(): void
+    {
+        $order = $this->stepOrder();
+        $index = array_search($this->activeStep, $order, true);
+        if ($index !== false && $index > 0) {
+            $this->activeStep = $order[$index - 1];
+        }
+    }
+
+    public function submit(): void
+    {
+        $key = 'parishioner-registration:' . request()->ip();
+
+        if (RateLimiter::tooManyAttempts($key, 5)) {
+            $this->addError('submit', 'Bạn đã gửi quá nhiều lần. Vui lòng thử lại sau ' . RateLimiter::availableIn($key) . ' giây.');
+
+            return;
+        }
+
+        $this->validate($this->familyRegisterSubmitRules(), $this->familyRegisterSubmitMessages());
+
+        $submitter = collect($this->members)->firstWhere('ref', $this->submitter_ref);
+        if (! $submitter) {
+            $this->addError('submitter_ref', 'Người đăng ký không hợp lệ');
+
+            return;
+        }
+
+        $payload = $this->buildFamilyRegisterPayload();
+
+        $request = ParishionerRegistrationRequest::create([
+            'reference_code'  => $this->family_code,
+            'parish_id'       => $this->targetParishId,
+            'status'          => ParishionerRegistrationRequest::STATUS_PENDING,
+            'submitted_name'  => trim(($submitter['last_name'] ?? '') . ' ' . ($submitter['first_name'] ?? '')),
+            'submitted_phone' => $this->contact_phone,
+            'payload'         => $payload,
+            'sacraments'      => $this->familySacraments ?: null,
+            'marriages'       => $this->familyMarriages ?: null,
+            'ip_address'      => request()->ip(),
+        ]);
+
+        RateLimiter::hit($key, 3600);
+
+        $this->submitted = true;
+        $this->referenceCode = $request->reference_code;
+    }
+
+    public function render()
+    {
+        return view('livewire.parishioners.parishioner-self-registration', [
+            'familyRoles'    => config('parishioner-registration.family_roles', []),
+            'marriageStatuses' => Marriage::statusOptions(),
+            'sacramentTypes' => Sacrament::typeOptions(),
+            'stepLabels'     => [
+                'household'  => 'Hộ GĐ',
+                'members'    => 'Thành viên',
+                'marriages'  => 'Hôn phối',
+                'sacraments' => 'Bí tích',
+                'contact'    => 'Gửi',
+            ],
+        ])->extends('frontend.layout.landing')->section('content');
+    }
+}
