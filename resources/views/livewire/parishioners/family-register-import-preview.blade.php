@@ -14,7 +14,7 @@
         <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
             <x-page-header
                 title="Import Sổ Gia Đình"
-                description="Nhập dữ liệu từ Sổ Gia Đình Công Giáo (3 sheet + temp_id)"
+                description="Nhập dữ liệu từ Sổ Gia Đình Công Giáo (2 sheet: hộ + thành viên)"
                 icon-type="default">
             </x-page-header>
 
@@ -26,22 +26,21 @@
                                 d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                         </svg>
                         <div class="text-sm text-amber-800">
-                            <p class="font-semibold mb-1">Cấu trúc file Excel</p>
-                            <p>File gồm 3 sheet dữ liệu (tên cột kỹ thuật ở <strong>dòng 5</strong>):</p>
+                            <p class="font-semibold mb-1">Cấu trúc file Excel (2 sheet)</p>
+                            <p>Tên cột kỹ thuật ở <strong>dòng 5</strong>. Dữ liệu bắt đầu từ dòng 6.</p>
                             <ul class="mt-2 text-xs space-y-1 list-disc list-inside">
-                                <li><strong>parishioners</strong> — temp_id, family_temp_id, family_role, last_name, first_name, gender, birthday, birth_place...</li>
-                                <li><strong>sacraments</strong> — parishioner_temp_id, type, received_date...</li>
-                                <li><strong>marriages</strong> — husband_temp_id, wife_temp_id, married_date, status...</li>
+                                <li><strong>ho_gia_dinh</strong> — ma_ho, ma_gd, ten_ho, gio_ho, dia_chi, tinh, xa, dien_thoai...</li>
+                                <li><strong>thanh_vien</strong> — ma_tv, ma_ho, vai_tro, ho, ten, bí tích (rt_*, tt_*, ts_*...), hôn phối (hp_*)</li>
                             </ul>
                             <p class="mt-2 text-xs text-amber-700">
-                                • Dùng <strong>temp_id</strong> (P001, P002...) để liên kết giữa các sheet<br>
-                                • <strong>family_role</strong>: husband / wife / child / other<br>
-                                • <strong>type</strong>: baptism / communion / confirmation / anointing / holy_orders<br>
+                                • <strong>ma_ho</strong> / <strong>ma_tv</strong> là mã tạm để liên kết giữa 2 sheet<br>
+                                • <strong>vai_tro</strong>: husband / wife / child / other<br>
+                                • Hôn phối tự suy ra từ cặp chồng–vợ cùng hộ (hoặc điền cột hp_* trên dòng chồng/vợ)<br>
                                 • Toàn bộ import chạy trong 1 transaction — lỗi sẽ rollback hết
                             </p>
                         </div>
                     </div>
-                    <a href="{{ route('parishioners.import.family-register.template') }}"
+                    <a href="{{ route('parishioners.import.template') }}"
                         class="flex-shrink-0 inline-flex items-center gap-1.5 px-3 py-2
                                bg-amber-100 hover:bg-amber-200 text-amber-800 text-xs font-semibold
                                rounded-lg transition">
@@ -92,9 +91,23 @@
             <div class="px-4 lg:px-6 py-4 border-b border-slate-200">
                 <h3 class="text-base font-bold text-slate-900">Xem trước</h3>
                 <p class="text-xs text-slate-500 mt-1">
-                    {{ count($parishioners) }} giáo dân · {{ count($sacraments) }} bí tích · {{ count($marriages) }} hôn phối
+                    {{ count($families) }} hộ · {{ count($parishioners) }} giáo dân · {{ count($sacraments) }} bí tích · {{ count($marriages) }} hôn phối
                 </p>
             </div>
+
+            @if(!empty($families))
+            <div class="px-4 lg:px-6 py-3 border-b border-slate-100 bg-slate-50/50">
+                <p class="text-xs font-semibold text-slate-600 mb-2">Hộ gia đình</p>
+                <div class="flex flex-wrap gap-2">
+                    @foreach($families as $family)
+                    <span class="inline-flex items-center px-2.5 py-1 rounded-lg bg-white border border-slate-200 text-xs">
+                        <span class="font-mono text-slate-500 mr-1.5">{{ $family['family_temp_id'] ?? '' }}</span>
+                        {{ $family['name'] ?? '—' }}
+                    </span>
+                    @endforeach
+                </div>
+            </div>
+            @endif
 
             <div class="overflow-x-auto">
                 <table class="w-full border-separate border-spacing-0">

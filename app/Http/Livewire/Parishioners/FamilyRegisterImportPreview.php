@@ -16,6 +16,7 @@ class FamilyRegisterImportPreview extends BaseComponent
 
     public $file = null;
 
+    public array $families         = [];
     public array $parishioners     = [];
     public array $sacraments      = [];
     public array $marriages       = [];
@@ -60,14 +61,17 @@ class FamilyRegisterImportPreview extends BaseComponent
 
             $this->errors        = $result['errors'];
             $this->warnings      = $result['warnings'];
+            $this->families      = $result['families'] ?? [];
             $this->parishioners  = $result['parishioners'];
             $this->sacraments    = $result['sacraments'];
             $this->marriages     = $result['marriages'];
             $this->readyToImport = $result['ready'];
 
             if ($this->readyToImport) {
+                $familyCount = is_array($this->families) ? count($this->families) : 0;
                 $msg = sprintf(
-                    'Sẵn sàng import: %d giáo dân, %d bí tích, %d hôn phối.',
+                    'Sẵn sàng import: %d hộ, %d giáo dân, %d bí tích, %d hôn phối.',
+                    $familyCount,
                     count($this->parishioners),
                     count($this->sacraments),
                     count($this->marriages)
@@ -94,7 +98,8 @@ class FamilyRegisterImportPreview extends BaseComponent
                 $this->parishioners,
                 $this->sacraments,
                 $this->marriages,
-                $this->parishId
+                $this->parishId,
+                $this->families
             );
 
             $parts = ['Import Sổ Gia Đình hoàn tất.'];
@@ -128,6 +133,7 @@ class FamilyRegisterImportPreview extends BaseComponent
 
     protected function resetPreview(): void
     {
+        $this->families       = [];
         $this->parishioners   = [];
         $this->sacraments     = [];
         $this->marriages      = [];

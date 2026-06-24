@@ -82,11 +82,7 @@
                                 @can('create', App\Models\Parishioner::class)
                                 <x-button as="a" href="{{ route('parishioners.import') }}" variant="outline">
                                     <x-icon name="upload" />
-                                    Import Excel
-                                </x-button>
-                                <x-button as="a" href="{{ route('parishioners.import.family-register') }}" variant="outline">
-                                    <x-icon name="upload" />
-                                    Sổ Gia Đình
+                                    Import Sổ GĐ
                                 </x-button>
                                 @endcan
 

@@ -9,10 +9,8 @@ class FamilyRegisterImportTemplateExport implements WithMultipleSheets
     public function sheets(): array
     {
         return [
-            new FamilyRegisterReadmeSheet(),
-            new FamilyRegisterParishionersSheet(),
-            new FamilyRegisterSacramentsSheet(),
-            new FamilyRegisterMarriagesSheet(),
+            new FamilyRegisterHouseholdsSheet(),
+            new FamilyRegisterMembersSheet(),
         ];
     }
 }

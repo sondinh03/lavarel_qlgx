@@ -27,17 +27,39 @@ class FamilyRegisterImportValidator
     {
         $classified = $this->classifySheets($allSheets);
 
+        $familiesMeta = [];
         $parishioners = $classified['parishioners'];
         $sacraments   = $classified['sacraments'];
         $marriages    = $classified['marriages'];
+
+        if (FamilyRegisterTwoSheetNormalizer::detect($allSheets)) {
+            $normalized = app(FamilyRegisterTwoSheetNormalizer::class)->normalize($allSheets);
+
+            if (! empty($normalized['errors'])) {
+                return [
+                    'errors'       => $normalized['errors'],
+                    'warnings'     => [],
+                    'families'     => [],
+                    'parishioners' => [],
+                    'sacraments'   => [],
+                    'marriages'    => [],
+                    'ready'        => false,
+                ];
+            }
+
+            $familiesMeta = $normalized['families'];
+            $parishioners = $this->rawRowsFromNormalized($normalized['parishioners']);
+            $sacraments   = $this->rawRowsFromNormalized($normalized['sacraments']);
+            $marriages    = $this->rawRowsFromNormalized($normalized['marriages']);
+        }
 
         $errors   = [];
         $warnings = [];
 
         if (empty($parishioners)) {
-            $errors[] = 'Không tìm thấy sheet <strong>parishioners</strong> (cần cột temp_id, family_temp_id, family_role).';
+            $errors[] = 'Không tìm thấy dữ liệu thành viên (sheet <strong>thanh_vien</strong> hoặc <strong>parishioners</strong>).';
 
-            return compact('errors', 'warnings', 'parishioners', 'sacraments', 'marriages') + ['ready' => false];
+            return compact('errors', 'warnings', 'parishioners', 'sacraments', 'marriages') + ['families' => $familiesMeta, 'ready' => false];
         }
 
         $tempIds        = [];
@@ -209,11 +231,21 @@ class FamilyRegisterImportValidator
         return [
             'errors'       => $errors,
             'warnings'     => $warnings,
+            'families'     => $familiesMeta,
             'parishioners' => $parsedRows,
             'sacraments'   => $parsedSacraments,
             'marriages'    => $parsedMarriages,
             'ready'        => $ready,
         ];
+    }
+
+    /**
+     * @param  array<int, array<string, mixed>>  $rows
+     * @return array<int, array<string, mixed>>
+     */
+    private function rawRowsFromNormalized(array $rows): array
+    {
+        return array_values($rows);
     }
 
     /**

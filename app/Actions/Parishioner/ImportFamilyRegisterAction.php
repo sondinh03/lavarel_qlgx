@@ -28,8 +28,13 @@ class ImportFamilyRegisterAction
      *   errors: array
      * }
      */
-    public function handle(array $parishioners, array $sacraments, array $marriages, int $defaultParishId): array
-    {
+    public function handle(
+        array $parishioners,
+        array $sacraments,
+        array $marriages,
+        int $defaultParishId,
+        array $familiesMeta = []
+    ): array {
         $tempIdMap       = [];
         $familyTempMap   = [];
         $saintMap        = [];
@@ -45,6 +50,7 @@ class ImportFamilyRegisterAction
             $sacraments,
             $marriages,
             $defaultParishId,
+            $familiesMeta,
             &$tempIdMap,
             &$familyTempMap,
             &$saintMap,
@@ -75,14 +81,19 @@ class ImportFamilyRegisterAction
                 $members = collect($parishioners)->where('family_temp_id', $familyTempId);
                 $husband = $members->firstWhere('family_role', 'husband');
                 $wife    = $members->firstWhere('family_role', 'wife');
+                $meta    = $familiesMeta[$familyTempId] ?? [];
                 $label   = $husband
                     ? trim(($husband['last_name'] ?? '') . ' ' . ($husband['first_name'] ?? ''))
                     : ($wife ? trim(($wife['last_name'] ?? '') . ' ' . ($wife['first_name'] ?? '')) : $familyTempId);
 
                 $family = Family::create([
-                    'parish_id' => $defaultParishId,
-                    'name'      => 'GĐ ' . $label,
-                    'status'    => true,
+                    'code'            => ! empty($meta['code']) ? $meta['code'] : null,
+                    'parish_id'       => $defaultParishId,
+                    'parish_group_id' => $this->resolveParishGroupId($meta['parish_group'] ?? '', $defaultParishId),
+                    'name'            => ! empty($meta['name']) ? $meta['name'] : ('GĐ ' . $label),
+                    'address'         => $meta['address'] ?? null,
+                    'province'        => $meta['province'] ?? null,
+                    'status'          => true,
                 ]);
 
                 $familyTempMap[$familyTempId] = $family->id;
@@ -271,5 +282,20 @@ class ImportFamilyRegisterAction
         $key = mb_strtolower(trim($parishName ?? ''), 'UTF-8');
 
         return ($key !== '' && isset($map[$key])) ? $map[$key] : $default;
+    }
+
+    private function resolveParishGroupId(?string $groupName, int $parishId): ?int
+    {
+        $key = mb_strtolower(trim($groupName ?? ''), 'UTF-8');
+        if ($key === '') {
+            return null;
+        }
+
+        $id = \App\Models\ParishGroup::query()
+            ->where('parish_id', $parishId)
+            ->whereRaw('LOWER(TRIM(name)) = ?', [$key])
+            ->value('id');
+
+        return $id ? (int) $id : null;
     }
 }
