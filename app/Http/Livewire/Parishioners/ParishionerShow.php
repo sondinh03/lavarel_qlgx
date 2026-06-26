@@ -89,7 +89,7 @@ class ParishionerShow extends Component
     public function mount(Parishioner $parishioner): void
     {
         $this->authorize('view', $parishioner);
-        $this->parishioner = $parishioner->load(['saint', 'parishGroup', 'student']);
+        $this->parishioner = $parishioner->load(['saint', 'parishGroup', 'association', 'student']);
         $this->is_deceased = $this->parishioner->death_date !== null;
 
         $this->openEditModalFromQuery(request()->query('edit'));
@@ -161,7 +161,7 @@ class ParishionerShow extends Component
         try {
             DB::beginTransaction();
             $this->parishioner->update($data);
-            $this->parishioner->refresh()->load(['saint', 'parishGroup']);
+            $this->parishioner->refresh()->load(['saint', 'parishGroup', 'association']);
             DB::commit();
             $this->emit('toast', 'message', 'Cập nhật thông tin cơ bản thành công');
             $this->showEditBasic = false;
@@ -240,7 +240,7 @@ class ParishionerShow extends Component
         try {
             $data = $this->applyParishionerSectionSave($this->parishioner, 'parish');
             $this->parishioner->update($data);
-            $this->parishioner->refresh()->load(['parishGroup', 'diocese', 'deanery', 'parish', 'transferredFromParish']);
+            $this->parishioner->refresh()->load(['parishGroup', 'association', 'diocese', 'deanery', 'parish', 'transferredFromParish']);
             $this->emit('toast', 'message', 'Cập nhật sinh hoạt giáo xứ thành công');
             $this->showEditParish = false;
             $this->resetValidation();

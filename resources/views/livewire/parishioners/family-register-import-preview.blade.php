@@ -29,13 +29,13 @@
                             <p class="font-semibold mb-1">Cấu trúc file Excel (2 sheet)</p>
                             <p>Tên cột kỹ thuật ở <strong>dòng 5</strong>. Dữ liệu bắt đầu từ dòng 6.</p>
                             <ul class="mt-2 text-xs space-y-1 list-disc list-inside">
-                                <li><strong>ho_gia_dinh</strong> — ma_ho, ma_gd, ten_ho, gio_ho, dia_chi, tinh, xa, dien_thoai...</li>
-                                <li><strong>thanh_vien</strong> — ma_tv, ma_ho, vai_tro, ho, ten, bí tích (rt_*, tt_*, ts_*...), hôn phối (hp_*)</li>
+                                <li><strong>ho_gia_dinh</strong> — ma_ho_gia_dinh, ma_gia_dinh, ten_ho_gia_dinh, giao_ho, dia_chi, hôn phối (hon_phoi_*)…</li>
+                                <li><strong>thanh_vien</strong> — ma_thanh_vien, ma_ho_gia_dinh, vai_tro, ho, ten, hoi_doan, bí tích (rua_toi_*, ruoc_le_*, them_suc_*)</li>
                             </ul>
                             <p class="mt-2 text-xs text-amber-700">
-                                • <strong>ma_ho</strong> / <strong>ma_tv</strong> là mã tạm để liên kết giữa 2 sheet<br>
-                                • <strong>vai_tro</strong>: husband / wife / child / other<br>
-                                • Hôn phối tự suy ra từ cặp chồng–vợ cùng hộ (hoặc điền cột hp_* trên dòng chồng/vợ)<br>
+                                • <strong>ma_ho_gia_dinh</strong> / <strong>ma_thanh_vien</strong> là mã tạm để liên kết giữa 2 sheet<br>
+                                • <strong>vai_tro</strong>: Chồng / Vợ / Con / Khác · <strong>gioi_tinh</strong>: Nam / Nữ<br>
+                                • Hôn phối điền trên sheet <strong>ho_gia_dinh</strong>; hệ thống suy ra cặp chồng–vợ từ vai trò thành viên<br>
                                 • Toàn bộ import chạy trong 1 transaction — lỗi sẽ rollback hết
                             </p>
                         </div>
@@ -119,6 +119,7 @@
                             <x-table-header>GD tạm</x-table-header>
                             <x-table-header>Ngày sinh</x-table-header>
                             <x-table-header>Tên thánh</x-table-header>
+                            <x-table-header>Hội đoàn</x-table-header>
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-slate-100">
@@ -126,10 +127,11 @@
                         <tr class="hover:bg-slate-50" wire:key="fr-{{ $row['temp_id'] }}">
                             <td class="px-4 py-3 text-xs font-mono text-slate-500">{{ $row['temp_id'] }}</td>
                             <td class="px-4 py-3 text-sm font-semibold">{{ $row['last_name'] }} {{ $row['first_name'] }}</td>
-                            <td class="px-4 py-3 text-sm">{{ $row['family_role'] }}</td>
+                            <td class="px-4 py-3 text-sm">{{ \App\Support\ParishionerEnumResolver::familyRoleLabel($row['family_role']) }}</td>
                             <td class="px-4 py-3 text-xs font-mono">{{ $row['family_temp_id'] }}</td>
                             <td class="px-4 py-3 text-sm">{{ $row['birthday'] ?: '—' }}</td>
                             <td class="px-4 py-3 text-sm">{{ $row['saint_name'] ?: '—' }}</td>
+                            <td class="px-4 py-3 text-sm">{{ $row['association_name'] ?: '—' }}</td>
                         </tr>
                         @endforeach
                     </tbody>

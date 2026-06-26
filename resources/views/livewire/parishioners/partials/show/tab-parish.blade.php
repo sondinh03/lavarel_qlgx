@@ -4,6 +4,7 @@
         <x-info-row label="Giáo hạt" :value="$parishioner->deanery?->name" />
         <x-info-row label="Giáo xứ" :value="$parishioner->parish?->name" />
         <x-info-row label="Giáo họ" :value="$parishioner->parishGroup?->name" />
+        <x-info-row label="Hội đoàn" :value="$parishioner->association?->name" />
         <x-info-row label="Cấp bậc" :value="config('parishioner.level.' . $parishioner->level)" />
     </x-parishioner-section-card>
 

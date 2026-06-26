@@ -7,6 +7,7 @@ use App\Models\Family;
 use App\Models\Holymanagement;
 use App\Models\Marriage;
 use App\Models\Parishioner;
+use App\Support\ParishionerEnumResolver;
 use App\Models\ParishionerRegistrationRequest;
 use App\Models\Sacrament;
 use App\Models\User;
@@ -70,6 +71,7 @@ class ApproveParishionerRegistrationAction
                 'father_name'          => $payload['father_name'] ?? null,
                 'mother_name'          => $payload['mother_name'] ?? null,
                 'family_role'          => $payload['family_role'] ?? null,
+                'association_id'       => ! empty($payload['association_id']) ? (int) $payload['association_id'] : null,
                 'married'              => (int) ($payload['married'] ?? 0),
                 'ethnic'               => $payload['ethnic'] ?? null,
                 'career'               => $payload['career'] ?? null,
@@ -156,6 +158,7 @@ class ApproveParishionerRegistrationAction
                     'mother_id'            => $this->resolveRef($row['mother_ref'] ?? null, $refMap),
                     'family_id'            => $family->id,
                     'family_role'          => $row['family_role'] ?? null,
+                    'association_id'       => ! empty($row['association_id']) ? (int) $row['association_id'] : null,
                     'parish_id'            => $request->parish_id,
                     'parish_area_id'       => $familyData['parish_area_id'] ?? null,
                     'permanent_residence'  => $familyData['address'] ?? null,
@@ -210,6 +213,8 @@ class ApproveParishionerRegistrationAction
                     continue;
                 }
 
+                $status = $row['status'] ?? Marriage::STATUS_VALID;
+
                 Marriage::create([
                     'husband_id'         => $husbandId,
                     'wife_id'            => $wifeId,
@@ -220,11 +225,12 @@ class ApproveParishionerRegistrationAction
                     'witness_1'          => $row['witness_1'] ?? null,
                     'witness_2'          => $row['witness_2'] ?? null,
                     'priest_witness'     => $row['priest_witness'] ?? null,
-                    'status'             => $row['status'] ?? Marriage::STATUS_VALID,
+                    'status'             => $status,
                     'note'               => $row['note'] ?? null,
                 ]);
 
-                Parishioner::whereIn('id', [$husbandId, $wifeId])->update(['married' => 1]);
+                $married = ParishionerEnumResolver::marriedFromMarriageStatus($status);
+                Parishioner::whereIn('id', [$husbandId, $wifeId])->update(['married' => $married]);
             }
 
             app(FamilyMembershipService::class)->recount($family);

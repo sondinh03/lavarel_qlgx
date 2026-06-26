@@ -2,13 +2,16 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Factories\HasFactory;
 use App\Traits\BelongsToParish;
+use Backpack\CRUD\app\Models\Traits\CrudTrait;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
 
 class StudentNew extends Model
 {
-    use HasFactory, BelongsToParish;
+    use BelongsToParish;
+    use CrudTrait;
+    use HasFactory;
 
     protected $table = 'students';
 
@@ -154,5 +157,10 @@ class StudentNew extends Model
         $saintName = $this->saint?->name ?? '';
 
         return trim($saintName . ' ' . $this->full_name);
+    }
+
+    public function openLink(): string
+    {
+        return '<a target="_blank" href="' . route('students.show', $this->id) . '"><i class="las la-link"></i>Liên kết</a>';
     }
 }

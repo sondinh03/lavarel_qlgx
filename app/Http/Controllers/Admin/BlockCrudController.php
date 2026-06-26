@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers\Admin;
 
+/** @deprecated Legacy CRUD for `block` table — route removed; use GradeLevelCrudController (`/admin/grade-level`). */
+
 use App\Http\Requests\BlockRequest;
 use Backpack\CRUD\app\Http\Controllers\CrudController;
 use Backpack\CRUD\app\Library\CrudPanel\CrudPanelFacade as CRUD;

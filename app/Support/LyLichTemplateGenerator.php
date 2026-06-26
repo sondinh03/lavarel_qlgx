@@ -8,7 +8,7 @@ use PhpOffice\PhpWord\IOFactory;
 class LyLichTemplateGenerator
 {
     public const PLACEHOLDERS = [
-        'did', 'deid', 'pid', 'giaoxu', 'paid', 'holy', 'id', 'name', 'birthday', 'sex',
+        'did', 'deid', 'pid', 'giaoxu', 'paid', 'assid', 'holy', 'id', 'name', 'birthday', 'sex',
         'email', 'origin', 'ward', 'province', 'residence', 'resi_ward', 'resi_province',
         'father', 'mother', 'phone', 'career', 'level', 'married',
         'baptism_date', 'baptism_number', 'baptism_giver', 'baptism_sponsor',
@@ -61,7 +61,7 @@ class LyLichTemplateGenerator
         $section->addTextBreak(1);
 
         $groups = [
-            'Thông tin giáo xứ' => ['did', 'deid', 'pid', 'giaoxu', 'paid'],
+            'Thông tin giáo xứ' => ['did', 'deid', 'pid', 'giaoxu', 'paid', 'assid'],
             'Thông tin cá nhân' => ['holy', 'name', 'birthday', 'sex', 'email', 'phone', 'id'],
             'Địa chỉ'           => ['origin', 'ward', 'province', 'residence', 'resi_ward', 'resi_province'],
             'Gia đình'          => ['father', 'mother', 'career', 'level', 'married'],

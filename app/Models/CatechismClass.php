@@ -3,12 +3,14 @@
 namespace App\Models;
 
 use App\Traits\BelongsToParish;
+use Backpack\CRUD\app\Models\Traits\CrudTrait;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class CatechismClass extends Model
 {
     use BelongsToParish;
+    use CrudTrait;
     use HasFactory;
 
     protected $table = "classes";
@@ -101,5 +103,10 @@ class CatechismClass extends Model
             ->join('grade_levels', 'classes.grade_level_id', '=', 'grade_levels.id')
             ->orderBy('grade_levels.sort_order')
             ->orderBy('classes.name');
+    }
+
+    public function openLink(): string
+    {
+        return '<a target="_blank" href="' . route('classes.show', $this->id) . '"><i class="las la-link"></i>Liên kết</a>';
     }
 }

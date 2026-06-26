@@ -127,7 +127,7 @@ if (request()->routeIs('parishioners.*', 'families.*', 'marriage-announcements.*
     $activeGroup = 'parishioners';
 } elseif (request()->routeIs('sacraments.*', 'baptisms.*', 'confirmations.*', 'marriages.*')) {
     $activeGroup = 'sacraments';
-} elseif (request()->routeIs('parish-group.*', 'holy-names.*', 'parishioner-system.*')) {
+} elseif (request()->routeIs('parish-group.*', 'associations.*', 'holy-names.*', 'parishioner-system.*')) {
     $activeGroup = 'system';
 } else {
     $activeGroup = null;
@@ -364,7 +364,7 @@ $isDashboard = request()->routeIs('parishioners.dashboard');
             {{-- ══════════════════════════════════════════
                  Nhóm: HỆ THỐNG
             ══════════════════════════════════════════ --}}
-            @php $isSystemActive = request()->routeIs('parish-group.*', 'holy-names.*', 'parishioner-system.*'); @endphp
+            @php $isSystemActive = request()->routeIs('parish-group.*', 'associations.*', 'holy-names.*', 'parishioner-system.*'); @endphp
             <div class="relative has-flyout">
                 <button @click="toggleGroup('system')"
                     class="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition group
@@ -397,6 +397,7 @@ $isDashboard = request()->routeIs('parishioners.dashboard');
                     x-transition:leave-end="opacity-0"
                     class="mt-0.5 ml-4 pl-3 border-l border-slate-100 space-y-0.5">
                     @include('frontend.layout.partials.sidebar-sub-item', ['route' => 'parish-group.index', 'label' => 'Giáo họ'])
+                    @include('frontend.layout.partials.sidebar-sub-item', ['route' => 'associations.index', 'label' => 'Hội đoàn'])
                     @include('frontend.layout.partials.sidebar-sub-item', ['route' => 'holy-names.index',   'label' => 'Tên thánh'])
                     {{-- @include('frontend.layout.partials.sidebar-sub-item', ['route' => 'parishioner-system.users', 'label' => 'Người dùng']) --}}
                 </div>
@@ -404,6 +405,7 @@ $isDashboard = request()->routeIs('parishioners.dashboard');
                 <div class="flyout-menu" x-cloak>
                     <div class="px-3 py-2 text-xs font-semibold text-slate-400 uppercase tracking-wide">Hệ Thống</div>
                     @include('frontend.layout.partials.flyout-item', ['route' => 'parish-group.index', 'label' => 'Giáo họ'])
+                    @include('frontend.layout.partials.flyout-item', ['route' => 'associations.index', 'label' => 'Hội đoàn'])
                     @include('frontend.layout.partials.flyout-item', ['route' => 'holy-names.index',   'label' => 'Tên thánh'])
                     {{-- @include('frontend.layout.partials.flyout-item', ['route' => 'parishioner-system.users', 'label' => 'Người dùng']) --}}
                 </div>

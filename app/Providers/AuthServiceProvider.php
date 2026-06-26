@@ -2,6 +2,7 @@
 
 namespace App\Providers;
 
+use App\Models\Association;
 use App\Models\AttendanceSession;
 use App\Models\CatechismClass;
 use App\Models\Family;
@@ -17,6 +18,7 @@ use App\Models\ScoreType;
 use App\Models\Student;
 use App\Models\StudentNew;
 use App\Models\StudentScore;
+use App\Policies\AssociationPolicy;
 use App\Policies\AttendanceSessionPolicy;
 use App\Policies\CatechismClassPolicy;
 use App\Policies\FamilyPolicy;
@@ -46,6 +48,7 @@ class AuthServiceProvider extends ServiceProvider
         StudentNew::class => StudentPolicy::class,
         Parishioner::class => ParishionerPolicy::class,
         ParishGroup::class => ParishGroupPolicy::class,
+        Association::class => AssociationPolicy::class,
         ScoreType::class => ScoreTypePolicy::class,
         StudentScore::class => StudentScorePolicy::class,
         Holymanagement::class => HolymanagementPolicy::class,

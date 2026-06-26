@@ -75,6 +75,7 @@ use App\Http\Livewire\NamHoc\NamHocManager;
 use App\Http\Livewire\Parish\ParishChild;
 use App\Http\Livewire\Parish\ParishGroup;
 use App\Http\Livewire\Parish\ParishGroupManager;
+use App\Http\Livewire\Parishioners\AssociationManager;
 use App\Http\Livewire\Parishioners\ParishionerCreate;
 use App\Http\Livewire\Parishioners\ParishionerRegistrationList;
 use App\Http\Livewire\Parishioners\ParishionerRegistrationShow;
@@ -280,6 +281,9 @@ Route::middleware('auth')->group(function () {
 
         Route::get('/parish-group', ParishGroupManager::class)
             ->name('parish-group.index');
+
+        Route::get('/associations', AssociationManager::class)
+            ->name('associations.index');
 
         Route::get('/groups', GroupManager::class)
             ->name('groups.index');

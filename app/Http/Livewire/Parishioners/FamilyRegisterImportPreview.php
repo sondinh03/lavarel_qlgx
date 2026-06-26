@@ -57,7 +57,7 @@ class FamilyRegisterImportPreview extends BaseComponent
 
         try {
             $allSheets = Excel::toArray(new FamilyRegisterPreviewImport, $this->file);
-            $result    = app(FamilyRegisterImportValidator::class)->validate($allSheets);
+            $result    = app(FamilyRegisterImportValidator::class)->validate($allSheets, $this->parishId);
 
             $this->errors        = $result['errors'];
             $this->warnings      = $result['warnings'];

@@ -15,7 +15,7 @@ class ParishionerLyLichPresenter
     public static function for(Parishioner $parishioner): self
     {
         $parishioner->loadMissing([
-            'saint', 'diocese', 'deanery', 'parish', 'parishGroup',
+            'saint', 'diocese', 'deanery', 'parish', 'parishGroup', 'association',
             'father', 'mother',
             'baptism.diocese', 'baptism.deanery', 'baptism.parish',
             'confirmation.diocese', 'confirmation.deanery', 'confirmation.parish',
@@ -46,6 +46,7 @@ class ParishionerLyLichPresenter
             'pid'   => $p->parish?->name ? ', ' . $p->parish->name : '',
             'giaoxu'=> $p->parish?->name ?? '',
             'paid'  => $p->parishGroup?->name ? ', Giáo họ ' . $p->parishGroup->name : '',
+            'assid' => $p->association?->name ? ', Hội đoàn ' . $p->association->name : '',
             'holy'  => $p->saint?->name ?? '',
             'id'    => (string) $p->id,
             'name'  => $p->full_name,

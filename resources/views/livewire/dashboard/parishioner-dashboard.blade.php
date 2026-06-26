@@ -112,6 +112,10 @@
                     <div class="text-sm font-semibold text-slate-800">Giáo họ</div>
                     <div class="text-xs text-slate-400 mt-0.5">Quản lý giáo họ</div>
                 </a>
+                <a href="{{ route('associations.index') }}" class="px-4 py-3 rounded-2xl bg-slate-50 hover:bg-slate-100 border border-slate-200 transition">
+                    <div class="text-sm font-semibold text-slate-800">Hội đoàn</div>
+                    <div class="text-xs text-slate-400 mt-0.5">Quản lý hội đoàn</div>
+                </a>
                 <a href="{{ route('holy-names.index') }}" class="px-4 py-3 rounded-2xl bg-slate-50 hover:bg-slate-100 border border-slate-200 transition">
                     <div class="text-sm font-semibold text-slate-800">Tên thánh</div>
                     <div class="text-xs text-slate-400 mt-0.5">Danh mục tên thánh</div>

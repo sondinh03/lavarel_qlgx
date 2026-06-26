@@ -173,6 +173,7 @@ class ParishionerSelfRegistration extends Component
     public function render()
     {
         return view('livewire.parishioners.parishioner-self-registration', [
+            'showDashboardBack' => auth()->check(),
             'familyRoles'    => config('parishioner-registration.family_roles', []),
             'marriageStatuses' => Marriage::statusOptions(),
             'sacramentTypes' => Sacrament::typeOptions(),

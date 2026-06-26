@@ -53,6 +53,18 @@
                 :value="$parish_area_id" />
             @error('parish_area_id') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
         </div>
+        <div>
+            <label class="block text-sm font-semibold text-slate-700 mb-1">Hội đoàn</label>
+            <x-searchable-select
+                wire:key="association-{{ $parish_id ?? 'none' }}"
+                wireModel="association_id"
+                :options="$associationOptions"
+                placeholder="{{ $parish_id ? '-- Chọn hội đoàn --' : 'Chọn giáo xứ trước' }}"
+                labelKey="name"
+                valueKey="id"
+                :value="$association_id" />
+            @error('association_id') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
+        </div>
     </div>
 
     <p class="text-xs font-semibold text-slate-500 uppercase tracking-wide pt-2">Sinh hoạt & chuyển xứ</p>

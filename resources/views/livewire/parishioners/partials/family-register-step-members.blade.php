@@ -127,6 +127,17 @@
     @endif
 
     <div>
+      <label class="block text-sm font-medium text-slate-700 mb-1">Hội đoàn</label>
+      <x-searchable-select
+        wireModel="member_association_id"
+        :options="$associationOptions"
+        placeholder="-- Chọn hội đoàn --"
+        labelKey="name"
+        valueKey="id"
+        :value="$member_association_id" />
+    </div>
+
+    <div>
       <label class="block text-sm font-medium text-slate-700 mb-1">CCCD</label>
       <input wire:model.defer="member_cccd" type="text" class="{{ $input }}" />
     </div>

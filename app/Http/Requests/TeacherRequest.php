@@ -25,7 +25,18 @@ class TeacherRequest extends FormRequest
     public function rules()
     {
         return [
-            // 'name' => 'required|min:5|max:255'
+            'parish_id' => 'required|integer|exists:parishes,id',
+            'parish_group_id' => 'nullable|integer|exists:parish_groups,id',
+            'last_name' => 'required|string|max:50',
+            'first_name' => 'required|string|max:50',
+            'saint_id' => 'nullable|integer|exists:holymanagements,id',
+            'gender' => 'nullable|in:male,female',
+            'birthday' => 'nullable|date',
+            'phone_number' => 'nullable|string|max:20',
+            'email' => 'nullable|email|max:255',
+            'address' => 'nullable|string|max:255',
+            'note' => 'nullable|string|max:2000',
+            'is_active' => 'nullable|boolean',
         ];
     }
 

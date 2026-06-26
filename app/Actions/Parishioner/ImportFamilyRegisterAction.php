@@ -6,11 +6,13 @@ use App\Actions\Family\FamilyMembershipService;
 use App\Models\Family;
 use App\Models\Holymanagement;
 use App\Models\Marriage;
+use App\Models\Association;
 use App\Models\ParishNew;
 use App\Models\Parishioner;
 use App\Models\Sacrament;
 use App\Support\ExcelDateParser;
 use App\Support\ParishionerEnumResolver;
+use App\Support\VietnamAddressResolver;
 use Illuminate\Support\Facades\DB;
 
 class ImportFamilyRegisterAction
@@ -37,6 +39,7 @@ class ImportFamilyRegisterAction
     ): array {
         $tempIdMap       = [];
         $familyTempMap   = [];
+        $familyContextMap = [];
         $saintMap        = [];
         $parishNameMap   = $this->buildParishNameMap();
 
@@ -53,6 +56,7 @@ class ImportFamilyRegisterAction
             $familiesMeta,
             &$tempIdMap,
             &$familyTempMap,
+            &$familyContextMap,
             &$saintMap,
             $parishNameMap,
             &$familiesCreated,
@@ -86,17 +90,31 @@ class ImportFamilyRegisterAction
                     ? trim(($husband['last_name'] ?? '') . ' ' . ($husband['first_name'] ?? ''))
                     : ($wife ? trim(($wife['last_name'] ?? '') . ' ' . ($wife['first_name'] ?? '')) : $familyTempId);
 
+                $parishGroupId = $this->resolveParishGroupId($meta['parish_group'] ?? '', $defaultParishId);
+                $provinceKey   = VietnamAddressResolver::resolveProvinceKey($meta['province'] ?? '')
+                    ?? ($meta['province'] ?? null);
+                $wardId        = VietnamAddressResolver::resolveWardId($meta['ward'] ?? '');
+
                 $family = Family::create([
                     'code'            => ! empty($meta['code']) ? $meta['code'] : null,
                     'parish_id'       => $defaultParishId,
-                    'parish_group_id' => $this->resolveParishGroupId($meta['parish_group'] ?? '', $defaultParishId),
+                    'parish_group_id' => $parishGroupId,
                     'name'            => ! empty($meta['name']) ? $meta['name'] : ('GĐ ' . $label),
                     'address'         => $meta['address'] ?? null,
-                    'province'        => $meta['province'] ?? null,
+                    'province'        => $provinceKey,
+                    'ward_id'         => $wardId,
+                    'phone'           => $meta['phone'] ?? null,
+                    'note'            => $meta['note'] ?? null,
                     'status'          => true,
                 ]);
 
                 $familyTempMap[$familyTempId] = $family->id;
+                $familyContextMap[$familyTempId] = [
+                    'parish_group_id' => $parishGroupId,
+                    'address'         => $meta['address'] ?? null,
+                    'province'        => $provinceKey,
+                    'ward_id'         => $wardId,
+                ];
                 $familiesCreated++;
             }
 
@@ -106,6 +124,7 @@ class ImportFamilyRegisterAction
             foreach ($sorted as $row) {
                 $tempId   = $row['temp_id'];
                 $parishId = $this->resolveParishId($row['parish_name'], $parishNameMap, $defaultParishId);
+                $familyCtx = $familyContextMap[$row['family_temp_id']] ?? [];
 
                 $data = [
                     'last_name'            => $row['last_name'],
@@ -116,10 +135,15 @@ class ImportFamilyRegisterAction
                     'birth_order'          => is_numeric($row['birth_order']) ? (int) $row['birth_order'] : null,
                     'saint_id'             => isset($saintMap[$row['saint_name']]) ? $saintMap[$row['saint_name']] : null,
                     'parish_id'            => $parishId,
+                    'parish_area_id'       => $familyCtx['parish_group_id'] ?? null,
                     'family_id'            => $familyTempMap[$row['family_temp_id']] ?? null,
                     'family_role'          => $row['family_role'] ?: null,
                     'father_id'            => $this->resolveTempId($row['father_temp_id'], $tempIdMap),
                     'mother_id'            => $this->resolveTempId($row['mother_temp_id'], $tempIdMap),
+                    'association_id'       => $this->resolveAssociationId($row['association_name'] ?? '', $defaultParishId),
+                    'permanent_residence'  => $familyCtx['address'] ?? null,
+                    'permanent_province'   => $familyCtx['province'] ?? null,
+                    'permanent_ward_id'    => $familyCtx['ward_id'] ?? null,
                     'note'                 => $row['note'] ?: null,
                     'status'               => true,
                     'is_active'            => true,
@@ -186,6 +210,7 @@ class ImportFamilyRegisterAction
                 }
 
                 $parishId = $this->resolveParishId($row['parish_name'], $parishNameMap, $defaultParishId);
+                $status   = $row['status'] ?: Marriage::STATUS_VALID;
 
                 Marriage::create([
                     'husband_id'         => $husbandId,
@@ -197,13 +222,14 @@ class ImportFamilyRegisterAction
                     'witness_1'          => $row['witness_1'] ?: null,
                     'witness_2'          => $row['witness_2'] ?: null,
                     'priest_witness'     => $row['priest_witness'] ?: null,
-                    'status'             => $row['status'] ?: Marriage::STATUS_VALID,
+                    'status'             => $status,
                     'note'               => $row['note'] ?: null,
                 ]);
 
                 $marriagesCreated++;
 
-                Parishioner::whereIn('id', [$husbandId, $wifeId])->update(['married' => 1]);
+                $married = ParishionerEnumResolver::marriedFromMarriageStatus($status);
+                Parishioner::whereIn('id', [$husbandId, $wifeId])->update(['married' => $married]);
             }
 
             $membershipService = app(FamilyMembershipService::class);
@@ -293,6 +319,22 @@ class ImportFamilyRegisterAction
 
         $id = \App\Models\ParishGroup::query()
             ->where('parish_id', $parishId)
+            ->whereRaw('LOWER(TRIM(name)) = ?', [$key])
+            ->value('id');
+
+        return $id ? (int) $id : null;
+    }
+
+    private function resolveAssociationId(?string $name, int $parishId): ?int
+    {
+        $key = mb_strtolower(trim($name ?? ''), 'UTF-8');
+        if ($key === '') {
+            return null;
+        }
+
+        $id = Association::query()
+            ->where('pid', $parishId)
+            ->where('status', 1)
             ->whereRaw('LOWER(TRIM(name)) = ?', [$key])
             ->value('id');
 

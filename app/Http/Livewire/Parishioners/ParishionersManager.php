@@ -17,6 +17,7 @@ class ParishionersManager extends BaseComponent
     public string $selectedMarried  = '';
     public string $selectedStatus   = '';
     public string $selectedGroup    = '';
+    public string $selectedAssociation = '';
     public string $selectedDeceased = '';
 
     public $showAdvancedFilters = false;
@@ -34,6 +35,9 @@ class ParishionersManager extends BaseComponent
     /** @var array<int, string> */
     public array $parishGroups = [];
 
+    /** @var array<int, string> */
+    public array $associations = [];
+
     protected function queryString(): array
     {
         return array_merge(parent::queryString(), [
@@ -42,6 +46,7 @@ class ParishionersManager extends BaseComponent
             'selectedMarried'  => ['except' => '', 'as' => 'married'],
             'selectedStatus'   => ['except' => '', 'as' => 'status'],
             'selectedGroup'    => ['except' => '', 'as' => 'group'],
+            'selectedAssociation' => ['except' => '', 'as' => 'association'],
             'selectedDeceased' => ['except' => '', 'as' => 'deceased'],
         ]);
     }
@@ -54,6 +59,7 @@ class ParishionersManager extends BaseComponent
         parent::mount();
         $this->requireParishId();
         $this->parishGroups = $this->loadParishGroups();
+        $this->associations = $this->loadAssociations();
     }
 
     protected function loadInitialData(): void {}
@@ -66,6 +72,20 @@ class ParishionersManager extends BaseComponent
 
         return DB::table('parish_groups')
             ->where('parish_id', $this->parishId)
+            ->orderBy('name')
+            ->pluck('name', 'id')
+            ->toArray();
+    }
+
+    private function loadAssociations(): array
+    {
+        if (! $this->parishId) {
+            return [];
+        }
+
+        return DB::table('associations')
+            ->where('pid', $this->parishId)
+            ->where('status', 1)
             ->orderBy('name')
             ->pluck('name', 'id')
             ->toArray();
@@ -152,6 +172,7 @@ class ParishionersManager extends BaseComponent
         $this->selectedMarried  = '';
         $this->selectedStatus   = '';
         $this->selectedGroup    = '';
+        $this->selectedAssociation = '';
         $this->selectedDeceased = '0';
         $this->search           = '';
         $this->resetPage();
@@ -162,7 +183,7 @@ class ParishionersManager extends BaseComponent
     {
         try {
             $query = Parishioner::query()
-                ->with(['saint', 'parishGroup', 'student']);
+                ->with(['saint', 'parishGroup', 'association', 'student']);
 
             if ($this->selectedDeceased === '1') {
                 $query->deceased();
@@ -181,6 +202,9 @@ class ParishionersManager extends BaseComponent
             }
             if ($this->selectedGroup !== '') {
                 $query->ofParishGroup((int) $this->selectedGroup);
+            }
+            if ($this->selectedAssociation !== '') {
+                $query->ofAssociation((int) $this->selectedAssociation);
             }
             if ($this->selectedAgeGroup !== '') {
                 [$min, $max] = str_contains($this->selectedAgeGroup, '+')
@@ -212,6 +236,7 @@ class ParishionersManager extends BaseComponent
     {
         return view('livewire.parishioners.parishioners-manager', [
             'parishGroups' => $this->parishGroups,
+            'associations' => $this->associations,
         ])->extends('frontend.layout.parishioner')->section('content');
     }
 }

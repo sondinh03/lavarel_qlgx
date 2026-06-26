@@ -21,6 +21,7 @@ class ParishNew extends Model
         'code',
         'deanery_id',
         'diocese_id',
+        'parish_priest_name',
         'ward',
         'province',
         'phone',

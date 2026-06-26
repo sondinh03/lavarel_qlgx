@@ -25,7 +25,17 @@ class FamilyRequest extends FormRequest
     public function rules()
     {
         return [
-            // 'name' => 'required|min:5|max:255'
+            'name' => 'required|string|max:255',
+            'parish_id' => 'required|integer|exists:parishes,id',
+            'parish_group_id' => 'nullable|integer|exists:parish_groups,id',
+            'head_id' => 'nullable|integer|exists:parishioners_new,id',
+            'address' => 'nullable|string|max:255',
+            'province' => 'nullable|string|max:100',
+            'ward_id' => 'nullable|integer',
+            'phone' => 'nullable|string|max:50',
+            'note' => 'nullable|string|max:2000',
+            'status' => 'nullable|boolean',
+            'is_included_in_stats' => 'nullable|boolean',
         ];
     }
 

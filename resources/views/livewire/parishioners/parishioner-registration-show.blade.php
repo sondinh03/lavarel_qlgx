@@ -74,6 +74,9 @@
                                 · {{ ($member['gender'] ?? '') === 'female' ? 'Nữ' : 'Nam' }}
                                 @if(!empty($member['birthday'])) · {{ $member['birthday'] }} @endif
                                 @if(!empty($member['birth_place'])) · {{ $member['birth_place'] }} @endif
+                                @if(!empty($member['association_id']) && !empty($associationNames[(int) $member['association_id']]))
+                                · {{ $associationNames[(int) $member['association_id']] }}
+                                @endif
                             </p>
                             @if(!empty($member['father_ref']) || !empty($member['mother_ref']) || !empty($member['father_name']) || !empty($member['mother_name']))
                             <p class="text-xs text-slate-500 mt-1">

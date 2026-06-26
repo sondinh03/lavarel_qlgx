@@ -104,46 +104,52 @@ class MarriageAnnouncementCrudController extends CrudController
         
         CRUD::addButtonFromModelFunction('line', 'open_link', 'openLink', 'beginning');
         CRUD::addColumn(['name' => 'name', 'type' => 'text', 'orderable' => false, 'label' => __('backend.name'), 'limit' => 255]);
-        //CRUD::addColumn(['name' => 'priest', 'type' => 'text', 'label' => __('backend.priest'), 'limit' => 255]);
         CRUD::addColumn(['name' => 'priest', 'type' => 'closure', 'orderable' => false, 'label' => __('backend.priest'), 'function' => function ($entry) {
-            if(!empty($entry->priest)){
-                $array_sacrament_givers = DB::table('sacrament_givers')
-                ->where('id', $entry->priest)
-                ->orderBy('id', 'ASC')
-                ->first();
-                
-                return $array_sacrament_givers->name;
+            if (empty($entry->priest)) {
+                return '—';
             }
+            $giver = DB::table('sacrament_givers')
+                ->where('id', $entry->priest)
+                ->first();
+
+            return $giver?->name ?? '—';
         }]);
         CRUD::addColumn(['name' => 'pid', 'type' => 'closure', 'orderable' => false, 'label' => __('backend.parish_managements'), 'function' => function ($entry) {
-            if(!empty($entry->pid)){
-                $array_parish = DB::table('parish_managements')
+            if (empty($entry->pid)) {
+                return '—';
+            }
+            $parish = \App\Models\ParishNew::find($entry->pid);
+            if ($parish) {
+                return $parish->name;
+            }
+            $legacy = DB::table('parish_managements')
                 ->where('status', '1')
                 ->where('id', $entry->pid)
-                ->orderBy('id', 'ASC')
                 ->first();
-                return $array_parish->name;
-            }
+
+            return $legacy?->name ?? '—';
         }]);
         CRUD::addColumn(['name' => 'deanerys', 'type' => 'closure', 'orderable' => false, 'label' => __('backend.deanerys'), 'function' => function ($entry) {
-            if(!empty($entry->deid)){
-                $array_deanerys = DB::table('deanerys')
+            if (empty($entry->deid)) {
+                return '—';
+            }
+            $deanery = DB::table('deanerys')
                 ->where('status', '1')
                 ->where('id', $entry->deid)
-                ->orderBy('id', 'ASC')
                 ->first();
-                return $array_deanerys->name;
-            }
+
+            return $deanery?->name ?? '—';
         }]);
         CRUD::addColumn(['name' => 'diocese', 'type' => 'closure', 'orderable' => false, 'label' => __('backend.diocese'), 'function' => function ($entry) {
-            if(!empty($entry->did)){
-                $array_diocese = DB::table('dioceses')
+            if (empty($entry->did)) {
+                return '—';
+            }
+            $diocese = DB::table('dioceses')
                 ->where('status', '1')
                 ->where('id', $entry->did)
-                ->orderBy('id', 'ASC')
                 ->first();
-                return $array_diocese->name;
-            }
+
+            return $diocese?->name ?? '—';
         }]);
     }
 

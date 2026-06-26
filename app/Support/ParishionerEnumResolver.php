@@ -61,6 +61,90 @@ class ParishionerEnumResolver
         return in_array($v, ['nữ', 'nu', 'female', 'f', '0'], true) ? 'female' : 'male';
     }
 
+    /**
+     * Vai trò trong hộ — Excel dùng tiếng Việt: Chồng, Vợ, Con, Khác.
+     */
+    public static function parseFamilyRole(?string $value): ?string
+    {
+        $v = mb_strtolower(trim($value ?? ''), 'UTF-8');
+        if ($v === '') {
+            return null;
+        }
+
+        if (in_array($v, ['husband', 'wife', 'child', 'other'], true)) {
+            return $v;
+        }
+
+        $aliases = [
+            'husband' => ['chồng', 'chong', 'chủ hộ', 'chu ho'],
+            'wife'    => ['vợ', 'vo'],
+            'child'   => ['con'],
+            'other'   => ['khác', 'khac'],
+        ];
+
+        foreach ($aliases as $code => $labels) {
+            if (in_array($v, $labels, true)) {
+                return $code;
+            }
+        }
+
+        foreach (config('parishioner-registration.family_roles', []) as $code => $label) {
+            $labelLower = mb_strtolower(trim((string) $label), 'UTF-8');
+            if ($v === $labelLower || str_starts_with($labelLower, $v . ' ')) {
+                return $code;
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * Loại bí tích — Excel dùng tiếng Việt hoặc mã kỹ thuật.
+     */
+    public static function parseSacramentType(?string $value): ?string
+    {
+        $v = mb_strtolower(trim($value ?? ''), 'UTF-8');
+        if ($v === '') {
+            return null;
+        }
+
+        $codes = ['baptism', 'communion', 'confirmation', 'anointing', 'holy_orders'];
+        if (in_array($v, $codes, true)) {
+            return $v;
+        }
+
+        $aliases = [
+            'baptism'      => ['rửa tội', 'rua toi', 'rt'],
+            'communion'    => ['rước lễ', 'ruoc le', 'rước lễ lần đầu', 'ruoc le lan dau', 'thánh thể', 'thanh the', 'tt'],
+            'confirmation' => ['thêm sức', 'them suc', 'ts'],
+            'anointing'    => ['xức dầu', 'xuc dau', 'xức dầu bệnh nhân', 'xd'],
+            'holy_orders'  => ['truyền chức', 'truyen chuc', 'truyền chức thánh', 'tch'],
+        ];
+
+        foreach ($aliases as $code => $labels) {
+            if (in_array($v, $labels, true)) {
+                return $code;
+            }
+        }
+
+        foreach (\App\Models\Sacrament::typeOptions() as $code => $label) {
+            if (mb_strtolower($label, 'UTF-8') === $v) {
+                return $code;
+            }
+        }
+
+        return null;
+    }
+
+    public static function familyRoleLabel(?string $code): string
+    {
+        if (! $code) {
+            return '—';
+        }
+
+        return config('parishioner-registration.family_roles.' . $code, $code);
+    }
+
     public static function parseMarriageRecordStatus(?string $value): string
     {
         $v = mb_strtolower(trim($value ?? ''), 'UTF-8');
@@ -82,6 +166,15 @@ class ParishionerEnumResolver
             'widowed'  => 'Góa',
             'divorced' => 'Ly dị',
             default    => '',
+        };
+    }
+
+    public static function marriedFromMarriageStatus(?string $status): int
+    {
+        return match ($status) {
+            'widowed'  => 2,
+            'divorced' => 3,
+            default    => 1,
         };
     }
 

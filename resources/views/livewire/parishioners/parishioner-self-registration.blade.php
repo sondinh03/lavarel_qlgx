@@ -3,6 +3,19 @@
 <div class="min-h-screen py-4 sm:py-8">
     <div class="mx-auto max-w-lg space-y-5">
 
+        <nav class="flex flex-wrap items-center gap-x-4 gap-y-1 px-1">
+            <a href="{{ route('landing') }}"
+                class="text-sm text-slate-500 hover:text-primary-600 transition">
+                ← Về trang chủ
+            </a>
+            @if($showDashboardBack)
+            <a href="{{ route('parishioners.dashboard') }}"
+                class="text-sm text-slate-500 hover:text-primary-600 transition">
+                ← Về dashboard
+            </a>
+            @endif
+        </nav>
+
         <div class="text-center px-2">
             <img src="{{ url(config('settings.logo')) }}" class="h-16 w-auto mx-auto mb-3" alt="">
             <h1 class="text-2xl font-bold text-slate-900">Khai báo sổ gia đình</h1>
@@ -24,9 +37,16 @@
                 <p class="text-xl font-mono font-bold text-primary-600 mt-1">{{ $referenceCode }}</p>
             </div>
             <p class="text-sm text-slate-500">Quản trị viên sẽ duyệt và tạo hồ sơ gia đình trong hệ thống.</p>
-            <a href="{{ route('landing') }}" class="inline-flex items-center justify-center px-5 py-2.5 rounded-xl bg-primary-600 text-white text-sm font-semibold hover:bg-primary-700">
-                Về trang chủ
-            </a>
+            <div class="flex flex-wrap items-center justify-center gap-3">
+                <a href="{{ route('landing') }}" class="inline-flex items-center justify-center px-5 py-2.5 rounded-xl bg-primary-600 text-white text-sm font-semibold hover:bg-primary-700">
+                    Về trang chủ
+                </a>
+                @if($showDashboardBack)
+                <a href="{{ route('parishioners.dashboard') }}" class="inline-flex items-center justify-center px-5 py-2.5 rounded-xl border border-slate-300 text-sm font-semibold text-slate-700 bg-white hover:bg-slate-50">
+                    Về dashboard
+                </a>
+                @endif
+            </div>
         </div>
         @else
         <form wire:submit.prevent="submit" class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">

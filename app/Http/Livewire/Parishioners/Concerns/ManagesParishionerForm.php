@@ -2,6 +2,7 @@
 
 namespace App\Http\Livewire\Parishioners\Concerns;
 
+use App\Models\Association;
 use App\Models\Deanery;
 use App\Models\Diocese;
 use App\Models\Holymanagement;
@@ -60,6 +61,7 @@ trait ManagesParishionerForm
     public bool $is_included_in_stats = true;
 
     public         $parish_area_id   = null;
+    public         $association_id   = null;
     public         $diocese_id       = null;
     public         $deanery_id       = null;
     public         $parish_id        = null;
@@ -77,6 +79,7 @@ trait ManagesParishionerForm
 
     public array $saints        = [];
     public array $parishGroups              = [];
+    public array $associationOptions        = [];
     public array $parishionerSearchOptions  = [];
     public array $provinces                 = [];
     public array $permanentWardOptions      = [];
@@ -120,6 +123,7 @@ trait ManagesParishionerForm
             'mother_name'           => 'nullable|string|max:255',
             'married'               => 'required|integer|in:0,1,2,3',
             'parish_area_id'        => 'nullable|integer|exists:parish_groups,id',
+            'association_id'        => 'nullable|integer|exists:associations,id',
             'diocese_id'            => 'nullable|integer|exists:dioceses,id',
             'deanery_id'            => 'nullable|integer|exists:deanerys,id',
             'parish_id'             => 'nullable|integer|exists:parishes,id',
@@ -171,7 +175,7 @@ trait ManagesParishionerForm
             'father_id', 'mother_id', 'family_id',
             'ethnic', 'career', 'education_level', 'specialist_level', 'catechism_level',
             'position', 'language', 'holy_order_status',
-            'parish_area_id', 'diocese_id', 'deanery_id', 'parish_id', 'level', 'transferred_from',
+            'parish_area_id', 'association_id', 'diocese_id', 'deanery_id', 'parish_id', 'level', 'transferred_from',
         ];
     }
 
@@ -199,7 +203,7 @@ trait ManagesParishionerForm
                 'temporary_province', 'temporary_ward_id', 'temporary_residence',
             ],
             'parish' => [
-                'diocese_id', 'deanery_id', 'parish_id', 'parish_area_id', 'level', 'joined_date',
+                'diocese_id', 'deanery_id', 'parish_id', 'parish_area_id', 'association_id', 'level', 'joined_date',
                 'transferred_from', 'transferred_date', 'left_reason',
             ],
             'family' => [
@@ -270,6 +274,7 @@ trait ManagesParishionerForm
 
         $this->loadAddressDropdowns();
         $this->loadHierarchyDropdowns();
+        $this->syncAssociationOptions($parishId);
     }
 
     protected function loadHierarchyDropdowns(): void
@@ -349,22 +354,27 @@ trait ManagesParishionerForm
         $this->deanery_id = null;
         $this->parish_id = null;
         $this->parish_area_id = null;
+        $this->association_id = null;
         $this->syncDeaneryOptions();
         $this->parishOptions = [];
         $this->parishGroups = [];
+        $this->associationOptions = [];
     }
 
     public function updatedDeaneryId(): void
     {
         $this->parish_id = null;
         $this->parish_area_id = null;
+        $this->association_id = null;
         $this->syncParishOptions();
         $this->parishGroups = [];
+        $this->associationOptions = [];
     }
 
     public function updatedParishId(): void
     {
         $this->parish_area_id = null;
+        $this->association_id = null;
 
         if ($this->parish_id) {
             $parish = ParishNew::find($this->parish_id);
@@ -377,6 +387,28 @@ trait ManagesParishionerForm
         }
 
         $this->syncParishGroupsFromFormParish();
+        $this->syncAssociationOptions();
+    }
+
+    protected function syncAssociationOptions(?int $parishId = null): void
+    {
+        $parishId = $parishId ?? $this->nullableFormInt($this->parish_id);
+        if (! $parishId) {
+            $this->associationOptions = [];
+
+            return;
+        }
+
+        $this->associationOptions = $this->normalizeDropdownList(
+            Association::query()
+                ->where('pid', $parishId)
+                ->where('status', 1)
+                ->orderBy('name')
+                ->get(['id', 'name'])
+                ->map(fn ($row) => ['id' => (string) $row->id, 'name' => $row->name])
+                ->values()
+                ->toArray()
+        );
     }
 
     protected function loadAddressDropdowns(): void
@@ -481,6 +513,7 @@ trait ManagesParishionerForm
         $this->is_included_in_stats = (bool) $p->is_included_in_stats;
 
         $this->parish_area_id   = $p->parish_area_id;
+        $this->association_id   = $p->association_id;
         $this->diocese_id       = $p->diocese_id;
         $this->deanery_id       = $p->deanery_id;
         $this->parish_id        = $p->parish_id;
@@ -538,6 +571,7 @@ trait ManagesParishionerForm
             'language'              => $this->nullableFormInt($this->language),
             'holy_order_status'     => $this->nullableFormInt($this->holy_order_status),
             'parish_area_id'        => $this->nullableFormInt($this->parish_area_id),
+            'association_id'        => $this->nullableFormInt($this->association_id),
             'level'                 => $this->nullableFormInt($this->level),
             'joined_date'           => $this->joined_date ?: null,
             'transferred_from'      => $this->nullableFormInt($this->transferred_from),
@@ -574,7 +608,7 @@ trait ManagesParishionerForm
             'father_name', 'mother_name', 'father_id', 'mother_id', 'family_id', 'family_role',
             'ethnic', 'career', 'education_level', 'specialist_level', 'catechism_level',
             'catechism_major', 'position', 'language', 'holy_order_status',
-            'parish_area_id', 'diocese_id', 'deanery_id', 'parish_id', 'level', 'joined_date', 'transferred_from', 'transferred_date', 'left_reason',
+            'parish_area_id', 'association_id', 'diocese_id', 'deanery_id', 'parish_id', 'level', 'joined_date', 'transferred_from', 'transferred_date', 'left_reason',
             'death_date', 'death_book_number', 'death_place', 'burial_place',
         ]);
         $this->gender               = 'male';

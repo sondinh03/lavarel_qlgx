@@ -4,6 +4,7 @@ namespace App\Http\Livewire\Parishioners\Concerns;
 
 use App\Models\Holymanagement;
 use App\Models\Marriage;
+use App\Models\Association;
 use App\Models\ParishGroup;
 use App\Models\Sacrament;
 use App\Support\CacheKeys;
@@ -39,6 +40,8 @@ trait ManagesFamilyRegisterSubmission
     public array $saints = [];
 
     public array $parishGroups = [];
+
+    public array $associationOptions = [];
 
     public array $provinces = [];
 
@@ -77,6 +80,8 @@ trait ManagesFamilyRegisterSubmission
     public ?string $member_cccd = null;
 
     public ?string $member_note = null;
+
+    public $member_association_id = null;
 
     public bool $showMarriageForm = false;
 
@@ -136,6 +141,15 @@ trait ManagesFamilyRegisterSubmission
             ->get(['id', 'name'])
             ->toArray();
 
+        $this->associationOptions = Association::query()
+            ->where('pid', $parishId)
+            ->where('status', 1)
+            ->orderBy('name')
+            ->get(['id', 'name'])
+            ->map(fn ($row) => ['id' => (string) $row->id, 'name' => $row->name])
+            ->values()
+            ->toArray();
+
         $this->provinces = VietnamAddressResolver::provincesForSelect();
         $this->syncFamilyWardOptions();
     }
@@ -182,6 +196,7 @@ trait ManagesFamilyRegisterSubmission
             'mother_name'  => null,
             'cccd'         => null,
             'note'         => null,
+            'association_id' => null,
             'is_submitter' => $isSubmitter,
         ];
     }
@@ -220,6 +235,7 @@ trait ManagesFamilyRegisterSubmission
             $this->member_mother_name = $row['mother_name'] ?? null;
             $this->member_cccd = $row['cccd'] ?? null;
             $this->member_note = $row['note'] ?? null;
+            $this->member_association_id = $row['association_id'] ?? null;
         } else {
             $this->member_ref = $this->nextMemberRef();
         }
@@ -251,6 +267,7 @@ trait ManagesFamilyRegisterSubmission
         $this->member_mother_name = null;
         $this->member_cccd = null;
         $this->member_note = null;
+        $this->member_association_id = null;
     }
 
     protected function memberFormRules(): array
@@ -270,6 +287,7 @@ trait ManagesFamilyRegisterSubmission
             'member_mother_name' => 'nullable|string|max:255',
             'member_cccd'        => 'nullable|string|max:20',
             'member_note'        => 'nullable|string|max:500',
+            'member_association_id' => 'nullable|integer|exists:associations,id',
         ];
     }
 
@@ -297,6 +315,7 @@ trait ManagesFamilyRegisterSubmission
             'mother_name'  => $this->member_mother_name ?: null,
             'cccd'         => $this->member_cccd ?: null,
             'note'         => $this->member_note ?: null,
+            'association_id' => $this->member_association_id ? (int) $this->member_association_id : null,
             'is_submitter' => $this->editingMemberIndex !== null
                 ? (bool) ($this->members[$this->editingMemberIndex]['is_submitter'] ?? false)
                 : false,

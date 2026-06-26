@@ -25,7 +25,12 @@ class LopRequest extends FormRequest
     public function rules()
     {
         return [
-            // 'name' => 'required|min:5|max:255'
+            'parish_id' => 'required|integer|exists:parishes,id',
+            'school_year_id' => 'required|integer|exists:nam_hoc,id',
+            'grade_level_id' => 'required|integer|exists:grade_levels,id',
+            'name' => 'required|string|max:255',
+            'capacity' => 'nullable|integer|min:0|max:999',
+            'is_active' => 'nullable|boolean',
         ];
     }
 

@@ -120,37 +120,18 @@ class AssociationCrudController extends CrudController
             }
         }
         
+        CRUD::with(['parish', 'deanery', 'diocese']);
+
         CRUD::addButtonFromModelFunction('line', 'open_link', 'openLink', 'beginning');
         CRUD::addColumn(['name' => 'name', 'type' => 'text', 'orderable' => false, 'label' => __('backend.name'), 'limit' => 255]);
         CRUD::addColumn(['name' => 'pid', 'type' => 'closure', 'orderable' => false, 'label' => __('backend.parish_managements'), 'function' => function ($entry) {
-            if(!empty($entry->pid)){
-                $array_parish = DB::table('parish_managements')
-                ->where('status', '1')
-                ->where('id', $entry->pid)
-                ->orderBy('id', 'ASC')
-                ->first();
-                return $array_parish->name;
-            }
+            return $entry->parish?->name ?? '—';
         }]);
         CRUD::addColumn(['name' => 'deanerys', 'type' => 'closure', 'orderable' => false, 'label' => __('backend.deanerys'), 'function' => function ($entry) {
-            if(!empty($entry->deid)){
-                $array_deanerys = DB::table('deanerys')
-                ->where('status', '1')
-                ->where('id', $entry->deid)
-                ->orderBy('id', 'ASC')
-                ->first();
-                return $array_deanerys->name;
-            }
+            return $entry->deanery?->name ?? '—';
         }]);
         CRUD::addColumn(['name' => 'diocese', 'type' => 'closure', 'orderable' => false, 'label' => __('backend.diocese'), 'function' => function ($entry) {
-            if(!empty($entry->did)){
-                $array_diocese = DB::table('dioceses')
-                ->where('status', '1')
-                ->where('id', $entry->did)
-                ->orderBy('id', 'ASC')
-                ->first();
-                return $array_diocese->name;
-            }
+            return $entry->diocese?->name ?? '—';
         }]);
         CRUD::addColumn(['name' => 'status', 'type' => 'closure', 'orderable' => false, 'label' => __('backend.status'), 'function' => function ($entry) {
             if ($entry->status == 0) {

@@ -70,6 +70,9 @@
                                 @if($parishioner->parishGroup?->name)
                                 <span>{{ $parishioner->parishGroup->name }}</span>
                                 @endif
+                                @if($parishioner->association?->name)
+                                <span>{{ $parishioner->association->name }}</span>
+                                @endif
                                 @if($parishioner->parish?->name)
                                 <span>{{ $parishioner->parish->name }}</span>
                                 @endif

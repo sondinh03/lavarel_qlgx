@@ -24,6 +24,7 @@ class ParishManagementRequest extends FormRequest
         return [
             'name' => 'required|min:2|max:255|unique:parishes,name,' . $id,
             'code' => 'required|max:20|unique:parishes,code,' . $id,
+            'parish_priest_name' => 'nullable|string|max:255',
         ];
     }
 

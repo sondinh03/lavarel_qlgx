@@ -3,6 +3,7 @@
 namespace App\Http\Livewire\Parishioners;
 
 use App\Actions\Parishioner\ApproveParishionerRegistrationAction;
+use App\Models\Association;
 use App\Models\Marriage;
 use App\Models\ParishionerRegistrationRequest;
 use App\Models\Sacrament;
@@ -119,12 +120,19 @@ class ParishionerRegistrationShow extends Component
     public function render()
     {
         $payload = $this->registration->payload;
+        $isFamilyRegister = ($payload['version'] ?? 1) >= 2;
+        $members = $isFamilyRegister ? ($payload['members'] ?? []) : [];
+        $associationIds = collect($members)->pluck('association_id')->filter()->unique()->map(fn ($id) => (int) $id);
+        $associationNames = $associationIds->isNotEmpty()
+            ? Association::whereIn('id', $associationIds)->pluck('name', 'id')->toArray()
+            : [];
 
         return view('livewire.parishioners.parishioner-registration-show', [
             'payload'          => $payload,
-            'isFamilyRegister' => ($payload['version'] ?? 1) >= 2,
+            'isFamilyRegister' => $isFamilyRegister,
             'familyData'       => $payload['family'] ?? [],
-            'members'          => $payload['members'] ?? [],
+            'members'          => $members,
+            'associationNames' => $associationNames,
             'marriages'        => $this->registration->marriages ?? [],
             'sacraments'       => $this->registration->sacraments ?? [],
             'typeOptions'      => Sacrament::typeOptions(),

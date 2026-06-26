@@ -25,7 +25,20 @@ class StudentRequest extends FormRequest
     public function rules()
     {
         return [
-            // 'name' => 'required|min:5|max:255'
+            'parish_id' => 'required|integer|exists:parishes,id',
+            'parish_group_id' => 'nullable|integer|exists:parish_groups,id',
+            'parishioner_id' => 'nullable|integer|exists:parishioners_new,id',
+            'saint_id' => 'nullable|integer|exists:holymanagements,id',
+            'first_name' => 'required|string|max:255',
+            'last_name' => 'required|string|max:255',
+            'father_name' => 'nullable|string|max:255',
+            'mother_name' => 'nullable|string|max:255',
+            'birthday' => 'nullable|date',
+            'gender' => 'nullable|in:male,female',
+            'phone' => 'nullable|string|max:20',
+            'email' => 'nullable|email|max:255',
+            'note' => 'nullable|string|max:2000',
+            'is_active' => 'nullable|boolean',
         ];
     }
 

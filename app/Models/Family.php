@@ -32,6 +32,7 @@ class Family extends Model
         'address',
         'ward_id',
         'province',
+        'phone',
         'is_transferred',
         'level',
         'is_included_in_stats',
@@ -115,5 +116,10 @@ class Family extends Model
     public function getStatusNameAttribute(): string
     {
         return $this->status ? 'Hoạt động' : 'Không hoạt động';
+    }
+
+    public function openLink(): string
+    {
+        return '<a target="_blank" href="' . route('families.show', $this->id) . '"><i class="las la-link"></i>Liên kết</a>';
     }
 }

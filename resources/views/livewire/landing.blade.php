@@ -1,50 +1,39 @@
 <div class="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 p-4 sm:p-6">
     <div class="mx-auto max-w-6xl space-y-6">
 
-        {{-- Header with Login + Registration --}}
-        <div class="relative py-8">
-            <div class="absolute top-0 right-0 flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
-                <a href="{{ route('parishioners.register.public') }}"
-                    class="inline-flex items-center justify-center gap-2 px-5 py-2.5
-                        text-sm font-bold text-white
-                        bg-emerald-500 rounded-xl
-                        shadow-sm hover:opacity-90
-                        hover:shadow-md transition-all">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
-                    </svg>
-                    Đăng ký giáo dân
-                </a>
-                <a href="{{ route('login') }}"
-                    class="inline-flex items-center justify-center gap-2 px-5 py-2.5
-                        text-sm font-bold text-white
-                        bg-primary-600 rounded-xl
-                        shadow-sm hover:bg-primary-700
-                        hover:shadow-md transition-all">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1" />
-                    </svg>
-                    Đăng nhập hệ thống
-                </a>
-            </div>
-
-            {{-- Logo & Title --}}
-            <div class="text-center">
-                <div class="flex justify-center mb-4">
-                    <img src="{{ url(config('settings.logo')) }}"
-                        class="h-20 w-auto"
-                        alt="{{ config('settings.web_name') }}">
-                </div>
-
-                <h1 class="text-3xl sm:text-4xl font-bold text-slate-900">
+        {{-- Navbar --}}
+        <header class="flex items-center justify-between gap-3 max-w-4xl mx-auto">
+            <a href="{{ route('landing') }}" class="flex items-center gap-2.5 min-w-0">
+                <img src="{{ url(config('settings.logo')) }}"
+                    class="h-10 w-auto flex-shrink-0"
+                    alt="{{ config('settings.web_name') }}">
+                <span class="font-bold text-slate-900 truncate text-sm sm:text-base hidden sm:block">
                     {{ config('settings.web_name', 'Hệ thống Quản lý Giáo lý') }}
-                </h1>
-                <p class="mt-3 text-lg text-slate-600">
-                    Tra cứu kết quả giáo lý và quản lý lớp học trực tuyến
-                </p>
-            </div>
+                </span>
+            </a>
+            <a href="{{ route('login') }}"
+                class="inline-flex items-center justify-center gap-2 px-4 py-2.5
+                    text-sm font-bold text-white
+                    bg-primary-600 rounded-xl
+                    shadow-sm hover:bg-primary-700
+                    hover:shadow-md transition-all flex-shrink-0">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1" />
+                </svg>
+                <span class="sm:hidden">Đăng nhập</span>
+                <span class="hidden sm:inline">Đăng nhập hệ thống</span>
+            </a>
+        </header>
+
+        {{-- Hero --}}
+        <div class="text-center max-w-2xl mx-auto pt-2 pb-1">
+            <h1 class="text-2xl sm:text-3xl font-bold text-slate-900">
+                {{ config('settings.web_name', 'Hệ thống Quản lý Giáo lý') }}
+            </h1>
+            <p class="mt-2 text-base sm:text-lg text-slate-600">
+                Tra cứu kết quả giáo lý và quản lý lớp học trực tuyến
+            </p>
         </div>
 
         {{-- Toast Notifications --}}
@@ -62,33 +51,8 @@
             @endif
         </div>
 
-        {{-- Main Grid --}}
-        <div class="grid grid-cols-1 gap-6 max-w-2xl mx-auto">
-
-            {{-- ĐĂNG KÝ GIÁO DÂN --}}
-            <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
-                <div class="px-6 py-4 border-b border-slate-200 bg-gradient-to-br from-emerald-50 to-white">
-                    <div class="flex items-center gap-3">
-                        <svg class="w-6 h-6 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
-                        </svg>
-                        <div>
-                            <h2 class="text-lg font-bold text-slate-900">Đăng ký sổ gia đình</h2>
-                            <p class="text-sm text-slate-600 mt-0.5">Khai báo hộ, thành viên, hôn phối và bí tích</p>
-                        </div>
-                    </div>
-                </div>
-                <div class="p-6">
-                    <p class="text-sm text-slate-600 mb-4">
-                        Điền đầy đủ thông tin hộ gia đình, thành viên, hôn phối cha–mẹ và bí tích theo sổ gia đình công giáo.
-                    </p>
-                    <a href="{{ route('parishioners.register.public') }}"
-                        class="inline-flex items-center justify-center w-full px-5 py-3 rounded-xl bg-emerald-500 text-white font-semibold hover:opacity-90 transition">
-                        Mở form đăng ký
-                    </a>
-                </div>
-            </div>
+        {{-- Main content --}}
+        <div class="space-y-6 max-w-2xl mx-auto">
 
             {{-- PHỤ HUYNH TRA CỨU --}}
             <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
@@ -255,11 +219,33 @@
 
                 </div>
             </div>
+
+            {{-- ĐĂNG KÝ SỔ GIA ĐÌNH (compact) --}}
+            <div class="max-w-md mx-auto bg-white rounded-2xl shadow-sm border border-dashed border-emerald-200 overflow-hidden">
+                <div class="p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center gap-4">
+                    <div class="flex items-start gap-3 flex-1 min-w-0">
+                        <div class="w-10 h-10 rounded-xl bg-emerald-100 flex items-center justify-center flex-shrink-0">
+                            <svg class="w-5 h-5 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
+                            </svg>
+                        </div>
+                        <div class="min-w-0">
+                            <h2 class="text-base font-bold text-slate-900">Đăng ký sổ gia đình</h2>
+                            <p class="text-sm text-slate-600 mt-0.5">Khai báo hộ, thành viên, hôn phối và bí tích</p>
+                        </div>
+                    </div>
+                    <a href="{{ route('parishioners.register.public') }}"
+                        class="inline-flex items-center justify-center px-4 py-2.5 rounded-xl bg-emerald-500 text-white text-sm font-semibold hover:opacity-90 transition whitespace-nowrap sm:flex-shrink-0">
+                        Mở form đăng ký
+                    </a>
+                </div>
+            </div>
         </div>
 
         {{-- ==================== CHI TIẾT HỌC SINH ==================== --}}
         @if($viewingStudent)
-        <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+        <div class="max-w-4xl mx-auto bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
 
             {{-- Header --}}
             <div class="px-6 py-4 border-b border-slate-200 bg-gradient-to-br from-primary-50 to-white">

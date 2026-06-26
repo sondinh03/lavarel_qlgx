@@ -44,6 +44,7 @@ class Parishioner extends Model
         'deanery_id',           // Giáo hạt
         'parish_id',            // Giáo xứ
         'parish_area_id',       // Giáo họ (parish_group)
+        'association_id',       // Hội đoàn (associations)
 
         // Phân loại cá nhân - xã hội
         'ethnic',               // Dân tộc (tinyint enum)
@@ -145,6 +146,11 @@ class Parishioner extends Model
     public function parishGroup(): BelongsTo
     {
         return $this->belongsTo(ParishGroup::class, 'parish_area_id');
+    }
+
+    public function association(): BelongsTo
+    {
+        return $this->belongsTo(Association::class, 'association_id');
     }
 
     public function family(): BelongsTo
@@ -294,6 +300,11 @@ class Parishioner extends Model
     public function scopeOfParishGroup(Builder $query, int $parishGroupId): Builder
     {
         return $query->where('parish_area_id', $parishGroupId);
+    }
+
+    public function scopeOfAssociation(Builder $query, int $associationId): Builder
+    {
+        return $query->where('association_id', $associationId);
     }
 
     public function scopeIsActive(Builder $query): Builder

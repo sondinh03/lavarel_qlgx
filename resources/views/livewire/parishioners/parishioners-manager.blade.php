@@ -157,6 +157,12 @@
                                 Giáo họ: {{ $parishGroups[(int)$selectedGroup] ?? '' }}
                             </span>
                             @endif
+
+                            @if($selectedAssociation)
+                            <span class="inline-flex items-center px-2.5 py-1 text-xs font-semibold bg-slate-100 text-slate-700 rounded-full">
+                                Hội đoàn: {{ $associations[(int)$selectedAssociation] ?? '' }}
+                            </span>
+                            @endif
                         </div>
 
                         {{-- Advanced filters --}}
@@ -204,6 +210,19 @@
                                 </select>
                             </div>
 
+                            {{-- Hội đoàn --}}
+                            <div>
+                                <label class="block text-sm font-semibold text-slate-700 mb-2">Hội đoàn</label>
+                                <select wire:model="selectedAssociation"
+                                    class="w-full px-4 py-2.5 bg-white border border-slate-200 rounded-xl text-sm text-slate-900
+                                           focus:outline-none focus:ring-2 focus:ring-primary-500">
+                                    <option value="">Tất cả</option>
+                                    @foreach($associations as $id => $name)
+                                        <option value="{{ $id }}">{{ $name }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+
                         </div>
                     </div>
                 </div>
@@ -223,6 +242,7 @@
                                 <x-table-header class="text-center">Ngày sinh</x-table-header>
                                 <x-table-header>Điện thoại</x-table-header>
                                 <x-table-header>Giáo họ</x-table-header>
+                                <x-table-header>Hội đoàn</x-table-header>
                                 <x-table-header class="text-center">Trạng thái</x-table-header>
                                 <x-table-header class="text-center">Thao tác</x-table-header>
                             </tr>
@@ -281,6 +301,10 @@
 
                                 <td class="px-4 py-3 text-sm text-slate-600">
                                     {{ $p->parishGroup?->name ?? '—' }}
+                                </td>
+
+                                <td class="px-4 py-3 text-sm text-slate-600">
+                                    {{ $p->association?->name ?? '—' }}
                                 </td>
 
                                 <td class="px-4 py-3 text-center">

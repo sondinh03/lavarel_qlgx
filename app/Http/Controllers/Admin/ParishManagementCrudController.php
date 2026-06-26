@@ -105,6 +105,13 @@ class ParishManagementCrudController extends CrudController
         ]);
 
         CRUD::addColumn([
+            'name'      => 'parish_priest_name',
+            'type'      => 'text',
+            'orderable' => false,
+            'label'     => 'Cha xứ',
+        ]);
+
+        CRUD::addColumn([
             'name'      => 'phone',
             'type'      => 'text',
             'orderable' => false,
@@ -171,6 +178,14 @@ class ParishManagementCrudController extends CrudController
             'type'    => 'select_from_array',
             'label'   => __('backend.deanerys'),
             'options' => $deanerys,
+            'wrapper' => ['class' => 'form-group col-md-4'],
+            'tab'     => __('backend.general'),
+        ]);
+
+        CRUD::addField([
+            'name'    => 'parish_priest_name',
+            'type'    => 'text',
+            'label'   => 'Cha xứ',
             'wrapper' => ['class' => 'form-group col-md-4'],
             'tab'     => __('backend.general'),
         ]);
