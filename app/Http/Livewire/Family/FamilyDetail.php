@@ -194,7 +194,7 @@ class FamilyDetail extends BaseComponent
             'birthday'    => $m->birthday?->format('d/m/Y') ?? '',
             'age'         => $m->birthday ? (int) $m->birthday->age : null,
             'phone'       => $m->phone ?? '',
-            'avatar'      => $m->avatar_path ?? '',
+            'avatar'      => avatar_url($m->avatar_path),
             'birth_order' => $m->birth_order,
             'status'      => (bool) ($m->is_active ?? true),
             'url'         => route('parishioners.show', $m->id),

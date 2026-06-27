@@ -354,13 +354,27 @@ class ApproveParishionerRegistrationAction
 
     private function moveAvatarToParishionerFolder(string $path): string
     {
-        if (! Storage::disk('public')->exists($path)) {
+        $path = ltrim($path, '/');
+
+        if (str_starts_with($path, 'uploads/')) {
             return $path;
         }
 
-        $newPath = 'parishioners/avatars/' . basename($path);
-        Storage::disk('public')->move($path, $newPath);
+        $disk = Storage::disk('public');
 
-        return $newPath;
+        if (! $disk->exists($path)) {
+            return $path;
+        }
+
+        $folder = public_path('uploads/parishioners');
+        if (! file_exists($folder)) {
+            mkdir($folder, 0775, true);
+        }
+
+        $newRelativePath = 'uploads/parishioners/' . basename($path);
+        file_put_contents(public_path($newRelativePath), $disk->get($path));
+        $disk->delete($path);
+
+        return $newRelativePath;
     }
 }

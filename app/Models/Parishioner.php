@@ -397,15 +397,9 @@ class Parishioner extends Model
             : 'bg-slate-200 text-slate-600';
     }
 
-    public function getAvatarUrlAttribute(): string
+    public function getAvatarUrlAttribute(): ?string
     {
-        if ($this->avatar_path) {
-            return asset('storage/' . $this->avatar_path);
-        }
-
-        return $this->gender === 'male'
-            ? asset('images/default-male-avatar.png')
-            : asset('images/default-female-avatar.png');
+        return avatar_url($this->avatar_path, $this->gender);
     }
 
     public function getAgeGroupAttribute(): string

@@ -1,6 +1,6 @@
 <div
     x-data="{
-        avatarPreview: '{{ $currentAvatarPath ? asset('storage/' . $currentAvatarPath) : '' }}',
+        avatarPreview: '{{ $currentAvatarPath ? avatar_url($currentAvatarPath) : '' }}',
         isDragging: false,
         handleFile(file) {
             if (!file || !file.type.startsWith('image/')) return;

@@ -428,7 +428,7 @@
                                     {{-- Avatar --}}
                                     <div class="w-10 h-10 rounded-full overflow-hidden bg-slate-100 flex-shrink-0">
                                         @if($p->avatar_path)
-                                        <img src="{{ asset('storage/' . $p->avatar_path) }}"
+                                        <img src="{{ avatar_url($p->avatar_path) }}"
                                             class="w-full h-full object-cover" />
                                         @else
                                         <div class="w-full h-full flex items-center justify-center">

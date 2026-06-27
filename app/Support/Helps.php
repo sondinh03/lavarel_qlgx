@@ -30,19 +30,77 @@ if (!function_exists('file_url')) {
     }
 }
 
+// ==================== MEDIA ====================
+
+if (!function_exists('media_url')) {
+    /**
+     * Resolve a stored media path to a public URL.
+     * Supports uploads/ (public/), storage disk paths, and absolute URLs.
+     */
+    function media_url(?string $path): ?string
+    {
+        if (!$path) {
+            return null;
+        }
+
+        if (str_starts_with($path, 'http://') || str_starts_with($path, 'https://')) {
+            return $path;
+        }
+
+        $path = ltrim($path, '/');
+
+        if (str_starts_with($path, 'uploads/')) {
+            return asset($path);
+        }
+
+        return asset('storage/' . $path);
+    }
+}
+
+if (!function_exists('delete_stored_media')) {
+    /**
+     * Delete a media file from public/uploads or the public storage disk.
+     */
+    function delete_stored_media(?string $path): void
+    {
+        if (!$path) {
+            return;
+        }
+
+        $path = ltrim($path, '/');
+
+        if (str_starts_with($path, 'uploads/')) {
+            @unlink(public_path($path));
+
+            return;
+        }
+
+        if (\Illuminate\Support\Facades\Storage::disk('public')->exists($path)) {
+            \Illuminate\Support\Facades\Storage::disk('public')->delete($path);
+        }
+    }
+}
+
 // ==================== AVATAR ====================
 
 if (!function_exists('avatar_url')) {
     /**
-     * Get avatar URL with fallback
+     * Get avatar URL with optional gender fallback when no path is set.
      */
-    function avatar_url($path, $gender = null)
+    function avatar_url(?string $path, ?string $gender = null): ?string
     {
         if ($path) {
-            return upload_url($path);
+            return media_url($path);
         }
 
-        // fallback theo giới tính (tuỳ bạn có ảnh hay chưa)
+        if ($gender === 'male') {
+            return asset('images/default-male-avatar.png');
+        }
+
+        if ($gender === 'female') {
+            return asset('images/default-female-avatar.png');
+        }
+
         return null;
     }
 }

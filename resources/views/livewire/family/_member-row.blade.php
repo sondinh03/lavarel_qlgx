@@ -3,7 +3,7 @@
 <div class="px-4 py-3 flex items-center justify-between gap-3 hover:bg-white/60 transition-colors">
     <div class="flex items-center gap-3 min-w-0 flex-1">
         @if($member['avatar'])
-        <img src="{{ asset($member['avatar']) }}" alt=""
+        <img src="{{ $member['avatar'] }}" alt=""
             class="w-10 h-10 rounded-xl object-cover flex-shrink-0 ring-2 ring-white shadow-sm" />
         @else
         @php

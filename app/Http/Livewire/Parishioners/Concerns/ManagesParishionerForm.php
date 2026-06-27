@@ -9,9 +9,9 @@ use App\Models\Holymanagement;
 use App\Models\ParishGroup;
 use App\Models\Parishioner;
 use App\Models\ParishNew;
+use App\Services\UploadService;
 use App\Support\CacheKeys;
 use App\Support\VietnamAddressResolver;
-use Illuminate\Support\Facades\Storage;
 
 trait ManagesParishionerForm
 {
@@ -592,9 +592,9 @@ trait ManagesParishionerForm
     {
         if ($this->avatar) {
             if ($this->currentAvatarPath) {
-                Storage::disk('public')->delete($this->currentAvatarPath);
+                delete_stored_media($this->currentAvatarPath);
             }
-            $data['avatar_path'] = $this->avatar->store('parishioners', 'public');
+            $data['avatar_path'] = app(UploadService::class)->upload($this->avatar, 'parishioners');
         }
     }
 

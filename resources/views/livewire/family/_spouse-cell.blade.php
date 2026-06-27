@@ -15,7 +15,7 @@
     <div class="mt-3 flex items-start justify-between gap-3">
         <div class="flex items-center gap-3 min-w-0">
             @if($member['avatar'])
-            <img src="{{ asset($member['avatar']) }}" alt="" class="w-12 h-12 rounded-xl object-cover shadow-sm" />
+            <img src="{{ $member['avatar'] }}" alt="" class="w-12 h-12 rounded-xl object-cover shadow-sm" />
             @else
             <div class="w-12 h-12 rounded-xl {{ $toneClasses['avatar'] }} flex items-center justify-center text-sm font-bold">
                 {{ $member['initials'] }}

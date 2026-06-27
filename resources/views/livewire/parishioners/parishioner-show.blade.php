@@ -18,7 +18,7 @@
                 <div class="flex flex-col sm:flex-row gap-4 sm:items-start justify-between">
                     <div class="flex items-start gap-4 flex-1 min-w-0">
                         @if($parishioner->avatar_path)
-                        <img src="{{ asset('storage/' . $parishioner->avatar_path) }}"
+                        <img src="{{ $parishioner->avatar_url }}"
                             alt="{{ $parishioner->full_name }}"
                             class="w-20 h-20 rounded-2xl object-cover shadow-sm ring-4 ring-primary-50 flex-shrink-0">
                         @else

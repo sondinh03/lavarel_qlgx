@@ -8,7 +8,6 @@ use App\Models\Student;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Storage;
 
 class ParishionersManager extends BaseComponent
 {
@@ -148,7 +147,7 @@ class ParishionersManager extends BaseComponent
             }
 
             if ($p->avatar_path) {
-                Storage::disk('public')->delete($p->avatar_path);
+                delete_stored_media($p->avatar_path);
             }
 
             $p->delete();

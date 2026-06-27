@@ -8,7 +8,6 @@ use App\Models\Parishioner;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Storage;
 use Livewire\Component;
 use Livewire\WithFileUploads;
 
@@ -388,7 +387,7 @@ class ParishionerShow extends Component
         try {
             DB::beginTransaction();
             if ($this->parishioner->avatar_path) {
-                Storage::disk('public')->delete($this->parishioner->avatar_path);
+                delete_stored_media($this->parishioner->avatar_path);
             }
             $this->parishioner->delete();
             DB::commit();
