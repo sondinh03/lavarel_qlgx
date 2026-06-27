@@ -39,6 +39,7 @@
   'parishioners.parishioner-registration-show' => 'App\\Http\\Livewire\\Parishioners\\ParishionerRegistrationShow',
   'parishioners.parishioner-self-registration' => 'App\\Http\\Livewire\\Parishioners\\ParishionerSelfRegistration',
   'parishioners.parishioner-show' => 'App\\Http\\Livewire\\Parishioners\\ParishionerShow',
+  'parishioners.parishioner-statistics' => 'App\\Http\\Livewire\\Parishioners\\ParishionerStatistics',
   'parishioners.parishioners-manager' => 'App\\Http\\Livewire\\Parishioners\\ParishionersManager',
   'parishioners.sacraments-manager' => 'App\\Http\\Livewire\\Parishioners\\SacramentsManager',
   'score.score-manager' => 'App\\Http\\Livewire\\Score\\ScoreManager',

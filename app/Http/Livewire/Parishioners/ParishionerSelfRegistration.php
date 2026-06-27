@@ -20,6 +20,8 @@ class ParishionerSelfRegistration extends Component
 
     public string $parishName = '';
 
+    public string $parishDisplayLabel = '';
+
     public bool $submitted = false;
 
     public ?string $referenceCode = null;
@@ -32,11 +34,15 @@ class ParishionerSelfRegistration extends Component
     {
         $activeParishes = ParishNew::query()
             ->where('status', 1)
+            ->with('diocese:id,name')
             ->orderBy('name')
-            ->get(['id', 'name']);
+            ->get();
 
         $this->parishOptions = $activeParishes
-            ->map(fn ($row) => ['id' => (string) $row->id, 'name' => $row->name])
+            ->map(fn ($row) => [
+                'id' => (string) $row->id,
+                'name' => $this->formatParishOptionLabel($row),
+            ])
             ->values()
             ->toArray();
 
@@ -61,6 +67,7 @@ class ParishionerSelfRegistration extends Component
     {
         if (! $this->targetParishId) {
             $this->parishName = '';
+            $this->parishDisplayLabel = '';
             $this->parishGroups = [];
             $this->saints = \App\Models\Holymanagement::query()
                 ->orderBy('name')
@@ -70,9 +77,19 @@ class ParishionerSelfRegistration extends Component
             return;
         }
 
-        $parish = ParishNew::find($this->targetParishId);
+        $parish = ParishNew::with('diocese:id,name')->find($this->targetParishId);
         $this->parishName = $parish?->name ?? '';
+        $this->parishDisplayLabel = $parish ? $this->formatParishOptionLabel($parish) : '';
         $this->loadFamilyRegisterDropdowns($this->targetParishId);
+    }
+
+    protected function formatParishOptionLabel(ParishNew $parish): string
+    {
+        $dioceseName = $parish->diocese?->name;
+
+        return $dioceseName
+            ? $parish->name . ' — ' . $dioceseName
+            : $parish->name;
     }
 
     public function goToStep(string $step): void
@@ -173,7 +190,6 @@ class ParishionerSelfRegistration extends Component
     public function render()
     {
         return view('livewire.parishioners.parishioner-self-registration', [
-            'showDashboardBack' => auth()->check(),
             'familyRoles'    => config('parishioner-registration.family_roles', []),
             'marriageStatuses' => Marriage::statusOptions(),
             'sacramentTypes' => Sacrament::typeOptions(),

@@ -123,10 +123,10 @@
 
 @php
 // ── Active group detection cho module Giáo dân ──
-if (request()->routeIs('parishioners.*', 'families.*', 'marriage-announcements.*')) {
+if (request()->routeIs('parishioners.*') && !request()->routeIs('parishioners.dashboard')) {
     $activeGroup = 'parishioners';
-} elseif (request()->routeIs('sacraments.*', 'baptisms.*', 'confirmations.*', 'marriages.*')) {
-    $activeGroup = 'sacraments';
+} elseif (request()->routeIs('families.*', 'marriage-announcements.*')) {
+    $activeGroup = 'family';
 } elseif (request()->routeIs('parish-group.*', 'associations.*', 'holy-names.*', 'parishioner-system.*')) {
     $activeGroup = 'system';
 } else {
@@ -257,7 +257,7 @@ $isDashboard = request()->routeIs('parishioners.dashboard');
             {{-- ══════════════════════════════════════════
                  Nhóm: GIÁO DÂN
             ══════════════════════════════════════════ --}}
-            @php $isParishionersActive = request()->routeIs('parishioners.*', 'families.*', 'marriage-announcements.*'); @endphp
+            @php $isParishionersActive = request()->routeIs('parishioners.*') && !request()->routeIs('parishioners.dashboard'); @endphp
             <div class="relative has-flyout">
                 <button @click="toggleGroup('parishioners')"
                     class="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition group
@@ -290,11 +290,10 @@ $isDashboard = request()->routeIs('parishioners.dashboard');
                     x-transition:leave-end="opacity-0"
                     class="mt-0.5 ml-4 pl-3 border-l border-slate-100 space-y-0.5">
                     @include('frontend.layout.partials.sidebar-sub-item', ['route' => 'parishioners.index', 'label' => 'Danh sách giáo dân'])
+                    @include('frontend.layout.partials.sidebar-sub-item', ['route' => 'parishioners.statistics', 'label' => 'Thống kê'])
                     @can('viewAny', \App\Models\ParishionerRegistrationRequest::class)
                     @include('frontend.layout.partials.sidebar-sub-item', ['route' => 'parishioners.registrations.index', 'label' => 'Duyệt đăng ký'])
                     @endcan
-                    @include('frontend.layout.partials.sidebar-sub-item', ['route' => 'families.index', 'label' => 'Gia đình'])
-                    @include('frontend.layout.partials.sidebar-sub-item', ['route' => 'marriage-announcements.index', 'label' => 'Rao hôn phối'])
                     {{-- @include('frontend.layout.partials.sidebar-sub-item', ['route' => 'parishioners.import', 'label' => 'Import giáo dân']) --}}
                 </div>
 
@@ -302,43 +301,41 @@ $isDashboard = request()->routeIs('parishioners.dashboard');
                 <div class="flyout-menu" x-cloak>
                     <div class="px-3 py-2 text-xs font-semibold text-slate-400 uppercase tracking-wide">Giáo Dân</div>
                     @include('frontend.layout.partials.flyout-item', ['route' => 'parishioners.index', 'label' => 'Danh sách giáo dân'])
+                    @include('frontend.layout.partials.flyout-item', ['route' => 'parishioners.statistics', 'label' => 'Thống kê'])
                     @can('viewAny', \App\Models\ParishionerRegistrationRequest::class)
                     @include('frontend.layout.partials.flyout-item', ['route' => 'parishioners.registrations.index', 'label' => 'Duyệt đăng ký'])
                     @endcan
-                    @include('frontend.layout.partials.flyout-item', ['route' => 'families.index', 'label' => 'Gia đình'])
-                    @include('frontend.layout.partials.flyout-item', ['route' => 'marriage-announcements.index', 'label' => 'Rao hôn phối'])
                     {{-- @include('frontend.layout.partials.flyout-item', ['route' => 'parishioners.import', 'label' => 'Import giáo dân']) --}}
                 </div>
             </div>
 
             {{-- ══════════════════════════════════════════
-                 Nhóm: BÍ TÍCH
+                 Nhóm: GIA ĐÌNH
             ══════════════════════════════════════════ --}}
-            @php $isSacramentsActive = request()->routeIs('sacraments.*', 'baptisms.*', 'confirmations.*', 'marriages.*'); @endphp
+            @php $isFamilyActive = request()->routeIs('families.*', 'marriage-announcements.*'); @endphp
             <div class="relative has-flyout">
-                <button @click="toggleGroup('sacraments')"
+                <button @click="toggleGroup('family')"
                     class="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition group
-                        {{ $isSacramentsActive ? 'text-primary-700 font-semibold' : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900' }}">
+                        {{ $isFamilyActive ? 'text-primary-700 font-semibold' : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900' }}">
                     <svg class="w-5 h-5 flex-shrink-0
-                        {{ $isSacramentsActive ? 'text-primary-600' : 'text-slate-400 group-hover:text-slate-600' }}"
+                        {{ $isFamilyActive ? 'text-primary-600' : 'text-slate-400 group-hover:text-slate-600' }}"
                         fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        {{-- Icon: thánh giá / bí tích --}}
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M12 3v18M3 9h18" />
+                            d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
                     </svg>
-                    <span class="sidebar-label flex-1 text-left truncate">Bí Tích</span>
-                    <svg class="sidebar-chevron w-3.5 h-3.5 flex-shrink-0 transition-transform duration-200"
-                        :class="openGroups.includes('sacraments') ? 'rotate-180 text-primary-600' : 'text-slate-400'"
+                    <span class="sidebar-label flex-1 text-left truncate">Gia Đình</span>
+                    <svg class="sidebar-chevron w-3.5 h-3.5 flex-shrink-0 text-slate-400 transition-transform duration-200"
+                        :class="openGroups.includes('family') ? 'rotate-180 text-primary-600' : 'text-slate-400'"
                         fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
                     </svg>
-                    @if($isSacramentsActive)
+                    @if($isFamilyActive)
                     <span class="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-6 bg-primary-500 rounded-r-full"></span>
                     @endif
                 </button>
 
-                <div x-show="openGroups.includes('sacraments') && !sidebarMini"
-                    style="{{ $isSacramentsActive ? '' : 'display:none' }}"
+                <div x-show="openGroups.includes('family') && !sidebarMini"
+                    style="{{ $isFamilyActive ? '' : 'display:none' }}"
                     x-transition:enter="transition ease-out duration-150"
                     x-transition:enter-start="opacity-0 -translate-y-1"
                     x-transition:enter-end="opacity-100 translate-y-0"
@@ -346,20 +343,21 @@ $isDashboard = request()->routeIs('parishioners.dashboard');
                     x-transition:leave-start="opacity-100"
                     x-transition:leave-end="opacity-0"
                     class="mt-0.5 ml-4 pl-3 border-l border-slate-100 space-y-0.5">
-                    {{-- @include('frontend.layout.partials.sidebar-sub-item', ['route' => 'baptisms.index',      'label' => 'Rửa tội']) --}}
-                    {{-- @include('frontend.layout.partials.sidebar-sub-item', ['route' => 'confirmations.index', 'label' => 'Thêm sức']) --}}
-                    {{-- @include('frontend.layout.partials.sidebar-sub-item', ['route' => 'marriages.index',     'label' => 'Hôn phối']) --}}
-                    {{-- @include('frontend.layout.partials.sidebar-sub-item', ['route' => 'sacraments.index',    'label' => 'Tất cả bí tích']) --}}
+                    @include('frontend.layout.partials.sidebar-sub-item', ['route' => 'families.index', 'label' => 'Gia đình'])
+                    @include('frontend.layout.partials.sidebar-sub-item', ['route' => 'marriage-announcements.index', 'label' => 'Rao hôn phối'])
                 </div>
 
                 <div class="flyout-menu" x-cloak>
-                    <div class="px-3 py-2 text-xs font-semibold text-slate-400 uppercase tracking-wide">Bí Tích</div>
-                    {{-- @include('frontend.layout.partials.flyout-item', ['route' => 'baptisms.index',      'label' => 'Rửa tội']) --}}
-                    {{-- @include('frontend.layout.partials.flyout-item', ['route' => 'confirmations.index', 'label' => 'Thêm sức']) --}}
-                    {{-- @include('frontend.layout.partials.flyout-item', ['route' => 'marriages.index',     'label' => 'Hôn phối']) --}}
-                    {{-- @include('frontend.layout.partials.flyout-item', ['route' => 'sacraments.index',    'label' => 'Tất cả bí tích']) --}}
+                    <div class="px-3 py-2 text-xs font-semibold text-slate-400 uppercase tracking-wide">Gia Đình</div>
+                    @include('frontend.layout.partials.flyout-item', ['route' => 'families.index', 'label' => 'Gia đình'])
+                    @include('frontend.layout.partials.flyout-item', ['route' => 'marriage-announcements.index', 'label' => 'Rao hôn phối'])
                 </div>
             </div>
+
+            {{-- Nhóm Bí Tích: ẩn tạm thời (chưa có route active)
+            @php $isSacramentsActive = request()->routeIs('sacraments.*', 'baptisms.*', 'confirmations.*', 'marriages.*'); @endphp
+            ...
+            --}}
 
             {{-- ══════════════════════════════════════════
                  Nhóm: HỆ THỐNG

@@ -60,7 +60,9 @@
             @endif
 
             <div class="flex items-center gap-2">
-                {{ $actions ?? '' }}
+                @isset($actions)
+                    {{ $actions }}
+                @endisset
             </div>
         </div>
 

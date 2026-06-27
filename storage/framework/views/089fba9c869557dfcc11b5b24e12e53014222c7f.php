@@ -79,8 +79,10 @@
             <?php endif; ?>
 
             <div class="flex items-center gap-2">
-                <?php echo e($actions ?? ''); ?>
+                <?php if(isset($actions)): ?>
+                    <?php echo e($actions); ?>
 
+                <?php endif; ?>
             </div>
         </div>
 

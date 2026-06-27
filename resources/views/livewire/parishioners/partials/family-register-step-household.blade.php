@@ -4,18 +4,20 @@
     @if(count($parishOptions) > 1)
     <div>
         <label class="block text-sm font-semibold text-slate-700 mb-1">Giáo xứ <span class="text-red-500">*</span></label>
-        <select wire:model="targetParishId" class="{{ $input }}">
-            <option value="">-- Chọn giáo xứ --</option>
-            @foreach($parishOptions as $opt)
-            <option value="{{ $opt['id'] }}">{{ $opt['name'] }}</option>
-            @endforeach
-        </select>
+        <x-searchable-select
+            wireModel="targetParishId"
+            :options="$parishOptions"
+            placeholder="-- Chọn giáo xứ --"
+            labelKey="name"
+            valueKey="id"
+            :live="true"
+            :value="$targetParishId" />
         @error('targetParishId') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
     </div>
-    @elseif($parishName)
+    @elseif($parishDisplayLabel)
     <div class="text-sm bg-primary-50 border border-primary-100 rounded-xl px-4 py-3">
         <span class="text-slate-500">Giáo xứ:</span>
-        <span class="font-semibold text-primary-700">{{ $parishName }}</span>
+        <span class="font-semibold text-primary-700">{{ $parishDisplayLabel }}</span>
     </div>
     @endif
 

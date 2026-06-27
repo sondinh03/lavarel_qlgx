@@ -74,7 +74,10 @@ Route::group([
     Route::crud('levelmanagement', LevelmanagementCrudController::class);
     Route::crud('positionmanagement', PositionmanagementCrudController::class);    
         
-    Route::crud('parishioners', ParishionersCrudController::class);
+    // Prefix route names to avoid collision with frontend Livewire routes (parishioners.*).
+    Route::group(['as' => 'backpack.'], function () {
+        Route::crud('parishioners', ParishionersCrudController::class);
+    });
     Route::crud('sacrament-giver', SacramentGiverCrudController::class);
     Route::crud('sponsor', SponsorCrudController::class);
     Route::crud('diocese', DioceseCrudController::class);

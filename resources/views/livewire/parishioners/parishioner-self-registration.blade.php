@@ -8,12 +8,6 @@
                 class="text-sm text-slate-500 hover:text-primary-600 transition">
                 ← Về trang chủ
             </a>
-            @if($showDashboardBack)
-            <a href="{{ route('parishioners.dashboard') }}"
-                class="text-sm text-slate-500 hover:text-primary-600 transition">
-                ← Về dashboard
-            </a>
-            @endif
         </nav>
 
         <div class="text-center px-2">
@@ -41,11 +35,6 @@
                 <a href="{{ route('landing') }}" class="inline-flex items-center justify-center px-5 py-2.5 rounded-xl bg-primary-600 text-white text-sm font-semibold hover:bg-primary-700">
                     Về trang chủ
                 </a>
-                @if($showDashboardBack)
-                <a href="{{ route('parishioners.dashboard') }}" class="inline-flex items-center justify-center px-5 py-2.5 rounded-xl border border-slate-300 text-sm font-semibold text-slate-700 bg-white hover:bg-slate-50">
-                    Về dashboard
-                </a>
-                @endif
             </div>
         </div>
         @else

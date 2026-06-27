@@ -52,7 +52,7 @@
         </div>
 
         {{-- Main content --}}
-        <div class="space-y-6 max-w-2xl mx-auto">
+        <div class="space-y-6 max-w-md mx-auto">
 
             {{-- PHỤ HUYNH TRA CỨU --}}
             <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
@@ -221,7 +221,7 @@
             </div>
 
             {{-- ĐĂNG KÝ SỔ GIA ĐÌNH (compact) --}}
-            <div class="max-w-md mx-auto bg-white rounded-2xl shadow-sm border border-dashed border-emerald-200 overflow-hidden">
+            <div class="bg-white rounded-2xl shadow-sm border border-dashed border-emerald-200 overflow-hidden">
                 <div class="p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center gap-4">
                     <div class="flex items-start gap-3 flex-1 min-w-0">
                         <div class="w-10 h-10 rounded-xl bg-emerald-100 flex items-center justify-center flex-shrink-0">

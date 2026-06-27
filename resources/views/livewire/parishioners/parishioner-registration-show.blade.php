@@ -53,6 +53,7 @@
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
                         <div><span class="text-slate-500">Mã gia đình:</span> <span class="font-mono font-medium">{{ $familyInfo['code'] ?? $registration->reference_code }}</span></div>
                         <div><span class="text-slate-500">Tên hộ:</span> <span class="font-medium">{{ $familyInfo['name'] ?? '—' }}</span></div>
+                        <div><span class="text-slate-500">Giáo họ:</span> <span class="font-medium">{{ $parishGroupName ?? '—' }}</span></div>
                         <div><span class="text-slate-500">Điện thoại liên hệ:</span> <span class="font-medium">{{ $payload['contact_phone'] ?? $registration->submitted_phone }}</span></div>
                         <div class="md:col-span-2"><span class="text-slate-500">Địa chỉ:</span> <span class="font-medium">{{ $familyInfo['address'] ?? '—' }}</span></div>
                     </div>
@@ -134,6 +135,7 @@
                 <div><span class="text-slate-500">Giới tính:</span> <span class="font-medium">{{ ($payload['gender'] ?? '') === 'female' ? 'Nữ' : 'Nam' }}</span></div>
                 <div><span class="text-slate-500">Ngày sinh:</span> <span class="font-medium">{{ $payload['birthday'] ?? '—' }}</span></div>
                 <div><span class="text-slate-500">Vai trò GĐ:</span> <span class="font-medium">{{ $familyRoles[$payload['family_role'] ?? ''] ?? '—' }}</span></div>
+                <div><span class="text-slate-500">Giáo họ:</span> <span class="font-medium">{{ $parishGroupName ?? '—' }}</span></div>
                 <div><span class="text-slate-500">Cha:</span> <span class="font-medium">{{ $payload['father_name'] ?? '—' }}</span></div>
                 <div><span class="text-slate-500">Mẹ:</span> <span class="font-medium">{{ $payload['mother_name'] ?? '—' }}</span></div>
             </div>

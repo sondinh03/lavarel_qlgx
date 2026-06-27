@@ -81,6 +81,7 @@ use App\Http\Livewire\Parishioners\ParishionerRegistrationList;
 use App\Http\Livewire\Parishioners\ParishionerRegistrationShow;
 use App\Http\Livewire\Parishioners\ParishionerSelfRegistration;
 use App\Http\Livewire\Parishioners\ParishionerShow;
+use App\Http\Livewire\Parishioners\ParishionerStatistics;
 use App\Http\Livewire\Parishioners\ParishionersManager;
 use App\Http\Livewire\Parishioners\FamilyRegisterImportPreview;
 use App\Http\Livewire\Parishioners\SacramentsManager;
@@ -129,37 +130,49 @@ Route::middleware('auth')->group(function () {
     Route::get('/parish-admin-dashboard', AdminDashboard::class)
         ->name('parish-admin.dashboard');
 
-    Route::get('/parishioner-dashboard', ParishionerDashboard::class)
-        ->name('parishioners.dashboard');
+    Route::prefix('giao-dan')->group(function () {
+        Route::get('/', ParishionerDashboard::class)
+            ->name('parishioners.dashboard');
+
+        Route::get('/danh-sach', ParishionersManager::class)
+            ->name('parishioners.index');
+
+        Route::get('/thong-ke', ParishionerStatistics::class)
+            ->name('parishioners.statistics');
+
+        Route::get('/tao', ParishionerCreate::class)
+            ->name('parishioners.create');
+
+        Route::get('/bi-tich', SacramentsManager::class)
+            ->name('parishioners.sacrament');
+
+        Route::middleware('role:parish_admin')->group(function () {
+            Route::get('/nhap', FamilyRegisterImportPreview::class)
+                ->name('parishioners.import');
+
+            Route::get('/nhap/mau', [FamilyRegisterImportController::class, 'template'])
+                ->name('parishioners.import.template');
+
+            Route::get('/dang-ky', ParishionerRegistrationList::class)
+                ->name('parishioners.registrations.index');
+
+            Route::get('/dang-ky/{registration}', ParishionerRegistrationShow::class)
+                ->name('parishioners.registrations.show');
+        });
+
+        Route::get('/{parishioner}/xuat-ly-lich', ParishionerLyLichExportController::class)
+            ->name('parishioners.export-lylich');
+
+        Route::get('/{parishioner}/sua', function (\App\Models\Parishioner $parishioner) {
+            return redirect()->route('parishioners.show', ['parishioner' => $parishioner], 301);
+        })->name('parishioners.edit');
+
+        Route::get('/{parishioner}', ParishionerShow::class)
+            ->name('parishioners.show');
+    });
 
     Route::get('/catechist-dashboard', CatechistDashboard::class)
         ->name('catechist.dashboard');
-
-    Route::get('/parishioner', ParishionersManager::class)
-        ->name('parishioners.index');
-    Route::get('/parishioner/import', FamilyRegisterImportPreview::class)
-        ->middleware('role:parish_admin')
-        ->name('parishioners.import');
-    Route::get('/parishioner/import/template', [FamilyRegisterImportController::class, 'template'])
-        ->middleware('role:parish_admin')
-        ->name('parishioners.import.template');
-    Route::get('/parishioner/sacrament', SacramentsManager::class)
-        ->name('parishioners.sacrament');
-    Route::get('/parishioners/create', ParishionerCreate::class)
-        ->name('parishioners.create');
-    Route::get('/parishioner/dang-ky', ParishionerRegistrationList::class)
-        ->middleware('role:parish_admin')
-        ->name('parishioners.registrations.index');
-    Route::get('/parishioner/dang-ky/{registration}', ParishionerRegistrationShow::class)
-        ->middleware('role:parish_admin')
-        ->name('parishioners.registrations.show');
-    Route::get('/parishioners/{parishioner}/export-lylich', ParishionerLyLichExportController::class)
-        ->name('parishioners.export-lylich');
-    Route::get('/parishioners/{parishioner}/edit', function (\App\Models\Parishioner $parishioner) {
-        return redirect()->route('parishioners.show', ['parishioner' => $parishioner], 301);
-    })->name('parishioners.edit');
-    Route::get('/parishioners/{parishioner}', ParishionerShow::class)
-        ->name('parishioners.show');
 
     Route::middleware('role:parish_admin|catechist')->group(function () {
 
@@ -190,15 +203,15 @@ Route::middleware('auth')->group(function () {
             ->name('students.show');
     });
 
-    Route::middleware('role:parish_admin|catechist')->prefix('families')->name('families.')->group(function () {
-        Route::get('/create', FamilyEdit::class)
+    Route::middleware('role:parish_admin|catechist')->prefix('gia-dinh')->name('families.')->group(function () {
+        Route::get('/tao', FamilyEdit::class)
             ->middleware('role:parish_admin')
             ->name('create');
 
         Route::get('/', FamilyList::class)
             ->name('index');
 
-        Route::get('/{id}/edit', FamilyEdit::class)
+        Route::get('/{id}/sua', FamilyEdit::class)
             ->middleware('role:parish_admin')
             ->name('edit');
 
@@ -206,19 +219,19 @@ Route::middleware('auth')->group(function () {
             ->name('show');
     });
 
-    Route::middleware('role:parish_admin|catechist')->prefix('marriage-announcements')->name('marriage-announcements.')->group(function () {
+    Route::middleware('role:parish_admin|catechist')->prefix('rao-hon-phoi')->name('marriage-announcements.')->group(function () {
         Route::get('/', MarriageAnnouncementList::class)
             ->name('index');
 
-        Route::get('/create', MarriageAnnouncementEdit::class)
+        Route::get('/tao', MarriageAnnouncementEdit::class)
             ->middleware('role:parish_admin')
             ->name('create');
 
-        Route::get('/{id}/edit', MarriageAnnouncementEdit::class)
+        Route::get('/{id}/sua', MarriageAnnouncementEdit::class)
             ->middleware('role:parish_admin')
             ->name('edit');
 
-        Route::get('/{id}/marriage/create', MarriageCreateFromAnnouncement::class)
+        Route::get('/{id}/hon-phoi/tao', MarriageCreateFromAnnouncement::class)
             ->middleware('role:parish_admin')
             ->name('create-marriage');
 
@@ -276,13 +289,13 @@ Route::middleware('auth')->group(function () {
         Route::get('/school-years/copy', CopyNamHoc::class)
             ->name('school-years.copy');
 
-        Route::get('/holy-names', HolyManager::class)
+        Route::get('/ten-thanh', HolyManager::class)
             ->name('holy-names.index');
 
-        Route::get('/parish-group', ParishGroupManager::class)
+        Route::get('/giao-ho', ParishGroupManager::class)
             ->name('parish-group.index');
 
-        Route::get('/associations', AssociationManager::class)
+        Route::get('/hoi-doan', AssociationManager::class)
             ->name('associations.index');
 
         Route::get('/groups', GroupManager::class)

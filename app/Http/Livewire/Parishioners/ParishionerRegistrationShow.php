@@ -5,6 +5,7 @@ namespace App\Http\Livewire\Parishioners;
 use App\Actions\Parishioner\ApproveParishionerRegistrationAction;
 use App\Models\Association;
 use App\Models\Marriage;
+use App\Models\ParishGroup;
 use App\Models\ParishionerRegistrationRequest;
 use App\Models\Sacrament;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
@@ -121,7 +122,14 @@ class ParishionerRegistrationShow extends Component
     {
         $payload = $this->registration->payload;
         $isFamilyRegister = ($payload['version'] ?? 1) >= 2;
+        $familyData = $payload['family'] ?? [];
         $members = $isFamilyRegister ? ($payload['members'] ?? []) : [];
+        $parishAreaId = $isFamilyRegister
+            ? ($familyData['parish_area_id'] ?? null)
+            : ($payload['parish_area_id'] ?? null);
+        $parishGroupName = $parishAreaId
+            ? ParishGroup::find((int) $parishAreaId)?->name
+            : null;
         $associationIds = collect($members)->pluck('association_id')->filter()->unique()->map(fn ($id) => (int) $id);
         $associationNames = $associationIds->isNotEmpty()
             ? Association::whereIn('id', $associationIds)->pluck('name', 'id')->toArray()
@@ -130,8 +138,9 @@ class ParishionerRegistrationShow extends Component
         return view('livewire.parishioners.parishioner-registration-show', [
             'payload'          => $payload,
             'isFamilyRegister' => $isFamilyRegister,
-            'familyData'       => $payload['family'] ?? [],
+            'familyData'       => $familyData,
             'members'          => $members,
+            'parishGroupName'  => $parishGroupName,
             'associationNames' => $associationNames,
             'marriages'        => $this->registration->marriages ?? [],
             'sacraments'       => $this->registration->sacraments ?? [],
