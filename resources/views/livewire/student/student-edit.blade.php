@@ -14,7 +14,7 @@
 
         <div
             x-data="{
-                avatarPreview: '{{ $existing_avatar ? asset($existing_avatar) : '' }}',
+                avatarPreview: '{{ $existing_avatar ? media_url($existing_avatar) : '' }}',
                 isDragging: false,
                 handleFile(file) {
                     if (!file || !file.type.startsWith('image/')) return;

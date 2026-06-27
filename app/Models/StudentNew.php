@@ -159,6 +159,11 @@ class StudentNew extends Model
         return trim($saintName . ' ' . $this->full_name);
     }
 
+    public function getAvatarUrlAttribute(): ?string
+    {
+        return media_url($this->avatar_path);
+    }
+
     public function openLink(): string
     {
         return '<a target="_blank" href="' . route('students.show', $this->id) . '"><i class="las la-link"></i>Liên kết</a>';

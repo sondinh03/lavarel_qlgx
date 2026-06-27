@@ -136,7 +136,7 @@
                     text-sm font-semibold shadow-sm
                     bg-primary-50 text-primary-800">
                     @if($student->avatar_path)
-                    <img src="{{ asset($student->avatar_path) }}"
+                    <img src="{{ $student->avatar_url }}"
                         class="w-full h-full rounded-full object-cover" />
                     @else
                     {{ strtoupper(mb_substr($student->last_name, 0, 1) . mb_substr($student->first_name, 0, 1)) }}

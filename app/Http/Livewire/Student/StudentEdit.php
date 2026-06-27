@@ -259,7 +259,7 @@ class StudentEdit extends BaseComponent
                 $path = app(UploadService::class)->upload($this->avatar_path, 'avatars');
 
                 if ($this->isEdit && $this->existing_avatar) {
-                    @unlink(public_path($this->existing_avatar));
+                    delete_stored_media($this->existing_avatar);
                 }
 
                 $student->avatar_path = $path;
@@ -306,7 +306,7 @@ class StudentEdit extends BaseComponent
         if ($this->isEdit && $this->existing_avatar) {
             $student = StudentNew::find($this->studentId);
             if ($student?->avatar_path) {
-                @unlink(public_path($student->avatar_path));
+                delete_stored_media($student->avatar_path);
                 $student->update(['avatar_path' => null]);
             }
             $this->existing_avatar = null;

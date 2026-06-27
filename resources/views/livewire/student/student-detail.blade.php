@@ -20,7 +20,7 @@
 
                     <div class="flex items-start gap-4 flex-1 min-w-0">
                         @if($student['avatar_path'])
-                        <img src="{{ asset($student['avatar_path']) }}"
+                        <img src="{{ media_url($student['avatar_path']) }}"
                             alt="{{ $student['full_name'] }}"
                             class="w-20 h-20 rounded-2xl object-cover shadow-sm ring-4 ring-primary-50 flex-shrink-0">
                         @else

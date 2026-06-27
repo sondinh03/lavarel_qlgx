@@ -185,10 +185,7 @@ class StudentDetail extends BaseComponent
 
         try {
             if ($student->avatar_path) {
-                $fullPath = public_path($student->avatar_path);
-                if (file_exists($fullPath)) {
-                    @unlink($fullPath);
-                }
+                delete_stored_media($student->avatar_path);
             }
 
             $student->delete();

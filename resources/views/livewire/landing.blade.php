@@ -166,7 +166,7 @@
 
                             {{-- Avatar --}}
                             @if($student['avatar_path'])
-                            <img src="{{ asset($student['avatar_path']) }}"
+                            <img src="{{ media_url($student['avatar_path']) }}"
                                 class="w-10 h-10 rounded-xl object-cover flex-shrink-0"
                                 alt="{{ $student['full_name'] }}">
                             @else
@@ -262,7 +262,7 @@
 
                     {{-- Avatar --}}
                     @if($viewingStudent['avatar_path'])
-                    <img src="{{ asset($viewingStudent['avatar_path']) }}"
+                    <img src="{{ media_url($viewingStudent['avatar_path']) }}"
                         class="w-12 h-12 rounded-2xl object-cover flex-shrink-0"
                         alt="{{ $viewingStudent['full_name'] }}">
                     @else
