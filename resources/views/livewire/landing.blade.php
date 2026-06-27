@@ -55,36 +55,38 @@
         <div class="space-y-6 max-w-md mx-auto">
 
             {{-- PHỤ HUYNH TRA CỨU --}}
-            <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+            <div class="bg-white rounded-2xl shadow-sm border border-dashed border-primary-200 overflow-hidden">
                 {{-- Card Header --}}
-                <div class="px-6 py-4 border-b border-slate-200 bg-gradient-to-br from-primary-50 to-white">
+                <div class="px-4 sm:px-5 py-4 border-b border-dashed border-primary-100 bg-gradient-to-br from-primary-50/80 to-white">
                     <div class="flex items-center gap-3">
-                        <svg class="w-6 h-6 text-primary-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                        </svg>
-                        <div>
-                            <h2 class="text-lg font-bold text-slate-900">Tra cứu kết quả giáo lý</h2>
+                        <div class="w-10 h-10 rounded-xl bg-primary-100 flex items-center justify-center flex-shrink-0">
+                            <svg class="w-5 h-5 text-primary-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                            </svg>
+                        </div>
+                        <div class="min-w-0">
+                            <h2 class="text-base font-bold text-slate-900">Tra cứu kết quả giáo lý</h2>
                             <p class="text-sm text-slate-600 mt-0.5">Dành cho phụ huynh và học viên</p>
                         </div>
                     </div>
                 </div>
 
                 {{-- Card Body --}}
-                <div class="p-6 space-y-4">
+                <div class="p-4 sm:p-5 space-y-4">
 
                     {{-- Input SĐT --}}
                     <div>
                         <label class="block text-sm font-semibold text-slate-700 mb-2">
                             Số điện thoại phụ huynh <span class="text-red-500">*</span>
                         </label>
-                        <div class="flex gap-2">
+                        <div class="space-y-2">
                             <input
                                 wire:model.defer="phone"
                                 wire:keydown.enter="search"
                                 type="tel"
                                 placeholder="VD: 0901234567"
-                                class="flex-1 px-4 py-3 rounded-xl border border-slate-300
+                                class="w-full min-w-0 px-4 py-3 rounded-xl border border-slate-300
                            focus:outline-none focus:ring-2 focus:ring-primary-500
                            @error('phone') border-red-500 @enderror"
                                 autofocus />
@@ -92,17 +94,18 @@
                             <button
                                 wire:click="search"
                                 wire:loading.attr="disabled"
-                                class="px-5 py-3 bg-primary-600 text-white rounded-xl
+                                type="button"
+                                class="w-full px-4 py-3 bg-primary-600 text-white rounded-xl
                            hover:bg-primary-700 transition font-semibold
                            disabled:opacity-50 disabled:cursor-not-allowed
-                           flex items-center gap-2">
+                           flex items-center justify-center gap-2 whitespace-nowrap">
                                 <svg wire:loading.remove wire:target="search"
-                                    class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                         d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                                 </svg>
                                 <svg wire:loading wire:target="search"
-                                    class="animate-spin w-5 h-5" fill="none" viewBox="0 0 24 24">
+                                    class="animate-spin w-5 h-5 flex-shrink-0" fill="none" viewBox="0 0 24 24">
                                     <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
                                     <path class="opacity-75" fill="currentColor"
                                         d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
