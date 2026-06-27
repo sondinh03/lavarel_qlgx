@@ -109,6 +109,8 @@ trait ManagesFamilyRegisterSubmission
 
     public bool $showFamilySacramentForm = false;
 
+    public bool $inlineMemberSacramentForm = false;
+
     public ?int $editingFamilySacramentIndex = null;
 
     public ?string $fs_member_ref = null;
@@ -139,19 +141,25 @@ trait ManagesFamilyRegisterSubmission
         $this->parishGroups = ParishGroup::where('parish_id', $parishId)
             ->orderBy('name')
             ->get(['id', 'name'])
+            ->map(fn ($row) => ['id' => (string) $row->id, 'name' => $row->name])
+            ->values()
             ->toArray();
 
+        $this->syncAssociationOptions($parishId);
+
+        $this->provinces = VietnamAddressResolver::provincesForSelect();
+        $this->syncFamilyWardOptions();
+    }
+
+    protected function syncAssociationOptions(int $parishId): void
+    {
         $this->associationOptions = Association::query()
-            ->where('pid', $parishId)
-            ->where('status', 1)
+            ->ofParish($parishId)
             ->orderBy('name')
             ->get(['id', 'name'])
             ->map(fn ($row) => ['id' => (string) $row->id, 'name' => $row->name])
             ->values()
             ->toArray();
-
-        $this->provinces = VietnamAddressResolver::provincesForSelect();
-        $this->syncFamilyWardOptions();
     }
 
     protected function syncFamilyWardOptions(): void
@@ -215,6 +223,11 @@ trait ManagesFamilyRegisterSubmission
 
     public function openMemberForm(?int $index = null): void
     {
+        if ($this->targetParishId) {
+            $this->syncAssociationOptions((int) $this->targetParishId);
+        }
+
+        $this->closeFamilySacramentForm();
         $this->resetMemberForm();
 
         if ($index !== null && isset($this->members[$index])) {
@@ -245,6 +258,19 @@ trait ManagesFamilyRegisterSubmission
 
     public function closeMemberForm(): void
     {
+        if ($this->editingMemberIndex === null && $this->member_ref !== '') {
+            $exists = collect($this->members)->contains(
+                fn ($m) => ($m['ref'] ?? '') === $this->member_ref
+            );
+            if (! $exists) {
+                $this->familySacraments = array_values(array_filter(
+                    $this->familySacraments,
+                    fn ($s) => ($s['member_ref'] ?? '') !== $this->member_ref
+                ));
+            }
+        }
+
+        $this->closeFamilySacramentForm();
         $this->showMemberForm = false;
         $this->resetMemberForm();
     }
@@ -476,6 +502,17 @@ trait ManagesFamilyRegisterSubmission
         $this->familyMarriages = array_values($this->familyMarriages);
     }
 
+    public function openMemberSacramentForm(?int $globalIndex = null): void
+    {
+        if ($this->member_ref === '') {
+            $this->member_ref = $this->nextMemberRef();
+        }
+
+        $this->inlineMemberSacramentForm = true;
+        $this->openFamilySacramentForm($globalIndex);
+        $this->fs_member_ref = $this->member_ref;
+    }
+
     public function openFamilySacramentForm(?int $index = null): void
     {
         $this->resetFamilySacramentForm();
@@ -500,6 +537,7 @@ trait ManagesFamilyRegisterSubmission
     public function closeFamilySacramentForm(): void
     {
         $this->showFamilySacramentForm = false;
+        $this->inlineMemberSacramentForm = false;
         $this->resetFamilySacramentForm();
     }
 
@@ -534,6 +572,10 @@ trait ManagesFamilyRegisterSubmission
 
     public function saveFamilySacrament(): void
     {
+        if ($this->inlineMemberSacramentForm && $this->member_ref !== '') {
+            $this->fs_member_ref = $this->member_ref;
+        }
+
         $this->validate($this->familySacramentFormRules(), [
             'fs_member_ref.required' => 'Vui lòng chọn thành viên',
             'fs_type.required'       => 'Vui lòng chọn loại bí tích',
@@ -564,6 +606,14 @@ trait ManagesFamilyRegisterSubmission
     {
         unset($this->familySacraments[$index]);
         $this->familySacraments = array_values($this->familySacraments);
+    }
+
+    public function memberSacramentCount(string $ref): int
+    {
+        return count(array_filter(
+            $this->familySacraments,
+            fn ($s) => ($s['member_ref'] ?? '') === $ref
+        ));
     }
 
     protected function buildFamilyRegisterPayload(): array

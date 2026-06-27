@@ -69,6 +69,7 @@ class ParishionerSelfRegistration extends Component
             $this->parishName = '';
             $this->parishDisplayLabel = '';
             $this->parishGroups = [];
+            $this->associationOptions = [];
             $this->saints = \App\Models\Holymanagement::query()
                 ->orderBy('name')
                 ->get(['id', 'name'])
@@ -94,15 +95,23 @@ class ParishionerSelfRegistration extends Component
 
     public function goToStep(string $step): void
     {
-        $valid = ['household', 'members', 'marriages', 'sacraments', 'contact'];
+        $valid = ['household', 'members', 'marriages', 'contact'];
         if (in_array($step, $valid, true)) {
             $this->activeStep = $step;
+            $this->ensureFamilyRegisterDropdowns();
+        }
+    }
+
+    protected function ensureFamilyRegisterDropdowns(): void
+    {
+        if ($this->targetParishId) {
+            $this->loadFamilyRegisterDropdowns($this->targetParishId);
         }
     }
 
     protected function stepOrder(): array
     {
-        return ['household', 'members', 'marriages', 'sacraments', 'contact'];
+        return ['household', 'members', 'marriages', 'contact'];
     }
 
     public function nextStep(): void
@@ -111,6 +120,7 @@ class ParishionerSelfRegistration extends Component
         $index = array_search($this->activeStep, $order, true);
         if ($index !== false && isset($order[$index + 1])) {
             $this->activeStep = $order[$index + 1];
+            $this->ensureFamilyRegisterDropdowns();
         }
     }
 
@@ -197,7 +207,6 @@ class ParishionerSelfRegistration extends Component
                 'household'  => 'Hộ GĐ',
                 'members'    => 'Thành viên',
                 'marriages'  => 'Hôn phối',
-                'sacraments' => 'Bí tích',
                 'contact'    => 'Gửi',
             ],
         ])->extends('frontend.layout.landing')->section('content');

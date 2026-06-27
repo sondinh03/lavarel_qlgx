@@ -14,7 +14,7 @@
             <img src="{{ url(config('settings.logo')) }}" class="h-16 w-auto mx-auto mb-3" alt="">
             <h1 class="text-2xl font-bold text-slate-900">Khai báo sổ gia đình</h1>
             <p class="mt-2 text-sm text-slate-600">
-                Nhập đầy đủ thông tin hộ gia đình, thành viên, hôn phối và bí tích theo sổ gia đình công giáo.
+                Nhập đầy đủ thông tin hộ gia đình, thành viên (kèm bí tích) và hôn phối theo sổ gia đình công giáo.
             </p>
         </div>
 
@@ -61,8 +61,6 @@
                     @include('livewire.parishioners.partials.family-register-step-members')
                 @elseif($activeStep === 'marriages')
                     @include('livewire.parishioners.partials.family-register-step-marriages')
-                @elseif($activeStep === 'sacraments')
-                    @include('livewire.parishioners.partials.family-register-step-sacraments')
                 @elseif($activeStep === 'contact')
                     @include('livewire.parishioners.partials.family-register-step-contact')
                 @endif

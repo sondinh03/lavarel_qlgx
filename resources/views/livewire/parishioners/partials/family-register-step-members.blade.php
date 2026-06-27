@@ -1,6 +1,12 @@
 @php $input = "w-full px-3 py-2.5 rounded-xl border border-slate-300 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"; @endphp
 
 <div class="space-y-4">
+  @if(count($members) === 1)
+  <p class="text-xs text-amber-800 bg-amber-50 border border-amber-200 rounded-xl px-4 py-3">
+    Vui lòng bấm <strong>Sửa</strong> để nhập đầy đủ thông tin <strong>người đăng ký</strong> (thành viên đầu tiên) trước khi thêm thành viên thứ hai.
+  </p>
+  @endif
+
   @foreach($members as $index => $member)
   <div class="rounded-xl border border-slate-200 p-3 {{ ($member['ref'] ?? '') === $submitter_ref ? 'ring-2 ring-primary-200' : '' }}">
     <div class="flex items-start justify-between gap-2">
@@ -15,6 +21,10 @@
           @endif
           @if(($member['ref'] ?? '') === $submitter_ref)
           <span class="text-primary-600 font-medium">· Người đăng ký</span>
+          @endif
+          @php $sacCount = $this->memberSacramentCount($member['ref'] ?? ''); @endphp
+          @if($sacCount > 0)
+          <span>· {{ $sacCount }} bí tích</span>
           @endif
         </p>
       </div>
@@ -128,10 +138,16 @@
 
     <div>
       <label class="block text-sm font-medium text-slate-700 mb-1">Hội đoàn</label>
+      @if(! $targetParishId)
+      <p class="text-xs text-amber-700 mb-2">Chọn giáo xứ ở bước <strong>Hộ GĐ</strong> để hiển thị danh sách hội đoàn.</p>
+      @elseif(empty($associationOptions))
+      <p class="text-xs text-slate-500 mb-2">Giáo xứ chưa có hội đoàn trong hệ thống (có thể bỏ qua).</p>
+      @endif
       <x-searchable-select
+        wire:key="member-association-{{ $targetParishId ?? 'none' }}-{{ count($associationOptions) }}"
         wireModel="member_association_id"
         :options="$associationOptions"
-        placeholder="-- Chọn hội đoàn --"
+        placeholder="{{ $targetParishId ? '-- Chọn hội đoàn --' : 'Chọn giáo xứ trước' }}"
         labelKey="name"
         valueKey="id"
         :value="$member_association_id" />
@@ -141,6 +157,8 @@
       <label class="block text-sm font-medium text-slate-700 mb-1">CCCD</label>
       <input wire:model.defer="member_cccd" type="text" class="{{ $input }}" />
     </div>
+
+    @include('livewire.parishioners.partials.family-register-inline-sacraments')
 
     <div class="flex gap-2">
       <button type="button" wire:click="saveMember" class="px-4 py-2 rounded-xl bg-primary-600 text-white text-sm font-semibold">Lưu</button>
