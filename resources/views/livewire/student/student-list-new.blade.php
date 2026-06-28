@@ -213,6 +213,7 @@
                                     class="w-4 h-4 rounded border-slate-300 text-primary-600 focus:ring-primary-500">
                             </x-table-header>
                             <x-table-header>STT</x-table-header>
+                            <x-table-header>Ảnh</x-table-header>
                             <x-table-header>Tên thánh</x-table-header>
                             <x-table-header class="w-[180px]"
                                 :sortable="true" sort-field="last_name"
@@ -252,6 +253,18 @@
 
                             <td class="px-4 py-3 text-sm font-semibold text-slate-500">
                                 {{ ($students->firstItem() ?? 0) + $index }}
+                            </td>
+
+                            <td class="px-4 py-3">
+                                <div class="w-9 h-9 rounded-full overflow-hidden bg-slate-100 flex items-center justify-center flex-shrink-0 text-xs font-semibold text-slate-500">
+                                    @if($student->avatar_path)
+                                    <img src="{{ $student->avatar_url }}"
+                                        alt="{{ $student->full_name_with_saint }}"
+                                        class="w-full h-full object-cover" />
+                                    @else
+                                    {{ strtoupper(mb_substr($student->last_name, 0, 1) . mb_substr($student->first_name, 0, 1)) }}
+                                    @endif
+                                </div>
                             </td>
 
                             <td class="px-4 py-3 text-sm text-slate-900">
