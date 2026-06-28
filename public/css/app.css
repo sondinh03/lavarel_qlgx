@@ -903,6 +903,12 @@ video {
 .mt-8 {
   margin-top: 2rem;
 }
+.line-clamp-1 {
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 1;
+}
 .line-clamp-2 {
   overflow: hidden;
   display: -webkit-box;
@@ -2243,11 +2249,6 @@ video {
 .bg-gradient-to-r {
   background-image: linear-gradient(to right, var(--tw-gradient-stops));
 }
-.from-emerald-50 {
-  --tw-gradient-from: #ecfdf5 var(--tw-gradient-from-position);
-  --tw-gradient-to: rgb(236 253 245 / 0) var(--tw-gradient-to-position);
-  --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to);
-}
 .from-gray-50 {
   --tw-gradient-from: #f9fafb var(--tw-gradient-from-position);
   --tw-gradient-to: rgb(249 250 251 / 0) var(--tw-gradient-to-position);
@@ -2260,6 +2261,11 @@ video {
 }
 .from-primary-50 {
   --tw-gradient-from: #EAF7EF var(--tw-gradient-from-position);
+  --tw-gradient-to: rgb(234 247 239 / 0) var(--tw-gradient-to-position);
+  --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to);
+}
+.from-primary-50\/80 {
+  --tw-gradient-from: rgb(234 247 239 / 0.8) var(--tw-gradient-from-position);
   --tw-gradient-to: rgb(234 247 239 / 0) var(--tw-gradient-to-position);
   --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to);
 }
@@ -3624,6 +3630,10 @@ video {
   --tw-border-opacity: 1;
   border-color: rgb(87 195 127 / var(--tw-border-opacity));
 }
+.focus\:border-primary-500:focus {
+  --tw-border-opacity: 1;
+  border-color: rgb(52 199 89 / var(--tw-border-opacity));
+}
 .focus\:border-transparent:focus {
   border-color: transparent;
 }
@@ -3928,6 +3938,10 @@ video {
     flex: none;
   }
 
+  .sm\:flex-shrink-0 {
+    flex-shrink: 0;
+  }
+
   .sm\:translate-x-0 {
     --tw-translate-x: 0px;
     transform: translate(var(--tw-translate-x), var(--tw-translate-y)) rotate(var(--tw-rotate)) skewX(var(--tw-skew-x)) skewY(var(--tw-skew-y)) scaleX(var(--tw-scale-x)) scaleY(var(--tw-scale-y));
@@ -3945,6 +3959,10 @@ video {
 
   .sm\:grid-cols-2 {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .sm\:grid-cols-3 {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 
   .sm\:grid-cols-4 {
@@ -4057,14 +4075,14 @@ video {
     line-height: 2.25rem;
   }
 
-  .sm\:text-4xl {
-    font-size: 2.25rem;
-    line-height: 2.5rem;
-  }
-
   .sm\:text-base {
     font-size: 1rem;
     line-height: 1.5rem;
+  }
+
+  .sm\:text-lg {
+    font-size: 1.125rem;
+    line-height: 1.75rem;
   }
 }
 @media (min-width: 768px) {

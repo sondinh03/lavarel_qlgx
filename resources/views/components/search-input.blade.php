@@ -4,9 +4,10 @@
     'debounce'    => '500ms'
 ])
 
-<div class="relative flex-1"
+<div {{ $attributes->merge(['class' => 'relative w-full']) }}
      x-data="{ hasValue: false }"
      x-init="
+         hasValue = ($wire.{{ $wireModel }} ?? '').length > 0;
          $watch('$wire.{{ $wireModel }}', val => {
              hasValue = val !== null && val !== undefined && val.length > 0;
          });
@@ -25,21 +26,23 @@
         wire:model.debounce.{{ $debounce }}="{{ $wireModel }}"
         placeholder="{{ $placeholder }}"
         x-on:input="hasValue = $event.target.value.length > 0"
-        {{ $attributes->merge([
-            'class' => 'w-full pl-10 pr-16 py-2.5 bg-slate-50 border border-slate-200 rounded-xl
-                        text-sm text-slate-900 placeholder-slate-500 focus:outline-none
-                        focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all'
-        ]) }}>
+        class="w-full pl-10 pr-10 py-2.5 bg-slate-50 border border-slate-200 rounded-xl
+               text-sm text-slate-900 placeholder-slate-500 focus:outline-none
+               focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all">
 
     {{-- Clear Button --}}
     <button
         type="button"
         wire:click="$set('{{ $wireModel }}', '')"
+        wire:loading.remove
+        wire:target="{{ $wireModel }}"
         x-on:click="hasValue = false"
         x-show="hasValue"
+        x-cloak
         x-transition
-        class="absolute right-9 top-1/2 -translate-y-1/2 text-slate-400
-               hover:text-slate-600 transition-colors z-10">
+        class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400
+               hover:text-slate-600 transition-colors z-10"
+        aria-label="Xóa tìm kiếm">
         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                   d="M6 18L18 6M6 6l12 12" />
@@ -48,7 +51,7 @@
 
     {{-- Spinner --}}
     <div wire:loading wire:target="{{ $wireModel }}"
-         class="absolute right-3 top-1/2 -translate-y-1/2">
+         class="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none">
         <svg class="animate-spin h-4 w-4 text-primary-500" fill="none" viewBox="0 0 24 24">
             <circle class="opacity-25" cx="12" cy="12" r="10"
                     stroke="currentColor" stroke-width="4"></circle>

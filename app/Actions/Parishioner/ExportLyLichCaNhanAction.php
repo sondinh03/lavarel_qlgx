@@ -5,10 +5,18 @@ namespace App\Actions\Parishioner;
 use App\Models\Parishioner;
 use App\Presenters\ParishionerLyLichPresenter;
 use App\Support\LyLichTemplateGenerator;
+use PhpOffice\PhpWord\Element\TextRun;
 use PhpOffice\PhpWord\TemplateProcessor;
 
 class ExportLyLichCaNhanAction
 {
+    private const HEADER_PLACEHOLDERS = ['did', 'deid', 'pid'];
+
+    private const HEADER_FONT = [
+        'name' => 'Times New Roman',
+        'size' => 13,
+    ];
+
     public function handle(Parishioner $parishioner): array
     {
         $templatePath = LyLichTemplateGenerator::ensureExists();
@@ -18,6 +26,11 @@ class ExportLyLichCaNhanAction
         $processor = new TemplateProcessor($templatePath);
 
         foreach ($placeholders as $key => $value) {
+            if (in_array($key, self::HEADER_PLACEHOLDERS, true)) {
+                $this->setHeaderValue($processor, $key, $this->escape($value));
+                continue;
+            }
+
             $processor->setValue($key, $this->escape($value));
         }
 
@@ -34,6 +47,13 @@ class ExportLyLichCaNhanAction
             'path'     => $tempPath,
             'filename' => $presenter->downloadFilename(),
         ];
+    }
+
+    private function setHeaderValue(TemplateProcessor $processor, string $key, string $value): void
+    {
+        $textRun = new TextRun();
+        $textRun->addText($value, self::HEADER_FONT);
+        $processor->setComplexValue($key, $textRun);
     }
 
     private function escape(mixed $value): string

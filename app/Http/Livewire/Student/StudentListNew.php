@@ -344,21 +344,78 @@ class StudentListNew extends BaseComponent
 
     protected function findSuggestedParishioners(StudentNew $student): \Illuminate\Support\Collection
     {
-        $candidates = Parishioner::query()
-            ->whereDoesntHave('student')
-            ->where(function ($q) use ($student) {
-                $q->whereRaw(
-                    "LOWER(CONCAT(last_name, ' ', first_name)) LIKE ?",
-                    ['%' . strtolower(trim($student->last_name . ' ' . $student->name)) . '%']
-                );
-            })
-            ->with('saint')
-            ->limit(20)
-            ->get(['id', 'last_name', 'first_name', 'saint_id', 'gender', 'birthday', 'avatar_path', 'cccd', 'phone']);
+        $normalizedName = $this->normalizePersonName($student->last_name, $student->first_name);
 
-        return $candidates->filter(function ($p) use ($student) {
-            return strtolower($p->full_name_with_saint) === strtolower($student->full_name_with_saint);
-        })->take(5)->values();
+        if ($normalizedName === '') {
+            return collect();
+        }
+
+        $baseQuery = function () use ($student, $normalizedName) {
+            return Parishioner::query()
+                ->whereDoesntHave('student')
+                ->active()
+                ->alive()
+                ->when($student->parish_id, fn ($q) => $q->where('parish_id', $student->parish_id))
+                ->whereRaw(
+                    'LOWER(TRIM(CONCAT(TRIM(last_name), \' \', TRIM(first_name)))) = ?',
+                    [$normalizedName]
+                )
+                ->with('saint');
+        };
+
+        $columns = ['id', 'last_name', 'first_name', 'saint_id', 'gender', 'birthday', 'avatar_path', 'cccd', 'phone'];
+
+        $candidates = collect();
+
+        if ($student->birthday) {
+            $candidates = $baseQuery()
+                ->whereDate('birthday', $student->birthday)
+                ->limit(10)
+                ->get($columns);
+        }
+
+        if ($candidates->isEmpty()) {
+            $candidates = $baseQuery()
+                ->limit(15)
+                ->get($columns);
+        }
+
+        return $candidates
+            ->sortByDesc(fn (Parishioner $p) => $this->scoreParishionerLinkMatch($student, $p))
+            ->take(5)
+            ->values();
+    }
+
+    /**
+     * Chuẩn hóa họ tên để so khớp (bỏ khoảng trắng thừa, lowercase).
+     */
+    protected function normalizePersonName(?string $lastName, ?string $firstName): string
+    {
+        $full = trim(preg_replace('/\s+/u', ' ', trim(($lastName ?? '') . ' ' . ($firstName ?? ''))));
+
+        return mb_strtolower($full, 'UTF-8');
+    }
+
+    /**
+     * Điểm ưu tiên gợi ý: ngày sinh > tên thánh > giới tính.
+     */
+    protected function scoreParishionerLinkMatch(StudentNew $student, Parishioner $parishioner): int
+    {
+        $score = 0;
+
+        if ($student->birthday && $parishioner->birthday) {
+            $score += $student->birthday->isSameDay($parishioner->birthday) ? 10 : -8;
+        }
+
+        if ($student->saint_id && $parishioner->saint_id) {
+            $score += (int) $student->saint_id === (int) $parishioner->saint_id ? 5 : 0;
+        }
+
+        if ($student->gender && $parishioner->gender && $student->gender === $parishioner->gender) {
+            $score += 2;
+        }
+
+        return $score;
     }
 
     public function confirmLink(int $parishionerId): void
@@ -371,12 +428,25 @@ class StudentListNew extends BaseComponent
             $student     = StudentNew::findOrFail($this->linkingStudentId);
             $parishioner = Parishioner::query()->findOrFail($parishionerId);
 
+            if ($parishioner->student()->exists()) {
+                DB::rollBack();
+                $this->emit('toast', 'warning', 'Giáo dân này đã được liên kết với học sinh khác');
+                return;
+            }
+
+            if ($student->parish_id && $parishioner->parish_id && (int) $student->parish_id !== (int) $parishioner->parish_id) {
+                DB::rollBack();
+                $this->emit('toast', 'error', 'Giáo dân không thuộc cùng giáo xứ với học sinh');
+                return;
+            }
+
             $student->update(['parishioner_id' => $parishioner->id]);
 
             DB::commit();
 
-            $this->emit('toast', 'message', "Đã liên kết {$student->name} với giáo dân {$parishioner->full_name}");
+            $this->emit('toast', 'message', "Đã liên kết {$student->full_name_with_saint} với giáo dân {$parishioner->full_name_with_saint}");
             $this->closeLinkModal();
+            $this->emit('refreshStudents');
         } catch (ModelNotFoundException $e) {
             DB::rollBack();
             $this->emit('toast', 'error', 'Không tìm thấy dữ liệu');
@@ -400,6 +470,7 @@ class StudentListNew extends BaseComponent
         try {
             StudentNew::findOrFail($studentId)->update(['parishioner_id' => null]);
             $this->emit('toast', 'message', 'Đã hủy liên kết giáo dân');
+            $this->emit('refreshStudents');
         } catch (\Exception $e) {
             $this->logError($e, 'Error unlinking parishioner');
             $this->emit('toast', 'error', 'Có lỗi khi hủy liên kết');
@@ -468,6 +539,33 @@ class StudentListNew extends BaseComponent
             ->paginate(15, ['*'], 'parishioner_page');
     }
 
+    /**
+     * Map dữ liệu giáo dân (parishioners_new) sang hồ sơ học sinh.
+     */
+    protected function buildStudentAttributesFromParishioner(Parishioner $parishioner): array
+    {
+        $birthday = $parishioner->getRawOriginal('birthday');
+
+        return [
+            'first_name'      => $parishioner->first_name,
+            'last_name'       => $parishioner->last_name,
+            'saint_id'        => $parishioner->saint_id,
+            'gender'          => in_array($parishioner->gender, ['male', 'female'], true)
+                ? $parishioner->gender
+                : 'male',
+            'birthday'        => $birthday ?: null,
+            'phone'           => $parishioner->phone,
+            'email'           => $parishioner->email,
+            'father_name'     => $parishioner->father_name,
+            'mother_name'     => $parishioner->mother_name,
+            'parishioner_id'  => $parishioner->id,
+            'parish_id'       => $parishioner->parish_id ?? $this->parishId,
+            'parish_group_id' => $parishioner->parish_area_id,
+            'note'            => $parishioner->note,
+            'is_active'       => true,
+        ];
+    }
+
     public function importParishionersToStudents(): void
     {
         $this->authorize('create', StudentNew::class);
@@ -487,22 +585,20 @@ class StudentListNew extends BaseComponent
 
             foreach (Parishioner::whereIn('id', $this->selectedParishioners)->get() as $p) {
                 try {
-                    $student = StudentNew::create([
-                        'first_name'      => $p->first_name,
-                        'last_name'       => $p->last_name,
-                        'saint_id'        => $p->holy ?? null,
-                        'gender'          => $p->sex == 1 ? 'male' : 'female',
-                        'birthday'        => $p->birthday?->format('Y-m-d'),
-                        'phone'           => $p->phone,
-                        'email'           => $p->email,
-                        'father_name'     => $p->father ?? null,
-                        'mother_name'     => $p->mother ?? null,
-                        'parishioner_id'  => $p->id,
-                        'parish_id'       => $this->parishId,
-                        'parish_group_id' => $p->paid ?? null,
-                        'note'            => $p->note ?? null,
-                        'is_active'       => true,
-                    ]);
+                    if ($p->student) {
+                        $p->student->classes()->syncWithoutDetaching([
+                            $catechismClass->id => [
+                                'enrolled_at' => now(),
+                                'updated_at'  => now(),
+                            ],
+                        ]);
+                        $successCount++;
+                        continue;
+                    }
+
+                    $student = StudentNew::create(
+                        $this->buildStudentAttributesFromParishioner($p)
+                    );
 
                     $student->classes()->attach($catechismClass->id, [
                         'enrolled_at' => now(),
@@ -512,7 +608,7 @@ class StudentListNew extends BaseComponent
 
                     $successCount++;
                 } catch (\Exception $e) {
-                    $errors[] = "{$p->last_name} {$p->name}: {$e->getMessage()}";
+                    $errors[] = "{$p->full_name}: {$e->getMessage()}";
                     $errorCount++;
                     $this->logError($e, 'Error creating StudentNew from parishioner', [
                         'parishioner_id' => $p->id,
@@ -868,11 +964,11 @@ class StudentListNew extends BaseComponent
 
     // ==================== STATISTICS ====================
 
-    protected function getGenderStats(): array
+    protected function getGenderStats(bool $withSearch = false): array
     {
         try {
             $query = StudentNew::query();
-            $this->applyListFilters($query);
+            $this->applyListFilters($query, $withSearch);
 
             $stats = $query
                 ->selectRaw('gender, COUNT(*) as total')
@@ -1129,6 +1225,10 @@ class StudentListNew extends BaseComponent
             ? $this->getAvailableParishionersPaginated()
             : null;
 
+        $linkingStudent = $this->linkingStudentId
+            ? StudentNew::find($this->linkingStudentId)
+            : null;
+
         $layout = auth()->user()?->isCatechist()
             ? 'frontend.layout.catechist'
             : 'frontend.layout.main';
@@ -1143,6 +1243,7 @@ class StudentListNew extends BaseComponent
             'parishId'              => $this->parishId,
             'availableStudents'     => $availableStudents,
             'availableParishioners' => $availableParishioners,
+            'linkingStudent'        => $linkingStudent,
         ])
             ->extends($layout)
             ->section('content');

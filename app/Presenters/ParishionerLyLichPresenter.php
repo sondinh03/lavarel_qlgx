@@ -41,9 +41,9 @@ class ParishionerLyLichPresenter
         $email = $p->email ? 'Email: ' . $p->email : '';
 
         return [
-            'did'   => $p->diocese?->name ?? '',
-            'deid'  => $p->deanery?->name ? ', ' . $p->deanery->name : '',
-            'pid'   => $p->parish?->name ? ', ' . $p->parish->name : '',
+            'did'   => $this->headerPlaceholder($p->diocese?->name),
+            'deid'  => $this->headerPlaceholder($p->deanery?->name),
+            'pid'   => $this->headerPlaceholder($p->parish?->name),
             'giaoxu'=> $p->parish?->name ?? '',
             'paid'  => $p->parishGroup?->name ? ', Giáo họ ' . $p->parishGroup->name : '',
             'assid' => $p->association?->name ? ', Hội đoàn ' . $p->association->name : '',
@@ -82,6 +82,8 @@ class ParishionerLyLichPresenter
             'day'   => date('d'),
             'month' => date('m'),
             'year'  => date('Y'),
+
+            'parish_priest' => $p->parish?->parish_priest_name ?? '',
         ];
     }
 
@@ -90,6 +92,13 @@ class ParishionerLyLichPresenter
         $name = preg_replace('/[^a-zA-Z0-9_\-\p{L}]/u', '_', $this->parishioner->full_name_with_saint);
 
         return 'LyLich_' . $name . '.docx';
+    }
+
+    private function headerPlaceholder(?string $value): string
+    {
+        $value = trim((string) ($value ?? ''));
+
+        return $value !== '' ? mb_strtoupper($value, 'UTF-8') : '';
     }
 
     private function sacramentPlaceholders(?Sacrament $sacrament, string $prefix, bool $includeSponsor = true): array

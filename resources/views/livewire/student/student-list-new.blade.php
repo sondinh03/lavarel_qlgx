@@ -30,7 +30,7 @@
                 stat-label="Học sinh"
                 icon-type="students" />
 
-            <div class="p-4 lg:p-6 border-b border-slate-200 bg-slate-50/70 rounded-b-2xl">
+            <div class="p-4 lg:p-6 border-b border-slate-200 bg-slate-50/70 {{ !$selectedNamHoc ? 'rounded-b-2xl' : '' }}">
                 @if($isCatechist)
                 <div class="flex flex-col gap-4">
                     <livewire:filters.filter-bar
@@ -116,7 +116,42 @@
                 </div>
                 @endif
             </div>
+
+            @if($selectedNamHoc)
+            <div class="px-4 lg:px-6 py-3 border-t border-slate-100 bg-slate-50/60 flex items-center gap-6 flex-wrap text-sm rounded-b-2xl">
+                <span class="text-slate-500">
+                    Tổng: <strong class="text-slate-800">{{ $total }}</strong>
+                </span>
+                <span class="text-primary-600">
+                    Nam: <strong>{{ $countnam }}</strong>
+                </span>
+                <span class="text-pink-600">
+                    Nữ: <strong>{{ $countnu }}</strong>
+                </span>
+            </div>
+            @endif
         </div>
+
+        @if($selectedNamHoc)
+        {{-- Banner ngữ cảnh lớp / phạm vi xem --}}
+        <div class="px-4 py-3 rounded-xl bg-primary-50 border border-primary-100 text-sm text-primary-800">
+            @if($lop)
+                <span class="font-semibold">{{ $lop->gradeLevel->name ?? '—' }}</span>
+                <span class="text-primary-400 mx-1">·</span>
+                <span class="font-semibold">Lớp {{ $lop->name }}</span>
+                <span class="text-primary-400 mx-1">·</span>
+                <span>GLV: {{ implode(', ', $lop->teacher_names) ?: '—' }}</span>
+                <span class="text-primary-400 mx-1">·</span>
+                <span>Sĩ số: <strong>{{ $total }}</strong></span>
+            @elseif($selectedKhoi)
+                Đang xem toàn bộ học sinh trong khối đã chọn
+                <span class="text-primary-500">— chọn lớp để ghi danh / export</span>
+            @else
+                Đang xem toàn bộ học sinh trong năm học
+                <span class="text-primary-500">— chọn lớp để ghi danh / export</span>
+            @endif
+        </div>
+        @endif
 
         @if($selectedNamHoc)
         @if($isCatechist)
@@ -214,6 +249,7 @@
                             </x-table-header>
                             <x-table-header>STT</x-table-header>
                             <x-table-header>Ảnh</x-table-header>
+                            <x-table-header>Mã HS</x-table-header>
                             <x-table-header>Tên thánh</x-table-header>
                             <x-table-header class="w-[180px]"
                                 :sortable="true" sort-field="last_name"
@@ -235,8 +271,6 @@
                                 :current-sort="$sortField" :sort-direction="$sortDirection">
                                 Giới tính
                             </x-table-header>
-                            <x-table-header class="w-[140px]">Họ tên bố</x-table-header>
-                            <x-table-header class="w-[140px]">Số điện thoại</x-table-header>
                             <x-table-header>Giáo họ</x-table-header>
                             <x-table-header class="text-center">Thao tác</x-table-header>
                         </tr>
@@ -267,6 +301,10 @@
                                 </div>
                             </td>
 
+                            <td class="px-4 py-3 text-sm font-mono text-primary-600 whitespace-nowrap">
+                                {{ $student->student_code ?? '—' }}
+                            </td>
+
                             <td class="px-4 py-3 text-sm text-slate-900">
                                 {{ $student->saint->name ?? '—' }}
                             </td>
@@ -293,19 +331,30 @@
                             </td>
 
                             <td class="px-4 py-3 text-sm text-slate-700 whitespace-nowrap">
-                                {{ $student->father_name ?? '—' }}
-                            </td>
-
-                            <td class="px-4 py-3 text-sm text-slate-700">
-                                {{ $student->phone ?? '—' }}
-                            </td>
-
-                            <td class="px-4 py-3 text-sm text-slate-700 whitespace-nowrap">
                                 {{ $student->parishGroup->name ?? '—' }}
                             </td>
 
                             <td class="px-4 py-3 overflow-visible">
                                 <div class="flex items-center justify-center gap-1">
+                                    @if($student->parishioner_id)
+                                    <x-tooltip content="Xem hồ sơ giáo dân (tab mới)">
+                                        <a href="{{ route('parishioners.show', $student->parishioner_id) }}"
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            class="p-2 text-emerald-600 hover:bg-emerald-50 rounded-lg transition-all">
+                                            <x-icon name="link" />
+                                        </a>
+                                    </x-tooltip>
+                                    @else
+                                    <x-tooltip content="Liên kết giáo dân">
+                                        <button type="button"
+                                            wire:click="openLinkParishioner({{ $student->id }})"
+                                            class="p-2 hover:bg-slate-100 text-slate-400 rounded-lg transition-all">
+                                            <x-icon name="link" />
+                                        </button>
+                                    </x-tooltip>
+                                    @endif
+
                                     <x-tooltip content="Xem chi tiết">
                                         <a href="{{ route('students.show', $student->id) }}"
                                             class="p-2 hover:bg-slate-100 text-slate-600 rounded-lg transition-all">
@@ -320,20 +369,34 @@
                                         </a>
                                     </x-tooltip>
                                     <x-dropdown icon="more-vertical" align="right" variant="subtle" position="fixed">
-                                        <x-dropdown-item wire:click="openLinkParishioner({{ $student->id }})" icon="link">
-                                            Liên kết giáo dân
+                                        @if($student->parishioner_id)
+                                        <x-dropdown-item
+                                            as="a"
+                                            :href="route('parishioners.show', $student->parishioner_id)"
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            icon="external-link">
+                                            Xem hồ sơ giáo dân
                                         </x-dropdown-item>
-
-                                        <div class="h-px bg-slate-100 my-1"></div>
-
                                         <x-dropdown-item
                                             x-on:click="$dispatch('open-confirm', {
-                                                message: 'Xóa học sinh {{ $student->full_name_with_saint }} khỏi lớp?',
+                                                message: 'Hủy liên kết giáo dân với {{ $student->full_name_with_saint }}?',
+                                                wireMethod: 'unlinkParishioner({{ $student->id }})'
+                                            })"
+                                            icon="link"
+                                            class="text-amber-700 hover:bg-amber-50">
+                                            Hủy liên kết giáo dân
+                                        </x-dropdown-item>
+                                        <div class="h-px bg-slate-100 my-1"></div>
+                                        @endif
+                                        <x-dropdown-item
+                                            x-on:click="$dispatch('open-confirm', {
+                                                message: 'Gỡ học sinh {{ $student->full_name_with_saint }} khỏi lớp?',
                                                 wireMethod: 'delete({{ $student->id }})'
                                             })"
                                             icon="trash"
                                             class="text-red-600 hover:bg-red-50">
-                                            Xóa học sinh
+                                            Gỡ khỏi lớp
                                         </x-dropdown-item>
                                     </x-dropdown>
                                 </div>
@@ -346,15 +409,21 @@
 
             {{-- Bulk action bar --}}
             @if(count($selectedStudents) > 0)
-            <div class="px-6 py-3 bg-primary-50 border-t border-primary-200 flex items-center justify-between">
+            <div class="px-6 py-3 bg-primary-50 border-t border-primary-200 flex items-center justify-between gap-4">
                 <span class="text-sm font-semibold text-primary-700">
                     Đã chọn {{ count($selectedStudents) }} học sinh
                 </span>
-                <button type="button" wire:click="$set('selectedStudents', [])"
-                    class="px-3 py-1.5 text-sm font-medium text-primary-600
-                       hover:bg-primary-100 rounded-lg transition">
-                    Bỏ chọn tất cả
-                </button>
+                <div class="flex items-center gap-2">
+                    <x-button wire:click="printSelected" variant="primary" size="sm">
+                        <x-icon name="printer" />
+                        In thẻ
+                    </x-button>
+                    <button type="button" wire:click="$set('selectedStudents', [])"
+                        class="px-3 py-1.5 text-sm font-medium text-primary-600
+                           hover:bg-primary-100 rounded-lg transition">
+                        Bỏ chọn tất cả
+                    </button>
+                </div>
             </div>
             @endif
 
@@ -389,10 +458,9 @@
         @endif
 
         @if(!$isCatechist)
-        {{-- Modal liên kết giáo dân --}}
+        {{-- Modal liên kết giáo dân (cùng pattern modal năm học) --}}
         <div
             x-show="showLink"
-            x-cloak
             x-transition.opacity
             class="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50 p-4"
             role="dialog"
@@ -403,16 +471,21 @@
             <div
                 x-show="showLink"
                 x-transition
-                class="bg-white rounded-2xl shadow-xl w-full max-w-lg max-h-[90vh] overflow-hidden flex flex-col"
+                class="bg-white rounded-2xl shadow-xl w-full max-w-xl max-h-[90vh] overflow-hidden flex flex-col"
                 @click.stop>
 
+                {{-- Header --}}
                 <div class="flex-shrink-0 p-6 border-b border-slate-200 bg-gradient-to-br from-primary-50 to-white">
                     <div class="flex items-start justify-between gap-4">
                         <div>
                             <h2 class="text-xl font-bold text-slate-900">Liên kết hồ sơ giáo dân</h2>
                             <p class="text-sm text-slate-600 mt-1">
-                                @if($showLinkModal)
-                                    Tìm thấy {{ $suggestedParishioners->count() }} giáo dân có thể trùng khớp
+                                @if($linkingStudent)
+                                    Tìm giáo dân trùng họ tên với
+                                    <strong>{{ $linkingStudent->full_name }}</strong>
+                                    @if($suggestedParishioners->count() > 0)
+                                        — {{ $suggestedParishioners->count() }} gợi ý
+                                    @endif
                                 @else
                                     Chọn giáo dân phù hợp để liên kết với học sinh
                                 @endif
@@ -428,37 +501,54 @@
                     </div>
                 </div>
 
-                <div class="flex-1 overflow-y-auto p-6">
-                    @if($showLinkModal)
+                {{-- Body --}}
+                <div class="flex-1 overflow-y-auto p-6 space-y-5">
+                    @if($showLinkModal && $linkingStudent)
+                    <div class="border border-slate-200 rounded-xl p-4 space-y-2 bg-slate-50/50">
+                        <h3 class="text-sm font-bold text-slate-900">Học sinh cần liên kết</h3>
+                        <div class="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-slate-600">
+                            <span><span class="text-slate-500">Họ tên:</span> <strong class="text-slate-900">{{ $linkingStudent->full_name }}</strong></span>
+                            @if($linkingStudent->birthday)
+                            <span><span class="text-slate-500">Ngày sinh:</span> {{ $linkingStudent->birthday->format('d/m/Y') }}</span>
+                            @endif
+                            @if($linkingStudent->student_code)
+                            <span><span class="text-slate-500">Mã HS:</span> <span class="font-mono">{{ $linkingStudent->student_code }}</span></span>
+                            @endif
+                        </div>
+                    </div>
+
                     @if($suggestedParishioners->count() > 0)
                     <div class="space-y-3">
+                        <h3 class="text-sm font-bold text-slate-900">Giáo dân gợi ý</h3>
                         @foreach($suggestedParishioners as $p)
-                        <div class="border border-slate-200 rounded-xl p-4 hover:border-primary-300
-                            hover:bg-primary-50/30 transition-all">
+                        <div class="border border-slate-200 rounded-xl p-4 hover:border-primary-300 hover:bg-primary-50/30 transition-all">
                             <div class="flex items-center justify-between gap-4">
-                                {{-- Thông tin giáo dân --}}
-                                <div class="flex items-center gap-3">
-                                    {{-- Avatar --}}
+                                <div class="flex items-center gap-3 min-w-0">
                                     <div class="w-10 h-10 rounded-full overflow-hidden bg-slate-100 flex-shrink-0">
                                         @if($p->avatar_path)
                                         <img src="{{ avatar_url($p->avatar_path) }}"
+                                            alt="{{ $p->full_name_with_saint }}"
                                             class="w-full h-full object-cover" />
                                         @else
-                                        <div class="w-full h-full flex items-center justify-center">
-                                            <svg class="w-5 h-5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                    d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                                            </svg>
+                                        <div class="w-full h-full flex items-center justify-center text-xs font-semibold text-slate-500">
+                                            {{ strtoupper(mb_substr($p->last_name, 0, 1) . mb_substr($p->first_name, 0, 1)) }}
                                         </div>
                                         @endif
                                     </div>
 
-                                    <div>
-                                        <div class="font-semibold text-slate-900">{{ $p->full_name_with_saint }}</div>
-                                        <div class="flex items-center gap-3 mt-0.5 text-xs text-slate-500">
+                                    <div class="min-w-0">
+                                        <div class="font-semibold text-slate-900 truncate">{{ $p->full_name_with_saint }}</div>
+                                        <div class="flex items-center gap-3 mt-0.5 text-xs text-slate-500 flex-wrap">
                                             <span>{{ $p->gender === 'male' ? 'Nam' : 'Nữ' }}</span>
                                             @if($p->birthday)
                                             <span>{{ $p->birthday->format('d/m/Y') }}</span>
+                                            @endif
+                                            @if($linkingStudent->birthday && $p->birthday)
+                                                @if($linkingStudent->birthday->isSameDay($p->birthday))
+                                                <span class="text-emerald-600 font-medium">Khớp ngày sinh</span>
+                                                @else
+                                                <span class="text-amber-600 font-medium">Khác ngày sinh</span>
+                                                @endif
                                             @endif
                                             @if($p->cccd)
                                             <span>CCCD: {{ $p->cccd }}</span>
@@ -467,36 +557,41 @@
                                     </div>
                                 </div>
 
-                                {{-- Nút liên kết --}}
-                                <button wire:click="confirmLink({{ $p->id }})"
-                                    class="flex-shrink-0 px-4 py-2 bg-primary-500 text-white text-sm
-                                   font-semibold rounded-xl hover:bg-primary-600 transition-colors">
+                                <x-button
+                                    wire:click="confirmLink({{ $p->id }})"
+                                    variant="primary"
+                                    size="sm">
+                                    <x-icon name="link" />
                                     Liên kết
-                                </button>
+                                </x-button>
                             </div>
                         </div>
                         @endforeach
                     </div>
 
                     @else
-                    {{-- Không tìm thấy gợi ý --}}
-                    <div class="text-center py-6">
+                    <div class="text-center py-8 border border-dashed border-slate-200 rounded-xl">
                         <svg class="mx-auto w-12 h-12 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                 d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                         </svg>
                         <p class="mt-3 text-slate-600 font-medium">Không tìm thấy giáo dân phù hợp</p>
-                        <p class="mt-1 text-sm text-slate-400">
-                            Không có giáo dân nào khớp họ tên và ngày sinh
+                        <p class="mt-1 text-sm text-slate-400 px-4">
+                            Không có giáo dân chưa liên kết nào khớp họ tên
+                            @if($linkingStudent->birthday)
+                                và ngày sinh {{ $linkingStudent->birthday->format('d/m/Y') }}
+                            @endif
+                            trong giáo xứ
                         </p>
                     </div>
                     @endif
                     @endif
                 </div>
 
+                {{-- Footer --}}
                 <div class="flex-shrink-0 px-6 py-4 border-t border-slate-200 bg-slate-50 flex justify-end gap-3">
-                    <x-button variant="outline" wire="skipLink">
-                        Bỏ qua
+                    <x-button variant="outline" @click="showLink = false; $wire.closeLinkModal()">
+                        Hủy
                     </x-button>
                 </div>
             </div>
