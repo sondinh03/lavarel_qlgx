@@ -11,6 +11,7 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Facades\Hash;
 use Laravel\Sanctum\HasApiTokens;
+use App\Notifications\ResetPasswordNotification;
 
 class User extends Authenticatable
 {
@@ -60,6 +61,11 @@ class User extends Authenticatable
         return $this->belongsTo(ParishNew::class, 'parish_id', 'id');
     }
 
+    public function teacher(): \Illuminate\Database\Eloquent\Relations\HasOne
+    {
+        return $this->hasOne(Teacher::class, 'user_id');
+    }
+
     public function isSuperAdmin(): bool
     {
         return $this->hasRole('super_admin');
@@ -75,6 +81,14 @@ class User extends Authenticatable
         return $this->hasRole('catechist');
     }
 
+    /**
+     * Giao diện mobile/bottom-nav chỉ dành cho GLV thuần (không phải quản trị xứ).
+     */
+    public function usesCatechistLayout(): bool
+    {
+        return $this->isCatechist() && ! $this->canManage();
+    }
+
     public function canManage(): bool
     {
         return $this->hasAnyRole(['super_admin', 'parish_admin']);
@@ -83,6 +97,11 @@ class User extends Authenticatable
     public function parishName(): ?string
     {
         return $this->parish?->name ?? null;
+    }
+
+    public function sendPasswordResetNotification($token): void
+    {
+        $this->notify(new ResetPasswordNotification($token));
     }
 
     public function setPasswordAttribute($value): void
@@ -94,6 +113,10 @@ class User extends Authenticatable
 
     protected static function booted(): void
     {
+        static::deleting(function (User $user) {
+            Teacher::where('user_id', $user->id)->update(['user_id' => null]);
+        });
+
         static::saved(function ($user) {
             $request = request();
             if ($request->filled('roles')) {

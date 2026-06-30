@@ -143,6 +143,7 @@
 /******/ 		var installedChunks = {
 /******/ 			"/js/manifest": 0,
 /******/ 			"css/app": 0,
+/******/ 			"css/backpack-admin": 0,
 /******/ 			"css/responsive": 0,
 /******/ 			"css/style": 0
 /******/ 		};

@@ -7,6 +7,7 @@ use App\Models\Teacher;
 use App\Models\User;
 use App\Models\ParishGroup;
 use App\Models\Holymanagement;
+use App\Support\UserAccountEmailResolver;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
@@ -269,13 +270,20 @@ class TeacherManager extends BaseComponent
     private function createTeacher(): void
     {
         $user = null;
+        $normalizedPhone = $this->phone_number
+            ? UserAccountEmailResolver::normalizePhone($this->phone_number)
+            : null;
+
+        if ($this->phone_number && $normalizedPhone === null) {
+            throw new \Exception('Số điện thoại không hợp lệ');
+        }
 
         if ($this->create_account) {
             if (empty($this->phone_number) && empty($this->email)) {
                 throw new \Exception('Cần có SĐT hoặc email để tạo tài khoản');
             }
 
-            $accountEmail = $this->email ?: ($this->phone_number . '@giaoly.local');
+            $accountEmail = UserAccountEmailResolver::resolveAccountEmail($this->email, $normalizedPhone);
 
             if (User::where('email', $accountEmail)->exists()) {
                 throw new \Exception('Email/SĐT này đã được dùng cho tài khoản khác');
@@ -285,7 +293,7 @@ class TeacherManager extends BaseComponent
                 'name'      => trim($this->last_name . ' ' . $this->first_name),
                 'email'     => $accountEmail,
                 'parish_id' => $this->parishId,
-                'password'  => $this->phone_number ?: '12345678',
+                'password'  => $normalizedPhone ?: '12345678',
             ]);
 
             $user->assignRole('catechist');
@@ -299,7 +307,7 @@ class TeacherManager extends BaseComponent
             'first_name'       => $this->first_name,
             'gender'           => $this->gender ?: null,
             'birthday'         => $this->birthday ?: null,
-            'phone_number'     => $this->phone_number ?: null,
+            'phone_number'     => $normalizedPhone ?? ($this->phone_number ?: null),
             'email'            => $this->email ?: null,
             'address'          => $this->address ?: null,
             'saint_id'         => $this->saint_id ?: null,
@@ -313,12 +321,20 @@ class TeacherManager extends BaseComponent
     {
         $teacher = Teacher::findOrFail($this->editingId);
 
+        $normalizedPhone = $this->phone_number
+            ? UserAccountEmailResolver::normalizePhone($this->phone_number)
+            : null;
+
+        if ($this->phone_number && $normalizedPhone === null) {
+            throw new \Exception('Số điện thoại không hợp lệ');
+        }
+
         $teacher->update([
             'last_name'        => $this->last_name,
             'first_name'       => $this->first_name,
             'gender'           => $this->gender ?: null,
             'birthday'         => $this->birthday ?: null,
-            'phone_number'     => $this->phone_number ?: null,
+            'phone_number'     => $normalizedPhone ?? ($this->phone_number ?: null),
             'email'            => $this->email ?: null,
             'address'          => $this->address ?: null,
             'saint_id'         => $this->saint_id ?: null,
@@ -334,8 +350,8 @@ class TeacherManager extends BaseComponent
                 'parish_id' => $this->parishId,
             ];
 
-            if ($this->reset_password && !empty($this->phone_number)) {
-                $userUpdate['password'] = Hash::make($this->phone_number);
+            if ($this->reset_password && $normalizedPhone) {
+                $userUpdate['password'] = Hash::make($normalizedPhone);
             }
 
             $teacher->user->update($userUpdate);
@@ -345,7 +361,7 @@ class TeacherManager extends BaseComponent
                 throw new \Exception('Cần có SĐT hoặc email để tạo tài khoản');
             }
 
-            $accountEmail = $this->email ?: ($this->phone_number . '@giaoly.local');
+            $accountEmail = UserAccountEmailResolver::resolveAccountEmail($this->email, $normalizedPhone);
 
             if (User::where('email', $accountEmail)->exists()) {
                 throw new \Exception('Email/SĐT này đã được dùng cho tài khoản khác');
@@ -355,7 +371,7 @@ class TeacherManager extends BaseComponent
                 'name'      => trim($this->last_name . ' ' . $this->first_name),
                 'email'     => $accountEmail,
                 'parish_id' => $this->parishId,
-                'password'  => $this->phone_number ?: '12345678',
+                'password'  => $normalizedPhone ?: '12345678',
             ]);
 
             $user->assignRole('catechist');

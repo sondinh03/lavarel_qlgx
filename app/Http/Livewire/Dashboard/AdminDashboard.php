@@ -32,7 +32,7 @@ class AdminDashboard extends BaseComponent
 
     public function mount(): void
     {
-        if (auth()->user()?->isCatechist()) {
+        if (auth()->user()?->usesCatechistLayout()) {
             redirect()->route('catechist.dashboard');
         }
 

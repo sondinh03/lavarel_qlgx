@@ -51,19 +51,20 @@ class ParishController extends Controller
         
         if(!empty($_GET['deid'])){
             $deid = $_GET['deid'];
-            $array_parish_managements = array();
+            $array_parishes = array();
             if(!empty($deid)){
-                $array_parish_managements = DB::table('parish_managements')
+                $rows = DB::table('parishes')
                     ->select('id', 'name')
-                    ->where('deanerys', '=', $deid)
+                    ->where('deanery_id', '=', $deid)
                     ->where('status', 1)
+                    ->orderBy('name')
                     ->get()->toArray();
                 
-                $array_parish_managements = json_decode(json_encode($array_parish_managements, true), true);
+                $array_parishes = json_decode(json_encode($rows, true), true);
             }
             
-            if (count($array_parish_managements) > 0) {
-                return response()->json($array_parish_managements, 200);
+            if (count($array_parishes) > 0) {
+                return response()->json($array_parishes, 200);
             } else {
                 return response()->json([
                     'status' => 'warning',

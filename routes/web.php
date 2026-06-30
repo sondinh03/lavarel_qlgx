@@ -75,6 +75,7 @@ use App\Http\Livewire\NamHoc\NamHocManager;
 use App\Http\Livewire\Parish\ParishChild;
 use App\Http\Livewire\Parish\ParishGroup;
 use App\Http\Livewire\Parish\ParishGroupManager;
+use App\Http\Livewire\ParishAdmin\ParishAdminSelfRegistration;
 use App\Http\Livewire\Parishioners\AssociationManager;
 use App\Http\Livewire\Parishioners\ParishionerCreate;
 use App\Http\Livewire\Parishioners\ParishionerRegistrationList;
@@ -110,6 +111,12 @@ Route::get('/dang-ky-giao-dan/{parish}', ParishionerSelfRegistration::class)
     ->whereNumber('parish')
     ->name('parishioners.register.public.parish');
 
+Route::get('/dang-ky-quan-tri-xu', ParishAdminSelfRegistration::class)
+    ->name('parish-admin.register.public');
+Route::get('/dang-ky-quan-tri-xu/{parish}', ParishAdminSelfRegistration::class)
+    ->whereNumber('parish')
+    ->name('parish-admin.register.public.parish');
+
 Route::get('/select-module', ModuleSelect::class)
     ->middleware('auth')
     ->name('module.select');
@@ -127,8 +134,123 @@ Route::middleware('auth')->group(function () {
         return redirect()->route('module.select');
     })->name('dashboard');
 
+    // ── Module Giáo lý (URL tiếng Việt, không prefix) ─────────────────
     Route::get('/parish-admin-dashboard', AdminDashboard::class)
         ->name('parish-admin.dashboard');
+
+    Route::get('/bang-dieu-khien', CatechistDashboard::class)
+        ->name('catechist.dashboard');
+
+    Route::middleware('role:parish_admin|catechist')->group(function () {
+        Route::get('/diem-danh', AttendanceManager::class)
+            ->name('attendance.show');
+
+        Route::get('/diem-danh/thong-ke', AttendanceStatistics::class)
+            ->name('attendance.statistics');
+
+        Route::get('/diem-danh/qr', AttendanceAttendanceQr::class)
+            ->name('attendance.qr');
+
+        Route::prefix('hoc-sinh')->name('students.')->group(function () {
+            Route::get('/', StudentListNew::class)->name('index');
+            Route::get('/thong-ke', StudentStatistics::class)->name('statistics');
+            Route::get('/qr/{token}', [StudentQrController::class, 'show'])
+                ->where('token', '[0-9a-fA-F-]{36}')
+                ->name('qr-image');
+
+            Route::middleware('role:parish_admin')->group(function () {
+                Route::get('/tao', StudentEdit::class)->name('create');
+                Route::get('/nhap', StudentImportPreview::class)->name('import');
+                Route::get('/nhap/mau', [StudentImportController::class, 'template'])->name('import.template');
+                Route::get('/in-the', PrintCards::class)->name('print-cards');
+                Route::get('/{id}/sua', StudentEdit::class)->name('edit')->whereNumber('id');
+            });
+
+            Route::get('/{id}', StudentDetail::class)->name('show')->whereNumber('id');
+        });
+    });
+
+    Route::middleware('role:parish_admin')->group(function () {
+        Route::prefix('lop-hoc')->name('classes.')->group(function () {
+            Route::get('/', CatechismClassList::class)->name('index');
+            Route::get('/{id}', LopDetail::class)->name('show')->whereNumber('id');
+            Route::get('/{id}/hoc-sinh', ClassStudentManager::class)->name('students')->whereNumber('id');
+            Route::get('/{id}/giao-ly-vien', AssignTeacher::class)->name('catechists')->whereNumber('id');
+        });
+
+        Route::prefix('giao-ly-vien')->name('catechists.')->group(function () {
+            Route::get('/', TeacherManager::class)->name('index');
+            Route::get('/nhap', TeacherImportPreview::class)->name('import');
+            Route::get('/nhap/mau', [TeacherImportController::class, 'template'])->name('import.template');
+        });
+
+        Route::get('/phien-diem-danh', SessionManager::class)
+            ->name('session.index');
+
+        Route::prefix('diem-so')->name('scores.')->group(function () {
+            Route::get('/', ScoreManager::class)->name('index');
+            Route::get('/thong-ke', ScoreStatistics::class)->name('statistics');
+        });
+
+        Route::prefix('nam-hoc')->name('school-years.')->group(function () {
+            Route::get('/', NamHocManager::class)->name('index');
+            Route::get('/sao-che', CopyNamHoc::class)->name('copy');
+        });
+    });
+
+    // Redirect URL cũ → tiếng Việt
+    Route::redirect('/catechist-dashboard', '/bang-dieu-khien', 301);
+    Route::redirect('/attendance', '/diem-danh', 301);
+    Route::redirect('/attendance/statistics', '/diem-danh/thong-ke', 301);
+    Route::redirect('/attendance/qr', '/diem-danh/qr', 301);
+    Route::redirect('/students', '/hoc-sinh', 301);
+    Route::redirect('/students/statistics', '/hoc-sinh/thong-ke', 301);
+    Route::redirect('/students/create', '/hoc-sinh/tao', 301);
+    Route::redirect('/studentss/import', '/hoc-sinh/nhap', 301);
+    Route::redirect('/studentss/download-template', '/hoc-sinh/nhap/mau', 301);
+    Route::redirect('/studentss/print-cards', '/hoc-sinh/in-the', 301);
+    Route::redirect('/classes', '/lop-hoc', 301);
+    Route::redirect('/catechists', '/giao-ly-vien', 301);
+    Route::redirect('/catechists/import', '/giao-ly-vien/nhap', 301);
+    Route::redirect('/catechists/download-template', '/giao-ly-vien/nhap/mau', 301);
+    Route::redirect('/session', '/phien-diem-danh', 301);
+    Route::redirect('/scores', '/diem-so', 301);
+    Route::redirect('/scores/statistics', '/diem-so/thong-ke', 301);
+    Route::redirect('/school-years', '/nam-hoc', 301);
+    Route::redirect('/school-years/copy', '/nam-hoc/sao-che', 301);
+
+    // Redirect /giao-ly/* (URL trung gian) → URL mới
+    Route::redirect('/giao-ly', '/parish-admin-dashboard', 301);
+    Route::redirect('/giao-ly/bang-dieu-khien', '/bang-dieu-khien', 301);
+    Route::redirect('/giao-ly/diem-danh', '/diem-danh', 301);
+    Route::redirect('/giao-ly/hoc-sinh', '/hoc-sinh', 301);
+    Route::redirect('/giao-ly/lop-hoc', '/lop-hoc', 301);
+    Route::redirect('/giao-ly/giao-ly-vien', '/giao-ly-vien', 301);
+    Route::redirect('/giao-ly/nam-hoc', '/nam-hoc', 301);
+
+    Route::get('/students/qr/{token}', function (string $token) {
+        return redirect("/hoc-sinh/qr/{$token}", 301);
+    })->where('token', '[0-9a-fA-F-]{36}');
+
+    Route::get('/students/{id}/edit', function (int $id) {
+        return redirect("/hoc-sinh/{$id}/sua", 301);
+    })->whereNumber('id');
+
+    Route::get('/students/{id}', function (int $id) {
+        return redirect("/hoc-sinh/{$id}", 301);
+    })->whereNumber('id');
+
+    Route::get('/classes/{id}/students', function (int $id) {
+        return redirect("/lop-hoc/{$id}/hoc-sinh", 301);
+    })->whereNumber('id');
+
+    Route::get('/classes/{id}/catechists', function (int $id) {
+        return redirect("/lop-hoc/{$id}/giao-ly-vien", 301);
+    })->whereNumber('id');
+
+    Route::get('/classes/{id}', function (int $id) {
+        return redirect("/lop-hoc/{$id}", 301);
+    })->whereNumber('id');
 
     Route::prefix('giao-dan')->group(function () {
         Route::get('/', ParishionerDashboard::class)
@@ -171,38 +293,6 @@ Route::middleware('auth')->group(function () {
             ->name('parishioners.show');
     });
 
-    Route::get('/catechist-dashboard', CatechistDashboard::class)
-        ->name('catechist.dashboard');
-
-    Route::middleware('role:parish_admin|catechist')->group(function () {
-
-        Route::get('/attendance', AttendanceManager::class)
-            ->name('attendance.show');
-
-        Route::get('/attendance/statistics', AttendanceStatistics::class)
-            ->name('attendance.statistics');
-
-        Route::get('/attendance/qr', AttendanceAttendanceQr::class)
-            ->name('attendance.qr');
-
-        Route::get('/students', StudentListNew::class)
-            ->name('students.index');
-
-        Route::get('/students/statistics', StudentStatistics::class)
-            ->name('students.statistics');
-
-        Route::get('/students/qr/{token}', [StudentQrController::class, 'show'])
-            ->where('token', '[0-9a-fA-F-]{36}')
-            ->name('students.qr-image');
-
-        Route::get('/students/create', StudentEdit::class)
-            ->middleware('role:parish_admin')
-            ->name('students.create');
-
-        Route::get('/students/{id}', StudentDetail::class)
-            ->name('students.show');
-    });
-
     Route::middleware('role:parish_admin|catechist')->prefix('gia-dinh')->name('families.')->group(function () {
         Route::get('/tao', FamilyEdit::class)
             ->middleware('role:parish_admin')
@@ -240,55 +330,6 @@ Route::middleware('auth')->group(function () {
     });
 
     Route::middleware('role:parish_admin')->group(function () {
-        Route::get('/classes', CatechismClassList::class)
-            ->name('classes.index');
-
-        Route::get('/classes/{id}', LopDetail::class)
-            ->name('classes.show');
-
-        Route::get('/classes/{id}/students', ClassStudentManager::class)
-            ->name('classes.students');
-
-        Route::get('/classes/{id}/catechists', AssignTeacher::class)
-            ->name('classes.catechists');
-
-        Route::get('/studentss/import', StudentImportPreview::class)
-            ->name('students.import');
-
-        Route::get('/studentss/download-template', [StudentImportController::class, 'template'])
-            ->name('students.import.template');
-
-        Route::get('/students/{id}/edit', StudentEdit::class)
-            ->name('students.edit');
-
-        Route::get('/studentss/print-cards', PrintCards::class)
-            ->name('students.print-cards');
-
-        Route::get('/catechists/download-template', [TeacherImportController::class, 'template'])
-            ->name('catechists.import.template');
-
-        Route::get('/catechists/import', TeacherImportPreview::class)
-            ->name('catechists.import');
-
-        Route::get('/catechists', TeacherManager::class)
-            ->name('catechists.index');
-
-        // ── Others ────────────────────────────────────────────
-        Route::get('/session', SessionManager::class)
-            ->name('session.index');
-
-        Route::get('/scores', ScoreManager::class)
-            ->name('scores.index');
-
-        Route::get('/scores/statistics', ScoreStatistics::class)
-            ->name('scores.statistics');
-
-        Route::get('/school-years', NamHocManager::class)
-            ->name('school-years.index');
-
-        Route::get('/school-years/copy', CopyNamHoc::class)
-            ->name('school-years.copy');
-
         Route::get('/ten-thanh', HolyManager::class)
             ->name('holy-names.index');
 

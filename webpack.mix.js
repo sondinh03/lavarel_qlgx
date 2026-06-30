@@ -21,6 +21,7 @@ mix.js('resources/js/app.js', 'public/js')
 	
 mix.sass("resources/css/style.scss", "public/css")
 mix.sass("resources/css/responsive.scss", "public/css")
+mix.sass("resources/css/backpack-admin.scss", "public/css")
 mix.js("resources/js/jquery.min.js", "public/js")
 mix.js("resources/js/main.js", "public/js")
 mix.js("resources/js/char.js", "public/js")

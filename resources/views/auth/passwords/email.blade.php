@@ -1,47 +1,68 @@
-@extends('layouts.app')
+@extends('frontend.layout.landing')
 
 @section('content')
-<div class="container">
-    <div class="row justify-content-center">
-        <div class="col-md-8">
-            <div class="card">
-                <div class="card-header">{{ __('frontend.Reset_Password') }}</div>
+<div class="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 to-slate-100 px-4">
+    <div class="w-full max-w-md bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
 
-                <div class="card-body">
-                    @if (session('status'))
-                        <div class="alert alert-success" role="alert">
-                            {{ session('status') }}
-                        </div>
-                    @endif
-
-                    <form method="POST" action="{{ route('password.email') }}">
-                        @csrf
-
-                        <div class="row mb-3">
-                            <label for="email" class="col-md-4 col-form-label text-md-end">{{ __('frontend.Email_Address') }}</label>
-
-                            <div class="col-md-6">
-                                <input id="email" type="email" class="form-control @error('email') is-invalid @enderror" name="email" value="{{ old('email') }}" required autocomplete="email" autofocus>
-
-                                @error('email')
-                                    <span class="invalid-feedback" role="alert">
-                                        <strong>{{ $message }}</strong>
-                                    </span>
-                                @enderror
-                            </div>
-                        </div>
-
-                        <div class="row mb-0">
-                            <div class="col-md-6 offset-md-4">
-                                <button type="submit" class="btn btn-primary">
-                                    {{ __('frontend.Send_Password_Reset_Link') }}
-                                </button>
-                            </div>
-                        </div>
-                    </form>
-                </div>
-            </div>
+        <div class="text-center mb-6">
+            <h1 class="text-2xl font-bold text-slate-900">
+                Quên mật khẩu
+            </h1>
+            <p class="text-slate-500 mt-1 text-sm">
+                Nhập email hoặc SĐT để nhận liên kết đặt lại mật khẩu
+            </p>
         </div>
+
+        @if (session('status'))
+        <div class="mb-4 rounded-xl bg-green-50 border border-green-200 px-4 py-3 text-sm text-green-800">
+            {{ session('status') }}
+        </div>
+        @endif
+
+        <form method="POST" action="{{ route('password.email') }}" class="space-y-4">
+            @csrf
+
+            <div>
+                <label class="block text-sm font-semibold text-slate-700 mb-1">
+                    Email hoặc số điện thoại
+                </label>
+                <input
+                    type="text"
+                    name="email"
+                    value="{{ old('email') }}"
+                    required
+                    autofocus
+                    autocomplete="username"
+                    placeholder="VD: admin@gmail.com hoặc 0901234567"
+                    class="w-full px-3 py-2 rounded-xl border border-slate-300
+                           focus:ring-2 focus:ring-primary-500 focus:outline-none">
+                <p class="text-xs text-slate-500 mt-1">
+                    Tài khoản chỉ đăng nhập bằng SĐT (không có Gmail) vui lòng liên hệ quản trị xứ.
+                </p>
+                @error('email')
+                <p class="text-sm text-red-500 mt-1">{{ $message }}</p>
+                @enderror
+            </div>
+
+            <button
+                type="submit"
+                class="w-full py-2.5 rounded-xl bg-primary-600 text-white font-semibold
+                       hover:bg-primary-700 transition">
+                Gửi liên kết đặt lại mật khẩu
+            </button>
+        </form>
+
+        <div class="text-center mt-6 space-y-2">
+            <a href="{{ route('login') }}"
+                class="block text-sm text-primary-600 hover:underline">
+                ← Quay lại đăng nhập
+            </a>
+            <a href="{{ route('landing') }}"
+                class="block text-sm text-slate-500 hover:text-primary-600">
+                Quay về trang tra cứu
+            </a>
+        </div>
+
     </div>
 </div>
 @endsection

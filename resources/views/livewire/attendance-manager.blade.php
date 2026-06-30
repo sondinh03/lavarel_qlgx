@@ -1,6 +1,6 @@
 @section('topbar')
 <x-breadcrumb :items="[
-        ['label' => 'Trang chủ', 'url' => auth()->user()->isCatechist() ? route('catechist.dashboard') : route('parish-admin.dashboard')],
+        ['label' => 'Trang chủ', 'url' => auth()->user()->usesCatechistLayout() ? route('catechist.dashboard') : route('parish-admin.dashboard')],
         ['label' => 'Điểm danh', 'url' => route('attendance.show')],
         ['label' => $selectedClassName],
     ]" />
@@ -203,7 +203,7 @@
 
                 {{-- Actions Bar --}}
                 <div class="px-4 sm:px-6 py-4 bg-slate-50/70 border-t border-slate-100">
-                    @php $isAdmin = !auth()->user()->isCatechist(); @endphp
+                    @php $isAdmin = auth()->user()->canManage(); @endphp
 
                     <div class="flex flex-col gap-4">
                         {{-- LEFT: Filters + search --}}

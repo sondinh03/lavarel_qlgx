@@ -1229,7 +1229,7 @@ class StudentListNew extends BaseComponent
             ? StudentNew::find($this->linkingStudentId)
             : null;
 
-        $layout = auth()->user()?->isCatechist()
+        $layout = auth()->user()?->usesCatechistLayout()
             ? 'frontend.layout.catechist'
             : 'frontend.layout.main';
 

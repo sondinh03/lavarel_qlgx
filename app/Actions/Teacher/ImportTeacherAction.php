@@ -7,6 +7,7 @@ use App\Models\ParishGroup;
 use App\Models\Teacher;
 use App\Models\User;
 use App\Support\ExcelDateParser;
+use App\Support\UserAccountEmailResolver;
 use Illuminate\Support\Facades\Hash;
 
 class ImportTeacherAction
@@ -78,6 +79,15 @@ class ImportTeacherAction
 
                 $phone = $row['so_dien_thoai'] ?? null;
                 $email = trim($row['email'] ?? '') ?: null;
+                $normalizedPhone = $phone
+                    ? UserAccountEmailResolver::normalizePhone((string) $phone)
+                    : null;
+
+                if ($phone && $normalizedPhone === null) {
+                    $errors[] = "Dòng {$rowNumber}: Số điện thoại không hợp lệ — bỏ qua dòng";
+                    $skipped++;
+                    continue;
+                }
 
                 // Tạo user account nếu tao_tai_khoan = có
                 $userId      = null;
@@ -85,7 +95,13 @@ class ImportTeacherAction
                 $shouldCreate = in_array($taotk, ['có', 'co', 'yes', '1']);
 
                 if ($shouldCreate) {
-                    $accountEmail = $email ?: ($phone . '@giaoly.local');
+                    try {
+                        $accountEmail = UserAccountEmailResolver::resolveAccountEmail($email, $normalizedPhone);
+                    } catch (\InvalidArgumentException $e) {
+                        $errors[] = "Dòng {$rowNumber}: {$e->getMessage()}";
+                        $skipped++;
+                        continue;
+                    }
 
                     if (User::where('email', $accountEmail)->exists()) {
                         // Không throw — chỉ ghi warning, vẫn tạo teacher
@@ -94,7 +110,7 @@ class ImportTeacherAction
                         $user = User::create([
                             'name'      => $fullName,
                             'email'     => $accountEmail,
-                            'password'  => $phone ?: '12345678',
+                            'password'  => $normalizedPhone ?: '12345678',
                             'parish_id' => $parishId,
                         ]);
 
@@ -110,7 +126,7 @@ class ImportTeacherAction
                     'gender'          => $gender,
                     'birthday'        => $birthday,
                     'email'           => $email,
-                    'phone_number'    => $phone,
+                    'phone_number'    => $normalizedPhone ?? $phone,
                     'parish_group_id' => $parishGroupId,
                     'parish_id'       => $parishId,
                     'user_id'         => $userId,

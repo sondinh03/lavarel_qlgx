@@ -32702,6 +32702,19 @@ __webpack_require__.r(__webpack_exports__);
 
 /***/ }),
 
+/***/ "./resources/css/backpack-admin.scss":
+/*!*******************************************!*\
+  !*** ./resources/css/backpack-admin.scss ***!
+  \*******************************************/
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+// extracted by mini-css-extract-plugin
+
+
+/***/ }),
+
 /***/ "./resources/css/responsive.scss":
 /*!***************************************!*\
   !*** ./resources/css/responsive.scss ***!
@@ -32793,7 +32806,7 @@ window.axios.defaults.headers.common['X-Requested-With'] = 'XMLHttpRequest';
 },
 /******/ __webpack_require__ => { // webpackRuntimeModules
 /******/ var __webpack_exec__ = (moduleId) => (__webpack_require__(__webpack_require__.s = moduleId))
-/******/ __webpack_require__.O(0, ["css/app","css/responsive","css/style","/js/vendor"], () => (__webpack_exec__("./resources/js/app.js"), __webpack_exec__("./resources/css/style.scss"), __webpack_exec__("./resources/css/responsive.scss"), __webpack_exec__("./resources/css/app.css")));
+/******/ __webpack_require__.O(0, ["css/app","css/backpack-admin","css/responsive","css/style","/js/vendor"], () => (__webpack_exec__("./resources/js/app.js"), __webpack_exec__("./resources/css/style.scss"), __webpack_exec__("./resources/css/responsive.scss"), __webpack_exec__("./resources/css/backpack-admin.scss"), __webpack_exec__("./resources/css/app.css")));
 /******/ var __webpack_exports__ = __webpack_require__.O();
 /******/ }
 ]);

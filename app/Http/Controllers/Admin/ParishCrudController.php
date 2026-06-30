@@ -37,10 +37,17 @@ class ParishCrudController extends CrudController
         CRUD::setRoute(config('backpack.base.route_prefix') . '/parish');
         CRUD::setEntityNameStrings(__('backend.parish'), __('backend.parishs'));
         CRUD::orderBy('id', 'desc');
+
+        $user = backpack_user();
+
+        if ($user->isSuperAdmin()) {
+            CRUD::allowAccess(['list', 'create', 'update', 'delete', 'show']);
+            return;
+        }
         
         /*
          |--------------------------------------------------------------------------
-         | Check Roles & Permissions
+         | Check Roles & Permissions (legacy)
          |--------------------------------------------------------------------------
          */
         if (! backpack_user()->can('view_manager')) {
@@ -121,34 +128,26 @@ class ParishCrudController extends CrudController
         
         CRUD::addColumn(['name' => 'name', 'type' => 'text', 'orderable' => false, 'label' => __('backend.name'), 'limit' => 255]);
         CRUD::addColumn(['name' => 'pid', 'type' => 'closure', 'orderable' => false, 'label' => __('backend.parish_managements'), 'function' => function ($entry) {
-            if(!empty($entry->pid)){
-                $array_parish = DB::table('parish_managements')
-                ->where('status', '1')
-                ->where('id', $entry->pid)
-                ->orderBy('id', 'ASC')
-                ->first();
-                return $array_parish->name;
+            if (empty($entry->pid)) {
+                return '—';
             }
+            $parish = DB::table('parishes')->where('id', $entry->pid)->first()
+                ?? DB::table('parish_managements')->where('id', $entry->pid)->first();
+            return $parish->name ?? '—';
         }]);
         CRUD::addColumn(['name' => 'deanerys', 'type' => 'closure', 'orderable' => false, 'label' => __('backend.deanerys'), 'function' => function ($entry) {
-            if(!empty($entry->deid)){
-                $array_deanerys = DB::table('deanerys')
-                ->where('status', '1')
-                ->where('id', $entry->deid)
-                ->orderBy('id', 'ASC')
-                ->first();
-                return $array_deanerys->name;
+            if (empty($entry->deid)) {
+                return '—';
             }
+            $deanery = DB::table('deanerys')->where('id', $entry->deid)->first();
+            return $deanery->name ?? '—';
         }]);
         CRUD::addColumn(['name' => 'diocese', 'type' => 'closure', 'orderable' => false, 'label' => __('backend.diocese'), 'function' => function ($entry) {
-            if(!empty($entry->did)){
-                $array_diocese = DB::table('dioceses')
-                ->where('status', '1')
-                ->where('id', $entry->did)
-                ->orderBy('id', 'ASC')
-                ->first();
-                return $array_diocese->name;
+            if (empty($entry->did)) {
+                return '—';
             }
+            $diocese = DB::table('dioceses')->where('id', $entry->did)->first();
+            return $diocese->name ?? '—';
         }]);
         CRUD::addColumn(['name' => 'status', 'type' => 'closure',  'orderable' => false, 'label' => __('backend.status'), 'function' => function ($entry) {
             if ($entry->status == 0) {
@@ -367,34 +366,34 @@ class ParishCrudController extends CrudController
     public function GetParishs($id){
         $array_par = array();
         if(!empty($id)){
-            $array_parish = DB::table('parishs')
-                //->select('parish_managements.id', 'deanerys.did', 'deanerys.name')
-                ->rightJoin('parish_managements', 'parish_managements.id', '=', 'parishs.pid')
-                ->where('parishs.id', '=', $id)
-                ->where('parish_managements.status', '=', 1)
-                ->get()->toArray();
-            
-            $array_parish = json_decode(json_encode($array_parish, true), true);
-            
-            foreach($array_parish as $item){
-                $array_par[$item['id']] = $item['name'];
+            $entry = DB::table('parishs')->where('id', $id)->first();
+            if ($entry && !empty($entry->deid)) {
+                $array_parish = DB::table('parishes')
+                    ->select('id', 'name')
+                    ->where('deanery_id', $entry->deid)
+                    ->where('status', 1)
+                    ->orderBy('name')
+                    ->get()->toArray();
+
+                foreach ($array_parish as $item) {
+                    $array_par[$item->id] = $item->name;
+                }
             }
         }
         return $array_par;
     }
-    public function GetParishs_first($id){
+    public function GetParishs_first($deaneryId){
         $array_par = array();
-        if(!empty($id)){
-            $array_parish = DB::table('parish_managements')
-            ->select('id', 'name', 'deanerys', 'diocese')
-            ->where('deanerys', '=', $id)
-            ->where('status', '=', 1)
+        if(!empty($deaneryId)){
+            $array_parish = DB::table('parishes')
+            ->select('id', 'name')
+            ->where('deanery_id', $deaneryId)
+            ->where('status', 1)
+            ->orderBy('name')
             ->get()->toArray();
             
-            $array_parish = json_decode(json_encode($array_parish, true), true);
-            
             foreach($array_parish as $item){
-                $array_par[$item['id']] = $item['name'];
+                $array_par[$item->id] = $item->name;
             }
         }
         return $array_par;

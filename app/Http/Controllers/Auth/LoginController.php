@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
 use App\Providers\RouteServiceProvider;
+use App\Support\UserAccountEmailResolver;
 use Illuminate\Foundation\Auth\AuthenticatesUsers;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -29,9 +30,41 @@ class LoginController extends Controller
         $this->middleware('guest')->except('logout');
     }
 
+    protected function credentials(Request $request): array
+    {
+        return [
+            'email'    => UserAccountEmailResolver::resolveLoginIdentifier($request->input('email', '')),
+            'password' => $request->input('password'),
+        ];
+    }
+
+    protected function attemptLogin(Request $request): bool
+    {
+        $credentials = $this->credentials($request);
+
+        if ($this->guard()->attempt($credentials, $request->boolean('remember'))) {
+            return true;
+        }
+
+        $raw = trim((string) $request->input('email', ''));
+
+        if ($raw !== '' && ! UserAccountEmailResolver::isEmail($raw)) {
+            $realEmail = UserAccountEmailResolver::findUserEmailByPhone($raw);
+
+            if ($realEmail && $realEmail !== $credentials['email']) {
+                return $this->guard()->attempt([
+                    'email'    => $realEmail,
+                    'password' => $credentials['password'],
+                ], $request->boolean('remember'));
+            }
+        }
+
+        return false;
+    }
+
     /**
      * ✅ Xử lý sau khi đăng nhập thành công
-     * 
+     *
      * Logic:
      * 1. Xác định role từ Spatie Permission
      * 2. Lưu session (backward compatibility)

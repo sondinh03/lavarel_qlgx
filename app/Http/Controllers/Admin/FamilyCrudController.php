@@ -32,6 +32,14 @@ class FamilyCrudController extends CrudController
         CRUD::setRoute(config('backpack.base.route_prefix') . '/family');
         CRUD::setEntityNameStrings(__('backend.family'), __('backend.families'));
 
+        $user = backpack_user();
+
+        if ($user->isSuperAdmin()) {
+            CRUD::allowAccess(['list', 'create', 'update', 'delete', 'show', 'revisions']);
+            CRUD::with('revisionHistory');
+            return;
+        }
+
         if (! backpack_user()->can('view_manager')) {
             CRUD::denyAccess(['list']);
         }

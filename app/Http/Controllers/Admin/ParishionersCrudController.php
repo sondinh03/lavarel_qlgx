@@ -83,9 +83,17 @@ class ParishionersCrudController extends CrudController
 
         CRUD::addColumn([
             'name'      => 'avatar_path',
-            'type'      => 'image',
+            'type'      => 'closure',
             'orderable' => false,
             'label'     => __('backend.image'),
+            'function'  => function ($entry) {
+                $url = $entry->avatar_path ? media_url($entry->avatar_path) : null;
+                if (!$url) {
+                    return '—';
+                }
+                return '<img src="' . e($url) . '" style="max-height:40px;border-radius:4px" alt="">';
+            },
+            'escaped'   => false,
         ]);
 
         CRUD::addColumn([
@@ -793,10 +801,10 @@ class ParishionersCrudController extends CrudController
                 ->first();
 
             if ($parishioner) {
-                $rows = DB::table('parishs')
-                    ->where('pid', $parishioner->parish_id)
+                $rows = DB::table('parish_groups')
+                    ->where('parish_id', $parishioner->parish_id)
                     ->where('status', 1)
-                    ->orderBy('id')
+                    ->orderBy('name')
                     ->get();
                 foreach ($rows as $row) {
                     $array_areas[$row->id] = $row->name;

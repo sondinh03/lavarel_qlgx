@@ -336,16 +336,16 @@ class ParishManagementCrudController extends CrudController
     {
         $array_dea = [];
         if (!empty($id)) {
-            $deanerys = DB::table('parishes')
-                ->select('deanerys.id', 'deanerys.did', 'deanerys.name')
-                ->rightJoin('deanerys', 'deanerys.did', '=', 'parishes.diocese_id')
-                ->where('parishes.id', '=', $id)
-                ->where('deanerys.status', '=', 1)
-                ->get()
-                ->toArray();
-
-            foreach ($deanerys as $item) {
-                $array_dea[$item->id] = $item->name;
+            $parish = DB::table('parishes')->where('id', $id)->first();
+            if ($parish && !empty($parish->diocese_id)) {
+                $deanerys = DB::table('deanerys')
+                    ->where('did', $parish->diocese_id)
+                    ->where('status', 1)
+                    ->orderBy('id')
+                    ->get();
+                foreach ($deanerys as $item) {
+                    $array_dea[$item->id] = $item->name;
+                }
             }
         }
         return $array_dea;

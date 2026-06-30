@@ -244,6 +244,28 @@
                     </a>
                 </div>
             </div>
+
+            {{-- ĐĂNG KÝ QUẢN TRỊ XỨ --}}
+            <div class="bg-white rounded-2xl shadow-sm border border-dashed border-indigo-200 overflow-hidden">
+                <div class="p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center gap-4">
+                    <div class="flex items-start gap-3 flex-1 min-w-0">
+                        <div class="w-10 h-10 rounded-xl bg-indigo-100 flex items-center justify-center flex-shrink-0">
+                            <svg class="w-5 h-5 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                            </svg>
+                        </div>
+                        <div class="min-w-0">
+                            <h2 class="text-base font-bold text-slate-900">Đăng ký quản trị xứ</h2>
+                            <p class="text-sm text-slate-600 mt-0.5">Yêu cầu tài khoản quản trị giáo xứ (chờ super admin duyệt)</p>
+                        </div>
+                    </div>
+                    <a href="{{ route('parish-admin.register.public') }}"
+                        class="inline-flex items-center justify-center px-4 py-2.5 rounded-xl bg-indigo-600 text-white text-sm font-semibold hover:opacity-90 transition whitespace-nowrap sm:flex-shrink-0">
+                        Đăng ký quản trị
+                    </a>
+                </div>
+            </div>
         </div>
 
         {{-- ==================== CHI TIẾT HỌC SINH ==================== --}}

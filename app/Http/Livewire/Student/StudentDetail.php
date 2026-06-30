@@ -221,7 +221,7 @@ class StudentDetail extends BaseComponent
 
     public function render()
     {
-        $layout = auth()->user()->isCatechist() ? 'frontend.layout.catechist' : 'frontend.layout.main';
+        $layout = auth()->user()?->usesCatechistLayout() ? 'frontend.layout.catechist' : 'frontend.layout.main';
 
         return view('livewire.student.student-detail', [
             'student'   => $this->studentData,

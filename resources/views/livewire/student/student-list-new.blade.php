@@ -1,6 +1,6 @@
 @section('topbar')
 <x-breadcrumb :items="[
-        ['label' => 'Trang chủ', 'url' => auth()->user()->isCatechist() ? route('catechist.dashboard') : route('parish-admin.dashboard')],
+        ['label' => 'Trang chủ', 'url' => auth()->user()->usesCatechistLayout() ? route('catechist.dashboard') : route('parish-admin.dashboard')],
         ['label' => 'Học sinh']
     ]" />
 @endsection
@@ -19,7 +19,7 @@
     <a href="#main-content" class="sr-only focus:not-sr-only">Bỏ qua tới nội dung</a>
 
     <div id="main-content" class="mx-auto max-w-7xl space-y-6">
-        @php $isCatechist = auth()->user()->isCatechist(); @endphp
+        @php $isCatechist = auth()->user()->usesCatechistLayout(); @endphp
 
         {{-- Header card --}}
         <div class="bg-white rounded-2xl shadow-sm border border-slate-200">

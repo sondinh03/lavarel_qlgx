@@ -192,8 +192,12 @@ class AttendanceQr extends BaseComponent
 
     public function render()
     {
+        $layout = auth()->user()?->usesCatechistLayout()
+            ? 'frontend.layout.catechist'
+            : 'frontend.layout.main';
+
         return view('livewire.attendance.attendance-qr')
-            ->extends('frontend.layout.catechist')
+            ->extends($layout)
             ->section('content');
     }
 }

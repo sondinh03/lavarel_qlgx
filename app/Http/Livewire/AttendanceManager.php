@@ -107,7 +107,7 @@ class AttendanceManager extends BaseComponent
         parent::initializeUser();
 
         // Tận dụng auth đã được gọi trong parent
-        $this->viewMode = auth()->user()?->isCatechist() ? 'mobile' : 'desktop';
+        $this->viewMode = auth()->user()?->usesCatechistLayout() ? 'mobile' : 'desktop';
     }
 
     protected function loadInitialData(): void

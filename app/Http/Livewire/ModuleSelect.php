@@ -12,6 +12,11 @@ class ModuleSelect extends Component
     public function mount(): void
     {
         $user = Auth::user();
+
+        if ($user->isSuperAdmin()) {
+            redirect('/admin/dashboard');
+        }
+
         $this->modules = $this->resolveModules($user);
 
         // Nếu chỉ có 1 module → redirect thẳng, không hiện trang chọn

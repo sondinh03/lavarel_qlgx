@@ -19,6 +19,7 @@ use App\Http\Controllers\Admin\SponsorCrudController;
 use App\Http\Controllers\Admin\DioceseCrudController;
 use App\Http\Controllers\Admin\DeaneryCrudController;
 use App\Http\Controllers\Admin\ParishCrudController;
+use App\Http\Controllers\Admin\ParishGroupCrudController;
 use App\Http\Controllers\Admin\AssociationCrudController;
 use App\Http\Controllers\Admin\GiaDinhCrudController;
 use App\Http\Controllers\Admin\FamilyCrudController;
@@ -33,6 +34,17 @@ use App\Http\Controllers\Admin\DecenCrudController;
 use App\Http\Controllers\Admin\GradeLevelCrudController;
 use App\Http\Controllers\Admin\SetAdminCrudController;
 use App\Http\Controllers\Admin\NamHocCrudController;
+use App\Http\Controllers\Admin\Auth\LoginController as AdminAuthLoginController;
+use App\Http\Controllers\Admin\ParishAdminRegistrationCrudController;
+
+// Ghi đè logout Backpack → redirect về /login (thay vì /admin/login)
+Route::group([
+    'prefix'     => config('backpack.base.route_prefix', 'admin'),
+    'middleware' => (array) config('backpack.base.web_middleware', 'web'),
+], function () {
+    Route::get('logout', [AdminAuthLoginController::class, 'logout'])->name('backpack.auth.logout');
+    Route::post('logout', [AdminAuthLoginController::class, 'logout']);
+});
 
 // --------------------------
 // Custom Backpack Routes
@@ -82,6 +94,7 @@ Route::group([
     Route::crud('sponsor', SponsorCrudController::class);
     Route::crud('diocese', DioceseCrudController::class);
     Route::crud('deanery', DeaneryCrudController::class);
+    Route::crud('parish-group', ParishGroupCrudController::class);
     Route::crud('parish', ParishCrudController::class);
     Route::crud('association', AssociationCrudController::class);
     
@@ -100,4 +113,10 @@ Route::group([
     Route::crud('decen', DecenCrudController::class);
     Route::crud('set-admin', SetAdminCrudController::class);
     Route::crud('nam-hoc', NamHocCrudController::class);
+
+    Route::crud('parish-admin-registration', ParishAdminRegistrationCrudController::class);
+    Route::post('parish-admin-registration/{id}/approve', [ParishAdminRegistrationCrudController::class, 'approve'])
+        ->name('parish-admin-registration.approve');
+    Route::post('parish-admin-registration/{id}/reject', [ParishAdminRegistrationCrudController::class, 'reject'])
+        ->name('parish-admin-registration.reject');
 }); // this should be the absolute last line of this file

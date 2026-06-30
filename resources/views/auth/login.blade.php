@@ -14,6 +14,12 @@
             </p>
         </div>
 
+        @if (session('status'))
+        <div class="mb-4 rounded-xl bg-green-50 border border-green-200 px-4 py-3 text-sm text-green-800">
+            {{ session('status') }}
+        </div>
+        @endif
+
         {{-- Form --}}
         <form method="POST" action="{{ route('login') }}" class="space-y-4">
             @csrf
@@ -29,6 +35,8 @@
                     value="{{ old('email') }}"
                     required
                     autofocus
+                    autocomplete="username"
+                    placeholder="VD: admin@gmail.com hoặc 0901234567"
                     class="w-full px-3 py-2 rounded-xl border border-slate-300
                            focus:ring-2 focus:ring-primary-500 focus:outline-none">
                 @error('email')
