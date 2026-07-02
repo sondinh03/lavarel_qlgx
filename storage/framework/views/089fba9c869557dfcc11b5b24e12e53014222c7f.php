@@ -5,8 +5,6 @@
 
     // Optional iOS-style enhancements (backwards compatible)
     'iconType' => null,   // e.g. attendance, score, students...
-    'statValue' => null,  // number/string
-    'statLabel' => null,  // string
 ]); ?>
 <?php foreach (array_filter(([
     'title' => '',
@@ -15,8 +13,6 @@
 
     // Optional iOS-style enhancements (backwards compatible)
     'iconType' => null,   // e.g. attendance, score, students...
-    'statValue' => null,  // number/string
-    'statLabel' => null,  // string
 ]), 'is_string', ARRAY_FILTER_USE_KEY) as $__key => $__value) {
     $$__key = $$__key ?? $__value;
 } ?>
@@ -70,20 +66,11 @@
         </div>
 
         
-        <div class="flex items-center gap-3 shrink-0">
-            <?php if($statValue !== null && $statLabel): ?>
-                <div class="hidden sm:flex flex-col items-end px-4 py-2 rounded-2xl bg-slate-50 border border-slate-200">
-                    <div class="text-lg font-extrabold text-slate-900 leading-tight"><?php echo e($statValue); ?></div>
-                    <div class="text-xs font-semibold text-slate-400 uppercase tracking-wide"><?php echo e($statLabel); ?></div>
-                </div>
+        <div class="flex items-center gap-2 shrink-0">
+            <?php if(isset($actions)): ?>
+                <?php echo e($actions); ?>
+
             <?php endif; ?>
-
-            <div class="flex items-center gap-2">
-                <?php if(isset($actions)): ?>
-                    <?php echo e($actions); ?>
-
-                <?php endif; ?>
-            </div>
         </div>
 
     </div>

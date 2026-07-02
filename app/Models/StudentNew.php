@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Traits\BelongsToParish;
 use Backpack\CRUD\app\Models\Traits\CrudTrait;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
@@ -124,6 +125,28 @@ class StudentNew extends Model
     public function studentsClass()
     {
         return $this->hasMany(StudentsClass::class, 'student_id');
+    }
+
+    public function scopeSearch(Builder $query, string $term): Builder
+    {
+        $searchTerm = '%' . trim($term) . '%';
+        $table = $query->getModel()->getTable();
+
+        return $query->where(function ($q) use ($searchTerm, $table) {
+            $q->where('first_name', 'like', $searchTerm)
+                ->orWhere('last_name', 'like', $searchTerm)
+                ->orWhere('student_code', 'like', $searchTerm)
+                ->orWhereRaw("CONCAT({$table}.last_name, ' ', {$table}.first_name) LIKE ?", [$searchTerm])
+                ->orWhereHas('saint', fn ($q2) => $q2->where('name', 'like', $searchTerm))
+                ->orWhereRaw(
+                    "TRIM(CONCAT(
+                        COALESCE((SELECT name FROM holymanagements WHERE holymanagements.id = {$table}.saint_id), ''),
+                        ' ',
+                        TRIM(CONCAT({$table}.last_name, ' ', {$table}.first_name))
+                    )) LIKE ?",
+                    [$searchTerm]
+                );
+        });
     }
 
     /*

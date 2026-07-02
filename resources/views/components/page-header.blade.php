@@ -5,8 +5,6 @@
 
     // Optional iOS-style enhancements (backwards compatible)
     'iconType' => null,   // e.g. attendance, score, students...
-    'statValue' => null,  // number/string
-    'statLabel' => null,  // string
 ])
 
 @php
@@ -50,20 +48,11 @@
             </div>
         </div>
 
-        {{-- RIGHT: Stat + Actions --}}
-        <div class="flex items-center gap-3 shrink-0">
-            @if($statValue !== null && $statLabel)
-                <div class="hidden sm:flex flex-col items-end px-4 py-2 rounded-2xl bg-slate-50 border border-slate-200">
-                    <div class="text-lg font-extrabold text-slate-900 leading-tight">{{ $statValue }}</div>
-                    <div class="text-xs font-semibold text-slate-400 uppercase tracking-wide">{{ $statLabel }}</div>
-                </div>
-            @endif
-
-            <div class="flex items-center gap-2">
-                @isset($actions)
-                    {{ $actions }}
-                @endisset
-            </div>
+        {{-- RIGHT: Actions --}}
+        <div class="flex items-center gap-2 shrink-0">
+            @isset($actions)
+                {{ $actions }}
+            @endisset
         </div>
 
     </div>

@@ -858,14 +858,7 @@ class StudentListNew extends BaseComponent
         }
 
         if ($withSearch && !empty(trim($this->search))) {
-            $search = trim($this->search);
-            $query->where(function ($q) use ($search) {
-                $q->where('first_name', 'like', "%{$search}%")
-                    ->orWhere('last_name', 'like', "%{$search}%")
-                    ->orWhere('student_code', 'like', "%{$search}%")
-                    ->orWhereRaw("CONCAT(last_name, ' ', first_name) LIKE ?", ["%{$search}%"])
-                    ->orWhereHas('saint', fn ($q2) => $q2->where('name', 'like', "%{$search}%"));
-            });
+            $query->search(trim($this->search));
         }
     }
 
@@ -897,13 +890,7 @@ class StudentListNew extends BaseComponent
         if (!empty(trim($this->modalSearch))) {
             $search = trim($this->modalSearch);
             $query->where(function ($q) use ($search) {
-                $q->where('first_name', 'like', "%{$search}%")
-                    ->orWhere('last_name', 'like', "%{$search}%")
-                    ->orWhere('student_code', 'like', "%{$search}%")
-                    ->orWhereRaw("CONCAT(last_name, ' ', first_name) LIKE ?", ["%{$search}%"])
-                    ->orWhereHas('saint', function ($q2) use ($search) {
-                        $q2->where('name', 'like', "%{$search}%");
-                    });
+                $q->search($search);
 
                 if (is_numeric($search) && strlen($search) === 4) {
                     $q->orWhereYear('birthday', (int) $search);

@@ -336,13 +336,24 @@ class Parishioner extends Model
     {
         $searchTerm = '%' . trim($term) . '%';
 
-        return $query->where(function ($q) use ($searchTerm) {
+        $table = $query->getModel()->getTable();
+
+        return $query->where(function ($q) use ($searchTerm, $table) {
             $q->where('last_name', 'like', $searchTerm)
                 ->orWhere('first_name', 'like', $searchTerm)
                 ->orWhere('code', 'like', $searchTerm)
                 ->orWhere('cccd', 'like', $searchTerm)
                 ->orWhere('phone', 'like', $searchTerm)
-                ->orWhereRaw("CONCAT(last_name, ' ', first_name) LIKE ?", [$searchTerm]);
+                ->orWhereRaw("CONCAT({$table}.last_name, ' ', {$table}.first_name) LIKE ?", [$searchTerm])
+                ->orWhereHas('saint', fn ($q2) => $q2->where('name', 'like', $searchTerm))
+                ->orWhereRaw(
+                    "TRIM(CONCAT(
+                        COALESCE((SELECT name FROM holymanagements WHERE holymanagements.id = {$table}.saint_id), ''),
+                        ' ',
+                        TRIM(CONCAT({$table}.last_name, ' ', {$table}.first_name))
+                    )) LIKE ?",
+                    [$searchTerm]
+                );
         });
     }
 
