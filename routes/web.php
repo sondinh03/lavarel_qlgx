@@ -94,6 +94,8 @@ use App\Http\Livewire\Student\StudentEdit;
 use App\Http\Livewire\Student\StudentImportPreview;
 use App\Http\Livewire\Student\StudentListNew;
 use App\Http\Livewire\Student\StudentStatistics;
+use App\Http\Livewire\Teacher\TeacherDetail;
+use App\Http\Livewire\Teacher\TeacherEdit;
 use App\Http\Livewire\Teacher\TeacherImportPreview;
 use App\Http\Livewire\Teacher\TeacherManager;
 use Illuminate\Support\Facades\Auth;
@@ -180,8 +182,11 @@ Route::middleware('auth')->group(function () {
 
         Route::prefix('giao-ly-vien')->name('catechists.')->group(function () {
             Route::get('/', TeacherManager::class)->name('index');
+            Route::get('/tao', TeacherEdit::class)->name('create');
             Route::get('/nhap', TeacherImportPreview::class)->name('import');
             Route::get('/nhap/mau', [TeacherImportController::class, 'template'])->name('import.template');
+            Route::get('/{id}/sua', TeacherEdit::class)->name('edit')->whereNumber('id');
+            Route::get('/{id}', TeacherDetail::class)->name('show')->whereNumber('id');
         });
 
         Route::get('/phien-diem-danh', SessionManager::class)

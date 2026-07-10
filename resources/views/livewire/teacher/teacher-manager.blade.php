@@ -6,14 +6,7 @@
 @endsection
 
 <div class="min-h-screen bg-apple-gray p-2 sm:p-4 lg:p-6"
-    style="min-height: calc(100vh - 56px - var(--bottom-offset));"
-    x-data="{ showForm: false }"
-    x-init="
-        document.addEventListener('livewire:load', () => {
-            Livewire.on('openModal', () => { showForm = true; });
-            Livewire.on('closeModal', () => { showForm = false; });
-        });
-    ">
+    style="min-height: calc(100vh - 56px - var(--bottom-offset));">
     <a href="#main-content" class="sr-only focus:not-sr-only">Bỏ qua tới nội dung</a>
 
     <div id="main-content" class="mx-auto max-w-7xl">
@@ -69,7 +62,7 @@
                                 <x-icon name="upload" />
                                 Import Excel
                             </x-button>
-                            <x-button wire:click="create" variant="primary">
+                            <x-button as="a" href="{{ route('catechists.create') }}" variant="primary">
                                 <x-icon name="plus" />
                                 Thêm giáo lý viên
                             </x-button>
@@ -80,119 +73,115 @@
 
             @if($teachers->count() > 0)
             <div class="overflow-x-auto">
-                <table class="w-full border-separate border-spacing-0">
+                <table class="w-full">
                     <thead class="bg-slate-50/50 mac-hairline-b">
                         <tr>
-                            <x-table-header>STT</x-table-header>
-                            <x-table-header>Họ tên</x-table-header>
+                            <x-table-header class="w-12">STT</x-table-header>
+                            <x-table-header class="w-14">Ảnh</x-table-header>
+                            <x-table-header>Tên thánh</x-table-header>
+                            <x-table-header class="w-[160px]">Họ & Tên đệm</x-table-header>
+                            <x-table-header>Tên</x-table-header>
                             <x-table-header>Giới tính</x-table-header>
                             <x-table-header>Ngày sinh</x-table-header>
-                            <x-table-header>Liên hệ</x-table-header>
+                            <x-table-header>Điện thoại</x-table-header>
+                            <x-table-header>Email</x-table-header>
                             <x-table-header>Giáo họ</x-table-header>
                             <x-table-header class="text-center">Trạng thái</x-table-header>
-                            <x-table-header class="text-center">Thao tác</x-table-header>
+                            <x-table-header class="text-center w-28">Thao tác</x-table-header>
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-black/[0.04]">
                         @foreach($teachers as $index => $teacher)
                         <tr class="hover:bg-black/[0.03] transition-colors" wire:key="teacher-{{ $teacher->id }}">
 
-                            {{-- STT --}}
                             <td class="px-4 py-3 text-sm text-slate-500">
                                 {{ ($teachers->firstItem() ?? 0) + $index }}
                             </td>
 
-                            {{-- Họ tên --}}
                             <td class="px-4 py-3">
-                                <div class="flex items-center gap-3">
-                                    {{-- Avatar placeholder --}}
-                                    <div class="w-9 h-9 rounded-full bg-primary-100 flex items-center justify-center
-                                                text-primary-700 font-bold text-sm flex-shrink-0">
-                                        {{ mb_substr($teacher->first_name, 0, 1) }}
-                                    </div>
-                                    <div>
-                                        @if($teacher->saint)
-                                        <div class="text-xs text-slate-500">
-                                            {{ $teacher->saint->name }}
-                                        </div>
-                                        @endif
-                                        <div class="font-semibold text-slate-900">
-
-                                            {{ $teacher->full_name }}
-                                        </div>
-
-                                    </div>
+                                <div class="w-9 h-9 rounded-full overflow-hidden bg-slate-100 flex items-center justify-center flex-shrink-0 text-xs font-semibold text-slate-500">
+                                    {{ strtoupper(mb_substr($teacher->last_name ?? '', 0, 1) . mb_substr($teacher->first_name ?? '', 0, 1)) }}
                                 </div>
                             </td>
 
-                            {{-- Giới tính --}}
+                            <td class="px-4 py-3 text-sm text-slate-900 whitespace-nowrap">
+                                {{ $teacher->saint->name ?? '—' }}
+                            </td>
+
+                            <td class="px-4 py-3 text-sm font-semibold text-slate-900 whitespace-nowrap">
+                                {{ $teacher->last_name ?: '—' }}
+                            </td>
+
+                            <td class="px-4 py-3 text-sm font-semibold text-slate-900 whitespace-nowrap">
+                                {{ $teacher->first_name ?: '—' }}
+                            </td>
+
                             <td class="px-4 py-3">
                                 @if($teacher->gender)
-                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold
+                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-lg text-xs font-semibold
                                     {{ $teacher->gender === 'male'
                                         ? 'bg-primary-100 text-primary-700'
                                         : 'bg-pink-100 text-pink-700' }}">
                                     {{ $teacher->gender_text }}
                                 </span>
                                 @else
-                                <span class="text-slate-400 text-sm">—</span>
+                                <span class="text-sm text-slate-400">—</span>
                                 @endif
                             </td>
 
-                            {{-- Ngày sinh --}}
-                            <td class="px-4 py-3 text-sm text-slate-600">
+                            <td class="px-4 py-3 text-sm text-slate-600 whitespace-nowrap">
                                 {{ $teacher->birthday?->format('d/m/Y') ?? '—' }}
                             </td>
 
-                            {{-- Liên hệ --}}
-                            <td class="px-4 py-3">
-                                <div class="space-y-1">
-                                    @if($teacher->phone_number)
-                                    <div class="text-sm text-slate-700">📞 {{ $teacher->phone_number }}</div>
-                                    @endif
-                                    @if($teacher->email)
-                                    <div class="text-xs text-slate-500 truncate max-w-40">✉ {{ $teacher->email }}</div>
-                                    @endif
-                                </div>
+                            <td class="px-4 py-3 text-sm text-slate-700 whitespace-nowrap">
+                                {{ $teacher->phone_number ?: '—' }}
                             </td>
 
-                            {{-- Giáo họ --}}
-                            <td class="px-4 py-3">
-                                @if($teacher->parishGroup)
-                                <span class="inline-flex items-center px-2.5 py-1 rounded-full
-                                             text-xs font-semibold bg-primary-100 text-primary-700">
-                                    {{ $teacher->parishGroup->name }}
+                            <td class="px-4 py-3 text-sm text-slate-500 max-w-[180px]">
+                                <span class="block truncate" title="{{ $teacher->email }}">
+                                    {{ $teacher->email ?: '—' }}
                                 </span>
-                                @else
-                                <span class="text-slate-400 text-sm">—</span>
-                                @endif
                             </td>
 
-                            {{-- Trạng thái --}}
+                            <td class="px-4 py-3 text-sm text-slate-700 whitespace-nowrap">
+                                {{ $teacher->parishGroup->name ?? '—' }}
+                            </td>
+
                             <td class="px-4 py-3 text-center">
-                                <span class="inline-flex items-center px-2.5 py-1 text-xs font-semibold rounded-full
-                                             {{ $teacher->is_active ? 'bg-primary-100 text-primary-700' : 'bg-slate-200 text-slate-600' }}">
+                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-lg text-xs font-semibold
+                                    {{ $teacher->is_active
+                                        ? 'bg-green-100 text-green-700'
+                                        : 'bg-slate-200 text-slate-600' }}">
                                     {{ $teacher->is_active ? 'Hoạt động' : 'Đã nghỉ' }}
                                 </span>
                             </td>
 
-                            {{-- Thao tác --}}
-                            <td class="px-4 py-3 text-center">
-                                <div class="inline-flex items-center gap-3">
-                                    <x-table-action wire="edit({{ $teacher->id }})" icon="edit">
-                                        Sửa
-                                    </x-table-action>
+                            <td class="px-4 py-3">
+                                <div class="flex items-center justify-center gap-1">
+                                    <x-tooltip content="Xem chi tiết">
+                                        <a href="{{ route('catechists.show', $teacher->id) }}"
+                                            class="p-2 hover:bg-slate-100 text-slate-600 rounded-lg transition-all">
+                                            <x-icon name="eye" />
+                                        </a>
+                                    </x-tooltip>
 
-                                    <span class="text-slate-300">|</span>
+                                    <x-tooltip content="Chỉnh sửa">
+                                        <a href="{{ route('catechists.edit', $teacher->id) }}"
+                                            class="p-2 hover:bg-slate-100 text-slate-600 rounded-lg transition-all">
+                                            <x-icon name="edit" />
+                                        </a>
+                                    </x-tooltip>
 
-                                    <x-table-action
-                                        wire="delete({{ $teacher->id }})"
-                                        icon="trash"
-                                        color="danger"
-                                        :loading="true"
-                                        confirm="Xóa giáo lý viên này sẽ xóa luôn tài khoản đăng nhập. Bạn chắc chắn?">
-                                        Xóa
-                                    </x-table-action>
+                                    <x-tooltip content="Xóa">
+                                        <button type="button"
+                                            @click="$dispatch('open-confirm', {
+                                                message: 'Xóa giáo lý viên này sẽ xóa luôn tài khoản đăng nhập. Bạn chắc chắn?',
+                                                wireMethod: 'delete({{ $teacher->id }})'
+                                            })"
+                                            class="p-2 hover:bg-red-50 text-red-500 rounded-lg transition-all">
+                                            <x-icon name="trash" />
+                                        </button>
+                                    </x-tooltip>
                                 </div>
                             </td>
                         </tr>
@@ -201,7 +190,6 @@
                 </table>
             </div>
 
-            {{-- Pagination --}}
             @if($teachers->hasPages())
             <div class="mac-hairline-t">
                 <x-pagination :paginator="$teachers" :per-page-options="[10, 15, 25, 50]" />
@@ -219,7 +207,7 @@
                         d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
                 </x-slot>
                 @if(!($search || $filterParishGroup || $filterGender || $filterActive))
-                <x-button wire:click="create" variant="primary">
+                <x-button as="a" href="{{ route('catechists.create') }}" variant="primary">
                     <x-icon name="plus" />
                     Thêm giáo lý viên
                 </x-button>
@@ -227,216 +215,5 @@
             </x-stats.page-empty>
             @endif
         </x-mac-panel>
-
-    </div>
-
-    {{-- Modal Form --}}
-    <div
-        x-show="showForm"
-        x-cloak
-        x-transition.opacity
-        class="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50 p-4"
-        role="dialog"
-        aria-modal="true"
-        @click="showForm = false; $wire.closeModal()"
-        @keydown.escape.window="showForm = false; $wire.closeModal()">
-
-        <div
-            x-show="showForm"
-            x-transition
-            class="bg-white rounded-2xl shadow-xl w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col"
-            @click.stop>
-
-            <div class="flex-shrink-0 p-6 border-b border-slate-200 bg-gradient-to-br from-primary-50 to-white">
-                <div class="flex items-start justify-between gap-4">
-                    <div>
-                        <h2 class="text-xl font-bold text-slate-900">
-                            {{ $editingId ? 'Cập nhật giáo lý viên' : 'Thêm giáo lý viên mới' }}
-                        </h2>
-                        <p class="text-sm text-slate-500 mt-1">
-                            {{ $editingId ? 'Chỉnh sửa thông tin' : 'Tạo tài khoản đăng nhập' }}
-                        </p>
-                    </div>
-                    <button type="button"
-                        @click="showForm = false; $wire.closeModal()"
-                        class="p-1 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors">
-                        <x-icon name="cancel" class="w-5 h-5" />
-                    </button>
-                </div>
-            </div>
-
-                {{-- Body --}}
-                <div class="flex-1 overflow-y-auto p-6 space-y-5">
-
-                    {{-- Errors --}}
-                    @if($errors->any())
-                    <div class="bg-red-50 border-l-4 border-red-500 rounded-xl p-4">
-                        <ul class="space-y-1 text-sm text-red-700">
-                            @foreach($errors->all() as $error)
-                            <li>• {{ $error }}</li>
-                            @endforeach
-                        </ul>
-                    </div>
-                    @endif
-
-                    {{-- Họ & Tên --}}
-                    <div class="grid grid-cols-2 gap-4">
-                        <x-form-input label="Họ (và tên đệm)" name="last_name"
-                            wire:model.defer="last_name"
-                            placeholder="VD: Nguyễn Văn" required />
-
-                        <x-form-input label="Tên" name="first_name"
-                            wire:model.defer="first_name"
-                            placeholder="VD: An" required />
-                    </div>
-
-                    {{-- Giới tính & Ngày sinh --}}
-                    <div class="grid grid-cols-2 gap-4">
-                        <div>
-                            <label class="block text-sm font-semibold text-slate-700 mb-1">Giới tính</label>
-                            <select wire:model.defer="gender"
-                                class="w-full px-3 py-2 rounded-xl border border-slate-300
-                                       focus:outline-none focus:ring-2 focus:ring-primary-500">
-                                <option value="">-- Chọn --</option>
-                                <option value="male">Nam</option>
-                                <option value="female">Nữ</option>
-                            </select>
-                        </div>
-
-                        <x-form-input label="Ngày sinh" name="birthday"
-                            type="date" wire:model.defer="birthday" />
-                    </div>
-
-                    {{-- SĐT & Email --}}
-                    <div class="grid grid-cols-2 gap-4">
-                        <x-form-input label="Số điện thoại" name="phone_number"
-                            wire:model.defer="phone_number"
-                            placeholder="0901234567" />
-
-                        <x-form-input label="Email" name="email"
-                            type="email" wire:model.defer="email"
-                            placeholder="example@gmail.com" />
-                    </div>
-
-                    {{-- Địa chỉ --}}
-                    <x-form-input label="Địa chỉ" name="address"
-                        wire:model.defer="address"
-                        placeholder="Địa chỉ cư trú" />
-
-                    {{-- Giáo họ & Tên thánh --}}
-                    <div class="grid grid-cols-2 gap-4">
-                        <div>
-                            <label class="block text-sm font-semibold text-slate-700 mb-1.5">Giáo họ</label>
-                            <x-searchable-select
-                                wireModel="parish_group_id"
-                                :options="$this->parishGroups"
-                                placeholder="-- Chọn giáo họ --"
-                                labelKey="name"
-                                valueKey="id"
-                                :value="$this->parish_group_id" />
-                            @error('parish_group_id')
-                            <p class="mt-1 text-xs text-red-500">{{ $message }}</p>
-                            @enderror
-                        </div>
-
-                        <div>
-                            <label class="block text-sm font-semibold text-slate-700 mb-1">Tên thánh</label>
-                            <x-searchable-select
-                                wireModel="saint_id"
-                                :options="$this->saints"
-                                placeholder="-- Chọn --"
-                                labelKey="name"
-                                valueKey="id"
-                                :value="$this->saint_id" />
-                            @error('saint_id')
-                            <p class="mt-1 text-xs text-red-500">{{ $message }}</p>
-                            @enderror
-                        </div>
-                    </div>
-
-                    {{-- Ghi chú --}}
-                    <div>
-                        <label class="block text-sm font-semibold text-slate-700 mb-1">Ghi chú</label>
-                        <textarea wire:model.defer="note" rows="2"
-                            class="w-full px-3 py-2 rounded-xl border border-slate-300
-                                   focus:outline-none focus:ring-2 focus:ring-primary-500 text-sm"
-                            placeholder="Ghi chú thêm..."></textarea>
-                    </div>
-
-                    {{-- Trạng thái --}}
-                    <div class="border border-slate-200 rounded-xl p-4">
-                        <div class="flex items-center gap-3">
-                            <input id="teacher-active" type="checkbox"
-                                wire:model.defer="is_active"
-                                class="w-4 h-4 rounded border-slate-300 text-primary-600 focus:ring-primary-500">
-                            <label for="teacher-active" class="text-sm font-semibold text-slate-900 cursor-pointer">
-                                Giáo lý viên đang hoạt động (bỏ chọn nếu đã nghỉ hoặc không còn giảng dạy)
-                            </label>
-                        </div>
-                    </div>
-
-                    {{-- Tài khoản đăng nhập --}}
-                    <div class="border border-slate-200 rounded-xl p-4 space-y-3 bg-slate-50">
-                        <p class="text-sm font-semibold text-slate-700">Tài khoản đăng nhập</p>
-
-                        @if(!$editingId)
-                        {{-- Thêm mới --}}
-                        <label class="flex items-center gap-3 cursor-pointer">
-                            <input type="checkbox" wire:model.defer="create_account"
-                                class="w-4 h-4 rounded border-slate-300 text-primary-600 focus:ring-primary-500">
-                            <span class="text-sm text-slate-700">Tạo tài khoản đăng nhập tự động</span>
-                        </label>
-
-                        @if($create_account)
-                        <div class="flex gap-2 bg-primary-50 border border-primary-200 rounded-xl px-3 py-2.5 text-xs text-primary-700">
-                            <svg class="w-4 h-4 mt-0.5 shrink-0 text-primary-500" fill="currentColor" viewBox="0 0 20 20">
-                                <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd" />
-                            </svg>
-                            <div class="space-y-0.5">
-                                <p>Email đăng nhập: email thật (nếu có) hoặc
-                                    <code class="font-mono bg-primary-100 px-1 rounded">SĐT@giaoly.local</code>
-                                </p>
-                                <p>Mật khẩu mặc định: số điện thoại (nếu có) hoặc
-                                    <code class="font-mono bg-primary-100 px-1 rounded">12345678</code>
-                                </p>
-                            </div>
-                        </div>
-                        @endif
-
-                        @else
-                        {{-- Đang edit --}}
-                        @if($has_account)
-                        <p class="text-xs text-primary-700 bg-primary-50 rounded-lg px-3 py-2">
-                            ✅ Giáo lý viên này đã có tài khoản đăng nhập.
-                        </p>
-                        <label class="flex items-center gap-3 cursor-pointer">
-                            <input type="checkbox" wire:model.defer="reset_password"
-                                class="w-4 h-4 rounded border-slate-300 text-amber-500 focus:ring-amber-400">
-                            <span class="text-sm text-slate-700">
-                                Reset mật khẩu về số điện thoại hiện tại
-                            </span>
-                        </label>
-                        @else
-                        <p class="text-xs text-amber-700 bg-amber-50 rounded-lg px-3 py-2">
-                            ⚠️ Giáo lý viên này chưa có tài khoản.
-                        </p>
-                        <label class="flex items-center gap-3 cursor-pointer">
-                            <input type="checkbox" wire:model.defer="create_account"
-                                class="w-4 h-4 rounded border-slate-300 text-primary-600 focus:ring-primary-500">
-                            <span class="text-sm text-slate-700">Tạo tài khoản đăng nhập ngay</span>
-                        </label>
-                        @endif
-                        @endif
-                    </div>
-                </div>
-
-            <div class="flex-shrink-0 px-6 py-4 border-t border-slate-200 bg-slate-50 flex justify-end gap-3">
-                <x-button variant="outline" @click="showForm = false; $wire.closeModal()">Hủy</x-button>
-                <x-button variant="primary" wire:click="save" :loading="true" loading-target="save">
-                    <x-icon name="save" />
-                    {{ $editingId ? 'Cập nhật' : 'Thêm giáo lý viên' }}
-                </x-button>
-            </div>
-        </div>
     </div>
 </div>

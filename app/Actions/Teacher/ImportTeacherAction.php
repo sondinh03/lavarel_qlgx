@@ -110,7 +110,7 @@ class ImportTeacherAction
                         $user = User::create([
                             'name'      => $fullName,
                             'email'     => $accountEmail,
-                            'password'  => $normalizedPhone ?: '12345678',
+                            'password'  => config('qlgx.catechist_default_password', '12345678'),
                             'parish_id' => $parishId,
                         ]);
 

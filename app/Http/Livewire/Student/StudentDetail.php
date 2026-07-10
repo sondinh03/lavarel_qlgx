@@ -10,19 +10,11 @@ class StudentDetail extends BaseComponent
     public $studentId;
     public $studentData = [];
     public $isLoading = true;
-    public $activeTab = 'basic';
     public $confirmingDelete = false;
 
     private ?StudentNew $cachedStudent = null;
 
     protected $usePagination = false;
-
-    protected function queryString()
-    {
-        return [
-            'activeTab' => ['except' => 'basic', 'as' => 'tab'],
-        ];
-    }
 
     protected $listeners = [
         'refresh'        => 'loadStudentData',
@@ -159,15 +151,6 @@ class StudentDetail extends BaseComponent
                 'joined_at'    => $class->pivot->created_at?->format('d/m/Y') ?? '',
             ];
         })->toArray();
-    }
-
-    // ==================== TAB ====================
-
-    public function switchTab(string $tab): void
-    {
-        if (in_array($tab, ['basic', 'history'])) {
-            $this->activeTab = $tab;
-        }
     }
 
     // ==================== ACTIONS ====================

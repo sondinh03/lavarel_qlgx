@@ -27,6 +27,10 @@ class ModuleSelect extends Component
 
     private function resolveModules($user): array
     {
+        $catechismRoute = $user->usesCatechistLayout()
+            ? 'catechist.dashboard'
+            : 'parish-admin.dashboard';
+
         $all = [
             [
                 'key'         => 'parishioner',
@@ -34,15 +38,15 @@ class ModuleSelect extends Component
                 'description' => 'Quản lý hồ sơ giáo dân, gia đình, bí tích, hôn phối',
                 'route'       => 'parishioners.index',
                 'icon'        => 'parishioner',
-                'roles'       => ['parish_admin'],         // chỉ parish_admin
+                'roles'       => ['parish_admin'],
             ],
             [
                 'key'         => 'catechism',
                 'label'       => 'Giáo lý',
                 'description' => 'Quản lý lớp học, học sinh, giáo viên, điểm số',
-                'route'       => 'parish-admin.dashboard',
+                'route'       => $catechismRoute,
                 'icon'        => 'catechism',
-                'roles'       => ['parish_admin', 'catechist'], // cả 2
+                'roles'       => ['parish_admin', 'catechist'],
             ],
         ];
 

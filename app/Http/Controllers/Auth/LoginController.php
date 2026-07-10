@@ -48,10 +48,23 @@ class LoginController extends Controller
 
         $raw = trim((string) $request->input('email', ''));
 
-        if ($raw !== '' && ! UserAccountEmailResolver::isEmail($raw)) {
-            $realEmail = UserAccountEmailResolver::findUserEmailByPhone($raw);
+        if ($raw === '') {
+            return false;
+        }
 
-            if ($realEmail && $realEmail !== $credentials['email']) {
+        // SĐT hoặc email ảo @giaoly.local → tìm email thật gắn với teacher
+        $phoneForLookup = null;
+
+        if (! UserAccountEmailResolver::isEmail($raw)) {
+            $phoneForLookup = $raw;
+        } elseif (UserAccountEmailResolver::isSyntheticEmail($credentials['email'])) {
+            $phoneForLookup = explode('@', $credentials['email'], 2)[0] ?? null;
+        }
+
+        if ($phoneForLookup) {
+            $realEmail = UserAccountEmailResolver::findUserEmailByPhone($phoneForLookup);
+
+            if ($realEmail && strtolower($realEmail) !== strtolower($credentials['email'])) {
                 return $this->guard()->attempt([
                     'email'    => $realEmail,
                     'password' => $credentials['password'],

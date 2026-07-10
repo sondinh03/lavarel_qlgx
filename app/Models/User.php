@@ -106,9 +106,24 @@ class User extends Authenticatable
 
     public function setPasswordAttribute($value): void
     {
-        if (!empty($value)) {
-            $this->attributes['password'] = Hash::make($value);
+        if ($value === null || $value === '') {
+            return;
         }
+
+        // Tránh hash 2 lần khi caller đã Hash::make() hoặc ghi hash có sẵn (parish approve).
+        if ($this->isAlreadyHashedPassword($value)) {
+            $this->attributes['password'] = $value;
+            return;
+        }
+
+        $this->attributes['password'] = Hash::make($value);
+    }
+
+    private function isAlreadyHashedPassword(string $value): bool
+    {
+        return (bool) preg_match('/^\$2[ayb]\$\d{2}\$.{53}$/', $value)
+            || str_starts_with($value, '$argon2id$')
+            || str_starts_with($value, '$argon2i$');
     }
 
     protected static function booted(): void

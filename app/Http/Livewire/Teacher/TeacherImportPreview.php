@@ -177,6 +177,7 @@ class TeacherImportPreview extends BaseComponent
                     $msg .= " ({$warningCount} dòng có cảnh báo)";
                 }
                 session()->flash('info', $msg);
+                $this->emit('toast', 'info', $msg);
             }
         } catch (\Exception $e) {
             $this->logError($e, 'Error previewing teacher import');
@@ -187,7 +188,7 @@ class TeacherImportPreview extends BaseComponent
     public function confirmImport()
     {
         if (!$this->readyToImport) {
-            session()->flash('error', 'Dữ liệu chưa hợp lệ, không thể import');
+            $this->emit('toast', 'error', 'Dữ liệu chưa hợp lệ, không thể import');
             return;
         }
 
@@ -195,22 +196,22 @@ class TeacherImportPreview extends BaseComponent
             $result = app(ImportTeacherAction::class)
                 ->handle($this->rows, $this->parishId);
 
-            $message = "✅ Import thành công {$result['imported']} giáo lý viên";
+            $message = "Import thành công {$result['imported']} giáo lý viên";
 
             if ($result['skipped'] > 0) {
                 $message .= " | Bỏ qua {$result['skipped']} dòng trống";
             }
 
             if (!empty($result['errors'])) {
-                $message .= " | ❌ " . count($result['errors']) . " dòng lỗi";
-                session()->flash('warning', implode('<br>', array_slice($result['errors'], 0, 5)));
+                $message .= " | " . count($result['errors']) . " dòng lỗi";
+                $this->emit('toast', 'warning', strip_tags(implode(' · ', array_slice($result['errors'], 0, 5))));
             }
 
-            session()->flash('message', $message);
+            $this->emit('toast', 'message', $message);
             return redirect()->route('catechists.index');
         } catch (\Exception $e) {
             $this->logError($e, 'Error confirming teacher import');
-            session()->flash('error', 'Có lỗi khi import: ' . $e->getMessage());
+            $this->emit('toast', 'error', 'Có lỗi khi import: ' . $e->getMessage());
         }
     }
 

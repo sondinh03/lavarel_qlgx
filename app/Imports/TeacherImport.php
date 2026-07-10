@@ -61,7 +61,7 @@ class TeacherImport implements ToModel, WithHeadingRow
             $password = $this->passwordFromBirthday($row['ngay_sinh'] ?? null);
 
             $user = app(CreateCatechistAccount::class)
-                ->create($row['ho_ten'], $email, $password);
+                ->create($row['ho_ten'], $email, $password, $this->parishId);
 
             $userId = $user->id;
         }

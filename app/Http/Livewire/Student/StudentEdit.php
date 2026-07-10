@@ -21,7 +21,6 @@ class StudentEdit extends BaseComponent
     public $studentId = null;
     public $isEdit = false;
     public $isLoading = true;
-    public $activeTab = 'basic';
     protected $usePagination = false;
     public ?int $classId = null;
 
@@ -82,7 +81,6 @@ class StudentEdit extends BaseComponent
     protected function queryString()
     {
         return [
-            'activeTab' => ['except' => 'basic', 'as' => 'tab'],
             'classId' => ['except' => null, 'as' => 'classId'],
         ];
     }
@@ -310,13 +308,6 @@ class StudentEdit extends BaseComponent
                 $student->update(['avatar_path' => null]);
             }
             $this->existing_avatar = null;
-        }
-    }
-
-    public function switchTab(string $tab): void
-    {
-        if (in_array($tab, ['basic', 'other'])) {
-            $this->activeTab = $tab;
         }
     }
 

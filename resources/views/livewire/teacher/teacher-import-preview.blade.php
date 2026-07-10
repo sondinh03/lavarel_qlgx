@@ -6,37 +6,19 @@
 ]" />
 @endsection
 
-<div class="min-h-screen bg-slate-50 p-2 sm:p-4 lg:p-6" style="min-height: calc(100vh - 56px - var(--bottom-offset));">
+<div class="min-h-screen bg-apple-gray p-2 sm:p-4 lg:p-6" style="min-height: calc(100vh - 56px - var(--bottom-offset));">
     <a href="#main-content" class="sr-only focus:not-sr-only">Bỏ qua tới nội dung</a>
 
-    <div id="main-content" class="mx-auto max-w-7xl space-y-6">
+    <div id="main-content" class="mx-auto max-w-7xl space-y-5">
 
-        {{-- Toast --}}
-        <div role="status" aria-live="polite">
-            @if(session()->has('message'))
-            <x-toast-notification type="success" :duration="4000">{{ session('message') }}</x-toast-notification>
-            @endif
-            @if(session()->has('error'))
-            <x-toast-notification type="error" :duration="5000">{{ session('error') }}</x-toast-notification>
-            @endif
-            @if(session()->has('warning'))
-            <x-toast-notification type="warning" :duration="5000">{!! session('warning') !!}</x-toast-notification>
-            @endif
-            @if(session()->has('info'))
-            <x-toast-notification type="info" :duration="4000">{{ session('info') }}</x-toast-notification>
-            @endif
-        </div>
-
-        {{-- Page header --}}
-        <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+        <x-mac-panel :overflow="true">
             <x-page-header
                 title="Import Giáo lý viên từ Excel"
                 description="Tải lên file Excel để thêm giáo lý viên hàng loạt"
-                icon-type="teachers">
-            </x-page-header>
+                icon-type="students" />
 
             {{-- Hướng dẫn + download template --}}
-            <div class="px-6 py-4 border-b border-slate-200 bg-amber-50/60">
+            <div class="px-4 lg:px-6 py-4 mac-hairline-b bg-amber-50/50">
                 <div class="flex items-start gap-3">
                     <svg class="w-5 h-5 text-amber-500 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -61,7 +43,7 @@
                     <a href="{{ asset('templates/teacher_import_template.xlsx') }}"
                         class="flex-shrink-0 inline-flex items-center gap-1.5 px-3 py-2
                                bg-amber-100 hover:bg-amber-200 text-amber-800 text-xs font-semibold
-                               rounded-lg transition">
+                               rounded-lg transition shadow-mac-sm">
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                 d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
@@ -70,10 +52,8 @@
                     </a>
                 </div>
             </div>
-        </div>
 
-        {{-- Upload form --}}
-        <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
+            <div class="p-4 lg:p-6">
             <p class="text-sm font-semibold text-slate-700 mb-3">Upload file Excel</p>
 
             <div class="relative">
@@ -87,7 +67,7 @@
                            file:text-sm file:font-semibold
                            file:bg-primary-50 file:text-primary-700
                            hover:file:bg-primary-100 cursor-pointer
-                           border border-slate-300 rounded-xl p-2">
+                           border border-black/[0.06] rounded-xl p-2 shadow-mac-sm bg-white/80">
 
                 <div wire:loading wire:target="file"
                     class="absolute inset-0 flex items-center justify-center bg-white/80 rounded-xl">
@@ -102,40 +82,40 @@
             @error('file')
             <p class="mt-1 text-sm text-red-500">{{ $message }}</p>
             @enderror
-        </div>
 
-        {{-- Lỗi file --}}
-        @if(!empty($fileErrors))
-        <div class="bg-red-50 border border-red-200 rounded-2xl p-5">
-            <div class="flex items-start gap-3">
-                <svg class="w-5 h-5 text-red-500 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                        d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-                <div>
-                    <p class="text-sm font-semibold text-red-800 mb-2">
-                        Không thể import — vui lòng sửa file và upload lại
-                    </p>
-                    <ul class="space-y-1">
-                        @foreach($fileErrors as $err)
-                        <li class="text-sm text-red-700">{!! $err !!}</li>
-                        @endforeach
-                    </ul>
-                    <button wire:click="resetUpload" type="button"
-                        class="mt-3 px-3 py-1.5 bg-red-100 text-red-700 text-sm font-medium rounded-lg hover:bg-red-200 transition">
-                        Upload lại
-                    </button>
+            @if(!empty($fileErrors))
+            <div class="mt-4 bg-red-50/90 border border-red-200/80 rounded-xl p-4 shadow-mac-sm">
+                <div class="flex items-start gap-3">
+                    <svg class="w-5 h-5 text-red-500 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    <div>
+                        <p class="text-sm font-semibold text-red-800 mb-2">
+                            Không thể import — vui lòng sửa file và upload lại
+                        </p>
+                        <ul class="space-y-1">
+                            @foreach($fileErrors as $err)
+                            <li class="text-sm text-red-700">{!! $err !!}</li>
+                            @endforeach
+                        </ul>
+                        <button wire:click="resetUpload" type="button"
+                            class="mt-3 px-3 py-1.5 bg-red-100 text-red-700 text-sm font-medium rounded-lg hover:bg-red-200 transition">
+                            Upload lại
+                        </button>
+                    </div>
                 </div>
             </div>
-        </div>
-        @endif
+            @endif
+            </div>
+        </x-mac-panel>
 
         {{-- Preview table --}}
         @if(!empty($rows))
-        <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+        <x-mac-panel :overflow="true">
 
             {{-- Preview header --}}
-            <div class="px-6 py-4 border-b border-slate-200 flex items-center justify-between">
+            <div class="px-4 lg:px-6 py-4 mac-hairline-b bg-white/40 flex items-center justify-between">
                 <div>
                     <h3 class="text-base font-bold text-slate-900">
                         Xem trước dữ liệu
@@ -318,7 +298,7 @@
                     </button>
                 </div>
             </div>
-        </div>
+        </x-mac-panel>
         @endif
 
     </div>
