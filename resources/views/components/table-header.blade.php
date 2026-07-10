@@ -21,17 +21,17 @@ default => 'justify-start'
 @endphp
 
 <th {{ $attributes->merge([
-    'class' => "px-4 py-3 {$alignClass} text-xs font-semibold text-slate-600"
+    'class' => "px-4 py-3 {$alignClass} text-xs font-medium text-slate-500 bg-slate-50/50"
 ]) }}>
     @if($sortable && $sortField)
     <button
         wire:click="sortBy('{{ $sortField }}')"
-        class="flex items-center h-full gap-2 p w-full {{ $justifyClass }}
-           transition-all duration-200
-           hover:text-slate-800 hover:opacity-90
-           focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 rounded">
+        class="flex items-center h-full gap-1.5 w-full {{ $justifyClass }}
+           transition-colors duration-150
+           hover:text-slate-700
+           focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/40 rounded-lg">
 
-        <span class="uppercase tracking-wide">{{ $slot }}</span>
+        <span class="tracking-wide">{{ $slot }}</span>
 
         {{-- Sort Icon --}}
         @if($currentSort === $sortField)
@@ -50,7 +50,7 @@ default => 'justify-start'
 
     </button>
     @else
-        <span class="uppercase tracking-wide">
+        <span class="tracking-wide">
             {{ $slot }}
         </span>
     @endif

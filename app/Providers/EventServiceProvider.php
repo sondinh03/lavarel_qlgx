@@ -28,8 +28,6 @@ use App\Observers\PageObserver;
 use App\Http\Controllers\PageController;
 use App\Models\Association;
 use App\Observers\AssociationObserver;
-use App\Models\Lop;
-use App\Observers\LopObserver;
 use App\Models\Student;
 use App\Observers\StudentObserver;
 use App\Models\Block;
@@ -71,7 +69,6 @@ class EventServiceProvider extends ServiceProvider
         MarriageAnnouncement::observe(MarriageAnnouncementObserver::class);
         Page::observe(PageObserver::class);
         Association::observe(AssociationObserver::class);
-        Lop::observe(LopObserver::class);
         Student::observe(StudentObserver::class);
         Block::observe(BlockObserver::class);
     }

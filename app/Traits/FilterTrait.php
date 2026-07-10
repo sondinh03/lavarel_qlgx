@@ -2,8 +2,8 @@
 
 namespace App\Traits;
 
-use App\Models\Block;
-use App\Models\Lop;
+use App\Models\CatechismClass;
+use App\Models\GradeLevel;
 use App\Models\NamHoc;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Cache;
@@ -107,12 +107,9 @@ trait FilterTrait
                 $cacheKey,
                 $this->cacheTTL,
                 function () use ($namhoc_id, $khoi_id) {
-                    return Lop::where('status', 1)
-                        // ->whereHas('blockRelation', function ($q) use ($namhoc_id) {
-                        //     $q->where('schoolyear', $namhoc_id);
-                        // })
-                        ->where('schoolyear', $namhoc_id)
-                        ->when($khoi_id, fn($query) => $query->where('block', $khoi_id))
+                    return CatechismClass::where('is_active', true)
+                        ->where('school_year_id', $namhoc_id)
+                        ->when($khoi_id, fn($query) => $query->where('grade_level_id', $khoi_id))
                         ->orderBy('name', 'asc')
                         ->pluck('name', 'id');
                 }
@@ -174,12 +171,11 @@ trait FilterTrait
         //     return collect();
         // }
 
-        return Lop::with(['blockRelation', 'schoolYear'])
-            ->with('slug')
-            ->withCount('students') // Đếm số học sinh
-            ->where('status', 1)
-            ->where('schoolyear', $namhoc_id)
-            ->when($khoi_id, fn($query) => $query->where('block', $khoi_id))
+        return CatechismClass::with(['gradeLevel', 'schoolYear'])
+            ->withCount('students')
+            ->where('is_active', true)
+            ->where('school_year_id', $namhoc_id)
+            ->when($khoi_id, fn($query) => $query->where('grade_level_id', $khoi_id))
             ->orderBy('name')
             ->get();
     }
@@ -190,46 +186,20 @@ trait FilterTrait
      * @param Lop $lop
      * @return Lop
      */
-    private function enrichLopData(Lop $lop): Lop
+    private function enrichLopData(CatechismClass $class): CatechismClass
     {
-        // ✅ Generate slug URL
-        $lop->slug_url = $this->generateSlugUrl($lop);
+        $class->slug_url = $this->generateSlugUrl($class);
 
-        // ✅ Get teacher names
-        $lop->teacher_name = $this->getTeacherNames($lop);
-
-        // ✅ Format dates
-        if ($lop->start_date_one) {
-            $lop->start_date_one_formatted = date('d/m/Y', strtotime($lop->start_date_one));
-        }
-        if ($lop->end_date_one) {
-            $lop->end_date_one_formatted = date('d/m/Y', strtotime($lop->end_date_one));
-        }
-        if ($lop->start_date_two) {
-            $lop->start_date_two_formatted = date('d/m/Y', strtotime($lop->start_date_two));
-        }
-        if ($lop->end_date_two) {
-            $lop->end_date_two_formatted = date('d/m/Y', strtotime($lop->end_date_two));
-        }
-
-        return $lop;
+        return $class;
     }
 
-
-    private function generateSlugUrl($lop)
+    private function generateSlugUrl(CatechismClass $class)
     {
         try {
-            if ($lop->relationLoaded('slug') && $lop->slug) {
-                $keyword = $lop->slug->keyword;
-                $extension = config('settings.url_prefix', '.html');
-                return url($keyword . $extension);
-            }
-
-            // Fallback
-            return route('lop.show', $lop->id);
+            return route('classes.show', $class->id);
         } catch (\Exception $e) {
-            Log::warning('LopList: Error generating slug URL', [
-                'lop_id' => $lop->id,
+            Log::warning('FilterTrait: Error generating class URL', [
+                'class_id' => $class->id,
                 'error' => $e->getMessage()
             ]);
 
@@ -250,9 +220,9 @@ trait FilterTrait
             return 0;
         }
 
-        return Lop::where('status', 1)
-            ->where('schoolyear', $namhoc_id)
-            ->when($khoi_id, fn($query) => $query->where('block', $khoi_id))
+        return CatechismClass::where('is_active', true)
+            ->where('school_year_id', $namhoc_id)
+            ->when($khoi_id, fn($query) => $query->where('grade_level_id', $khoi_id))
             ->count();
     }
 
@@ -268,11 +238,11 @@ trait FilterTrait
             return collect();
         }
 
-        return Lop::where('status', 1)
-            ->where('schoolyear', $namhoc_id)
-            ->selectRaw('block, COUNT(*) as total')
-            ->groupBy('block')
-            ->with('blockRelation')
+        return CatechismClass::where('is_active', true)
+            ->where('school_year_id', $namhoc_id)
+            ->selectRaw('grade_level_id, COUNT(*) as total')
+            ->groupBy('grade_level_id')
+            ->with('gradeLevel')
             ->get();
     }
 }

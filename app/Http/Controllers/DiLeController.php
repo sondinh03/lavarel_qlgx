@@ -6,7 +6,7 @@ use Illuminate\Http\Request;
 use App\Models\Holymanagement;
 use App\Models\Student;
 use App\Models\Teacher;
-use App\Models\Lop;
+use App\Models\CatechismClass;
 use App\Models\Slug;
 use Illuminate\Support\Facades\Cache;
 use App\Models\Block;
@@ -41,7 +41,7 @@ class DiLeController extends Controller
         $dile = Slug::where('keyword', '=', $slug)->where('sluggable_id', $id)->first();
         if(!empty($dile)){
             
-            $lop = Lop::where('id', $id)->where('status', 1)->orderBy('name', 'asc')->get()->first();
+            $lop = CatechismClass::where('id', $id)->where('status', 1)->orderBy('name', 'asc')->get()->first();
             
             if($lop->block != ''){
                 $block = Block::where('id', $lop->block)->where('status', 1)->first();

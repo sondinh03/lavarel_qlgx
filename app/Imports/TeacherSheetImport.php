@@ -31,7 +31,7 @@ use App\Models\Slug;
 use Cocur\Slugify\Slugify;
 use Maatwebsite\Excel\Concerns\WithHeadingRow;
 use App\Models\Teacher;
-use App\Models\Lop;
+use App\Models\CatechismClass;
 use Illuminate\Support\Facades\Auth;
 use App\Models\Decen;
 
@@ -121,7 +121,7 @@ class TeacherSheetImport implements ToModel, ToArray, HasReferencesToOtherSheets
                             'status'    => 1,
                         ]);
                         
-                        $lop = Lop::where('did', $_POST['giaophan'])->where('deid', $_POST['giaohat'])->where('pid', $_POST['giaoxu'])->where('name', $row['lop'])->where('status', 1)->first();
+                        $lop = CatechismClass::where('did', $_POST['giaophan'])->where('deid', $_POST['giaohat'])->where('pid', $_POST['giaoxu'])->where('name', $row['lop'])->where('status', 1)->first();
                         if(!empty($lop->id)){
                             $array_teacher = array();
                             if(!empty($lop->teacher)){
@@ -131,7 +131,7 @@ class TeacherSheetImport implements ToModel, ToArray, HasReferencesToOtherSheets
                                 $array_teacher[] = $teacher->id;
                             }
                             
-                            Lop::where('id', $lop->id)
+                            CatechismClass::where('id', $lop->id)
                             ->update([
                                 'teacher'   => array_unique($array_teacher),
                             ]);
@@ -152,7 +152,7 @@ class TeacherSheetImport implements ToModel, ToArray, HasReferencesToOtherSheets
                         ]);
                         if($tea->id){
                             if(!empty($row['lop'])){
-                                $lop = Lop::where('did', $_POST['giaophan'])->where('deid', $_POST['giaohat'])->where('pid', $_POST['giaoxu'])->where('name', $row['lop'])->where('status', 1)->first();
+                                $lop = CatechismClass::where('did', $_POST['giaophan'])->where('deid', $_POST['giaohat'])->where('pid', $_POST['giaoxu'])->where('name', $row['lop'])->where('status', 1)->first();
                                 if(!empty($lop->id)){
                                     $array_teacher = array();
                                     if(!empty($lop->teacher)){
@@ -162,7 +162,7 @@ class TeacherSheetImport implements ToModel, ToArray, HasReferencesToOtherSheets
                                         $array_teacher[] = $tea->id;
                                     }
                                     $array_teacher[] = $tea->id;
-                                    Lop::where('id', $lop->id)
+                                    CatechismClass::where('id', $lop->id)
                                     ->update([
                                         'teacher'   => array_unique($array_teacher),
                                     ]);

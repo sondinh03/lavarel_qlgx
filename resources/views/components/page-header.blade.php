@@ -18,13 +18,13 @@
     $iconPath = $icons[$iconType] ?? ($iconType ? $icons['default'] : null);
 @endphp
 
-<div class="px-6 py-5 border-b border-slate-100 bg-white rounded-t-2xl">
+<div class="px-6 py-5 mac-hairline-b bg-white/40 rounded-t-2xl">
     <div class="flex items-start justify-between gap-4">
 
         {{-- LEFT: Icon + Title --}}
         <div class="flex items-start gap-3 min-w-0">
             @if($iconPath)
-                <div class="w-10 h-10 rounded-xl bg-primary-100 flex items-center justify-center flex-shrink-0">
+                <div class="w-10 h-10 rounded-xl bg-primary-50/80 backdrop-blur-sm flex items-center justify-center flex-shrink-0 shadow-mac-sm">
                     <svg class="w-5 h-5 text-primary-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="{{ $iconPath }}" />
                     </svg>
@@ -32,7 +32,7 @@
             @endif
 
             <div class="min-w-0">
-                <h1 class="text-xl font-bold text-slate-900 truncate">
+                <h1 class="text-[22px] font-semibold tracking-tight text-slate-900 truncate">
                     {{ $title }}
 
                     @if($count !== null)
@@ -41,7 +41,7 @@
                 </h1>
 
                 @if($description)
-                    <p class="text-sm text-slate-500 mt-0.5">
+                    <p class="text-sm text-slate-500 mt-0.5 leading-relaxed">
                         {{ $description }}
                     </p>
                 @endif

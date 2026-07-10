@@ -6,14 +6,11 @@
     ]" />
 @endsection
 
-<div class="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 p-4 sm:p-6">
-    <div class="mx-auto max-w-7xl space-y-5">
+<div class="min-h-screen bg-apple-gray p-2 sm:p-4 lg:p-6" style="min-height: calc(100vh - 56px - var(--bottom-offset));">
+    <div id="main-content" class="mx-auto max-w-7xl space-y-5">
 
-        {{-- ===================== HEADER ===================== --}}
-        <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
-
-            {{-- Title row --}}
-            <div class="px-6 py-5 flex items-center justify-between gap-4 flex-wrap border-b border-slate-100">
+        <x-mac-panel :overflow="true">
+            <div class="px-4 lg:px-6 py-5 flex items-center justify-between gap-4 flex-wrap mac-hairline-b">
                 <div class="flex items-center gap-3">
                     <div class="w-10 h-10 rounded-xl bg-primary-100 flex items-center justify-center flex-shrink-0">
                         <svg class="w-5 h-5 text-primary-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -28,8 +25,8 @@
                 </div>
 
                 <a href="{{ route('scores.index') }}"
-                   class="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl border border-slate-300
-                          text-sm font-semibold text-slate-600 hover:bg-slate-50 transition">
+                   class="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl border border-black/[0.08]
+                          text-sm font-semibold text-slate-600 hover:bg-black/[0.03] transition">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
                     </svg>
@@ -37,8 +34,7 @@
                 </a>
             </div>
 
-            {{-- Filters --}}
-            <div class="px-6 py-4 bg-slate-50/60 border-b border-slate-100">
+            <div class="p-4 lg:p-6 bg-white/30">
                 <livewire:filters.filter-bar
                     :parish-id="$parishId"
                     :show-nam-hoc="true"
@@ -50,11 +46,11 @@
                     :selected-lop="$selectedLop"
                     :selected-ky="$selectedSemester" />
             </div>
-        </div>
+        </x-mac-panel>
 
-        {{-- ===================== EMPTY STATE ===================== --}}
         @if(empty($ratingChartData) || $totalStudentsWithScore === 0)
         <x-stats.page-empty
+            :panel="false"
             tone="primary"
             :title="!$selectedNamHoc ? 'Vui lòng chọn năm học' : ('Chưa có dữ liệu điểm (' . $scopeLabel . ', ' . $semesterLabel . ')')"
             description="Hãy nhập điểm tại trang quản lý điểm trước">
@@ -170,7 +166,7 @@
         @endif
 
         {{-- ===================== NOTES ===================== --}}
-        <div class="bg-white rounded-2xl border border-slate-200 shadow-sm px-6 py-4">
+        <div class="rounded-xl border border-black/[0.06] bg-white/50 px-4 lg:px-6 py-4">
             <div class="flex flex-wrap items-center gap-x-6 gap-y-2 text-xs text-slate-500">
                 <span class="font-semibold text-slate-700">Ghi chú:</span>
                 <span class="flex items-center gap-1.5">

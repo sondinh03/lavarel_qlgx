@@ -3,7 +3,6 @@
 namespace App\Providers;
 
 use Illuminate\Support\ServiceProvider;
-use App\Models\Lop;
 use App\Models\ClassTeacher;
 use App\Models\Holymanagement;
 use App\Models\ParishGroup;
@@ -11,7 +10,6 @@ use App\Models\Parishioner;
 use App\Models\ParishNew;
 use App\Models\StudentNew;
 use App\Models\Teacher;
-use App\Observers\LopObserver;
 use App\Observers\ClassTeacherObserver;
 use App\Observers\HolymanagementObserver;
 use App\Observers\ParishGroupObserver;
@@ -43,7 +41,6 @@ class AppServiceProvider extends ServiceProvider
         require_once app_path('Helpers/AttendanceHelper.php');
 
         // register observers to keep cache versioning in sync
-        Lop::observe(LopObserver::class);
         ClassTeacher::observe(ClassTeacherObserver::class);
         Parishioner::observe(ParishionerObserver::class);
         ParishNew::observe(ParishNewObserver::class);

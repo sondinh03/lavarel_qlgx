@@ -3,59 +3,27 @@
 namespace App\Http\Livewire\Lop;
 
 use App\Http\Livewire\Base\BaseComponent;
+use App\Models\CatechismClass;
 use App\Models\ClassTeacher;
-use App\Models\Lop;
 use Illuminate\Support\Facades\Cache;
 
-/**
- * Component chi tiết Lớp học
- * 
- * Features:
- * - Hiển thị thông tin chi tiết lớp
- * - Danh sách giáo lý viên
- * - Thống kê học sinh (cache 5 phút)
- */
 class LopDetail extends BaseComponent
 {
-    // ==================== ROUTE PARAMS ====================
-
-    /** @var int ID của lớp học */
     public $lopId;
 
-    // ==================== PUBLIC DATA ====================
-
-    /** @var array Thông tin cơ bản lớp học (primitive types only) */
     public $lopData = [];
-
-    /** @var array Danh sách giáo lý viên */
     public $teachers = [];
-
-    /** @var array Thống kê học sinh */
     public $statistics = [];
 
-    // ==================== PROTECTED DATA ====================
-
-    /** @var \App\Models\Lop|null Model instance (PROTECTED để tránh serialization) */
-    protected $lopModel = null;
-
-    /** @var \App\Models\Block|null Block relation */
-    protected $block = null;
-
-    /** @var \App\Models\NamHoc|null Năm học relation */
+    protected $classModel = null;
+    protected $gradeLevel = null;
     protected $namHoc = null;
-
-    // ==================== LISTENERS ====================
 
     protected $listeners = [
         'refresh' => 'handleRefresh',
         'filtersChanged' => 'handleFiltersChanged',
     ];
 
-    // ==================== LIFECYCLE ====================
-
-    /**
-     * Component initialization
-     */
     public function mount($id = null)
     {
         $this->lopId = (int) $id;
@@ -67,19 +35,13 @@ class LopDetail extends BaseComponent
         }
 
         parent::mount();
-        // Không cần requireManager vì đây là view public
-        // Nhưng vẫn validate parishId nếu cần
-        // $this->requireParishId();
     }
 
-    /**
-     * Load dữ liệu ban đầu (implement từ BaseComponent)
-     */
     protected function loadInitialData(): void
     {
-        $this->loadLopDetails();
+        $this->loadClassDetails();
 
-        if (!$this->lopModel) {
+        if (!$this->classModel) {
             $this->redirectRoute('classes.index');
             return;
         }
@@ -87,126 +49,92 @@ class LopDetail extends BaseComponent
         $this->loadStatistics();
     }
 
-    /**
-     * Override validateUserAccess - Lớp này public nên không cần strict auth
-     */
     protected function validateUserAccess(): void
     {
-        // Public view - không cần authorization
-        // Hoặc nếu cần, có thể check:
-        // if (!$this->parishId) {
-        //     abort(403, 'Không xác định được giáo xứ');
-        // }
     }
 
-
-    /**
-     * Load chi tiết lớp học
-     */
-    private function loadLopDetails(): void
+    private function loadClassDetails(): void
     {
         try {
-            $this->lopModel = Lop::with([
-                'blockRelation',
+            $this->classModel = CatechismClass::with([
+                'gradeLevel',
                 'schoolYear',
                 'classTeachers' => function ($q) {
                     $q->where('status', 1)
                         ->with('teacher')
                         ->orderBy('role', 'asc');
-                }
+                },
             ])
                 ->withCount('students')
                 ->findOrFail($this->lopId);
 
-            // Load teachers data
             $this->loadTeachers();
 
-            // Load relations
-            $this->block = $this->lopModel->blockRelation;
-            $this->namHoc = $this->lopModel->schoolYear;
+            $this->gradeLevel = $this->classModel->gradeLevel;
+            $this->namHoc = $this->classModel->schoolYear;
 
-            // Expose minimal public data (primitive types only)
             $this->lopData = [
-                'id' => $this->lopModel->id,
-                'name' => $this->lopModel->name ?? '',
-                'symbol' => $this->lopModel->symbol ?? '',
-                'students_count' => (int) ($this->lopModel->students_count ?? 0),
-                'start_date_one' => $this->lopModel->start_date_one ?? null,
-                'end_date_one' => $this->lopModel->end_date_one ?? null,
-                'start_date_two' => $this->lopModel->start_date_two ?? null,
-                'end_date_two' => $this->lopModel->end_date_two ?? null,
-                'note' => $this->lopModel->note ?? null,
-                'parish_id' => (int) ($this->lopModel->pid ?? 0),
+                'id' => $this->classModel->id,
+                'name' => $this->classModel->name ?? '',
+                'capacity' => $this->classModel->capacity,
+                'students_count' => (int) ($this->classModel->students_count ?? 0),
+                'parish_id' => (int) ($this->classModel->parish_id ?? 0),
             ];
         } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
             session()->flash('error', 'Không tìm thấy lớp học này.');
-            $this->logError($e, 'Class not found', ['lop_id' => $this->lopId]);
-            $this->lopModel = null;
+            $this->logError($e, 'Class not found', ['class_id' => $this->lopId]);
+            $this->classModel = null;
         } catch (\Exception $e) {
-            $this->logError($e, 'Error loading class details', ['lop_id' => $this->lopId]);
+            $this->logError($e, 'Error loading class details', ['class_id' => $this->lopId]);
             session()->flash('error', 'Có lỗi trong lúc tải thông tin lớp.');
-            $this->lopModel = null;
+            $this->classModel = null;
         }
     }
 
-    /**
-     * Load danh sách giáo lý viên
-     */
     private function loadTeachers(): void
     {
         $teachersData = [];
+        $schoolYearId = $this->classModel->school_year_id ?? null;
 
-        if ($this->lopModel->relationLoaded('classTeachers') && $this->lopModel->classTeachers->isNotEmpty()) {
-            $schoolYearId = $this->lopModel->schoolYear?->id ?? null;
+        foreach ($this->classModel->classTeachers as $ct) {
+            if (
+                $ct->teacher &&
+                $ct->teacher->is_active &&
+                (is_null($schoolYearId) || $ct->namhoc_id == $schoolYearId)
+            ) {
+                $teacher = $ct->teacher;
 
-            foreach ($this->lopModel->classTeachers as $ct) {
-                // Filter by school year & ensure teacher is active
-                if (
-                    $ct->teacher &&
-                    $ct->teacher->status == 1 &&
-                    (is_null($schoolYearId) || $ct->namhoc_id == $schoolYearId)
-                ) {
-
-                    $teacher = $ct->teacher;
-                    $isChuNhiem = ($ct->role == ClassTeacher::ROLE_CHU_NHIEM);
-
-                    $teachersData[] = [
-                        'id' => $teacher->id,
-                        'name' => $teacher->name,
-                        'birthday' => $teacher->birthday ?? null,
-                        'phone' => $teacher->phone ?? '',
-                        'is_chu_nhiem' => $isChuNhiem,
-                    ];
-                }
+                $teachersData[] = [
+                    'id' => $teacher->id,
+                    'name' => $teacher->full_name_with_saint,
+                    'birthday' => $teacher->birthday?->format('d/m/Y'),
+                    'phone' => $teacher->phone_number ?? '',
+                    'is_chu_nhiem' => $ct->role == ClassTeacher::ROLE_CHU_NHIEM,
+                ];
             }
         }
 
         $this->teachers = $teachersData;
     }
 
-    /**
-     * Load thống kê học sinh (với cache 5 phút)
-     */
     private function loadStatistics(): void
     {
-        if (!$this->lopModel) {
+        if (!$this->classModel) {
             $this->statistics = ['total' => 0, 'male' => 0, 'female' => 0];
             return;
         }
 
         try {
-            $schoolYearId = $this->lopModel->schoolYear?->id ?? 'none';
-            $cacheKey = "class_stats:{$this->lopModel->id}:{$schoolYearId}";
-            $ttlSeconds = 300; // 5 minutes
+            $schoolYearId = $this->classModel->school_year_id ?? 'none';
+            $cacheKey = "class_stats:{$this->classModel->id}:{$schoolYearId}";
+            $ttlSeconds = 300;
 
             $this->statistics = Cache::remember($cacheKey, $ttlSeconds, function () {
-                $result = $this->lopModel->students()
-                    ->wherePivot('status', 1)
-                    ->withoutGlobalScopes()
+                $result = $this->classModel->students()
                     ->selectRaw("
                         COUNT(*) as total,
-                        SUM(CASE WHEN sex = 1 THEN 1 ELSE 0 END) as male,
-                        SUM(CASE WHEN sex = 0 THEN 1 ELSE 0 END) as female
+                        SUM(CASE WHEN gender = 'male' THEN 1 ELSE 0 END) as male,
+                        SUM(CASE WHEN gender = 'female' THEN 1 ELSE 0 END) as female
                     ")
                     ->getQuery()
                     ->first();
@@ -218,62 +146,42 @@ class LopDetail extends BaseComponent
                 ];
             });
         } catch (\Exception $e) {
-            $this->logError($e, 'Error loading statistics', ['lop_id' => $this->lopId]);
+            $this->logError($e, 'Error loading statistics', ['class_id' => $this->lopId]);
             $this->statistics = ['total' => 0, 'male' => 0, 'female' => 0];
         }
     }
 
-    // ==================== EVENT HANDLERS ====================
-
-    /**
-     * Handle filters changed event
-     */
     public function handleFiltersChanged($filters): void
     {
         if (!is_array($filters)) {
             return;
         }
 
-        $newLopId = $filters['lop'] ?? null;
+        $newClassId = $filters['lop'] ?? null;
 
-        if ($newLopId && (int) $newLopId !== (int) $this->lopId) {
-            // $this->lopId = (int) $newLopId;
-            // $this->loadLopDetails();
-            // $this->loadStatistics();
-            $this->redirect(route('lop.show', $newLopId));
+        if ($newClassId && (int) $newClassId !== (int) $this->lopId) {
+            $this->redirect(route('classes.show', $newClassId));
         }
     }
 
-    /**
-     * Refresh dữ liệu
-     */
     public function handleRefresh(): void
     {
-        // Clear cache
-        if ($this->lopModel && $this->lopModel->schoolYear) {
-            $schoolYearId = $this->lopModel->schoolYear->id ?? 'none';
-            $cacheKey = "class_stats:{$this->lopModel->id}:{$schoolYearId}";
-            Cache::forget($cacheKey);
+        if ($this->classModel) {
+            $schoolYearId = $this->classModel->school_year_id ?? 'none';
+            Cache::forget("class_stats:{$this->classModel->id}:{$schoolYearId}");
         }
 
-        // Reload data
-        $this->loadLopDetails();
+        $this->loadClassDetails();
         $this->loadStatistics();
 
         session()->flash('message', 'Đã làm mới thông tin lớp học');
     }
 
-    // ==================== RENDER ====================
-
-    /**
-     * Render component
-     */
     public function render()
     {
         return view('livewire.lop.lop-detail', [
-            // Pass protected data to view
             'parishId' => $this->parishId,
-            'block' => $this->block,
+            'gradeLevel' => $this->gradeLevel,
             'namHoc' => $this->namHoc,
         ])
             ->extends('frontend.layout.main')

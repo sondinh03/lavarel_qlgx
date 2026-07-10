@@ -6,21 +6,18 @@
     ]" />
 @endsection
 
-<div class="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 p-4 sm:p-6">
+<div class="min-h-screen bg-apple-gray p-2 sm:p-4 lg:p-6" style="min-height: calc(100vh - 56px - var(--bottom-offset));">
     <a href="#main-content" class="sr-only focus:not-sr-only">Bỏ qua tới nội dung</a>
 
-    <div id="main-content" class="mx-auto max-w-7xl space-y-5">
-
-        {{-- ===================== HEADER CARD ===================== --}}
-        <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+    <div id="main-content" class="mx-auto max-w-7xl">
+        <x-mac-panel :overflow="true">
             <x-page-header
                 title="Quản lý điểm"
                 description="Nhập và quản lý điểm học sinh theo lớp và học kỳ"
                 icon-type="score" />
 
-            {{-- Filter Bar --}}
-            <div class="px-6 py-4 border-b border-slate-200 bg-slate-50/70">
-                <div class="flex items-center justify-between gap-4 flex-wrap">
+            <div class="p-4 lg:p-6 mac-hairline-b bg-white/30">
+                <div class="flex flex-col gap-4">
                     <livewire:filters.filter-bar
                         :parish-id="$parishId"
                         :show-nam-hoc="true"
@@ -32,17 +29,15 @@
                         :selected-lop="$selectedLop"
                         :selected-ky="$selectedSemester" />
 
-                    {{-- Search --}}
-                    <input
-                        wire:model.debounce.400ms="search"
+                    <x-search-input
+                        wire-model="search"
                         placeholder="Tìm học sinh..."
-                        class="w-52 px-3 py-2 rounded-xl border border-slate-300 text-sm
-                               focus:outline-none focus:ring-2 focus:ring-primary-500" />
+                        debounce="400ms"
+                        class="max-w-md" />
                 </div>
             </div>
 
-            {{-- Tabs + Actions --}}
-            <div class="px-6 py-3 border-b border-slate-200 flex items-center justify-between gap-4 flex-wrap">
+            <div class="px-4 lg:px-6 py-3 mac-hairline-b flex items-center justify-between gap-4 flex-wrap">
                 {{-- Tabs --}}
                 <div class="flex gap-1 bg-slate-100 p-1 rounded-xl">
                     <button
@@ -94,32 +89,30 @@
                     @endif
                 </div>
             </div>
-        </div>
 
-        {{-- ===================== TAB: BẢNG ĐIỂM ===================== --}}
         @if($activeTab === 'scores')
         @if(!$selectedLop)
-        <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-12 text-center">
-            <svg class="mx-auto w-16 h-16 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+        <x-stats.page-empty
+            :panel="false"
+            tone="primary"
+            title="Vui lòng chọn lớp"
+            description="Chọn lớp ở bộ lọc phía trên để xem bảng điểm">
+            <x-slot name="icon">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
                     d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
-            </svg>
-            <p class="mt-4 text-lg text-slate-500">Vui lòng chọn lớp để xem bảng điểm</p>
-        </div>
+            </x-slot>
+        </x-stats.page-empty>
 
         @elseif($scoreTypes->isEmpty())
-        <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-12 text-center">
-            <svg class="mx-auto w-16 h-16 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                    d="M12 9v2m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
-            <p class="mt-4 text-lg text-slate-500">Lớp này chưa có cấu hình loại điểm</p>
-            <button
-                wire:click="switchTab('config')"
-                class="mt-4 px-4 py-2 bg-primary-600 text-white rounded-xl hover:bg-primary-700 transition text-sm font-semibold">
+        <x-stats.page-empty
+            :panel="false"
+            tone="primary"
+            title="Lớp chưa có cấu hình loại điểm"
+            description="Thêm loại điểm trước khi nhập điểm cho học sinh">
+            <x-button wire:click="switchTab('config')" variant="primary">
                 Cấu hình ngay
-            </button>
-        </div>
+            </x-button>
+        </x-stats.page-empty>
 
         @else
 
@@ -148,13 +141,10 @@
             </div>
         </div>
 
-        {{-- ===================== BẢNG ĐIỂM ===================== --}}
-        <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
-
-            <div class="max-h-[70vh] overflow-y-auto">
-                <div class="overflow-x-auto">
-                    <table class="w-full border-separate border-spacing-0 text-sm">
-                        <thead class="bg-slate-50 sticky top-0 z-10">
+        <div class="max-h-[70vh] overflow-y-auto">
+            <div class="overflow-x-auto">
+                <table class="w-full border-separate border-spacing-0 text-sm">
+                    <thead class="bg-slate-50/50 sticky top-0 z-10 mac-hairline-b">
                             <tr>
                                 <x-table-header>STT</x-table-header>
                                 <x-table-header>Tên thánh</x-table-header>
@@ -187,8 +177,8 @@
                             </tr>
                         </thead>
 
-                        <tbody class="divide-y divide-slate-100">
-                            @forelse($students as $index => $sc)
+                    <tbody class="divide-y divide-black/[0.04]">
+                        @forelse($students as $index => $sc)
                             @php
                                 $avg    = $this->getAverage($sc->pivot_id);
                                 $rating = null;
@@ -212,7 +202,7 @@
                                     default   => 'bg-slate-100 text-slate-400',
                                 };
                             @endphp
-                            <tr class="hover:bg-slate-50/70 transition-colors" wire:key="sc-{{ $sc->pivot_id }}">
+                            <tr class="hover:bg-black/[0.03] transition-colors" wire:key="sc-{{ $sc->pivot_id }}">
 
                                 <td class="px-4 py-3 text-slate-400 sticky left-0 bg-white">
                                     {{ ($students->firstItem() ?? 0) + $index }}
@@ -289,15 +279,101 @@
                 </div>
             </div>
 
-            {{-- Footer: pagination --}}
-            <div class="px-6 py-4 border-t border-slate-200">
-                @if($students->hasPages())
+            @if($students->hasPages())
+            <div class="mac-hairline-t">
                 <x-pagination :paginator="$students" :per-page-options="[10, 15, 25, 50, 100]" />
-                @endif
             </div>
-        </div>
+            @endif
 
-        {{-- Keyboard nav script --}}
+        @endif
+        @endif
+
+        @if($activeTab === 'config')
+        @if(!$selectedNamHoc)
+        <x-stats.page-empty
+            :panel="false"
+            tone="slate"
+            title="Vui lòng chọn năm học"
+            description="Chọn năm học để cấu hình loại điểm" />
+        @else
+        @if(!$selectedLop)
+        <div class="mx-4 lg:mx-6 my-4 px-4 py-3 mac-hairline-b bg-amber-50/50 text-sm text-amber-800 rounded-lg">
+            Chưa chọn lớp cụ thể — loại điểm sẽ được tạo theo <strong>khối</strong> hoặc <strong>toàn xứ</strong>.
+            Chọn lớp ở trên nếu muốn cấu hình riêng từng lớp.
+        </div>
+        @endif
+
+        @if($scoreTypes->isNotEmpty())
+        <div class="overflow-x-auto">
+            <table class="w-full border-separate border-spacing-0 text-sm">
+                <thead class="bg-slate-50/50 mac-hairline-b">
+                    <tr>
+                        <x-table-header>Tên loại điểm</x-table-header>
+                        <x-table-header>Loại</x-table-header>
+                        <x-table-header class="text-center">Thứ tự</x-table-header>
+                        <x-table-header class="text-center">Hệ số</x-table-header>
+                        <x-table-header class="text-center">Điểm tối đa</x-table-header>
+                        <x-table-header class="text-center">Trạng thái</x-table-header>
+                        <x-table-header class="text-center">Thao tác</x-table-header>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-black/[0.04]">
+                    @foreach($scoreTypes as $st)
+                    <tr class="hover:bg-black/[0.03] transition-colors" wire:key="st-{{ $st->id }}">
+                        <td class="px-4 py-3 font-semibold text-slate-900">{{ $st->name }}</td>
+                        <td class="px-4 py-3">
+                            <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-indigo-100 text-indigo-700">
+                                {{ $st->type_label }}
+                            </span>
+                        </td>
+                        <td class="px-4 py-3 text-center text-slate-600">{{ $st->order }}</td>
+                        <td class="px-4 py-3 text-center font-semibold text-slate-700">{{ $st->coefficient }}</td>
+                        <td class="px-4 py-3 text-center text-slate-600">{{ $st->max_score }}</td>
+                        <td class="px-4 py-3 text-center">
+                            <span class="inline-flex items-center px-2.5 py-1 text-xs font-semibold rounded-full
+                                {{ $st->is_active ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-200 text-slate-500' }}">
+                                {{ $st->is_active ? 'Đang dùng' : 'Tắt' }}
+                            </span>
+                        </td>
+                        <td class="px-4 py-3 text-center">
+                            <div class="inline-flex items-center gap-3">
+                                <x-tooltip content="Chỉnh sửa">
+                                    <x-table-action wire="editScoreType({{ $st->id }})" icon="edit" />
+                                </x-tooltip>
+                                <span class="text-slate-300">|</span>
+                                <x-tooltip content="Xóa">
+                                    <x-table-action
+                                        wire="delete({{ $st->id }})"
+                                        icon="trash"
+                                        color="danger"
+                                        :loading="true"
+                                        confirm="Bạn có chắc chắn muốn xóa loại điểm '{{ $st->name }}'?" />
+                                </x-tooltip>
+                            </div>
+                        </td>
+                    </tr>
+                    @endforeach
+                </tbody>
+            </table>
+        </div>
+        @else
+        <x-stats.page-empty
+            :panel="false"
+            tone="primary"
+            title="Chưa có loại điểm"
+            description="Thêm loại điểm đầu tiên cho phạm vi đã chọn">
+            <x-button wire:click="createScoreType" variant="primary">
+                <x-icon name="plus" />
+                Thêm loại điểm
+            </x-button>
+        </x-stats.page-empty>
+        @endif
+        @endif
+        @endif
+
+        </x-mac-panel>
+
+        @if($activeTab === 'scores')
         <script>
             document.addEventListener('keydown', function(e) {
                 if (!e.target.classList.contains('score-input')) return;
@@ -324,90 +400,6 @@
                 if (next) { next.focus(); next.select(); }
             });
         </script>
-
-        @endif {{-- end scoreTypes check --}}
-        @endif {{-- end activeTab === scores --}}
-
-
-        {{-- ===================== TAB: CẤU HÌNH ===================== --}}
-        @if($activeTab === 'config')
-        @if(!$selectedNamHoc)
-        <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-12 text-center">
-            <p class="text-lg text-slate-500">Vui lòng chọn năm học để cấu hình loại điểm</p>
-        </div>
-        @else
-        @if(!$selectedLop)
-        <div class="bg-amber-50 border border-amber-200 rounded-2xl px-6 py-4 flex items-center gap-3">
-            <svg class="w-5 h-5 text-amber-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                    d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
-            <p class="text-sm text-amber-700">
-                Chưa chọn lớp cụ thể — loại điểm sẽ được tạo theo <strong>khối</strong> hoặc <strong>toàn xứ</strong>.
-                Chọn lớp ở trên nếu muốn cấu hình riêng từng lớp.
-            </p>
-        </div>
-        @endif
-
-        <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
-            @if($scoreTypes->isNotEmpty())
-            <table class="w-full border-separate border-spacing-0 text-sm">
-                <thead class="bg-slate-50 border-b border-slate-200">
-                    <tr>
-                        <x-table-header>Tên loại điểm</x-table-header>
-                        <x-table-header>Loại</x-table-header>
-                        <x-table-header class="text-center">Thứ tự</x-table-header>
-                        <x-table-header class="text-center">Hệ số</x-table-header>
-                        <x-table-header class="text-center">Điểm tối đa</x-table-header>
-                        <x-table-header class="text-center">Trạng thái</x-table-header>
-                        <x-table-header class="text-center">Thao tác</x-table-header>
-                    </tr>
-                </thead>
-                <tbody class="divide-y divide-slate-100">
-                    @foreach($scoreTypes as $st)
-                    <tr class="hover:bg-slate-50 transition-colors" wire:key="st-{{ $st->id }}">
-                        <td class="px-6 py-4 font-semibold text-slate-900">{{ $st->name }}</td>
-                        <td class="px-6 py-4">
-                            <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-indigo-100 text-indigo-700">
-                                {{ $st->type_label }}
-                            </span>
-                        </td>
-                        <td class="px-6 py-4 text-center text-slate-600">{{ $st->order }}</td>
-                        <td class="px-6 py-4 text-center font-semibold text-slate-700">{{ $st->coefficient }}</td>
-                        <td class="px-6 py-4 text-center text-slate-600">{{ $st->max_score }}</td>
-                        <td class="px-6 py-4 text-center">
-                            <span class="inline-flex items-center px-2.5 py-1 text-xs font-semibold rounded-full
-                                {{ $st->is_active ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-200 text-slate-500' }}">
-                                {{ $st->is_active ? 'Đang dùng' : 'Tắt' }}
-                            </span>
-                        </td>
-                        <td class="px-6 py-4 text-center">
-                            <div class="inline-flex items-center gap-3">
-                                <x-tooltip content="Chỉnh sửa">
-                                    <x-table-action wire="editScoreType({{ $st->id }})" icon="edit" />
-                                </x-tooltip>
-                                <span class="text-slate-300">|</span>
-                                <x-tooltip content="Xóa">
-                                    <x-table-action
-                                        wire="delete({{ $st->id }})"
-                                        icon="trash"
-                                        color="danger"
-                                        :loading="true"
-                                        confirm="Bạn có chắc chắn muốn xóa loại điểm '{{ $st->name }}'?" />
-                                </x-tooltip>
-                            </div>
-                        </td>
-                    </tr>
-                    @endforeach
-                </tbody>
-            </table>
-            @else
-            <div class="p-12 text-center">
-                <p class="text-slate-400">Chưa có loại điểm nào. Thêm loại điểm đầu tiên.</p>
-            </div>
-            @endif
-        </div>
-        @endif
         @endif
 
 

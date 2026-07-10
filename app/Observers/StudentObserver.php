@@ -6,7 +6,7 @@ use App\Models\Student;
 use App\Http\Controllers\StudentController;
 use App\Models\Slug;
 use Cocur\Slugify\Slugify;
-use App\Models\Lop;
+use App\Models\CatechismClass;
 use App\Models\Parish;
 use App\Models\Parishioners;
 
@@ -39,7 +39,7 @@ class StudentObserver
     public function saved(Student $student)
     {
         if(!empty($_POST['chon_student'])){
-            $lop = Lop::where('id', $student->lop)->where('status', 1)->orderBy('id', 'ASC')->first();
+            $lop = CatechismClass::where('id', $student->lop)->where('status', 1)->orderBy('id', 'ASC')->first();
             $hocsinh = Parishioners::where('id', $_POST['chon_student'])->orderBy('id', 'ASC')->first();
             Student::where('id', $student->id)->update([
                 'mahv'      => $lop->symbol . $student->id,
@@ -73,7 +73,7 @@ class StudentObserver
             ]);
         }else{
             if(!empty($student->id)){
-                $lop = Lop::where('id', $student->lop)->where('status', 1)->orderBy('id', 'ASC')->first();
+                $lop = CatechismClass::where('id', $student->lop)->where('status', 1)->orderBy('id', 'ASC')->first();
                 if(!empty($lop->symbol)){
                     Student::where('id', $student->id)->update([
                         'mahv'      => $lop->symbol . $student->id,

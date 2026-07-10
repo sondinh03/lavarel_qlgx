@@ -56,9 +56,15 @@ class StudentsClass extends Pivot
         return $this->belongsTo(StudentNew::class);
     }
 
+    public function catechismClass()
+    {
+        return $this->belongsTo(CatechismClass::class, 'class_id');
+    }
+
+    /** @deprecated Use catechismClass() */
     public function lop()
     {
-        return $this->belongsTo(Lop::class, 'class_id');
+        return $this->catechismClass();
     }
 
     /*

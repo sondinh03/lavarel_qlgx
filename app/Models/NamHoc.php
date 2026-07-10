@@ -116,9 +116,15 @@ class NamHoc extends Model
         return $this->belongsTo(ParishNew::class, 'parish_id', 'id');
     }
 
+    public function catechismClasses()
+    {
+        return $this->hasMany(CatechismClass::class, 'school_year_id');
+    }
+
+    /** @deprecated Use catechismClasses() */
     public function lops()
     {
-        return $this->hasMany(Lop::class, 'schoolyear');
+        return $this->catechismClasses();
     }
 
     /*

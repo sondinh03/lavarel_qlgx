@@ -1,28 +1,18 @@
-<div class="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 p-4 sm:p-6">
+@section('topbar')
+<x-breadcrumb :items="[
+    ['label' => 'Trang chủ', 'url' => route('parish-admin.dashboard')],
+    ['label' => 'Quản lý khối học'],
+]" />
+@endsection
+
+<div
+    class="min-h-screen bg-apple-gray p-2 sm:p-4 lg:p-6"
+    style="min-height: calc(100vh - 56px - var(--bottom-offset));">
     <a href="#main-content" class="sr-only focus:not-sr-only">Bỏ qua tới nội dung</a>
 
-    <div class="mx-auto max-w-7xl space-y-5">
-
-        {{-- Breadcrumb --}}
-        <x-breadcrumb
-            :items="[
-                [
-                    'label' => 'Trang chủ',
-                    'url' => route('parish-admin.dashboard'),
-                ],
-                [
-                    'label' => 'Quản lý khối học',
-                    'url' => route('grades.index'),
-                    'icon' => '<svg class=\'w-4 h-4\' fill=\'none\' stroke=\'currentColor\' viewBox=\'0 0 24 24\'>
-                                <path stroke-linecap=\'round\' stroke-linejoin=\'round\' stroke-width=\'2\'
-                                    d=\'M3 7h18M3 12h18M3 17h18\' />
-                            </svg>',
-                ],
-            ]"
-            separator="arrow" />
-
+    <div id="main-content" class="mx-auto max-w-7xl">
         {{-- Toast Notifications --}}
-        <div role="status" aria-live="polite">
+        <div role="status" aria-live="polite" class="mb-4">
             @if (session()->has('message'))
             <x-toast-notification type="success" :duration="3500">
                 {{ session('message') }}
@@ -48,79 +38,57 @@
             @endif
         </div>
 
-        {{-- Main Card --}}
-        <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
-            {{-- Header --}}
+        <x-mac-panel :overflow="true">
             <x-page-header
                 title="Quản lý khối học"
                 description="Danh sách các khối theo năm học"
-                :stat-value="$blocks?->count()"
-                stat-label="Khối học"
-                icon-type="block">
-            </x-page-header>
+                icon-type="block" />
 
-            {{-- Actions Bar --}}
-            <div class="px-6 py-4 border-b border-slate-200 bg-slate-50/70">
-                <div class="flex items-center justify-between gap-4">
+            <div class="p-4 lg:p-6 mac-hairline-b bg-white/30">
+                <div class="flex flex-col gap-4">
+                    <div class="flex items-end gap-3">
+                        <div class="flex-1 min-w-0">
+                            <livewire:filters.filter-bar
+                                :parish-id="$parishId"
+                                :show-nam-hoc="true"
+                                :show-khoi="false"
+                                :show-lop="false"
+                                :show-ky="false"
+                                :selected-nam-hoc="$selectedNamHoc" />
+                        </div>
 
-                    {{-- LEFT: Filters --}}
-                    <div class="flex items-center gap-3">
-
-                        {{-- Năm học --}}
-                        <livewire:filters.filter-bar
-                        :parish-id="$parishId"
-                            :show-nam-hoc="true"
-                            :show-khoi="false"
-                            :show-lop="false"
-                            :show-ky="false"
-                            :selected-nam-hoc="$selectedNamHoc" />
-
-                        {{-- Search --}}
-                        <input
-                            wire:model.debounce.500ms="search"
-                            placeholder="Tìm kiếm khối"
-                            class="w-56 px-3 py-2 rounded-xl
-                                border border-slate-300
-                                text-sm focus:outline-none
-                                focus:ring-2 focus:ring-primary-500" />
+                        <div class="flex-shrink-0 pb-0.5">
+                            <x-button wire:click="resetFilters" variant="subtle">
+                                <x-icon name="refresh" />
+                                Đặt lại
+                            </x-button>
+                        </div>
                     </div>
 
-                    {{-- RIGHT: Primary Action --}}
-                    <x-action-button
-                        wire="create"
-                        icon="plus"
-                        :disabled="!$selectedNamHoc">
-                        Thêm khối
-                    </x-action-button>
-                    {{-- <button
-                        wire:click="create"
-                        @disabled(!$selectedNamHoc)
-                        class="inline-flex items-center gap-2
-                            px-5 py-2.5 rounded-xl
-                            bg-gradient-to-r from-primary-500 to-primary-600
-                            hover:from-primary-600 hover:to-primary-700
-                            text-white text-sm font-semibold
-                            active:scale-95
-                            disabled:bg-slate-300 disabled:cursor-not-allowed
-                            transition-all shadow-sm">
+                    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                        <x-search-input
+                            wire-model="search"
+                            placeholder="Tìm kiếm khối..."
+                            debounce="500ms"
+                            class="max-w-md" />
 
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M12 4v16m8-8H4" />
-                        </svg>
-                        Thêm khối
-                    </button> --}}
+                        <x-button wire:click="create" variant="primary" :disabled="!$selectedNamHoc">
+                            <x-icon name="plus" />
+                            Thêm khối
+                        </x-button>
+                    </div>
                 </div>
             </div>
-        </div>
 
-        {{-- Table Section --}}
-        @if($selectedNamHoc)
-        <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+            @if($selectedNamHoc)
+            <div class="px-4 lg:px-6 py-3 mac-hairline-b bg-slate-100/80 text-sm text-slate-700">
+                Đang xem khối học trong năm học đã chọn
+            </div>
+
             @if($blocks && $blocks->count() > 0)
             <div class="overflow-x-auto">
                 <table class="w-full border-separate border-spacing-0">
-                    <thead class="bg-slate-50 border-b border-slate-200">
+                    <thead class="bg-slate-50/50 mac-hairline-b">
                         <tr>
                             <x-table-header>STT</x-table-header>
                             <x-table-header>Tên khối</x-table-header>
@@ -130,38 +98,38 @@
                         </tr>
                     </thead>
 
-                    <tbody class="divide-y divide-slate-100">
+                    <tbody class="divide-y divide-black/[0.04]">
                         @foreach($blocks as $i => $block)
-                        <tr class="hover:bg-slate-50 transition-colors">
-                            <td class="px-6 py-4 text-sm text-slate-500">
-                                {{ $i + 1}}
+                        <tr class="hover:bg-black/[0.03] transition-colors">
+                            <td class="px-4 py-3 text-sm text-slate-500">
+                                {{ $i + 1 }}
                             </td>
 
-                            <td class="px-6 py-4 font-semibold text-slate-900">
+                            <td class="px-4 py-3 font-semibold text-slate-900">
                                 {{ $block->name }}
                             </td>
-                            <td class="px-6 py-4 text-center text-slate-600">
+                            <td class="px-4 py-3 text-center text-slate-600">
                                 {{ $block->weight }}
                             </td>
 
-                            <td class="px-6 py-4 text-center">
-                                <span class="px-2.5 py-1 text-xs font-semibold rounded-full
-                    {{ $block->status ? 'bg-primary-100 text-primary-700' : 'bg-slate-200 text-slate-600' }}">
+                            <td class="px-4 py-3 text-center">
+                                <span class="inline-flex items-center px-2.5 py-1 text-xs font-semibold rounded-full
+                                    {{ $block->status ? 'bg-primary-100 text-primary-700' : 'bg-slate-200 text-slate-600' }}">
                                     {{ $block->status ? 'Hoạt động' : 'Tắt' }}
                                 </span>
                             </td>
 
-                            <td class="px-6 py-4 text-center">
+                            <td class="px-4 py-3 text-center">
                                 <div class="inline-flex gap-3">
                                     <button wire:click="edit({{ $block->id }})"
-                                        class="text-primary-600 hover:text-primary-800">
+                                        class="text-primary-600 hover:text-primary-800 text-sm font-medium">
                                         Sửa
                                     </button>
 
                                     @if($isAdmin)
                                     <button wire:click="delete({{ $block->id }})"
                                         onclick="return confirm('Xóa khối học?')"
-                                        class="text-red-600 hover:text-red-800">
+                                        class="text-red-600 hover:text-red-800 text-sm font-medium">
                                         Xóa
                                     </button>
                                     @endif
@@ -172,28 +140,27 @@
                     </tbody>
                 </table>
             </div>
-
-            {{-- Pagination --}}
-            <div class="px-6 py-4 border-t border-gray-200">
-                {{-- {{ $blocks->links() }} --}}
-            </div>
             @else
-            <div class="text-center py-12">
-                <i class="las la-inbox text-6xl text-gray-300"></i>
-                <p class="mt-2 text-gray-500">Chưa có khối học nào</p>
-                <button wire:click="create"
-                    class="mt-4 px-4 py-2 bg-primary-600 text-white rounded-md hover:bg-primary-700">
-                    <i class="las la-plus mr-1"></i> Thêm khối học đầu tiên
-                </button>
-            </div>
+            <x-stats.page-empty
+                :panel="false"
+                tone="primary"
+                title="Chưa có khối học nào"
+                description="Thêm khối học đầu tiên cho năm học đã chọn">
+                <x-button wire:click="create" variant="primary">
+                    <x-icon name="plus" />
+                    Thêm khối học
+                </x-button>
+            </x-stats.page-empty>
             @endif
-        </div>
-        @else
-        <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-12 text-center">
-            <i class="las la-hand-point-up text-6xl text-gray-300"></i>
-            <p class="mt-4 text-lg text-gray-500">Vui lòng chọn năm học để xem danh sách khối</p>
-        </div>
-        @endif
+
+            @else
+            <x-stats.page-empty
+                :panel="false"
+                tone="slate"
+                title="Chọn năm học"
+                description="Vui lòng chọn năm học để xem danh sách khối" />
+            @endif
+        </x-mac-panel>
 
         {{-- Form Modal --}}
         @if ($showForm)

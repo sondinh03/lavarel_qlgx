@@ -8,7 +8,7 @@ use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Database\Query\Builder;
-use App\Models\Lop;
+use App\Models\CatechismClass;
 use App\Models\Block;
 use App\Models\Parish;
 use App\Models\ParishManagement;
@@ -76,7 +76,7 @@ class BlockController extends Controller
             }
         }
         
-        $lop = Lop::where('block', $id)->where('status', 1)->orderBy('name', 'asc')->paginate($this->per_page)->withQueryString();
+        $lop = CatechismClass::where('block', $id)->where('status', 1)->orderBy('name', 'asc')->paginate($this->per_page)->withQueryString();
         
         if(!empty($lop)){
             foreach($lop as $item){

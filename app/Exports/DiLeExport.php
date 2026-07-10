@@ -3,7 +3,7 @@
 namespace App\Exports;
 
 use Maatwebsite\Excel\Concerns\FromCollection;
-use App\Models\Lop;
+use App\Models\CatechismClass;
 use Illuminate\Support\Facades\DB;
 use Maatwebsite\Excel\Concerns\WithHeadings;
 use Maatwebsite\Excel\Concerns\WithTitle;
@@ -53,7 +53,7 @@ class DiLeExport implements FromCollection, WithTitle, WithHeadings, WithHeading
             $userId = $user->id;
             $decen = Decen::where('use', $userId)->where('pid', $_POST['giaoxu'])->where('status', '1')->get()->first();
             if(!empty($decen) AND $decen->student == 1){
-                $lop = Lop::where('did', '=', $_POST['giaophan'])->where('deid', '=', $_POST['giaohat'])->where('pid', '=', $_POST['giaoxu'])->where('id', $_POST['lop'])->first();
+                $lop = CatechismClass::where('did', '=', $_POST['giaophan'])->where('deid', '=', $_POST['giaohat'])->where('pid', '=', $_POST['giaoxu'])->where('id', $_POST['lop'])->first();
                 
                 $ten_lop =  array('ĐIỂM DANH ĐI LỄ KỲ I');
                 $ten_lopk2 =  array('ĐIỂM DANH ĐI LỄ KỲ II');
@@ -180,7 +180,7 @@ class DiLeExport implements FromCollection, WithTitle, WithHeadings, WithHeading
                         $hocsinh->birthday = date('d-m-Y', strtotime($hocsinh->birthday));
                     }
                     
-                    $lop = Lop::where('did', '=', $_POST['giaophan'])->where('deid', '=', $_POST['giaohat'])->where('pid', '=', $_POST['giaoxu'])->where('id', $_POST['lop'])->first();
+                    $lop = CatechismClass::where('did', '=', $_POST['giaophan'])->where('deid', '=', $_POST['giaohat'])->where('pid', '=', $_POST['giaoxu'])->where('id', $_POST['lop'])->first();
                     
                     $begin = Carbon::parse($lop->start_date_one);
                     $end = Carbon::parse($lop->end_date_one);
@@ -294,7 +294,7 @@ class DiLeExport implements FromCollection, WithTitle, WithHeadings, WithHeading
     public function styles(Worksheet $sheet) {
         $sheet->setShowGridlines(true);
         
-        $lop = Lop::where('did', '=', $_POST['giaophan'])->where('deid', '=', $_POST['giaohat'])->where('pid', '=', $_POST['giaoxu'])->where('id', $_POST['lop'])->first();
+        $lop = CatechismClass::where('did', '=', $_POST['giaophan'])->where('deid', '=', $_POST['giaohat'])->where('pid', '=', $_POST['giaoxu'])->where('id', $_POST['lop'])->first();
                 
         $begin = Carbon::parse($lop->start_date_one);
         $end = Carbon::parse($lop->end_date_one);

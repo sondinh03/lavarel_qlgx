@@ -31,7 +31,7 @@ use App\Http\Controllers\ParishionersController;
 use App\Models\Slug;
 use Cocur\Slugify\Slugify;
 use Maatwebsite\Excel\Concerns\WithHeadingRow;
-use App\Models\Lop;
+use App\Models\CatechismClass;
 use App\Http\Controllers\LopController;
 use Illuminate\Support\Facades\DB;
 use Maatwebsite\Excel\Concerns\ToModel;
@@ -96,17 +96,17 @@ class LophocImport implements ToModel, ToCollection, WithHeadingRow, HasReferenc
                 $last_char = substr($str, -1);
                 $symbol = $array_moi . $last_char;
                 
-                $lop = Lop::where('name', $tensheet)
+                $lop = CatechismClass::where('name', $tensheet)
                 ->where('did', $decen->did)
                 ->where('deid', $decen->deid)
                 ->where('pid', $giaoxu)
                 ->get()->first();
                 
                 if(!empty($lop)){
-                    Lop::where('id', $lop->id)
+                    CatechismClass::where('id', $lop->id)
                     ->update(['schoolyear' => $_POST['schoolyear']]);
                 }else{
-                    $lop = Lop::create([
+                    $lop = CatechismClass::create([
                         'name'          => $tensheet,
                         'did'           => $decen->did,
                         'deid'          => $decen->deid,
@@ -128,7 +128,7 @@ class LophocImport implements ToModel, ToCollection, WithHeadingRow, HasReferenc
                             Slug::create([
                                 'keyword' => $slugmoi,
                                 'controller' => LopController::class,
-                                'model' => Lop::class,
+                                'model' => CatechismClass::class,
                                 'sluggable_id' => $lop->id
                             ]);                            
                         }
@@ -137,7 +137,7 @@ class LophocImport implements ToModel, ToCollection, WithHeadingRow, HasReferenc
                     Slug::create([
                         'keyword' => $sluglink,
                         'controller' => LopController::class,
-                        'model' => Lop::class,
+                        'model' => CatechismClass::class,
                         'sluggable_id' => $lop->id
                     ]);
                 }

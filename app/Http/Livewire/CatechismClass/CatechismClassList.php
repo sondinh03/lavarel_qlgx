@@ -459,7 +459,7 @@ class CatechismClassList extends BaseComponent
         $this->selectedGradeLevel = '';
         $this->search = '';
         $this->resetPage();
-        session()->flash('message', 'Đã đặt lại bộ lọc');
+        $this->emit('resetFilters');
     }
 
     // ==================== FORM HELPERS ====================

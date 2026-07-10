@@ -328,7 +328,7 @@ class Student extends Model
      */
     public function lops(): BelongsToMany
     {
-        return $this->belongsToMany(Lop::class, 'students_class', 'student_id', 'class_id')
+        return $this->belongsToMany(CatechismClass::class, 'students_class', 'student_id', 'class_id')
             ->using(StudentsClass::class)
             ->withPivot('status')
             ->withTimestamps();
@@ -336,7 +336,7 @@ class Student extends Model
 
     public function students()
     {
-        return $this->belongsToMany(Lop::class, 'students_class', 'student_id', 'class_id')
+        return $this->belongsToMany(CatechismClass::class, 'students_class', 'student_id', 'class_id')
             ->using(StudentsClass::class)
             ->withPivot('status')
             ->withTimestamps();

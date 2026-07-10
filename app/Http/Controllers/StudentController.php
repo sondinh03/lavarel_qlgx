@@ -13,7 +13,7 @@ use App\Models\Diocese;
 use App\Models\Parish;
 use App\Models\Holymanagement;
 use Faker\Core\DateTime;
-use App\Models\Lop;
+use App\Models\CatechismClass;
 use App\Models\DiHoc;
 use App\Models\DiLe;
 use Carbon\Carbon;
@@ -99,7 +99,7 @@ class StudentController extends Controller
                     }else{
                         $student['did'] = '';
                     }
-                    $lop = Lop::where('id', $student->lop)->where('status', 1)->first();
+                    $lop = CatechismClass::where('id', $student->lop)->where('status', 1)->first();
                     
                     $Date = date('Y-m-d');
                     
@@ -222,7 +222,7 @@ class StudentController extends Controller
                 $weight = intval($weight) + 1;
             }
             
-            $lophoc = Lop::where('status', 1)->where('id', $lop)->get()->first();
+            $lophoc = CatechismClass::where('status', 1)->where('id', $lop)->get()->first();
             
             $day_date = date('Y-m-d');
             
@@ -325,7 +325,7 @@ class StudentController extends Controller
                 $weight = intval($weight) + 1;
             }
             
-            $lophoc = Lop::where('status', 1)->where('id', $lop)->get()->first();
+            $lophoc = CatechismClass::where('status', 1)->where('id', $lop)->get()->first();
             
             $start_date = $lophoc->start_date_two;
             $end_Date = $lophoc->end_date_two;

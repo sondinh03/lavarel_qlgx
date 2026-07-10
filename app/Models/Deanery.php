@@ -51,6 +51,11 @@ class Deanery extends Model
     |--------------------------------------------------------------------------
     */
 
+    public function diocese()
+    {
+        return $this->belongsTo(Diocese::class, 'did', 'id');
+    }
+
     /*
     |--------------------------------------------------------------------------
     | SCOPES

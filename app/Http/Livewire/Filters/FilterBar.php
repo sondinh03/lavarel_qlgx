@@ -5,7 +5,6 @@ namespace App\Http\Livewire\Filters;
 use App\Models\Block;
 use App\Models\CatechismClass;
 use App\Models\GradeLevel;
-use App\Models\Lop;
 use App\Models\NamHoc;
 use Livewire\Component;
 use Illuminate\Support\Collection;
@@ -53,14 +52,32 @@ class FilterBar extends Component
      * - null  : admin tổng
      * - int   : decen theo giáo xứ
      */
-    public function mount($parishId = null): void
-    {
+    public function mount(
+        $parishId = null,
+        $selectedNamHoc = null,
+        $selectedKhoi = null,
+        $selectedLop = null,
+        $selectedKy = null
+    ): void {
         if (!$parishId) {
             session()->flash('warning', 'Vui lòng chọn giáo xứ');
             return;
         }
 
         $this->parish_id = $parishId;
+
+        if ($selectedNamHoc !== null && $selectedNamHoc !== '') {
+            $this->selectedNamHoc = $selectedNamHoc;
+        }
+        if ($selectedKhoi !== null && $selectedKhoi !== '') {
+            $this->selectedKhoi = $selectedKhoi;
+        }
+        if ($selectedLop !== null && $selectedLop !== '') {
+            $this->selectedLop = $selectedLop;
+        }
+        if ($selectedKy !== null && $selectedKy !== '') {
+            $this->selectedKy = $selectedKy;
+        }
 
         $this->namHocs = collect();
         $this->khois   = collect();
@@ -71,7 +88,10 @@ class FilterBar extends Component
             $this->loadNamHocs();
         }
 
-        if ($this->namHocs->isNotEmpty()) {
+        $hadNamHoc = (bool) $this->selectedNamHoc;
+        $this->ensureDefaultNamHoc();
+
+        if ($this->selectedNamHoc && $this->namHocs->isNotEmpty()) {
             $this->loadKhois();
             $this->loadLops();
         }
@@ -79,6 +99,40 @@ class FilterBar extends Component
         if (!$this->selectedKy && $this->selectedNamHoc) {
             $this->selectedKy = $this->detectCurrentSemester();
         }
+
+        if ($this->selectedNamHoc && !$hadNamHoc) {
+            $this->emitFilter();
+        }
+    }
+
+    /**
+     * Luôn có năm học mặc định khi danh sách không rỗng.
+     */
+    protected function ensureDefaultNamHoc(): void
+    {
+        if ($this->selectedNamHoc && $this->namHocs->keys()->contains((int) $this->selectedNamHoc)) {
+            $this->selectedNamHoc = (int) $this->selectedNamHoc;
+            return;
+        }
+
+        $defaultId = $this->resolveDefaultNamHocId();
+        $this->selectedNamHoc = $defaultId ? (int) $defaultId : null;
+    }
+
+    protected function resolveDefaultNamHocId(): ?int
+    {
+        $current = NamHoc::where('parish_id', $this->parish_id)
+            ->active()
+            ->current()
+            ->value('id');
+
+        if ($current) {
+            return (int) $current;
+        }
+
+        $first = $this->namHocs->keys()->first();
+
+        return $first ? (int) $first : null;
     }
 
     public function handleReset(): void
@@ -177,9 +231,11 @@ class FilterBar extends Component
 
     public function updatedSelectedNamHoc(): void
     {
-        $this->selectedNamHoc = $this->selectedNamHoc
-            ? (int) $this->selectedNamHoc
-            : null;
+        if (!$this->selectedNamHoc || $this->selectedNamHoc === '') {
+            $this->ensureDefaultNamHoc();
+        } else {
+            $this->selectedNamHoc = (int) $this->selectedNamHoc;
+        }
 
         $this->reset(['selectedKhoi', 'selectedLop', 'selectedKy']);
 

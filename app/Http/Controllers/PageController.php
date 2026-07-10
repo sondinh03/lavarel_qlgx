@@ -28,7 +28,7 @@ use App\Models\Block;
 use App\Models\Student;
 use App\Models\Decen;
 use App\Models\Teacher;
-use App\Models\Lop;
+use App\Models\CatechismClass;
 use App\Models\MarriageAnnouncementParishioners;
 use Illuminate\Database\Query\Builder;
 use App\Models\SetAdmin;
@@ -2435,8 +2435,8 @@ class PageController extends Controller
                     }
                     $array_thongke[$row['id']]['hocsinh']['hocsinh_total'] = $hocsinh_total;
                     
-                    $array_thongke[$row['id']]['lop']['lop_count'] = $lop_count = Lop::where('status', 1)->where('pid', $row['pid'])->get()->count();
-                    $array_thongke[$row['id']]['lop']['lop_counttotal'] = $lop_counttotal = Lop::where('status', 1)->get()->count();
+                    $array_thongke[$row['id']]['lop']['lop_count'] = $lop_count = CatechismClass::where('status', 1)->where('pid', $row['pid'])->get()->count();
+                    $array_thongke[$row['id']]['lop']['lop_counttotal'] = $lop_counttotal = CatechismClass::where('status', 1)->get()->count();
                     if(!empty($lop_count) AND !empty($lop_counttotal)){
                         $lop_total = $lop_count/$lop_counttotal*100;
                     }else{
@@ -2511,7 +2511,7 @@ class PageController extends Controller
                     if(!empty($_GET['schoolyear'])){
                         $this->data['block'] = $block = Block::where('pid', $decen->pid)->where('namhoc', $_GET['schoolyear'])->where('status', 1)->orderBy('name', 'asc')->get()->toArray();
                         
-                        $lop = Lop::where('pid', $decen->pid)->where('block', $_GET['block'])->orderBy('name', 'asc')->where('status', 1)->get()->toArray();
+                        $lop = CatechismClass::where('pid', $decen->pid)->where('block', $_GET['block'])->orderBy('name', 'asc')->where('status', 1)->get()->toArray();
                         
                         $this->data['lop'] = $lop;
                     }else{
@@ -2645,7 +2645,7 @@ class PageController extends Controller
                         $giaoho = '';
                     }
                     
-                    $lopmoi = Lop::where('schoolyear', $schoolyear)->get()->toArray();
+                    $lopmoi = CatechismClass::where('schoolyear', $schoolyear)->get()->toArray();
                     $array_lop = array();
                     foreach($lopmoi as $item){
                         $array_lop[] = $item['id'];

@@ -6,7 +6,7 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Http\JsonResponse;
-use App\Models\Lop;
+use App\Models\CatechismClass;
 
 class StudentController extends Controller
 {
@@ -213,9 +213,9 @@ class StudentController extends Controller
             $giaoxu = $_GET['giaoxu'];
             $search = $_GET['q'];
             if ($search) {
-                $results = Lop::where('name', 'LIKE', '%'.$search.'%')->where('pid', $giaoxu)->where('status', '=', 1)->paginate(10);
+                $results = CatechismClass::where('name', 'LIKE', '%'.$search.'%')->where('pid', $giaoxu)->where('status', '=', 1)->paginate(10);
             } else {
-                $results = Lop::paginate(10);
+                $results = CatechismClass::paginate(10);
             }
             return $results;
         }

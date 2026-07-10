@@ -12,7 +12,7 @@ use App\Models\Slug;
 use App\Models\Teacher;
 use App\Models\Student;
 use App\Models\Holymanagement;
-use App\Models\Lop;
+use App\Models\CatechismClass;
 use App\Models\Block;
 use App\Models\DiHoc;
 use App\Models\NamHoc;
@@ -43,7 +43,7 @@ class LopHocController extends Controller
         $giatri = Slug::where('keyword', '=', $slug)->where('sluggable_id', $id)->first();
         if(!empty($giatri)){
             
-            $lop = Lop::where('id', $id)->where('status', 1)->first();
+            $lop = CatechismClass::where('id', $id)->where('status', 1)->first();
                 
             if($lop->block != ''){
                 $block = Block::where('id', $lop->block)->where('status', 1)->first();

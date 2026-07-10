@@ -457,6 +457,12 @@ class TeacherManager extends BaseComponent
         $this->resetValidation();
     }
 
+    public function resetFilters(): void
+    {
+        $this->reset(['search', 'filterParishGroup', 'filterGender', 'filterActive']);
+        $this->resetPage();
+    }
+
     // ==================== RENDER ====================
 
     public function render()

@@ -5,7 +5,7 @@
 ]" />
 @endsection
 
-<div class="min-h-screen bg-slate-50 p-2 sm:p-4 lg:p-6"
+<div class="min-h-screen bg-apple-gray p-2 sm:p-4 lg:p-6"
     style="min-height: calc(100vh - 56px - var(--bottom-offset));"
     x-data="{ showForm: false }"
     x-init="
@@ -16,50 +16,64 @@
     ">
     <a href="#main-content" class="sr-only focus:not-sr-only">Bỏ qua tới nội dung</a>
 
-    <div id="main-content" class="mx-auto max-w-7xl space-y-6">
-
-        <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+    <div id="main-content" class="mx-auto max-w-7xl">
+        <x-mac-panel :overflow="true">
             <x-page-header
-                class="rounded-t-2xl"
                 title="Quản lý lớp học"
                 description="Danh sách các lớp học theo năm học và khối"
-                :stat-value="$classes?->total()"
-                stat-label="Lớp học"
                 icon-type="students" />
 
-            <div class="p-4 lg:p-6 border-t border-slate-200 bg-slate-50/70 rounded-b-2xl">
-                <div class="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-4">
-                    <div class="flex flex-col sm:flex-row sm:flex-wrap sm:items-end gap-3 flex-1 min-w-0">
-                        <livewire:filters.filter-bar
-                            :parish-id="$parishId"
-                            :show-nam-hoc="true"
-                            :show-khoi="true"
-                            :show-lop="false"
-                            :show-ky="false"
-                            :selected-nam-hoc="$selectedNamHoc"
-                            :selected-khoi="$selectedGradeLevel" />
+            <div class="p-4 lg:p-6 mac-hairline-b bg-white/30">
+                <div class="flex flex-col gap-4">
+                    <div class="flex items-end gap-3">
+                        <div class="flex-1 min-w-0">
+                            <livewire:filters.filter-bar
+                                :parish-id="$parishId"
+                                :show-nam-hoc="true"
+                                :show-khoi="true"
+                                :show-lop="false"
+                                :show-ky="false"
+                                :selected-nam-hoc="$selectedNamHoc"
+                                :selected-khoi="$selectedGradeLevel" />
+                        </div>
 
-                        <x-search-input
-                            wireModel="search"
-                            placeholder="Tìm theo tên lớp..."
-                            debounce="500ms"
-                            class="max-w-xs" />
+                        <div class="flex-shrink-0 pb-0.5">
+                            <x-button wire:click="resetFilters" variant="subtle">
+                                <x-icon name="refresh" />
+                                Đặt lại
+                            </x-button>
+                        </div>
                     </div>
 
-                    <x-button wire:click="create" variant="primary" :disabled="!$selectedNamHoc">
-                        <x-icon name="plus" />
-                        Thêm lớp
-                    </x-button>
+                    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                        <x-search-input
+                            wire-model="search"
+                            placeholder="Tìm theo tên lớp..."
+                            debounce="500ms"
+                            class="max-w-md" />
+
+                        <x-button wire:click="create" variant="primary" :disabled="!$selectedNamHoc">
+                            <x-icon name="plus" />
+                            Thêm lớp
+                        </x-button>
+                    </div>
                 </div>
             </div>
-        </div>
 
-        @if($selectedNamHoc)
-        <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+            @if($selectedNamHoc)
+            <div class="px-4 lg:px-6 py-3 mac-hairline-b bg-slate-100/80 text-sm text-slate-700">
+                @if($selectedGradeLevel)
+                    Đang xem lớp học theo khối đã chọn
+                    <span class="text-slate-500">— bỏ lọc khối để xem toàn năm học</span>
+                @else
+                    Đang xem toàn bộ lớp học trong năm học đã chọn
+                @endif
+            </div>
+
             @if($classes && $classes->count() > 0)
             <div class="overflow-x-auto">
                 <table class="w-full border-separate border-spacing-0">
-                    <thead class="bg-slate-50 border-b border-slate-200">
+                    <thead class="bg-slate-50/50 mac-hairline-b">
                         <tr>
                             <x-table-header class="w-12">STT</x-table-header>
                             <x-table-header
@@ -89,24 +103,24 @@
                         </tr>
                     </thead>
 
-                    <tbody class="divide-y divide-slate-100">
+                    <tbody class="divide-y divide-black/[0.04]">
                         @foreach($classes as $index => $class)
-                        <tr class="hover:bg-slate-50 transition-colors" wire:key="class-{{ $class->id }}">
-                            <td class="px-6 py-4 text-sm text-slate-500">
+                        <tr class="hover:bg-black/[0.03] transition-colors" wire:key="class-{{ $class->id }}">
+                            <td class="px-4 py-3 text-sm text-slate-500">
                                 {{ ($classes->firstItem() ?? 0) + $index }}
                             </td>
-                            <td class="px-6 py-4">
+                            <td class="px-4 py-3">
                                 <span class="text-sm font-semibold text-slate-900">{{ $class->name }}</span>
                             </td>
-                            <td class="px-6 py-4">
+                            <td class="px-4 py-3">
                                 <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-slate-100 text-slate-700">
                                     {{ $class->gradeLevel->name ?? '—' }}
                                 </span>
                             </td>
-                            <td class="px-6 py-4 text-center text-sm font-semibold text-slate-900">
+                            <td class="px-4 py-3 text-center text-sm font-semibold text-slate-900">
                                 {{ $class->students_count ?? 0 }}
                             </td>
-                            <td class="px-6 py-4 relative">
+                            <td class="px-4 py-3 relative">
                                 @if(($class->teachers_count ?? 0) > 0)
                                 <div x-data="{ open: false }" class="inline-block">
                                     <a href="{{ route('classes.catechists', ['id' => $class->id]) }}"
@@ -135,7 +149,7 @@
                                 </a>
                                 @endif
                             </td>
-                            <td class="px-6 py-4 text-center">
+                            <td class="px-4 py-3 text-center">
                                 <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold
                                     {{ $class->is_active ? 'bg-primary-100 text-primary-700' : 'bg-slate-200 text-slate-600' }}">
                                     {{ $class->is_active ? 'Hoạt động' : 'Tắt' }}
@@ -183,13 +197,14 @@
             </div>
 
             @if($classes->hasPages())
-            <div class="px-4 lg:px-6 py-4 border-t border-slate-200">
+            <div class="mac-hairline-t">
                 <x-pagination :paginator="$classes" :per-page-options="[10, 15, 25, 50]" />
             </div>
             @endif
 
             @else
             <x-stats.page-empty
+                :panel="false"
                 tone="primary"
                 title="Chưa có lớp học nào"
                 description="Bắt đầu bằng cách thêm lớp học đầu tiên cho năm học đã chọn">
@@ -203,18 +218,19 @@
                 </x-button>
             </x-stats.page-empty>
             @endif
-        </div>
 
-        @else
-        <x-stats.page-empty
-            title="Vui lòng chọn năm học"
-            description="Chọn năm học ở bộ lọc phía trên để xem danh sách lớp">
-            <x-slot name="icon">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
-                    d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-            </x-slot>
-        </x-stats.page-empty>
-        @endif
+            @else
+            <x-stats.page-empty
+                :panel="false"
+                title="Vui lòng chọn năm học"
+                description="Chọn năm học ở bộ lọc phía trên để xem danh sách lớp">
+                <x-slot name="icon">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+                        d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                </x-slot>
+            </x-stats.page-empty>
+            @endif
+        </x-mac-panel>
 
     </div>
 

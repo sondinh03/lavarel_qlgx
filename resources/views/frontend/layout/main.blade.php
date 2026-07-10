@@ -142,7 +142,7 @@ if (request()->routeIs('attendance.statistics', 'scores.statistics', 'students.s
 $isDashboard = request()->routeIs('parish-admin.dashboard');
 @endphp
 
-<body class="min-h-screen bg-slate-50 text-slate-800 antialiased"
+<body class="min-h-screen bg-apple-gray text-slate-800 antialiased"
     x-data="{
         sidebarMini: localStorage.getItem('sidebarMini') === 'true',
         mobileOpen: false,
@@ -590,7 +590,7 @@ $isDashboard = request()->routeIs('parish-admin.dashboard');
         ">
 
         {{-- ── Topbar ── --}}
-        <header class="sticky top-0 z-30 bg-white/90 backdrop-blur-sm border-b border-slate-200 shadow-sm">
+        <header class="sticky top-0 z-30 bg-white/70 backdrop-blur-xl border-b border-black/[0.06] shadow-mac-sm">
             <div class="h-14 flex items-center gap-3 px-4 sm:px-6">
 
                 {{-- Mobile hamburger --}}

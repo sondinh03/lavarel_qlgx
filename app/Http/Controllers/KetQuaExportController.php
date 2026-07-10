@@ -5,13 +5,13 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Maatwebsite\Excel\Facades\Excel;
 use App\Exports\KetQuaExport;
-use App\Models\Lop;
+use App\Models\CatechismClass;
 
 class KetQuaExportController extends Controller
 {
     public function store()
     {
-        $lop = Lop::where('did', '=', $_POST['giaophan'])->where('deid', '=', $_POST['giaohat'])->where('pid', '=', $_POST['giaoxu'])->where('id', $_POST['lop'])->first();
+        $lop = CatechismClass::where('did', '=', $_POST['giaophan'])->where('deid', '=', $_POST['giaohat'])->where('pid', '=', $_POST['giaoxu'])->where('id', $_POST['lop'])->first();
 
         $tenlop =  $lop->name . ' - ' . $lop->schoolyear;
         

@@ -13,7 +13,7 @@ use BaconQrCode\Encoder\QrCode;
 use Validator;
 use App\Models\Student;
 use App\Models\Holymanagement;
-use App\Models\Lop;
+use App\Models\CatechismClass;
 use App\Models\Block;
 use App\Models\Parish;
 use App\Models\ParishManagement;
@@ -55,7 +55,7 @@ class QRLopController extends Controller
             
             $noidung = array();
             
-            $loptoi = Lop::where('id', $id)->where('status', 1)->orderBy('id', 'ASC')->get()->first();
+            $loptoi = CatechismClass::where('id', $id)->where('status', 1)->orderBy('id', 'ASC')->get()->first();
             if(!empty($loptoi->block)){
                 $blocks = Block::where('id', $loptoi->block)->where('status', 1)->orderBy('id', 'ASC')->get()->first();
                 $loptoi->khoi = $blocks->name;
@@ -86,7 +86,7 @@ class QRLopController extends Controller
                 }
                 
                 if($item->lop){
-                    $lop = Lop::where('id', $item->lop)->where('status', 1)->orderBy('id', 'ASC')->get()->first();
+                    $lop = CatechismClass::where('id', $item->lop)->where('status', 1)->orderBy('id', 'ASC')->get()->first();
                     $item->lop = $lop->name;
                     if(!empty($lop->block)){
                         $block = Block::where('id', $lop->block)->where('status', 1)->orderBy('id', 'ASC')->get()->first();

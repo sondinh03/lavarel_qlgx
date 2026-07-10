@@ -6,7 +6,8 @@
 @endsection
 
 <div
-    class="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 p-4 sm:p-6"
+    class="min-h-screen bg-apple-gray p-2 sm:p-4 lg:p-6"
+    style="min-height: calc(100vh - 56px - var(--bottom-offset));"
     x-data="{ showForm: false }"
     x-init="
         document.addEventListener('livewire:load', () => {
@@ -19,33 +20,33 @@
         });
     ">
 
-    <div id="main-content" class="mx-auto max-w-7xl space-y-5">
+    <a href="#main-content" class="sr-only focus:not-sr-only">Bỏ qua tới nội dung</a>
 
-        {{-- Main Card --}}
-        <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+    <div id="main-content" class="mx-auto max-w-7xl">
+        <x-mac-panel :overflow="true">
             <x-page-header
                 title="Quản lý năm học"
                 description="Danh sách các năm học của giáo xứ"
-                :stat-value="$namHocs?->count()"
-                stat-label="Năm học"
-                icon-type="schoolYear">
-            </x-page-header>
+                icon-type="schoolYear" />
 
-            <div class="px-4 py-3 border-b border-slate-200 bg-slate-50/70">
-                <div class="flex items-center justify-end gap-3">
-                    <x-search-input wireModel="search" placeholder="Tìm kiếm năm học..." />
+            <div class="p-4 lg:p-6 mac-hairline-b bg-white/30">
+                <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                    <x-search-input
+                        wire-model="search"
+                        placeholder="Tìm kiếm năm học..."
+                        debounce="500ms"
+                        class="max-w-md" />
+
                     <x-button wire:click="create" variant="primary">
                         <x-icon name="plus" />
                         Thêm năm học
                     </x-button>
                 </div>
             </div>
-        </div>
 
-        {{-- Table --}}
-        <div class="bg-white rounded-2xl shadow-sm border border-slate-200">
-            <table class="w-full table-fixed">
-                <thead class="bg-slate-50 border-b border-slate-200">
+            <div class="overflow-x-auto">
+            <table class="w-full table-fixed border-separate border-spacing-0">
+                <thead class="bg-slate-50/50 mac-hairline-b">
                     <tr>
                         <x-table-header class="w-12">STT</x-table-header>
                         <x-table-header class="w-24 text-center" :sortable="true" sort-field="name"
@@ -63,14 +64,14 @@
                     </tr>
                 </thead>
 
-                <tbody class="divide-y divide-slate-100">
+                <tbody class="divide-y divide-black/[0.04]">
                     @forelse ($namHocs as $i => $nh)
-                    <tr class="hover:bg-slate-50 transition-colors">
-                        <td class="px-6 py-4 text-sm text-slate-500">{{ $i + 1 }}</td>
-                        <td class="px-6 py-4">
+                    <tr class="hover:bg-black/[0.03] transition-colors">
+                        <td class="px-4 py-3 text-sm text-slate-500">{{ $i + 1 }}</td>
+                        <td class="px-4 py-3">
                             <div class="font-semibold text-slate-900">{{ $nh->name }}</div>
                         </td>
-                        <td class="px-6 py-4 text-center text-sm text-slate-600">
+                        <td class="px-4 py-3 text-center text-sm text-slate-600">
                             @if($nh->start_date_one && $nh->end_date_one)
                             <div class="inline-flex items-center gap-1">
                                 <span>{{ $nh->start_date_one->format('d/m/Y') }}</span>
@@ -83,7 +84,7 @@
                             <span class="text-slate-400">Chưa thiết lập</span>
                             @endif
                         </td>
-                        <td class="px-6 py-4 text-center text-sm text-slate-600">
+                        <td class="px-4 py-3 text-center text-sm text-slate-600">
                             @if($nh->start_date_two && $nh->end_date_two)
                             <div class="inline-flex items-center gap-1">
                                 <span>{{ $nh->start_date_two->format('d/m/Y') }}</span>
@@ -96,16 +97,16 @@
                             <span class="text-slate-400">Chưa thiết lập</span>
                             @endif
                         </td>
-                        <td class="px-6 py-4 text-center">
+                        <td class="px-4 py-3 text-center">
                             @if ($nh->current_semester)
-                            <span class="inline-flex items-center px-2.5 py-1 text-xs font-semibold rounded-full bg-emerald-100 text-emerald-700">
+                            <span class="inline-flex items-center px-2.5 py-1 text-xs font-semibold rounded-full bg-primary-100 text-primary-700">
                                 HK {{ $nh->current_semester }}
                             </span>
                             @else
                             <span class="text-slate-400 text-sm">—</span>
                             @endif
                         </td>
-                        <td class="px-6 py-4 text-center">
+                        <td class="px-4 py-3 text-center">
                             <span class="inline-flex items-center px-3 py-1 text-xs font-semibold rounded-full {{ $nh->status_class }}">
                                 {{ $nh->status_label }}
                             </span>
@@ -153,6 +154,7 @@
                     <tr>
                         <td colspan="7" class="p-0 border-none">
                             <x-stats.page-empty
+                                :panel="false"
                                 tone="primary"
                                 title="Chưa có năm học"
                                 description="Hãy tạo năm học đầu tiên cho giáo xứ">
@@ -170,7 +172,8 @@
                     @endforelse
                 </tbody>
             </table>
-        </div>
+            </div>
+        </x-mac-panel>
 
     </div>
 

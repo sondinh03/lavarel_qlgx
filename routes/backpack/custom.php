@@ -29,7 +29,6 @@ use App\Http\Controllers\Admin\MenuCrudController;
 use App\Http\Controllers\Admin\PageCrudController;
 use App\Http\Controllers\Admin\TeacherCrudController;
 use App\Http\Controllers\Admin\StudentCrudController;
-use App\Http\Controllers\Admin\LopCrudController;
 use App\Http\Controllers\Admin\DecenCrudController;
 use App\Http\Controllers\Admin\GradeLevelCrudController;
 use App\Http\Controllers\Admin\SetAdminCrudController;
@@ -106,7 +105,7 @@ Route::group([
     Route::crud('page', PageCrudController::class);
     Route::crud('teacher', TeacherCrudController::class);
     Route::crud('student', StudentCrudController::class);
-    Route::crud('lop', LopCrudController::class);
+    // Legacy lop CRUD removed — manage classes via Livewire /lop-hoc
     // Legacy block CRUD removed — use grade-level for khối lớp
     Route::crud('grade-level', GradeLevelCrudController::class);
     

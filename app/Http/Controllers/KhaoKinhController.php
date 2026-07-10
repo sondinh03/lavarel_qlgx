@@ -7,7 +7,7 @@ use Illuminate\Contracts\View\View;
 use App\Models\Slug;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
-use App\Models\Lop;
+use App\Models\CatechismClass;
 use App\Models\Block;
 use App\Models\Teacher;
 use App\Models\Student;
@@ -38,7 +38,7 @@ class KhaoKinhController extends Controller
         $giatri = Slug::where('keyword', '=', $slug)->where('sluggable_id', $id)->first();
         if(!empty($giatri)){
             $lop = Cache::remember("lop_$id", $this->cache_time, function () use ($id) {
-                return Lop::findOrFail($id);
+                return CatechismClass::findOrFail($id);
             });
             if($lop->block != ''){
                 $block = Block::where('id', $lop->block)->where('status', 1)->first();

@@ -340,7 +340,6 @@ class AttendanceManager extends BaseComponent
         try {
             $this->sessions = AttendanceSession::where('class_id', $this->selectedClassId)
                 ->where('type', $this->attendanceType)
-                ->when($this->selectedKy, fn($q) => $q->where('semester', $this->selectedKy))
                 ->orderBy('date')
                 ->get()
                 ->map(function ($s) {

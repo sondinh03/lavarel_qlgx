@@ -17,64 +17,78 @@ $formatDate = function (?string $value) {
 ]" />
 @endsection
 
-<div class="min-h-screen bg-slate-50 p-2 sm:p-4 lg:p-6" style="min-height: calc(100vh - 56px - var(--bottom-offset));">
-    <div class="mx-auto max-w-7xl space-y-6">
-        <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
-            <x-page-header class="rounded-t-2xl" title="Rao hôn phối" description="Quản lý hồ sơ rao hôn phối"
-                :stat-value="$announcements->total()" stat-label="Hồ sơ" icon-type="default">
-                <x-slot name="actions">
-                    @if($canManage)
-                    <x-button as="a" href="{{ route('marriage-announcements.create') }}" variant="primary">
-                        <x-icon name="plus" /> Tạo mới
-                    </x-button>
-                    @endif
-                </x-slot>
-            </x-page-header>
+<div class="min-h-screen bg-apple-gray p-2 sm:p-4 lg:p-6" style="min-height: calc(100vh - 56px - var(--bottom-offset));">
+    <a href="#main-content" class="sr-only focus:not-sr-only">Bỏ qua tới nội dung</a>
 
-            <div class="p-4 lg:p-6 border-b border-slate-200 bg-slate-50/70 flex flex-col lg:flex-row gap-3 lg:items-end lg:justify-between">
-                <div class="flex flex-wrap gap-3 items-end">
-                    <div class="min-w-[140px]">
-                        <label class="block text-xs font-semibold text-slate-500 mb-1">Trạng thái</label>
-                        <select wire:model="statusFilter" class="w-full px-3 py-2 rounded-xl border border-slate-300 text-sm bg-white">
-                            <option value="">Tất cả</option>
-                            @foreach(config('marriage-announcement.status') as $k => $label)
-                            <option value="{{ $k }}">{{ $label }}</option>
-                            @endforeach
-                        </select>
+    <div id="main-content" class="mx-auto max-w-7xl">
+        <x-mac-panel :overflow="true">
+            <x-page-header
+                title="Rao hôn phối"
+                description="Quản lý hồ sơ rao hôn phối"
+                icon-type="default" />
+
+            <div class="p-4 lg:p-6 mac-hairline-b bg-white/30">
+                <div class="flex flex-col gap-4">
+                    <div class="flex items-end gap-3">
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 flex-1 min-w-0">
+                            <x-select-input
+                                label="Trạng thái"
+                                wire:model="statusFilter"
+                                :value="$statusFilter"
+                                :options="config('marriage-announcement.status')"
+                                placeholder="Tất cả" />
+
+                            <x-select-input
+                                label="Năm"
+                                wire:model="yearFilter"
+                                :value="$yearFilter"
+                                :options="collect($years)->mapWithKeys(fn ($y) => [$y => $y])->all()"
+                                placeholder="Tất cả" />
+                        </div>
+
+                        <div class="flex-shrink-0 pb-0.5">
+                            <x-button wire:click="resetFilters" variant="subtle">
+                                <x-icon name="refresh" />
+                                Đặt lại
+                            </x-button>
+                        </div>
                     </div>
-                    <div class="min-w-[120px]">
-                        <label class="block text-xs font-semibold text-slate-500 mb-1">Năm</label>
-                        <select wire:model="yearFilter" class="w-full px-3 py-2 rounded-xl border border-slate-300 text-sm bg-white">
-                            <option value="">Tất cả</option>
-                            @foreach($years as $year)
-                            <option value="{{ $year }}">{{ $year }}</option>
-                            @endforeach
-                        </select>
+
+                    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                        <x-search-input
+                            wire-model="search"
+                            placeholder="Tìm tên đôi..."
+                            debounce="500ms"
+                            class="max-w-md" />
+
+                        @if($canManage)
+                        <x-button as="a" href="{{ route('marriage-announcements.create') }}" variant="primary">
+                            <x-icon name="plus" />
+                            Tạo mới
+                        </x-button>
+                        @endif
                     </div>
                 </div>
-                <x-search-input wireModel="search" placeholder="Tìm tên đôi..." class="max-w-sm" />
             </div>
-        </div>
 
-        @if($announcements->count())
-        <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+            @if($announcements->count())
             <div class="overflow-x-auto">
-                <table class="w-full text-sm">
-                    <thead class="bg-slate-50 border-b border-slate-200">
+                <table class="w-full text-sm border-separate border-spacing-0">
+                    <thead class="bg-slate-50/50 mac-hairline-b">
                         <tr>
-                            <th class="px-4 py-3 text-left font-semibold text-slate-600 w-12">STT</th>
-                            <th class="px-4 py-3 text-left font-semibold text-slate-600">Tên đôi</th>
-                            <th class="px-4 py-3 text-left font-semibold text-slate-600">Linh mục</th>
-                            <th class="px-4 py-3 text-left font-semibold text-slate-600">Lần 1</th>
-                            <th class="px-4 py-3 text-left font-semibold text-slate-600">Lần 2</th>
-                            <th class="px-4 py-3 text-left font-semibold text-slate-600">Lần 3</th>
-                            <th class="px-4 py-3 text-left font-semibold text-slate-600">Trạng thái</th>
-                            <th class="px-4 py-3 text-center font-semibold text-slate-600">Thao tác</th>
+                            <x-table-header class="w-12">STT</x-table-header>
+                            <x-table-header>Tên đôi</x-table-header>
+                            <x-table-header>Linh mục</x-table-header>
+                            <x-table-header>Lần 1</x-table-header>
+                            <x-table-header>Lần 2</x-table-header>
+                            <x-table-header>Lần 3</x-table-header>
+                            <x-table-header>Trạng thái</x-table-header>
+                            <x-table-header class="text-center">Thao tác</x-table-header>
                         </tr>
                     </thead>
-                    <tbody class="divide-y divide-slate-100">
+                    <tbody class="divide-y divide-black/[0.04]">
                         @foreach($announcements as $index => $row)
-                        <tr class="hover:bg-slate-50" wire:key="ma-{{ $row->id }}">
+                        <tr class="hover:bg-black/[0.03] transition-colors" wire:key="ma-{{ $row->id }}">
                             <td class="px-4 py-3 text-slate-400">{{ ($announcements->firstItem() ?? 0) + $index }}</td>
                             <td class="px-4 py-3">
                                 <a href="{{ route('marriage-announcements.show', $row->id) }}" class="font-semibold text-primary-600 hover:text-primary-700">
@@ -86,7 +100,7 @@ $formatDate = function (?string $value) {
                             <td class="px-4 py-3">{{ $formatDate($row->announcements_two) }}</td>
                             <td class="px-4 py-3">{{ $formatDate($row->announcements_three) }}</td>
                             <td class="px-4 py-3">
-                                <span class="inline-flex px-2.5 py-0.5 rounded-full text-xs font-semibold {{ $row->status_badge }}">
+                                <span class="inline-flex px-2.5 py-1 rounded-full text-xs font-semibold {{ $row->status_badge }}">
                                     {{ $row->status_label }}
                                 </span>
                             </td>
@@ -110,15 +124,20 @@ $formatDate = function (?string $value) {
                 </table>
             </div>
             @if($announcements->hasPages())
-            <div class="px-4 py-3 border-t border-slate-100">{{ $announcements->links() }}</div>
+            <div class="mac-hairline-t">
+                <x-pagination :paginator="$announcements" :per-page-options="[10, 15, 25, 50]" />
+            </div>
             @endif
-        </div>
-        @else
-        <x-stats.page-empty tone="primary" title="Chưa có hồ sơ rao" description="Tạo hồ sơ rao hôn phối mới">
-            @if($canManage)
-            <x-action-button as="a" href="{{ route('marriage-announcements.create') }}" icon="plus">Tạo mới</x-action-button>
+            @else
+            <x-stats.page-empty :panel="false" tone="primary" title="Chưa có hồ sơ rao" description="Tạo hồ sơ rao hôn phối mới">
+                @if($canManage)
+                <x-button as="a" href="{{ route('marriage-announcements.create') }}" variant="primary">
+                    <x-icon name="plus" />
+                    Tạo mới
+                </x-button>
+                @endif
+            </x-stats.page-empty>
             @endif
-        </x-stats.page-empty>
-        @endif
+        </x-mac-panel>
     </div>
 </div>

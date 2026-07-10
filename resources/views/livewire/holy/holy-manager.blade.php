@@ -6,7 +6,7 @@
 @endsection
 
 <div
-    class="min-h-screen bg-slate-50 p-2 sm:p-4 lg:p-6"
+    class="min-h-screen bg-apple-gray p-2 sm:p-4 lg:p-6"
     style="min-height: calc(100vh - 56px - var(--bottom-offset));"
     x-data="{ showModal: false }"
     x-init="
@@ -22,24 +22,19 @@
 
     <a href="#main-content" class="sr-only focus:not-sr-only">Bỏ qua tới nội dung</a>
 
-    <div id="main-content" class="mx-auto max-w-7xl space-y-6">
-        {{-- Main Card --}}
-        <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
-            {{-- Header --}}
+    <div id="main-content" class="mx-auto max-w-7xl">
+        <x-mac-panel :overflow="true">
             <x-page-header
                 title="Quản lý Tên thánh"
                 description="Danh sách các Tên thánh trong hệ thống"
-                :stat-value="$holies?->total()"
-                stat-label="Tên thánh"
-                icon-type="church">
-            </x-page-header>
+                icon-type="church" />
 
-            {{-- Actions Bar --}}
-            <div class="p-4 lg:p-6 border-b border-slate-200 bg-slate-50/70 rounded-b-2xl">
+            <div class="p-4 lg:p-6 mac-hairline-b bg-white/30">
                 <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                     <x-search-input
-                        wireModel="search"
+                        wire-model="search"
                         placeholder="Tìm kiếm tên thánh..."
+                        debounce="500ms"
                         class="max-w-md" />
 
                     <x-button wire:click="create" variant="primary">
@@ -48,13 +43,10 @@
                     </x-button>
                 </div>
             </div>
-        </div>
 
-        {{-- Table --}}
-        <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
             <div class="overflow-x-auto">
                 <table class="w-full border-separate border-spacing-0">
-                    <thead class="bg-slate-50 border-b border-slate-200">
+                    <thead class="bg-slate-50/50 mac-hairline-b">
                         <tr>
                             <x-table-header>STT</x-table-header>
                             <x-table-header>Tên thánh</x-table-header>
@@ -62,9 +54,9 @@
                         </tr>
                     </thead>
 
-                    <tbody class="divide-y divide-slate-100">
+                    <tbody class="divide-y divide-black/[0.04]">
                         @forelse ($holies as $i => $holy)
-                        <tr class="hover:bg-slate-50 transition-colors" wire:key="holy-{{ $holy->id }}">
+                        <tr class="hover:bg-black/[0.03] transition-colors" wire:key="holy-{{ $holy->id }}">
                             <td class="px-4 py-3 text-sm text-slate-500">
                                 {{ $holies->firstItem() + $i }}
                             </td>
@@ -116,6 +108,7 @@
                         <tr>
                             <td colspan="3" class="p-0 border-none">
                                 <x-stats.page-empty
+                                    :panel="false"
                                     tone="primary"
                                     title="Chưa có tên thánh"
                                     description="Hãy tạo tên thánh đầu tiên">
@@ -136,13 +129,13 @@
 
             {{-- Pagination --}}
             @if ($holies->hasPages())
-            <div class="border-t border-slate-200">
+            <div class="mac-hairline-t">
                 <x-pagination
                     :paginator="$holies"
                     :per-page-options="[10, 15, 25, 50]" />
             </div>
             @endif
-        </div>
+        </x-mac-panel>
 
     </div>
 

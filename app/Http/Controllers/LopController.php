@@ -7,7 +7,7 @@ use Illuminate\Contracts\View\View;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\DB;
-use App\Models\Lop;
+use App\Models\CatechismClass;
 use App\Models\Block;
 use App\Models\Teacher;
 use App\Models\Student;

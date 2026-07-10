@@ -3,7 +3,7 @@
 namespace App\Exports;
 
 use Maatwebsite\Excel\Concerns\FromCollection;
-use App\Models\Lop;
+use App\Models\CatechismClass;
 use Illuminate\Support\Facades\DB;
 use Maatwebsite\Excel\Concerns\WithHeadings;
 use Maatwebsite\Excel\Concerns\WithTitle;
@@ -54,7 +54,7 @@ class DiHocExport implements FromCollection, WithHeadingRow, WithHeadings, WithT
             $userId = $user->id;
             $decen = Decen::where('use', $userId)->where('pid', $_POST['giaoxu'])->where('status', '1')->get()->first();
             if(!empty($decen) AND $decen->student == 1){
-                $lop = Lop::where('did', '=', $_POST['giaophan'])->where('deid', '=', $_POST['giaohat'])->where('pid', '=', $_POST['giaoxu'])->where('id', $_POST['lop'])->first();
+                $lop = CatechismClass::where('did', '=', $_POST['giaophan'])->where('deid', '=', $_POST['giaohat'])->where('pid', '=', $_POST['giaoxu'])->where('id', $_POST['lop'])->first();
                 
                 $start_date = $lop->start_date_one;
                 $end_Date = $lop->end_date_one;
@@ -187,7 +187,7 @@ class DiHocExport implements FromCollection, WithHeadingRow, WithHeadings, WithT
                         $hocsinh->phone = 0 . $hocsinh->phone;
                     }
                     
-                    $lop = Lop::where('did', '=', $_POST['giaophan'])->where('deid', '=', $_POST['giaohat'])->where('pid', '=', $_POST['giaoxu'])->where('id', $_POST['lop'])->first();
+                    $lop = CatechismClass::where('did', '=', $_POST['giaophan'])->where('deid', '=', $_POST['giaohat'])->where('pid', '=', $_POST['giaoxu'])->where('id', $_POST['lop'])->first();
                     
                     $start_date = $lop->start_date_one;
                     $end_Date = $lop->end_date_one;
@@ -344,7 +344,7 @@ class DiHocExport implements FromCollection, WithHeadingRow, WithHeadings, WithT
             ],
         ]);
         
-        $lop = Lop::where('did', '=', $_POST['giaophan'])->where('deid', '=', $_POST['giaohat'])->where('pid', '=', $_POST['giaoxu'])->where('id', $_POST['lop'])->first();
+        $lop = CatechismClass::where('did', '=', $_POST['giaophan'])->where('deid', '=', $_POST['giaohat'])->where('pid', '=', $_POST['giaoxu'])->where('id', $_POST['lop'])->first();
         
         $start_date = $lop->start_date_one;
         $end_Date = $lop->end_date_one;

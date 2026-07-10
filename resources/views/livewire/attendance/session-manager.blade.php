@@ -5,7 +5,7 @@
     ]" />
 @endsection
 
-<div class="min-h-screen bg-slate-50 p-2 sm:p-4 lg:p-6"
+<div class="min-h-screen bg-apple-gray p-2 sm:p-4 lg:p-6"
     style="min-height: calc(100vh - 56px - var(--bottom-offset));"
     x-data="{ showForm: false }"
     x-init="
@@ -16,23 +16,18 @@
     ">
     <a href="#main-content" class="sr-only focus:not-sr-only">Bỏ qua tới nội dung</a>
 
-    <div class="mx-auto max-w-7xl space-y-6">
-
-        {{-- ══════ HEADER CARD ══════ --}}
-        <div class="bg-white rounded-2xl shadow-sm border border-slate-200">
+    <div id="main-content" class="mx-auto max-w-7xl">
+        <x-mac-panel :overflow="true">
             <x-page-header
-                class="rounded-t-2xl"
                 title="Quản lý phiên điểm danh"
-                :count="$total">
-            </x-page-header>
+                description="Danh sách buổi điểm danh theo lớp và năm học"
+                icon-type="attendance"
+                :count="$total" />
 
-            {{-- Actions Bar --}}
-            <div class="p-4 lg:p-6 border-b border-slate-200 bg-slate-50/70">
+            <div class="p-4 lg:p-6 mac-hairline-b bg-white/30">
                 <div class="flex flex-col gap-4">
-
-                    {{-- Row 1: Filters --}}
                     <div class="flex items-end gap-3">
-                        <div class="flex-1">
+                        <div class="flex-1 min-w-0">
                             <livewire:filters.filter-bar
                                 :parish-id="$parishId"
                                 :show-nam-hoc="true"
@@ -45,8 +40,7 @@
                         </div>
                     </div>
 
-                    {{-- Row 2: Search + Actions --}}
-                    <div class="flex items-center justify-between gap-4">
+                    <div class="flex items-center justify-between gap-4 flex-wrap">
                         <x-search-input
                             placeholder="Tìm kiếm theo ngày (vd: 12/03/2026)..."
                             wire-model="search"
@@ -62,27 +56,21 @@
                             </x-action-button>
                         </x-tooltip>
                     </div>
-
                 </div>
             </div>
 
-            {{-- Năm học info bar --}}
             @if($currentNamHoc)
-            <div class="px-6 py-3 bg-primary-50 border-b border-primary-100 rounded-b-2xl">
-                <div class="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-primary-700">
-                    <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
-                    <span class="font-semibold">{{ $currentNamHoc->name }}</span>
+            <div class="px-4 lg:px-6 py-3 mac-hairline-b bg-slate-100/80 text-sm text-slate-700">
+                <div class="flex flex-wrap items-center gap-x-4 gap-y-1">
+                    <span class="font-semibold text-slate-800">{{ $currentNamHoc->name }}</span>
                     @if($currentNamHoc->start_date_one && $currentNamHoc->end_date_one)
-                    <span class="text-primary-600">
+                    <span class="text-slate-500">
                         HK1: {{ $currentNamHoc->start_date_one->format('d/m/Y') }}
                         – {{ $currentNamHoc->end_date_one->format('d/m/Y') }}
                     </span>
                     @endif
                     @if($currentNamHoc->start_date_two && $currentNamHoc->end_date_two)
-                    <span class="text-primary-600">
+                    <span class="text-slate-500">
                         HK2: {{ $currentNamHoc->start_date_two->format('d/m/Y') }}
                         – {{ $currentNamHoc->end_date_two->format('d/m/Y') }}
                     </span>
@@ -90,16 +78,12 @@
                 </div>
             </div>
             @endif
-        </div>
 
-        {{-- ══════ TABLE CARD ══════ --}}
-        @if($selectedNamHoc)
-        <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
-
+            @if($selectedNamHoc)
             @if($sessions->count() > 0)
             <div class="overflow-x-auto">
-                <table class="w-full">
-                    <thead class="bg-slate-50 border-b border-slate-200">
+                <table class="w-full border-separate border-spacing-0">
+                    <thead class="bg-slate-50/50 mac-hairline-b">
                         <tr>
                             <x-table-header>STT</x-table-header>
                             <x-table-header
@@ -123,9 +107,9 @@
                             <x-table-header class="text-center">Thao tác</x-table-header>
                         </tr>
                     </thead>
-                    <tbody class="divide-y divide-slate-100">
+                    <tbody class="divide-y divide-black/[0.04]">
                         @foreach($sessions as $index => $session)
-                        <tr class="hover:bg-slate-50 transition-colors"
+                        <tr class="hover:bg-black/[0.03] transition-colors"
                             wire:key="session-{{ $session['id'] }}">
 
                             {{-- STT --}}
@@ -246,7 +230,7 @@
             </div>
 
             {{-- Legend + Pagination --}}
-            <div class="px-6 py-4 border-t border-slate-200 bg-slate-50 flex flex-col sm:flex-row
+            <div class="px-4 lg:px-6 py-3 mac-hairline-t bg-slate-50/40 flex flex-col sm:flex-row
                         items-start sm:items-center justify-between gap-4">
                 {{-- Legend --}}
                 <div class="flex flex-wrap items-center gap-4 text-xs text-slate-600">
@@ -264,51 +248,45 @@
 
             {{-- Pagination --}}
             @if($sessions->hasPages())
-            <div class="px-6 pb-6">
+            <div class="mac-hairline-t">
                 <x-pagination :paginator="$sessions" :per-page-options="[10, 15, 25, 50]" />
             </div>
             @endif
 
             @else
-            {{-- Empty state khi đã chọn năm học nhưng không có phiên --}}
-            <div class="text-center py-16">
-                <svg class="mx-auto w-16 h-16 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+            <x-stats.page-empty
+                :panel="false"
+                tone="primary"
+                :title="!empty(trim($search)) ? 'Không tìm thấy phiên điểm danh' : (!$selectedClassId ? 'Vui lòng chọn lớp' : 'Chưa có phiên điểm danh')"
+                :description="!empty(trim($search)) ? 'Thử thay đổi từ khóa tìm kiếm' : (!$selectedClassId ? 'Chọn lớp ở bộ lọc phía trên' : 'Tạo phiên điểm danh đầu tiên cho lớp')">
+                <x-slot name="icon">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
                         d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                </svg>
-                @if(!empty(trim($search)))
-                <p class="mt-4 text-lg text-slate-500">Không tìm thấy phiên điểm danh nào</p>
-                <p class="mt-1 text-sm text-slate-400">Thử thay đổi từ khóa tìm kiếm</p>
-                @elseif(!$selectedClassId)
-                <p class="mt-4 text-lg text-slate-500">Vui lòng chọn lớp để xem phiên điểm danh</p>
-                @else
-                <p class="mt-4 text-lg text-slate-500">Chưa có phiên điểm danh nào</p>
-                <button wire:click="create" type="button"
-                    class="mt-4 inline-flex items-center gap-2 px-4 py-2.5
-                           bg-primary-600 text-white text-sm font-semibold
-                           rounded-xl hover:bg-primary-700 transition-all">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
-                    </svg>
+                </x-slot>
+                @if(empty(trim($search)) && $selectedClassId)
+                <x-button wire:click="create" variant="primary">
+                    <x-icon name="plus" />
                     Tạo phiên đầu tiên
-                </button>
+                </x-button>
                 @endif
-            </div>
+            </x-stats.page-empty>
             @endif
-        </div>
 
-        @else
-        {{-- Chưa chọn năm học --}}
-        <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-12 text-center">
-            <svg class="mx-auto w-16 h-16 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                    d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-            </svg>
-            <p class="mt-4 text-lg text-slate-500">Vui lòng chọn năm học để xem phiên điểm danh</p>
-        </div>
-        @endif
+            @else
+            <x-stats.page-empty
+                :panel="false"
+                tone="slate"
+                title="Vui lòng chọn năm học"
+                description="Chọn năm học ở bộ lọc phía trên để xem phiên điểm danh">
+                <x-slot name="icon">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+                        d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                </x-slot>
+            </x-stats.page-empty>
+            @endif
+        </x-mac-panel>
 
-    </div>{{-- /max-w-7xl --}}
+    </div>
 
     {{-- ══════════════ MODAL TẠO PHIÊN ══════════════ --}}
     <div

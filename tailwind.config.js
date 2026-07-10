@@ -76,6 +76,11 @@ module.exports = {
           800: "#1e293b",
           900: "#0f172a",
         },
+
+        apple: {
+          gray: "#F5F5F7",
+          hairline: "rgba(0, 0, 0, 0.06)",
+        },
       },
 
       fontFamily: {
@@ -92,6 +97,13 @@ module.exports = {
 
       boxShadow: {
         ios: "0 1px 2px rgba(0,0,0,0.04), 0 4px 12px rgba(0,0,0,0.06)",
+        mac: "0 8px 30px rgba(0, 0, 0, 0.06), 0 1px 3px rgba(0, 0, 0, 0.04)",
+        "mac-sm": "0 2px 8px rgba(0, 0, 0, 0.04), 0 0 0 1px rgba(0, 0, 0, 0.03)",
+        "mac-inset": "inset 0 1px 2px rgba(0, 0, 0, 0.04)",
+      },
+
+      backdropBlur: {
+        mac: "20px",
       },
 
       transitionTimingFunction: {

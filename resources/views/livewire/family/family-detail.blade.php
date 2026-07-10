@@ -56,8 +56,12 @@
                         </div>
                     </div>
 
-                    @if($canManageMembers)
                     <div class="flex items-center gap-2 flex-shrink-0">
+                        <x-button as="a" href="{{ route('families.export-sogiadinh', $family['id']) }}" variant="outline" size="sm">
+                            <x-icon name="download" />
+                            Xuất sổ GĐCG
+                        </x-button>
+                        @if($canManageMembers)
                         <x-button as="a" href="{{ route('families.edit', $family['id']) }}" variant="outline" size="sm">
                             <x-icon name="edit" />
                             Sửa hộ
@@ -80,8 +84,8 @@
                             </x-dropdown-item>
                         </x-dropdown>
                         @endcan
+                        @endif
                     </div>
-                    @endif
                 </div>
             </div>
 

@@ -5,7 +5,7 @@
 ]" />
 @endsection
 
-<div class="min-h-screen bg-slate-50 p-2 sm:p-4 lg:p-6"
+<div class="min-h-screen bg-apple-gray p-2 sm:p-4 lg:p-6"
     style="min-height: calc(100vh - 56px - var(--bottom-offset));"
     x-data="{ showForm: false }"
     x-init="
@@ -16,51 +16,37 @@
     ">
     <a href="#main-content" class="sr-only focus:not-sr-only">Bỏ qua tới nội dung</a>
 
-    <div id="main-content" class="mx-auto max-w-7xl space-y-6">
-
-        {{-- Main Card --}}
-        <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+    <div id="main-content" class="mx-auto max-w-7xl">
+        <x-mac-panel :overflow="true">
             <x-page-header
-                class="rounded-t-2xl"
                 title="Danh sách gia đình"
                 description="Quản lý hồ sơ gia đình trong giáo xứ"
-                :stat-value="$families->total()"
-                stat-label="Gia đình"
                 icon-type="default" />
 
             @if($addParishionerId)
-            <div class="mx-4 lg:mx-6 mt-4 px-4 py-3 rounded-xl bg-primary-50 border border-primary-100 text-sm text-primary-800">
+            <div class="mx-4 lg:mx-6 mt-4 px-4 py-3 mac-hairline-b bg-primary-50/50 text-sm text-primary-800 rounded-lg">
                 Chọn gia đình bên dưới để thêm giáo dân vào hộ.
                 <a href="{{ route('parishioners.show', $addParishionerId) }}" class="font-semibold underline ml-1">Xem hồ sơ giáo dân</a>
             </div>
             @endif
 
-            <div class="p-4 lg:p-6 border-b border-slate-200 bg-slate-50/70">
+            <div class="p-4 lg:p-6 mac-hairline-b bg-white/30">
                 <div class="flex flex-col gap-4">
+                    <div class="flex items-end gap-3">
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 flex-1 min-w-0">
+                            <x-select-input
+                                label="Giáo họ"
+                                wire:model="parishGroupFilter"
+                                :value="$parishGroupFilter"
+                                :options="collect($parishGroups)->pluck('name', 'id')"
+                                placeholder="-- Tất cả giáo họ --" />
 
-                    {{-- Filters row --}}
-                    <div class="flex items-end gap-3 flex-wrap">
-                        <div class="flex-1 min-w-[160px]">
-                            <label class="block text-xs font-semibold text-slate-500 mb-1 uppercase tracking-wide">Giáo họ</label>
-                            <select wire:model="parishGroupFilter"
-                                class="w-full px-3 py-2 rounded-xl border border-slate-300 text-sm bg-white
-                                       focus:outline-none focus:ring-2 focus:ring-primary-500">
-                                <option value="">-- Tất cả giáo họ --</option>
-                                @foreach($parishGroups as $group)
-                                    <option value="{{ $group->id }}">{{ $group->name }}</option>
-                                @endforeach
-                            </select>
-                        </div>
-
-                        <div class="flex-1 min-w-[140px]">
-                            <label class="block text-xs font-semibold text-slate-500 mb-1 uppercase tracking-wide">Trạng thái</label>
-                            <select wire:model="statusFilter"
-                                class="w-full px-3 py-2 rounded-xl border border-slate-300 text-sm bg-white
-                                       focus:outline-none focus:ring-2 focus:ring-primary-500">
-                                <option value="">-- Tất cả --</option>
-                                <option value="1">Hoạt động</option>
-                                <option value="0">Không hoạt động</option>
-                            </select>
+                            <x-select-input
+                                label="Trạng thái"
+                                wire:model="statusFilter"
+                                :value="$statusFilter"
+                                :options="['1' => 'Hoạt động', '0' => 'Không hoạt động']"
+                                placeholder="-- Tất cả --" />
                         </div>
 
                         <div class="flex-shrink-0 pb-0.5">
@@ -71,11 +57,11 @@
                         </div>
                     </div>
 
-                    {{-- Search + actions --}}
-                    <div class="flex items-center justify-between gap-3 flex-wrap">
+                    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                         <x-search-input
-                            wireModel="search"
+                            wire-model="search"
                             placeholder="Tìm theo tên gia đình, chủ hộ..."
+                            debounce="500ms"
                             class="max-w-md" />
 
                         <x-button as="a" href="{{ route('families.create') }}" variant="primary">
@@ -83,34 +69,28 @@
                             Thêm gia đình
                         </x-button>
                     </div>
-
                 </div>
             </div>
 
-            {{-- Stats bar --}}
-            <div class="px-4 lg:px-6 py-3 border-b border-slate-100 bg-slate-50/60 flex items-center gap-6 flex-wrap text-sm">
+            <div class="px-4 lg:px-6 py-3 mac-hairline-b bg-slate-50/40 flex items-center gap-6 flex-wrap text-sm">
                 <span class="text-slate-500">
                     Tổng: <strong class="text-slate-800">{{ $stats['total'] }}</strong>
                 </span>
-                <span class="text-emerald-600">
+                <span class="text-primary-600">
                     Hoạt động: <strong>{{ $stats['active'] }}</strong>
                 </span>
                 <span class="text-slate-400">
                     Không hoạt động: <strong>{{ $stats['inactive'] }}</strong>
                 </span>
             </div>
-        </div>
 
-        {{-- Table Card --}}
-        @if($families && $families->count() > 0)
-        <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+            @if($families && $families->count() > 0)
             <div class="overflow-x-auto">
                 <table class="w-full border-separate border-spacing-0">
-                    <thead class="bg-slate-50 border-b border-slate-200">
+                    <thead class="bg-slate-50/50 mac-hairline-b">
                         <tr>
                             <x-table-header class="w-10">
-                                <input type="checkbox" wire:model="selectAll"
-                                    class="w-4 h-4 rounded border-slate-300 text-primary-600 focus:ring-primary-500">
+                                <x-checkbox wire:model="selectAll" />
                             </x-table-header>
                             <x-table-header class="w-12">STT</x-table-header>
                             <x-table-header>Mã</x-table-header>
@@ -141,14 +121,12 @@
                         </tr>
                     </thead>
 
-                    <tbody class="divide-y divide-slate-100">
+                    <tbody class="divide-y divide-black/[0.04]">
                         @foreach($families as $index => $family)
-                        <tr class="hover:bg-slate-50 transition-colors" wire:key="family-{{ $family->id }}">
+                        <tr class="hover:bg-black/[0.03] transition-colors" wire:key="family-{{ $family->id }}">
 
                             <td class="px-4 py-3">
-                                <input type="checkbox" wire:model="selectedFamilies"
-                                    value="{{ $family->id }}"
-                                    class="w-4 h-4 rounded border-slate-300 text-primary-600 focus:ring-primary-500">
+                                <x-checkbox wire:model="selectedFamilies" value="{{ $family->id }}" />
                             </td>
 
                             <td class="px-4 py-3 text-sm font-semibold text-slate-400">
@@ -194,7 +172,7 @@
                             <td class="px-4 py-3">
                                 @if($family->status)
                                     <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold
-                                                 bg-emerald-100 text-emerald-700">
+                                                 bg-primary-100 text-primary-700">
                                         Hoạt động
                                     </span>
                                 @else
@@ -244,7 +222,7 @@
 
             {{-- Bulk action bar --}}
             @if(count($selectedFamilies) > 0)
-            <div class="px-6 py-3 bg-primary-50 border-t border-primary-200 flex items-center justify-between">
+            <div class="px-4 lg:px-6 py-3 bg-primary-50/50 mac-hairline-t flex items-center justify-between gap-4">
                 <span class="text-sm font-semibold text-primary-700">
                     Đã chọn {{ count($selectedFamilies) }} gia đình
                 </span>
@@ -270,15 +248,15 @@
 
             {{-- Pagination --}}
             @if($families->hasPages())
-            <div class="p-6 border-t border-slate-200">
+            <div class="mac-hairline-t">
                 <x-pagination :paginator="$families" :per-page-options="[10, 15, 25, 50, 100]" />
             </div>
             @endif
-        </div>
 
-        @else
-        <x-stats.page-empty
-            tone="primary"
+            @else
+            <x-stats.page-empty
+                :panel="false"
+                tone="primary"
             title="Chưa có gia đình nào"
             description="Hãy thêm gia đình đầu tiên cho giáo xứ">
             <x-slot name="icon">
@@ -289,8 +267,9 @@
                 <x-icon name="plus" />
                 Thêm gia đình
             </x-button>
-        </x-stats.page-empty>
-        @endif
+            </x-stats.page-empty>
+            @endif
+        </x-mac-panel>
 
     </div>
 

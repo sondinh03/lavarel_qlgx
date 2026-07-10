@@ -38,7 +38,7 @@
             'showKhoi' => true,
             'showLop' => true,
             'selectedNamHoc' => $namHoc->id ?? null,
-            'selectedKhoi' => $block->id ?? null,
+            'selectedKhoi' => $gradeLevel->id ?? null,
             'selectedLop' => $lopData['id'] ?? null,
         ])
 
@@ -61,9 +61,9 @@
                                 </div>
                                 <div>
                                     <h1 class="text-2xl font-bold text-slate-900">{{ $lopData['name'] ?? 'N/A' }}</h1>
-                                    @if(!empty($lopData['symbol']))
+                                    @if(!empty($lopData['capacity']))
                                     <p class="text-sm text-slate-600 mt-1">
-                                        Mã lớp: <span class="font-mono font-semibold text-slate-900">{{ $lopData['symbol'] }}</span>
+                                        Sĩ số tối đa: <span class="font-semibold text-slate-900">{{ $lopData['capacity'] }}</span>
                                     </p>
                                     @endif
                                 </div>
@@ -99,7 +99,7 @@
                             </svg>
                             <span class="text-xs text-slate-600 mb-1">Khối</span>
                             <span class="text-sm font-semibold text-slate-900">
-                                {{ $block->name ?? 'N/A' }}
+                                {{ $gradeLevel->name ?? 'N/A' }}
                             </span>
                         </div>
 
@@ -143,18 +143,17 @@
                 </div>
 
                 {{-- Schedule Card --}}
-                @if(!empty($lopData['start_date_one']) || !empty($lopData['start_date_two']))
+                @if($namHoc && ($namHoc->start_date_one || $namHoc->start_date_two))
                 <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
                     <div class="p-6">
                         <h3 class="text-lg font-bold text-slate-900 mb-4 flex items-center gap-2">
                             <svg class="w-5 h-5 text-primary-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                             </svg>
-                            Lịch học
+                            Lịch năm học
                         </h3>
                         <div class="grid grid-cols-2 gap-4">
-                            {{-- HK1 --}}
-                            @if(!empty($lopData['start_date_one']) && !empty($lopData['end_date_one']))
+                            @if($namHoc->start_date_one && $namHoc->end_date_one)
                             <div class="flex items-center gap-4 p-4 bg-gradient-to-br from-primary-50 to-primary-50 rounded-xl border border-primary-200">
                                 <div class="flex-shrink-0 w-12 h-12 bg-primary-500 rounded-xl flex items-center justify-center shadow-sm">
                                     <span class="text-white font-bold">HK1</span>
@@ -162,14 +161,13 @@
                                 <div class="min-w-0">
                                     <p class="text-sm font-bold text-slate-900">Học kỳ 1</p>
                                     <p class="text-xs text-slate-600 font-medium mt-0.5">
-                                        {{ $lopData['start_date_one'] }} - {{ $lopData['end_date_one'] }}
+                                        {{ $namHoc->start_date_one->format('d/m/Y') }} - {{ $namHoc->end_date_one->format('d/m/Y') }}
                                     </p>
                                 </div>
                             </div>
                             @endif
 
-                            {{-- HK2 --}}
-                            @if(!empty($lopData['start_date_two']) && !empty($lopData['end_date_two']))
+                            @if($namHoc->start_date_two && $namHoc->end_date_two)
                             <div class="flex items-center gap-4 p-4 bg-gradient-to-br from-primary-50 to-primary-100 rounded-xl border border-primary-200">
                                 <div class="flex-shrink-0 w-12 h-12 bg-primary-500 rounded-xl flex items-center justify-center shadow-sm">
                                     <span class="text-white font-bold">HK2</span>
@@ -177,7 +175,7 @@
                                 <div class="min-w-0">
                                     <p class="text-sm font-bold text-slate-900">Học kỳ 2</p>
                                     <p class="text-xs text-slate-600 font-medium mt-0.5">
-                                        {{ $lopData['start_date_two'] }} - {{ $lopData['end_date_two'] }}
+                                        {{ $namHoc->start_date_two->format('d/m/Y') }} - {{ $namHoc->end_date_two->format('d/m/Y') }}
                                     </p>
                                 </div>
                             </div>
@@ -198,7 +196,7 @@
                     </div>
                     <div class="p-4 space-y-2">
                         {{-- Primary Action: Danh sách học sinh --}}
-                        <a href="{{ route('classes.show', $lopData['id'] ?? 0) }}"
+                        <a href="{{ route('classes.students', $lopData['id'] ?? 0) }}"
                             class="flex items-center justify-center gap-2 w-full px-4 py-3 bg-gradient-to-r from-primary-500 to-primary-600 text-white rounded-xl hover:from-primary-600 hover:to-primary-700 active:scale-[0.98] transition-all shadow-sm font-semibold">
                             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
@@ -207,7 +205,7 @@
                         </a>
 
                         {{-- Secondary Actions --}}
-                        <a href="{{ route('attendance', $lopData['id'] ?? 0) }}"
+                        <a href="{{ route('attendance.show', ['classId' => $lopData['id'] ?? 0]) }}"
                             class="flex items-center gap-3 w-full px-4 py-2.5 bg-slate-50 hover:bg-slate-100 text-slate-900 rounded-xl transition-all font-medium">
                             <svg class="w-5 h-5 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />

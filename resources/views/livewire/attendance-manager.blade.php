@@ -6,7 +6,7 @@
     ]" />
 @endsection
 
-<div class="bg-gradient-to-br from-slate-50 to-slate-100 p-2 sm:p-4 lg:p-6" style="min-height: calc(100vh - 56px - var(--bottom-offset));">
+<div class="min-h-screen bg-apple-gray p-2 sm:p-4 lg:p-6" style="min-height: calc(100vh - 56px - var(--bottom-offset));">
 
     <a href="#main-content" class="sr-only focus:not-sr-only">Bỏ qua tới nội dung</a>
 
@@ -177,20 +177,15 @@
         x-on:saving-attendance.window="onSavingStarted()"
         x-on:attendance-save-completed.window="onSavingCompleted()">
 
-        <div class="mx-auto max-w-7xl space-y-5">
-            {{-- Main Card --}}
-            <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
-                {{-- Header --}}
+        <div id="main-content" class="mx-auto max-w-7xl">
+            <x-mac-panel :overflow="true">
                 @if ($this->viewMode != 'mobile')
                 <x-page-header
                     title="Điểm danh{{ $selectedClassId ? ' - ' . $selectedClassName : '' }}"
                     description="Điểm danh {{ $attendanceType == 1 ? 'đi học' : 'đi lễ' }}{{ $selectedClassId ? ' • ' . $students->count() . ' học sinh • ' . count($sessions) . ' buổi' : '' }}"
-                    :stat-value="$students->count()"
-                    stat-label="Học sinh"
-                    icon-type="attendance">
-                </x-page-header>
+                    icon-type="attendance" />
                 @else
-                <div id="page-big-title" class="px-4 sm:px-6 pt-5 pb-3 transition-opacity duration-300">
+                <div id="page-big-title" class="px-4 sm:px-6 pt-5 pb-3 mac-hairline-b transition-opacity duration-300">
                     <h1 class="text-2xl font-bold text-slate-800">
                         Điểm danh{{ $selectedClassId ? ' · ' . $selectedClassName : '' }}
                     </h1>
@@ -201,8 +196,7 @@
                 </div>
                 @endif
 
-                {{-- Actions Bar --}}
-                <div class="px-4 sm:px-6 py-4 bg-slate-50/70 border-t border-slate-100">
+                <div class="p-4 lg:p-6 mac-hairline-b bg-white/30">
                     @php $isAdmin = auth()->user()->canManage(); @endphp
 
                     <div class="flex flex-col gap-4">
@@ -260,31 +254,19 @@
                             @endif
 
                             <div x-show="hasDraft()" x-cloak>
-                                <x-button variant="danger" x-on:click="discard()">
-                                    <x-icon name="x" />
+                                <x-button variant="ghost" size="sm" x-on:click="discard()">
                                     Hủy
                                 </x-button>
                             </div>
 
-                            <button
+                            <x-button
+                                variant="primary"
+                                size="sm"
                                 x-on:click="save()"
-                                :disabled="!hasDraft() || isSaving"
-                                :class="!hasDraft() || isSaving
-                                    ? 'bg-slate-200 text-slate-400 cursor-not-allowed'
-                                    : 'bg-primary-600 hover:bg-primary-700 text-white cursor-pointer'"
-                                class="px-4 py-2 rounded-xl text-sm font-semibold transition-colors flex items-center gap-2">
-                                <svg x-show="!isSaving" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                        d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" />
-                                </svg>
-                                <svg x-show="isSaving" x-cloak class="animate-spin w-4 h-4" fill="none" viewBox="0 0 24 24">
-                                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                                    <path class="opacity-75" fill="currentColor"
-                                        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                                </svg>
+                                x-bind:disabled="!hasDraft() || isSaving">
                                 <span x-show="!isSaving">Lưu</span>
-                                <span x-show="isSaving" x-cloak></span>
-                            </button>
+                                <span x-show="isSaving" x-cloak>Đang lưu…</span>
+                            </x-button>
                         </div>
                         @endif
                     </div>
@@ -309,12 +291,10 @@
                     </div>
                     @endif
                 </div>
-            </div>
-
-            {{-- ==================== CONTENT ==================== --}}
 
             @if (!$selectedClassId)
             <x-stats.page-empty
+                :panel="false"
                 :title="'Vui lòng chọn lớp để bắt đầu điểm danh'"
                 description="Chọn lớp ở bộ lọc phía trên để xem danh sách học sinh."
                 tone="primary">
@@ -326,6 +306,7 @@
 
             @elseif ($students->isEmpty())
             <x-stats.page-empty
+                :panel="false"
                 :title="'Lớp chưa có học sinh'"
                 description="Hãy thêm học sinh vào lớp trước khi điểm danh."
                 tone="primary">
@@ -336,18 +317,27 @@
             </x-stats.page-empty>
 
             @else
-            <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
                 @if($students->count() > 0 && count($sessions) > 0)
 
                 {{-- ===================== DESKTOP TABLE ===================== --}}
-                <div class="hidden lg:block overflow-x-auto">
-                    <table class="w-full border-separate border-spacing-0">
-                        <thead class="bg-slate-50 border-b border-slate-200">
+                <div class="hidden lg:block overflow-x-auto overscroll-x-contain">
+                    <table class="w-max min-w-full border-separate border-spacing-0">
+                        <colgroup>
+                            <col style="width: 3rem">
+                            <col style="width: 7rem">
+                            <col style="width: 11rem">
+                            <col style="width: 7rem">
+                            <col style="width: 9rem">
+                        </colgroup>
+                        <thead class="bg-slate-50 mac-hairline-b">
                             <tr>
-                                <x-table-header class="sticky left-0 bg-slate-50 z-20">#</x-table-header>
-                                <x-table-header class="sticky left-12 bg-slate-50 z-20 min-w-[200px]">Họ và tên</x-table-header>
+                                <x-table-header class="sticky left-0 z-[30] w-12 max-w-[3rem] shrink-0 bg-slate-50">#</x-table-header>
+                                <x-table-header class="sticky left-[3rem] z-[31] w-28 max-w-[7rem] shrink-0 bg-slate-50">Tên thánh</x-table-header>
+                                <x-table-header class="sticky left-[10rem] z-[32] w-44 max-w-[11rem] shrink-0 bg-slate-50">Họ và tên</x-table-header>
+                                <x-table-header class="sticky left-[21rem] z-[33] w-28 max-w-[7rem] shrink-0 bg-slate-50 whitespace-nowrap">Ngày sinh</x-table-header>
+                                <x-table-header class="sticky left-[28rem] z-[34] w-36 max-w-[9rem] shrink-0 bg-slate-50 border-r border-black/[0.08] shadow-[4px_0_12px_-4px_rgba(0,0,0,0.12)]">Giáo họ</x-table-header>
                                 @foreach($sessions as $session)
-                                <x-table-header class="text-center min-w-[120px]">
+                                <x-table-header class="text-center min-w-[7.5rem] w-[7.5rem] shrink-0">
                                     <div class="flex flex-col gap-1">
                                         <div class="{{ $session['locked'] ? 'text-slate-400' : '' }} flex items-center justify-center gap-1">
                                             <span>{{ $session['dayName'] }}</span>
@@ -375,33 +365,37 @@
                             </tr>
                         </thead>
 
-                        <tbody class="divide-y divide-slate-100">
+                        <tbody class="divide-y divide-black/[0.04]">
                             @foreach ($students as $index => $student)
-                            <tr class="hover:bg-slate-50 transition-colors"
+                            <tr class="group hover:bg-black/[0.03] transition-colors"
                                 wire:key="student-{{ $student->id }}">
 
-                                <td class="px-6 py-4 text-sm text-slate-500 sticky left-0 bg-white z-10">
+                                <td class="px-4 py-3 text-sm text-slate-500 sticky left-0 z-[20] w-12 max-w-[3rem] shrink-0 bg-white group-hover:bg-slate-50">
                                     {{ $index + 1 }}
                                 </td>
 
-                                <td class="px-6 py-4 sticky left-12 bg-white z-10">
-                                    <div class="text-xs text-slate-500">{{ $student->saint_name }}</div>
-                                    <div class="font-semibold text-slate-900">{{ $student->full_name }}</div>
-                                    <div class="text-xs text-slate-500 mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-0.5">
-                                        @if($student->birthday)
-                                            <span>{{ optional($student->birthday)->format('d/m/Y') }}</span>
-                                        @endif
-                                        @if($student->parishGroup?->name)
-                                            <span class="text-slate-300">•</span>
-                                            <span class="truncate max-w-[180px]" title="{{ $student->parishGroup->name }}">
-                                                {{ $student->parishGroup->name }}
-                                            </span>
-                                        @endif
-                                    </div>
+                                <td class="px-4 py-3 text-sm text-slate-600 sticky left-[3rem] z-[21] w-28 max-w-[7rem] shrink-0 bg-white group-hover:bg-slate-50">
+                                    <span class="block truncate" title="{{ $student->saint_name !== '-' ? $student->saint_name : '' }}">
+                                        {{ $student->saint_name !== '-' ? $student->saint_name : '—' }}
+                                    </span>
+                                </td>
+
+                                <td class="px-4 py-3 sticky left-[10rem] z-[22] w-44 max-w-[11rem] shrink-0 bg-white group-hover:bg-slate-50">
+                                    <span class="block font-semibold text-slate-900 text-sm truncate" title="{{ $student->full_name }}">{{ $student->full_name }}</span>
+                                </td>
+
+                                <td class="px-4 py-3 text-sm text-slate-600 whitespace-nowrap sticky left-[21rem] z-[23] w-28 max-w-[7rem] shrink-0 bg-white group-hover:bg-slate-50">
+                                    {{ $student->birthday ? optional($student->birthday)->format('d/m/Y') : '—' }}
+                                </td>
+
+                                <td class="px-4 py-3 text-sm text-slate-600 sticky left-[28rem] z-[24] w-36 max-w-[9rem] shrink-0 bg-white group-hover:bg-slate-50 border-r border-black/[0.08] shadow-[4px_0_12px_-4px_rgba(0,0,0,0.12)]">
+                                    <span class="line-clamp-2" title="{{ $student->parishGroup?->name }}">
+                                        {{ $student->parishGroup?->name ?? '—' }}
+                                    </span>
                                 </td>
 
                                 @foreach($sessions as $session)
-                                <td class="px-3 py-3 text-center"
+                                <td class="px-3 py-3 text-center min-w-[7.5rem] w-[7.5rem] shrink-0"
                                     wire:key="cell-{{ $student->id }}-{{ $session['id'] }}">
 
                                     @if($session['locked'])
@@ -515,16 +509,17 @@
 
                             {{-- Stats Row — server pre-computed --}}
                             <tr class="bg-slate-50 font-semibold border-t-2 border-slate-300">
-                                <td colspan="2"
-                                    class="px-6 py-3 text-sm text-slate-900 sticky left-0 bg-slate-50 z-10">
+                                <td colspan="5"
+                                    class="px-4 py-3 text-sm text-slate-900 sticky left-0 z-[24] w-[37rem] max-w-[37rem] bg-slate-50 border-r border-black/[0.08] shadow-[4px_0_12px_-4px_rgba(0,0,0,0.12)]">
                                     Thống kê
+                                    <span class="ml-2 text-xs font-normal text-slate-500">({{ count($sessions) }} buổi — kéo ngang để xem thêm)</span>
                                 </td>
                                 @foreach($sessions as $session)
                                 @php
                                 $stats = $sessionStats[$session['dateStr']]
                                 ?? ['present' => 0, 'absentPermitted' => 0, 'absentNotPermitted' => 0];
                                 @endphp
-                                <td class="px-3 py-3 text-center">
+                                <td class="px-3 py-3 text-center min-w-[7.5rem] w-[7.5rem] shrink-0">
                                     <div class="flex flex-col gap-1 text-xs">
                                         <div class="text-green-600">✓ {{ $stats['present'] }}</div>
                                         <div class="text-yellow-600">P {{ $stats['absentPermitted'] }}</div>
@@ -645,7 +640,7 @@
                     {{-- Mobile Table --}}
                     <div class="overflow-x-auto">
                         <table class="w-full border-separate border-spacing-0">
-                            <thead class="bg-slate-50 border-b border-slate-200">
+                            <thead class="bg-slate-50/50 mac-hairline-b">
                                 <tr>
                                     <th class="px-4 py-3 text-left text-xs font-bold text-slate-500 uppercase tracking-wider w-full">
                                         Học sinh
@@ -667,7 +662,7 @@
                                 </tr>
                             </thead>
 
-                            <tbody class="divide-y divide-slate-100 bg-white">
+                            <tbody class="divide-y divide-black/[0.04] bg-white">
                                 @foreach ($students as $index => $student)
                                 <tr wire:key="mobile-student-{{ $student->id }}-{{ $mobileSessionId }}"
                                     @if($mobileSessionId)
@@ -792,61 +787,38 @@
                     </div>
 
                     {{-- Mobile Sticky Bottom Bar --}}
-                    <div class="lg:hidden fixed left-0 right-0 z-20
-                    bg-white border-t border-slate-200 shadow-lg px-4"
-                        style="bottom: calc(env(safe-area-inset-bottom) + 60px); padding-bottom: 12px; padding-top: 12px;">
-                        <div class="flex items-center gap-3 max-w-7xl mx-auto">
-                            {{-- Discard --}}
-                            <button
+                    <div class="lg:hidden fixed left-0 right-0 z-20 bg-white/90 backdrop-blur border-t border-black/[0.06] px-4 py-3"
+                        style="bottom: calc(env(safe-area-inset-bottom) + 60px);">
+                        <div class="flex items-center gap-2 max-w-7xl mx-auto">
+                            <x-button
+                                x-show="hasDraft()"
+                                x-cloak
+                                variant="ghost"
+                                size="sm"
+                                class="flex-shrink-0"
                                 x-on:click="discard()"
-                                :disabled="!hasDraft() || isSaving"
-                                :class="!hasDraft() || isSaving
-                                    ? 'border-slate-200 text-slate-400 cursor-not-allowed bg-slate-100'
-                                    : 'border-red-200 text-red-500 hover:bg-red-50'"
-                                                            class="flex-shrink-0 w-14 h-14 rounded-xl border
-                                    flex items-center justify-center transition-colors shadow-lg shadow-primary-200/60">
+                                x-bind:disabled="isSaving">
+                                Hủy
+                            </x-button>
 
-                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                        d="M6 18L18 6M6 6l12 12" />
-                                </svg>
-                            </button>
-
-                            {{-- Save --}}
-                            <button
+                            <x-button
+                                variant="primary"
+                                size="sm"
+                                class="flex-1"
                                 x-on:click="save()"
-                                :disabled="!hasDraft() || isSaving"
-                                :class="!hasDraft() || isSaving
-                                ? 'bg-slate-100 text-slate-400 cursor-not-allowed'
-                                : 'bg-primary-600 text-white shadow-md active:scale-95'"
-                                class="flex-1 h-14 rounded-xl font-semibold text-sm transition-all
-                                   flex items-center justify-center gap-2 shadow-lg shadow-primary-200/60">
-                                <svg x-show="!isSaving" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                        d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" />
-                                </svg>
-                                <svg x-show="isSaving" x-cloak class="animate-spin w-4 h-4" fill="none" viewBox="0 0 24 24">
-                                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                                    <path class="opacity-75" fill="currentColor"
-                                        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                                </svg>
+                                x-bind:disabled="!hasDraft() || isSaving">
                                 <span x-show="!isSaving">Lưu</span>
-                                <span x-show="isSaving" x-cloak></span>
-                                <span
-                                    x-show="hasDraft()"
-                                    x-text="draftCount()"
-                                    class="bg-white/20 text-white text-xs font-bold px-2 py-0.5 rounded-full">
-                                </span>
-                            </button>
+                                <span x-show="isSaving" x-cloak>Đang lưu…</span>
+                            </x-button>
                         </div>
                     </div>
 
-                    <div class="lg:hidden h-32"></div>
+                    <div class="lg:hidden h-24"></div>
                 </div>
 
                 @else
-                <div class="p-10">
                     <x-stats.page-empty
+                        :panel="false"
                         :title="empty($sessions) ? 'Chưa có buổi điểm danh nào' : 'Không có dữ liệu để hiển thị'"
                         description="Vui lòng kiểm tra lại bộ lọc hoặc tạo buổi điểm danh."
                         tone="slate">
@@ -855,10 +827,9 @@
                                 d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
                         </x-slot>
                     </x-stats.page-empty>
-                </div>
                 @endif
-            </div>
             @endif
+            </x-mac-panel>
 
         </div>
 

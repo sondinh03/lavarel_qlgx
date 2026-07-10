@@ -8,7 +8,7 @@ use Illuminate\Contracts\View\View;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use App\Models\Slug;
-use App\Models\Lop;
+use App\Models\CatechismClass;
 use App\Models\Block;
 use App\Models\Student;
 use Carbon\Carbon;
@@ -37,7 +37,7 @@ class KetQuaController extends Controller
         
         $giatri = Slug::where('keyword', '=', $slug)->where('sluggable_id', $id)->first();
         if(!empty($giatri)){            
-            $lop = Lop::where('id', $id)->where('status', 1)->get()->first();
+            $lop = CatechismClass::where('id', $id)->where('status', 1)->get()->first();
             if($lop->block != ''){
                 $block = Block::where('id', $lop->block)->where('status', 1)->first();
                 $lop['block'] = $block->name;

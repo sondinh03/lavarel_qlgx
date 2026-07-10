@@ -5,7 +5,7 @@
     ]" />
 @endsection
 
-<div class="min-h-screen bg-slate-50 p-2 sm:p-4 lg:p-6"
+<div class="min-h-screen bg-apple-gray p-2 sm:p-4 lg:p-6"
     style="min-height: calc(100vh - 56px - var(--bottom-offset));"
     x-data="{ showForm: false }"
     x-init="
@@ -16,79 +16,72 @@
     ">
     <a href="#main-content" class="sr-only focus:not-sr-only">Bỏ qua tới nội dung</a>
 
-    <div id="main-content" class="mx-auto max-w-7xl space-y-6">
-        {{-- Main Card --}}
-        <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+    <div id="main-content" class="mx-auto max-w-7xl">
+        <x-mac-panel :overflow="true">
             <x-page-header
-                class="rounded-t-2xl"
                 title="Danh sách giáo lý viên"
                 description="Quản lý hồ sơ và tài khoản giáo lý viên"
-                :stat-value="$teachers->total()"
-                stat-label="Giáo lý viên"
                 icon-type="students" />
 
-            {{-- Actions Bar --}}
-            <div class="p-4 lg:p-6 border-t border-slate-200 bg-slate-50/70 rounded-b-2xl">
-                <div class="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-4">
-                    <div class="flex flex-wrap items-end gap-3 flex-1 min-w-0">
+            <div class="p-4 lg:p-6 mac-hairline-b bg-white/30">
+                <div class="flex flex-col gap-4">
+                    <div class="flex items-end gap-3">
+                        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 flex-1 min-w-0">
+                            <x-select-input
+                                label="Giáo họ"
+                                wire:model="filterParishGroup"
+                                :value="$filterParishGroup"
+                                :options="collect($parishGroups)->pluck('name', 'id')"
+                                placeholder="-- Tất cả giáo họ --" />
 
-                        <x-search-input
-                            wireModel="search"
-                            placeholder="Tìm tên, SĐT, email..."
-                            debounce="500ms"
-                            class="max-w-xs" />
+                            <x-select-input
+                                label="Giới tính"
+                                wire:model="filterGender"
+                                :value="$filterGender"
+                                :options="['male' => 'Nam', 'female' => 'Nữ']"
+                                placeholder="-- Tất cả giới tính --" />
 
-                        {{-- Filter giáo họ --}}
-                        <select wire:model="filterParishGroup"
-                            class="px-3 py-2 rounded-xl border border-slate-300 text-sm
-                                   focus:outline-none focus:ring-2 focus:ring-primary-500">
-                            <option value="">-- Tất cả giáo họ --</option>
-                            @foreach($parishGroups as $pg)
-                            <option value="{{ $pg->id }}">{{ $pg->name }}</option>
-                            @endforeach
-                        </select>
+                            <x-select-input
+                                label="Trạng thái"
+                                wire:model="filterActive"
+                                :value="$filterActive"
+                                :options="['1' => 'Đang hoạt động', '0' => 'Đã nghỉ']"
+                                placeholder="-- Tất cả trạng thái --" />
+                        </div>
 
-                        {{-- Filter giới tính --}}
-                        <select wire:model="filterGender"
-                            class="px-3 py-2 rounded-xl border border-slate-300 text-sm
-                                   focus:outline-none focus:ring-2 focus:ring-primary-500">
-                            <option value="">-- Tất cả giới tính --</option>
-                            <option value="male">Nam</option>
-                            <option value="female">Nữ</option>
-                        </select>
-
-                        {{-- <x-filter-select wire:model.live="filterGender" placeholder="-- Tất cả giới tính --" :options="['male' => 'Nam', 'female' => 'Nữ']" /> --}}
-
-                        {{-- Filter trạng thái --}}
-                        <select wire:model="filterActive"
-                            class="px-3 py-2 rounded-xl border border-slate-300 text-sm
-                                   focus:outline-none focus:ring-2 focus:ring-primary-500">
-                            <option value="">-- Tất cả trạng thái --</option>
-                            <option value="1">Đang hoạt động</option>
-                            <option value="0">Đã nghỉ</option>
-                        </select>
+                        <div class="flex-shrink-0 pb-0.5">
+                            <x-button wire:click="resetFilters" variant="subtle">
+                                <x-icon name="refresh" />
+                                Đặt lại
+                            </x-button>
+                        </div>
                     </div>
 
-                    <div class="flex flex-wrap items-center gap-2 flex-shrink-0">
-                        <x-button as="a" href="{{ route('catechists.import') }}" variant="outline">
-                            <x-icon name="upload" />
-                            Import Excel
-                        </x-button>
-                        <x-button wire:click="create" variant="primary">
-                            <x-icon name="plus" />
-                            Thêm giáo lý viên
-                        </x-button>
+                    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                        <x-search-input
+                            wire-model="search"
+                            placeholder="Tìm tên, SĐT, email..."
+                            debounce="500ms"
+                            class="max-w-md" />
+
+                        <div class="flex items-center gap-2 flex-wrap justify-end">
+                            <x-button as="a" href="{{ route('catechists.import') }}" variant="outline">
+                                <x-icon name="upload" />
+                                Import Excel
+                            </x-button>
+                            <x-button wire:click="create" variant="primary">
+                                <x-icon name="plus" />
+                                Thêm giáo lý viên
+                            </x-button>
+                        </div>
                     </div>
                 </div>
             </div>
-        </div>
 
-        {{-- Table --}}
-        <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
             @if($teachers->count() > 0)
             <div class="overflow-x-auto">
                 <table class="w-full border-separate border-spacing-0">
-                    <thead class="bg-slate-50 border-b border-slate-200">
+                    <thead class="bg-slate-50/50 mac-hairline-b">
                         <tr>
                             <x-table-header>STT</x-table-header>
                             <x-table-header>Họ tên</x-table-header>
@@ -100,17 +93,17 @@
                             <x-table-header class="text-center">Thao tác</x-table-header>
                         </tr>
                     </thead>
-                    <tbody class="divide-y divide-slate-100">
+                    <tbody class="divide-y divide-black/[0.04]">
                         @foreach($teachers as $index => $teacher)
-                        <tr class="hover:bg-slate-50 transition-colors" wire:key="teacher-{{ $teacher->id }}">
+                        <tr class="hover:bg-black/[0.03] transition-colors" wire:key="teacher-{{ $teacher->id }}">
 
                             {{-- STT --}}
-                            <td class="px-6 py-4 text-sm text-slate-500">
+                            <td class="px-4 py-3 text-sm text-slate-500">
                                 {{ ($teachers->firstItem() ?? 0) + $index }}
                             </td>
 
                             {{-- Họ tên --}}
-                            <td class="px-6 py-4">
+                            <td class="px-4 py-3">
                                 <div class="flex items-center gap-3">
                                     {{-- Avatar placeholder --}}
                                     <div class="w-9 h-9 rounded-full bg-primary-100 flex items-center justify-center
@@ -133,17 +126,26 @@
                             </td>
 
                             {{-- Giới tính --}}
-                            <td class="px-6 py-4 text-sm text-slate-600">
-                                {{ $teacher->gender_text }}
+                            <td class="px-4 py-3">
+                                @if($teacher->gender)
+                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold
+                                    {{ $teacher->gender === 'male'
+                                        ? 'bg-primary-100 text-primary-700'
+                                        : 'bg-pink-100 text-pink-700' }}">
+                                    {{ $teacher->gender_text }}
+                                </span>
+                                @else
+                                <span class="text-slate-400 text-sm">—</span>
+                                @endif
                             </td>
 
                             {{-- Ngày sinh --}}
-                            <td class="px-6 py-4 text-sm text-slate-600">
+                            <td class="px-4 py-3 text-sm text-slate-600">
                                 {{ $teacher->birthday?->format('d/m/Y') ?? '—' }}
                             </td>
 
                             {{-- Liên hệ --}}
-                            <td class="px-6 py-4">
+                            <td class="px-4 py-3">
                                 <div class="space-y-1">
                                     @if($teacher->phone_number)
                                     <div class="text-sm text-slate-700">📞 {{ $teacher->phone_number }}</div>
@@ -155,7 +157,7 @@
                             </td>
 
                             {{-- Giáo họ --}}
-                            <td class="px-6 py-4">
+                            <td class="px-4 py-3">
                                 @if($teacher->parishGroup)
                                 <span class="inline-flex items-center px-2.5 py-1 rounded-full
                                              text-xs font-semibold bg-primary-100 text-primary-700">
@@ -167,7 +169,7 @@
                             </td>
 
                             {{-- Trạng thái --}}
-                            <td class="px-6 py-4 text-center">
+                            <td class="px-4 py-3 text-center">
                                 <span class="inline-flex items-center px-2.5 py-1 text-xs font-semibold rounded-full
                                              {{ $teacher->is_active ? 'bg-primary-100 text-primary-700' : 'bg-slate-200 text-slate-600' }}">
                                     {{ $teacher->is_active ? 'Hoạt động' : 'Đã nghỉ' }}
@@ -175,7 +177,7 @@
                             </td>
 
                             {{-- Thao tác --}}
-                            <td class="px-6 py-4 text-center">
+                            <td class="px-4 py-3 text-center">
                                 <div class="inline-flex items-center gap-3">
                                     <x-table-action wire="edit({{ $teacher->id }})" icon="edit">
                                         Sửa
@@ -201,13 +203,14 @@
 
             {{-- Pagination --}}
             @if($teachers->hasPages())
-            <div class="px-6 py-4 border-t border-slate-200">
+            <div class="mac-hairline-t">
                 <x-pagination :paginator="$teachers" :per-page-options="[10, 15, 25, 50]" />
             </div>
             @endif
 
             @else
             <x-stats.page-empty
+                :panel="false"
                 tone="primary"
                 :title="($search || $filterParishGroup || $filterGender || $filterActive) ? 'Không tìm thấy kết quả' : 'Chưa có giáo lý viên'"
                 :description="($search || $filterParishGroup || $filterGender || $filterActive) ? 'Thử đổi bộ lọc hoặc từ khóa tìm kiếm' : 'Thêm giáo lý viên đầu tiên hoặc import từ Excel'">
@@ -223,7 +226,7 @@
                 @endif
             </x-stats.page-empty>
             @endif
-        </div>
+        </x-mac-panel>
 
     </div>
 

@@ -3,7 +3,7 @@
 namespace App\Exports;
 
 use Maatwebsite\Excel\Concerns\FromCollection;
-use App\Models\Lop;
+use App\Models\CatechismClass;
 use App\Models\Student;
 use Illuminate\Support\Facades\DB;
 use Maatwebsite\Excel\Concerns\WithHeadings;
@@ -45,14 +45,14 @@ class LopExport implements FromCollection, WithHeadingRow, WithHeadings, WithTit
     
     public function title():string
     {
-        $lop = Lop::where('did', '=', $_POST['giaophan'])->where('deid', '=', $_POST['giaohat'])->where('pid', '=', $_POST['giaoxu'])->where('id', $_POST['lop'])->first();
+        $lop = CatechismClass::where('did', '=', $_POST['giaophan'])->where('deid', '=', $_POST['giaohat'])->where('pid', '=', $_POST['giaoxu'])->where('id', $_POST['lop'])->first();
         
         return $lop->name;
     }
     
     public function headings(): array
     {
-        $lop = Lop::where('did', '=', $_POST['giaophan'])->where('deid', '=', $_POST['giaohat'])->where('pid', '=', $_POST['giaoxu'])->where('id', $_POST['lop'])->first();
+        $lop = CatechismClass::where('did', '=', $_POST['giaophan'])->where('deid', '=', $_POST['giaohat'])->where('pid', '=', $_POST['giaoxu'])->where('id', $_POST['lop'])->first();
                 
         return[
             [
@@ -166,7 +166,7 @@ class LopExport implements FromCollection, WithHeadingRow, WithHeadings, WithTit
                         $hocsinh->phone = 0 . $hocsinh->phone;
                     }
                     
-                    $lop = Lop::where('id', $hocsinh->lop)->where('status', 1)->first();
+                    $lop = CatechismClass::where('id', $hocsinh->lop)->where('status', 1)->first();
                     
                     if(!empty($lop->block)){
                         $block = Block::where('id', $lop->block)->where('status', 1)->first();

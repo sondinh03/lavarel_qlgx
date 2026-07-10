@@ -54,9 +54,15 @@ class ClassTeacher extends Pivot
         return $this->belongsTo(Teacher::class);
     }
 
+    public function catechismClass()
+    {
+        return $this->belongsTo(CatechismClass::class, 'class_id');
+    }
+
+    /** @deprecated Use catechismClass() */
     public function lop()
     {
-        return $this->belongsTo(Lop::class);
+        return $this->catechismClass();
     }
 
     public function namhoc()

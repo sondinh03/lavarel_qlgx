@@ -88,7 +88,7 @@
     </style>
 </head>
 
-<body class="min-h-screen bg-slate-50 text-slate-800 antialiased"
+<body class="min-h-screen bg-apple-gray text-slate-800 antialiased"
     x-data="{ showMenu: false }">
 
     {{-- Toast --}}

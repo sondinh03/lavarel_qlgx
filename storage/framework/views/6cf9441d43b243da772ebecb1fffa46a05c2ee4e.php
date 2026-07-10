@@ -35,18 +35,18 @@ default => 'justify-start'
 ?>
 
 <th <?php echo e($attributes->merge([
-    'class' => "px-4 py-3 {$alignClass} text-xs font-semibold text-slate-600"
+    'class' => "px-4 py-3 {$alignClass} text-xs font-medium text-slate-500 bg-slate-50/50"
 ])); ?>>
     <?php if($sortable && $sortField): ?>
     <button
         wire:click="sortBy('<?php echo e($sortField); ?>')"
-        class="flex items-center h-full gap-2 p w-full <?php echo e($justifyClass); ?>
+        class="flex items-center h-full gap-1.5 w-full <?php echo e($justifyClass); ?>
 
-           transition-all duration-200
-           hover:text-slate-800 hover:opacity-90
-           focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 rounded">
+           transition-colors duration-150
+           hover:text-slate-700
+           focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/40 rounded-lg">
 
-        <span class="uppercase tracking-wide"><?php echo e($slot); ?></span>
+        <span class="tracking-wide"><?php echo e($slot); ?></span>
 
         
         <?php if($currentSort === $sortField): ?>
@@ -65,9 +65,10 @@ default => 'justify-start'
 
     </button>
     <?php else: ?>
-        <span class="uppercase tracking-wide">
+        <span class="tracking-wide">
             <?php echo e($slot); ?>
 
         </span>
     <?php endif; ?>
-</th><?php /**PATH D:\Document\WORKING\lavarel_qlgx\resources\views/components/table-header.blade.php ENDPATH**/ ?>
+</th>
+<?php /**PATH D:\Document\WORKING\lavarel_qlgx\resources\views/components/table-header.blade.php ENDPATH**/ ?>

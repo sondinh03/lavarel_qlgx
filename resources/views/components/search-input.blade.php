@@ -14,9 +14,9 @@
      ">
 
     {{-- Search Icon --}}
-    <svg class="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400 pointer-events-none"
+    <svg class="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-500 pointer-events-none"
          fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.25"
               d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
     </svg>
 
@@ -26,9 +26,12 @@
         wire:model.debounce.{{ $debounce }}="{{ $wireModel }}"
         placeholder="{{ $placeholder }}"
         x-on:input="hasValue = $event.target.value.length > 0"
-        class="w-full pl-10 pr-10 py-2.5 bg-slate-50 border border-slate-200 rounded-xl
-               text-sm text-slate-900 placeholder-slate-500 focus:outline-none
-               focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all">
+        class="w-full pl-10 pr-10 py-2.5 h-11
+               bg-white/60 backdrop-blur-sm border border-black/[0.06] rounded-xl
+               shadow-mac-sm
+               text-sm text-slate-900 placeholder-slate-400
+               focus:outline-none focus:ring-2 focus:ring-primary-500/30 focus:border-primary-300/50
+               transition-all">
 
     {{-- Clear Button --}}
     <button
@@ -41,7 +44,7 @@
         x-cloak
         x-transition
         class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400
-               hover:text-slate-600 transition-colors z-10"
+               hover:text-slate-600 transition-colors z-10 rounded-full p-0.5 hover:bg-black/[0.04]"
         aria-label="Xóa tìm kiếm">
         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"

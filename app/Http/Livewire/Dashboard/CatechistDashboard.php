@@ -3,7 +3,7 @@
 namespace App\Http\Livewire\Dashboard;
 
 use App\Http\Livewire\Base\BaseComponent;
-use App\Models\Lop;
+use App\Models\CatechismClass;
 use App\Models\NamHoc;
 use Carbon\Carbon;
 
@@ -53,9 +53,10 @@ class CatechistDashboard extends BaseComponent
             return;
         }
 
-        $this->myClasses = Lop::with(['blockRelation', 'activeStudents'])
-            ->where('schoolyear', $this->activeSchoolYear->id)
-            ->whereHas('catechists', fn($q) => $q->where('teacher_id', $teacherId))
+        $this->myClasses = CatechismClass::with('gradeLevel')
+            ->withCount('students')
+            ->where('school_year_id', $this->activeSchoolYear->id)
+            ->whereHas('teachers', fn($q) => $q->where('teachers.id', $teacherId))
             ->active()
             ->get();
     }

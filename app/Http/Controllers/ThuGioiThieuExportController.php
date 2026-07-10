@@ -12,7 +12,7 @@ use App\Models\Deanery;
 use App\Models\Diocese;
 use App\Models\SacramentGiver;
 use App\Models\Sponsor;
-use App\Models\Lop;
+use App\Models\CatechismClass;
 use App\Models\Block;
 
 class ThuGioiThieuExportController extends Controller
@@ -32,7 +32,7 @@ class ThuGioiThieuExportController extends Controller
             $student->birthday = date("d-m-Y", strtotime($student->birthday));
         }
         
-        $lop = Lop::where('id', $student->lop)->where('status', 1)->orderBy('created_at', 'desc')->first();
+        $lop = CatechismClass::where('id', $student->lop)->where('status', 1)->orderBy('created_at', 'desc')->first();
         
         if(!empty($lop->schoolyear)){
             $student->schoolyear = $lop->schoolyear;

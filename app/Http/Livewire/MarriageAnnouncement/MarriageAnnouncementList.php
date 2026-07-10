@@ -46,6 +46,14 @@ class MarriageAnnouncementList extends BaseComponent
         $this->resetPage();
     }
 
+    public function resetFilters(): void
+    {
+        $this->statusFilter = '';
+        $this->yearFilter = '';
+        $this->search = '';
+        $this->resetPage();
+    }
+
     public function delete(int $id): void
     {
         $announcement = MarriageAnnouncement::findOrFail($id);

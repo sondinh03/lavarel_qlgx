@@ -301,6 +301,9 @@ Route::middleware('auth')->group(function () {
         Route::get('/', FamilyList::class)
             ->name('index');
 
+        Route::get('/{family}/xuat-so-gia-dinh', \App\Http\Controllers\FamilySoGiaDinhExportController::class)
+            ->name('export-sogiadinh');
+
         Route::get('/{id}/sua', FamilyEdit::class)
             ->middleware('role:parish_admin')
             ->name('edit');

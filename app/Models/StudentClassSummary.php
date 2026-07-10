@@ -67,9 +67,15 @@ class StudentClassSummary extends Model
         return $this->belongsTo(Student::class, 'student_id');
     }
 
+    public function catechismClass()
+    {
+        return $this->belongsTo(CatechismClass::class, 'class_id');
+    }
+
+    /** @deprecated Use catechismClass() */
     public function lop()
     {
-        return $this->belongsTo(Lop::class, 'class_id');
+        return $this->catechismClass();
     }
 
     /*

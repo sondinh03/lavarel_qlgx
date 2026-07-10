@@ -5,7 +5,7 @@
     ]" />
 @endsection
 
-<div class="min-h-screen bg-slate-50 p-2 sm:p-4 lg:p-6"
+<div class="min-h-screen bg-apple-gray p-2 sm:p-4 lg:p-6"
     style="min-height: calc(100vh - 56px - var(--bottom-offset));"
     x-data="{ showEnroll: false, showLink: false }"
     x-init="
@@ -18,19 +18,16 @@
     ">
     <a href="#main-content" class="sr-only focus:not-sr-only">Bỏ qua tới nội dung</a>
 
-    <div id="main-content" class="mx-auto max-w-7xl space-y-6">
+    <div id="main-content" class="mx-auto max-w-7xl">
         @php $isCatechist = auth()->user()->usesCatechistLayout(); @endphp
 
-        {{-- Header card --}}
-        <div class="bg-white rounded-2xl shadow-sm border border-slate-200">
+        <x-mac-panel :overflow="true">
             <x-page-header
                 title="Danh sách học sinh"
                 :description="$isCatechist ? 'Lớp được phân công' : 'Quản lý hồ sơ và ghi danh theo năm học'"
-                :stat-value="$students->total()"
-                stat-label="Học sinh"
                 icon-type="students" />
 
-            <div class="p-4 lg:p-6 border-b border-slate-200 bg-slate-50/70 {{ !$selectedNamHoc ? 'rounded-b-2xl' : '' }}">
+            <div class="p-4 lg:p-6 mac-hairline-b bg-white/30">
                 @if($isCatechist)
                 <div class="flex flex-col gap-4">
                     <livewire:filters.filter-bar
@@ -118,7 +115,7 @@
             </div>
 
             @if($selectedNamHoc)
-            <div class="px-4 lg:px-6 py-3 border-t border-slate-100 bg-slate-50/60 flex items-center gap-6 flex-wrap text-sm rounded-b-2xl">
+            <div class="px-4 lg:px-6 py-3 mac-hairline-b bg-slate-50/40 flex items-center gap-6 flex-wrap text-sm">
                 <span class="text-slate-500">
                     Tổng: <strong class="text-slate-800">{{ $total }}</strong>
                 </span>
@@ -129,47 +126,42 @@
                     Nữ: <strong>{{ $countnu }}</strong>
                 </span>
             </div>
-            @endif
-        </div>
 
-        @if($selectedNamHoc)
-        {{-- Banner ngữ cảnh lớp / phạm vi xem --}}
-        <div class="px-4 py-3 rounded-xl bg-primary-50 border border-primary-100 text-sm text-primary-800">
-            @if($lop)
-                <span class="font-semibold">{{ $lop->gradeLevel->name ?? '—' }}</span>
-                <span class="text-primary-400 mx-1">·</span>
-                <span class="font-semibold">Lớp {{ $lop->name }}</span>
-                <span class="text-primary-400 mx-1">·</span>
-                <span>GLV: {{ implode(', ', $lop->teacher_names) ?: '—' }}</span>
-                <span class="text-primary-400 mx-1">·</span>
-                <span>Sĩ số: <strong>{{ $total }}</strong></span>
-            @elseif($selectedKhoi)
-                Đang xem toàn bộ học sinh trong khối đã chọn
-                <span class="text-primary-500">— chọn lớp để ghi danh / export</span>
-            @else
-                Đang xem toàn bộ học sinh trong năm học
-                <span class="text-primary-500">— chọn lớp để ghi danh / export</span>
-            @endif
-        </div>
-        @endif
+            {{-- Banner ngữ cảnh lớp / phạm vi xem --}}
+            <div class="px-4 lg:px-6 py-3 mac-hairline-b bg-slate-100/80 text-sm text-slate-700">
+                @if($lop)
+                    <span class="font-semibold text-slate-800">{{ $lop->gradeLevel->name ?? '—' }}</span>
+                    <span class="text-slate-400 mx-1">·</span>
+                    <span class="font-semibold text-slate-800">Lớp {{ $lop->name }}</span>
+                    <span class="text-slate-400 mx-1">·</span>
+                    <span>GLV: {{ implode(', ', $lop->teacher_names) ?: '—' }}</span>
+                    <span class="text-slate-400 mx-1">·</span>
+                    <span>Sĩ số: <strong>{{ $total }}</strong></span>
+                @elseif($selectedKhoi)
+                    Đang xem toàn bộ học sinh trong khối đã chọn
+                    <span class="text-slate-500">— chọn lớp để ghi danh / export</span>
+                @else
+                    Đang xem toàn bộ học sinh trong năm học
+                    <span class="text-slate-500">— chọn lớp để ghi danh / export</span>
+                @endif
+            </div>
 
-        @if($selectedNamHoc)
-        @if($isCatechist)
+            @if($isCatechist)
         {{-- ══ CATECHIST: Card list ══ --}}
-        <div class="space-y-3" wire:key="student-cards-{{ $listContext }}">
+        <div class="p-4 lg:p-4 space-y-3" wire:key="student-cards-{{ $listContext }}">
             @if($students && $students->count() > 0)
 
             @foreach($students as $student)
             <a href="{{ route('students.show', $student->id) }}"
                 wire:key="student-card-{{ $student->id }}"
-                class="bg-white rounded-2xl border border-slate-200 shadow-sm p-4
-                      flex items-center gap-3 hover:border-primary-300
-                      hover:bg-primary-50/30 transition-all active:scale-[0.99] block">
+                class="bg-white/70 rounded-xl border border-black/[0.06] p-4
+                      flex items-center gap-3 hover:border-primary-300/50
+                      hover:bg-black/[0.02] transition-all active:scale-[0.99] block">
 
                 {{-- Avatar --}}
                 <div class="w-11 h-11 rounded-full flex-shrink-0 flex items-center justify-center
-                    text-sm font-semibold shadow-sm
-                    bg-primary-50 text-primary-800">
+                    text-sm font-semibold
+                    bg-primary-50/80 text-primary-800">
                     @if($student->avatar_path)
                     <img src="{{ $student->avatar_url }}"
                         class="w-full h-full rounded-full object-cover" />
@@ -224,6 +216,7 @@
 
             @else
             <x-stats.page-empty
+                :panel="false"
                 title="Không tìm thấy học sinh"
                 description="Không có học sinh nào phù hợp với bộ lọc của bạn">
                 <x-slot name="icon">
@@ -237,17 +230,14 @@
         @else
         {{-- ══ ADMIN: Table đầy đủ ══ --}}
         @if($students && $students->count() > 0)
-        <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden"
-            wire:key="student-list-{{ $listContext }}">
+        <div wire:key="student-list-{{ $listContext }}">
             <div class="overflow-x-auto">
                 <table class="w-full">
-                    <thead class="bg-slate-50 border-b border-slate-200">
+                    <thead class="bg-slate-50/50 mac-hairline-b">
                         <tr>
                             <x-table-header>
-                                <input type="checkbox" wire:model="selectAll"
-                                    class="w-4 h-4 rounded border-slate-300 text-primary-600 focus:ring-primary-500">
+                                <x-checkbox wire:model="selectAll" />
                             </x-table-header>
-                            <x-table-header>STT</x-table-header>
                             <x-table-header>Ảnh</x-table-header>
                             <x-table-header>Mã HS</x-table-header>
                             <x-table-header>Tên thánh</x-table-header>
@@ -275,18 +265,12 @@
                             <x-table-header class="text-center">Thao tác</x-table-header>
                         </tr>
                     </thead>
-                    <tbody class="divide-y divide-slate-100 overflow-visible">
-                        @foreach($students as $index => $student)
-                        <tr class="hover:bg-slate-50 transition-colors overflow-visible" wire:key="student-{{ $student->id }}">
+                    <tbody class="divide-y divide-black/[0.04] overflow-visible">
+                        @foreach($students as $student)
+                        <tr class="hover:bg-black/[0.03] transition-colors overflow-visible" wire:key="student-{{ $student->id }}">
 
                             <td class="px-4 py-3 text-sm text-slate-500">
-                                <input type="checkbox" wire:model="selectedStudents"
-                                    value="{{ $student->id }}"
-                                    class="w-4 h-4 rounded border-slate-300 text-primary-600 focus:ring-primary-500">
-                            </td>
-
-                            <td class="px-4 py-3 text-sm font-semibold text-slate-500">
-                                {{ ($students->firstItem() ?? 0) + $index }}
+                                <x-checkbox wire:model="selectedStudents" value="{{ $student->id }}" />
                             </td>
 
                             <td class="px-4 py-3">
@@ -409,7 +393,7 @@
 
             {{-- Bulk action bar --}}
             @if(count($selectedStudents) > 0)
-            <div class="px-6 py-3 bg-primary-50 border-t border-primary-200 flex items-center justify-between gap-4">
+            <div class="px-4 lg:px-6 py-3 bg-primary-50/50 mac-hairline-t flex items-center justify-between gap-4">
                 <span class="text-sm font-semibold text-primary-700">
                     Đã chọn {{ count($selectedStudents) }} học sinh
                 </span>
@@ -428,13 +412,14 @@
             @endif
 
             @if($students->hasPages())
-            <div class="px-6 py-4 border-t border-slate-200 bg-slate-50">
+            <div class="mac-hairline-t">
                 <x-pagination :paginator="$students" :per-page-options="[10, 15, 25, 50, 100]" />
             </div>
             @endif
         </div>
         @else
         <x-stats.page-empty
+            :panel="false"
             title="Không tìm thấy học sinh"
             description="Không có học sinh nào phù hợp với bộ lọc của bạn">
             <x-slot name="icon">
@@ -445,17 +430,19 @@
         @endif
         @endif
 
-        @else
-        <x-stats.page-empty
-            tone="primary"
-            title="Vui lòng chọn năm học"
-            description="Chọn năm học ở bộ lọc phía trên để xem danh sách học sinh">
-            <x-slot name="icon">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
-                    d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-            </x-slot>
-        </x-stats.page-empty>
-        @endif
+            @else
+            <x-stats.page-empty
+                :panel="false"
+                tone="primary"
+                title="Vui lòng chọn năm học"
+                description="Chọn năm học ở bộ lọc phía trên để xem danh sách học sinh">
+                <x-slot name="icon">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+                        d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                </x-slot>
+            </x-stats.page-empty>
+            @endif
+        </x-mac-panel>
 
         @if(!$isCatechist)
         {{-- Modal liên kết giáo dân (cùng pattern modal năm học) --}}
@@ -724,10 +711,7 @@
                                 <thead class="bg-slate-50 sticky top-0">
                                     <tr>
                                         <th class="px-4 py-3 text-left">
-                                            <input
-                                                type="checkbox"
-                                                wire:model="selectAllInModal"
-                                                class="w-4 h-4 rounded border-slate-300 text-primary-600 focus:ring-primary-500">
+                                            <x-checkbox wire:model="selectAllInModal" />
                                         </th>
                                         <th class="px-4 py-3 text-left text-xs font-semibold text-slate-700 uppercase">Mã HS</th>
                                         <th class="px-4 py-3 text-left text-xs font-semibold text-slate-700 uppercase">Tên thánh</th>
@@ -741,11 +725,7 @@
                                     @foreach($availableStudents as $student)
                                     <tr class="hover:bg-slate-50" wire:key="avail-{{ $student->id }}">
                                         <td class="px-4 py-3">
-                                            <input
-                                                type="checkbox"
-                                                wire:model="studentsToAdd"
-                                                value="{{ $student->id }}"
-                                                class="w-4 h-4 rounded border-slate-300 text-primary-600 focus:ring-primary-500">
+                                            <x-checkbox wire:model="studentsToAdd" value="{{ $student->id }}" />
                                         </td>
                                         <td class="px-4 py-3 text-sm font-mono text-primary-600">
                                             {{ $student->student_code ?? '—' }}
@@ -854,9 +834,7 @@
                                 <thead class="bg-slate-50 sticky top-0">
                                     <tr>
                                         <th class="px-4 py-3 text-left">
-                                            <input type="checkbox"
-                                                wire:model="selectAllParishioners"
-                                                class="w-4 h-4 rounded border-slate-300 text-primary-600 focus:ring-primary-500">
+                                            <x-checkbox wire:model="selectAllParishioners" />
                                         </th>
                                         <th class="px-4 py-3 text-left text-xs font-semibold text-slate-700 uppercase">Họ</th>
                                         <th class="px-4 py-3 text-left text-xs font-semibold text-slate-700 uppercase">Tên</th>
@@ -870,10 +848,7 @@
                                     @foreach($availableParishioners as $p)
                                     <tr class="hover:bg-slate-50" wire:key="parish-{{ $p->id }}">
                                         <td class="px-4 py-3">
-                                            <input type="checkbox"
-                                                wire:model="selectedParishioners"
-                                                value="{{ $p->id }}"
-                                                class="w-4 h-4 rounded border-slate-300 text-primary-600 focus:ring-primary-500">
+                                            <x-checkbox wire:model="selectedParishioners" value="{{ $p->id }}" />
                                         </td>
                                         <td class="px-4 py-3 text-sm font-semibold text-slate-900">
                                             {{ $p->last_name }}

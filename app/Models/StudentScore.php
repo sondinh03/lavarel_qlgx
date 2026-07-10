@@ -63,16 +63,22 @@ class StudentScore extends Model
     /**
      * Truy xuất nhanh lớp (through student_class)
      */
-    public function lop()
+    public function catechismClass()
     {
         return $this->hasOneThrough(
-            Lop::class,
+            CatechismClass::class,
             StudentsClass::class,
-            'id',          // FK on students_class
-            'id',          // FK on lop
+            'id',
+            'id',
             'student_class_id',
             'class_id'
         );
+    }
+
+    /** @deprecated Use catechismClass() */
+    public function lop()
+    {
+        return $this->catechismClass();
     }
 
     public function scoreType()

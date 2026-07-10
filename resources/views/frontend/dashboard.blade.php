@@ -12,7 +12,7 @@
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mt-6">
             <div class="p-4 bg-indigo-50 rounded-lg">
                 <div class="text-sm text-gray-500">Tổng số lớp</div>
-                <div class="text-3xl font-bold text-indigo-700">{{ \App\Models\Lop::count() }}</div>
+                <div class="text-3xl font-bold text-indigo-700">{{ \App\Models\CatechismClass::count() }}</div>
             </div>
 
             <div class="p-4 bg-green-50 rounded-lg">

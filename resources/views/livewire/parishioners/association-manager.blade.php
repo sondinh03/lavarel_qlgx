@@ -6,7 +6,7 @@
 @endsection
 
 <div
-    class="min-h-screen bg-slate-50 p-2 sm:p-4 lg:p-6"
+    class="min-h-screen bg-apple-gray p-2 sm:p-4 lg:p-6"
     style="min-height: calc(100vh - 56px - var(--bottom-offset));"
     x-data="{ showForm: false }"
     x-init="
@@ -18,21 +18,19 @@
 
     <a href="#main-content" class="sr-only focus:not-sr-only">Bỏ qua tới nội dung</a>
 
-    <div id="main-content" class="mx-auto max-w-7xl space-y-6">
-        <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+    <div id="main-content" class="mx-auto max-w-7xl">
+        <x-mac-panel :overflow="true">
             <x-page-header
                 title="Quản lý hội đoàn"
                 description="Danh sách các hội đoàn trong giáo xứ"
-                :stat-value="$associations->total()"
-                stat-label="Hội đoàn"
-                icon-type="parish">
-            </x-page-header>
+                icon-type="parish" />
 
-            <div class="p-4 lg:p-6 border-b border-slate-200 bg-slate-50/70 rounded-b-2xl">
+            <div class="p-4 lg:p-6 mac-hairline-b bg-white/30">
                 <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                     <x-search-input
-                        wireModel="search"
+                        wire-model="search"
                         placeholder="Tìm kiếm hội đoàn..."
+                        debounce="500ms"
                         class="max-w-md" />
 
                     <x-button wire:click="create" variant="primary">
@@ -41,13 +39,11 @@
                     </x-button>
                 </div>
             </div>
-        </div>
 
-        <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
             @if ($associations->count() > 0)
             <div class="overflow-x-auto">
                 <table class="w-full border-separate border-spacing-0">
-                    <thead class="bg-slate-50 border-b border-slate-200">
+                    <thead class="bg-slate-50/50 mac-hairline-b">
                         <tr>
                             <x-table-header>STT</x-table-header>
                             <x-table-header
@@ -86,25 +82,25 @@
                             <x-table-header class="text-center">Thao tác</x-table-header>
                         </tr>
                     </thead>
-                    <tbody class="divide-y divide-slate-100">
+                    <tbody class="divide-y divide-black/[0.04]">
                         @foreach ($associations as $index => $association)
-                        <tr class="hover:bg-slate-50 transition-colors" wire:key="association-{{ $association->id }}">
-                            <td class="px-6 py-4 text-sm text-slate-500">
+                        <tr class="hover:bg-black/[0.03] transition-colors" wire:key="association-{{ $association->id }}">
+                            <td class="px-4 py-3 text-sm text-slate-500">
                                 {{ ($associations->firstItem() ?? 0) + $index }}
                             </td>
-                            <td class="px-6 py-4">
+                            <td class="px-4 py-3">
                                 <span class="font-semibold text-slate-900">{{ $association->name }}</span>
                                 @if($association->note)
                                 <p class="text-xs text-slate-500 mt-0.5 line-clamp-1">{{ $association->note }}</p>
                                 @endif
                             </td>
-                            <td class="px-6 py-4 text-center text-sm text-slate-700">
+                            <td class="px-4 py-3 text-center text-sm text-slate-700">
                                 {{ $association->thanhbonmang ?: '—' }}
                             </td>
-                            <td class="px-6 py-4 text-center text-sm text-slate-700">
+                            <td class="px-4 py-3 text-center text-sm text-slate-700">
                                 {{ $association->ngaythanhlap?->format('d/m/Y') ?? '—' }}
                             </td>
-                            <td class="px-6 py-4 text-center">
+                            <td class="px-4 py-3 text-center">
                                 <div class="inline-flex items-center gap-1.5 text-sm text-slate-700">
                                     <svg class="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -113,7 +109,7 @@
                                     <span class="font-semibold">{{ $association->parishioners_count ?? 0 }}</span>
                                 </div>
                             </td>
-                            <td class="px-6 py-4 text-center">
+                            <td class="px-4 py-3 text-center">
                                 <span class="inline-flex items-center px-2.5 py-1 text-xs font-semibold rounded-full
                                     {{ $association->status
                                         ? 'bg-primary-100 text-primary-700'
@@ -121,7 +117,7 @@
                                     {{ $association->status ? 'Hoạt động' : 'Lưu trữ' }}
                                 </span>
                             </td>
-                            <td class="px-6 py-4 text-center">
+                            <td class="px-4 py-3 text-center">
                                 <div class="flex items-center justify-center gap-3">
                                     <x-tooltip content="Chỉnh sửa">
                                         <x-table-action wire="edit({{ $association->id }})" icon="edit" :icon-only="true" />
@@ -154,12 +150,13 @@
                 </table>
             </div>
             @if ($associations->hasPages())
-            <div class="px-6 py-4 border-t border-slate-200">
+            <div class="mac-hairline-t">
                 <x-pagination :paginator="$associations" :per-page-options="[10, 15, 25, 50]" />
             </div>
             @endif
             @else
             <x-stats.page-empty
+                :panel="false"
                 tone="primary"
                 title="Chưa có hội đoàn nào"
                 description="Hãy thêm hội đoàn đầu tiên cho giáo xứ">
@@ -173,7 +170,7 @@
                 </x-button>
             </x-stats.page-empty>
             @endif
-        </div>
+        </x-mac-panel>
     </div>
 
     <div

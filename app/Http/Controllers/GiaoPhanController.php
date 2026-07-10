@@ -5,7 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 //use App\Http\Controllers\Api\GiaoPhanController;
 use Illuminate\Support\Facades\DB;
-use App\Models\Lop;
+use App\Models\CatechismClass;
 use App\Models\Block;
 use App\Models\Decen;
 
@@ -65,7 +65,7 @@ class GiaoPhanController extends Controller
             $search = $_POST['block'];
             $array_class = array();
             if ($search) {
-                $array_lop = Lop::where('block', $search)
+                $array_lop = CatechismClass::where('block', $search)
                 ->where('status', 1)
                 ->orderBy('name', 'asc')
                 ->get()->toArray();

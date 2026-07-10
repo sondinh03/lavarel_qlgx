@@ -13,7 +13,7 @@ use App\Models\Slug;
 use Carbon\Carbon;
 use App\Models\Holymanagement;
 use App\Models\Student;
-use App\Models\Lop;
+use App\Models\CatechismClass;
 use App\Models\DiHoc;
 use App\Models\DiLe;
 
@@ -88,7 +88,7 @@ class KQController extends Controller
             $id = $request->id;
             $idlop = $request->lop;
             $data = array();
-            $lop = Lop::where('id', $idlop)->where('status', 1)->first();
+            $lop = CatechismClass::where('id', $idlop)->where('status', 1)->first();
             
             $start_date = $lop->start_date_one;
             $end_Date = $lop->end_date_one;
@@ -203,7 +203,7 @@ class KQController extends Controller
             $id = $request->id;
             $idlop = $request->lop;
             $data = array();
-            $lop = Lop::where('id', $idlop)->where('status', 1)->first();
+            $lop = CatechismClass::where('id', $idlop)->where('status', 1)->first();
             
             $begin = Carbon::parse($lop->start_date_one);
             $end = Carbon::parse($lop->end_date_one);

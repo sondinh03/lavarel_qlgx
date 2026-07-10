@@ -4,6 +4,7 @@ namespace App\Http\Livewire\Block;
 
 use App\Http\Livewire\Base\BaseComponent;
 use App\Models\Block;
+use App\Models\CatechismClass;
 use App\Models\NamHoc;
 use Illuminate\Support\Facades\DB;
 
@@ -372,7 +373,9 @@ class BlockManager extends BaseComponent
                 ->findOrFail($id);
 
             // Check nếu khối đang được sử dụng (có lớp học)
-            $hasClasses = \App\Models\Lop::where('block', $block->id)->exists();
+            $hasClasses = CatechismClass::where('school_year_id', $this->selectedNamHoc)
+                ->where('grade_level_id', $block->id)
+                ->exists();
 
             if ($hasClasses) {
                 session()->flash('error', 'Không thể xóa khối học đang có lớp học');

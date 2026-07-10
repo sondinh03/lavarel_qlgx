@@ -5,72 +5,60 @@
         ]" />
     @endsection
 
-<div class="min-h-screen bg-slate-50 p-2 sm:p-4 lg:p-6" style="min-height: calc(100vh - 56px - var(--bottom-offset));">
+<div class="min-h-screen bg-apple-gray p-2 sm:p-4 lg:p-6" style="min-height: calc(100vh - 56px - var(--bottom-offset));">
     <a href="#main-content" class="sr-only focus:not-sr-only">Bỏ qua tới nội dung</a>
 
-    <div id="main-content" class="mx-auto max-w-7xl space-y-6">
-            {{-- Header + Actions --}}
-            <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
-                <x-page-header
-                    class="rounded-t-2xl"
-                    title="Danh sách giáo dân"
+    <div id="main-content" class="mx-auto max-w-7xl">
+        <x-mac-panel :overflow="true">
+            <x-page-header
+                title="Danh sách giáo dân"
                 description="Quản lý hồ sơ giáo dân trong giáo xứ"
-                :stat-value="$this->parishioners->total()"
-                stat-label="Giáo dân"
                 icon-type="default" />
 
-                <div class="p-4 lg:p-6 border-b border-slate-200 bg-slate-50/70 rounded-b-2xl space-y-4">
+            <div class="p-4 lg:p-6 mac-hairline-b bg-white/30 space-y-4">
 
                     {{-- ===== FILTERS (Unified like student-list-new) ===== --}}
                     <div x-data="{ open: false }" class="space-y-4">
 
-                        {{-- Top row: Search + Quick filters + Actions --}}
-                        <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3">
+                        <div class="flex items-end gap-3">
+                            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 flex-1 min-w-0">
+                                <x-select-input
+                                    label="Giới tính"
+                                    wire:model="selectedGender"
+                                    :value="$selectedGender"
+                                    :options="['male' => 'Nam', 'female' => 'Nữ']"
+                                    placeholder="Tất cả giới tính" />
 
-                            {{-- LEFT --}}
-                            <div class="flex flex-col sm:flex-row sm:items-center gap-3 flex-1">
+                                <x-select-input
+                                    label="Trạng thái"
+                                    wire:model="selectedStatus"
+                                    :value="$selectedStatus"
+                                    :options="['1' => 'Hoạt động', '0' => 'Tắt']"
+                                    placeholder="Tất cả trạng thái" />
 
-                                {{-- Search --}}
-                                <x-search-input
-                                    wireModel="search"
-                                    placeholder="Tìm theo tên, CCCD, SĐT..."
-                                    debounce="500ms"
-                                    class="max-w-md" />
-
-                                {{-- Quick filters --}}
-                                <div class="flex flex-wrap items-center gap-2">
-
-                                    {{-- Giới tính --}}
-                                    <select wire:model="selectedGender"
-                                        class="px-4 py-2.5 bg-white border border-slate-200 rounded-xl text-sm text-slate-900
-                                               focus:outline-none focus:ring-2 focus:ring-primary-500">
-                                        <option value="">Giới tính</option>
-                                        <option value="male">Nam</option>
-                                        <option value="female">Nữ</option>
-                                    </select>
-
-                                    {{-- Trạng thái --}}
-                                    <select wire:model="selectedStatus"
-                                        class="px-4 py-2.5 bg-white border border-slate-200 rounded-xl text-sm text-slate-900
-                                               focus:outline-none focus:ring-2 focus:ring-primary-500">
-                                        <option value="">Trạng thái</option>
-                                        <option value="1">Hoạt động</option>
-                                        <option value="0">Tắt</option>
-                                    </select>
-
-                                    {{-- Tình trạng --}}
-                                    <select wire:model="selectedDeceased"
-                                        class="px-4 py-2.5 bg-white border border-slate-200 rounded-xl text-sm text-slate-900
-                                               focus:outline-none focus:ring-2 focus:ring-primary-500">
-                                        <option value="0">Còn sống</option> {{-- mặc định --}}
-                                        <option value="1">Đã qua đời</option>
-                                        <option value="">Tất cả</option>
-                                    </select>
-
-                                </div>
+                                <x-select-input
+                                    label="Tình trạng"
+                                    wire:model="selectedDeceased"
+                                    :value="$selectedDeceased"
+                                    :options="['0' => 'Còn sống', '1' => 'Đã qua đời']"
+                                    placeholder="Tất cả" />
                             </div>
 
-                            {{-- RIGHT --}}
+                            <div class="flex-shrink-0 pb-0.5">
+                                <x-button wire:click="resetFilters" variant="subtle">
+                                    <x-icon name="refresh" />
+                                    Đặt lại
+                                </x-button>
+                            </div>
+                        </div>
+
+                        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                            <x-search-input
+                                wire-model="search"
+                                placeholder="Tìm theo tên, CCCD, SĐT..."
+                                debounce="500ms"
+                                class="max-w-md" />
+
                             <div class="flex items-center gap-2 flex-wrap justify-end">
                                 @can('create', App\Models\Parishioner::class)
                                 <x-button as="a" href="{{ route('parishioners.create') }}">
@@ -93,22 +81,15 @@
                                 </x-button>
                                 @endcan
 
-                                {{-- Toggle advanced --}}
                                 <x-button type="button" variant="outline" @click="open = !open">
                                     <x-icon name="filter" />
-                                    Bộ lọc
+                                    Bộ lọc nâng cao
                                     <svg :class="{ 'rotate-180': open }"
                                         class="w-4 h-4 transition-transform"
                                         fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                             d="M19 9l-7 7-7-7" />
                                     </svg>
-                                </x-button>
-
-                                {{-- Reset --}}
-                                <x-button wire:click="resetFilters" variant="subtle">
-                                    <x-icon name="refresh" />
-                                    Đặt lại
                                 </x-button>
                             </div>
                         </div>
@@ -168,72 +149,44 @@
                         {{-- Advanced filters --}}
                         <div x-show="open" x-transition
                             class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 p-4
-                                border border-slate-200 rounded-2xl bg-white">
+                                border border-black/[0.06] rounded-xl bg-white/50">
 
-                            {{-- Nhóm tuổi --}}
-                            <div>
-                                <label class="block text-sm font-semibold text-slate-700 mb-2">Nhóm tuổi</label>
-                                <select wire:model="selectedAgeGroup"
-                                    class="w-full px-4 py-2.5 bg-white border border-slate-200 rounded-xl text-sm text-slate-900
-                                           focus:outline-none focus:ring-2 focus:ring-primary-500">
-                                    <option value="">Tất cả</option>
-                                    @foreach($ageGroups as $key => $label)
-                                    <option value="{{ $key }}">{{ $label }}</option>
-                                    @endforeach
-                                </select>
-                            </div>
+                            <x-select-input
+                                label="Nhóm tuổi"
+                                wire:model="selectedAgeGroup"
+                                :value="$selectedAgeGroup"
+                                :options="$ageGroups"
+                                placeholder="Tất cả" />
 
-                            {{-- Hôn nhân --}}
-                            <div>
-                                <label class="block text-sm font-semibold text-slate-700 mb-2">Hôn nhân</label>
-                                <select wire:model="selectedMarried"
-                                    class="w-full px-4 py-2.5 bg-white border border-slate-200 rounded-xl text-sm text-slate-900
-                                           focus:outline-none focus:ring-2 focus:ring-primary-500">
-                                    <option value="">Tất cả</option>
-                                    <option value="0">Độc thân</option>
-                                    <option value="1">Đã kết hôn</option>
-                                    <option value="2">Góa</option>
-                                    <option value="3">Ly hôn</option>
-                                </select>
-                            </div>
+                            <x-select-input
+                                label="Hôn nhân"
+                                wire:model="selectedMarried"
+                                :value="$selectedMarried"
+                                :options="['0' => 'Độc thân', '1' => 'Đã kết hôn', '2' => 'Góa', '3' => 'Ly hôn']"
+                                placeholder="Tất cả" />
 
-                            {{-- Giáo họ --}}
-                            <div>
-                                <label class="block text-sm font-semibold text-slate-700 mb-2">Giáo họ</label>
-                                <select wire:model="selectedGroup"
-                                    class="w-full px-4 py-2.5 bg-white border border-slate-200 rounded-xl text-sm text-slate-900
-                                           focus:outline-none focus:ring-2 focus:ring-primary-500">
-                                    <option value="">Tất cả</option>
-                                    @foreach($parishGroups as $id => $name)
-                                        <option value="{{ $id }}">{{ $name }}</option>
-                                    @endforeach
-                                </select>
-                            </div>
+                            <x-select-input
+                                label="Giáo họ"
+                                wire:model="selectedGroup"
+                                :value="$selectedGroup"
+                                :options="$parishGroups"
+                                placeholder="Tất cả" />
 
-                            {{-- Hội đoàn --}}
-                            <div>
-                                <label class="block text-sm font-semibold text-slate-700 mb-2">Hội đoàn</label>
-                                <select wire:model="selectedAssociation"
-                                    class="w-full px-4 py-2.5 bg-white border border-slate-200 rounded-xl text-sm text-slate-900
-                                           focus:outline-none focus:ring-2 focus:ring-primary-500">
-                                    <option value="">Tất cả</option>
-                                    @foreach($associations as $id => $name)
-                                        <option value="{{ $id }}">{{ $name }}</option>
-                                    @endforeach
-                                </select>
-                            </div>
+                            <x-select-input
+                                label="Hội đoàn"
+                                wire:model="selectedAssociation"
+                                :value="$selectedAssociation"
+                                :options="$associations"
+                                placeholder="Tất cả" />
 
                         </div>
                     </div>
-                </div>
             </div>
 
-            {{-- Table --}}
-            <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
-                @if($this->parishioners->count() > 0)
-                <div class="overflow-x-auto">
-                    <table class="w-full border-separate border-spacing-0">
-                        <thead class="bg-slate-50 border-b border-slate-200">
+            @if($this->parishioners->count() > 0)
+            <div class="overflow-x-auto">
+                <table class="w-full border-separate border-spacing-0">
+                    <thead class="bg-slate-50/50 mac-hairline-b">
                             <tr>
                                 <x-table-header>STT</x-table-header>
                                 <x-table-header>Ảnh</x-table-header>
@@ -247,9 +200,9 @@
                                 <x-table-header class="text-center">Thao tác</x-table-header>
                             </tr>
                         </thead>
-                        <tbody class="divide-y divide-slate-100">
+                        <tbody class="divide-y divide-black/[0.04]">
                             @foreach($this->parishioners as $index => $p)
-                            <tr class="hover:bg-slate-50 transition-colors duration-200 {{ $p->is_deceased ? 'opacity-60' : '' }}"
+                            <tr class="hover:bg-black/[0.03] transition-colors duration-200 {{ $p->is_deceased ? 'opacity-60' : '' }}"
                                 wire:key="p-{{ $p->id }}">
 
                                 <td class="px-4 py-3 text-sm text-slate-500">
@@ -352,13 +305,14 @@
                 </div>
 
                 @if($this->parishioners->hasPages())
-                <div class="px-6 py-4 border-t border-slate-200">
+                <div class="mac-hairline-t">
                     <x-pagination :paginator="$this->parishioners" :per-page-options="[10, 15, 25, 50]" />
                 </div>
                 @endif
 
                 @else
                 <x-stats.page-empty
+                    :panel="false"
                     tone="primary"
                     title="Chưa có giáo dân nào"
                     description="Hãy thêm giáo dân đầu tiên cho giáo xứ">
@@ -374,9 +328,7 @@
                     @endcan
                 </x-stats.page-empty>
                 @endif
-            </div>
-
-        </div>
+        </x-mac-panel>
 
         {{-- Loading overlay --}}
         <div wire:loading.delay wire:target="delete,toggleStatus"
@@ -391,3 +343,4 @@
         </div>
 
     </div>
+</div>

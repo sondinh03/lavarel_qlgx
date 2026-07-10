@@ -93,9 +93,15 @@ class AttendanceSession extends Model
      *  RELATIONS
      * ======================
      */
+    public function catechismClass()
+    {
+        return $this->belongsTo(CatechismClass::class, 'class_id');
+    }
+
+    /** @deprecated Use catechismClass() */
     public function class()
     {
-        return $this->belongsTo(Lop::class, 'class_id');
+        return $this->catechismClass();
     }
 
     public function records()

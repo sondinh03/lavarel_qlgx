@@ -58,6 +58,11 @@ class CatechismClass extends Model
         return $this->hasMany(ScoreType::class, 'class_id');
     }
 
+    public function classTeachers()
+    {
+        return $this->hasMany(ClassTeacher::class, 'class_id');
+    }
+
     public function teachers()
     {
         return $this->belongsToMany(
