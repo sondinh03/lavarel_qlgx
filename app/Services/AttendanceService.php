@@ -95,16 +95,15 @@ class AttendanceService
             if ($savedCount === 0 && !empty($errors)) {
                 return [
                     'success'   => false,
-                    'message'   => 'Không có học sinh nào được lưu. ' . implode('; ', array_slice($errors, 0, 3)),
+                    'message'   => 'Không lưu được. Kiểm tra lại các buổi đã chọn',
                     'errors'    => $errors,
                     'savedKeys' => [],
                 ];
             }
 
-            $message = "Đã lưu điểm danh cho {$savedCount} học sinh";
-            if (!empty($errors)) {
-                $message .= sprintf(' (bỏ qua %d buổi: %s)', count($errors), implode('; ', array_slice($errors, 0, 2)));
-            }
+            $message = !empty($errors)
+                ? 'Đã lưu một phần. Một số buổi bị bỏ qua'
+                : 'Đã lưu điểm danh';
 
             return [
                 'success'   => true,
@@ -114,11 +113,13 @@ class AttendanceService
             ];
         } catch (\Exception $e) {
             DB::rollBack();
-            Log::error('saveBulkAttendance failed', ['error' => $e->getMessage()]);
+            Log::error('saveBulkAttendance failed', [
+                'error' => $e->getMessage(),
+            ]);
 
             return [
                 'success'   => false,
-                'message'   => 'Có lỗi khi lưu điểm danh. Vui lòng thử lại sau.',
+                'message'   => 'Có lỗi khi lưu điểm danh',
                 'errors'    => [],
                 'savedKeys' => [],
             ];

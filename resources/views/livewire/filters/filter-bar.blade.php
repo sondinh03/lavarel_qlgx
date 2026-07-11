@@ -1,4 +1,4 @@
-<div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+<div class="grid grid-cols-1 md:grid-cols-4 gap-2 md:gap-4">
 
     @if($showNamHoc)
     <x-select-input
@@ -21,26 +21,50 @@
         :disabled="!$selectedNamHoc" />
     @endif
 
-    @if($showLop)
-    <x-select-input
-        wire:key="filter-lop-{{ $selectedNamHoc }}-{{ $selectedKhoi }}-{{ $selectedLop }}"
-        label="Lớp"
-        wire:model="selectedLop"
-        :value="$selectedLop"
-        :options="collect($lops)->pluck('name', 'id')"
-        placeholder="-- Tất cả lớp --"
-        :disabled="!$selectedNamHoc" />
-    @endif
+    {{-- Mobile: Lớp + Kỳ cùng hàng (Kỳ hẹp) để giảm chiều cao; md+: tham gia grid 4 cột --}}
+    @if($showLop && $showKy)
+    <div class="grid grid-cols-[minmax(0,1fr)_6.75rem] gap-2 items-end md:contents">
+        <x-select-input
+            wire:key="filter-lop-{{ $selectedNamHoc }}-{{ $selectedKhoi }}-{{ $selectedLop }}"
+            label="Lớp"
+            wire:model="selectedLop"
+            :value="$selectedLop"
+            :options="collect($lops)->pluck('name', 'id')"
+            placeholder="-- Tất cả lớp --"
+            :disabled="!$selectedNamHoc" />
 
-    @if($showKy)
-    <x-select-input
-        wire:key="filter-ky-{{ $selectedNamHoc }}-{{ $selectedKy }}"
-        label="Học kỳ"
-        wire:model="selectedKy"
-        :value="$selectedKy"
-        :options="$kys"
-        placeholder=""
-        :disabled="!$selectedNamHoc" />
+        <x-select-input
+            wire:key="filter-ky-{{ $selectedNamHoc }}-{{ $selectedKy }}"
+            class="min-w-0"
+            label="Kỳ"
+            wire:model="selectedKy"
+            :value="$selectedKy"
+            :options="$kys"
+            placeholder=""
+            :disabled="!$selectedNamHoc" />
+    </div>
+    @else
+        @if($showLop)
+        <x-select-input
+            wire:key="filter-lop-{{ $selectedNamHoc }}-{{ $selectedKhoi }}-{{ $selectedLop }}"
+            label="Lớp"
+            wire:model="selectedLop"
+            :value="$selectedLop"
+            :options="collect($lops)->pluck('name', 'id')"
+            placeholder="-- Tất cả lớp --"
+            :disabled="!$selectedNamHoc" />
+        @endif
+
+        @if($showKy)
+        <x-select-input
+            wire:key="filter-ky-{{ $selectedNamHoc }}-{{ $selectedKy }}"
+            label="Kỳ"
+            wire:model="selectedKy"
+            :value="$selectedKy"
+            :options="$kys"
+            placeholder=""
+            :disabled="!$selectedNamHoc" />
+        @endif
     @endif
 
 </div>

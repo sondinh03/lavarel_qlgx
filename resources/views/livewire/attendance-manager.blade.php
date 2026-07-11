@@ -33,12 +33,12 @@
             </div>
             @endif
 
-            <div class="p-4 lg:p-6 mac-hairline-b bg-white/30">
+            <div class="p-3 sm:p-4 lg:p-6 mac-hairline-b bg-white/30">
                 @php $isAdmin = auth()->user()->canManage(); @endphp
 
-                <div class="flex flex-col gap-4">
+                <div class="flex flex-col gap-2 lg:gap-4">
                     {{-- Filters ngoài wire:key — remount khi class/năm/kỳ parent đổi để khớp URL --}}
-                    <div class="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-3 lg:gap-4">
+                    <div class="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-2 lg:gap-4">
                         <livewire:filters.filter-bar
                             wire:key="attendance-filter-{{ $selectedClassId }}-{{ $selectedNamHoc }}-{{ $selectedKy }}"
                             :parish-id="$parishId"
@@ -153,7 +153,7 @@
 
             clearDraft(showToast = false) {
                 this.draft = {};
-                if (showToast) this.toast('info', 'Đã hủy các thay đổi chưa lưu');
+                if (showToast) this.toast('info', 'Đã hủy thay đổi');
             },
 
             resetEditingState() {

@@ -1549,6 +1549,9 @@ video {
 .grid-cols-4 {
   grid-template-columns: repeat(4, minmax(0, 1fr));
 }
+.grid-cols-\[minmax\(0\2c 1fr\)_6\.75rem\] {
+  grid-template-columns: minmax(0,1fr) 6.75rem;
+}
 .flex-row {
   flex-direction: row;
 }
@@ -4577,6 +4580,10 @@ video {
     display: flex;
   }
 
+  .md\:contents {
+    display: contents;
+  }
+
   .md\:min-h-screen {
     min-height: 100vh;
   }
@@ -4595,6 +4602,10 @@ video {
 
   .md\:grid-cols-4 {
     grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+
+  .md\:gap-4 {
+    gap: 1rem;
   }
 
   .md\:border-l {

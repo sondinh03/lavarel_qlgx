@@ -117,7 +117,7 @@ class AttendanceManager extends BaseComponent
                 $this->selectedClassId = null;
             }
             if (!$this->selectedClassId) {
-                $this->emit('toast', 'warning', 'Bạn không có quyền điểm danh lớp này');
+                $this->emit('toast', 'warning', 'Bạn không có quyền');
             }
         }
 
@@ -131,7 +131,7 @@ class AttendanceManager extends BaseComponent
             } else {
                 // classId không hợp lệ → reset
                 $this->selectedClassId = null;
-                $this->emit('toast', 'warning', 'Lớp học không tồn tại');
+                $this->emit('toast', 'warning', 'Lớp không tồn tại');
             }
         }
 
@@ -165,10 +165,26 @@ class AttendanceManager extends BaseComponent
         $this->attendanceType = in_array((int) $this->attendanceType, [1, 2], true)
             ? (int) $this->attendanceType : 1;
 
-        // Điểm danh: chỉ kỳ 1|2 (không dùng "Cả năm")
-        $this->selectedKy = is_numeric($this->selectedKy)
-            && in_array((int) $this->selectedKy, [1, 2], true)
-            ? (int) $this->selectedKy : null;
+        // Điểm danh không dùng "Cả năm" (0) — ép về kỳ 1|2 (hoặc null để mount detect sau)
+        $this->selectedKy = $this->normalizeAttendanceKy($this->selectedKy);
+    }
+
+    /**
+     * Chỉ chấp nhận kỳ 1|2. Giá trị 0 ("Cả năm") / lạ → kỳ hiện tại theo năm học,
+     * tránh selectedKy=null làm loadSessions() lấy cả năm.
+     */
+    protected function normalizeAttendanceKy($ky): ?int
+    {
+        if (is_numeric($ky) && in_array((int) $ky, [1, 2], true)) {
+            return (int) $ky;
+        }
+
+        $namHocId = is_numeric($this->selectedNamHoc) ? (int) $this->selectedNamHoc : null;
+        if ($namHocId) {
+            return $this->detectSemesterForNamHoc($namHocId) ?? 1;
+        }
+
+        return null;
     }
 
     protected function resetToDefaults(): void
@@ -193,7 +209,7 @@ class AttendanceManager extends BaseComponent
 
         if ($this->selectedClassId && !$this->assertCanMarkClass((int) $this->selectedClassId)) {
             $this->selectedClassId = null;
-            $this->emit('toast', 'error', 'Bạn không có quyền điểm danh lớp này');
+            $this->emit('toast', 'error', 'Bạn không có quyền');
             $this->clearAttendanceState();
             $this->resetPage();
             return;
@@ -325,7 +341,7 @@ class AttendanceManager extends BaseComponent
         } catch (\Exception $e) {
             $this->logError($e, 'Error loading students');
             $this->students = collect();
-            $this->emit('toast', 'error', 'Không thể tải danh sách học sinh');
+            $this->emit('toast', 'error', 'Không tải được danh sách học sinh');
         }
     }
 
@@ -371,7 +387,7 @@ class AttendanceManager extends BaseComponent
             })->toArray();
 
             if (empty($this->sessions)) {
-                $this->emit('toast', 'info', 'Chưa có buổi điểm danh nào');
+                $this->emit('toast', 'info', 'Chưa có buổi điểm danh');
                 if ($this->viewMode === 'mobile') {
                     $this->selectedDate = null;
                 }
@@ -461,14 +477,14 @@ class AttendanceManager extends BaseComponent
             }
 
             if (!$this->selectedClassId) {
-                $this->emit('toast', 'warning', 'Vui lòng chọn lớp trước khi lưu');
+                $this->emit('toast', 'warning', 'Vui lòng chọn lớp');
                 return;
             }
 
             $classId = (int) $this->selectedClassId;
 
             if (!$this->assertCanMarkClass($classId)) {
-                $this->emit('toast', 'error', 'Bạn không có quyền điểm danh lớp này');
+                $this->emit('toast', 'error', 'Bạn không có quyền');
                 return;
             }
 
@@ -492,19 +508,19 @@ class AttendanceManager extends BaseComponent
 
             foreach ($draft as $key => $item) {
                 if (!is_string($key) || !preg_match('/^\d+_\d+$/', $key)) {
-                    $this->emit('toast', 'error', 'Dữ liệu điểm danh không hợp lệ');
+                    $this->emit('toast', 'error', 'Dữ liệu không hợp lệ');
                     return;
                 }
 
                 [$studentId, $sessionId] = array_map('intval', explode('_', $key, 2));
 
                 if (!isset($allowedStudentLookup[$studentId])) {
-                    $this->emit('toast', 'error', 'Có học sinh không thuộc lớp đang điểm danh');
+                    $this->emit('toast', 'error', 'Dữ liệu không hợp lệ');
                     return;
                 }
 
                 if (!isset($allowedSessionLookup[$sessionId])) {
-                    $this->emit('toast', 'error', 'Có buổi điểm danh không thuộc lớp / loại đang chọn');
+                    $this->emit('toast', 'error', 'Dữ liệu không hợp lệ');
                     return;
                 }
 
@@ -513,13 +529,13 @@ class AttendanceManager extends BaseComponent
                     : null;
 
                 if (!in_array($status, [1, 2, 3], true)) {
-                    $this->emit('toast', 'error', 'Trạng thái điểm danh không hợp lệ');
+                    $this->emit('toast', 'error', 'Dữ liệu không hợp lệ');
                     return;
                 }
 
                 $note = (string) ($item['note'] ?? '');
                 if (mb_strlen($note) > 500) {
-                    $this->emit('toast', 'error', 'Ghi chú không được vượt quá 500 ký tự');
+                    $this->emit('toast', 'error', 'Ghi chú tối đa 500 ký tự');
                     return;
                 }
             }
@@ -546,7 +562,7 @@ class AttendanceManager extends BaseComponent
                 $this->loadAttendanceRecords();
 
                 $toastType = !empty($result['errors']) ? 'warning' : 'success';
-                $this->emit('toast', $toastType, $result['message'] ?? 'Đã lưu điểm danh thành công');
+                $this->emit('toast', $toastType, $result['message'] ?? 'Đã lưu điểm danh');
 
                 $this->dispatchBrowserEvent('attendance-saved', [
                     'records'   => $this->attendanceRecords,
@@ -582,12 +598,12 @@ class AttendanceManager extends BaseComponent
     public function exportAttendance()
     {
         if (!$this->selectedClassId) {
-            $this->emit('toast', 'warning', 'Vui lòng chọn lớp trước khi xuất file');
+            $this->emit('toast', 'warning', 'Vui lòng chọn lớp');
             return;
         }
 
         if (!$this->assertCanMarkClass((int) $this->selectedClassId)) {
-            $this->emit('toast', 'error', 'Bạn không có quyền xuất điểm danh lớp này');
+            $this->emit('toast', 'error', 'Bạn không có quyền');
             return;
         }
 
@@ -601,7 +617,7 @@ class AttendanceManager extends BaseComponent
         }
 
         if ($sessionsQuery->count() === 0) {
-            $this->emit('toast', 'warning', 'Chưa có buổi điểm danh để xuất');
+            $this->emit('toast', 'warning', 'Chưa có buổi để xuất');
             return;
         }
 
@@ -657,8 +673,8 @@ class AttendanceManager extends BaseComponent
         }
 
         if (array_key_exists('ky', $filters)) {
-            $newKy = $id($filters['ky']);
-            $oldKy = $id($this->selectedKy);
+            $newKy = $this->normalizeAttendanceKy($filters['ky']);
+            $oldKy = $this->normalizeAttendanceKy($this->selectedKy);
             if ($newKy !== $oldKy) {
                 $this->selectedKy = $newKy;
                 $kyChanged = true;
@@ -688,7 +704,7 @@ class AttendanceManager extends BaseComponent
 
             if ($newClassId !== $oldClassId) {
                 if ($newClassId && !$this->assertCanMarkClass($newClassId)) {
-                    $this->emit('toast', 'error', 'Bạn không có quyền điểm danh lớp này');
+                    $this->emit('toast', 'error', 'Bạn không có quyền');
                     $this->resetPage();
                     return;
                 }

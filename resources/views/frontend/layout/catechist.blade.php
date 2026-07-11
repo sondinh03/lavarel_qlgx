@@ -330,23 +330,6 @@
                 }));
             });
 
-            Livewire.hook('message.sent', () => {
-                document.getElementById('global-loading')?.classList.remove('hidden');
-            });
-            Livewire.hook('message.processed', () => {
-                document.getElementById('global-loading')?.classList.add('hidden');
-            });
-        });
-    </script>
-
-    <script>
-        document.addEventListener('livewire:load', () => {
-            Livewire.on('toast', (type, message) => {
-                window.dispatchEvent(new CustomEvent('toast', {
-                    detail: [type, message]
-                }));
-            });
-
             let loadingTimer = null;
 
             Livewire.hook('message.sent', () => {
