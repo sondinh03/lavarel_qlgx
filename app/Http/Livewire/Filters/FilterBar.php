@@ -17,6 +17,11 @@ class FilterBar extends Component
     public bool $showKy = true;
 
     /**
+     * Cho phép option "Cả năm" (ky = 0). Bật ở thống kê; tắt ở điểm danh.
+     */
+    public bool $allowAllYear = true;
+
+    /**
      * Khi true: đổi bộ lọc phải được Alpine/parent xác nhận (macOS leave-guard).
      * Dùng cho trang có draft chưa lưu (điểm danh).
      */
@@ -48,13 +53,8 @@ class FilterBar extends Component
     /** @var Collection<int, string> */
     public $lops;
 
-    /** @var Collection<int, string> */
-    // public $kys;
-    public $kys = [
-        '0' => 'Cả năm',
-        '1' => 'Kỳ 1',
-        '2' => 'Kỳ 2',
-    ];
+    /** @var Collection<int, string>|array<string, string> */
+    public $kys = [];
 
     /**
      * Parish context
@@ -101,6 +101,8 @@ class FilterBar extends Component
             $this->selectedKy = (int) $selectedKy;
         }
 
+        $this->kys = $this->buildKyOptions();
+
         $this->namHocs = collect();
         $this->khois   = collect();
         $this->lops    = collect();
@@ -133,14 +135,33 @@ class FilterBar extends Component
             }
         }
 
-        if (!$this->selectedKy && $this->selectedNamHoc) {
+        if (($this->selectedKy === null || $this->selectedKy === '') && $this->selectedNamHoc) {
             $this->selectedKy = $this->detectCurrentSemester();
+        }
+
+        // Điểm danh không dùng "Cả năm" — ép về kỳ hiện tại
+        if (!$this->allowAllYear && (int) $this->selectedKy === 0) {
+            $this->selectedKy = $this->detectCurrentSemester() ?? 1;
         }
 
         // Chỉ emit khi tự gán năm mặc định và chưa có lớp — tránh xóa classId trên parent
         if ($this->selectedNamHoc && !$hadNamHoc && !$this->selectedLop) {
             $this->emitFilter();
         }
+    }
+
+    protected function buildKyOptions(): array
+    {
+        $options = [
+            '1' => 'Kỳ 1',
+            '2' => 'Kỳ 2',
+        ];
+
+        if ($this->allowAllYear) {
+            return ['0' => 'Cả năm'] + $options;
+        }
+
+        return $options;
     }
 
     /**
@@ -478,6 +499,10 @@ class FilterBar extends Component
 
         if ($this->selectedKy !== '' && $this->selectedKy !== null) {
             $this->selectedKy = (int) $this->selectedKy;
+        }
+
+        if (!$this->allowAllYear && (int) $this->selectedKy === 0) {
+            $this->selectedKy = $this->detectCurrentSemester() ?? 1;
         }
 
         $this->requestFilterEmit('đổi học kỳ');

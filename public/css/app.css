@@ -764,6 +764,9 @@ video {
 .z-50 {
   z-index: 50;
 }
+.z-\[200\] {
+  z-index: 200;
+}
 .z-\[20\] {
   z-index: 20;
 }
@@ -1348,6 +1351,9 @@ video {
 }
 .max-w-\[3rem\] {
   max-width: 3rem;
+}
+.max-w-\[480px\] {
+  max-width: 480px;
 }
 .max-w-\[7rem\] {
   max-width: 7rem;
@@ -4758,10 +4764,6 @@ video {
   .lg\:py-4 {
     padding-top: 1rem;
     padding-bottom: 1rem;
-  }
-
-  .lg\:pb-5 {
-    padding-bottom: 1.25rem;
   }
 
   .lg\:opacity-0 {

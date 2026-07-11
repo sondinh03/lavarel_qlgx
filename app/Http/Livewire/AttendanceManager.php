@@ -165,9 +165,9 @@ class AttendanceManager extends BaseComponent
         $this->attendanceType = in_array((int) $this->attendanceType, [1, 2], true)
             ? (int) $this->attendanceType : 1;
 
-        // 0 = cả năm; 1|2 = học kỳ
+        // Điểm danh: chỉ kỳ 1|2 (không dùng "Cả năm")
         $this->selectedKy = is_numeric($this->selectedKy)
-            && in_array((int) $this->selectedKy, [0, 1, 2], true)
+            && in_array((int) $this->selectedKy, [1, 2], true)
             ? (int) $this->selectedKy : null;
     }
 
