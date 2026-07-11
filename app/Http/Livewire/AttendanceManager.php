@@ -98,21 +98,25 @@ class AttendanceManager extends BaseComponent
 
     protected function loadInitialData(): void
     {
-        if (!$this->selectedNamHoc) {
-            $this->selectedNamHoc = $this->getDefaultNamHocId();
+        $currentNamHocId = $this->getDefaultNamHocId();
+        $isCatechistOnly = auth()->user()?->isCatechist() && !auth()->user()?->canManage();
+
+        // GLV: luôn neo năm học đang mở. Admin: giữ năm từ filter/URL hoặc mặc định hiện tại.
+        if ($isCatechistOnly || !$this->selectedNamHoc) {
+            $this->selectedNamHoc = $currentNamHocId;
+        }
+
+        // classId URL/cũ phải thuộc đúng xứ + năm đang chọn
+        if ($this->selectedClassId && !$this->isValidAttendanceClass((int) $this->selectedClassId)) {
+            $this->selectedClassId = null;
         }
 
         if (!$this->selectedClassId && $this->selectedNamHoc) {
-            // Catechist → dùng defaultClassId từ BaseComponent
-            // Không catechist → fallback lớp đầu tiên của năm học
-            $this->selectedClassId = $this->defaultClassId
-                ?? CatechismClass::where('school_year_id', $this->selectedNamHoc)
-                ->orderBy('id')
-                ->value('id');
+            $this->selectedClassId = $this->resolveDefaultClassForYear((int) $this->selectedNamHoc);
         }
 
         if ($this->selectedClassId && !$this->assertCanMarkClass((int) $this->selectedClassId)) {
-            $this->selectedClassId = $this->defaultClassId;
+            $this->selectedClassId = $this->resolveDefaultClassForYear((int) ($this->selectedNamHoc ?? 0));
             if ($this->selectedClassId && !$this->assertCanMarkClass((int) $this->selectedClassId)) {
                 $this->selectedClassId = null;
             }
@@ -122,14 +126,13 @@ class AttendanceManager extends BaseComponent
         }
 
         if ($this->selectedClassId) {
-            $class = CatechismClass::select('id', 'name', 'school_year_id', 'grade_level_id')
+            $class = CatechismClass::select('id', 'name', 'school_year_id', 'grade_level_id', 'parish_id')
                 ->find($this->selectedClassId);
 
-            if ($class) {
+            if ($class && $this->isValidAttendanceClass((int) $class->id)) {
                 $this->selectedNamHoc    = (int) $class->school_year_id;
                 $this->selectedClassName = $class->name;
             } else {
-                // classId không hợp lệ → reset
                 $this->selectedClassId = null;
                 $this->emit('toast', 'warning', 'Lớp không tồn tại');
             }
@@ -252,7 +255,7 @@ class AttendanceManager extends BaseComponent
     // ==================== AUTHORIZATION ====================
 
     /**
-     * Admin / GLV cùng xứ: điểm danh mọi lớp trong giáo xứ (parish scope trên CatechismClass).
+     * Admin / GLV cùng xứ: điểm danh lớp thuộc giáo xứ (và năm đang chọn nếu có).
      */
     protected function assertCanMarkClass(?int $classId): bool
     {
@@ -265,11 +268,58 @@ class AttendanceManager extends BaseComponent
             return false;
         }
 
-        if ($user->canManage() || $user->isSuperAdmin() || $user->isCatechist()) {
-            return CatechismClass::where('id', $classId)->exists();
+        if (!($user->canManage() || $user->isSuperAdmin() || $user->isCatechist())) {
+            return false;
         }
 
-        return false;
+        return $this->attendanceClassQuery($classId)->exists();
+    }
+
+    /**
+     * Lớp hợp lệ để điểm danh: đúng xứ + đúng năm học đang chọn.
+     */
+    protected function isValidAttendanceClass(int $classId): bool
+    {
+        return $this->attendanceClassQuery($classId)->exists();
+    }
+
+    protected function attendanceClassQuery(int $classId)
+    {
+        return CatechismClass::where('id', $classId)
+            ->when(
+                $this->parishId,
+                fn ($q) => $q->where('parish_id', $this->parishId)
+            )
+            ->when(
+                $this->selectedNamHoc,
+                fn ($q) => $q->where('school_year_id', (int) $this->selectedNamHoc)
+            );
+    }
+
+    /**
+     * Ưu tiên lớp phụ trách GLV trong năm/xứ; fallback lớp active đầu tiên.
+     */
+    protected function resolveDefaultClassForYear(int $namHocId): ?int
+    {
+        if ($namHocId <= 0) {
+            return null;
+        }
+
+        if (
+            $this->defaultClassId
+            && CatechismClass::where('id', $this->defaultClassId)
+                ->where('school_year_id', $namHocId)
+                ->when($this->parishId, fn ($q) => $q->where('parish_id', $this->parishId))
+                ->exists()
+        ) {
+            return (int) $this->defaultClassId;
+        }
+
+        return CatechismClass::where('school_year_id', $namHocId)
+            ->when($this->parishId, fn ($q) => $q->where('parish_id', $this->parishId))
+            ->active()
+            ->orderBy('id')
+            ->value('id');
     }
 
     // ==================== STATE MANAGEMENT ====================
@@ -705,6 +755,13 @@ class AttendanceManager extends BaseComponent
             if ($newClassId !== $oldClassId) {
                 if ($newClassId && !$this->assertCanMarkClass($newClassId)) {
                     $this->emit('toast', 'error', 'Bạn không có quyền');
+                    $this->resetPage();
+                    return;
+                }
+
+                // Bỏ lớp không thuộc năm/xứ đang chọn (tránh classId sai khi trùng tên)
+                if ($newClassId && !$this->isValidAttendanceClass($newClassId)) {
+                    $this->emit('toast', 'warning', 'Lớp không thuộc năm học đang chọn');
                     $this->resetPage();
                     return;
                 }

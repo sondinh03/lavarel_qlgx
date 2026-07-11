@@ -3,6 +3,7 @@
 namespace App\Http\Livewire\Base;
 
 use App\Models\ClassTeacher;
+use App\Models\NamHoc;
 use App\Models\Teacher;
 use App\Traits\FilterTrait;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
@@ -119,11 +120,31 @@ abstract class BaseComponent extends Component
         if ($user->isCatechist()) {
             $teacher = Teacher::where('email', $user->email)->first();
 
-            if ($teacher) {
-                $this->defaultClassId = ClassTeacher::where('teacher_id', $teacher->id)
+            if ($teacher && $this->parishId) {
+                $currentNamHocId = NamHoc::where('parish_id', $this->parishId)
+                    ->active()
+                    ->current()
+                    ->value('id');
+
+                $query = ClassTeacher::query()
+                    ->where('teacher_id', $teacher->id)
                     ->where('status', true)
-                    ->orderByDesc('role')
-                    ->value('class_id');
+                    ->whereHas('catechismClass', function ($q) {
+                        $q->where('parish_id', $this->parishId)
+                            ->where('is_active', true);
+                    });
+
+                if ($currentNamHocId) {
+                    $query->where(function ($q) use ($currentNamHocId) {
+                        $q->where('namhoc_id', $currentNamHocId)
+                            ->orWhereHas(
+                                'catechismClass',
+                                fn ($c) => $c->where('school_year_id', $currentNamHocId)
+                            );
+                    });
+                }
+
+                $this->defaultClassId = $query->orderByDesc('role')->value('class_id');
             }
         }
     }

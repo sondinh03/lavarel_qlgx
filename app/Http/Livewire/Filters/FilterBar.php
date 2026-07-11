@@ -381,6 +381,7 @@ class FilterBar extends Component
         }
 
         $this->lops = CatechismClass::where('school_year_id', $this->selectedNamHoc)
+            ->where('parish_id', $this->parish_id)
             ->when(
                 $this->selectedKhoi,
                 fn($q) => $q->where('grade_level_id', $this->selectedKhoi)
@@ -395,8 +396,8 @@ class FilterBar extends Component
     }
 
     /**
-     * Lớp đang chọn (URL/parent) luôn có trong options — kể cả inactive /
-     * lệch khối — tránh UI hiện "-- Tất cả lớp --" trong khi classId vẫn còn.
+     * Lớp đang chọn chỉ giữ khi đúng giáo xứ + năm học đang chọn.
+     * Inactive cùng năm/xứ vẫn inject vào options (để UI khớp URL).
      */
     protected function ensureSelectedLopInList(): void
     {
@@ -413,18 +414,17 @@ class FilterBar extends Component
             return;
         }
 
-        $class = CatechismClass::select('id', 'name', 'school_year_id')
+        $class = CatechismClass::select('id', 'name', 'school_year_id', 'parish_id')
             ->where('id', $lopId)
             ->first();
 
-        if (!$class) {
+        if (
+            !$class
+            || (int) $class->parish_id !== (int) $this->parish_id
+            || (int) $class->school_year_id !== (int) $this->selectedNamHoc
+        ) {
             $this->selectedLop = null;
             return;
-        }
-
-        if ((int) $class->school_year_id !== (int) $this->selectedNamHoc) {
-            $this->selectedNamHoc = (int) $class->school_year_id;
-            $this->ensureSelectedNamHocInList();
         }
 
         $this->lops = collect([
