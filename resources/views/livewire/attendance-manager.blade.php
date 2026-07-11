@@ -920,8 +920,8 @@
             x-transition:enter="transition ease-out duration-200"
             x-transition:enter-start="opacity-0"
             x-transition:enter-end="opacity-100"
-            class="fixed inset-0 bg-black/40 z-[200] flex items-end lg:items-center justify-center lg:p-4"
-            style="padding-bottom: var(--bottom-offset, 0px);"
+            class="fixed inset-0 bg-black/40 z-[200] flex items-end lg:items-center justify-center
+                max-lg:[padding-bottom:calc(var(--bottom-offset,0px)+4.5rem)] lg:p-4"
             x-on:click="noteModal.open = false">
 
             {{-- Sheet / Modal --}}
