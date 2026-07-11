@@ -89,25 +89,32 @@ class FilterBar extends Component
         $this->parish_id = $parishId;
 
         if ($selectedNamHoc !== null && $selectedNamHoc !== '') {
-            $this->selectedNamHoc = $selectedNamHoc;
+            $this->selectedNamHoc = (int) $selectedNamHoc;
         }
         if ($selectedKhoi !== null && $selectedKhoi !== '') {
-            $this->selectedKhoi = $selectedKhoi;
+            $this->selectedKhoi = (int) $selectedKhoi;
         }
         if ($selectedLop !== null && $selectedLop !== '') {
-            $this->selectedLop = $selectedLop;
+            $this->selectedLop = (int) $selectedLop;
         }
         if ($selectedKy !== null && $selectedKy !== '') {
-            $this->selectedKy = $selectedKy;
+            $this->selectedKy = (int) $selectedKy;
         }
 
         $this->namHocs = collect();
         $this->khois   = collect();
         $this->lops    = collect();
-        // $this->kys     = collect();
 
         if ($this->parish_id !== null) {
             $this->loadNamHocs();
+        }
+
+        // Có lớp từ parent/URL → neo năm học theo lớp (tránh default năm khác → lệch FilterBar)
+        if ($this->selectedLop) {
+            $classNamHoc = CatechismClass::where('id', $this->selectedLop)->value('school_year_id');
+            if ($classNamHoc) {
+                $this->selectedNamHoc = (int) $classNamHoc;
+            }
         }
 
         $hadNamHoc = (bool) $this->selectedNamHoc;
@@ -118,11 +125,20 @@ class FilterBar extends Component
             $this->loadLops();
         }
 
+        // Lớp không thuộc danh sách năm đang chọn → bỏ chọn (tránh UI "Tất cả lớp" giả)
+        if ($this->selectedLop) {
+            $lopIds = collect($this->lops)->pluck('id')->map(fn ($id) => (int) $id);
+            if (!$lopIds->contains((int) $this->selectedLop)) {
+                $this->selectedLop = null;
+            }
+        }
+
         if (!$this->selectedKy && $this->selectedNamHoc) {
             $this->selectedKy = $this->detectCurrentSemester();
         }
 
-        if ($this->selectedNamHoc && !$hadNamHoc) {
+        // Chỉ emit khi tự gán năm mặc định và chưa có lớp — tránh xóa classId trên parent
+        if ($this->selectedNamHoc && !$hadNamHoc && !$this->selectedLop) {
             $this->emitFilter();
         }
     }

@@ -126,13 +126,18 @@ class AttendanceManager extends BaseComponent
                 ->find($this->selectedClassId);
 
             if ($class) {
-                $this->selectedNamHoc    = $class->school_year_id;
+                $this->selectedNamHoc    = (int) $class->school_year_id;
                 $this->selectedClassName = $class->name;
             } else {
                 // classId không hợp lệ → reset
                 $this->selectedClassId = null;
                 $this->emit('toast', 'warning', 'Lớp học không tồn tại');
             }
+        }
+
+        // Đồng bộ kỳ nếu URL chỉ có classId (FilterBar cũng detect kỳ — tránh lệch lần emit đầu)
+        if ($this->selectedNamHoc && $this->selectedKy === null) {
+            $this->selectedKy = $this->detectSemesterForNamHoc((int) $this->selectedNamHoc);
         }
 
         if ($this->selectedClassId) {
@@ -151,7 +156,13 @@ class AttendanceManager extends BaseComponent
         $this->selectedClassId = is_numeric($this->selectedClassId)
             ? (int) $this->selectedClassId : null;
 
-        $this->attendanceType = in_array((int) $this->attendanceType, [1, 2])
+        $this->selectedNamHoc = is_numeric($this->selectedNamHoc)
+            ? (int) $this->selectedNamHoc : null;
+
+        $this->selectedKhoi = is_numeric($this->selectedKhoi)
+            ? (int) $this->selectedKhoi : null;
+
+        $this->attendanceType = in_array((int) $this->attendanceType, [1, 2], true)
             ? (int) $this->attendanceType : 1;
 
         // 0 = cả năm; 1|2 = học kỳ
@@ -610,7 +621,13 @@ class AttendanceManager extends BaseComponent
 
     public function handleFilterChanged($filters): void
     {
-        if (!is_array($filters)) return;
+        if (!is_array($filters)) {
+            return;
+        }
+
+        $id = static function ($value): ?int {
+            return is_numeric($value) ? (int) $value : null;
+        };
 
         $namHocChanged = false;
         $khoiChanged   = false;
@@ -618,42 +635,58 @@ class AttendanceManager extends BaseComponent
         $kyChanged     = false;
 
         if (array_key_exists('namHoc', $filters)) {
-            $newNamHoc = is_numeric($filters['namHoc']) ? (int) $filters['namHoc'] : null;
-            if ($newNamHoc !== $this->selectedNamHoc) {
+            $newNamHoc = $id($filters['namHoc']);
+            $oldNamHoc = $id($this->selectedNamHoc);
+            if ($newNamHoc !== $oldNamHoc) {
                 $this->selectedNamHoc = $newNamHoc;
                 $namHocChanged = true;
+            } else {
+                $this->selectedNamHoc = $oldNamHoc;
             }
         }
 
         if (array_key_exists('khoi', $filters)) {
-            $newKhoi = is_numeric($filters['khoi']) ? (int) $filters['khoi'] : null;
-            $oldKhoi = is_numeric($this->selectedKhoi) ? (int) $this->selectedKhoi : null;
-
+            $newKhoi = $id($filters['khoi']);
+            $oldKhoi = $id($this->selectedKhoi);
             if ($newKhoi !== $oldKhoi) {
                 $this->selectedKhoi = $newKhoi;
                 $khoiChanged = true;
+            } else {
+                $this->selectedKhoi = $oldKhoi;
             }
         }
 
         if (array_key_exists('ky', $filters)) {
-            $newKy = is_numeric($filters['ky']) ? (int) $filters['ky'] : null;
-            $oldKy = is_numeric($this->selectedKy) ? (int) $this->selectedKy : null;
+            $newKy = $id($filters['ky']);
+            $oldKy = $id($this->selectedKy);
             if ($newKy !== $oldKy) {
                 $this->selectedKy = $newKy;
                 $kyChanged = true;
+            } else {
+                $this->selectedKy = $oldKy;
             }
         }
 
+        $newClassId = array_key_exists('lop', $filters)
+            ? $id($filters['lop'])
+            : $id($this->selectedClassId);
+
+        // Đổi năm/khối: chỉ clear lớp khi payload không mang lớp mới
         if ($namHocChanged || $khoiChanged) {
-            $this->clearAttendanceState();
-            $this->resetPage();
-            return;
+            if ($newClassId === null) {
+                $this->clearAttendanceState();
+                $this->resetPage();
+                return;
+            }
+
+            // Cùng emit có lop → giữ/áp lớp, không return sớm (tránh mất classId)
+            $this->selectedDate = null;
         }
 
         if (array_key_exists('lop', $filters)) {
-            $newClassId = is_numeric($filters['lop']) ? (int) $filters['lop'] : null;
+            $oldClassId = $id($this->selectedClassId);
 
-            if ($newClassId !== $this->selectedClassId) {
+            if ($newClassId !== $oldClassId) {
                 if ($newClassId && !$this->assertCanMarkClass($newClassId)) {
                     $this->emit('toast', 'error', 'Bạn không có quyền điểm danh lớp này');
                     $this->resetPage();
@@ -663,15 +696,16 @@ class AttendanceManager extends BaseComponent
                 $this->selectedClassId = $newClassId;
                 $this->selectedDate    = null;
                 $classChanged = true;
+            } else {
+                $this->selectedClassId = $oldClassId;
             }
         }
 
-        // ── Load 1 lần duy nhất ở đây ─────────────────────────
-        if ($classChanged || $kyChanged) {
+        if ($classChanged || $kyChanged || $namHocChanged || $khoiChanged) {
             if (!$this->selectedClassId) {
                 $this->clearAttendanceState();
             } else {
-                if ($classChanged) {
+                if ($classChanged || $namHocChanged || $khoiChanged) {
                     $this->selectedClassName = CatechismClass::where('id', $this->selectedClassId)
                         ->value('name') ?? '';
                     $this->loadStudents();
@@ -727,6 +761,40 @@ class AttendanceManager extends BaseComponent
     protected function getVietnameseDayName(Carbon $date): string
     {
         return ['CN', 'T2', 'T3', 'T4', 'T5', 'T6', 'T7'][$date->dayOfWeek];
+    }
+
+    protected function detectSemesterForNamHoc(int $namHocId): ?int
+    {
+        $namHoc = NamHoc::find($namHocId);
+        if (!$namHoc) {
+            return 1;
+        }
+
+        $today = now()->toDateString();
+
+        if ($namHoc->start_date_one && $namHoc->end_date_one) {
+            if (
+                $today >= $namHoc->start_date_one->toDateString()
+                && $today <= $namHoc->end_date_one->toDateString()
+            ) {
+                return 1;
+            }
+        }
+
+        if ($namHoc->start_date_two && $namHoc->end_date_two) {
+            if (
+                $today >= $namHoc->start_date_two->toDateString()
+                && $today <= $namHoc->end_date_two->toDateString()
+            ) {
+                return 2;
+            }
+        }
+
+        if ($namHoc->end_date_two && $today > $namHoc->end_date_two->toDateString()) {
+            return 2;
+        }
+
+        return 1;
     }
 
     protected function getDefaultNamHocId(): ?int

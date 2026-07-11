@@ -37,9 +37,10 @@
                 @php $isAdmin = auth()->user()->canManage(); @endphp
 
                 <div class="flex flex-col gap-4">
-                    {{-- Filters ngoài wire:key — không remount khi đổi ngày/tab --}}
+                    {{-- Filters ngoài wire:key — remount khi class/năm/kỳ parent đổi để khớp URL --}}
                     <div class="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-3 lg:gap-4">
                         <livewire:filters.filter-bar
+                            wire:key="attendance-filter-{{ $selectedClassId }}-{{ $selectedNamHoc }}-{{ $selectedKy }}"
                             :parish-id="$parishId"
                             :show-nam-hoc="$isAdmin"
                             :show-khoi="$isAdmin"
@@ -66,6 +67,36 @@
                             debounce="500ms" />
                     </div>
                 </div>
+            </div>
+
+            {{-- Leave-guard bridge: ngoài wire:key, luôn nhận filter-leave-request --}}
+            <div
+                class="hidden"
+                aria-hidden="true"
+                x-data="{
+                    onFilterLeave(raw) {
+                        const detail = Array.isArray(raw) ? (raw[0] || {}) : (raw || {});
+                        const root = document.querySelector('[data-attendance-root]');
+                        let dirty = false;
+                        if (root && window.Alpine) {
+                            try { dirty = !!Alpine.evaluate(root, 'hasDraft()'); } catch (e) {}
+                        }
+                        const fb = detail.componentId ? window.Livewire.find(detail.componentId) : null;
+                        const confirmFn = () => fb ? fb.call('confirmFilterLeave') : window.Livewire.emit('confirmFilterLeave');
+                        const cancelFn = () => fb ? fb.call('cancelFilterLeave') : window.Livewire.emit('cancelFilterLeave');
+
+                        if (dirty) {
+                            const label = detail.actionLabel || 'đổi bộ lọc';
+                            if (!confirm('Bạn có thay đổi chưa lưu. Nếu ' + label + ' sẽ mất thay đổi. Tiếp tục?')) {
+                                cancelFn();
+                                return;
+                            }
+                            try { Alpine.evaluate(root, 'resetEditingState()'); } catch (e) {}
+                        }
+                        confirmFn();
+                    }
+                }"
+                x-on:filter-leave-request.window="onFilterLeave($event.detail)">
             </div>
 
     <div wire:key="attendance-{{ $selectedClassId }}-{{ $attendanceType }}-{{ $selectedKy }}"
@@ -141,19 +172,6 @@
                 this.resetEditingState();
                 if (typeof proceed === 'function') proceed();
                 return true;
-            },
-
-            handleFilterLeave(detail) {
-                const label = detail?.actionLabel || 'đổi bộ lọc';
-                const componentId = detail?.componentId;
-                const filterBar = componentId ? window.Livewire.find(componentId) : null;
-
-                if (!this.confirmLeave(label)) {
-                    filterBar ? filterBar.call('cancelFilterLeave') : window.Livewire.emit('cancelFilterLeave');
-                    return;
-                }
-                this.resetEditingState();
-                filterBar ? filterBar.call('confirmFilterLeave') : window.Livewire.emit('confirmFilterLeave');
             },
 
             toggle(studentId, sessionId, status) {
@@ -313,7 +331,6 @@
                 window.removeEventListener('beforeunload', guardUnload);
             });
         "
-        x-on:filter-leave-request.window="handleFilterLeave($event.detail)"
         x-on:attendance-records-loaded.window="onRecordsLoaded($event.detail)"
         x-on:attendance-saved.window="onSaved($event.detail)"
         x-on:attendance-state-cleared.window="onCleared()"
