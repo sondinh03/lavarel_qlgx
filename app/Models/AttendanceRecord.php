@@ -50,7 +50,7 @@ class AttendanceRecord extends Model
 
     public function student()
     {
-        return $this->belongsTo(Student::class, 'student_id');
+        return $this->belongsTo(StudentNew::class, 'student_id');
     }
 
     public static function isValidStatus($status): bool

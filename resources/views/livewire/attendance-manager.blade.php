@@ -14,12 +14,76 @@
     $selectedClassName = $this->selectedClassName;
     @endphp
 
-    <div wire:key="attendance-{{ $selectedClassId }}-{{ $attendanceType }}-{{ $selectedDate }}"
+    <div id="main-content" class="mx-auto max-w-7xl">
+        <x-mac-panel :overflow="true">
+            @if ($this->viewMode != 'mobile')
+            <x-page-header
+                title="Điểm danh{{ $selectedClassId ? ' - ' . $selectedClassName : '' }}"
+                description="Điểm danh {{ $attendanceType == 1 ? 'đi học' : 'đi lễ' }}{{ $selectedClassId ? ' • ' . $students->count() . ' học sinh • ' . count($sessions) . ' buổi' : '' }}"
+                icon-type="attendance" />
+            @else
+            <div id="page-big-title" class="px-4 sm:px-6 pt-5 pb-3 mac-hairline-b transition-opacity duration-300">
+                <h1 class="text-2xl font-bold text-slate-800">
+                    Điểm danh{{ $selectedClassId ? ' · ' . $selectedClassName : '' }}
+                </h1>
+                <p class="text-sm text-slate-500 mt-0.5">
+                    {{ $attendanceType == 1 ? 'Đi học' : 'Đi lễ' }}
+                    {{ $selectedClassId ? ' · ' . $students->count() . ' học sinh' : '' }}
+                </p>
+            </div>
+            @endif
+
+            <div class="p-4 lg:p-6 mac-hairline-b bg-white/30">
+                @php $isAdmin = auth()->user()->canManage(); @endphp
+
+                <div class="flex flex-col gap-4">
+                    {{-- Filters ngoài wire:key — không remount khi đổi ngày/tab --}}
+                    <div class="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-3 lg:gap-4">
+                        <livewire:filters.filter-bar
+                            :parish-id="$parishId"
+                            :show-nam-hoc="$isAdmin"
+                            :show-khoi="$isAdmin"
+                            :show-lop="true"
+                            :show-ky="$isAdmin"
+                            :leave-guard="true"
+                            :selected-nam-hoc="$selectedNamHoc"
+                            :selected-khoi="$selectedKhoi"
+                            :selected-lop="$selectedClassId"
+                            :selected-ky="$selectedKy" />
+
+                        <div class="hidden lg:block w-72">
+                            <x-search-input
+                                placeholder="Tìm học sinh..."
+                                wire-model="search"
+                                debounce="500ms" />
+                        </div>
+                    </div>
+
+                    <div class="lg:hidden">
+                        <x-search-input
+                            placeholder="Tìm học sinh..."
+                            wire-model="search"
+                            debounce="500ms" />
+                    </div>
+                </div>
+            </div>
+
+    <div wire:key="attendance-{{ $selectedClassId }}-{{ $attendanceType }}-{{ $selectedKy }}"
+        data-attendance-root
         x-data="{
             records: {},
             draft: {},
             isSaving: false,
             context: @js('class:' . ($selectedClassId ?? 'none') . '|type:' . ($attendanceType ?? 'none') . '|mode:' . ($this->viewMode ?? 'none') . '|date:' . ($selectedDate ?? 'all') . '|ky:' . ($selectedKy ?? 'all')),
+            livewireId: null,
+
+            getLivewire() {
+                return window.Livewire.find(this.livewireId);
+            },
+
+            toast(type, message) {
+                this.getLivewire()?.emit('toast', type, message);
+            },
 
             getStatus(studentId, sessionId) {
                 const key = studentId + '_' + sessionId;
@@ -33,77 +97,177 @@
                 return this.records[key]?.note || null;
             },
 
-            hasDraft() { 
-                const result = Object.keys(this.draft).length > 0;
-                return result; 
+            isDirtyEntry(key, item) {
+                const saved = this.records[key];
+                const status = item?.status ?? null;
+                const note = item?.note || '';
+                if (!saved) return status !== null && status !== undefined;
+                return Number(saved.status) !== Number(status) || (saved.note || '') !== note;
             },
 
-            draftCount() { return Object.keys(this.draft).length; },
+            hasDraft() {
+                return Object.keys(this.draft).some(k => this.isDirtyEntry(k, this.draft[k]));
+            },
+
+            draftCount() {
+                return Object.keys(this.draft).filter(k => this.isDirtyEntry(k, this.draft[k])).length;
+            },
+
+            pruneDraft() {
+                Object.keys(this.draft).forEach(k => {
+                    if (!this.isDirtyEntry(k, this.draft[k])) delete this.draft[k];
+                });
+            },
+
+            clearDraft(showToast = false) {
+                this.draft = {};
+                if (showToast) this.toast('info', 'Đã hủy các thay đổi chưa lưu');
+            },
+
+            resetEditingState() {
+                this.isSaving = false;
+                this.clearDraft(false);
+            },
+
+            confirmLeave(actionLabel = 'đổi trang') {
+                if (!this.hasDraft()) return true;
+                return confirm(
+                    'Bạn có thay đổi chưa lưu. Nếu ' + actionLabel + ' sẽ mất thay đổi. Tiếp tục?'
+                );
+            },
+
+            requestLeave(actionLabel, proceed) {
+                if (!this.confirmLeave(actionLabel)) return false;
+                this.resetEditingState();
+                if (typeof proceed === 'function') proceed();
+                return true;
+            },
+
+            handleFilterLeave(detail) {
+                const label = detail?.actionLabel || 'đổi bộ lọc';
+                const componentId = detail?.componentId;
+                const filterBar = componentId ? window.Livewire.find(componentId) : null;
+
+                if (!this.confirmLeave(label)) {
+                    filterBar ? filterBar.call('cancelFilterLeave') : window.Livewire.emit('cancelFilterLeave');
+                    return;
+                }
+                this.resetEditingState();
+                filterBar ? filterBar.call('confirmFilterLeave') : window.Livewire.emit('confirmFilterLeave');
+            },
 
             toggle(studentId, sessionId, status) {
-                const key     = studentId + '_' + sessionId;
+                const key = studentId + '_' + sessionId;
                 const current = this.getStatus(studentId, sessionId);
+                const statusNum = Number(status);
 
-                if (current === status) {
-                    delete this.draft[key];
-                } else {
-                    this.draft[key] = { status: status, note: '' };
+                if (current !== null && current !== undefined && Number(current) === statusNum) {
+                    if (this.draft[key] !== undefined) delete this.draft[key];
+                    return;
                 }
-            },
 
-            openNote(studentId, sessionId) {
-                this.getLivewire().call('openNote', studentId, sessionId);
+                const existingNote = this.getNote(studentId, sessionId) || '';
+                const next = {
+                    status: statusNum,
+                    note: statusNum === 1 ? '' : existingNote,
+                };
 
+                if (!this.isDirtyEntry(key, next)) {
+                    delete this.draft[key];
+                    return;
+                }
+
+                this.draft[key] = next;
             },
 
             markAll(sessionId, studentIds) {
-                studentIds.forEach(id => {
+                const unmarked = studentIds.filter(id => this.getStatus(id, sessionId) == null);
+
+                if (unmarked.length === 0) {
+                    if (!confirm('Tất cả đã có trạng thái. Đánh dấu lại tất cả thành có mặt?')) return;
+                    studentIds.forEach(id => {
+                        const key = id + '_' + sessionId;
+                        const next = { status: 1, note: '' };
+                        if (!this.isDirtyEntry(key, next)) {
+                            delete this.draft[key];
+                            return;
+                        }
+                        this.draft[key] = next;
+                    });
+                    return;
+                }
+
+                unmarked.forEach(id => {
                     this.draft[id + '_' + sessionId] = { status: 1, note: '' };
                 });
             },
 
-            livewireId: null,
+            requestSwitchType(type) {
+                if (Number(type) === Number(@js($attendanceType ?? 1))) return;
+                this.requestLeave('đổi loại điểm danh', () => {
+                    this.getLivewire().call('switchType', type);
+                });
+            },
 
-            getLivewire() {
-                return window.Livewire.find(this.livewireId);
+            requestSelectDate(date) {
+                if (date === @js($selectedDate)) return;
+                this.requestLeave('đổi ngày', () => {
+                    this.getLivewire().call('selectDate', date);
+                });
+            },
+
+            requestExport() {
+                this.requestLeave('xuất Excel', () => {
+                    this.getLivewire().call('exportAttendance');
+                });
+            },
+
+            saveButtonLabel() {
+                return this.isSaving ? 'Đang lưu…' : 'Lưu';
             },
 
             save() {
-                if (!this.hasDraft() || this.isSaving) return;
+                if (this.isSaving || !this.hasDraft()) return;
                 this.isSaving = true;
-                this.getLivewire().call('saveFromClient', this.draft);        
+                this.getLivewire().call('saveFromClient', this.draft);
             },
 
-            discard() { this.draft = {}; },
+            discard() {
+                if (!this.hasDraft() || this.isSaving) return;
+                if (!confirm('Hủy các thay đổi chưa lưu?')) return;
+                this.clearDraft(true);
+            },
 
             onSaved(detail) {
                 if (detail?.context && detail.context !== this.context) return;
-                this.draft = {}; 
                 this.isSaving = false;
                 if (detail && detail.records) {
                     Object.keys(this.records).forEach(k => delete this.records[k]);
-                    // Gán key mới — Alpine detect mutation
                     Object.assign(this.records, detail.records);
+                }
+                const keys = detail?.savedKeys;
+                if (Array.isArray(keys) && keys.length > 0) {
+                    keys.forEach(k => delete this.draft[k]);
+                    this.pruneDraft();
+                } else if (!Array.isArray(keys) || keys.length === 0) {
+                    // success với 0 key (hiếm) hoặc legacy — prune theo records mới
+                    this.pruneDraft();
                 }
             },
 
             onRecordsLoaded(detail) {
-            if (detail?.context && detail.context !== this.context) return;
-            const newRecords = detail?.records || {};
-            Object.keys(this.records).forEach(k => delete this.records[k]);
-            Object.assign(this.records, newRecords);
+                if (detail?.context && detail.context !== this.context) return;
+                const newRecords = detail?.records || {};
+                Object.keys(this.records).forEach(k => delete this.records[k]);
+                Object.assign(this.records, newRecords);
+                this.pruneDraft();
             },
 
             onCleared() {
-                this.draft = {};
+                this.resetEditingState();
                 this.records = {};
             },
 
-            onNoteSaved({ key, status, note }) {
-                this.draft[key] = { status: status, note: note };
-            },
-
-            onSavingStarted() { this.isSaving = true; },
             onSavingCompleted() { this.isSaving = false; },
 
             noteModal: {
@@ -134,163 +298,86 @@
         x-init="
             livewireId = $el.closest('[wire\\:id]')?.getAttribute('wire:id');
             records = @js($attendanceRecords ?? []);
-
-            const backupKey = 'draft_{{ $selectedClassId }}_{{ $attendanceType }}';
-
-            // ── Restore draft nếu có từ lần trước (mọi platform) ──
-            const backup = sessionStorage.getItem(backupKey);
-            if (backup) {
-                try {
-                    Object.assign(draft, JSON.parse(backup));
-                    $wire.emit('toast', 'warning', 'Bạn có ' + Object.keys(draft).length + ' thay đổi chưa lưu từ trước');
-                } catch(e) {}
-                sessionStorage.removeItem(backupKey);
-            }
-
-            const saveDraftBackup = () => {
-                if (document.visibilityState === 'hidden' && Object.keys(draft).length > 0) {
-                    sessionStorage.setItem(backupKey, JSON.stringify(draft));
-                }
-            };
-            document.addEventListener('visibilitychange', saveDraftBackup);
+            draft = {};
+            isSaving = false;
 
             const guardUnload = (e) => {
-                if (Object.keys(draft).length === 0) return;
+                if (!hasDraft()) return;
                 e.preventDefault();
                 return e.returnValue = '';
             };
 
             window.addEventListener('beforeunload', guardUnload);
 
-            // iOS Safari fallback — pagehide fires khi swipe back
-            window.addEventListener('pagehide', guardUnload);
-
             $cleanup(() => {
                 window.removeEventListener('beforeunload', guardUnload);
-                window.removeEventListener('pagehide', guardUnload);
             });
         "
+        x-on:filter-leave-request.window="handleFilterLeave($event.detail)"
         x-on:attendance-records-loaded.window="onRecordsLoaded($event.detail)"
         x-on:attendance-saved.window="onSaved($event.detail)"
         x-on:attendance-state-cleared.window="onCleared()"
-        x-on:note-saved.window="onNoteSaved($event.detail)"
-        x-on:saving-attendance.window="onSavingStarted()"
         x-on:attendance-save-completed.window="onSavingCompleted()">
 
-        <div id="main-content" class="mx-auto max-w-7xl">
-            <x-mac-panel :overflow="true">
-                @if ($this->viewMode != 'mobile')
-                <x-page-header
-                    title="Điểm danh{{ $selectedClassId ? ' - ' . $selectedClassName : '' }}"
-                    description="Điểm danh {{ $attendanceType == 1 ? 'đi học' : 'đi lễ' }}{{ $selectedClassId ? ' • ' . $students->count() . ' học sinh • ' . count($sessions) . ' buổi' : '' }}"
-                    icon-type="attendance" />
-                @else
-                <div id="page-big-title" class="px-4 sm:px-6 pt-5 pb-3 mac-hairline-b transition-opacity duration-300">
-                    <h1 class="text-2xl font-bold text-slate-800">
-                        Điểm danh{{ $selectedClassId ? ' · ' . $selectedClassName : '' }}
-                    </h1>
-                    <p class="text-sm text-slate-500 mt-0.5">
-                        {{ $attendanceType == 1 ? 'Đi học' : 'Đi lễ' }}
-                        {{ $selectedClassId ? ' · ' . $students->count() . ' học sinh' : '' }}
-                    </p>
+            @php $isAdmin = auth()->user()->canManage(); @endphp
+
+            <div class="px-4 lg:px-6 py-3 mac-hairline-b bg-white/30 space-y-3">
+                @if($selectedClassId)
+                <div class="hidden lg:flex items-center justify-end gap-3">
+                    <x-button as="a" variant="outline" href="{{ route('attendance.statistics', [
+                            'namHoc'  => $selectedNamHoc,
+                            'classId' => $selectedClassId,
+                            'khoi'    => $selectedKhoi,
+                            'ky'      => $selectedKy,
+                            'type'    => $attendanceType,
+                    ]) }}"
+                        x-on:click="if (!confirmLeave('xem thống kê')) { $event.preventDefault(); return; } resetEditingState();">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                        </svg>
+                        Thống kê
+                    </x-button>
+
+                    @if($isAdmin)
+                    <x-button variant="outline" x-on:click="requestExport()">
+                        <x-icon name="file-export" />
+                        Xuất Excel
+                    </x-button>
+                    @endif
+
+                    <div x-show="hasDraft()" x-cloak class="flex items-center gap-2">
+                        <x-button variant="ghost" size="sm" x-on:click="discard()" x-bind:disabled="isSaving">
+                            Hủy
+                        </x-button>
+                        <x-button
+                            variant="primary"
+                            size="sm"
+                            x-on:click="save()"
+                            x-bind:disabled="isSaving">
+                            <span x-text="saveButtonLabel()"></span>
+                        </x-button>
+                    </div>
+                </div>
+
+                <div class="flex bg-slate-200 p-1 rounded-xl text-sm font-medium">
+                    <button
+                        type="button"
+                        x-on:click="requestSwitchType(1)"
+                        class="flex-1 py-2 rounded-lg text-sm font-semibold transition-all
+                        {{ $attendanceType == 1 ? 'bg-white text-primary-600 shadow-sm' : 'text-slate-600 hover:text-slate-900' }}">
+                        Điểm danh đi học
+                    </button>
+                    <button
+                        type="button"
+                        x-on:click="requestSwitchType(2)"
+                        class="flex-1 py-2 rounded-lg text-sm font-semibold transition-all
+                        {{ $attendanceType == 2 ? 'bg-white text-primary-600 shadow-sm' : 'text-slate-600 hover:text-slate-900' }}">
+                        Điểm danh đi lễ
+                    </button>
                 </div>
                 @endif
-
-                <div class="p-4 lg:p-6 mac-hairline-b bg-white/30">
-                    @php $isAdmin = auth()->user()->canManage(); @endphp
-
-                    <div class="flex flex-col gap-4">
-                        {{-- LEFT: Filters + search --}}
-                        <div class="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-3 lg:gap-4">
-                            <livewire:filters.filter-bar
-                                :parish-id="$parishId"
-                                :show-nam-hoc="$isAdmin"
-                                :show-khoi="$isAdmin"
-                                :show-lop="true"
-                                :show-ky="$isAdmin"
-                                :selected-nam-hoc="$selectedNamHoc"
-                                :selected-khoi="$selectedKhoi"
-                                :selected-lop="$selectedClassId"
-                                :selected-ky="$selectedKy" />
-
-                            <div class="hidden lg:block w-72">
-                                <x-search-input
-                                    placeholder="Tìm học sinh..."
-                                    wire-model="search"
-                                    debounce="500ms" />
-                            </div>
-                        </div>
-
-                        {{-- Mobile search --}}
-                        <div class="lg:hidden">
-                            <x-search-input
-                                placeholder="Tìm học sinh..."
-                                wire-model="search"
-                                debounce="500ms" />
-                        </div>
-
-                        {{-- RIGHT: Actions (desktop) --}}
-                        @if($selectedClassId)
-                        <div class="hidden lg:flex items-center justify-end gap-3">
-                            <x-button as="a" variant="outline" href="{{ route('attendance.statistics', [
-                                    'namHoc'  => $selectedNamHoc,
-                                    'classId' => $selectedClassId,
-                                    'khoi'    => $selectedKhoi,
-                                    'ky'      => $selectedKy,
-                                    'type'    => $attendanceType,
-                            ]) }}">
-                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                        d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-                                </svg>
-                                Thống kê
-                            </x-button>
-
-                            @if($isAdmin)
-                            <x-button wire:click="exportAttendance" variant="outline">
-                                <x-icon name="file-export" />
-                                Xuất Excel
-                            </x-button>
-                            @endif
-
-                            <div x-show="hasDraft()" x-cloak>
-                                <x-button variant="ghost" size="sm" x-on:click="discard()">
-                                    Hủy
-                                </x-button>
-                            </div>
-
-                            <x-button
-                                variant="primary"
-                                size="sm"
-                                x-on:click="save()"
-                                x-bind:disabled="!hasDraft() || isSaving">
-                                <span x-show="!isSaving">Lưu</span>
-                                <span x-show="isSaving" x-cloak>Đang lưu…</span>
-                            </x-button>
-                        </div>
-                        @endif
-                    </div>
-
-                    {{-- Tabs --}}
-                    @if($selectedClassId)
-                    <div class="pt-2">
-                        <div class="flex bg-slate-200 p-1 rounded-xl text-sm font-medium">
-                            <button
-                                wire:click="switchType(1)"
-                                class="flex-1 py-2 rounded-lg text-sm font-semibold transition-all
-                                {{ $attendanceType == 1 ? 'bg-white text-primary-600 shadow-sm' : 'text-slate-600 hover:text-slate-900' }}">
-                                Điểm danh đi học
-                            </button>
-                            <button
-                                wire:click="switchType(2)"
-                                class="flex-1 py-2 rounded-lg text-sm font-semibold transition-all
-                                {{ $attendanceType == 2 ? 'bg-white text-primary-600 shadow-sm' : 'text-slate-600 hover:text-slate-900' }}">
-                                Điểm danh đi lễ
-                            </button>
-                        </div>
-                    </div>
-                    @endif
-                </div>
+            </div>
 
             @if (!$selectedClassId)
             <x-stats.page-empty
@@ -556,15 +643,15 @@
                                 })
                             "
                             class="flex gap-2 overflow-x-auto px-3 py-3 scrollbar-hide snap-x snap-mandatory">
+                            
                             @foreach($sessions as $session)
                             @php
                             $isActive = $session['dateStr'] === $selectedDate;
-                            $hasAnyRecord = isset($sessionHasRecord[$session['dateStr']])
-                            && $sessionHasRecord[$session['dateStr']] > 0;
                             @endphp
                             <button
+                                type="button"
                                 data-active="{{ $isActive ? 'true' : 'false' }}"
-                                wire:click="selectDate('{{ $session['dateStr'] }}')"
+                                x-on:click="requestSelectDate('{{ $session['dateStr'] }}')"
                                 class="flex-shrink-0 snap-start flex flex-col items-center gap-1 px-3 py-2
                                    rounded-xl border transition-all min-w-[72px]
                                 {{ $isActive
@@ -582,11 +669,6 @@
                                 </div>
                                 <span class="text-[10px] {{ $isActive ? 'text-white/80' : 'text-slate-400' }}">
                                     {{ $session['dayName'] }}
-                                </span>
-                                <span class="w-1.5 h-1.5 rounded-full mt-0.5
-                                {{ $hasAnyRecord
-                                    ? ($isActive ? 'bg-white/70' : 'bg-primary-400')
-                                    : ($isActive ? 'bg-white/30' : 'bg-slate-200') }}">
                                 </span>
                             </button>
                             @endforeach
@@ -786,13 +868,14 @@
                         </table>
                     </div>
 
-                    {{-- Mobile Sticky Bottom Bar --}}
-                    <div class="lg:hidden fixed left-0 right-0 z-20 bg-white/90 backdrop-blur border-t border-black/[0.06] px-4 py-3"
+                    {{-- Mobile Sticky Bottom Bar — chỉ hiện khi có thay đổi --}}
+                    <div
+                        x-show="hasDraft()"
+                        x-cloak
+                        class="lg:hidden fixed left-0 right-0 z-20 bg-white/90 backdrop-blur border-t border-black/[0.06] px-4 py-3"
                         style="bottom: calc(env(safe-area-inset-bottom) + 60px);">
                         <div class="flex items-center gap-2 max-w-7xl mx-auto">
                             <x-button
-                                x-show="hasDraft()"
-                                x-cloak
                                 variant="ghost"
                                 size="sm"
                                 class="flex-shrink-0"
@@ -806,14 +889,13 @@
                                 size="sm"
                                 class="flex-1"
                                 x-on:click="save()"
-                                x-bind:disabled="!hasDraft() || isSaving">
-                                <span x-show="!isSaving">Lưu</span>
-                                <span x-show="isSaving" x-cloak>Đang lưu…</span>
+                                x-bind:disabled="isSaving">
+                                <span x-text="saveButtonLabel()"></span>
                             </x-button>
                         </div>
                     </div>
 
-                    <div class="lg:hidden h-24"></div>
+                    <div x-show="hasDraft()" x-cloak class="lg:hidden h-24"></div>
                 </div>
 
                 @else
@@ -829,18 +911,17 @@
                     </x-stats.page-empty>
                 @endif
             @endif
-            </x-mac-panel>
 
-        </div>
-
-        {{-- Note Modal — Alpine only --}}
+        {{-- Note Modal — teleport ra body để không bị overflow/backdrop-blur của mac-panel --}}
+        <template x-teleport="body">
         <div
             x-show="noteModal.open"
             x-cloak
             x-transition:enter="transition ease-out duration-200"
             x-transition:enter-start="opacity-0"
             x-transition:enter-end="opacity-100"
-            class="fixed inset-0 bg-black/40 z-50 flex items-end lg:items-center justify-center lg:p-4"
+            class="fixed inset-0 bg-black/40 z-[200] flex items-end lg:items-center justify-center lg:p-4"
+            style="padding-bottom: var(--bottom-offset, 0px);"
             x-on:click="noteModal.open = false">
 
             {{-- Sheet / Modal --}}
@@ -850,7 +931,7 @@
                 x-transition:enter="transition ease-out duration-200"
                 x-transition:enter-start="translate-y-full lg:translate-y-0 lg:scale-95 lg:opacity-0"
                 x-transition:enter-end="translate-y-0 lg:scale-100 lg:opacity-100"
-                class="w-full lg:w-[480px] lg:rounded-2xl rounded-t-2xl bg-white"
+                class="w-full lg:w-[480px] lg:rounded-2xl rounded-t-2xl bg-white shadow-xl lg:mb-0"
                 x-on:click.stop>
 
                 {{-- Handle — mobile only --}}
@@ -918,8 +999,12 @@
 
             </div>
         </div>
-    </div>
-</div>
+        </template>
+    </div>{{-- /alpine wire:key --}}
+
+        </x-mac-panel>
+    </div>{{-- /main-content --}}
+</div>{{-- /min-h-screen --}}
 
 @push('page-title')
 <span class="text-slate-800 font-semibold text-sm">Điểm danh</span>
@@ -927,47 +1012,48 @@
 
 @push('scripts')
 <script>
-    // Collapsing header — IntersectionObserver
     (function() {
+        let collapsingObserver = null;
+
         function initCollapsingHeader() {
             const bigTitle = document.getElementById('page-big-title');
             const headerTitle = document.getElementById('header-collapsed-title');
 
             if (!bigTitle || !headerTitle) return;
 
-            const observer = new IntersectionObserver(
+            if (collapsingObserver) {
+                collapsingObserver.disconnect();
+                collapsingObserver = null;
+            }
+
+            collapsingObserver = new IntersectionObserver(
                 ([entry]) => {
                     if (entry.isIntersecting) {
-                        // Big title visible → ẩn header title
                         headerTitle.style.opacity = '0';
                         bigTitle.style.opacity = '1';
                     } else {
-                        // Big title out of view → hiện header title
                         headerTitle.style.opacity = '1';
                         bigTitle.style.opacity = '0';
                     }
                 }, {
                     threshold: 0,
-                    rootMargin: '-56px 0px 0px 0px', // trừ đi chiều cao header
+                    rootMargin: '-56px 0px 0px 0px',
                 }
             );
 
-            observer.observe(bigTitle);
+            collapsingObserver.observe(bigTitle);
         }
 
-        // Init sau khi Livewire render xong
         document.addEventListener('livewire:load', initCollapsingHeader);
         document.addEventListener('livewire:update', initCollapsingHeader);
     })();
 
     document.addEventListener('livewire:load', function() {
-        // Ctrl+S / Cmd+S → save
         window.addEventListener('keydown', function(e) {
             if ((e.ctrlKey || e.metaKey) && e.key === 's') {
                 e.preventDefault();
-                // Tìm Alpine component và gọi save()
-                const el = document.querySelector('[x-data]');
-                if (el) {
+                const el = document.querySelector('[data-attendance-root]');
+                if (el && window.Alpine) {
                     Alpine.evaluate(el, 'save()');
                 }
             }

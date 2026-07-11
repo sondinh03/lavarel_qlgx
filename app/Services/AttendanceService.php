@@ -9,21 +9,32 @@ use Illuminate\Support\Facades\Log;
 
 class AttendanceService
 {
-    public function saveBulkAttendance(array $drafts): array
+    public function saveBulkAttendance(array $drafts, ?int $classId = null, ?int $type = null): array
     {
         DB::beginTransaction();
 
         try {
             $savedCount = 0;
+            $savedKeys  = [];
             $errors     = [];
 
             $groupedBySession = collect($drafts)->groupBy('session_id');
 
             foreach ($groupedBySession as $sessionId => $records) {
-                $session = AttendanceSession::find($sessionId);
+                $sessionQuery = AttendanceSession::query()->where('id', $sessionId);
+
+                if ($classId !== null) {
+                    $sessionQuery->where('class_id', $classId);
+                }
+
+                if ($type !== null) {
+                    $sessionQuery->where('type', $type);
+                }
+
+                $session = $sessionQuery->first();
 
                 if (!$session) {
-                    $errors[] = "Buổi #{$sessionId} không tồn tại";
+                    $errors[] = "Buổi #{$sessionId} không hợp lệ với lớp đang chọn";
                     continue;
                 }
 
@@ -49,16 +60,16 @@ class AttendanceService
                     }
                 }
 
-                // INSERT
+                $userId = auth()->id();
+                $now    = now();
+
                 if (!empty($toInsert)) {
-                    $userId = auth()->id();
-                    $now    = now();
                     DB::table('attendance_records')->insert(
-                        collect($toInsert)->map(fn($r) => [
+                        collect($toInsert)->map(fn ($r) => [
                             'session_id' => $sessionId,
                             'student_id' => $r['student_id'],
                             'status'     => $r['status'],
-                            'note'       => $r['note'] ?? null,
+                            'note'       => $r['note'] !== '' ? $r['note'] : null,
                             'created_by' => $userId,
                             'updated_by' => $userId,
                             'created_at' => $now,
@@ -67,42 +78,94 @@ class AttendanceService
                     );
                 }
 
-                // UPDATE — dùng Eloquent upsert thay vì raw SQL
                 if (!empty($toUpdate)) {
-                    $userId = auth()->id();
-                    $now    = now();
-                    foreach ($toUpdate as $r) {
-                        AttendanceRecord::where('id', $r['record_id'])->update([
-                            'status'     => $r['status'],
-                            'note'       => $r['note'] ?? null,
-                            'updated_by' => $userId,
-                            'updated_at' => $now,
-                        ]);
-                    }
+                    $this->bulkUpdateRecords($toUpdate, $userId, $now);
                 }
 
-                $savedCount += count($toInsert) + count($toUpdate);
+                $sessionSaved = count($toInsert) + count($toUpdate);
+                $savedCount  += $sessionSaved;
+
+                foreach (array_merge($toInsert, $toUpdate) as $r) {
+                    $savedKeys[] = $r['student_id'] . '_' . $sessionId;
+                }
             }
 
             DB::commit();
 
             if ($savedCount === 0 && !empty($errors)) {
                 return [
-                    'success' => false,
-                    'message' => 'Không có học sinh nào được lưu. ' . implode('; ', array_slice($errors, 0, 3)),
+                    'success'   => false,
+                    'message'   => 'Không có học sinh nào được lưu. ' . implode('; ', array_slice($errors, 0, 3)),
+                    'errors'    => $errors,
+                    'savedKeys' => [],
                 ];
             }
 
             $message = "Đã lưu điểm danh cho {$savedCount} học sinh";
             if (!empty($errors)) {
-                $message .= sprintf(' (có %d lỗi)', count($errors));
+                $message .= sprintf(' (bỏ qua %d buổi: %s)', count($errors), implode('; ', array_slice($errors, 0, 2)));
             }
 
-            return ['success' => true, 'message' => $message, 'errors' => $errors];
+            return [
+                'success'   => true,
+                'message'   => $message,
+                'errors'    => $errors,
+                'savedKeys' => $savedKeys,
+            ];
         } catch (\Exception $e) {
             DB::rollBack();
+            Log::error('saveBulkAttendance failed', ['error' => $e->getMessage()]);
 
-            return ['success' => false, 'message' => 'Có lỗi khi lưu điểm danh. Vui lòng thử lại sau.'];
+            return [
+                'success'   => false,
+                'message'   => 'Có lỗi khi lưu điểm danh. Vui lòng thử lại sau.',
+                'errors'    => [],
+                'savedKeys' => [],
+            ];
         }
+    }
+
+    /**
+     * Cập nhật nhiều record trong 1–2 query thay vì N lần Eloquent.
+     */
+    private function bulkUpdateRecords(array $toUpdate, $userId, $now): void
+    {
+        $ids = collect($toUpdate)->pluck('record_id')->map(fn ($id) => (int) $id)->all();
+
+        if (empty($ids)) {
+            return;
+        }
+
+        $statusSql = 'CASE id';
+        $noteSql   = 'CASE id';
+        $bindings  = [];
+
+        foreach ($toUpdate as $r) {
+            $statusSql .= ' WHEN ? THEN ?';
+            $bindings[] = (int) $r['record_id'];
+            $bindings[] = (int) $r['status'];
+
+            $noteSql .= ' WHEN ? THEN ?';
+            $bindings[] = (int) $r['record_id'];
+            $bindings[] = ($r['note'] ?? '') !== '' ? $r['note'] : null;
+        }
+
+        $statusSql .= ' END';
+        $noteSql   .= ' END';
+
+        $placeholders = implode(',', array_fill(0, count($ids), '?'));
+        $bindings[]   = $userId;
+        $bindings[]   = $now;
+        $bindings     = array_merge($bindings, $ids);
+
+        DB::update(
+            "UPDATE attendance_records
+             SET status = {$statusSql},
+                 note = {$noteSql},
+                 updated_by = ?,
+                 updated_at = ?
+             WHERE id IN ({$placeholders})",
+            $bindings
+        );
     }
 }
