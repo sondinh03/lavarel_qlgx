@@ -868,9 +868,9 @@
                         </table>
                     </div>
 
-                    {{-- Mobile Sticky Bottom Bar — chỉ hiện khi có thay đổi --}}
+                    {{-- Mobile Sticky Bottom Bar — ẩn khi đang mở modal lý do --}}
                     <div
-                        x-show="hasDraft()"
+                        x-show="hasDraft() && !noteModal.open"
                         x-cloak
                         class="lg:hidden fixed left-0 right-0 z-20 bg-white/90 backdrop-blur border-t border-black/[0.06] px-4 py-3"
                         style="bottom: calc(env(safe-area-inset-bottom) + 60px);">
@@ -912,7 +912,7 @@
                 @endif
             @endif
 
-        {{-- Note Modal — teleport ra body để không bị overflow/backdrop-blur của mac-panel --}}
+        {{-- Note Modal — căn giữa viewport; không dùng bottom-sheet (tránh bị bottom-nav che) --}}
         <template x-teleport="body">
         <div
             x-show="noteModal.open"
@@ -920,35 +920,33 @@
             x-transition:enter="transition ease-out duration-200"
             x-transition:enter-start="opacity-0"
             x-transition:enter-end="opacity-100"
-            class="fixed inset-0 bg-black/40 z-[200] flex items-end lg:items-center justify-center
-                max-lg:[padding-bottom:calc(var(--bottom-offset,0px)+4.5rem)] lg:p-4"
-            x-on:click="noteModal.open = false">
+            class="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/40"
+            style="padding-bottom: max(1rem, var(--bottom-offset, 0px)); padding-top: max(1rem, env(safe-area-inset-top, 0px));"
+            x-on:click="noteModal.open = false"
+            x-on:keydown.escape.window="if (noteModal.open) noteModal.open = false">
 
-            {{-- Sheet / Modal --}}
             <div
                 x-show="noteModal.open"
                 x-cloak
                 x-transition:enter="transition ease-out duration-200"
-                x-transition:enter-start="translate-y-full lg:translate-y-0 lg:scale-95 lg:opacity-0"
-                x-transition:enter-end="translate-y-0 lg:scale-100 lg:opacity-100"
-                class="w-full lg:w-[480px] lg:rounded-2xl rounded-t-2xl bg-white shadow-xl lg:mb-0"
-                x-on:click.stop>
+                x-transition:enter-start="opacity-0 scale-95"
+                x-transition:enter-end="opacity-100 scale-100"
+                class="w-full max-w-[480px] rounded-2xl bg-white shadow-xl overflow-y-auto"
+                style="max-height: calc(100dvh - var(--bottom-offset, 0px) - 2rem);"
+                x-on:click.stop
+                role="dialog"
+                aria-modal="true"
+                aria-label="Vắng có phép">
 
-                {{-- Handle — mobile only --}}
-                <div class="flex justify-center pt-3 pb-2 lg:hidden">
-                    <div class="w-10 h-1 bg-slate-300 rounded-full"></div>
-                </div>
-
-                {{-- Header — desktop only --}}
-                <div class="hidden lg:flex items-center justify-between px-5 py-4 border-b border-slate-200">
-                    <div>
+                <div class="flex items-center justify-between gap-3 px-5 py-4 border-b border-slate-200 sticky top-0 bg-white z-10">
+                    <div class="min-w-0">
                         <h3 class="font-semibold text-slate-900">Vắng có phép</h3>
-                        <p class="text-sm text-slate-500 mt-0.5" x-text="noteModal.studentName"></p>
+                        <p class="text-sm text-slate-500 mt-0.5 truncate" x-text="noteModal.studentName"></p>
                     </div>
                     <button
                         type="button"
                         x-on:click="noteModal.open = false"
-                        class="text-slate-400 hover:text-slate-600 transition-colors">
+                        class="flex-shrink-0 text-slate-400 hover:text-slate-600 transition-colors p-1">
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                 d="M6 18L18 6M6 6l12 12" />
@@ -956,14 +954,7 @@
                     </button>
                 </div>
 
-                {{-- Student name — mobile only --}}
-                <div class="px-4 pb-3 lg:hidden">
-                    <span class="text-xs text-slate-400">Vắng có phép · </span>
-                    <span class="text-sm font-semibold text-slate-700" x-text="noteModal.studentName"></span>
-                </div>
-
-                {{-- Quick reasons --}}
-                <div class="px-4 lg:px-5 lg:py-4 grid grid-cols-2 gap-2">
+                <div class="px-4 sm:px-5 py-4 grid grid-cols-2 gap-2">
                     @foreach(['Bệnh', 'Về quê', 'Gia đình có việc', 'Đi học thêm', 'Dự lễ nơi khác', 'Lý do khác'] as $reason)
                     <button
                         type="button"
@@ -976,9 +967,7 @@
                     @endforeach
                 </div>
 
-                {{-- Nhập tay --}}
-                <div class="px-4 lg:px-5 pt-3 lg:pb-5 flex gap-2"
-                    style="padding-bottom: calc(1rem + env(safe-area-inset-bottom))">
+                <div class="px-4 sm:px-5 pb-5 flex gap-2">
                     <input
                         type="text"
                         x-model="noteModal.note"
@@ -996,7 +985,6 @@
                         OK
                     </button>
                 </div>
-
             </div>
         </div>
         </template>
