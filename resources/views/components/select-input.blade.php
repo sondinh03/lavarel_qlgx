@@ -152,7 +152,7 @@
             x-transition:leave-start="opacity-100 scale-100"
             x-transition:leave-end="opacity-0 scale-[0.98]"
             :class="dropdownDirection === 'up' ? 'bottom-full mb-1.5' : 'top-full mt-1.5'"
-            class="absolute z-50 w-full min-w-[10rem]
+            class="absolute z-50 w-full left-0 right-0
                    bg-white/90 backdrop-blur-xl rounded-xl
                    border border-black/[0.06] shadow-mac py-1.5 overflow-hidden"
             role="listbox">

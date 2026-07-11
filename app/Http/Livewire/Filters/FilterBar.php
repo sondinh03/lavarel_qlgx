@@ -122,17 +122,9 @@ class FilterBar extends Component
         $hadNamHoc = (bool) $this->selectedNamHoc;
         $this->ensureDefaultNamHoc();
 
-        if ($this->selectedNamHoc && $this->namHocs->isNotEmpty()) {
+        if ($this->selectedNamHoc) {
             $this->loadKhois();
             $this->loadLops();
-        }
-
-        // Lớp không thuộc danh sách năm đang chọn → bỏ chọn (tránh UI "Tất cả lớp" giả)
-        if ($this->selectedLop) {
-            $lopIds = collect($this->lops)->pluck('id')->map(fn ($id) => (int) $id);
-            if (!$lopIds->contains((int) $this->selectedLop)) {
-                $this->selectedLop = null;
-            }
         }
 
         if (($this->selectedKy === null || $this->selectedKy === '') && $this->selectedNamHoc) {
@@ -165,17 +157,39 @@ class FilterBar extends Component
     }
 
     /**
-     * Luôn có năm học mặc định khi danh sách không rỗng.
+     * Giữ năm đã chọn (parent/URL/lớp). Chỉ gán mặc định khi chưa có.
+     * Nếu năm không nằm trong list active → inject để select vẫn hiện đúng.
      */
     protected function ensureDefaultNamHoc(): void
     {
-        if ($this->selectedNamHoc && $this->namHocs->keys()->contains((int) $this->selectedNamHoc)) {
+        if ($this->selectedNamHoc) {
             $this->selectedNamHoc = (int) $this->selectedNamHoc;
+            $this->ensureSelectedNamHocInList();
             return;
         }
 
         $defaultId = $this->resolveDefaultNamHocId();
         $this->selectedNamHoc = $defaultId ? (int) $defaultId : null;
+    }
+
+    protected function ensureSelectedNamHocInList(): void
+    {
+        if (!$this->selectedNamHoc) {
+            return;
+        }
+
+        $id = (int) $this->selectedNamHoc;
+        if ($this->namHocs->has($id) || $this->namHocs->has((string) $id)) {
+            return;
+        }
+
+        $name = NamHoc::where('parish_id', $this->parish_id)
+            ->where('id', $id)
+            ->value('name');
+
+        if ($name) {
+            $this->namHocs = collect([$id => $name])->union($this->namHocs);
+        }
     }
 
     protected function resolveDefaultNamHocId(): ?int
@@ -376,6 +390,46 @@ class FilterBar extends Component
             ->orderBy('name')
             ->get(['id', 'name'])
             ->map(fn($lop) => ['id' => $lop->id, 'name' => $lop->name]);
+
+        $this->ensureSelectedLopInList();
+    }
+
+    /**
+     * Lớp đang chọn (URL/parent) luôn có trong options — kể cả inactive /
+     * lệch khối — tránh UI hiện "-- Tất cả lớp --" trong khi classId vẫn còn.
+     */
+    protected function ensureSelectedLopInList(): void
+    {
+        if (!$this->selectedLop) {
+            return;
+        }
+
+        $lopId = (int) $this->selectedLop;
+        $exists = collect($this->lops)->contains(
+            fn ($lop) => (int) ($lop['id'] ?? 0) === $lopId
+        );
+
+        if ($exists) {
+            return;
+        }
+
+        $class = CatechismClass::select('id', 'name', 'school_year_id')
+            ->where('id', $lopId)
+            ->first();
+
+        if (!$class) {
+            $this->selectedLop = null;
+            return;
+        }
+
+        if ((int) $class->school_year_id !== (int) $this->selectedNamHoc) {
+            $this->selectedNamHoc = (int) $class->school_year_id;
+            $this->ensureSelectedNamHocInList();
+        }
+
+        $this->lops = collect([
+            ['id' => $class->id, 'name' => $class->name],
+        ])->merge($this->lops)->unique('id')->values();
     }
 
     protected function blockIfPending(string $field): bool
