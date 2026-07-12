@@ -38,6 +38,7 @@
         placeholder: @js($placeholder),
         disabled: @js($disabled),
         dropdownDirection: 'down',
+        menuStyle: '',
 
         init() {
             this.syncFromDom();
@@ -53,6 +54,24 @@
                     this.$nextTick(() => this.syncFromDom());
                 });
             }
+
+            this._onReposition = () => {
+                if (this.open) this.updatePosition();
+            };
+            this._onOutside = (e) => this.onOutside(e);
+
+            this.$watch('open', (value) => {
+                if (value) {
+                    this.$nextTick(() => this.updatePosition());
+                    window.addEventListener('scroll', this._onReposition, true);
+                    window.addEventListener('resize', this._onReposition);
+                    document.addEventListener('mousedown', this._onOutside);
+                } else {
+                    window.removeEventListener('scroll', this._onReposition, true);
+                    window.removeEventListener('resize', this._onReposition);
+                    document.removeEventListener('mousedown', this._onOutside);
+                }
+            });
         },
 
         syncFromDom() {
@@ -86,13 +105,21 @@
 
         toggle() {
             if (this.disabled) return;
-            this.checkDirection();
-            this.open = !this.open;
+            if (this.open) {
+                this.close();
+                return;
+            }
+            this.open = true;
+            this.$nextTick(() => this.updatePosition());
+        },
+
+        close() {
+            this.open = false;
         },
 
         select(value) {
             this.selectedValue = value === null ? '' : String(value);
-            this.open = false;
+            this.close();
 
             if (this.$refs.hiddenInput) {
                 this.$refs.hiddenInput.value = this.selectedValue;
@@ -100,16 +127,29 @@
             }
         },
 
-        checkDirection() {
-            const rect = this.$el.getBoundingClientRect();
+        updatePosition() {
+            const trigger = this.$refs.trigger;
+            if (!trigger) return;
+
+            const rect = trigger.getBoundingClientRect();
+            const dropdownHeight = Math.min(this.options.length * 40 + 16, 240);
             const spaceBelow = window.innerHeight - rect.bottom;
             const spaceAbove = rect.top;
-            const dropdownHeight = Math.min(this.options.length * 40 + 16, 240);
             this.dropdownDirection = spaceBelow < dropdownHeight && spaceAbove > spaceBelow ? 'up' : 'down';
+
+            this.menuStyle = this.dropdownDirection === 'up'
+                ? `position:fixed; left:${rect.left}px; width:${rect.width}px; bottom:${window.innerHeight - rect.top + 6}px; top:auto; z-index:9999;`
+                : `position:fixed; left:${rect.left}px; width:${rect.width}px; top:${rect.bottom + 6}px; z-index:9999;`;
+        },
+
+        onOutside(e) {
+            if (!this.open) return;
+            if (this.$el.contains(e.target)) return;
+            if (this.$refs.menu && this.$refs.menu.contains(e.target)) return;
+            this.close();
         },
     }"
-    x-on:click.outside="open = false"
-    x-on:keydown.escape.window="open = false">
+    x-on:keydown.escape.window="close()">
 
     @if($label)
     <label class="block text-xs font-semibold text-slate-500 mb-1.5 tracking-wide uppercase">
@@ -123,6 +163,7 @@
     <div class="relative">
         <button
             type="button"
+            x-ref="trigger"
             x-on:click="toggle()"
             :disabled="disabled"
             :class="open ? 'ring-2 ring-primary-500/25 border-primary-300/40' : ''"
@@ -142,58 +183,60 @@
             </svg>
         </div>
 
-        <div
-            x-show="open"
-            x-cloak
-            x-transition:enter="transition ease-out duration-150"
-            x-transition:enter-start="opacity-0 scale-[0.98]"
-            x-transition:enter-end="opacity-100 scale-100"
-            x-transition:leave="transition ease-in duration-100"
-            x-transition:leave-start="opacity-100 scale-100"
-            x-transition:leave-end="opacity-0 scale-[0.98]"
-            :class="dropdownDirection === 'up' ? 'bottom-full mb-1.5' : 'top-full mt-1.5'"
-            class="absolute z-50 w-full left-0 right-0
-                   bg-white/90 backdrop-blur-xl rounded-xl
-                   border border-black/[0.06] shadow-mac py-1.5 overflow-hidden"
-            role="listbox">
-            <ul class="max-h-60 overflow-y-auto py-0.5">
-                @if($placeholder)
-                <li>
-                    <button
-                        type="button"
-                        x-on:click="select('')"
-                        :class="selectedValue === ''
-                            ? 'bg-primary-500/10 text-primary-700 font-medium'
-                            : 'text-slate-700 hover:bg-black/[0.04]'"
-                        class="w-full px-3 py-2 text-sm text-left flex items-center justify-between gap-2 mx-1 rounded-lg transition-colors"
-                        style="width: calc(100% - 0.5rem);">
-                        <span class="truncate">{{ $placeholder }}</span>
-                        <svg x-show="selectedValue === ''" class="w-4 h-4 text-primary-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7" />
-                        </svg>
-                    </button>
-                </li>
-                @endif
-
-                <template x-for="option in options" :key="option.value">
+        <template x-teleport="body">
+            <div
+                x-ref="menu"
+                x-show="open"
+                x-cloak
+                x-transition:enter="transition ease-out duration-150"
+                x-transition:enter-start="opacity-0 scale-[0.98]"
+                x-transition:enter-end="opacity-100 scale-100"
+                x-transition:leave="transition ease-in duration-100"
+                x-transition:leave-start="opacity-100 scale-100"
+                x-transition:leave-end="opacity-0 scale-[0.98]"
+                :style="menuStyle"
+                class="bg-white/90 backdrop-blur-xl rounded-xl
+                       border border-black/[0.06] shadow-mac py-1.5 overflow-hidden"
+                role="listbox">
+                <ul class="max-h-60 overflow-y-auto py-0.5">
+                    @if($placeholder)
                     <li>
                         <button
                             type="button"
-                            x-on:click="select(option.value)"
-                            :class="isSelected(option)
+                            x-on:click="select('')"
+                            :class="selectedValue === ''
                                 ? 'bg-primary-500/10 text-primary-700 font-medium'
                                 : 'text-slate-700 hover:bg-black/[0.04]'"
                             class="w-full px-3 py-2 text-sm text-left flex items-center justify-between gap-2 mx-1 rounded-lg transition-colors"
                             style="width: calc(100% - 0.5rem);">
-                            <span class="truncate" x-text="option.label"></span>
-                            <svg x-show="isSelected(option)" class="w-4 h-4 text-primary-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <span class="truncate">{{ $placeholder }}</span>
+                            <svg x-show="selectedValue === ''" class="w-4 h-4 text-primary-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7" />
                             </svg>
                         </button>
                     </li>
-                </template>
-            </ul>
-        </div>
+                    @endif
+
+                    <template x-for="option in options" :key="option.value">
+                        <li>
+                            <button
+                                type="button"
+                                x-on:click="select(option.value)"
+                                :class="isSelected(option)
+                                    ? 'bg-primary-500/10 text-primary-700 font-medium'
+                                    : 'text-slate-700 hover:bg-black/[0.04]'"
+                                class="w-full px-3 py-2 text-sm text-left flex items-center justify-between gap-2 mx-1 rounded-lg transition-colors"
+                                style="width: calc(100% - 0.5rem);">
+                                <span class="truncate" x-text="option.label"></span>
+                                <svg x-show="isSelected(option)" class="w-4 h-4 text-primary-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7" />
+                                </svg>
+                            </button>
+                        </li>
+                    </template>
+                </ul>
+            </div>
+        </template>
 
         @if($model)
         <input

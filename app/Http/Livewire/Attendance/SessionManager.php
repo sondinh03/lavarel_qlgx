@@ -451,17 +451,17 @@ class SessionManager extends BaseComponent
         $this->authorize('create', AttendanceSession::class);
 
         if ($this->createMode === 'weekly' && empty($this->weekDays)) {
-            $this->emit('toast', 'error', 'Vui lòng chọn ít nhất 1 ngày trong tuần');
+            $this->emit('toast', 'error', 'Vui lòng chọn ít nhất 1 ngày trong tuần.');
             return;
         }
 
         if ($this->createMode === 'custom' && empty($this->selectedDates)) {
-            $this->emit('toast', 'error', 'Vui lòng chọn ít nhất 1 ngày');
+            $this->emit('toast', 'error', 'Vui lòng chọn ít nhất 1 ngày.');
             return;
         }
 
-        if (!$this->startDate) {
-            $this->emit('toast', 'error', 'Vui lòng chọn ngày bắt đầu');
+        if (in_array($this->createMode, ['single', 'weekly'], true) && !$this->startDate) {
+            $this->emit('toast', 'error', 'Vui lòng chọn ngày bắt đầu.');
             return;
         }
 
@@ -599,6 +599,31 @@ class SessionManager extends BaseComponent
     }
 
     // ==================== MODAL ====================
+
+    public function addSelectedDate(): void
+    {
+        if (!$this->startDate) {
+            $this->emit('toast', 'warning', 'Vui lòng chọn ngày trước khi thêm.');
+            return;
+        }
+
+        if (in_array($this->startDate, $this->selectedDates, true)) {
+            $this->emit('toast', 'info', 'Ngày này đã có trong danh sách.');
+            return;
+        }
+
+        $this->selectedDates[] = $this->startDate;
+        sort($this->selectedDates);
+        $this->selectedDates = array_values($this->selectedDates);
+    }
+
+    public function removeSelectedDate(string $date): void
+    {
+        $this->selectedDates = array_values(array_filter(
+            $this->selectedDates,
+            fn ($d) => $d !== $date
+        ));
+    }
 
     public function closeModal(): void
     {
@@ -775,10 +800,10 @@ class SessionManager extends BaseComponent
     protected function getStatusClass(int $status): string
     {
         return match ($status) {
-            AttendanceSession::STATUS_OPENING   => 'bg-green-100 text-green-700',
-            AttendanceSession::STATUS_CLOSED    => 'bg-slate-200 text-slate-600',
-            AttendanceSession::STATUS_CANCELLED => 'bg-red-100 text-red-700',
-            default                             => 'bg-slate-100 text-slate-500',
+            AttendanceSession::STATUS_OPENING   => 'bg-green-50/80 text-green-700',
+            AttendanceSession::STATUS_CLOSED    => 'bg-slate-100/80 text-slate-600',
+            AttendanceSession::STATUS_CANCELLED => 'bg-red-50/80 text-red-700',
+            default                             => 'bg-slate-50/80 text-slate-500',
         };
     }
 

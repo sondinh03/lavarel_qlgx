@@ -1,8 +1,7 @@
 @section('topbar')
 <x-breadcrumb :items="[
         ['label' => 'Trang chủ', 'url' => route('parish-admin.dashboard')],
-        ['label' => 'Quản lý điểm', 'url' => route('scores.index')],
-        ['label' => 'Bảng điểm', 'url' => route('scores.index')],
+        ['label' => 'Kết quả học tập'],
     ]" />
 @endsection
 
@@ -12,81 +11,84 @@
     <div id="main-content" class="mx-auto max-w-7xl">
         <x-mac-panel :overflow="true">
             <x-page-header
-                title="Quản lý điểm"
+                title="Kết quả học tập"
                 description="Nhập và quản lý điểm học sinh theo lớp và học kỳ"
                 icon-type="score" />
 
             <div class="p-4 lg:p-6 mac-hairline-b bg-white/30">
                 <div class="flex flex-col gap-4">
-                    <livewire:filters.filter-bar
-                        :parish-id="$parishId"
-                        :show-nam-hoc="true"
-                        :show-khoi="true"
-                        :show-lop="true"
-                        :show-ky="true"
-                        :selected-nam-hoc="$selectedNamHoc"
-                        :selected-khoi="$selectedKhoi"
-                        :selected-lop="$selectedLop"
-                        :selected-ky="$selectedSemester" />
+                    <div class="flex-1 min-w-0">
+                        <livewire:filters.filter-bar
+                            :parish-id="$parishId"
+                            :show-nam-hoc="true"
+                            :show-khoi="true"
+                            :show-lop="true"
+                            :show-ky="true"
+                            :selected-nam-hoc="$selectedNamHoc"
+                            :selected-khoi="$selectedKhoi"
+                            :selected-lop="$selectedLop"
+                            :selected-ky="$selectedSemester" />
+                    </div>
 
-                    <x-search-input
-                        wire-model="search"
-                        placeholder="Tìm học sinh..."
-                        debounce="400ms"
-                        class="max-w-md" />
+                    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                        <x-search-input
+                            wire-model="search"
+                            placeholder="Tìm học sinh..."
+                            debounce="400ms"
+                            class="max-w-md" />
+
+                        <div class="flex items-center gap-2 flex-wrap justify-end">
+                            @if($activeTab === 'scores')
+                            <x-button
+                                as="a"
+                                href="{{ route('scores.statistics', ['namHoc' => $selectedNamHoc, 'khoi' => $selectedKhoi, 'lop' => $selectedLop, 'semester' => $selectedSemester]) }}"
+                                variant="outline">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                                </svg>
+                                Thống kê
+                            </x-button>
+                            <x-button wire:click="saveAllScores" variant="primary">
+                                <x-icon name="save" />
+                                Lưu tất cả
+                            </x-button>
+                            <x-button wire:click="exportScores" variant="outline">
+                                <x-icon name="file-export" />
+                                Xuất Excel
+                            </x-button>
+                            @endif
+                            @if($activeTab === 'config')
+                            <x-button wire:click="createScoreType" variant="primary">
+                                <x-icon name="plus" />
+                                Thêm loại điểm
+                            </x-button>
+                            @endif
+                        </div>
+                    </div>
                 </div>
             </div>
 
-            <div class="px-4 lg:px-6 py-3 mac-hairline-b flex items-center justify-between gap-4 flex-wrap">
-                {{-- Tabs --}}
-                <div class="flex gap-1 bg-slate-100 p-1 rounded-xl">
+            <div class="px-4 lg:px-6 py-3 mac-hairline-b bg-white/20">
+                <div class="flex gap-1 p-1 rounded-xl bg-black/[0.04] border border-black/[0.04] w-fit">
                     <button
                         wire:click="switchTab('scores')"
+                        type="button"
                         class="px-4 py-1.5 text-sm font-semibold rounded-lg transition-all
                                {{ $activeTab === 'scores'
-                                   ? 'bg-white text-primary-600 shadow-sm'
+                                   ? 'bg-white/90 text-primary-600 shadow-mac-sm'
                                    : 'text-slate-600 hover:text-slate-900' }}">
                         Bảng điểm
                     </button>
                     <button
                         wire:click="switchTab('config')"
+                        type="button"
                         class="px-4 py-1.5 text-sm font-semibold rounded-lg transition-all
                                {{ $activeTab === 'config'
-                                   ? 'bg-white text-primary-600 shadow-sm'
+                                   ? 'bg-white/90 text-primary-600 shadow-mac-sm'
                                    : 'text-slate-600 hover:text-slate-900' }}">
                         Cấu hình loại điểm
                     </button>
-                </div>
-
-                {{-- Actions --}}
-                <div class="flex items-center gap-2 flex-wrap">
-                    @if($activeTab === 'scores')
-                    {{-- Nút đến trang thống kê --}}
-                    <a
-                        href="{{ route('scores.statistics', ['namHoc' => $selectedNamHoc, 'khoi' => $selectedKhoi, 'lop' => $selectedLop, 'semester' => $selectedSemester]) }}"
-                        class="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl border border-slate-300
-                               text-sm font-semibold text-slate-600 hover:bg-slate-50 hover:border-slate-400 transition-all">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-                        </svg>
-                        Thống kê
-                    </a>
-                    <x-button wire:click="saveAllScores" variant="primary">
-                        <x-icon name="save" />
-                        Lưu tất cả
-                    </x-button>
-                    <x-button wire:click="exportScores" variant="outline">
-                        <x-icon name="file-export" />
-                        Xuất Excel
-                    </x-button>
-                    @endif
-                    @if($activeTab === 'config')
-                    <x-button wire:click="createScoreType" variant="primary">
-                        <x-icon name="plus" />
-                        Thêm loại điểm
-                    </x-button>
-                    @endif
                 </div>
             </div>
 
@@ -121,21 +123,24 @@
             x-data="{ show: false, action: '', value: '' }"
             x-on:confirm-discard-draft.window="show = true; action = $event.detail.action; value = $event.detail.value">
             <div x-show="show" x-cloak
-                class="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4">
-                <div class="bg-white rounded-2xl shadow-xl w-full max-w-sm p-6 space-y-4">
-                    <h3 class="text-lg font-bold text-slate-900">Bạn có thay đổi chưa lưu</h3>
+                class="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-[60] p-4"
+                role="dialog" aria-modal="true"
+                @click.self="show = false"
+                @keydown.escape.window="show = false">
+                <div class="bg-white/90 backdrop-blur-xl rounded-2xl border border-black/[0.06] shadow-mac
+                    w-full max-w-sm p-6 space-y-4" @click.stop>
+                    <h3 class="text-base font-semibold tracking-tight text-slate-900">Bạn có thay đổi chưa lưu</h3>
                     <p class="text-sm text-slate-500">
                         Nếu tiếp tục, điểm đã nhập nhưng chưa lưu sẽ bị mất.
                     </p>
-                    <div class="flex justify-end gap-3">
-                        <button @click="show = false"
-                            class="px-4 py-2 text-sm font-semibold text-slate-600 hover:bg-slate-100 rounded-xl transition">
+                    <div class="flex gap-3 pt-1">
+                        <x-button type="button" variant="outline" class="flex-1" @click="show = false">
                             Ở lại
-                        </button>
-                        <button @click="show = false; $wire.confirmDiscard(action, value)"
-                            class="px-4 py-2 text-sm font-semibold text-white bg-red-500 hover:bg-red-600 rounded-xl transition">
+                        </x-button>
+                        <x-button type="button" variant="danger" class="flex-1"
+                            @click="show = false; $wire.confirmDiscard(action, value)">
                             Bỏ thay đổi
-                        </button>
+                        </x-button>
                     </div>
                 </div>
             </div>
@@ -143,7 +148,7 @@
 
         <div class="max-h-[70vh] overflow-y-auto">
             <div class="overflow-x-auto">
-                <table class="w-full border-separate border-spacing-0 text-sm">
+                <table class="w-full text-sm">
                     <thead class="bg-slate-50/50 sticky top-0 z-10 mac-hairline-b">
                             <tr>
                                 <x-table-header>STT</x-table-header>
@@ -167,11 +172,11 @@
                                     :sortable="true" sort-field="avg"
                                     :current-sort="$sortField" :sort-direction="$sortDirection"
                                     align="center"
-                                    class="bg-primary-50 text-primary-700 font-bold">
+                                    class="bg-primary-50/80 text-primary-700 font-bold">
                                     Điểm<br>trung bình
                                 </x-table-header>
 
-                                <x-table-header align="center" class="bg-primary-50 text-primary-700 font-bold">
+                                <x-table-header align="center" class="bg-primary-50/80 text-primary-700 font-bold">
                                     Xếp loại
                                 </x-table-header>
                             </tr>
@@ -193,18 +198,18 @@
                                     else                  { $rating = 'KEM';        $ratingLabel = 'Kém';        $ratingColor = 'red'; }
                                 }
                                 $badgeClass = match($ratingColor) {
-                                    'emerald' => 'bg-emerald-100 text-emerald-700',
-                                    'blue'    => 'bg-blue-100 text-blue-700',
-                                    'amber'   => 'bg-amber-100 text-amber-700',
-                                    'yellow'  => 'bg-yellow-100 text-yellow-700',
-                                    'orange'  => 'bg-orange-100 text-orange-700',
-                                    'red'     => 'bg-red-100 text-red-700',
-                                    default   => 'bg-slate-100 text-slate-400',
+                                    'emerald' => 'bg-emerald-50/80 text-emerald-700',
+                                    'blue'    => 'bg-blue-50/80 text-blue-700',
+                                    'amber'   => 'bg-amber-50/80 text-amber-700',
+                                    'yellow'  => 'bg-yellow-50/80 text-yellow-700',
+                                    'orange'  => 'bg-orange-50/80 text-orange-700',
+                                    'red'     => 'bg-red-50/80 text-red-700',
+                                    default   => 'bg-slate-50/80 text-slate-400',
                                 };
                             @endphp
                             <tr class="hover:bg-black/[0.03] transition-colors" wire:key="sc-{{ $sc->pivot_id }}">
 
-                                <td class="px-4 py-3 text-slate-400 sticky left-0 bg-white">
+                                <td class="px-4 py-3 text-slate-400 sticky left-0 bg-white/95 backdrop-blur-sm">
                                     {{ ($students->firstItem() ?? 0) + $index }}
                                 </td>
 
@@ -232,21 +237,21 @@
                                         data-row="{{ $index }}"
                                         data-col="{{ $colIndex }}"
                                         class="score-input w-14 py-1.5 px-2 text-center rounded-lg text-sm font-semibold
-                                               border transition-all outline-none placeholder:text-slate-300
-                                               focus:ring-2 focus:ring-primary-400 focus:border-primary-400
+                                               border shadow-mac-sm transition-all outline-none placeholder:text-slate-300
+                                               focus:ring-2 focus:ring-primary-500/25 focus:border-primary-300/40
                                                [appearance:textfield]
                                                [&::-webkit-outer-spin-button]:appearance-none
                                                [&::-webkit-inner-spin-button]:appearance-none
                                                {{ isset($scoresMatrix[$sc->pivot_id][$type->id])
-                                                   ? 'border-emerald-200 bg-emerald-50 text-emerald-700'
-                                                   : 'border-slate-200 bg-white text-slate-500' }}" />
+                                                   ? 'border-emerald-200/80 bg-emerald-50/80 text-emerald-700'
+                                                   : 'border-black/[0.06] bg-white/80 text-slate-600' }}" />
                                 </td>
                                 @endforeach
 
                                 {{-- Điểm TB --}}
-                                <td class="px-4 py-3 text-center bg-primary-50">
+                                <td class="px-4 py-3 text-center bg-primary-50/50">
                                     @if($avg !== null)
-                                    <span class="font-bold text-lg
+                                    <span class="font-bold text-lg tracking-tight
                                          {{ $avg >= 8 ? 'text-emerald-600' : ($avg >= 5 ? 'text-primary-600' : 'text-red-500') }}">
                                         {{ number_format($avg, 1) }}
                                     </span>
@@ -256,9 +261,9 @@
                                 </td>
 
                                 {{-- Xếp loại --}}
-                                <td class="px-4 py-3 text-center bg-primary-50">
+                                <td class="px-4 py-3 text-center bg-primary-50/50">
                                     @if($ratingLabel)
-                                    <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold {{ $badgeClass }}">
+                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-lg text-xs font-semibold {{ $badgeClass }}">
                                         {{ $ratingLabel }}
                                     </span>
                                     @else
@@ -297,7 +302,7 @@
             description="Chọn năm học để cấu hình loại điểm" />
         @else
         @if(!$selectedLop)
-        <div class="mx-4 lg:mx-6 my-4 px-4 py-3 mac-hairline-b bg-amber-50/50 text-sm text-amber-800 rounded-lg">
+        <div class="mx-4 lg:mx-6 my-4 px-4 py-3 rounded-xl border border-amber-200/80 bg-amber-50/80 text-sm text-amber-800 shadow-mac-sm">
             Chưa chọn lớp cụ thể — loại điểm sẽ được tạo theo <strong>khối</strong> hoặc <strong>toàn xứ</strong>.
             Chọn lớp ở trên nếu muốn cấu hình riêng từng lớp.
         </div>
@@ -305,7 +310,7 @@
 
         @if($scoreTypes->isNotEmpty())
         <div class="overflow-x-auto">
-            <table class="w-full border-separate border-spacing-0 text-sm">
+            <table class="w-full text-sm">
                 <thead class="bg-slate-50/50 mac-hairline-b">
                     <tr>
                         <x-table-header>Tên loại điểm</x-table-header>
@@ -322,7 +327,7 @@
                     <tr class="hover:bg-black/[0.03] transition-colors" wire:key="st-{{ $st->id }}">
                         <td class="px-4 py-3 font-semibold text-slate-900">{{ $st->name }}</td>
                         <td class="px-4 py-3">
-                            <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-indigo-100 text-indigo-700">
+                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-lg text-xs font-semibold bg-indigo-50/80 text-indigo-700">
                                 {{ $st->type_label }}
                             </span>
                         </td>
@@ -330,8 +335,8 @@
                         <td class="px-4 py-3 text-center font-semibold text-slate-700">{{ $st->coefficient }}</td>
                         <td class="px-4 py-3 text-center text-slate-600">{{ $st->max_score }}</td>
                         <td class="px-4 py-3 text-center">
-                            <span class="inline-flex items-center px-2.5 py-1 text-xs font-semibold rounded-full
-                                {{ $st->is_active ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-200 text-slate-500' }}">
+                            <span class="inline-flex items-center px-2.5 py-0.5 text-xs font-semibold rounded-lg
+                                {{ $st->is_active ? 'bg-emerald-50/80 text-emerald-700' : 'bg-slate-100/80 text-slate-500' }}">
                                 {{ $st->is_active ? 'Đang dùng' : 'Tắt' }}
                             </span>
                         </td>
@@ -406,51 +411,65 @@
         {{-- ===================== MODAL: CẤU HÌNH LOẠI ĐIỂM ===================== --}}
         @if($showScoreTypeForm)
         <div
-            class="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4"
+            class="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50 p-4"
             role="dialog" aria-modal="true"
-            wire:click="closeScoreTypeForm">
+            wire:click="closeScoreTypeForm"
+            @keydown.escape.window="$wire.closeScoreTypeForm()">
             <div
-                class="bg-white rounded-2xl shadow-xl w-full max-w-lg max-h-[90vh] overflow-hidden flex flex-col"
+                class="bg-white/90 backdrop-blur-xl rounded-2xl border border-black/[0.06] shadow-mac
+                    w-full max-w-lg max-h-[90vh] overflow-hidden flex flex-col"
                 wire:click.stop>
 
-                <div class="flex-shrink-0 p-6 border-b border-slate-200 bg-gradient-to-br from-primary-50 to-white">
-                    <h2 class="text-xl font-bold text-slate-900">
-                        {{ $editingScoreTypeId ? 'Cập nhật loại điểm' : 'Thêm loại điểm' }}
-                    </h2>
-                    <p class="text-sm text-slate-500 mt-0.5">
-                        Học kỳ {{ $selectedSemester }}
-                        @if($editingScoreTypeId)
-                            &middot; {{ $availableLops->firstWhere('id', $selectedLop)?->name ?? '' }}
-                        @else
-                            &middot;
-                            @if($createScope === 'class' && $selectedLop)
-                                Lớp: {{ $availableLops->firstWhere('id', $selectedLop)?->name ?? '' }}
-                            @elseif($createScope === 'grade')
-                                Khối: {{ $availableGrades->firstWhere('id', $createScopeGradeId)?->name ?? '(chưa chọn)' }}
-                            @else
-                                Toàn giáo xứ
-                            @endif
-                        @endif
-                    </p>
+                <div class="flex-shrink-0 px-6 py-5 border-b border-black/[0.06]">
+                    <div class="flex items-start justify-between gap-4">
+                        <div class="flex-1 min-w-0">
+                            <h2 class="text-xl font-semibold tracking-tight text-slate-900">
+                                {{ $editingScoreTypeId ? 'Cập nhật loại điểm' : 'Thêm loại điểm' }}
+                            </h2>
+                            <p class="mt-1 text-sm text-slate-500">
+                                Học kỳ {{ $selectedSemester }}
+                                @if($editingScoreTypeId)
+                                    &middot; {{ $availableLops->firstWhere('id', $selectedLop)?->name ?? '' }}
+                                @else
+                                    &middot;
+                                    @if($createScope === 'class' && $selectedLop)
+                                        Lớp: {{ $availableLops->firstWhere('id', $selectedLop)?->name ?? '' }}
+                                    @elseif($createScope === 'grade')
+                                        Khối: {{ $availableGrades->firstWhere('id', $createScopeGradeId)?->name ?? '(chưa chọn)' }}
+                                    @else
+                                        Toàn giáo xứ
+                                    @endif
+                                @endif
+                            </p>
+                        </div>
+                        <button wire:click="closeScoreTypeForm" type="button"
+                            class="flex-shrink-0 p-1.5 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-black/[0.04] transition-colors"
+                            aria-label="Đóng">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                        </button>
+                    </div>
                 </div>
 
                 <div class="flex-1 overflow-y-auto p-6 space-y-5">
                     @if($errors->any())
-                    <div class="bg-red-50 border-l-4 border-red-500 rounded-xl p-4 text-sm text-red-700 space-y-1">
+                    <div class="bg-red-50/90 border border-red-200/80 rounded-xl p-4 shadow-mac-sm text-sm text-red-700 space-y-1">
                         @foreach($errors->all() as $err)<div>• {{ $err }}</div>@endforeach
                     </div>
                     @endif
 
                     @if(!$editingScoreTypeId)
                     <div>
-                        <label class="block text-sm font-semibold text-slate-700 mb-2">Áp dụng cho</label>
+                        <label class="block text-xs font-semibold text-slate-500 mb-2 tracking-wide uppercase">Áp dụng cho</label>
                         <div class="grid grid-cols-3 gap-2">
                             @if($selectedLop)
                             <label class="flex flex-col items-center gap-1 p-3 rounded-xl border cursor-pointer
-                                          text-center transition-all select-none
+                                          text-center transition-all select-none shadow-mac-sm
                                           {{ $createScope === 'class'
-                                              ? 'border-primary-400 bg-primary-50 ring-1 ring-primary-300'
-                                              : 'border-slate-200 hover:border-slate-300' }}">
+                                              ? 'border-primary-300/60 bg-primary-50/80'
+                                              : 'border-black/[0.06] bg-white/80 hover:bg-white' }}">
                                 <input type="radio" wire:model="createScope" value="class" class="sr-only">
                                 <span class="text-sm font-semibold text-slate-800">Lớp này</span>
                                 <span class="text-xs text-slate-400">Chỉ lớp đang chọn</span>
@@ -458,20 +477,20 @@
                             @endif
 
                             <label class="flex flex-col items-center gap-1 p-3 rounded-xl border cursor-pointer
-                                          text-center transition-all select-none
+                                          text-center transition-all select-none shadow-mac-sm
                                           {{ $createScope === 'grade'
-                                              ? 'border-primary-400 bg-primary-50 ring-1 ring-primary-300'
-                                              : 'border-slate-200 hover:border-slate-300' }}">
+                                              ? 'border-primary-300/60 bg-primary-50/80'
+                                              : 'border-black/[0.06] bg-white/80 hover:bg-white' }}">
                                 <input type="radio" wire:model="createScope" value="grade" class="sr-only">
                                 <span class="text-sm font-semibold text-slate-800">Theo khối</span>
                                 <span class="text-xs text-slate-400">Tất cả lớp cùng khối</span>
                             </label>
 
                             <label class="flex flex-col items-center gap-1 p-3 rounded-xl border cursor-pointer
-                                          text-center transition-all select-none
+                                          text-center transition-all select-none shadow-mac-sm
                                           {{ $createScope === 'parish'
-                                              ? 'border-primary-400 bg-primary-50 ring-1 ring-primary-300'
-                                              : 'border-slate-200 hover:border-slate-300' }}">
+                                              ? 'border-primary-300/60 bg-primary-50/80'
+                                              : 'border-black/[0.06] bg-white/80 hover:bg-white' }}">
                                 <input type="radio" wire:model="createScope" value="parish" class="sr-only">
                                 <span class="text-sm font-semibold text-slate-800">Toàn xứ</span>
                                 <span class="text-xs text-slate-400">Tất cả lớp năm học</span>
@@ -480,9 +499,11 @@
 
                         @if($createScope === 'grade')
                         <div class="mt-3">
+                            <label class="block text-xs font-semibold text-slate-500 mb-1.5 tracking-wide uppercase">Chọn khối</label>
                             <select wire:model="createScopeGradeId"
-                                class="w-full px-3 py-2 rounded-xl border border-slate-300
-                                       focus:outline-none focus:ring-2 focus:ring-primary-500 text-sm">
+                                class="w-full h-11 px-4 py-2.5 rounded-xl border border-black/[0.06] bg-white/80 backdrop-blur-sm
+                                       text-sm text-slate-900 shadow-mac-sm
+                                       focus:outline-none focus:ring-2 focus:ring-primary-500/25 focus:border-primary-300/40">
                                 <option value="">-- Chọn khối --</option>
                                 @foreach($availableGrades as $grade)
                                 <option value="{{ $grade->id }}">{{ $grade->name }}</option>
@@ -494,12 +515,13 @@
                     @endif
 
                     <div>
-                        <label class="block text-sm font-semibold text-slate-700 mb-1">
-                            Loại điểm <span class="text-red-500">*</span>
+                        <label class="block text-xs font-semibold text-slate-500 mb-1.5 tracking-wide uppercase">
+                            Loại điểm <span class="text-red-500 normal-case">*</span>
                         </label>
                         <select wire:model.defer="scoreTypeType"
-                            class="w-full px-3 py-2 rounded-xl border border-slate-300
-                                   focus:outline-none focus:ring-2 focus:ring-primary-500">
+                            class="w-full h-11 px-4 py-2.5 rounded-xl border border-black/[0.06] bg-white/80 backdrop-blur-sm
+                                   text-sm text-slate-900 shadow-mac-sm
+                                   focus:outline-none focus:ring-2 focus:ring-primary-500/25 focus:border-primary-300/40">
                             <option value="">-- Chọn loại --</option>
                             <option value="1">Khảo kinh</option>
                             <option value="2">Điểm 15 phút</option>
@@ -536,18 +558,21 @@
                         type="number" step="0.1" min="1" max="100"
                         wire:model.defer="typeMaxScore" />
 
-                    <div class="border border-slate-200 rounded-xl p-4">
+                    <div class="rounded-xl border border-black/[0.06] bg-white/50 p-4 shadow-mac-sm">
                         <label class="inline-flex items-center gap-3 cursor-pointer">
                             <input type="checkbox" wire:model.defer="typeIsActive"
-                                class="w-4 h-4 rounded border-slate-300 text-primary-600 focus:ring-primary-500">
+                                class="w-4 h-4 rounded border-black/[0.15] text-primary-600 focus:ring-primary-500/25">
                             <span class="text-sm font-semibold text-slate-900">Kích hoạt loại điểm này</span>
                         </label>
                     </div>
                 </div>
 
-                <div class="flex-shrink-0 px-6 py-4 border-t border-slate-200 bg-slate-50 flex justify-end gap-3">
-                    <x-action-button wire="closeScoreTypeForm" variant="secondary">Huỷ</x-action-button>
-                    <x-action-button wire="saveScoreType" icon="save" :loading="true">Lưu</x-action-button>
+                <div class="flex-shrink-0 px-6 py-4 border-t border-black/[0.06] bg-white/40 flex justify-end gap-3">
+                    <x-button type="button" variant="outline" wire:click="closeScoreTypeForm">Huỷ</x-button>
+                    <x-button type="button" variant="primary" wire:click="saveScoreType" wire:loading.attr="disabled">
+                        <x-icon name="save" />
+                        Lưu
+                    </x-button>
                 </div>
             </div>
         </div>

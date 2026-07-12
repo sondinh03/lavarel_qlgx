@@ -391,26 +391,6 @@
                 </table>
             </div>
 
-            {{-- Bulk action bar --}}
-            @if(count($selectedStudents) > 0)
-            <div class="px-4 lg:px-6 py-3 bg-primary-50/50 mac-hairline-t flex items-center justify-between gap-4">
-                <span class="text-sm font-semibold text-primary-700">
-                    Đã chọn {{ count($selectedStudents) }} học sinh
-                </span>
-                <div class="flex items-center gap-2">
-                    <x-button wire:click="printSelected" variant="primary" size="sm">
-                        <x-icon name="printer" />
-                        In thẻ
-                    </x-button>
-                    <button type="button" wire:click="$set('selectedStudents', [])"
-                        class="px-3 py-1.5 text-sm font-medium text-primary-600
-                           hover:bg-primary-100 rounded-lg transition">
-                        Bỏ chọn tất cả
-                    </button>
-                </div>
-            </div>
-            @endif
-
             @if($students->hasPages())
             <div class="mac-hairline-t">
                 <x-pagination :paginator="$students" :per-page-options="[10, 15, 25, 50, 100]" />
@@ -445,7 +425,7 @@
         </x-mac-panel>
 
         @if(!$isCatechist)
-        {{-- Modal liên kết giáo dân (cùng pattern modal năm học) --}}
+        {{-- Modal liên kết giáo dân --}}
         <div
             x-show="showLink"
             x-transition.opacity
@@ -458,18 +438,19 @@
             <div
                 x-show="showLink"
                 x-transition
-                class="bg-white rounded-2xl shadow-xl w-full max-w-xl max-h-[90vh] overflow-hidden flex flex-col"
+                class="bg-white/90 backdrop-blur-xl rounded-2xl border border-black/[0.06] shadow-mac
+                    w-full max-w-xl max-h-[90vh] overflow-hidden flex flex-col"
                 @click.stop>
 
                 {{-- Header --}}
-                <div class="flex-shrink-0 p-6 border-b border-slate-200 bg-gradient-to-br from-primary-50 to-white">
+                <div class="flex-shrink-0 px-6 py-5 border-b border-black/[0.06]">
                     <div class="flex items-start justify-between gap-4">
-                        <div>
-                            <h2 class="text-xl font-bold text-slate-900">Liên kết hồ sơ giáo dân</h2>
-                            <p class="text-sm text-slate-600 mt-1">
+                        <div class="min-w-0">
+                            <h2 class="text-xl font-semibold tracking-tight text-slate-900">Liên kết hồ sơ giáo dân</h2>
+                            <p class="text-sm text-slate-500 mt-1">
                                 @if($linkingStudent)
                                     Tìm giáo dân trùng họ tên với
-                                    <strong>{{ $linkingStudent->full_name }}</strong>
+                                    <span class="font-semibold text-slate-700">{{ $linkingStudent->full_name }}</span>
                                     @if($suggestedParishioners->count() > 0)
                                         — {{ $suggestedParishioners->count() }} gợi ý
                                     @endif
@@ -480,7 +461,7 @@
                         </div>
                         <button type="button"
                             @click="showLink = false; $wire.closeLinkModal()"
-                            class="flex-shrink-0 p-1 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors">
+                            class="flex-shrink-0 p-1.5 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-black/[0.04] transition-colors">
                             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
                             </svg>
@@ -491,27 +472,28 @@
                 {{-- Body --}}
                 <div class="flex-1 overflow-y-auto p-6 space-y-5">
                     @if($showLinkModal && $linkingStudent)
-                    <div class="border border-slate-200 rounded-xl p-4 space-y-2 bg-slate-50/50">
-                        <h3 class="text-sm font-bold text-slate-900">Học sinh cần liên kết</h3>
+                    <div class="rounded-xl border border-black/[0.06] bg-white/40 p-4 space-y-2">
+                        <h3 class="text-xs font-semibold text-slate-500 tracking-wide uppercase">Học sinh cần liên kết</h3>
                         <div class="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-slate-600">
-                            <span><span class="text-slate-500">Họ tên:</span> <strong class="text-slate-900">{{ $linkingStudent->full_name }}</strong></span>
+                            <span><span class="text-slate-500">Họ tên:</span> <span class="font-semibold text-slate-900">{{ $linkingStudent->full_name }}</span></span>
                             @if($linkingStudent->birthday)
                             <span><span class="text-slate-500">Ngày sinh:</span> {{ $linkingStudent->birthday->format('d/m/Y') }}</span>
                             @endif
                             @if($linkingStudent->student_code)
-                            <span><span class="text-slate-500">Mã HS:</span> <span class="font-mono">{{ $linkingStudent->student_code }}</span></span>
+                            <span><span class="text-slate-500">Mã HS:</span> <span class="font-mono text-primary-600">{{ $linkingStudent->student_code }}</span></span>
                             @endif
                         </div>
                     </div>
 
                     @if($suggestedParishioners->count() > 0)
                     <div class="space-y-3">
-                        <h3 class="text-sm font-bold text-slate-900">Giáo dân gợi ý</h3>
+                        <h3 class="text-xs font-semibold text-slate-500 tracking-wide uppercase">Giáo dân gợi ý</h3>
                         @foreach($suggestedParishioners as $p)
-                        <div class="border border-slate-200 rounded-xl p-4 hover:border-primary-300 hover:bg-primary-50/30 transition-all">
+                        <div class="rounded-xl border border-black/[0.06] bg-white/40 p-4
+                            hover:border-primary-300/50 hover:bg-primary-50/40 transition-all shadow-mac-sm">
                             <div class="flex items-center justify-between gap-4">
                                 <div class="flex items-center gap-3 min-w-0">
-                                    <div class="w-10 h-10 rounded-full overflow-hidden bg-slate-100 flex-shrink-0">
+                                    <div class="w-10 h-10 rounded-2xl overflow-hidden bg-slate-100/80 flex-shrink-0 shadow-mac-sm">
                                         @if($p->avatar_path)
                                         <img src="{{ avatar_url($p->avatar_path) }}"
                                             alt="{{ $p->full_name_with_saint }}"
@@ -524,7 +506,7 @@
                                     </div>
 
                                     <div class="min-w-0">
-                                        <div class="font-semibold text-slate-900 truncate">{{ $p->full_name_with_saint }}</div>
+                                        <div class="font-semibold text-sm text-slate-900 truncate">{{ $p->full_name_with_saint }}</div>
                                         <div class="flex items-center gap-3 mt-0.5 text-xs text-slate-500 flex-wrap">
                                             <span>{{ $p->gender === 'male' ? 'Nam' : 'Nữ' }}</span>
                                             @if($p->birthday)
@@ -532,9 +514,9 @@
                                             @endif
                                             @if($linkingStudent->birthday && $p->birthday)
                                                 @if($linkingStudent->birthday->isSameDay($p->birthday))
-                                                <span class="text-emerald-600 font-medium">Khớp ngày sinh</span>
+                                                <span class="inline-flex px-2 py-0.5 rounded-md text-[10px] font-semibold bg-emerald-50/80 text-emerald-700">Khớp ngày sinh</span>
                                                 @else
-                                                <span class="text-amber-600 font-medium">Khác ngày sinh</span>
+                                                <span class="inline-flex px-2 py-0.5 rounded-md text-[10px] font-semibold bg-amber-50/80 text-amber-700">Khác ngày sinh</span>
                                                 @endif
                                             @endif
                                             @if($p->cccd)
@@ -557,7 +539,7 @@
                     </div>
 
                     @else
-                    <div class="text-center py-8 border border-dashed border-slate-200 rounded-xl">
+                    <div class="text-center py-8 rounded-xl border border-dashed border-black/[0.08] bg-white/30">
                         <svg class="mx-auto w-12 h-12 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                 d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -576,7 +558,7 @@
                 </div>
 
                 {{-- Footer --}}
-                <div class="flex-shrink-0 px-6 py-4 border-t border-slate-200 bg-slate-50 flex justify-end gap-3">
+                <div class="flex-shrink-0 px-6 py-4 border-t border-black/[0.06] bg-slate-50/70 flex justify-end gap-3">
                     <x-button variant="outline" @click="showLink = false; $wire.closeLinkModal()">
                         Hủy
                     </x-button>
@@ -599,29 +581,30 @@
             <div
                 x-show="showEnroll"
                 x-transition
-                class="bg-white rounded-2xl shadow-xl w-full max-w-5xl max-h-[90vh] overflow-hidden flex flex-col"
+                class="bg-white/90 backdrop-blur-xl rounded-2xl border border-black/[0.06] shadow-mac
+                    w-full max-w-5xl max-h-[90vh] overflow-hidden flex flex-col"
                 @click.stop>
 
-                <div class="flex-shrink-0 p-6 border-b border-slate-200 bg-gradient-to-br from-primary-50 to-white">
+                <div class="flex-shrink-0 px-6 py-5 border-b border-black/[0.06]">
                     <div class="flex items-start justify-between gap-4 mb-4">
                         <div>
-                            <h2 id="enroll-modal-title" class="text-xl font-bold text-slate-900">
+                            <h2 id="enroll-modal-title" class="text-xl font-semibold tracking-tight text-slate-900">
                                 Ghi danh học sinh
                             </h2>
-                            <p class="text-sm text-slate-600 mt-1">
-                                @if($lop) Lớp: <strong>{{ $lop->name }}</strong> @endif
+                            <p class="text-sm text-slate-500 mt-1">
+                                @if($lop) Lớp: <span class="font-semibold text-slate-700">{{ $lop->name }}</span> @endif
                             </p>
                         </div>
                         <button type="button"
                             @click="showEnroll = false; $wire.closeEnrollModal()"
-                            class="flex-shrink-0 p-1 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors">
+                            class="flex-shrink-0 p-1.5 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-black/[0.04] transition-colors">
                             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
                             </svg>
                         </button>
                     </div>
 
-                    <div class="flex gap-1 bg-slate-100 p-1 rounded-xl w-fit flex-wrap">
+                    <div class="flex gap-1 bg-black/[0.04] p-1 rounded-xl w-fit flex-wrap">
 
                         {{-- Tab 1: Học sinh có sẵn --}}
                         <button type="button"
@@ -629,8 +612,8 @@
                             class="inline-flex items-center gap-2 px-4 py-2 text-sm font-semibold
                                    rounded-lg transition-all
                                    {{ $enrollTab === 'existing'
-                                       ? 'bg-white text-primary-700 shadow-sm'
-                                       : 'text-slate-500 hover:text-slate-700' }}">
+                                       ? 'bg-white/90 text-primary-700 shadow-mac-sm'
+                                       : 'text-slate-500 hover:text-slate-700 hover:bg-white/50' }}">
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                     d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
@@ -643,8 +626,8 @@
                             class="inline-flex items-center gap-2 px-4 py-2 text-sm font-semibold
                                 rounded-lg transition-all
                                 {{ $enrollTab === 'new'
-                                    ? 'bg-white text-primary-700 shadow-sm'
-                                    : 'text-slate-500 hover:text-slate-700' }}">
+                                    ? 'bg-white/90 text-primary-700 shadow-mac-sm'
+                                    : 'text-slate-500 hover:text-slate-700 hover:bg-white/50' }}">
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                     d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
@@ -658,8 +641,8 @@
                             class="inline-flex items-center gap-2 px-4 py-2 text-sm font-semibold
                                    rounded-lg transition-all
                                    {{ $enrollTab === 'parishioner'
-                                       ? 'bg-white text-primary-700 shadow-sm'
-                                       : 'text-slate-500 hover:text-slate-700' }}">
+                                       ? 'bg-white/90 text-primary-700 shadow-mac-sm'
+                                       : 'text-slate-500 hover:text-slate-700 hover:bg-white/50' }}">
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                     d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
@@ -682,13 +665,15 @@
                                 wire:model.debounce.300ms="modalSearch"
                                 type="text"
                                 placeholder="Tìm kiếm học sinh..."
-                                class="flex-1 px-4 py-2.5 rounded-xl border border-slate-200
-                                       focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent">
+                                class="flex-1 h-11 px-4 py-2.5 rounded-xl border border-black/[0.06]
+                                    bg-white/80 backdrop-blur-sm text-sm text-slate-900 shadow-mac-sm
+                                    focus:outline-none focus:ring-2 focus:ring-primary-500/25 focus:border-primary-300/40 transition-all">
 
                             <select
                                 wire:model="birthYear"
-                                class="w-44 px-3 py-2.5 rounded-xl border border-slate-200 bg-white
-                                       focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent text-sm">
+                                class="w-44 h-11 px-3 py-2.5 rounded-xl border border-black/[0.06]
+                                    bg-white/80 backdrop-blur-sm text-sm text-slate-900 shadow-mac-sm
+                                    focus:outline-none focus:ring-2 focus:ring-primary-500/25 focus:border-primary-300/40 transition-all">
                                 <option value="">-- Tất cả năm sinh --</option>
                                 @foreach($this->getQuickYearOptions() as $year)
                                 <option value="{{ $year }}">{{ $year }}</option>
@@ -697,7 +682,7 @@
 
                             @if($birthYear)
                             <button wire:click="clearBirthYearFilters" type="button"
-                                class="p-2.5 text-slate-500 hover:bg-slate-100 rounded-xl transition">
+                                class="p-2.5 text-slate-500 hover:bg-black/[0.04] rounded-xl transition">
                                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
                                 </svg>
@@ -706,24 +691,24 @@
                         </div>
 
                         @if($availableStudents && $availableStudents->count() > 0)
-                        <div class="overflow-x-auto rounded-xl border border-slate-200">
-                            <table class="w-full border-separate border-spacing-0">
-                                <thead class="bg-slate-50 sticky top-0">
+                        <div class="overflow-x-auto rounded-xl border border-black/[0.06] bg-white/40">
+                            <table class="w-full">
+                                <thead class="bg-slate-50/50 sticky top-0">
                                     <tr>
                                         <th class="px-4 py-3 text-left">
                                             <x-checkbox wire:model="selectAllInModal" />
                                         </th>
-                                        <th class="px-4 py-3 text-left text-xs font-semibold text-slate-700 uppercase">Mã HS</th>
-                                        <th class="px-4 py-3 text-left text-xs font-semibold text-slate-700 uppercase">Tên thánh</th>
-                                        <th class="px-4 py-3 text-left text-xs font-semibold text-slate-700 uppercase">Họ tên</th>
-                                        <th class="px-4 py-3 text-left text-xs font-semibold text-slate-700 uppercase">Ngày sinh</th>
-                                        <th class="px-4 py-3 text-left text-xs font-semibold text-slate-700 uppercase">Giáo họ</th>
-                                        <th class="px-4 py-3 text-left text-xs font-semibold text-slate-700 uppercase">Thao tác</th>
+                                        <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500 tracking-wide uppercase">Mã HS</th>
+                                        <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500 tracking-wide uppercase">Tên thánh</th>
+                                        <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500 tracking-wide uppercase">Họ tên</th>
+                                        <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500 tracking-wide uppercase">Ngày sinh</th>
+                                        <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500 tracking-wide uppercase">Giáo họ</th>
+                                        <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500 tracking-wide uppercase">Thao tác</th>
                                     </tr>
                                 </thead>
-                                <tbody class="divide-y divide-slate-100">
+                                <tbody class="divide-y divide-black/[0.04]">
                                     @foreach($availableStudents as $student)
-                                    <tr class="hover:bg-slate-50" wire:key="avail-{{ $student->id }}">
+                                    <tr class="hover:bg-black/[0.03] transition-colors" wire:key="avail-{{ $student->id }}">
                                         <td class="px-4 py-3">
                                             <x-checkbox wire:model="studentsToAdd" value="{{ $student->id }}" />
                                         </td>
@@ -787,13 +772,15 @@
                                 wire:model.debounce.300ms="parishionerSearch"
                                 type="text"
                                 placeholder="Tìm kiếm giáo dân..."
-                                class="w-full px-4 py-2.5 rounded-xl border border-slate-200
-                                       focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent">
+                                class="w-full h-11 px-4 py-2.5 rounded-xl border border-black/[0.06]
+                                    bg-white/80 backdrop-blur-sm text-sm text-slate-900 shadow-mac-sm
+                                    focus:outline-none focus:ring-2 focus:ring-primary-500/25 focus:border-primary-300/40 transition-all">
 
                             <div class="flex items-center gap-2 flex-wrap">
                                 <select wire:model="parishionerBirthYear"
-                                    class="flex-1 min-w-[140px] px-3 py-2.5 rounded-xl border border-slate-300
-                                           focus:outline-none focus:ring-2 focus:ring-primary-500 text-sm">
+                                    class="flex-1 min-w-[140px] h-11 px-3 py-2.5 rounded-xl border border-black/[0.06]
+                                        bg-white/80 backdrop-blur-sm text-sm text-slate-900 shadow-mac-sm
+                                        focus:outline-none focus:ring-2 focus:ring-primary-500/25 focus:border-primary-300/40 transition-all">
                                     <option value="">-- Tất cả năm sinh --</option>
                                     @foreach($this->getQuickYearOptions() as $year)
                                     <option value="{{ $year }}">{{ $year }}</option>
@@ -802,7 +789,7 @@
 
                                 @if($parishionerBirthYear)
                                 <button wire:click="$set('parishionerBirthYear', null)" type="button"
-                                    class="p-2.5 text-slate-500 hover:bg-slate-100 rounded-xl transition">
+                                    class="p-2.5 text-slate-500 hover:bg-black/[0.04] rounded-xl transition">
                                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
                                     </svg>
@@ -811,42 +798,44 @@
 
                                 <input type="number" wire:model.lazy="ageFrom"
                                     placeholder="Tuổi từ"
-                                    class="w-28 px-3 py-2.5 rounded-xl border border-slate-300
-                                           focus:outline-none focus:ring-2 focus:ring-primary-500 text-sm">
+                                    class="w-28 h-11 px-3 py-2.5 rounded-xl border border-black/[0.06]
+                                        bg-white/80 backdrop-blur-sm text-sm text-slate-900 shadow-mac-sm
+                                        focus:outline-none focus:ring-2 focus:ring-primary-500/25 focus:border-primary-300/40 transition-all">
 
                                 <input type="number" wire:model.lazy="ageTo"
                                     placeholder="đến"
-                                    class="w-28 px-3 py-2.5 rounded-xl border border-slate-300
-                                           focus:outline-none focus:ring-2 focus:ring-primary-500 text-sm">
+                                    class="w-28 h-11 px-3 py-2.5 rounded-xl border border-black/[0.06]
+                                        bg-white/80 backdrop-blur-sm text-sm text-slate-900 shadow-mac-sm
+                                        focus:outline-none focus:ring-2 focus:ring-primary-500/25 focus:border-primary-300/40 transition-all">
 
                                 @if($ageFrom || $ageTo)
                                 <button wire:click="$set('ageFrom', null); $set('ageTo', null);" type="button"
-                                    class="px-3 py-2 text-sm text-slate-600 hover:bg-slate-100 rounded-xl transition">
-                                    ✕ Xóa tuổi
+                                    class="px-3 py-2 text-sm text-slate-600 hover:bg-black/[0.04] rounded-xl transition">
+                                    Xóa tuổi
                                 </button>
                                 @endif
                             </div>
                         </div>
 
                         @if($availableParishioners && $availableParishioners->count() > 0)
-                        <div class="overflow-x-auto rounded-xl border border-slate-200">
-                            <table class="w-full border-separate border-spacing-0">
-                                <thead class="bg-slate-50 sticky top-0">
+                        <div class="overflow-x-auto rounded-xl border border-black/[0.06] bg-white/40">
+                            <table class="w-full">
+                                <thead class="bg-slate-50/50 sticky top-0">
                                     <tr>
                                         <th class="px-4 py-3 text-left">
                                             <x-checkbox wire:model="selectAllParishioners" />
                                         </th>
-                                        <th class="px-4 py-3 text-left text-xs font-semibold text-slate-700 uppercase">Họ</th>
-                                        <th class="px-4 py-3 text-left text-xs font-semibold text-slate-700 uppercase">Tên</th>
-                                        <th class="px-4 py-3 text-left text-xs font-semibold text-slate-700 uppercase">Ngày sinh</th>
-                                        <th class="px-4 py-3 text-left text-xs font-semibold text-slate-700 uppercase">Tuổi</th>
-                                        <th class="px-4 py-3 text-left text-xs font-semibold text-slate-700 uppercase">Giới tính</th>
-                                        <th class="px-4 py-3 text-left text-xs font-semibold text-slate-700 uppercase">Điện thoại</th>
+                                        <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500 tracking-wide uppercase">Họ</th>
+                                        <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500 tracking-wide uppercase">Tên</th>
+                                        <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500 tracking-wide uppercase">Ngày sinh</th>
+                                        <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500 tracking-wide uppercase">Tuổi</th>
+                                        <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500 tracking-wide uppercase">Giới tính</th>
+                                        <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500 tracking-wide uppercase">Điện thoại</th>
                                     </tr>
                                 </thead>
-                                <tbody class="divide-y divide-slate-100">
+                                <tbody class="divide-y divide-black/[0.04]">
                                     @foreach($availableParishioners as $p)
-                                    <tr class="hover:bg-slate-50" wire:key="parish-{{ $p->id }}">
+                                    <tr class="hover:bg-black/[0.03] transition-colors" wire:key="parish-{{ $p->id }}">
                                         <td class="px-4 py-3">
                                             <x-checkbox wire:model="selectedParishioners" value="{{ $p->id }}" />
                                         </td>
@@ -869,8 +858,8 @@
                                             @endif
                                         </td>
                                         <td class="px-4 py-3 text-sm">
-                                            <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium
-                                                         {{ $p->gender == 'male' || $p->gender == 1 ? 'bg-primary-100 text-primary-700' : 'bg-pink-100 text-pink-700' }}">
+                                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-lg text-xs font-semibold
+                                                         {{ $p->gender == 'male' || $p->gender == 1 ? 'bg-primary-50/80 text-primary-700' : 'bg-pink-50/80 text-pink-700' }}">
                                                 {{ $p->gender == 'male' || $p->gender == 1 ? 'Nam' : 'Nữ' }}
                                             </span>
                                         </td>
@@ -904,7 +893,7 @@
                     @endif
                 </div>
 
-                <div class="flex-shrink-0 px-6 py-4 border-t border-slate-200 bg-slate-50">
+                <div class="flex-shrink-0 px-6 py-4 border-t border-black/[0.06] bg-slate-50/70">
                     @if($enrollTab === 'existing')
                     <div class="flex items-center justify-between gap-4">
                         <span class="text-sm text-slate-600">
@@ -953,6 +942,56 @@
         </div>
         @endif
     </div>
+
+    {{-- Sticky bulk action bar (trong vùng main, không đè sidebar) --}}
+    @if(count($selectedStudents) > 0)
+    <div class="fixed right-0 z-40 px-3 sm:px-4"
+        style="left: var(--sidebar-current, 0px); bottom: calc(var(--bottom-offset, 0px) + env(safe-area-inset-bottom, 0px) + 0.75rem);">
+        <div class="mx-auto max-w-7xl">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3
+                px-4 py-3 rounded-2xl
+                bg-white/90 backdrop-blur-xl border border-black/[0.06] shadow-mac">
+                <span class="text-sm font-semibold text-slate-800">
+                    Đã chọn <span class="text-primary-700">{{ count($selectedStudents) }}</span> học sinh
+                </span>
+                <div class="flex items-center gap-2 flex-wrap justify-end">
+                    <x-button wire:click="printSelected" variant="primary" size="sm">
+                        <x-icon name="printer" />
+                        In thẻ
+                    </x-button>
+                    <x-button
+                        type="button"
+                        variant="warning"
+                        size="sm"
+                        x-on:click="$dispatch('open-confirm', {
+                            message: 'Gỡ {{ count($selectedStudents) }} học sinh đã chọn khỏi lớp?',
+                            wireMethod: 'removeSelectedFromClass'
+                        })">
+                        <x-icon name="trash" />
+                        Gỡ khỏi lớp
+                    </x-button>
+                    <x-button
+                        type="button"
+                        variant="danger"
+                        size="sm"
+                        x-on:click="$dispatch('open-confirm', {
+                            message: 'Xóa vĩnh viễn {{ count($selectedStudents) }} hồ sơ học sinh? Hành động này không thể hoàn tác.',
+                            wireMethod: 'deleteSelectedProfiles'
+                        })">
+                        <x-icon name="trash" />
+                        Xóa hồ sơ
+                    </x-button>
+                    <button type="button" wire:click="$set('selectedStudents', [])"
+                        class="px-3 py-1.5 text-sm font-medium text-slate-600
+                            hover:bg-black/[0.04] rounded-lg transition">
+                        Bỏ chọn
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="h-24" aria-hidden="true"></div>
+    @endif
 </div>
 
 @push('page-title')

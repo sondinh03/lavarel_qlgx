@@ -6,30 +6,27 @@
     ]" />
 @endsection
 
-<div class="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 p-4 sm:p-6">
-    <div class="mx-auto max-w-7xl space-y-5">
+<div class="min-h-screen bg-apple-gray p-2 sm:p-4 lg:p-6" style="min-height: calc(100vh - 56px - var(--bottom-offset));">
+    <div id="main-content" class="mx-auto max-w-7xl space-y-5">
 
-        {{-- ===================== HEADER ===================== --}}
-        <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
-
-            {{-- Title row --}}
-            <div class="px-6 py-5 flex items-center justify-between gap-4 flex-wrap border-b border-slate-100">
+        <x-mac-panel>
+            <div class="px-4 lg:px-6 py-5 flex items-center justify-between gap-4 flex-wrap mac-hairline-b">
                 <div class="flex items-center gap-3">
-                    <div class="w-10 h-10 rounded-xl bg-primary-100 flex items-center justify-center flex-shrink-0">
+                    <div class="w-10 h-10 rounded-xl bg-primary-50/90 ring-1 ring-primary-100/80 flex items-center justify-center flex-shrink-0 shadow-mac-sm">
                         <svg class="w-5 h-5 text-primary-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                 d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/>
                         </svg>
                     </div>
                     <div>
-                        <h1 class="text-xl font-bold text-slate-900">Thống kê học sinh</h1>
+                        <h1 class="text-xl font-semibold tracking-tight text-slate-900">Thống kê học sinh</h1>
                         <p class="text-sm text-slate-500">Thống kê toàn xứ — số lượng và giới tính theo từng lớp</p>
                     </div>
                 </div>
 
                 <a href="{{ route('students.index') }}"
-                   class="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl border border-slate-300
-                          text-sm font-semibold text-slate-600 hover:bg-slate-50 transition">
+                   class="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl border border-black/[0.08]
+                          text-sm font-semibold text-slate-600 hover:bg-black/[0.03] transition">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
                     </svg>
@@ -37,8 +34,7 @@
                 </a>
             </div>
 
-            {{-- Filter: năm học --}}
-            <div class="px-6 py-4 bg-slate-50/60 border-b border-slate-100">
+            <div class="p-4 lg:p-6 mac-hairline-b bg-white/30">
                 <livewire:filters.filter-bar
                     :parish-id="$parishId"
                     :show-nam-hoc="true"
@@ -47,9 +43,8 @@
                     :show-ky="false"
                     :selected-nam-hoc="$selectedNamHoc" />
             </div>
-        </div>
+        </x-mac-panel>
 
-        {{-- ===================== EMPTY STATE ===================== --}}
         @if(empty($classChartData))
         <x-stats.page-empty
             tone="primary"
@@ -67,10 +62,7 @@
 
         @else
 
-        {{-- ===================== SUMMARY CARDS ===================== --}}
         <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
-
-            {{-- Tỷ lệ nam --}}
             <x-stats.stat-card
                 label="Tỷ lệ nam"
                 :value="($summary['male_rate'] ?? 0)"
@@ -78,21 +70,18 @@
                 :subline="($summary['male_count'] ?? 0) . ' nam / ' . ($summary['female_count'] ?? 0) . ' nữ'"
                 value-class="text-primary-600" />
 
-            {{-- Tổng học sinh --}}
             <x-stats.stat-card
                 :label="($summary['classes_count'] ?? 0) > 1 ? (($summary['classes_count'] ?? 0) . ' lớp') : 'Học sinh'"
                 :value="($summary['total_students'] ?? 0)"
                 subline="đang học"
                 value-class="text-slate-800" />
 
-            {{-- TB học sinh / lớp --}}
             <x-stats.stat-card
                 label="TB học sinh / lớp"
                 :value="($summary['avg_per_class'] ?? 0)"
                 :subline="'trên ' . ($summary['classes_count'] ?? 0) . ' lớp'"
                 value-class="text-primary-600" />
 
-            {{-- Lớp đông / ít nhất --}}
             <x-stats.stat-card label="Lớp đông / ít nhất" :value="null" value-class="text-slate-800">
                 @if(($summary['max_class'] ?? null) && ($summary['min_class'] ?? null))
                 <div class="flex items-baseline gap-2">
@@ -109,10 +98,7 @@
             </x-stats.stat-card>
         </div>
 
-        {{-- ===================== BIỂU ĐỒ ===================== --}}
         <div class="grid grid-cols-1 lg:grid-cols-5 gap-5">
-
-            {{-- ===== DONUT: PHÂN BỐ GIỚI TÍNH (2 cột) ===== --}}
             <x-stats.chart-card class="lg:col-span-2" title="Phân bố giới tính" :right="($summary['total_students'] ?? 0) . ' học sinh'">
                     @if(empty($statusChartData))
                     <div class="flex items-center justify-center h-44 text-slate-400 text-sm">
@@ -123,7 +109,7 @@
                         <div class="relative flex-shrink-0 w-44 h-44">
                             <canvas id="statusDonutChart" width="176" height="176"></canvas>
                             <div class="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-                                <span class="text-2xl font-extrabold text-slate-800">
+                                <span class="text-2xl font-extrabold tracking-tight text-slate-800">
                                     {{ $summary['male_rate'] ?? 0 }}%
                                 </span>
                                 <span class="text-xs text-slate-400">nam</span>
@@ -156,7 +142,6 @@
                     @endif
             </x-stats.chart-card>
 
-            {{-- ===== BAR CHART: HỌC SINH THEO LỚP (3 cột) ===== --}}
             <x-stats.chart-card class="lg:col-span-3" title="Số học sinh theo lớp" :right="count($classChartData) . ' lớp'">
                     @if(empty($classChartData))
                     <div class="flex items-center justify-center h-48 text-slate-400 text-sm">
@@ -168,8 +153,7 @@
             </x-stats.chart-card>
         </div>
 
-        {{-- ===================== CHÚ THÍCH ===================== --}}
-        <div class="bg-white rounded-2xl border border-slate-200 shadow-sm px-6 py-4">
+        <div class="rounded-2xl border border-black/[0.06] bg-white/50 backdrop-blur-sm shadow-mac-sm px-4 lg:px-6 py-4">
             <div class="flex flex-wrap items-center gap-x-6 gap-y-2 text-xs text-slate-500">
                 <span class="font-semibold text-slate-700">Ghi chú:</span>
                 <span class="flex items-center gap-1.5">

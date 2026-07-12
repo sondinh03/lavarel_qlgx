@@ -14,9 +14,16 @@
     {{-- Set margin-left NGAY khi parse HTML, trước khi Alpine load --}}
     <script>
         (function() {
-            if (window.innerWidth < 1024) return;
-
             var mini = localStorage.getItem('sidebarMini') === 'true';
+            var desktop = window.innerWidth >= 1024;
+
+            document.documentElement.style.setProperty(
+                '--sidebar-current',
+                desktop ? (mini ? '64px' : '256px') : '0px'
+            );
+
+            if (!desktop) return;
+
             var style = document.createElement('style');
 
             style.id = 'sidebar-init-style';
@@ -43,6 +50,7 @@
         :root {
             --sidebar-w: 256px;
             --sidebar-w-mini: 64px;
+            --sidebar-current: 0px;
 
             --transition-fast: 200ms ease;
         }
@@ -231,7 +239,9 @@ $isDashboard = request()->routeIs('parish-admin.dashboard');
                     sidebarMini = nextMini;
                     openGroups = nextMini ? [] : (('{{ $activeGroup }}' ? ['{{ $activeGroup }}'] : []));
                     localStorage.setItem('sidebarMini', nextMini);
-                    wrapper.style.marginLeft = nextMini ? '64px' : '256px';
+                    const offset = nextMini ? '64px' : '256px';
+                    wrapper.style.marginLeft = offset;
+                    document.documentElement.style.setProperty('--sidebar-current', offset);
                 "
                 class="hidden lg:flex ml-auto flex-shrink-0 w-7 h-7 items-center justify-center
                        rounded-lg text-slate-400 hover:bg-slate-100 hover:text-primary-600 transition">
@@ -581,8 +591,23 @@ $isDashboard = request()->routeIs('parish-admin.dashboard');
             });
 
             if (window.innerWidth >= 1024) {
-                $el.style.marginLeft = sidebarMini ? '64px' : '256px';
+                const offset = sidebarMini ? '64px' : '256px';
+                $el.style.marginLeft = offset;
+                document.documentElement.style.setProperty('--sidebar-current', offset);
+            } else {
+                document.documentElement.style.setProperty('--sidebar-current', '0px');
             }
+
+            window.addEventListener('resize', () => {
+                if (window.innerWidth >= 1024) {
+                    const offset = sidebarMini ? '64px' : '256px';
+                    $el.style.marginLeft = offset;
+                    document.documentElement.style.setProperty('--sidebar-current', offset);
+                } else {
+                    $el.style.marginLeft = '';
+                    document.documentElement.style.setProperty('--sidebar-current', '0px');
+                }
+            });
 
             // Xoá style inject từ head script sau khi Alpine đã handle
             var s = document.getElementById('sidebar-init-style');

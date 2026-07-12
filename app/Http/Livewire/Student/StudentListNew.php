@@ -338,7 +338,7 @@ class StudentListNew extends BaseComponent
             $this->showLinkModal         = true;
             $this->emit('openLinkModal');
         } catch (ModelNotFoundException $e) {
-            $this->emit('toast', 'error', 'Không tìm thấy học sinh này');
+            $this->emit('toast', 'error', 'Không tìm thấy học sinh này.');
         }
     }
 
@@ -430,13 +430,13 @@ class StudentListNew extends BaseComponent
 
             if ($parishioner->student()->exists()) {
                 DB::rollBack();
-                $this->emit('toast', 'warning', 'Giáo dân này đã được liên kết với học sinh khác');
+                $this->emit('toast', 'warning', 'Giáo dân này đã được liên kết với học sinh khác.');
                 return;
             }
 
             if ($student->parish_id && $parishioner->parish_id && (int) $student->parish_id !== (int) $parishioner->parish_id) {
                 DB::rollBack();
-                $this->emit('toast', 'error', 'Giáo dân không thuộc cùng giáo xứ với học sinh');
+                $this->emit('toast', 'error', 'Giáo dân không thuộc cùng giáo xứ với học sinh.');
                 return;
             }
 
@@ -444,22 +444,22 @@ class StudentListNew extends BaseComponent
 
             DB::commit();
 
-            $this->emit('toast', 'message', "Đã liên kết {$student->full_name_with_saint} với giáo dân {$parishioner->full_name_with_saint}");
+            $this->emit('toast', 'success', "Đã liên kết {$student->full_name_with_saint} với giáo dân {$parishioner->full_name_with_saint}.");
             $this->closeLinkModal();
             $this->emit('refreshStudents');
         } catch (ModelNotFoundException $e) {
             DB::rollBack();
-            $this->emit('toast', 'error', 'Không tìm thấy dữ liệu');
+            $this->emit('toast', 'error', 'Không tìm thấy dữ liệu cần liên kết.');
         } catch (\Exception $e) {
             DB::rollBack();
             $this->logError($e, 'Error linking parishioner to student');
-            $this->emit('toast', 'error', 'Có lỗi khi liên kết');
+            $this->emit('toast', 'error', 'Có lỗi khi liên kết. Vui lòng thử lại.');
         }
     }
 
     public function skipLink(): void
     {
-        $this->emit('toast', 'info', 'Đã bỏ qua liên kết giáo dân');
+        $this->emit('toast', 'info', 'Đã bỏ qua liên kết giáo dân.');
         $this->closeLinkModal();
     }
 
@@ -469,11 +469,11 @@ class StudentListNew extends BaseComponent
 
         try {
             StudentNew::findOrFail($studentId)->update(['parishioner_id' => null]);
-            $this->emit('toast', 'message', 'Đã hủy liên kết giáo dân');
+            $this->emit('toast', 'success', 'Đã hủy liên kết giáo dân.');
             $this->emit('refreshStudents');
         } catch (\Exception $e) {
             $this->logError($e, 'Error unlinking parishioner');
-            $this->emit('toast', 'error', 'Có lỗi khi hủy liên kết');
+            $this->emit('toast', 'error', 'Có lỗi khi hủy liên kết. Vui lòng thử lại.');
         }
     }
 
@@ -571,7 +571,7 @@ class StudentListNew extends BaseComponent
         $this->authorize('create', StudentNew::class);
 
         if (empty($this->selectedParishioners)) {
-            $this->emit('toast', 'warning', 'Vui lòng chọn ít nhất 1 giáo dân');
+            $this->emit('toast', 'warning', 'Vui lòng chọn ít nhất một giáo dân.');
             return;
         }
 
@@ -618,16 +618,16 @@ class StudentListNew extends BaseComponent
 
             DB::commit();
 
-            $message = "✅ Đã import {$successCount} học sinh thành công";
+            $message = "Đã import {$successCount} học sinh thành công.";
             if ($errorCount > 0) {
-                $message .= " | ❌ {$errorCount} lỗi";
+                $message .= " {$errorCount} bản ghi lỗi.";
             }
-            $this->emit('toast', 'message', $message);
+            $this->emit('toast', $errorCount > 0 ? 'warning' : 'success', $message);
 
             if (!empty($errors)) {
-                $detail = '<strong>Chi tiết lỗi:</strong><br>' . implode('<br>', array_slice($errors, 0, 5));
+                $detail = 'Chi tiết lỗi:<br>' . implode('<br>', array_slice($errors, 0, 5));
                 if (count($errors) > 5) {
-                    $detail .= '<br><em>... và ' . (count($errors) - 5) . ' lỗi khác</em>';
+                    $detail .= '<br>… và ' . (count($errors) - 5) . ' lỗi khác';
                 }
                 $this->emit('toast', 'warning', $detail);
             }
@@ -640,7 +640,7 @@ class StudentListNew extends BaseComponent
                 'selected_count' => count($this->selectedParishioners),
                 'lop_id'         => $this->selectedLop,
             ]);
-            $this->emit('toast', 'error', 'Có lỗi khi import học sinh: ' . $e->getMessage());
+            $this->emit('toast', 'error', 'Có lỗi khi import học sinh. Vui lòng thử lại.');
         }
     }
 
@@ -651,7 +651,7 @@ class StudentListNew extends BaseComponent
         $this->authorize('create', StudentNew::class);
 
         if (!$this->selectedLop) {
-            $this->emit('toast', 'warning', 'Vui lòng chọn lớp trước khi ghi danh');
+            $this->emit('toast', 'warning', 'Vui lòng chọn lớp trước khi ghi danh.');
             return;
         }
 
@@ -711,7 +711,7 @@ class StudentListNew extends BaseComponent
         $this->authorize('create', StudentNew::class);
 
         if (empty($this->studentsToAdd)) {
-            $this->emit('toast', 'warning', 'Vui lòng chọn ít nhất một học sinh');
+            $this->emit('toast', 'warning', 'Vui lòng chọn ít nhất một học sinh.');
             return;
         }
 
@@ -728,7 +728,7 @@ class StudentListNew extends BaseComponent
             $newStudentIds      = array_diff($this->studentsToAdd, $existingStudentIds);
 
             if (empty($newStudentIds)) {
-                $this->emit('toast', 'warning', 'Tất cả học sinh đã có trong lớp này');
+                $this->emit('toast', 'warning', 'Tất cả học sinh đã có trong lớp này.');
                 return;
             }
 
@@ -740,7 +740,7 @@ class StudentListNew extends BaseComponent
 
             DB::commit();
 
-            $this->emit('toast', 'message', 'Đã thêm ' . count($newStudentIds) . ' học sinh vào lớp thành công');
+            $this->emit('toast', 'success', 'Đã thêm ' . count($newStudentIds) . ' học sinh vào lớp.');
 
             $this->closeEnrollModal();
             $this->emit('refreshStudents');
@@ -777,25 +777,25 @@ class StudentListNew extends BaseComponent
                     ->whereIn('class_id', $classIds)
                     ->delete();
             } else {
-                $this->emit('toast', 'error', 'Vui lòng chọn năm học trước khi xóa');
+                $this->emit('toast', 'error', 'Vui lòng chọn năm học trước khi gỡ khỏi lớp.');
                 return;
             }
 
             DB::commit();
 
-            $this->emit('toast', 'message', 'Đã xóa học sinh khỏi lớp thành công');
+            $this->emit('toast', 'success', 'Đã gỡ học sinh khỏi lớp.');
             $this->emit('refreshStudents');
         } catch (\Illuminate\Auth\Access\AuthorizationException $e) {
-            $this->emit('toast', 'error', 'Bạn không có quyền xóa học sinh này');
+            $this->emit('toast', 'error', 'Bạn không có quyền gỡ học sinh này khỏi lớp.');
         } catch (ModelNotFoundException $e) {
-            $this->emit('toast', 'error', 'Không tìm thấy học sinh hoặc lớp học');
+            $this->emit('toast', 'error', 'Không tìm thấy học sinh hoặc lớp học.');
         } catch (\Exception $e) {
             DB::rollBack();
             $this->logError($e, 'Error deleting StudentNew from class', [
                 'lop_id'     => $this->selectedLop,
                 'student_id' => $studentId,
             ]);
-            $this->emit('toast', 'error', 'Có lỗi khi xóa học sinh khỏi lớp. Vui lòng thử lại.');
+            $this->emit('toast', 'error', 'Có lỗi khi gỡ học sinh khỏi lớp. Vui lòng thử lại.');
         }
     }
 
@@ -819,20 +819,149 @@ class StudentListNew extends BaseComponent
 
             DB::commit();
 
-            $this->emit('toast', 'message', 'Đã xóa học sinh thành công');
+            $this->emit('toast', 'success', 'Đã xóa hồ sơ học sinh.');
             $this->emit('refreshStudents');
         } catch (\Illuminate\Auth\Access\AuthorizationException $e) {
             DB::rollBack();
-            $this->emit('toast', 'error', 'Bạn không có quyền xóa học sinh này');
+            $this->emit('toast', 'error', 'Bạn không có quyền xóa học sinh này.');
         } catch (ModelNotFoundException $e) {
             DB::rollBack();
-            $this->emit('toast', 'error', 'Không tìm thấy học sinh');
+            $this->emit('toast', 'error', 'Không tìm thấy học sinh.');
         } catch (\Exception $e) {
             DB::rollBack();
             $this->logError($e, 'Error deleting StudentNew profile', [
                 'student_id' => $studentId,
             ]);
             $this->emit('toast', 'error', 'Có lỗi khi xóa học sinh. Vui lòng thử lại.');
+        }
+    }
+
+    public function removeSelectedFromClass(): void
+    {
+        $ids = $this->normalizeIdList($this->selectedStudents);
+
+        if (empty($ids)) {
+            $this->emit('toast', 'warning', 'Vui lòng chọn ít nhất một học sinh.');
+            return;
+        }
+
+        if (!$this->selectedLop && !$this->selectedNamHoc) {
+            $this->emit('toast', 'error', 'Vui lòng chọn năm học hoặc lớp trước khi gỡ khỏi lớp.');
+            return;
+        }
+
+        try {
+            DB::beginTransaction();
+
+            $students = StudentNew::whereIn('id', $ids)->get();
+            $allowedIds = [];
+            $denied = 0;
+
+            foreach ($students as $student) {
+                if (!auth()->user()->can('delete', $student)) {
+                    $denied++;
+                    continue;
+                }
+                $allowedIds[] = (int) $student->id;
+            }
+
+            if (empty($allowedIds)) {
+                DB::rollBack();
+                $this->emit('toast', 'error', 'Bạn không có quyền gỡ các học sinh đã chọn khỏi lớp.');
+                return;
+            }
+
+            if ($this->selectedLop) {
+                CatechismClass::findOrFail($this->selectedLop)
+                    ->students()
+                    ->detach($allowedIds);
+            } else {
+                $classIds = CatechismClass::where('school_year_id', $this->selectedNamHoc)
+                    ->pluck('id');
+
+                \App\Models\StudentsClass::whereIn('student_id', $allowedIds)
+                    ->whereIn('class_id', $classIds)
+                    ->delete();
+            }
+
+            DB::commit();
+
+            $this->resetSelection();
+
+            $message = 'Đã gỡ ' . count($allowedIds) . ' học sinh khỏi lớp.';
+            if ($denied > 0) {
+                $message .= " Bỏ qua {$denied} học sinh không đủ quyền.";
+                $this->emit('toast', 'warning', $message);
+            } else {
+                $this->emit('toast', 'success', $message);
+            }
+
+            $this->emit('refreshStudents');
+        } catch (ModelNotFoundException $e) {
+            DB::rollBack();
+            $this->emit('toast', 'error', 'Không tìm thấy lớp học.');
+        } catch (\Exception $e) {
+            DB::rollBack();
+            $this->logError($e, 'Error bulk removing students from class', [
+                'lop_id'      => $this->selectedLop,
+                'student_ids' => $ids,
+            ]);
+            $this->emit('toast', 'error', 'Có lỗi khi gỡ học sinh khỏi lớp. Vui lòng thử lại.');
+        }
+    }
+
+    public function deleteSelectedProfiles(): void
+    {
+        $ids = $this->normalizeIdList($this->selectedStudents);
+
+        if (empty($ids)) {
+            $this->emit('toast', 'warning', 'Vui lòng chọn ít nhất một học sinh.');
+            return;
+        }
+
+        try {
+            DB::beginTransaction();
+
+            $students = StudentNew::whereIn('id', $ids)->get();
+            $deleted = 0;
+            $denied = 0;
+
+            foreach ($students as $student) {
+                if (!auth()->user()->can('delete', $student)) {
+                    $denied++;
+                    continue;
+                }
+
+                $student->classes()->detach();
+                $student->studentsClass()->delete();
+                $student->delete();
+                $deleted++;
+            }
+
+            DB::commit();
+
+            $this->resetSelection();
+
+            if ($deleted === 0) {
+                $this->emit('toast', 'error', 'Bạn không có quyền xóa các hồ sơ đã chọn.');
+                return;
+            }
+
+            $message = "Đã xóa {$deleted} hồ sơ học sinh.";
+            if ($denied > 0) {
+                $message .= " Bỏ qua {$denied} hồ sơ không đủ quyền.";
+                $this->emit('toast', 'warning', $message);
+            } else {
+                $this->emit('toast', 'success', $message);
+            }
+
+            $this->emit('refreshStudents');
+        } catch (\Exception $e) {
+            DB::rollBack();
+            $this->logError($e, 'Error bulk deleting student profiles', [
+                'student_ids' => $ids,
+            ]);
+            $this->emit('toast', 'error', 'Có lỗi khi xóa hồ sơ học sinh. Vui lòng thử lại.');
         }
     }
 
@@ -926,7 +1055,7 @@ class StudentListNew extends BaseComponent
                 'lop'    => $this->selectedLop,
                 'search' => $this->search,
             ]);
-            $this->emit('toast', 'error', 'Có lỗi khi tải danh sách học viên.');
+            $this->emit('toast', 'error', 'Có lỗi khi tải danh sách học sinh.');
             return new LengthAwarePaginator([], 0, $this->perPage, $this->page ?? 1);
         }
     }
@@ -935,7 +1064,7 @@ class StudentListNew extends BaseComponent
     public function printSelected(): void
     {
         if (empty($this->selectedStudents) && !$this->selectedLop) {
-            $this->emit('toast', 'warning', 'Vui lòng chọn học sinh hoặc lớp');
+            $this->emit('toast', 'warning', 'Vui lòng chọn học sinh hoặc lớp.');
             return;
         }
 
@@ -1037,7 +1166,7 @@ class StudentListNew extends BaseComponent
     public function resetFilters(): void
     {
         if (!$this->selectedKhoi && !$this->selectedLop && !$this->search) {
-            $this->emit('toast', 'warning', 'Không có bộ lọc nào đang được áp dụng');
+            $this->emit('toast', 'warning', 'Không có bộ lọc nào đang được áp dụng.');
             return;
         }
 
@@ -1046,7 +1175,7 @@ class StudentListNew extends BaseComponent
         $this->search       = '';
         $this->finalizeFilterChange();
         $this->emitTo('filters.filter-bar', 'resetFilters');
-        $this->emit('toast', 'success', 'Đã đặt lại bộ lọc');
+        $this->emit('toast', 'success', 'Đã đặt lại bộ lọc.');
     }
 
     public function handleRefresh(): void
@@ -1182,7 +1311,7 @@ class StudentListNew extends BaseComponent
     public function export()
     {
         if (!$this->selectedLop) {
-            $this->emit('toast', 'warning', 'Vui lòng chọn lớp trước khi xuất file');
+            $this->emit('toast', 'warning', 'Vui lòng chọn lớp trước khi xuất file.');
             return;
         }
 

@@ -9,17 +9,17 @@
 <div class="min-h-screen bg-apple-gray p-2 sm:p-4 lg:p-6" style="min-height: calc(100vh - 56px - var(--bottom-offset));">
     <div id="main-content" class="mx-auto max-w-7xl space-y-5">
 
-        <x-mac-panel :overflow="true">
+        <x-mac-panel>
             <div class="px-4 lg:px-6 py-5 flex items-center justify-between gap-4 flex-wrap mac-hairline-b">
                 <div class="flex items-center gap-3">
-                    <div class="w-10 h-10 rounded-xl bg-primary-100 flex items-center justify-center flex-shrink-0">
+                    <div class="w-10 h-10 rounded-xl bg-primary-50/90 ring-1 ring-primary-100/80 flex items-center justify-center flex-shrink-0 shadow-mac-sm">
                         <svg class="w-5 h-5 text-primary-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                 d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
                         </svg>
                     </div>
                     <div>
-                        <h1 class="text-xl font-bold text-slate-900">Thống kê điểm</h1>
+                        <h1 class="text-xl font-semibold tracking-tight text-slate-900">Thống kê điểm</h1>
                         <p class="text-sm text-slate-500">Phạm vi tự động theo bộ lọc lớp / khối</p>
                     </div>
                 </div>
@@ -166,7 +166,7 @@
         @endif
 
         {{-- ===================== NOTES ===================== --}}
-        <div class="rounded-xl border border-black/[0.06] bg-white/50 px-4 lg:px-6 py-4">
+        <div class="rounded-2xl border border-black/[0.06] bg-white/50 backdrop-blur-sm shadow-mac-sm px-4 lg:px-6 py-4">
             <div class="flex flex-wrap items-center gap-x-6 gap-y-2 text-xs text-slate-500">
                 <span class="font-semibold text-slate-700">Ghi chú:</span>
                 <span class="flex items-center gap-1.5">

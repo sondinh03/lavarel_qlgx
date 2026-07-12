@@ -3,6 +3,8 @@
         toasts: [],
         add(type, message) {
             const id = Date.now();
+            // Legacy: 'message' was used for success toasts
+            if (type === 'message') type = 'success';
             const duration = type === 'success' ? 3500 : 4000;
             this.toasts.push({ id, type, message });
             setTimeout(() => this.remove(id), duration);

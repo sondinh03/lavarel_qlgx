@@ -44,6 +44,7 @@ use App\Http\Controllers\HonPhoiExportController;
 use App\Http\Controllers\StudentImportController;
 use App\Http\Controllers\FamilyRegisterImportController;
 use App\Http\Controllers\ParishionerLyLichExportController;
+use App\Http\Controllers\ParishionerDonXinRuaToiExportController;
 use App\Http\Controllers\StudentQrController;
 use App\Http\Livewire\Attendance\AttendanceQr as AttendanceAttendanceQr;
 use App\Http\Livewire\Attendance\AttendanceStatistics;
@@ -289,6 +290,9 @@ Route::middleware('auth')->group(function () {
 
         Route::get('/{parishioner}/xuat-ly-lich', ParishionerLyLichExportController::class)
             ->name('parishioners.export-lylich');
+
+        Route::get('/{parishioner}/xuat-don-xin-rua-toi', ParishionerDonXinRuaToiExportController::class)
+            ->name('parishioners.export-don-xin-rua-toi');
 
         Route::get('/{parishioner}/sua', function (\App\Models\Parishioner $parishioner) {
             return redirect()->route('parishioners.show', ['parishioner' => $parishioner], 301);

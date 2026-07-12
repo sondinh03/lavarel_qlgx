@@ -27,6 +27,13 @@ class ParishionerShow extends Component
     public bool $showEditMarriage  = false;
     public bool $showEditDeceased  = false;
     public bool $showDeleteConfirm = false;
+    public bool $showDonXinRuaToiModal = false;
+
+    public string $baptism_candidate_name = '';
+    public string $godparent_name = '';
+    public ?string $baptism_candidate_birthday = null;
+    public string $baptism_candidate_birth_place = '';
+    public $baptism_candidate_birth_order = null;
 
     public ?int    $marriage_id          = null;
     public         $spouse_id            = null;
@@ -118,6 +125,60 @@ class ParishionerShow extends Component
     {
         $this->activeTab = $tab;
         $this->loadRelationsForTab($tab);
+    }
+
+    public function openDonXinRuaToiModal(): void
+    {
+        $this->authorize('view', $this->parishioner);
+
+        $this->baptism_candidate_name        = '';
+        $this->godparent_name                = '';
+        $this->baptism_candidate_birthday    = null;
+        $this->baptism_candidate_birth_place = '';
+        $this->baptism_candidate_birth_order = null;
+        $this->resetErrorBag([
+            'baptism_candidate_name',
+            'godparent_name',
+            'baptism_candidate_birthday',
+            'baptism_candidate_birth_place',
+            'baptism_candidate_birth_order',
+        ]);
+        $this->showDonXinRuaToiModal = true;
+    }
+
+    public function exportDonXinRuaToi()
+    {
+        $this->authorize('view', $this->parishioner);
+
+        $this->validate([
+            'baptism_candidate_name'        => 'required|string|max:200',
+            'godparent_name'                => 'required|string|max:200',
+            'baptism_candidate_birthday'    => 'required|date',
+            'baptism_candidate_birth_place' => 'required|string|max:255',
+            'baptism_candidate_birth_order' => 'required|integer|min:1|max:99',
+        ], [
+            'baptism_candidate_name.required'        => 'Vui lòng nhập tên thánh, họ tên người được rửa tội',
+            'godparent_name.required'                => 'Vui lòng nhập tên thánh, họ tên người đỡ đầu',
+            'baptism_candidate_birthday.required'    => 'Vui lòng nhập ngày sinh',
+            'baptism_candidate_birthday.date'        => 'Ngày sinh không hợp lệ',
+            'baptism_candidate_birth_place.required' => 'Vui lòng nhập nơi sinh',
+            'baptism_candidate_birth_order.required' => 'Vui lòng nhập con thứ',
+            'baptism_candidate_birth_order.integer'  => 'Con thứ phải là số',
+            'baptism_candidate_birth_order.min'      => 'Con thứ phải từ 1 trở lên',
+        ]);
+
+        $url = route('parishioners.export-don-xin-rua-toi', [
+            'parishioner'    => $this->parishioner,
+            'holy_fullname'       => $this->baptism_candidate_name,
+            'godparent_name' => $this->godparent_name,
+            'birthday'       => $this->baptism_candidate_birthday,
+            'birth_place'    => $this->baptism_candidate_birth_place,
+            'birth_order'    => (int) $this->baptism_candidate_birth_order,
+        ]);
+
+        $this->showDonXinRuaToiModal = false;
+
+        return redirect()->to($url);
     }
 
     private function loadRelationsForTab(string $tab): void

@@ -40,7 +40,7 @@
                         </div>
                     </div>
 
-                    <div class="flex items-center justify-between gap-4 flex-wrap">
+                    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                         <x-search-input
                             placeholder="Tìm kiếm theo ngày (vd: 12/03/2026)..."
                             wire-model="search"
@@ -48,21 +48,19 @@
                             class="max-w-md" />
 
                         <x-tooltip content="Vui lòng chọn năm học trước" :show="!$selectedNamHoc">
-                            <x-action-button
-                                wire="create"
-                                icon="plus"
-                                :disabled="!$selectedNamHoc">
+                            <x-button wire:click="create" :disabled="!$selectedNamHoc">
+                                <x-icon name="plus" />
                                 Tạo phiên mới
-                            </x-action-button>
+                            </x-button>
                         </x-tooltip>
                     </div>
                 </div>
             </div>
 
             @if($currentNamHoc)
-            <div class="px-4 lg:px-6 py-3 mac-hairline-b bg-slate-100/80 text-sm text-slate-700">
+            <div class="px-4 lg:px-6 py-3 mac-hairline-b bg-white/40 text-sm text-slate-700">
                 <div class="flex flex-wrap items-center gap-x-4 gap-y-1">
-                    <span class="font-semibold text-slate-800">{{ $currentNamHoc->name }}</span>
+                    <span class="font-semibold text-slate-900">{{ $currentNamHoc->name }}</span>
                     @if($currentNamHoc->start_date_one && $currentNamHoc->end_date_one)
                     <span class="text-slate-500">
                         HK1: {{ $currentNamHoc->start_date_one->format('d/m/Y') }}
@@ -82,7 +80,7 @@
             @if($selectedNamHoc)
             @if($sessions->count() > 0)
             <div class="overflow-x-auto">
-                <table class="w-full border-separate border-spacing-0">
+                <table class="w-full">
                     <thead class="bg-slate-50/50 mac-hairline-b">
                         <tr>
                             <x-table-header>STT</x-table-header>
@@ -126,10 +124,10 @@
 
                             {{-- Loại --}}
                             <td class="px-4 py-3">
-                                <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold
+                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-lg text-xs font-semibold
                                     {{ $session['type'] == 1
-                                        ? 'bg-primary-100 text-primary-700'
-                                        : 'bg-purple-100 text-purple-700' }}">
+                                        ? 'bg-primary-50/80 text-primary-700'
+                                        : 'bg-purple-50/80 text-purple-700' }}">
                                     {{ $session['typeLabel'] }}
                                 </span>
                             </td>
@@ -168,7 +166,7 @@
 
                             {{-- Trạng thái --}}
                             <td class="px-4 py-3 text-center">
-                                <span class="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-semibold
+                                <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-lg text-xs font-semibold
                                     {{ $session['statusClass'] }}">
                                     @if($session['locked'])
                                     <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -292,8 +290,7 @@
     <div
         x-show="showForm"
         x-transition.opacity
-        class="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center
-               justify-center z-50 p-4"
+        class="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50 p-4"
         role="dialog"
         aria-modal="true"
         aria-labelledby="session-modal-title"
@@ -303,19 +300,18 @@
         <div
             x-show="showForm"
             x-transition
-            x-data="{ createMode: @entangle('createMode') }"
-            class="bg-white rounded-2xl shadow-2xl w-full max-w-xl
-                   max-h-[90vh] overflow-hidden flex flex-col"
+            class="bg-white/90 backdrop-blur-xl rounded-2xl border border-black/[0.06] shadow-mac
+                w-full max-w-xl max-h-[90vh] overflow-hidden flex flex-col"
             @click.stop>
 
             {{-- Header --}}
-            <div class="flex-shrink-0 p-6 border-b border-slate-200 bg-gradient-to-br from-primary-50 to-white">
-                <div class="flex items-start justify-between">
-                    <div class="flex-1">
-                        <h2 id="session-modal-title" class="text-xl font-bold text-slate-900">
+            <div class="flex-shrink-0 px-6 py-5 border-b border-black/[0.06]">
+                <div class="flex items-start justify-between gap-4">
+                    <div class="flex-1 min-w-0">
+                        <h2 id="session-modal-title" class="text-xl font-semibold tracking-tight text-slate-900">
                             Tạo phiên điểm danh
                         </h2>
-                        <div class="mt-1 text-sm text-slate-600 flex items-center gap-2 flex-wrap">
+                        <p class="mt-1 text-sm text-slate-500 flex items-center gap-2 flex-wrap">
                             <span>Áp dụng:</span>
                             @if($selectedClassId)
                             <span class="font-semibold text-primary-700">
@@ -330,14 +326,14 @@
                                 Toàn bộ năm học
                             </span>
                             @endif
-                            <span class="text-xs text-slate-500">
+                            <span class="text-xs text-slate-400">
                                 ({{ count($this->resolveClassIds()) }} lớp)
                             </span>
-                        </div>
+                        </p>
                     </div>
                     <button wire:click="closeModal" type="button"
-                        class="text-slate-400 hover:text-slate-600 transition-colors p-1">
-                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        class="flex-shrink-0 p-1.5 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-black/[0.04] transition-colors">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                 d="M6 18L18 6M6 6l12 12" />
                         </svg>
@@ -348,9 +344,8 @@
             {{-- Body --}}
             <div class="flex-1 overflow-y-auto p-6 space-y-5">
 
-                {{-- Error summary --}}
                 @if($errors->any())
-                <div class="bg-red-50 border-l-4 border-red-500 rounded-xl p-4">
+                <div class="bg-red-50/90 border border-red-200/80 rounded-xl p-4 shadow-mac-sm">
                     <div class="flex items-start gap-3">
                         <svg class="w-5 h-5 text-red-500 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -370,8 +365,8 @@
 
                 {{-- Loại điểm danh --}}
                 <div>
-                    <label class="block text-sm font-semibold text-slate-700 mb-2">
-                        Loại điểm danh <span class="text-red-500">*</span>
+                    <label class="block text-xs font-semibold text-slate-500 mb-2 tracking-wide uppercase">
+                        Loại điểm danh <span class="text-red-500 normal-case">*</span>
                     </label>
                     <div class="grid grid-cols-2 gap-3">
                         <x-radio-card wire:model="type" :value="1" label="Điểm danh đi học" :checked="$type == 1" />
@@ -381,8 +376,8 @@
 
                 {{-- Chế độ tạo --}}
                 <div>
-                    <label class="block text-sm font-semibold text-slate-700 mb-2">
-                        Chế độ tạo <span class="text-red-500">*</span>
+                    <label class="block text-xs font-semibold text-slate-500 mb-2 tracking-wide uppercase">
+                        Chế độ tạo <span class="text-red-500 normal-case">*</span>
                     </label>
                     <div class="grid grid-cols-3 gap-3">
                         <x-radio-card wire:model="createMode" value="single" label="Theo ngày"   :checked="$createMode === 'single'" />
@@ -391,32 +386,54 @@
                     </div>
                 </div>
 
+                @if($createMode === 'single')
                 {{-- Single: một ngày --}}
-                <div x-show="createMode === 'single'" x-transition.opacity>
-                    <x-form-input label="Ngày điểm danh" name="startDate" type="date"
-                        wire:model.defer="startDate" required />
+                <div>
+                    <label class="block text-xs font-semibold text-slate-500 mb-1.5 tracking-wide uppercase">
+                        Ngày điểm danh <span class="text-red-500 normal-case">*</span>
+                    </label>
+                    <input type="date" wire:model.defer="startDate"
+                        class="w-full h-11 px-4 py-2.5 rounded-xl border border-black/[0.06] bg-white/80 backdrop-blur-sm text-sm
+                            text-slate-900 shadow-mac-sm
+                            focus:outline-none focus:ring-2 focus:ring-primary-500/25 focus:border-primary-300/40 transition-all" />
                 </div>
+                @endif
 
+                @if($createMode === 'weekly')
                 {{-- Weekly: khoảng + ngày trong tuần --}}
-                <div x-show="createMode === 'weekly'" x-transition.opacity class="space-y-4">
+                <div class="space-y-4">
                     <div class="grid grid-cols-2 gap-4">
-                        <x-form-input label="Từ ngày" name="startDate" type="date"
-                            wire:model.defer="startDate" required />
-                        <x-form-input label="Đến ngày" name="endDate" type="date"
-                            wire:model.defer="endDate" />
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-500 mb-1.5 tracking-wide uppercase">
+                                Từ ngày <span class="text-red-500 normal-case">*</span>
+                            </label>
+                            <input type="date" wire:model.defer="startDate"
+                                class="w-full h-11 px-4 py-2.5 rounded-xl border border-black/[0.06] bg-white/80 backdrop-blur-sm text-sm
+                                    text-slate-900 shadow-mac-sm
+                                    focus:outline-none focus:ring-2 focus:ring-primary-500/25 focus:border-primary-300/40 transition-all" />
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-500 mb-1.5 tracking-wide uppercase">
+                                Đến ngày
+                            </label>
+                            <input type="date" wire:model.defer="endDate"
+                                class="w-full h-11 px-4 py-2.5 rounded-xl border border-black/[0.06] bg-white/80 backdrop-blur-sm text-sm
+                                    text-slate-900 shadow-mac-sm
+                                    focus:outline-none focus:ring-2 focus:ring-primary-500/25 focus:border-primary-300/40 transition-all" />
+                        </div>
                     </div>
                     <div>
-                        <label class="block text-sm font-semibold text-slate-700 mb-2">
-                            Ngày trong tuần <span class="text-red-500">*</span>
+                        <label class="block text-xs font-semibold text-slate-500 mb-2 tracking-wide uppercase">
+                            Ngày trong tuần <span class="text-red-500 normal-case">*</span>
                         </label>
                         <div class="grid grid-cols-4 gap-2">
                             @foreach([['0','CN'],['1','T2'],['2','T3'],['3','T4'],['4','T5'],['5','T6'],['6','T7']] as [$val, $lbl])
-                            <label class="flex items-center gap-2 px-3 py-2 rounded-lg border cursor-pointer transition-colors
+                            <label class="flex items-center gap-2 px-3 py-2.5 rounded-xl border cursor-pointer transition-all shadow-mac-sm
                                 {{ in_array($val, $weekDays)
-                                    ? 'border-primary-500 bg-primary-50'
-                                    : 'border-slate-200 hover:border-slate-300' }}">
+                                    ? 'border-primary-300/60 bg-primary-50/80'
+                                    : 'border-black/[0.06] bg-white/80 hover:bg-white' }}">
                                 <input type="checkbox" wire:model="weekDays" value="{{ $val }}"
-                                    class="w-4 h-4 rounded border-slate-300 text-primary-600 focus:ring-primary-500">
+                                    class="w-4 h-4 rounded border-black/[0.12] text-primary-600 focus:ring-primary-500/25">
                                 <span class="text-sm font-medium
                                     {{ in_array($val, $weekDays) ? 'text-primary-700' : 'text-slate-700' }}">
                                     {{ $lbl }}
@@ -426,59 +443,124 @@
                         </div>
                     </div>
                 </div>
+                @endif
 
-                {{-- Custom: chọn ngày thủ công --}}
-                <div x-show="createMode === 'custom'" x-transition.opacity>
-                    <label class="block text-sm font-semibold text-slate-700 mb-2">
-                        Chọn ngày cụ thể <span class="text-red-500">*</span>
+                @if($createMode === 'custom')
+                {{-- Custom: chọn từng ngày --}}
+                <div class="space-y-3">
+                    <label class="block text-xs font-semibold text-slate-500 mb-1.5 tracking-wide uppercase">
+                        Chọn ngày cụ thể <span class="text-red-500 normal-case">*</span>
                     </label>
-                    <div class="border border-slate-200 rounded-xl p-4 bg-slate-50">
-                        <input type="date" wire:model.defer="startDate"
-                            class="w-full px-3 py-2 rounded-lg border border-slate-300
-                                   focus:outline-none focus:ring-2 focus:ring-primary-500">
-                        <p class="mt-2 text-xs text-slate-500">
-                            📌 Chọn nhiều ngày sẽ được bổ sung sau
-                        </p>
+                    <div class="flex items-end gap-2">
+                        <div class="flex-1 min-w-0">
+                            <input type="date" wire:model="startDate"
+                                class="w-full h-11 px-4 py-2.5 rounded-xl border border-black/[0.06] bg-white/80 backdrop-blur-sm text-sm
+                                    text-slate-900 shadow-mac-sm
+                                    focus:outline-none focus:ring-2 focus:ring-primary-500/25 focus:border-primary-300/40 transition-all" />
+                        </div>
+                        <x-button type="button" variant="outline" wire:click="addSelectedDate">
+                            <x-icon name="plus" />
+                            Thêm
+                        </x-button>
                     </div>
+
+                    @if(count($selectedDates) > 0)
+                    <div class="flex flex-wrap gap-2">
+                        @foreach($selectedDates as $date)
+                        <span class="inline-flex items-center gap-1.5 pl-2.5 pr-1 py-1 rounded-lg text-xs font-semibold
+                            bg-primary-50/80 text-primary-700 border border-primary-200/60">
+                            {{ \Carbon\Carbon::parse($date)->format('d/m/Y') }}
+                            <button type="button" wire:click="removeSelectedDate('{{ $date }}')"
+                                class="p-0.5 rounded-md hover:bg-primary-100/80 transition"
+                                aria-label="Xóa ngày">
+                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                                </svg>
+                            </button>
+                        </span>
+                        @endforeach
+                    </div>
+                    @else
+                    <p class="text-xs text-slate-400">Chưa chọn ngày nào — chọn ngày rồi bấm Thêm.</p>
+                    @endif
                 </div>
+                @endif
 
                 {{-- Tiêu đề --}}
-                <x-form-input
-                    label="Tiêu đề (không bắt buộc)"
-                    name="title"
-                    wire:model.defer="title"
-                    placeholder="VD: Tuần lễ Phục sinh, Thánh lễ khai giảng..." />
+                <div>
+                    <label class="block text-xs font-semibold text-slate-500 mb-1.5 tracking-wide uppercase">
+                        Tiêu đề (không bắt buộc)
+                    </label>
+                    <input type="text" wire:model.defer="title"
+                        placeholder="VD: Tuần lễ Phục sinh, Thánh lễ khai giảng..."
+                        class="w-full h-11 px-4 py-2.5 rounded-xl border border-black/[0.06] bg-white/80 backdrop-blur-sm text-sm
+                            text-slate-900 shadow-mac-sm
+                            focus:outline-none focus:ring-2 focus:ring-primary-500/25 focus:border-primary-300/40 transition-all" />
+                </div>
 
                 {{-- Thời gian --}}
                 <div class="grid grid-cols-2 gap-4">
-                    <x-form-input label="Giờ bắt đầu" name="startTime" type="time" wire:model.defer="startTime" />
-                    <x-form-input label="Giờ kết thúc" name="endTime"   type="time" wire:model.defer="endTime"   />
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-500 mb-1.5 tracking-wide uppercase">
+                            Giờ bắt đầu
+                        </label>
+                        <input type="time" wire:model.defer="startTime"
+                            class="w-full h-11 px-4 py-2.5 rounded-xl border border-black/[0.06] bg-white/80 backdrop-blur-sm text-sm
+                                text-slate-900 shadow-mac-sm
+                                focus:outline-none focus:ring-2 focus:ring-primary-500/25 focus:border-primary-300/40 transition-all" />
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-500 mb-1.5 tracking-wide uppercase">
+                            Giờ kết thúc
+                        </label>
+                        <input type="time" wire:model.defer="endTime"
+                            class="w-full h-11 px-4 py-2.5 rounded-xl border border-black/[0.06] bg-white/80 backdrop-blur-sm text-sm
+                                text-slate-900 shadow-mac-sm
+                                focus:outline-none focus:ring-2 focus:ring-primary-500/25 focus:border-primary-300/40 transition-all" />
+                    </div>
                 </div>
 
                 {{-- Info notice --}}
-                <div class="bg-primary-50 border-l-4 border-primary-500 rounded-xl p-4">
+                <div class="bg-primary-50/80 border border-primary-200/60 rounded-xl p-4 shadow-mac-sm">
                     <div class="flex gap-3">
                         <svg class="w-5 h-5 text-primary-500 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                 d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                         </svg>
-                        <ul class="text-sm text-primary-600 space-y-1">
+                        <ul class="text-sm text-primary-700 space-y-1">
                             <li>• Chỉ tạo phiên trong khoảng thời gian năm học</li>
                             <li>• Phiên đã tồn tại (cùng lớp, loại, ngày) sẽ bị bỏ qua</li>
-                            <li>• Chế độ "Theo tuần" có thể tạo nhiều phiên cùng lúc</li>
+                            @if($createMode === 'single')
+                            <li>• Tạo một phiên cho ngày đã chọn</li>
+                            @elseif($createMode === 'weekly')
+                            <li>• Tạo nhiều phiên theo các ngày trong tuần trong khoảng đã chọn</li>
+                            @else
+                            <li>• Tạo phiên cho từng ngày đã thêm vào danh sách</li>
+                            @endif
                         </ul>
                     </div>
                 </div>
 
-            </div>{{-- /body --}}
-
-            {{-- Footer --}}
-            <div class="flex-shrink-0 px-6 py-4 border-t border-slate-200 bg-slate-50 flex justify-end gap-3">
-                <x-action-button wire="closeModal" variant="secondary">Hủy</x-action-button>
-                <x-action-button wire="save" icon="save" :loading="true">Tạo phiên</x-action-button>
             </div>
 
-        </div>{{-- /modal inner --}}
-    </div>{{-- /modal overlay --}}
+            {{-- Footer --}}
+            <div class="flex-shrink-0 px-6 py-4 border-t border-black/[0.06] bg-slate-50/70 flex justify-end gap-3">
+                <x-button type="button" variant="outline" wire:click="closeModal">
+                    Hủy
+                </x-button>
+                <x-button type="button" variant="primary"
+                    wire:click="save"
+                    wire:loading.attr="disabled"
+                    wire:target="save">
+                    <span wire:loading.remove wire:target="save" class="inline-flex items-center gap-2">
+                        <x-icon name="save" />
+                        Tạo phiên
+                    </span>
+                    <span wire:loading wire:target="save">Đang tạo…</span>
+                </x-button>
+            </div>
 
-</div>{{-- /x-data --}}
+        </div>
+    </div>
+
+</div>

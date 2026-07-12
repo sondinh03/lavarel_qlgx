@@ -9,17 +9,17 @@
 <div class="min-h-screen bg-apple-gray p-2 sm:p-4 lg:p-6" style="min-height: calc(100vh - 56px - var(--bottom-offset));">
     <div id="main-content" class="mx-auto max-w-7xl space-y-5">
 
-        <x-mac-panel :overflow="true">
+        <x-mac-panel>
             <div class="px-4 lg:px-6 py-5 flex items-center justify-between gap-4 flex-wrap mac-hairline-b">
                 <div class="flex items-center gap-3">
-                    <div class="w-10 h-10 rounded-xl bg-emerald-100 flex items-center justify-center flex-shrink-0">
+                    <div class="w-10 h-10 rounded-xl bg-emerald-50/90 ring-1 ring-emerald-100/80 flex items-center justify-center flex-shrink-0 shadow-mac-sm">
                         <svg class="w-5 h-5 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                 d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/>
                         </svg>
                     </div>
                     <div>
-                        <h1 class="text-xl font-bold text-slate-900">Thống kê điểm danh</h1>
+                        <h1 class="text-xl font-semibold tracking-tight text-slate-900">Thống kê điểm danh</h1>
                         <p class="text-sm text-slate-500">Phân tích tỷ lệ chuyên cần theo lớp, khối và toàn xứ</p>
                     </div>
                 </div>
@@ -49,50 +49,50 @@
 
                     <div class="flex items-center gap-3 flex-wrap">
                         {{-- Type toggle: Đi học / Đi lễ --}}
-                        <div class="flex gap-1 bg-slate-200 p-1 rounded-xl">
+                        <div class="flex gap-1 p-1 rounded-xl bg-black/[0.04] border border-black/[0.04]">
                             <button wire:click="setType(1)"
                                 class="px-3 py-1.5 rounded-lg text-sm font-semibold transition-all
                                        {{ $attendanceType == 1
-                                           ? 'bg-white text-emerald-600 shadow-sm'
+                                           ? 'bg-white/90 text-emerald-600 shadow-mac-sm'
                                            : 'text-slate-600 hover:text-slate-900' }}">
                                 Đi học
                             </button>
                             <button wire:click="setType(2)"
                                 class="px-3 py-1.5 rounded-lg text-sm font-semibold transition-all
                                        {{ $attendanceType == 2
-                                           ? 'bg-white text-emerald-600 shadow-sm'
+                                           ? 'bg-white/90 text-emerald-600 shadow-mac-sm'
                                            : 'text-slate-600 hover:text-slate-900' }}">
                                 Đi lễ
                             </button>
                         </div>
 
                         {{-- Group by: ngày / tuần / tháng / khoảng thời gian --}}
-                        <div class="flex gap-1 bg-slate-200 p-1 rounded-xl">
+                        <div class="flex gap-1 p-1 rounded-xl bg-black/[0.04] border border-black/[0.04]">
                             <button wire:click="$set('groupBy', 'day')"
                                 class="px-3 py-1.5 rounded-lg text-sm font-semibold transition-all
                                        {{ $groupBy === 'day'
-                                           ? 'bg-white text-emerald-600 shadow-sm'
+                                           ? 'bg-white/90 text-emerald-600 shadow-mac-sm'
                                            : 'text-slate-600 hover:text-slate-900' }}">
                                 Ngày
                             </button>
                             <button wire:click="$set('groupBy', 'week')"
                                 class="px-3 py-1.5 rounded-lg text-sm font-semibold transition-all
                                        {{ $groupBy === 'week'
-                                           ? 'bg-white text-emerald-600 shadow-sm'
+                                           ? 'bg-white/90 text-emerald-600 shadow-mac-sm'
                                            : 'text-slate-600 hover:text-slate-900' }}">
                                 Tuần
                             </button>
                             <button wire:click="$set('groupBy', 'month')"
                                 class="px-3 py-1.5 rounded-lg text-sm font-semibold transition-all
                                        {{ $groupBy === 'month'
-                                           ? 'bg-white text-emerald-600 shadow-sm'
+                                           ? 'bg-white/90 text-emerald-600 shadow-mac-sm'
                                            : 'text-slate-600 hover:text-slate-900' }}">
                                 Tháng
                             </button>
                             <button wire:click="$set('groupBy', 'range')"
                                 class="px-3 py-1.5 rounded-lg text-sm font-semibold transition-all
                                        {{ $groupBy === 'range'
-                                           ? 'bg-white text-emerald-600 shadow-sm'
+                                           ? 'bg-white/90 text-emerald-600 shadow-mac-sm'
                                            : 'text-slate-600 hover:text-slate-900' }}">
                                 Khoảng
                             </button>
@@ -103,15 +103,17 @@
                             <div>
                                 <label class="sr-only" for="attendanceFrom">Từ ngày</label>
                                 <input id="attendanceFrom" type="date" wire:model.lazy="dateFrom"
-                                    class="px-3 py-2 rounded-xl border border-slate-300 bg-white text-sm text-slate-700
-                                           focus:outline-none focus:ring-2 focus:ring-emerald-500" />
+                                    class="h-10 px-3 rounded-xl border border-black/[0.06] bg-white/80 backdrop-blur-sm
+                                           text-sm text-slate-700 shadow-mac-sm
+                                           focus:outline-none focus:ring-2 focus:ring-emerald-500/25 focus:border-emerald-300/40" />
                             </div>
                             <span class="text-xs text-slate-400 font-semibold">→</span>
                             <div>
                                 <label class="sr-only" for="attendanceTo">Đến ngày</label>
                                 <input id="attendanceTo" type="date" wire:model.lazy="dateTo"
-                                    class="px-3 py-2 rounded-xl border border-slate-300 bg-white text-sm text-slate-700
-                                           focus:outline-none focus:ring-2 focus:ring-emerald-500" />
+                                    class="h-10 px-3 rounded-xl border border-black/[0.06] bg-white/80 backdrop-blur-sm
+                                           text-sm text-slate-700 shadow-mac-sm
+                                           focus:outline-none focus:ring-2 focus:ring-emerald-500/25 focus:border-emerald-300/40" />
                             </div>
                         </div>
                         @endif
@@ -234,7 +236,7 @@
         </div>
 
         {{-- ===================== CHÚ THÍCH ===================== --}}
-        <div class="rounded-xl border border-black/[0.06] bg-white/50 px-4 lg:px-6 py-4">
+        <div class="rounded-2xl border border-black/[0.06] bg-white/50 backdrop-blur-sm shadow-mac-sm px-4 lg:px-6 py-4">
             <div class="flex flex-wrap items-center gap-x-6 gap-y-2 text-xs text-slate-500">
                 <span class="font-semibold text-slate-700">Ghi chú:</span>
                 <span class="flex items-center gap-1.5">
