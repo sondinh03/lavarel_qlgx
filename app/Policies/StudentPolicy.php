@@ -24,59 +24,48 @@ class StudentPolicy
 
     /**
      * Xem danh sách học sinh
-     * parish_admin: xem học sinh trong xứ mình
-     * catechist: xem học sinh trong xứ mình
      */
     public function viewAny(User $user): bool
     {
-        return $user->hasRole('parish_admin')
-            || $user->hasRole('catechist');
+        return $user->canManageCatechism()
+            || $user->isCatechist();
     }
 
     /**
-     * Xem chi tiết 1 học sinh
-     * parish_admin và catechist có thể xem chi tiết học sinh trong xứ mình
+     * Xem chi tiết 1 học sinh trong cùng xứ
      */
     public function view(User $user, StudentNew $student): bool
     {
-        if ($user->hasRole('parish_admin') || $user->hasRole('catechist')) {
+        if ($user->canManageCatechism() || $user->isCatechist()) {
             return $user->parish_id === $student->parish_id;
         }
-
-        // catechist chỉ xem học sinh trong lớp mình dạy
-        // if ($user->hasRole('catechist')) {
-        //     return $student->classes()
-        //         ->whereHas('teachers', fn($q) => $q->where('user_id', $user->id))
-        //         ->exists();
-        // }
 
         return false;
     }
 
     /**
-     * Tạo học sinh mới - chỉ parish_admin
+     * Tạo học sinh mới
      */
     public function create(User $user): bool
     {
-        return $user->hasRole('parish_admin');
+        return $user->canManageCatechism();
     }
 
     /**
-     * Sửa học sinh - parish_admin trong cùng xứ
+     * Sửa học sinh trong cùng xứ
      */
     public function update(User $user, StudentNew $student): bool
     {
-        return $user->hasRole('parish_admin')
+        return $user->canManageCatechism()
             && $user->parish_id === $student->parish_id;
     }
 
     /**
-     * Xóa học sinh - parish_admin trong cùng xứ
-     * Cân nhắc: có thể set false nếu không muốn cho xóa thật
+     * Xóa học sinh trong cùng xứ
      */
     public function delete(User $user, StudentNew $student): bool
     {
-        return $user->hasRole('parish_admin')
+        return $user->canManageCatechism()
             && $user->parish_id === $student->parish_id;
     }
 }

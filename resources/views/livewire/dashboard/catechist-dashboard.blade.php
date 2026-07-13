@@ -51,7 +51,7 @@
                 </div>
                 <div class="min-w-0 flex-1">
                     <p class="font-semibold tracking-tight text-slate-900 group-hover:text-emerald-700">Điểm danh</p>
-                    <p class="text-sm text-slate-400">Điểm danh lớp học của bạn</p>
+                    <p class="text-sm text-slate-400">Điểm danh mọi lớp trong giáo xứ</p>
                 </div>
                 <svg class="w-5 h-5 text-slate-300 flex-shrink-0 group-hover:text-emerald-400"
                     fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -72,7 +72,7 @@
                 </div>
                 <div class="min-w-0 flex-1">
                     <p class="font-semibold tracking-tight text-slate-900 group-hover:text-blue-700">Học sinh</p>
-                    <p class="text-sm text-slate-400">Danh sách học sinh lớp tôi</p>
+                    <p class="text-sm text-slate-400">Danh sách học sinh trong giáo xứ</p>
                 </div>
                 <svg class="w-5 h-5 text-slate-300 flex-shrink-0 group-hover:text-blue-400"
                     fill="none" stroke="currentColor" viewBox="0 0 24 24">

@@ -6,6 +6,7 @@ use App\Http\Livewire\Base\BaseComponent;
 use App\Models\CatechismClass;
 use App\Models\ClassTeacher;
 use App\Models\Teacher;
+use App\Notifications\TeacherAssignedToClass;
 use Illuminate\Support\Facades\DB;
 
 class AssignTeacher extends BaseComponent
@@ -243,6 +244,20 @@ class AssignTeacher extends BaseComponent
 
             $roleLabel = $this->selectedRole === ClassTeacher::ROLE_CHU_NHIEM
                 ? 'Chủ nhiệm' : 'Phụ trách';
+
+            if ($teacher->user_id && (int) $teacher->user_id !== (int) auth()->id()) {
+                try {
+                    $teacher->loadMissing('user');
+                    if ($teacher->user) {
+                        notify_users(
+                            $teacher->user,
+                            new TeacherAssignedToClass($this->class, $teacher, $roleLabel)
+                        );
+                    }
+                } catch (\Throwable $e) {
+                    report($e);
+                }
+            }
 
             session()->flash('message', "Đã phân công {$teacher->full_name} làm {$roleLabel}");
 

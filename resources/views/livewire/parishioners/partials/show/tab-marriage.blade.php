@@ -1,9 +1,11 @@
 <div>
     <div class="flex items-center justify-between mb-5">
         <h3 class="text-base font-semibold text-slate-800">Thông tin hôn phối</h3>
+        @can('update', $parishioner)
         <button wire:click="openEditMarriage" class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-primary-600 bg-primary-50 rounded-lg hover:bg-primary-100 transition">
             {{ $marriage ? 'Chỉnh sửa' : 'Thêm hôn phối' }}
         </button>
+        @endcan
     </div>
 
     @if($marriage)
@@ -45,7 +47,9 @@
     @else
     <div class="text-center py-12">
         <p class="text-slate-400 text-sm">Chưa có thông tin hôn phối</p>
+        @can('update', $parishioner)
         <button wire:click="openEditMarriage" class="mt-3 px-4 py-2 text-sm font-medium text-primary-600 bg-primary-50 rounded-xl hover:bg-primary-100 transition">Thêm hôn phối</button>
+        @endcan
     </div>
     @endif
 </div>

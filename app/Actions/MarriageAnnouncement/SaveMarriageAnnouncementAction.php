@@ -7,6 +7,8 @@ use App\Models\MarriageAnnouncement;
 use App\Models\MarriageAnnouncementParishioners;
 use App\Models\Priest;
 use App\Models\Slug;
+use App\Notifications\MarriageAnnouncementImpediment;
+use App\Support\NotificationRecipients;
 use Cocur\Slugify\Slugify;
 use Illuminate\Support\Facades\DB;
 
@@ -26,6 +28,11 @@ class SaveMarriageAnnouncementAction
             $brideImpediment = ! empty($bride['has_impediment']);
 
             $userStatus = (int) ($header['status'] ?? 0);
+            $wasImpediment = false;
+
+            if ($id) {
+                $wasImpediment = (int) (MarriageAnnouncement::query()->where('id', $id)->value('status') ?? 0) === 2;
+            }
 
             if ($groomImpediment || $brideImpediment) {
                 $status = 2;
@@ -63,7 +70,18 @@ class SaveMarriageAnnouncementAction
             $this->syncParticipant($announcement, config('marriage-announcement.sex_bride'), $bride);
             $this->syncSlug($announcement, $header['slug'] ?? null);
 
-            return $announcement->fresh(['parishioners']);
+            $fresh = $announcement->fresh(['parishioners']);
+
+            if ((int) $fresh->status === 2 && ! $wasImpediment && $fresh->pid) {
+                $recipients = NotificationRecipients::parishRoles(
+                    (int) $fresh->pid,
+                    ['parish_admin', 'parishioner_admin'],
+                    auth()->id()
+                );
+                notify_users($recipients, new MarriageAnnouncementImpediment($fresh));
+            }
+
+            return $fresh;
         });
     }
 

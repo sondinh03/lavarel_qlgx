@@ -412,9 +412,9 @@ $isDashboard = request()->routeIs('parishioners.dashboard');
             {{-- ══════════════════════════════════════════
                  Chuyển sang module Giáo lý
             ══════════════════════════════════════════ --}}
-            @canany(['parish_admin', 'catechism_admin', 'catechist'])
+            @if(auth()->user()?->canManageCatechism() || auth()->user()?->isCatechist())
             <div class="pt-2 mt-2 border-t border-slate-100">
-                <a href="{{ route('parish-admin.dashboard') }}"
+                <a href="{{ auth()->user()->usesCatechistLayout() ? route('catechist.dashboard') : route('parish-admin.dashboard') }}"
                     class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition group
                            text-slate-500 hover:bg-slate-50 hover:text-slate-900">
                     <svg class="w-5 h-5 flex-shrink-0 text-slate-400 group-hover:text-slate-600"
@@ -425,7 +425,7 @@ $isDashboard = request()->routeIs('parishioners.dashboard');
                     <span class="sidebar-label truncate">Sang module Giáo lý</span>
                 </a>
             </div>
-            @endcanany
+            @endif
 
         </nav>
 
@@ -435,10 +435,7 @@ $isDashboard = request()->routeIs('parishioners.dashboard');
             <div class="relative has-flyout" x-data="{ open: false }">
                 <button @click="if(!sidebarMini) open = !open" @click.outside="open = false"
                     class="w-full flex items-center gap-3 px-2 py-2 rounded-xl hover:bg-slate-50 transition group">
-                    <div class="w-8 h-8 rounded-full bg-primary-100 text-primary-700
-                                flex items-center justify-center text-xs font-bold flex-shrink-0">
-                        {{ strtoupper(substr(Auth::user()->name, 0, 1)) }}
-                    </div>
+                    <x-user-avatar :user="Auth::user()" size="sm" />
                     <div class="user-info sidebar-label flex-1 min-w-0 text-left">
                         <p class="text-sm font-medium text-slate-800 truncate">{{ Auth::user()->name }}</p>
                         <p class="text-xs text-slate-400 truncate">{{ Auth::user()->email }}</p>
@@ -454,6 +451,16 @@ $isDashboard = request()->routeIs('parishioners.dashboard');
                     @click.outside="open = false"
                     class="absolute bottom-full left-0 right-0 mb-1 bg-white border border-slate-200 rounded-xl shadow-lg overflow-hidden z-50"
                     x-cloak>
+                    <a href="{{ route('account.settings') }}"
+                        class="block px-4 py-2.5 text-sm text-slate-700 hover:bg-slate-50">
+                        Tài khoản
+                    </a>
+                    @if(Auth::user()->isParishAdmin())
+                    <a href="{{ route('parish.settings') }}"
+                        class="block px-4 py-2.5 text-sm text-slate-700 hover:bg-slate-50">
+                        Thông tin giáo xứ
+                    </a>
+                    @endif
                     <a href="{{ route('module.select') }}"
                         class="block px-4 py-2.5 text-sm text-slate-700 hover:bg-slate-50">
                         Chọn phân hệ
@@ -473,6 +480,16 @@ $isDashboard = request()->routeIs('parishioners.dashboard');
                     <div class="px-3 py-2 text-xs font-semibold text-slate-400 uppercase tracking-wide">
                         {{ Auth::user()->name }}
                     </div>
+                    <a href="{{ route('account.settings') }}"
+                        class="block px-4 py-2 text-sm text-slate-700 hover:bg-slate-50">
+                        Tài khoản
+                    </a>
+                    @if(Auth::user()->isParishAdmin())
+                    <a href="{{ route('parish.settings') }}"
+                        class="block px-4 py-2 text-sm text-slate-700 hover:bg-slate-50">
+                        Thông tin giáo xứ
+                    </a>
+                    @endif
                     <a href="{{ route('module.select') }}"
                         class="block px-4 py-2 text-sm text-slate-700 hover:bg-slate-50">
                         Chọn phân hệ
@@ -536,6 +553,10 @@ $isDashboard = request()->routeIs('parishioners.dashboard');
 
                 {{-- Right actions --}}
                 <div class="flex items-center gap-2 flex-shrink-0">
+                    @auth
+                    @livewire('notifications.notification-bell')
+                    @endauth
+
                     {{-- Module badge --}}
                     <span class="hidden sm:inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full
                                  text-xs font-medium bg-blue-50 text-blue-700 border border-blue-100">

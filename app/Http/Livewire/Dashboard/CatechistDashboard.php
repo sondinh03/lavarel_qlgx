@@ -31,7 +31,7 @@ class CatechistDashboard extends BaseComponent
 
     public function mount(): void
     {
-        if (auth()->user()?->isParishAdmin()) {
+        if (auth()->user()?->canManageCatechism()) {
             redirect()->route('parish-admin.dashboard');
         }
 
@@ -45,19 +45,13 @@ class CatechistDashboard extends BaseComponent
             return;
         }
 
-        // Lấy lớp mà catechist này đang dạy
-        $teacherId = auth()->user()->teacher?->id;
-
-        if (!$teacherId) {
-            $this->myClasses = collect();
-            return;
-        }
-
+        // GLV xem mọi lớp active trong giáo xứ (năm học hiện tại)
         $this->myClasses = CatechismClass::with('gradeLevel')
             ->withCount('students')
             ->where('school_year_id', $this->activeSchoolYear->id)
-            ->whereHas('teachers', fn($q) => $q->where('teachers.id', $teacherId))
+            ->when($this->parishId, fn ($q) => $q->where('parish_id', $this->parishId))
             ->active()
+            ->orderBy('name')
             ->get();
     }
 

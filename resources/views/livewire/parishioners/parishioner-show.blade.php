@@ -1,9 +1,23 @@
 @section('topbar')
-<x-breadcrumb :items="[
-    ['label' => 'Trang chủ', 'url' => route('parishioners.dashboard')],
-    ['label' => 'Quản lý giáo dân', 'url' => route('parishioners.index')],
-    ['label' => $parishioner->full_name_with_saint],
-]" />
+@php
+    $user = auth()->user();
+    $homeUrl = match (true) {
+        $user?->canManageParishioners() => route('parishioners.dashboard'),
+        $user?->usesCatechistLayout() => route('catechist.dashboard'),
+        $user?->canManageCatechism() => route('parish-admin.dashboard'),
+        default => route('landing'),
+    };
+    $crumbItems = [
+        ['label' => 'Trang chủ', 'url' => $homeUrl],
+    ];
+    if ($user?->canManageParishioners()) {
+        $crumbItems[] = ['label' => 'Quản lý giáo dân', 'url' => route('parishioners.index')];
+    } elseif ($user?->canManageCatechism() || $user?->isCatechist()) {
+        $crumbItems[] = ['label' => 'Học sinh', 'url' => route('students.index')];
+    }
+    $crumbItems[] = ['label' => $parishioner->full_name_with_saint];
+@endphp
+<x-breadcrumb :items="$crumbItems" />
 @endsection
 
 <div class="min-h-screen bg-slate-50 p-2 sm:p-4 lg:p-6" style="min-height: calc(100vh - 56px - var(--bottom-offset));">
@@ -81,6 +95,7 @@
                         </div>
                     </div>
 
+                    @can('update', $parishioner)
                     <div class="flex items-center gap-2 flex-shrink-0 flex-wrap">
                         <x-button as="a" href="{{ route('parishioners.export-lylich', $parishioner) }}" variant="outline">
                             <x-icon name="download" />
@@ -97,6 +112,7 @@
                         </x-button>
                         @endcan
                     </div>
+                    @endcan
                 </div>
             </div>
 

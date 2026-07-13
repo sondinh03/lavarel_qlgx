@@ -8,6 +8,9 @@ use App\Models\Marriage;
 use App\Models\ParishGroup;
 use App\Models\ParishionerRegistrationRequest;
 use App\Models\Sacrament;
+use App\Notifications\ParishionerRegistrationApproved;
+use App\Notifications\ParishionerRegistrationRejected;
+use App\Support\NotificationRecipients;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Support\Facades\Log;
 use Livewire\Component;
@@ -63,6 +66,14 @@ class ParishionerRegistrationShow extends Component
 
             $this->registration = $result['request'];
             $this->showApproveModal = false;
+
+            $recipients = NotificationRecipients::parishRoles(
+                (int) $this->registration->parish_id,
+                ['parish_admin', 'parishioner_admin'],
+                auth()->id()
+            );
+            notify_users($recipients, new ParishionerRegistrationApproved($this->registration));
+
             $message = ! empty($result['family'])
                 ? 'Đã duyệt và tạo hộ gia đình trong hệ thống.'
                 : 'Đã duyệt và thêm giáo dân vào hệ thống.';
@@ -115,6 +126,14 @@ class ParishionerRegistrationShow extends Component
 
         $this->registration->refresh();
         $this->showRejectModal = false;
+
+        $recipients = NotificationRecipients::parishRoles(
+            (int) $this->registration->parish_id,
+            ['parish_admin', 'parishioner_admin'],
+            auth()->id()
+        );
+        notify_users($recipients, new ParishionerRegistrationRejected($this->registration));
+
         $this->emit('toast', 'message', 'Đã từ chối yêu cầu đăng ký.');
     }
 

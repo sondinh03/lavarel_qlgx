@@ -1,4 +1,4 @@
-<div class="min-h-screen bg-[#0B0B0F] flex flex-col"
+<div class="min-h-screen bg-apple-gray flex flex-col"
     style="min-height: calc(100vh - var(--bottom-offset));">
 
     {{-- Loading bar --}}
@@ -9,40 +9,40 @@
         </div>
     </div>
 
-    {{-- Header dark glass --}}
+    {{-- Header --}}
     <div class="sticky top-0 z-40 flex-shrink-0 flex items-center justify-between px-3 py-3
-                bg-black/50 backdrop-blur-xl border-b border-white/[0.08]">
+                bg-white/80 backdrop-blur-xl border-b border-slate-200 shadow-mac-sm">
         <div class="flex items-center gap-3 min-w-0">
             <a href="{{ route('dashboard') }}"
                 onclick="if(window.stopCamera) window.stopCamera()"
-                class="w-9 h-9 rounded-xl bg-white/10 ring-1 ring-white/10
-                       flex items-center justify-center text-white/80
-                       hover:bg-white/15 active:scale-95 transition touch-feedback"
+                class="w-9 h-9 rounded-xl bg-slate-100 border border-slate-200
+                       flex items-center justify-center text-slate-600
+                       hover:bg-slate-200 active:scale-95 transition touch-feedback"
                 aria-label="Quay lại">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
                 </svg>
             </a>
-            <div class="text-white font-semibold text-sm tracking-tight leading-tight min-w-0">
+            <div class="text-slate-900 font-semibold text-sm tracking-tight leading-tight min-w-0">
                 Điểm danh QR
-                <div class="text-[11px] text-white/45 font-medium">Mở camera · Quét liên tục</div>
+                <div class="text-xs text-slate-400 font-medium">Mở camera · Quét liên tục</div>
             </div>
         </div>
 
         {{-- Type toggle --}}
-        <div class="flex items-center gap-0.5 bg-white/10 ring-1 ring-white/10 rounded-xl p-1 flex-shrink-0">
+        <div class="flex items-center gap-0.5 bg-slate-100 border border-slate-200 rounded-xl p-1 flex-shrink-0">
             <button wire:click="setType(1)" type="button"
                 class="px-3 py-1.5 rounded-lg text-sm font-medium transition-all
                        {{ $type === 1
                            ? 'bg-primary-500 text-white shadow-mac-sm'
-                           : 'text-white/50 hover:text-white/80' }}">
+                           : 'text-slate-500 hover:text-slate-700' }}">
                 Đi học
             </button>
             <button wire:click="setType(2)" type="button"
                 class="px-3 py-1.5 rounded-lg text-sm font-medium transition-all
                        {{ $type === 2
                            ? 'bg-primary-500 text-white shadow-mac-sm'
-                           : 'text-white/50 hover:text-white/80' }}">
+                           : 'text-slate-500 hover:text-slate-700' }}">
                 Đi lễ
             </button>
         </div>
@@ -79,9 +79,9 @@
             id="camera-flip-btn"
             onclick="if(window.switchCamera) window.switchCamera()"
             class="absolute bottom-3 right-3 z-10 w-10 h-10 rounded-full
-                   bg-black/55 backdrop-blur-md ring-1 ring-white/15 text-white/90
+                   bg-slate-900/70 border border-slate-600 text-white
                    flex items-center justify-center touch-feedback active:scale-95
-                   hover:bg-black/70 transition"
+                   hover:bg-slate-900 transition"
             aria-label="Đổi camera">
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -89,121 +89,138 @@
             </svg>
         </button>
 
-        {{-- Result overlay --}}
+        {{-- Kết quả: banner nhỏ dưới camera, không che khung quét --}}
         @if($lastResult)
-        <div class="absolute inset-0 flex items-center justify-center backdrop-blur-sm
-                    {{ $lastResultType === 'success' ? 'bg-emerald-950/75' :
-                       ($lastResultType === 'warning' ? 'bg-amber-950/75' : 'bg-red-950/75') }}">
-            <div class="mx-5 w-full max-w-xs rounded-2xl bg-black/40 ring-1 ring-white/10
-                backdrop-blur-xl px-6 py-5 text-center shadow-mac">
-                @if($lastResultType === 'success')
-                <div class="w-14 h-14 bg-emerald-500/90 rounded-2xl flex items-center justify-center mx-auto mb-3 shadow-mac-sm">
-                    <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        @php
+            $overlaySaint = ($lastResult['saint_name'] ?? '') && ($lastResult['saint_name'] ?? '') !== '-'
+                ? $lastResult['saint_name']
+                : '';
+            $bannerTone = match ($lastResultType) {
+                'success' => 'bg-emerald-50 border-emerald-200',
+                'warning' => 'bg-amber-50 border-amber-200',
+                default   => 'bg-red-50 border-red-200',
+            };
+            $iconTone = match ($lastResultType) {
+                'success' => 'bg-emerald-500 text-white',
+                'warning' => 'bg-amber-400 text-slate-900',
+                default   => 'bg-red-500 text-white',
+            };
+        @endphp
+        <div
+            wire:key="qr-result-{{ md5(($lastResultType ?? '') . json_encode($lastResult) . count($scannedLog)) }}"
+            x-data
+            x-init="setTimeout(() => $wire.clearResult(), 2500)"
+            class="absolute left-3 right-14 bottom-3 z-20 pointer-events-none">
+            <div class="flex items-center gap-2.5 rounded-xl border shadow-mac px-3 py-2.5 {{ $bannerTone }}">
+                <div class="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 {{ $iconTone }}">
+                    @if($lastResultType === 'success')
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7" />
                     </svg>
-                </div>
-                @elseif($lastResultType === 'warning')
-                <div class="w-14 h-14 bg-amber-400/95 rounded-2xl flex items-center justify-center mx-auto mb-3 shadow-mac-sm">
-                    <svg class="w-8 h-8 text-slate-900" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    @elseif($lastResultType === 'warning')
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                             d="M12 9v2m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                     </svg>
-                </div>
-                @else
-                <div class="w-14 h-14 bg-red-500/90 rounded-2xl flex items-center justify-center mx-auto mb-3 shadow-mac-sm">
-                    <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    @else
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M6 18L18 6M6 6l12 12" />
                     </svg>
+                    @endif
                 </div>
-                @endif
-
-                @if(isset($lastResult['saint_name']) && $lastResult['saint_name'])
-                <div class="text-white/55 text-sm">{{ $lastResult['saint_name'] }}</div>
-                @endif
-                @if(isset($lastResult['student_name']))
-                <div class="text-white font-semibold tracking-tight text-lg">{{ $lastResult['student_name'] }}</div>
-                @if(isset($lastResult['class_name']))
-                <div class="text-white/45 text-xs mt-0.5">{{ $lastResult['class_name'] }}</div>
-                @endif
-                @endif
-
-                <div class="mt-2 text-white/90 text-sm font-medium">{{ $lastResult['message'] }}</div>
-
-                @if(isset($lastResult['time']))
-                <div class="text-white/45 text-xs mt-1">Lúc {{ $lastResult['time'] }}</div>
-                @endif
+                <div class="min-w-0 flex-1">
+                    <div class="text-sm font-semibold tracking-tight text-slate-900 truncate">
+                        @if($overlaySaint){{ $overlaySaint }} @endif{{ $lastResult['student_name'] ?? '' }}
+                    </div>
+                    <div class="text-xs text-slate-600 truncate">
+                        {{ $lastResult['message'] }}
+                        @if(isset($lastResult['class_name']) && $lastResult['class_name'])
+                            · {{ $lastResult['class_name'] }}
+                        @endif
+                        @if(isset($lastResult['time']) && $lastResult['time'])
+                            · {{ $lastResult['time'] }}
+                        @endif
+                    </div>
+                </div>
             </div>
         </div>
         @endif
     </div>
 
-    {{-- Hint --}}
-    <div class="flex-shrink-0 py-2.5 text-center text-xs text-white/35">
-        Đưa mã QR vào khung hình · Giữ ổn định 1–2 giây
-    </div>
+    {{-- Below camera: light surface --}}
+    <div class="flex-1 flex flex-col bg-apple-gray min-h-0">
+        {{-- Hint --}}
+        <div class="flex-shrink-0 py-2.5 text-center text-xs text-slate-400">
+            Đưa mã QR vào khung hình · Giữ ổn định 1–2 giây
+        </div>
 
-    {{-- Scanned Log --}}
-    <div class="flex-1 overflow-y-auto px-3 pb-2">
-        @if(count($scannedLog) > 0)
-        <div class="rounded-2xl bg-white/[0.04] ring-1 ring-white/[0.08] overflow-hidden">
-            <div class="px-4 py-2.5 flex items-center justify-between border-b border-white/[0.06]">
-                <span class="text-xs font-semibold text-white/45 uppercase tracking-wide">
-                    Vừa điểm danh
-                </span>
-                <span class="text-xs text-white/35">{{ count($scannedLog) }} học sinh</span>
-            </div>
-            <div class="divide-y divide-white/[0.06]">
-                @foreach($scannedLog as $log)
-                <div class="flex items-center gap-3 px-4 py-3">
-                    <div class="w-8 h-8 rounded-xl bg-emerald-500/15 ring-1 ring-emerald-400/20
-                        flex items-center justify-center flex-shrink-0">
-                        <svg class="w-4 h-4 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7" />
-                        </svg>
-                    </div>
-                    <div class="flex-1 min-w-0">
-                        <div class="text-white text-sm font-medium tracking-tight truncate">{{ $log['student_name'] }}</div>
-                        <div class="text-white/40 text-xs truncate">
-                            @php
-                                $saint = ($log['saint_name'] ?? '') && ($log['saint_name'] ?? '') !== '-' ? $log['saint_name'] : '';
-                            @endphp
-                            {{ $saint ? $saint . ' · ' : '' }}{{ $log['class_name'] }}
+        {{-- Scanned Log --}}
+        <div class="flex-1 overflow-y-auto px-3 pb-2">
+            @if(count($scannedLog) > 0)
+            <div class="rounded-2xl bg-white/75 backdrop-blur-xl border border-slate-200 shadow-mac overflow-hidden">
+                <div class="px-4 py-2.5 flex items-center justify-between border-b border-slate-100">
+                    <span class="text-xs font-semibold text-slate-500 uppercase tracking-wide">
+                        Vừa điểm danh
+                    </span>
+                    <span class="text-xs text-slate-400">{{ count($scannedLog) }} học sinh</span>
+                </div>
+                <div class="divide-y divide-slate-100">
+                    @foreach($scannedLog as $log)
+                    @php
+                        $saint = ($log['saint_name'] ?? '') && ($log['saint_name'] ?? '') !== '-'
+                            ? $log['saint_name']
+                            : '';
+                    @endphp
+                    <div class="flex items-center gap-3 px-4 py-3">
+                        <div class="w-8 h-8 rounded-xl bg-emerald-50 border border-emerald-100
+                            flex items-center justify-center flex-shrink-0">
+                            <svg class="w-4 h-4 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7" />
+                            </svg>
                         </div>
+                        <div class="flex-1 min-w-0">
+                            <div class="text-sm font-semibold tracking-tight text-slate-900 truncate">
+                                @if($saint){{ $saint }} @endif{{ $log['student_name'] }}
+                            </div>
+                            @if(!empty($log['class_name']))
+                            <div class="text-xs text-slate-400 truncate">{{ $log['class_name'] }}</div>
+                            @endif
+                        </div>
+                        <div class="text-xs text-slate-400 flex-shrink-0">{{ $log['time'] }}</div>
                     </div>
-                    <div class="text-white/35 text-xs flex-shrink-0">{{ $log['time'] }}</div>
+                    @endforeach
                 </div>
-                @endforeach
             </div>
+            @else
+            <div class="flex items-center justify-center h-32 px-4 rounded-2xl
+                bg-white/75 border border-slate-200 shadow-mac-sm">
+                <p class="text-slate-400 text-sm text-center leading-relaxed">
+                    Chưa có ai được quét.<br>Đưa QR vào khung và chờ nhận diện.
+                </p>
+            </div>
+            @endif
         </div>
-        @else
-        <div class="flex items-center justify-center h-32 px-4 rounded-2xl
-            bg-white/[0.03] ring-1 ring-white/[0.06]">
-            <p class="text-white/30 text-sm text-center leading-relaxed">
-                Chưa có ai được quét.<br>Đưa QR vào khung và chờ nhận diện.
-            </p>
-        </div>
-        @endif
-    </div>
 
-    {{-- Footer --}}
-    <div class="sticky bottom-0 z-40 flex-shrink-0 px-4 py-3
-        bg-black/55 backdrop-blur-xl border-t border-white/[0.08]"
-        style="padding-bottom: calc(12px + var(--safe-bottom));">
-        <div class="flex items-center justify-between mb-2">
-            <span class="text-xs text-white/45">
-                Đã quét <span class="text-white font-semibold">{{ count($scannedLog) }}</span> học sinh
-            </span>
-            <span class="text-xs text-white/30">{{ now()->format('d/m/Y') }}</span>
+        {{-- Footer --}}
+        <div class="sticky bottom-0 z-40 flex-shrink-0 px-4 py-3
+            bg-white/80 backdrop-blur-xl border-t border-slate-200"
+            style="padding-bottom: calc(12px + var(--safe-bottom));">
+            <div class="flex items-center justify-between mb-2">
+                <span class="text-xs text-slate-500">
+                    Đã quét <span class="font-semibold text-slate-900">{{ count($scannedLog) }}</span> học sinh
+                </span>
+                <span class="text-xs text-slate-400">{{ now()->format('d/m/Y') }}</span>
+            </div>
+            <a href="{{ route('dashboard') }}"
+                onclick="if(window.stopCamera) window.stopCamera()"
+                class="block w-full py-3 rounded-xl text-center font-semibold text-sm
+                      transition-all touch-feedback active:scale-95
+                      {{ count($scannedLog) > 0
+                          ? 'bg-primary-500 hover:bg-primary-600 text-white shadow-mac-sm'
+                          : 'bg-slate-100 text-slate-500 border border-slate-200' }}">
+                {{ count($scannedLog) > 0 ? 'Hoàn thành' : 'Thoát' }}
+            </a>
         </div>
-        <a href="{{ route('dashboard') }}"
-            onclick="if(window.stopCamera) window.stopCamera()"
-            class="block w-full py-3 rounded-xl text-center font-semibold text-sm
-                  transition-all touch-feedback active:scale-95
-                  {{ count($scannedLog) > 0
-                      ? 'bg-primary-500 hover:bg-primary-600 text-white shadow-mac-sm'
-                      : 'bg-white/10 text-white/50 ring-1 ring-white/10' }}">
-            {{ count($scannedLog) > 0 ? 'Hoàn thành' : 'Thoát' }}
-        </a>
     </div>
 </div>
 

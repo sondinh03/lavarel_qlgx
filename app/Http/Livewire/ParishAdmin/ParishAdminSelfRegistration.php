@@ -2,16 +2,29 @@
 
 namespace App\Http\Livewire\ParishAdmin;
 
+use App\Models\Deanery;
+use App\Models\Diocese;
 use App\Models\ParishAdminRegistrationRequest;
 use App\Models\ParishNew;
+use App\Models\User;
+use App\Notifications\ParishAdminRegistrationSubmitted;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\RateLimiter;
+use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 use Livewire\Component;
 
 class ParishAdminSelfRegistration extends Component
 {
-    public ?int $targetParishId = null;
+    public $dioceseId = null;
+
+    public $deaneryId = null;
+
+    public $targetParishId = null;
+
+    public bool $useCustomParish = false;
+
+    public string $customParishName = '';
 
     public string $name = '';
 
@@ -25,9 +38,16 @@ class ParishAdminSelfRegistration extends Component
 
     public string $note = '';
 
+    /** @var array<int, string> */
+    public array $selectedRoles = ['parish_admin'];
+
     public bool $submitted = false;
 
     public ?string $referenceCode = null;
+
+    public array $dioceseOptions = [];
+
+    public array $deaneryOptions = [];
 
     public array $parishOptions = [];
 
@@ -37,54 +57,147 @@ class ParishAdminSelfRegistration extends Component
             abort(404);
         }
 
-        $activeParishes = ParishNew::query()
-            ->where('status', 1)
-            ->with('diocese:id,name')
+        $this->dioceseOptions = Diocese::query()
             ->orderBy('name')
-            ->get();
-
-        $this->parishOptions = $activeParishes
+            ->get(['id', 'name'])
             ->map(fn ($row) => [
                 'id'   => (string) $row->id,
-                'name' => $this->formatParishOptionLabel($row),
+                'name' => $row->name,
             ])
             ->values()
             ->toArray();
 
-        if ($parish && $activeParishes->contains('id', $parish)) {
-            $this->targetParishId = $parish;
-        } elseif ($activeParishes->count() === 1) {
-            $this->targetParishId = $activeParishes->first()->id;
+        if ($parish) {
+            $existing = ParishNew::query()
+                ->where('status', 1)
+                ->find($parish);
+
+            if ($existing) {
+                $this->dioceseId = $existing->diocese_id ? (int) $existing->diocese_id : null;
+                $this->deaneryId = $existing->deanery_id ? (int) $existing->deanery_id : null;
+                $this->targetParishId = (int) $existing->id;
+                $this->loadDeaneryOptions();
+                $this->loadParishOptions();
+            }
         }
     }
 
-    protected function formatParishOptionLabel(ParishNew $parish): string
+    public function updatedDioceseId(): void
     {
-        $dioceseName = $parish->diocese?->name;
+        $this->deaneryId = null;
+        $this->targetParishId = null;
+        $this->customParishName = '';
+        $this->useCustomParish = false;
+        $this->loadDeaneryOptions();
+        $this->parishOptions = [];
+    }
 
-        return $dioceseName
-            ? $parish->name . ' — ' . $dioceseName
-            : $parish->name;
+    public function updatedDeaneryId(): void
+    {
+        $this->targetParishId = null;
+        $this->customParishName = '';
+        $this->useCustomParish = false;
+        $this->loadParishOptions();
+    }
+
+    public function updatedUseCustomParish($value): void
+    {
+        if ($value) {
+            $this->targetParishId = null;
+        } else {
+            $this->customParishName = '';
+        }
+    }
+
+    public function updatedTargetParishId(): void
+    {
+        if ($this->targetParishId) {
+            $this->useCustomParish = false;
+            $this->customParishName = '';
+        }
+    }
+
+    protected function loadDeaneryOptions(): void
+    {
+        if (! $this->dioceseId) {
+            $this->deaneryOptions = [];
+
+            return;
+        }
+
+        $this->deaneryOptions = Deanery::query()
+            ->where('did', $this->dioceseId)
+            ->orderBy('name')
+            ->get(['id', 'name'])
+            ->map(fn ($row) => [
+                'id'   => (string) $row->id,
+                'name' => $row->name,
+            ])
+            ->values()
+            ->toArray();
+    }
+
+    protected function loadParishOptions(): void
+    {
+        if (! $this->deaneryId) {
+            $this->parishOptions = [];
+
+            return;
+        }
+
+        $this->parishOptions = ParishNew::query()
+            ->where('status', 1)
+            ->where('deanery_id', $this->deaneryId)
+            ->orderBy('name')
+            ->get(['id', 'name'])
+            ->map(fn ($row) => [
+                'id'   => (string) $row->id,
+                'name' => $row->name,
+            ])
+            ->values()
+            ->toArray();
     }
 
     protected function rules(): array
     {
+        $roleKeys = array_keys(config('parish-admin-registration.roles', []));
+
         return [
-            'targetParishId'        => 'required|integer|exists:parishes,id',
-            'name'                  => 'required|string|max:255',
-            'email'                 => 'required|email|max:255',
-            'phone'                 => 'nullable|string|max:20',
-            'password'              => 'required|string|min:8|confirmed',
+            'dioceseId'         => 'required|integer|exists:dioceses,id',
+            'deaneryId'         => 'required|integer|exists:deanerys,id',
+            'targetParishId'    => [
+                Rule::requiredIf(fn () => ! $this->useCustomParish),
+                'nullable',
+                'integer',
+                'exists:parishes,id',
+            ],
+            'customParishName'  => [
+                Rule::requiredIf(fn () => $this->useCustomParish),
+                'nullable',
+                'string',
+                'max:255',
+            ],
+            'selectedRoles'     => 'required|array|min:1',
+            'selectedRoles.*'   => ['required', 'string', Rule::in($roleKeys)],
+            'name'              => 'nullable|string|max:255',
+            'email'             => 'required|email|max:255',
+            'phone'             => 'nullable|string|max:20',
+            'password'          => 'required|string|min:8|confirmed',
             'password_confirmation' => 'required|string|min:8',
-            'note'                  => 'nullable|string|max:1000',
+            'note'              => 'nullable|string|max:1000',
         ];
     }
 
     protected function messages(): array
     {
         return [
-            'targetParishId.required' => 'Vui lòng chọn giáo xứ.',
-            'password.confirmed'      => 'Xác nhận mật khẩu không khớp.',
+            'dioceseId.required'        => 'Vui lòng chọn giáo phận.',
+            'deaneryId.required'        => 'Vui lòng chọn giáo hạt.',
+            'targetParishId.required'   => 'Vui lòng chọn giáo xứ hoặc nhập tên giáo xứ mới.',
+            'customParishName.required' => 'Vui lòng nhập tên giáo xứ.',
+            'selectedRoles.required'    => 'Vui lòng chọn ít nhất một quyền.',
+            'selectedRoles.min'         => 'Vui lòng chọn ít nhất một quyền.',
+            'password.confirmed'        => 'Xác nhận mật khẩu không khớp.',
         ];
     }
 
@@ -97,8 +210,7 @@ class ParishAdminSelfRegistration extends Component
 
         if (RateLimiter::tooManyAttempts($ipKey, $maxAttempts)) {
             $seconds = RateLimiter::availableIn($ipKey);
-            $message = 'Bạn đã gửi quá nhiều lần. Vui lòng thử lại sau ' . $seconds . ' giây.';
-            $this->addError('submit', $message);
+            $this->addError('submit', 'Bạn đã gửi quá nhiều lần. Vui lòng thử lại sau ' . $seconds . ' giây.');
 
             return;
         }
@@ -109,39 +221,63 @@ class ParishAdminSelfRegistration extends Component
             throw $e;
         }
 
+        $deanery = Deanery::query()->find($this->deaneryId);
+
+        if (! $deanery || (int) $deanery->did !== (int) $this->dioceseId) {
+            $this->addError('deaneryId', 'Giáo hạt không thuộc giáo phận đã chọn.');
+
+            return;
+        }
+
+        if ($this->targetParishId) {
+            $parish = ParishNew::query()->find($this->targetParishId);
+
+            if (! $parish
+                || (int) $parish->deanery_id !== (int) $this->deaneryId
+                || (int) $parish->diocese_id !== (int) $this->dioceseId
+            ) {
+                $this->addError('targetParishId', 'Giáo xứ không thuộc giáo hạt / giáo phận đã chọn.');
+
+                return;
+            }
+        }
+
         $emailKey = 'parish-admin-registration:email:' . strtolower(trim($this->email));
 
         if (RateLimiter::tooManyAttempts($emailKey, $maxAttempts)) {
             $seconds = RateLimiter::availableIn($emailKey);
-            $message = 'Email này đã gửi quá nhiều yêu cầu. Vui lòng thử lại sau ' . $seconds . ' giây.';
-            $this->addError('email', $message);
+            $this->addError('email', 'Email này đã gửi quá nhiều yêu cầu. Vui lòng thử lại sau ' . $seconds . ' giây.');
 
             return;
         }
 
         if (ParishAdminRegistrationRequest::emailIsBlocked($this->email)) {
-            $message = 'Email đã được sử dụng hoặc đang chờ duyệt.';
-            $this->addError('email', $message);
+            $this->addError('email', 'Email đã được sử dụng hoặc đang chờ duyệt.');
 
             return;
         }
 
+        $roles = array_values(array_unique($this->selectedRoles));
+
         try {
             $request = ParishAdminRegistrationRequest::create([
-                'reference_code' => ParishAdminRegistrationRequest::generateReferenceCode(),
-                'parish_id'      => $this->targetParishId,
-                'status'         => ParishAdminRegistrationRequest::STATUS_PENDING,
-                'name'           => trim($this->name),
-                'email'          => strtolower(trim($this->email)),
-                'phone'          => trim($this->phone) ?: null,
-                'password_hash'  => Hash::make($this->password),
-                'note'           => trim($this->note) ?: null,
-                'ip_address'     => request()->ip(),
+                'reference_code'     => ParishAdminRegistrationRequest::generateReferenceCode(),
+                'parish_id'          => $this->useCustomParish ? null : (int) $this->targetParishId,
+                'diocese_id'         => (int) $this->dioceseId,
+                'deanery_id'         => (int) $this->deaneryId,
+                'custom_parish_name' => $this->useCustomParish ? trim($this->customParishName) : null,
+                'status'             => ParishAdminRegistrationRequest::STATUS_PENDING,
+                'name'               => trim($this->name) ?: null,
+                'email'              => strtolower(trim($this->email)),
+                'phone'              => trim($this->phone) ?: null,
+                'password_hash'      => Hash::make($this->password),
+                'note'               => trim($this->note) ?: null,
+                'requested_roles'    => $roles,
+                'ip_address'         => request()->ip(),
             ]);
         } catch (\Throwable $e) {
             report($e);
-            $message = 'Có lỗi khi gửi đăng ký. Vui lòng thử lại sau.';
-            $this->addError('submit', $message);
+            $this->addError('submit', 'Có lỗi khi gửi đăng ký. Vui lòng thử lại sau.');
 
             return;
         }
@@ -149,9 +285,27 @@ class ParishAdminSelfRegistration extends Component
         RateLimiter::hit($ipKey, $decaySeconds);
         RateLimiter::hit($emailKey, $decaySeconds);
 
-        $this->reset(['name', 'email', 'phone', 'password', 'password_confirmation', 'note']);
+        $superAdmins = User::role('super_admin')->get();
+        notify_users($superAdmins, new ParishAdminRegistrationSubmitted($request));
+
+        $this->reset([
+            'name',
+            'email',
+            'phone',
+            'password',
+            'password_confirmation',
+            'note',
+            'customParishName',
+            'useCustomParish',
+        ]);
+        $this->selectedRoles = ['parish_admin'];
         $this->submitted = true;
         $this->referenceCode = $request->reference_code;
+    }
+
+    public function getRoleCatalogProperty(): array
+    {
+        return config('parish-admin-registration.roles', []);
     }
 
     public function render()

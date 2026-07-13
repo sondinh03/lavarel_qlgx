@@ -38,7 +38,7 @@ class ModuleSelect extends Component
                 'description' => 'Quản lý hồ sơ giáo dân, gia đình, bí tích, hôn phối',
                 'route'       => 'parishioners.index',
                 'icon'        => 'parishioner',
-                'roles'       => ['parish_admin'],
+                'roles'       => ['parish_admin', 'parishioner_admin'],
             ],
             [
                 'key'         => 'catechism',
@@ -46,7 +46,7 @@ class ModuleSelect extends Component
                 'description' => 'Quản lý lớp học, học sinh, giáo viên, điểm số',
                 'route'       => $catechismRoute,
                 'icon'        => 'catechism',
-                'roles'       => ['parish_admin', 'catechist'],
+                'roles'       => ['parish_admin', 'catechism_admin', 'catechist'],
             ],
         ];
 

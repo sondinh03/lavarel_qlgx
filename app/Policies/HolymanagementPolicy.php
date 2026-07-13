@@ -21,36 +21,21 @@ class HolymanagementPolicy
         return null;
     }
 
-    /**
-     * parish_admin và super_admin đều xem được
-     */
     public function viewAny(User $user): bool
     {
-        return $user->isParishAdmin() || $user->isSuperAdmin();
+        return $user->canManageParishioners();
     }
 
-    /**
-     * Chỉ super_admin — đã handle trong before()
-     * parish_admin không được tạo
-     */
     public function create(User $user): bool
     {
-        // return false;
-        return $user->isParishAdmin() || $user->isSuperAdmin();
+        return $user->canManageParishioners();
     }
 
-    /**
-     * Chỉ super_admin — đã handle trong before()
-     */
     public function update(User $user, Holymanagement $holy): bool
     {
-        // return false;
-        return $user->isParishAdmin() || $user->isSuperAdmin();
+        return $user->canManageParishioners();
     }
 
-    /**
-     * Chỉ super_admin — đã handle trong before()
-     */
     public function delete(User $user, Holymanagement $holy): bool
     {
         return false;

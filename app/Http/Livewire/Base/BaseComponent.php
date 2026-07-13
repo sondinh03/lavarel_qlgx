@@ -329,7 +329,7 @@ abstract class BaseComponent extends Component
         /** @var \App\Models\User $user */
         $user = auth()->user();
 
-        $user->hasAnyRole(['super_admin', 'parish_admin'])
+        $user->canManage()
             || abort(403, 'Chỉ quản trị viên mới có quyền');
     }
 
@@ -341,7 +341,7 @@ abstract class BaseComponent extends Component
         /** @var \App\Models\User $user */
         $user = auth()->user();
 
-        $user->hasRole('parish_admin')
+        $user->canManage()
             || abort(403, 'Chỉ quản trị xứ mới có quyền');
 
         $this->parishId

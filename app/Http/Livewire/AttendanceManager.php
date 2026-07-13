@@ -7,8 +7,12 @@ use App\Http\Livewire\Base\BaseComponent;
 use App\Models\AttendanceRecord;
 use App\Models\AttendanceSession;
 use App\Models\CatechismClass;
+use App\Models\ClassTeacher;
 use App\Models\NamHoc;
+use App\Models\User;
+use App\Notifications\AttendanceSessionSummary;
 use App\Services\AttendanceService;
+use App\Support\NotificationRecipients;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -255,7 +259,7 @@ class AttendanceManager extends BaseComponent
     // ==================== AUTHORIZATION ====================
 
     /**
-     * Admin / GLV cùng xứ: điểm danh lớp thuộc giáo xứ (và năm đang chọn nếu có).
+     * Admin / GLV cùng xứ: điểm danh mọi lớp thuộc giáo xứ (và năm đang chọn nếu có).
      */
     protected function assertCanMarkClass(?int $classId): bool
     {
@@ -297,7 +301,7 @@ class AttendanceManager extends BaseComponent
     }
 
     /**
-     * Ưu tiên lớp phụ trách GLV trong năm/xứ; fallback lớp active đầu tiên.
+     * Ưu tiên lớp phụ trách GLV (nếu có); fallback lớp active đầu tiên trong xứ/năm.
      */
     protected function resolveDefaultClassForYear(int $namHocId): ?int
     {
@@ -614,6 +618,15 @@ class AttendanceManager extends BaseComponent
                 $toastType = !empty($result['errors']) ? 'warning' : 'success';
                 $this->emit('toast', $toastType, $result['message'] ?? 'Đã lưu điểm danh');
 
+                try {
+                    $this->notifyAttendanceSummary($drafts, $classId);
+                } catch (\Throwable $e) {
+                    Log::warning('Attendance summary notification failed', [
+                        'class_id' => $classId,
+                        'error'    => $e->getMessage(),
+                    ]);
+                }
+
                 $this->dispatchBrowserEvent('attendance-saved', [
                     'records'   => $this->attendanceRecords,
                     'savedKeys' => $result['savedKeys'] ?? [],
@@ -628,6 +641,64 @@ class AttendanceManager extends BaseComponent
         } finally {
             $this->dispatchBrowserEvent('attendance-save-completed');
         }
+    }
+
+    /**
+     * Gửi tóm tắt điểm danh (1 thông báo/lần lưu) tới GLV lớp + admin giáo lý, trừ người đang lưu.
+     *
+     * @param  array<int, array{student_id: int, session_id: int, status: int, note: string, attendanceType: int}>  $drafts
+     */
+    protected function notifyAttendanceSummary(array $drafts, int $classId): void
+    {
+        if ($drafts === []) {
+            return;
+        }
+
+        $class = CatechismClass::query()->find($classId);
+        if (! $class) {
+            return;
+        }
+
+        $statuses = collect($drafts)->pluck('status');
+        $summary = [
+            'class_name'         => $class->name ?? 'Lớp',
+            'present'            => $statuses->filter(fn ($s) => (int) $s === AttendanceRecord::STATUS_PRESENT)->count(),
+            'absent_excused'     => $statuses->filter(fn ($s) => (int) $s === AttendanceRecord::STATUS_ABSENT_EXCUSED)->count(),
+            'absent_unexcused'   => $statuses->filter(fn ($s) => (int) $s === AttendanceRecord::STATUS_ABSENT_UNEXCUSED)->count(),
+            'total'              => $statuses->count(),
+        ];
+
+        $actorId = auth()->id();
+
+        $teacherUserIds = ClassTeacher::query()
+            ->byClass($classId)
+            ->when($class->school_year_id, fn ($q) => $q->byNamhoc($class->school_year_id))
+            ->active()
+            ->with('teacher:id,user_id')
+            ->get()
+            ->pluck('teacher.user_id')
+            ->filter()
+            ->unique()
+            ->values();
+
+        $recipients = User::query()
+            ->whereIn('id', $teacherUserIds)
+            ->get();
+
+        if ($class->parish_id) {
+            $admins = NotificationRecipients::parishRoles(
+                (int) $class->parish_id,
+                ['parish_admin', 'catechism_admin'],
+                $actorId
+            );
+            $recipients = $recipients->merge($admins);
+        }
+
+        $recipients = $recipients
+            ->filter(fn (User $u) => (int) $u->id !== (int) $actorId)
+            ->unique('id');
+
+        notify_users($recipients, new AttendanceSessionSummary($summary, $classId));
     }
 
     public function switchType(int $type): void

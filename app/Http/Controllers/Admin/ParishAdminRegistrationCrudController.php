@@ -7,12 +7,14 @@ use App\Actions\ParishAdmin\RejectParishAdminRegistrationAction;
 use App\Models\ParishAdminRegistrationRequest;
 use Backpack\CRUD\app\Http\Controllers\CrudController;
 use Backpack\CRUD\app\Library\CrudPanel\CrudPanelFacade as CRUD;
+use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Http\Request;
 use InvalidArgumentException;
 use Prologue\Alerts\Facades\Alert;
 
 class ParishAdminRegistrationCrudController extends CrudController
 {
+    use AuthorizesRequests;
     use \Backpack\CRUD\app\Http\Controllers\Operations\ListOperation;
     use \Backpack\CRUD\app\Http\Controllers\Operations\ShowOperation;
 
@@ -44,9 +46,26 @@ class ParishAdminRegistrationCrudController extends CrudController
         CRUD::column('email')->label('Email');
         CRUD::column('phone')->label('SĐT');
         CRUD::addColumn([
-            'name'  => 'parish.name',
-            'label' => 'Giáo xứ',
+            'name'  => 'diocese.name',
+            'label' => 'Giáo phận',
             'type'  => 'text',
+        ]);
+        CRUD::addColumn([
+            'name'  => 'deanery.name',
+            'label' => 'Giáo hạt',
+            'type'  => 'text',
+        ]);
+        CRUD::addColumn([
+            'name'     => 'parish_display',
+            'label'    => 'Giáo xứ',
+            'type'     => 'closure',
+            'function' => fn ($entry) => $entry->parishDisplayName(),
+        ]);
+        CRUD::addColumn([
+            'name'     => 'requested_roles',
+            'label'    => 'Quyền',
+            'type'     => 'closure',
+            'function' => fn ($entry) => implode(', ', $entry->requestedRoleLabels()) ?: '—',
         ]);
         CRUD::addColumn([
             'name'          => 'status',
@@ -68,9 +87,26 @@ class ParishAdminRegistrationCrudController extends CrudController
         CRUD::column('email')->label('Email');
         CRUD::column('phone')->label('SĐT');
         CRUD::addColumn([
-            'name'  => 'parish.name',
-            'label' => 'Giáo xứ',
+            'name'  => 'diocese.name',
+            'label' => 'Giáo phận',
             'type'  => 'text',
+        ]);
+        CRUD::addColumn([
+            'name'  => 'deanery.name',
+            'label' => 'Giáo hạt',
+            'type'  => 'text',
+        ]);
+        CRUD::addColumn([
+            'name'     => 'parish_display',
+            'label'    => 'Giáo xứ',
+            'type'     => 'closure',
+            'function' => fn ($entry) => $entry->parishDisplayName(),
+        ]);
+        CRUD::addColumn([
+            'name'     => 'requested_roles',
+            'label'    => 'Quyền yêu cầu',
+            'type'     => 'closure',
+            'function' => fn ($entry) => implode(', ', $entry->requestedRoleLabels()) ?: '—',
         ]);
         CRUD::column('note')->label('Ghi chú')->type('textarea');
         CRUD::addColumn([

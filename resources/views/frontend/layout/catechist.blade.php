@@ -105,20 +105,11 @@
             </div>
 
             <div class="flex items-center gap-1 flex-shrink-0">
-                <button type="button"
-                    class="relative p-2 rounded-xl text-slate-500 hover:bg-black/[0.04] active:bg-black/[0.06] transition touch-feedback"
-                    aria-label="Thông báo">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
-                    </svg>
-                </button>
+                @livewire('notifications.notification-bell')
                 <button type="button" @click="showMenu = !showMenu"
-                    class="w-8 h-8 rounded-full bg-primary-500/90 ring-1 ring-primary-400/40
-                        flex items-center justify-center text-white text-sm font-bold shadow-mac-sm
-                        hover:bg-primary-600 active:scale-95 transition touch-feedback"
+                    class="rounded-full hover:opacity-90 active:scale-95 transition touch-feedback"
                     aria-label="Menu">
-                    {{ strtoupper(substr(Auth::user()->name ?? 'U', 0, 1)) }}
+                    <x-user-avatar :user="Auth::user()" size="sm" class="ring-1 ring-primary-400/40 shadow-mac-sm" />
                 </button>
             </div>
         </div>
@@ -160,10 +151,7 @@
                     </button>
                 </div>
                 <div class="flex items-center gap-3">
-                    <div class="w-11 h-11 rounded-2xl bg-primary-50/90 ring-1 ring-primary-100/80
-                        flex items-center justify-center text-primary-700 font-bold text-lg flex-shrink-0 shadow-mac-sm">
-                        {{ strtoupper(substr(Auth::user()->name ?? 'U', 0, 1)) }}
-                    </div>
+                    <x-user-avatar :user="Auth::user()" size="md" class="rounded-2xl ring-1 ring-primary-100/80 shadow-mac-sm" />
                     <div class="min-w-0">
                         <p class="font-semibold tracking-tight text-slate-900 truncate">{{ Auth::user()->name ?? '' }}</p>
                         <p class="text-xs text-slate-500">Giáo lý viên</p>
@@ -201,7 +189,16 @@
                 @endforeach
             </nav>
 
-            <div class="flex-shrink-0 p-3 border-t border-black/[0.06]">
+            <div class="flex-shrink-0 p-3 border-t border-black/[0.06] space-y-1">
+                <a href="{{ route('account.settings') }}"
+                    class="w-full flex items-center gap-3 px-3 py-3 rounded-xl
+                        text-slate-700 hover:bg-black/[0.04] transition-all touch-feedback">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                    </svg>
+                    <span class="text-sm font-medium">Tài khoản</span>
+                </a>
                 <form method="POST" action="{{ route('logout') }}">
                     @csrf
                     <button type="submit"

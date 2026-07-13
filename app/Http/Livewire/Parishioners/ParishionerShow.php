@@ -5,6 +5,8 @@ namespace App\Http\Livewire\Parishioners;
 use App\Http\Livewire\Parishioners\Concerns\ManagesParishionerForm;
 use App\Models\Marriage;
 use App\Models\Parishioner;
+use App\Notifications\ParishionerMarkedDeceased;
+use App\Support\NotificationRecipients;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -94,7 +96,6 @@ class ParishionerShow extends Component
 
     public function mount(Parishioner $parishioner): void
     {
-        $this->authorize('view', $parishioner);
         $this->parishioner = $parishioner->load(['saint', 'parishGroup', 'association', 'student']);
         $this->is_deceased = $this->parishioner->death_date !== null;
 
@@ -129,7 +130,7 @@ class ParishionerShow extends Component
 
     public function openDonXinRuaToiModal(): void
     {
-        $this->authorize('view', $this->parishioner);
+        $this->authorize('update', $this->parishioner);
 
         $this->baptism_candidate_name        = '';
         $this->godparent_name                = '';
@@ -148,7 +149,7 @@ class ParishionerShow extends Component
 
     public function exportDonXinRuaToi()
     {
-        $this->authorize('view', $this->parishioner);
+        $this->authorize('update', $this->parishioner);
 
         $this->validate([
             'baptism_candidate_name'        => 'required|string|max:200',
@@ -427,10 +428,20 @@ class ParishionerShow extends Component
         $this->authorize('update', $this->parishioner);
 
         try {
+            $wasDeceased = $this->parishioner->death_date !== null;
             $data = $this->applyParishionerSectionSave($this->parishioner, 'deceased');
             $this->parishioner->update($data);
             $this->parishioner->refresh();
             $this->is_deceased = $this->parishioner->death_date !== null;
+
+            if (! $wasDeceased && $this->is_deceased && $this->parishioner->parish_id) {
+                $recipients = NotificationRecipients::parishRoles(
+                    (int) $this->parishioner->parish_id,
+                    ['parish_admin', 'parishioner_admin'],
+                    auth()->id()
+                );
+                notify_users($recipients, new ParishionerMarkedDeceased($this->parishioner));
+            }
 
             $this->emit('toast', 'message', 'Cập nhật thông tin tử vong thành công');
             $this->showEditDeceased = false;
@@ -491,9 +502,19 @@ class ParishionerShow extends Component
 
     public function render()
     {
+        $user = auth()->user();
+
+        $layout = match (true) {
+            $user === null => 'frontend.layout.landing',
+            $user->usesCatechistLayout() => 'frontend.layout.catechist',
+            $user->canManageParishioners() => 'frontend.layout.parishioner',
+            $user->canManageCatechism() => 'frontend.layout.main',
+            default => 'frontend.layout.landing',
+        };
+
         return view('livewire.parishioners.parishioner-show', [
             'marriage' => $this->parishioner->marriageAsHusband
                 ?? $this->parishioner->marriageAsWife,
-        ])->extends('frontend.layout.parishioner')->section('content');
+        ])->extends($layout)->section('content');
     }
 }

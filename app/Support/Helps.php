@@ -156,3 +156,34 @@ if (!function_exists('status_badge_class')) {
             : 'bg-red-100 text-red-600';
     }
 }
+
+// ==================== NOTIFICATIONS ====================
+
+if (! function_exists('notify_users')) {
+    /**
+     * Gửi notification tới một hoặc nhiều User (database channel).
+     *
+     * @param  \Illuminate\Support\Collection|\Illuminate\Database\Eloquent\Collection|iterable|\App\Models\User|null  $users
+     * @param  \Illuminate\Notifications\Notification  $notification
+     */
+    function notify_users($users, $notification): void
+    {
+        if ($users === null) {
+            return;
+        }
+
+        if ($users instanceof \App\Models\User) {
+            $users->notify($notification);
+
+            return;
+        }
+
+        $collection = collect($users)->filter()->unique('id');
+
+        if ($collection->isEmpty()) {
+            return;
+        }
+
+        \Illuminate\Support\Facades\Notification::send($collection, $notification);
+    }
+}

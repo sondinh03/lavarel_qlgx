@@ -10,9 +10,12 @@
     <link href="{{ mix('css/app.css') }}" rel="stylesheet">
     @livewireStyles
     @stack('styles')
+    <style>
+        [x-cloak] { display: none !important; }
+    </style>
 </head>
 
-<body class="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 antialiased">
+<body class="min-h-screen bg-apple-gray text-slate-800 antialiased font-sans">
 
     {{-- MAIN - Không có header/nav --}}
     <main class="flex-1">

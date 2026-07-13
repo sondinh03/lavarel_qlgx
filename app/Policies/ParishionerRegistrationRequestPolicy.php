@@ -17,18 +17,18 @@ class ParishionerRegistrationRequestPolicy
 
     public function viewAny(User $user): bool
     {
-        return $user->hasRole('parish_admin');
+        return $user->canManageParishioners();
     }
 
     public function view(User $user, ParishionerRegistrationRequest $request): bool
     {
-        return $user->hasRole('parish_admin')
+        return $user->canManageParishioners()
             && (int) $user->parish_id === (int) $request->parish_id;
     }
 
     public function approve(User $user, ParishionerRegistrationRequest $request): bool
     {
-        return $user->hasRole('parish_admin')
+        return $user->canManageParishioners()
             && (int) $user->parish_id === (int) $request->parish_id
             && $request->isPending();
     }

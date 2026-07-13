@@ -1,4 +1,5 @@
 <?php return array (
+  'account.account-settings' => 'App\\Http\\Livewire\\Account\\AccountSettings',
   'attendance-manager' => 'App\\Http\\Livewire\\AttendanceManager',
   'attendance.attendance-qr' => 'App\\Http\\Livewire\\Attendance\\AttendanceQr',
   'attendance.attendance-statistics' => 'App\\Http\\Livewire\\Attendance\\AttendanceStatistics',
@@ -29,8 +30,11 @@
   'module-select' => 'App\\Http\\Livewire\\ModuleSelect',
   'nam-hoc.copy-nam-hoc' => 'App\\Http\\Livewire\\NamHoc\\CopyNamHoc',
   'nam-hoc.nam-hoc-manager' => 'App\\Http\\Livewire\\NamHoc\\NamHocManager',
+  'notifications.notification-bell' => 'App\\Http\\Livewire\\Notifications\\NotificationBell',
+  'notifications.notification-index' => 'App\\Http\\Livewire\\Notifications\\NotificationIndex',
   'parish-admin.parish-admin-self-registration' => 'App\\Http\\Livewire\\ParishAdmin\\ParishAdminSelfRegistration',
   'parish.parish-group-manager' => 'App\\Http\\Livewire\\Parish\\ParishGroupManager',
+  'parish.parish-settings' => 'App\\Http\\Livewire\\Parish\\ParishSettings',
   'parishioners.association-manager' => 'App\\Http\\Livewire\\Parishioners\\AssociationManager',
   'parishioners.family-register-import-preview' => 'App\\Http\\Livewire\\Parishioners\\FamilyRegisterImportPreview',
   'parishioners.parishioner-create' => 'App\\Http\\Livewire\\Parishioners\\ParishionerCreate',

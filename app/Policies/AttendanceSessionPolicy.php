@@ -21,12 +21,12 @@ class AttendanceSessionPolicy
     }
 
     /**
-     * Xem danh sách lớp
+     * Xem danh sách phiên
      */
     public function viewAny(User $user): bool
     {
-        return $user->hasRole('parish_admin')
-            || $user->hasRole('catechist');
+        return $user->canManageCatechism()
+            || $user->isCatechist();
     }
 
     /**
@@ -40,7 +40,7 @@ class AttendanceSessionPolicy
             return false;
         }
 
-        if ($user->hasRole('parish_admin') || $user->hasRole('catechist')) {
+        if ($user->canManageCatechism() || $user->isCatechist()) {
             return (int) $user->parish_id === (int) $class->parish_id;
         }
 
@@ -49,14 +49,14 @@ class AttendanceSessionPolicy
 
     public function create(User $user): bool
     {
-        return $user->hasRole('parish_admin');
+        return $user->canManageCatechism();
     }
 
     public function update(User $user, AttendanceSession $session): bool
     {
         $class = $session->catechismClass;
 
-        return $user->hasRole('parish_admin')
+        return $user->canManageCatechism()
             && $class
             && (int) $user->parish_id === (int) $class->parish_id;
     }
@@ -65,7 +65,7 @@ class AttendanceSessionPolicy
     {
         $class = $session->catechismClass;
 
-        return $user->hasRole('parish_admin')
+        return $user->canManageCatechism()
             && $class
             && (int) $user->parish_id === (int) $class->parish_id;
     }

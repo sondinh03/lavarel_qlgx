@@ -21,23 +21,23 @@ class AssociationPolicy
 
     public function viewAny(User $user): bool
     {
-        return $user->isParishAdmin();
+        return $user->canManageParishioners();
     }
 
     public function create(User $user): bool
     {
-        return $user->isParishAdmin();
+        return $user->canManageParishioners();
     }
 
     public function update(User $user, Association $association): bool
     {
-        return $user->isParishAdmin()
+        return $user->canManageParishioners()
             && (int) $user->parish_id === (int) $association->pid;
     }
 
     public function delete(User $user, Association $association): bool
     {
-        return $user->isParishAdmin()
+        return $user->canManageParishioners()
             && (int) $user->parish_id === (int) $association->pid;
     }
 }

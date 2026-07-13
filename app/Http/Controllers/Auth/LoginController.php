@@ -97,7 +97,7 @@ class LoginController extends Controller
             return redirect('/admin/dashboard');
         }
 
-        if ($user->isParishAdmin() || $user->isCatechist()) {
+        if ($user->canManage() || $user->isCatechist()) {
             return redirect()->route('module.select');
         }
 

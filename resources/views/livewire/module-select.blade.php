@@ -370,10 +370,12 @@
                     <p class="ms-user-role">
                         @php
                         $roleName = match(auth()->user()->roles->first()?->name) {
-                            'super_admin'  => 'Quản trị hệ thống',
-                            'parish_admin' => 'Cha xứ / Quản trị xứ',
-                            'catechist'    => 'Giáo lý viên',
-                            default        => auth()->user()->roles->first()?->name ?? 'Người dùng',
+                            'super_admin'        => 'Quản trị hệ thống',
+                            'parish_admin'       => 'Cha xứ / Quản trị xứ',
+                            'catechism_admin'    => 'Quản trị giáo lý',
+                            'parishioner_admin'  => 'Quản trị giáo dân',
+                            'catechist'          => 'Giáo lý viên',
+                            default              => auth()->user()->roles->first()?->name ?? 'Người dùng',
                         };
                         @endphp
                         {{ $roleName }}

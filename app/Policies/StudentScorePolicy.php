@@ -25,16 +25,16 @@ class StudentScorePolicy
 
     public function create(User $user): bool
     {
-        return $user->isParishAdmin();
+        return $user->canManageCatechism();
     }
 
     public function update(User $user, StudentScore $studentScore): bool
     {
-        return $user->isParishAdmin();
+        return $user->canManageCatechism();
     }
 
     public function delete(User $user, StudentScore $studentScore): bool
     {
-        return $user->isParishAdmin();
+        return $user->canManageCatechism();
     }
 }

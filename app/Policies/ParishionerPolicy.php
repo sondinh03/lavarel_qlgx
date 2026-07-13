@@ -13,68 +13,43 @@ class ParishionerPolicy
     /**
      * SuperAdmin bỏ qua tất cả checks
      */
-    public function before(User $user): ?bool
+    public function before(?User $user): ?bool
     {
-        if ($user->isSuperAdmin()) {
+        if ($user?->isSuperAdmin()) {
             return true;
         }
 
         return null;
     }
 
-    /**
-     * Xem danh sách giáo dân
-     * parish_admin: xem giáo dân trong xứ mình
-     */
     public function viewAny(User $user): bool
     {
-        return $user->hasRole('parish_admin')
-            || $user->hasRole('catechist');
+        return $user->canManageParishioners()
+            || $user->isCatechist();
     }
 
     /**
-     * Xem chi tiết một giáo dân
-     * parish_admin và catechist chỉ xem giáo dân trong xứ mình
+     * Hồ sơ giáo dân công khai (kể cả khách chưa đăng nhập).
      */
-    public function view(User $user, Parishioner $parishioner): bool
+    public function view(?User $user, Parishioner $parishioner): bool
     {
-        // parish_admin xem trong xứ mình
-        if ($user->hasRole('parish_admin')) {
-            return $user->parish_id === $parishioner->parish_id;
-        }
-
-        // catechist chỉ xem, không sửa/xóa — check cùng xứ là đủ
-        if ($user->hasRole('catechist')) {
-            return $user->parish_id === $parishioner->parish_id;
-        }
-
-        return false;
+        return true;
     }
 
-    /**
-     * Tạo giáo dân mới
-     * chỉ parish_admin trong cùng xứ được tạo giáo dân mới
-     */
     public function create(User $user): bool
     {
-        return $user->hasRole('parish_admin');
+        return $user->canManageParishioners();
     }
 
-    /**
-     * Cập nhật giáo dân - parish_admin trong cùng xứ
-     */
     public function update(User $user, Parishioner $parishioner): bool
     {
-        return $user->hasRole('parish_admin')
+        return $user->canManageParishioners()
             && $user->parish_id === $parishioner->parish_id;
     }
 
-    /**
-     * Xóa giáo dân - parish_admin trong cùng xứ
-     */
     public function delete(User $user, Parishioner $parishioner): bool
     {
-        return $user->hasRole('parish_admin')
+        return $user->canManageParishioners()
             && $user->parish_id === $parishioner->parish_id;
     }
 }

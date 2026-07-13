@@ -29,6 +29,7 @@ class User extends Authenticatable
         'email',
         'password',
         'parish_id',
+        'avatar_path',
     ];
 
     /**
@@ -81,6 +82,32 @@ class User extends Authenticatable
         return $this->hasRole('catechist');
     }
 
+    public function isCatechismAdmin(): bool
+    {
+        return $this->hasRole('catechism_admin');
+    }
+
+    public function isParishionerAdmin(): bool
+    {
+        return $this->hasRole('parishioner_admin');
+    }
+
+    /**
+     * Quản lý đầy đủ module giáo lý cấp xứ (không gồm GLV thuần).
+     */
+    public function canManageCatechism(): bool
+    {
+        return $this->hasAnyRole(['super_admin', 'parish_admin', 'catechism_admin']);
+    }
+
+    /**
+     * Quản lý đầy đủ module giáo dân cấp xứ.
+     */
+    public function canManageParishioners(): bool
+    {
+        return $this->hasAnyRole(['super_admin', 'parish_admin', 'parishioner_admin']);
+    }
+
     /**
      * Giao diện mobile/bottom-nav chỉ dành cho GLV thuần (không phải quản trị xứ).
      */
@@ -89,14 +116,27 @@ class User extends Authenticatable
         return $this->isCatechist() && ! $this->canManage();
     }
 
+    /**
+     * Staff quản trị xứ (một hoặc cả hai module), không phải GLV thuần.
+     */
     public function canManage(): bool
     {
-        return $this->hasAnyRole(['super_admin', 'parish_admin']);
+        return $this->hasAnyRole([
+            'super_admin',
+            'parish_admin',
+            'catechism_admin',
+            'parishioner_admin',
+        ]);
     }
 
     public function parishName(): ?string
     {
         return $this->parish?->name ?? null;
+    }
+
+    public function avatarUrl(): ?string
+    {
+        return $this->avatar_path ? media_url($this->avatar_path) : null;
     }
 
     public function sendPasswordResetNotification($token): void
@@ -130,6 +170,10 @@ class User extends Authenticatable
     {
         static::deleting(function (User $user) {
             Teacher::where('user_id', $user->id)->update(['user_id' => null]);
+
+            if ($user->avatar_path) {
+                delete_stored_media($user->avatar_path);
+            }
         });
 
         static::saved(function ($user) {

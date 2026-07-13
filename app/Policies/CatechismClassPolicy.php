@@ -25,25 +25,17 @@ class CatechismClassPolicy
      */
     public function viewAny(User $user): bool
     {
-        return $user->hasRole('parish_admin')
-            || $user->hasRole('catechist');
+        return $user->canManageCatechism()
+            || $user->isCatechist();
     }
 
     /**
-     * Xem chi tiết 
+     * Xem chi tiết — admin giáo lý / GLV cùng xứ xem mọi lớp trong giáo xứ
      */
     public function view(User $user, CatechismClass $class): bool
     {
-        // parish_admin xem mọi lớp trong xứ
-        if ($user->hasRole('parish_admin')) {
+        if ($user->canManageCatechism() || $user->isCatechist()) {
             return $user->parish_id === $class->parish_id;
-        }
-
-        // catechist chỉ xem lớp mình dạy
-        if ($user->hasRole('catechist')) {
-            return $class->teachers()
-                ->where('user_id', $user->id)
-                ->exists();
         }
 
         return false;
@@ -51,18 +43,18 @@ class CatechismClassPolicy
 
     public function create(User $user): bool
     {
-        return $user->hasRole('parish_admin');
+        return $user->canManageCatechism();
     }
 
     public function update(User $user, CatechismClass $class): bool
     {
-        return $user->hasRole('parish_admin')
+        return $user->canManageCatechism()
             && $user->parish_id === $class->parish_id;
     }
 
     public function delete(User $user, CatechismClass $class): bool
     {
-        return $user->hasRole('parish_admin')
+        return $user->canManageCatechism()
             && $user->parish_id === $class->parish_id;
     }
 }

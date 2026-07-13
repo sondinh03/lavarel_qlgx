@@ -7,6 +7,8 @@ use App\Models\Marriage;
 use App\Models\ParishionerRegistrationRequest;
 use App\Models\ParishNew;
 use App\Models\Sacrament;
+use App\Models\User;
+use App\Notifications\ParishionerRegistrationSubmitted;
 use App\Support\FamilyCodeGenerator;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Validation\ValidationException;
@@ -186,6 +188,12 @@ class ParishionerSelfRegistration extends Component
         }
 
         RateLimiter::hit($key, 3600);
+
+        $recipients = User::query()
+            ->where('parish_id', $request->parish_id)
+            ->role(['parish_admin', 'parishioner_admin'])
+            ->get();
+        notify_users($recipients, new ParishionerRegistrationSubmitted($request));
 
         $this->submitted = true;
         $this->referenceCode = $request->reference_code;

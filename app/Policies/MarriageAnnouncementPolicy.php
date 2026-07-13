@@ -17,12 +17,12 @@ class MarriageAnnouncementPolicy
 
     public function viewAny(User $user): bool
     {
-        return $user->hasRole('parish_admin') || $user->hasRole('catechist');
+        return $user->canManageParishioners() || $user->isCatechist();
     }
 
     public function view(User $user, MarriageAnnouncement $announcement): bool
     {
-        if ($user->hasRole('parish_admin') || $user->hasRole('catechist')) {
+        if ($user->canManageParishioners() || $user->isCatechist()) {
             return (int) $user->parish_id === (int) $announcement->pid;
         }
 
@@ -31,18 +31,18 @@ class MarriageAnnouncementPolicy
 
     public function create(User $user): bool
     {
-        return $user->hasRole('parish_admin');
+        return $user->canManageParishioners();
     }
 
     public function update(User $user, MarriageAnnouncement $announcement): bool
     {
-        return $user->hasRole('parish_admin')
+        return $user->canManageParishioners()
             && (int) $user->parish_id === (int) $announcement->pid;
     }
 
     public function delete(User $user, MarriageAnnouncement $announcement): bool
     {
-        return $user->hasRole('parish_admin')
+        return $user->canManageParishioners()
             && (int) $user->parish_id === (int) $announcement->pid;
     }
 
