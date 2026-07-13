@@ -76,6 +76,7 @@ class ApproveParishAdminRegistrationAction
 
             $freshRequest = $request->fresh();
             notify_users($user, new ParishAdminRegistrationApproved($freshRequest));
+            app(\App\Services\Admin\SystemOverviewService::class)->forget();
 
             return [
                 'user'    => $user,

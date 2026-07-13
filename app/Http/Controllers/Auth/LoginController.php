@@ -3,11 +3,13 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
+use App\Models\User;
 use App\Providers\RouteServiceProvider;
 use App\Support\UserAccountEmailResolver;
 use Illuminate\Foundation\Auth\AuthenticatesUsers;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Validation\ValidationException;
 
 class LoginController extends Controller
 {
@@ -73,6 +75,53 @@ class LoginController extends Controller
         }
 
         return false;
+    }
+
+    /**
+     * Thông báo lỗi đăng nhập cụ thể hơn (tài khoản không tồn tại / sai mật khẩu).
+     */
+    protected function sendFailedLoginResponse(Request $request)
+    {
+        throw ValidationException::withMessages([
+            $this->username() => [$this->failedLoginMessage($request)],
+        ]);
+    }
+
+    protected function failedLoginMessage(Request $request): string
+    {
+        $raw = trim((string) $request->input('email', ''));
+
+        if ($raw === '') {
+            return __('auth.failed');
+        }
+
+        if ($this->findLoginUser($raw)) {
+            return __('auth.failed_password');
+        }
+
+        return __('auth.failed_user');
+    }
+
+    protected function findLoginUser(string $raw): ?User
+    {
+        $resolved = UserAccountEmailResolver::resolveLoginIdentifier($raw);
+        $user = User::where('email', $resolved)->first();
+
+        if ($user) {
+            return $user;
+        }
+
+        $phone = UserAccountEmailResolver::isEmail($raw)
+            ? (UserAccountEmailResolver::isSyntheticEmail($resolved)
+                ? (explode('@', $resolved, 2)[0] ?? null)
+                : null)
+            : $raw;
+
+        if ($phone) {
+            return UserAccountEmailResolver::findUserByPhone($phone);
+        }
+
+        return null;
     }
 
     /**

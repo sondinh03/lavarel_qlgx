@@ -8,6 +8,7 @@ use App\Models\ParishAdminRegistrationRequest;
 use App\Models\ParishNew;
 use App\Models\User;
 use App\Notifications\ParishAdminRegistrationSubmitted;
+use App\Services\Admin\SystemOverviewService;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Validation\Rule;
@@ -287,6 +288,7 @@ class ParishAdminSelfRegistration extends Component
 
         $superAdmins = User::role('super_admin')->get();
         notify_users($superAdmins, new ParishAdminRegistrationSubmitted($request));
+        app(SystemOverviewService::class)->forget();
 
         $this->reset([
             'name',

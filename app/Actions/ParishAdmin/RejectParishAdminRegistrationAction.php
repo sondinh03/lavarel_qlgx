@@ -4,6 +4,7 @@ namespace App\Actions\ParishAdmin;
 
 use App\Models\ParishAdminRegistrationRequest;
 use App\Models\User;
+use App\Services\Admin\SystemOverviewService;
 use Illuminate\Support\Facades\DB;
 use InvalidArgumentException;
 
@@ -26,7 +27,10 @@ class RejectParishAdminRegistrationAction
                 'rejection_reason'  => $rejectionReason,
             ]);
 
-            return $request->fresh();
+            $fresh = $request->fresh();
+            app(SystemOverviewService::class)->forget();
+
+            return $fresh;
         });
     }
 }

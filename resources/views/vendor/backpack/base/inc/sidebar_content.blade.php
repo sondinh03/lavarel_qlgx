@@ -5,6 +5,15 @@
         <i class="la la-home nav-icon"></i> {{ trans('backpack::base.dashboard') }}
     </a>
 </li>
+<li class="nav-item">
+    <a class="nav-link" href="{{ route('backpack.notifications.index') }}">
+        <i class="la la-bell nav-icon"></i> Thông báo
+        @php $sidebarUnread = backpack_user()?->unreadNotifications()->count() ?? 0; @endphp
+        @if($sidebarUnread > 0)
+            <span class="badge badge-pill badge-danger ml-1">{{ $sidebarUnread > 99 ? '99+' : $sidebarUnread }}</span>
+        @endif
+    </a>
+</li>
 
 {{-- Hệ thống --}}
 <li class="nav-title">Hệ thống</li>

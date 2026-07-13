@@ -12,6 +12,16 @@ class NotificationIndex extends Component
 
     protected $paginationTheme = 'tailwind';
 
+    public function mount(): void
+    {
+        $user = Auth::user();
+        abort_unless($user, 403);
+
+        if ($user->isSuperAdmin()) {
+            $this->redirect(route('backpack.notifications.index'));
+        }
+    }
+
     public function markAsRead(string $id): void
     {
         $user = Auth::user();

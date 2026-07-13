@@ -35,6 +35,8 @@ use App\Http\Controllers\Admin\SetAdminCrudController;
 use App\Http\Controllers\Admin\NamHocCrudController;
 use App\Http\Controllers\Admin\Auth\LoginController as AdminAuthLoginController;
 use App\Http\Controllers\Admin\ParishAdminRegistrationCrudController;
+use App\Http\Controllers\Admin\NotificationController;
+use App\Http\Controllers\Admin\DashboardController;
 
 // Ghi đè logout Backpack → redirect về /login (thay vì /admin/login)
 Route::group([
@@ -69,6 +71,9 @@ Route::group([
     ),
     //'namespace'  => 'App\Http\Controllers\Admin',
 ], function () { // custom admin routes        
+    Route::get('dashboard', [DashboardController::class, 'index'])
+        ->name('backpack.dashboard');
+
     Route::get('/ckfinder', \App\Http\Controllers\Admin\CkfinderController::class)->name('ckfinder');
     Route::any('/ckfinder/connector', '\CKSource\CKFinderBridge\Controller\CKFinderController@requestAction')->name('ckfinder_connector');
     Route::any('/ckfinder/browser', '\CKSource\CKFinderBridge\Controller\CKFinderController@browserAction')->name('ckfinder_browser');
@@ -118,4 +123,13 @@ Route::group([
         ->name('parish-admin-registration.approve');
     Route::post('parish-admin-registration/{id}/reject', [ParishAdminRegistrationCrudController::class, 'reject'])
         ->name('parish-admin-registration.reject');
+
+    Route::get('notifications', [NotificationController::class, 'index'])
+        ->name('backpack.notifications.index');
+    Route::get('notifications/{id}/open', [NotificationController::class, 'open'])
+        ->name('backpack.notifications.open');
+    Route::post('notifications/{id}/read', [NotificationController::class, 'markAsRead'])
+        ->name('backpack.notifications.read');
+    Route::post('notifications/mark-all-read', [NotificationController::class, 'markAllAsRead'])
+        ->name('backpack.notifications.mark-all-read');
 }); // this should be the absolute last line of this file

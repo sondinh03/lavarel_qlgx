@@ -13,7 +13,9 @@ return [
     |
     */
 
-    'failed' => 'Thông tin không trùng khớp',
-    'throttle' => 'Đăng nhập quá nhiều lần. Hãy thử lại sau :seconds giây.',
+    'failed' => 'Email/SĐT hoặc mật khẩu không đúng. Vui lòng kiểm tra lại.',
+    'failed_user' => 'Không tìm thấy tài khoản với email hoặc SĐT này.',
+    'failed_password' => 'Mật khẩu không đúng. Nếu quên, hãy dùng Quên mật khẩu.',
+    'throttle' => 'Bạn đã thử đăng nhập quá nhiều lần. Vui lòng thử lại sau :seconds giây.',
 
 ];

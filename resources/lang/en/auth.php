@@ -13,7 +13,9 @@ return [
     |
     */
 
-    'failed' => 'These credentials do not match our records.',
+    'failed' => 'Email/phone or password is incorrect. Please try again.',
+    'failed_user' => 'No account found with this email or phone number.',
+    'failed_password' => 'Incorrect password. If you forgot it, use Forgot password.',
     'password' => 'The provided password is incorrect.',
     'throttle' => 'Too many login attempts. Please try again in :seconds seconds.',
 
