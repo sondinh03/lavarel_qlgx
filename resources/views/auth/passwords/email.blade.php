@@ -59,7 +59,11 @@
                             focus:border-primary-400 transition">
                     <p class="text-xs text-slate-400 mt-1.5">
                         Tài khoản chỉ đăng nhập bằng SĐT (không có Gmail) vui lòng liên hệ hỗ trợ
-                        @if(trim((string) config('settings.support_phone', '')) !== '' || trim((string) config('settings.support_email', '')) !== '')
+                        @if(
+                            trim((string) config('settings.support_phone', '')) !== ''
+                            || trim((string) config('settings.support_email', '')) !== ''
+                            || trim((string) config('settings.support_zalo', '')) !== ''
+                        )
                             — <x-support-contact variant="inline" />
                         @else
                             / quản trị xứ.

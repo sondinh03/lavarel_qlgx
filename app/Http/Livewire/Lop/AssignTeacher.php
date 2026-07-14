@@ -19,6 +19,9 @@ class AssignTeacher extends BaseComponent
     /** @var \App\Models\CatechismClass */
     public $class;
 
+    /** @var array<int|string, string> options cho select lớp */
+    public $classOptions = [];
+
     // ==================== FORM STATE ====================
 
     public $showModal = false;
@@ -93,14 +96,75 @@ class AssignTeacher extends BaseComponent
     {
         try {
             $this->class = CatechismClass::with(['schoolYear', 'gradeLevel'])
+                ->where('parish_id', $this->parishId)
                 ->findOrFail($this->classId);
 
+            $this->loadClassOptions();
             $this->loadInitialData();
         } catch (\Exception $e) {
             $this->logError($e, 'Error loading class', ['class_id' => $this->classId]);
             session()->flash('error', 'Không tìm thấy lớp học');
             $this->redirectRoute('classes.index');
         }
+    }
+
+    protected function loadClassOptions(): void
+    {
+        if (! $this->class) {
+            $this->classOptions = [];
+
+            return;
+        }
+
+        // Sắp xếp: order khối → tên lớp A→Z. Dùng string key để Livewire không đảo thứ tự.
+        $this->classOptions = CatechismClass::query()
+            ->with(['gradeLevel:id,name,sort_order'])
+            ->where('parish_id', $this->parishId)
+            ->where('school_year_id', $this->class->school_year_id)
+            ->get(['id', 'name', 'grade_level_id'])
+            ->sortBy([
+                fn (CatechismClass $item) => $item->gradeLevel->sort_order ?? PHP_INT_MAX,
+                fn (CatechismClass $item) => mb_strtolower($item->name ?? '', 'UTF-8'),
+            ])
+            ->values()
+            ->mapWithKeys(function (CatechismClass $item) {
+                $grade = $item->gradeLevel?->name;
+                $label = $grade
+                    ? trim($grade) . ' — ' . $item->name
+                    : $item->name;
+
+                return [(string) $item->id => $label];
+            })
+            ->all();
+    }
+
+    public function updatedClassId($value): void
+    {
+        $id = (int) $value;
+
+        if ($id <= 0) {
+            $this->classId = (int) ($this->class->id ?? 0);
+
+            return;
+        }
+
+        if ($this->class && $id === (int) $this->class->id) {
+            return;
+        }
+
+        $allowed = CatechismClass::query()
+            ->where('parish_id', $this->parishId)
+            ->where('id', $id)
+            ->exists();
+
+        if (! $allowed) {
+            session()->flash('error', 'Lớp học không hợp lệ.');
+            $this->classId = (int) ($this->class->id ?? 0);
+
+            return;
+        }
+
+        $this->redirect(route('classes.catechists', $id));
     }
 
     protected function loadCurrentTeachers(): void

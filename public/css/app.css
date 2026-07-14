@@ -3490,6 +3490,10 @@ video {
 .ring-primary-500\/25 {
   --tw-ring-color: rgb(52 199 89 / 0.25);
 }
+.ring-red-100 {
+  --tw-ring-opacity: 1;
+  --tw-ring-color: rgb(254 226 226 / var(--tw-ring-opacity));
+}
 .ring-red-100\/80 {
   --tw-ring-color: rgb(254 226 226 / 0.8);
 }
@@ -3766,10 +3770,6 @@ video {
   border-color: rgb(129 210 159 / 0.5);
 }
 
-.hover\:border-primary-300\/60:hover {
-  border-color: rgb(129 210 159 / 0.6);
-}
-
 .hover\:border-slate-300:hover {
   --tw-border-opacity: 1;
   border-color: rgb(203 213 225 / var(--tw-border-opacity));
@@ -3895,10 +3895,6 @@ video {
 
 .hover\:bg-primary-50\/70:hover {
   background-color: rgb(234 247 239 / 0.7);
-}
-
-.hover\:bg-primary-50\/80:hover {
-  background-color: rgb(234 247 239 / 0.8);
 }
 
 .hover\:bg-primary-600:hover {
@@ -4277,10 +4273,6 @@ video {
 .focus-visible\:ring-primary-500:focus-visible {
   --tw-ring-opacity: 1;
   --tw-ring-color: rgb(52 199 89 / var(--tw-ring-opacity));
-}
-
-.focus-visible\:ring-primary-500\/30:focus-visible {
-  --tw-ring-color: rgb(52 199 89 / 0.3);
 }
 
 .focus-visible\:ring-primary-500\/40:focus-visible {
