@@ -73,9 +73,13 @@ trait ManagesParishionerForm
 
     public bool    $is_deceased       = false;
     public ?string $death_date        = null;
+    public ?string $death_time        = null;
     public ?string $death_book_number = null;
     public ?string $death_place       = null;
     public ?string $burial_place      = null;
+    public ?string $embalm_at         = null;
+    public ?string $farewell_mass_at  = null;
+    public ?string $burial_mass_at    = null;
 
     public array $saints        = [];
     public array $parishGroups              = [];
@@ -137,9 +141,13 @@ trait ManagesParishionerForm
             'is_new_convert'        => 'required|boolean',
             'is_included_in_stats'  => 'required|boolean',
             'death_date'            => 'nullable|date|required_if:is_deceased,true',
+            'death_time'            => 'nullable|string|max:20',
             'death_book_number'     => 'nullable|string|max:20',
             'death_place'           => 'nullable|string|max:255',
             'burial_place'          => 'nullable|string|max:255',
+            'embalm_at'             => 'nullable|date',
+            'farewell_mass_at'      => 'nullable|date',
+            'burial_mass_at'        => 'nullable|date',
         ];
     }
 
@@ -210,7 +218,8 @@ trait ManagesParishionerForm
                 'father_name', 'mother_name', 'married',
             ],
             'deceased' => [
-                'death_date', 'death_book_number', 'death_place', 'burial_place',
+                'death_date', 'death_time', 'death_book_number', 'death_place', 'burial_place',
+                'embalm_at', 'farewell_mass_at', 'burial_mass_at',
             ],
         ];
     }
@@ -525,9 +534,13 @@ trait ManagesParishionerForm
 
         $this->is_deceased       = $p->death_date !== null;
         $this->death_date        = $p->death_date?->format('Y-m-d');
+        $this->death_time        = $p->death_time;
         $this->death_book_number = $p->death_book_number;
         $this->death_place       = $p->death_place;
         $this->burial_place      = $p->burial_place;
+        $this->embalm_at         = $p->embalm_at?->format('Y-m-d\TH:i');
+        $this->farewell_mass_at  = $p->farewell_mass_at?->format('Y-m-d\TH:i');
+        $this->burial_mass_at    = $p->burial_mass_at?->format('Y-m-d\TH:i');
 
         $this->loadHierarchyDropdowns();
     }
@@ -582,9 +595,13 @@ trait ManagesParishionerForm
             'is_new_convert'        => $this->is_new_convert,
             'is_included_in_stats'  => $this->is_included_in_stats,
             'death_date'            => $this->is_deceased ? ($this->death_date ?: null) : null,
+            'death_time'            => $this->is_deceased ? ($this->death_time ?: null) : null,
             'death_book_number'     => $this->is_deceased ? $this->death_book_number : null,
             'death_place'           => $this->is_deceased ? $this->death_place : null,
             'burial_place'          => $this->is_deceased ? $this->burial_place : null,
+            'embalm_at'             => $this->is_deceased ? ($this->embalm_at ?: null) : null,
+            'farewell_mass_at'      => $this->is_deceased ? ($this->farewell_mass_at ?: null) : null,
+            'burial_mass_at'        => $this->is_deceased ? ($this->burial_mass_at ?: null) : null,
         ];
     }
 
@@ -609,7 +626,8 @@ trait ManagesParishionerForm
             'ethnic', 'career', 'education_level', 'specialist_level', 'catechism_level',
             'catechism_major', 'position', 'language', 'holy_order_status',
             'parish_area_id', 'association_id', 'diocese_id', 'deanery_id', 'parish_id', 'level', 'joined_date', 'transferred_from', 'transferred_date', 'left_reason',
-            'death_date', 'death_book_number', 'death_place', 'burial_place',
+            'death_date', 'death_time', 'death_book_number', 'death_place', 'burial_place',
+            'embalm_at', 'farewell_mass_at', 'burial_mass_at',
         ]);
         $this->gender               = 'male';
         $this->married              = 0;
@@ -624,9 +642,13 @@ trait ManagesParishionerForm
     {
         if (!$this->is_deceased) {
             $this->death_date        = null;
+            $this->death_time        = null;
             $this->death_book_number = null;
             $this->death_place       = null;
             $this->burial_place      = null;
+            $this->embalm_at         = null;
+            $this->farewell_mass_at  = null;
+            $this->burial_mass_at    = null;
         }
     }
 }

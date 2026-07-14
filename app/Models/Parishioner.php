@@ -92,9 +92,13 @@ class Parishioner extends Model
 
         // Thông tin tử vong
         'death_date',           // Ngày mất — mục 58
+        'death_time',           // Giờ từ trần
         'death_book_number',    // Số sổ mất — mục 59
         'death_place',          // Nơi qua đời — mục 60
         'burial_place',         // Nơi an táng — mục 61
+        'embalm_at',            // Nghi thức tẩm liệm
+        'farewell_mass_at',     // Thánh lễ đưa chân
+        'burial_mass_at',       // Thánh lễ an táng
     ];
 
     protected $casts = [
@@ -103,6 +107,9 @@ class Parishioner extends Model
         'joined_date'          => 'date',
         'transferred_date'     => 'date',
         'death_date'           => 'date',
+        'embalm_at'            => 'datetime',
+        'farewell_mass_at'     => 'datetime',
+        'burial_mass_at'       => 'datetime',
         'is_new_convert'       => 'boolean',
         'is_included_in_stats' => 'boolean',
         'is_active'            => 'boolean',

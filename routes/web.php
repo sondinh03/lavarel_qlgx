@@ -45,6 +45,10 @@ use App\Http\Controllers\StudentImportController;
 use App\Http\Controllers\FamilyRegisterImportController;
 use App\Http\Controllers\ParishionerLyLichExportController;
 use App\Http\Controllers\ParishionerDonXinRuaToiExportController;
+use App\Http\Controllers\ParishionerPhieuBaoTuExportController;
+use App\Http\Controllers\ParishionerGioiThieuGiaoLyDuTongExportController;
+use App\Http\Controllers\ParishionerChungChiBiTichExportController;
+use App\Http\Controllers\MarriageAnnouncementGioiThieuHonPhoiExportController;
 use App\Http\Controllers\StudentQrController;
 use App\Http\Livewire\Attendance\AttendanceQr as AttendanceAttendanceQr;
 use App\Http\Livewire\Attendance\AttendanceStatistics;
@@ -310,6 +314,15 @@ Route::middleware('auth')->group(function () {
         Route::get('/{parishioner}/xuat-don-xin-rua-toi', ParishionerDonXinRuaToiExportController::class)
             ->name('parishioners.export-don-xin-rua-toi');
 
+        Route::get('/{parishioner}/xuat-giay-bao-tu', ParishionerPhieuBaoTuExportController::class)
+            ->name('parishioners.export-phieu-bao-tu');
+
+        Route::get('/{parishioner}/xuat-giay-gioi-thieu-giao-ly-du-tong', ParishionerGioiThieuGiaoLyDuTongExportController::class)
+            ->name('parishioners.export-gioi-thieu-giao-ly-du-tong');
+
+        Route::get('/{parishioner}/xuat-chung-chi-bi-tich', ParishionerChungChiBiTichExportController::class)
+            ->name('parishioners.export-chung-chi-bi-tich');
+
         Route::get('/{parishioner}/sua', function (\App\Models\Parishioner $parishioner) {
             return redirect()->route('parishioners.show', ['parishioner' => $parishioner], 301);
         })->name('parishioners.edit');
@@ -349,6 +362,10 @@ Route::middleware('auth')->group(function () {
         Route::get('/{id}/hon-phoi/tao', MarriageCreateFromAnnouncement::class)
             ->middleware('role:parish_admin|parishioner_admin')
             ->name('create-marriage');
+
+        Route::get('/{id}/xuat-giay-gioi-thieu-hon-phoi', MarriageAnnouncementGioiThieuHonPhoiExportController::class)
+            ->middleware('role:parish_admin|parishioner_admin')
+            ->name('export-gioi-thieu-hon-phoi');
 
         Route::get('/{id}', MarriageAnnouncementShow::class)
             ->name('show');

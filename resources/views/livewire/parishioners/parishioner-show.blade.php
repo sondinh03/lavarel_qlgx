@@ -97,14 +97,38 @@
 
                     @can('update', $parishioner)
                     <div class="flex items-center gap-2 flex-shrink-0 flex-wrap">
-                        <x-button as="a" href="{{ route('parishioners.export-lylich', $parishioner) }}" variant="outline">
-                            <x-icon name="download" />
-                            Lý lịch cá nhân
-                        </x-button>
-                        <x-button type="button" variant="outline" wire:click="openDonXinRuaToiModal">
-                            <x-icon name="download" />
-                            Đơn xin rửa tội
-                        </x-button>
+                        <x-dropdown label="Xuất đơn" icon="download" align="right" width="72">
+                            <x-dropdown-item as="a"
+                                href="{{ route('parishioners.export-lylich', $parishioner) }}"
+                                icon="download"
+                                x-on:click="open = false">
+                                Lý lịch cá nhân
+                            </x-dropdown-item>
+                            <x-dropdown-item
+                                wire:click="openDonXinRuaToiModal"
+                                icon="download"
+                                x-on:click="open = false">
+                                Đơn xin rửa tội
+                            </x-dropdown-item>
+                            <x-dropdown-item
+                                wire:click="openGioiThieuGiaoLyDuTongModal"
+                                icon="download"
+                                x-on:click="open = false">
+                                Giấy giới thiệu GL dự tòng
+                            </x-dropdown-item>
+                            <x-dropdown-item
+                                wire:click="openChungChiBiTichModal"
+                                icon="download"
+                                x-on:click="open = false">
+                                Chứng chỉ BT – Thêm sức
+                            </x-dropdown-item>
+                            <x-dropdown-item
+                                wire:click="openPhieuBaoTuModal"
+                                icon="download"
+                                x-on:click="open = false">
+                                Giấy báo tử
+                            </x-dropdown-item>
+                        </x-dropdown>
                         @can('delete', $parishioner)
                         <x-button variant="danger" wire:click="$set('showDeleteConfirm', true)">
                             <x-icon name="trash" />
@@ -184,7 +208,8 @@
             <div class="flex-shrink-0 px-6 py-5 border-b border-black/[0.06]">
                 <h2 class="text-xl font-bold text-slate-900">Xuất đơn xin rửa tội</h2>
                 <p class="text-sm text-slate-500 mt-1">
-                    Nhập tên người được rửa tội, con thứ, ngày sinh, nơi sinh và người đỡ đầu. Các thông tin còn lại lấy từ hồ sơ giáo dân.
+                    Đứng từ hồ sơ <strong>cha hoặc mẹ</strong> để xuất. Người được rửa tội chưa có trong hệ thống —
+                    nhập tên, con thứ, ngày sinh, nơi sinh và người đỡ đầu. Ông/Bà, địa chỉ, giáo xứ/họ lấy từ hồ sơ đang mở.
                 </p>
             </div>
 
@@ -280,7 +305,344 @@
     </div>
     @endif
 
-    <div wire:loading.delay wire:target="saveBasic,saveAddress,saveFamily,saveParish,saveMarriage,saveDeceased,delete,exportDonXinRuaToi"
+    @if($showPhieuBaoTuModal)
+    <div class="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50 p-4"
+        wire:click="$set('showPhieuBaoTuModal', false)">
+        <div class="bg-white/90 backdrop-blur-xl rounded-2xl border border-black/[0.06] shadow-mac
+            w-full max-w-lg max-h-[90vh] flex flex-col overflow-hidden"
+            wire:click.stop>
+            <div class="flex-shrink-0 px-6 py-5 border-b border-black/[0.06]">
+                <h2 class="text-xl font-bold text-slate-900">Xuất giấy báo tử</h2>
+                <p class="text-sm text-slate-500 mt-1">
+                    Kiểm tra / bổ sung thông tin rồi xuất. Dữ liệu sẽ được lưu vào hồ sơ giáo dân.
+                </p>
+            </div>
+
+            <div class="flex-1 overflow-y-auto p-6 space-y-4">
+                <div class="rounded-xl bg-slate-50 border border-black/[0.06] px-3.5 py-3 text-sm text-slate-600">
+                    <span class="font-medium text-slate-800">{{ $parishioner->full_name_with_saint }}</span>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold text-slate-500 mb-1.5 tracking-wide uppercase">
+                        Ngày mất <span class="text-red-500 normal-case">*</span>
+                    </label>
+                    <input type="date"
+                        wire:model.defer="death_date"
+                        class="w-full h-11 px-4 py-2.5 bg-white/80 backdrop-blur-sm border border-black/[0.06] rounded-xl
+                            text-sm text-slate-900 shadow-mac-sm
+                            focus:outline-none focus:ring-2 focus:ring-primary-500/25 focus:border-primary-300/40">
+                    @error('death_date')
+                    <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                    @enderror
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold text-slate-500 mb-1.5 tracking-wide uppercase">
+                        Giờ từ trần
+                    </label>
+                    <input type="text"
+                        wire:model.defer="death_time"
+                        class="w-full h-11 px-4 py-2.5 bg-white/80 backdrop-blur-sm border border-black/[0.06] rounded-xl
+                            text-sm text-slate-900 shadow-mac-sm
+                            focus:outline-none focus:ring-2 focus:ring-primary-500/25 focus:border-primary-300/40"
+                        placeholder="VD: 14:30 hoặc 14 giờ 30">
+                    @error('death_time')
+                    <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                    @enderror
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold text-slate-500 mb-1.5 tracking-wide uppercase">
+                        Nơi qua đời
+                    </label>
+                    <input type="text"
+                        wire:model.defer="death_place"
+                        class="w-full h-11 px-4 py-2.5 bg-white/80 backdrop-blur-sm border border-black/[0.06] rounded-xl
+                            text-sm text-slate-900 shadow-mac-sm
+                            focus:outline-none focus:ring-2 focus:ring-primary-500/25 focus:border-primary-300/40">
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold text-slate-500 mb-1.5 tracking-wide uppercase">
+                        Nơi an táng
+                    </label>
+                    <input type="text"
+                        wire:model.defer="burial_place"
+                        class="w-full h-11 px-4 py-2.5 bg-white/80 backdrop-blur-sm border border-black/[0.06] rounded-xl
+                            text-sm text-slate-900 shadow-mac-sm
+                            focus:outline-none focus:ring-2 focus:ring-primary-500/25 focus:border-primary-300/40">
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold text-slate-500 mb-1.5 tracking-wide uppercase">
+                        Nghi thức tẩm liệm
+                    </label>
+                    <input type="datetime-local"
+                        wire:model.defer="embalm_at"
+                        class="w-full h-11 px-4 py-2.5 bg-white/80 backdrop-blur-sm border border-black/[0.06] rounded-xl
+                            text-sm text-slate-900 shadow-mac-sm
+                            focus:outline-none focus:ring-2 focus:ring-primary-500/25 focus:border-primary-300/40">
+                    @error('embalm_at')
+                    <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                    @enderror
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold text-slate-500 mb-1.5 tracking-wide uppercase">
+                        Thánh lễ đưa chân
+                    </label>
+                    <input type="datetime-local"
+                        wire:model.defer="farewell_mass_at"
+                        class="w-full h-11 px-4 py-2.5 bg-white/80 backdrop-blur-sm border border-black/[0.06] rounded-xl
+                            text-sm text-slate-900 shadow-mac-sm
+                            focus:outline-none focus:ring-2 focus:ring-primary-500/25 focus:border-primary-300/40">
+                    @error('farewell_mass_at')
+                    <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                    @enderror
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold text-slate-500 mb-1.5 tracking-wide uppercase">
+                        Thánh lễ an táng
+                    </label>
+                    <input type="datetime-local"
+                        wire:model.defer="burial_mass_at"
+                        class="w-full h-11 px-4 py-2.5 bg-white/80 backdrop-blur-sm border border-black/[0.06] rounded-xl
+                            text-sm text-slate-900 shadow-mac-sm
+                            focus:outline-none focus:ring-2 focus:ring-primary-500/25 focus:border-primary-300/40">
+                    @error('burial_mass_at')
+                    <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                    @enderror
+                </div>
+            </div>
+
+            <div class="flex-shrink-0 px-6 py-4 border-t border-black/[0.06] bg-slate-50/70 flex justify-end gap-3">
+                <x-button type="button" variant="outline" wire:click="$set('showPhieuBaoTuModal', false)">
+                    Hủy
+                </x-button>
+                <x-button type="button" variant="primary"
+                    wire:click="exportPhieuBaoTu"
+                    wire:loading.attr="disabled"
+                    wire:target="exportPhieuBaoTu">
+                    <span wire:loading.remove wire:target="exportPhieuBaoTu">Lưu & xuất file</span>
+                    <span wire:loading wire:target="exportPhieuBaoTu">Đang xuất…</span>
+                </x-button>
+            </div>
+        </div>
+    </div>
+    @endif
+
+    @if($showGioiThieuGiaoLyDuTongModal)
+    <div class="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50 p-4"
+        wire:click="$set('showGioiThieuGiaoLyDuTongModal', false)">
+        <div class="bg-white/90 backdrop-blur-xl rounded-2xl border border-black/[0.06] shadow-mac
+            w-full max-w-lg max-h-[90vh] flex flex-col overflow-hidden"
+            wire:click.stop>
+            <div class="flex-shrink-0 px-6 py-5 border-b border-black/[0.06]">
+                <h2 class="text-xl font-bold text-slate-900">Xuất giấy giới thiệu GL dự tòng</h2>
+                <p class="text-sm text-slate-500 mt-1">
+                    Người được giới thiệu có thể chưa có trong hệ thống — nhập thông tin bên dưới.
+                    Giáo phận/xứ và cha xứ lấy từ hồ sơ đang mở.
+                </p>
+            </div>
+
+            <div class="flex-1 overflow-y-auto p-6 space-y-4">
+                <div>
+                    <label class="block text-xs font-semibold text-slate-500 mb-1.5 tracking-wide uppercase">
+                        Họ tên <span class="text-red-500 normal-case">*</span>
+                    </label>
+                    <input type="text"
+                        wire:model.defer="gioi_thieu_full_name"
+                        class="w-full h-11 px-4 py-2.5 bg-white/80 backdrop-blur-sm border border-black/[0.06] rounded-xl
+                            text-sm text-slate-900 shadow-mac-sm
+                            focus:outline-none focus:ring-2 focus:ring-primary-500/25 focus:border-primary-300/40"
+                        placeholder="Tên thánh, họ và tên">
+                    @error('gioi_thieu_full_name')
+                    <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                    @enderror
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold text-slate-500 mb-1.5 tracking-wide uppercase">
+                        Ngày sinh <span class="text-red-500 normal-case">*</span>
+                    </label>
+                    <input type="date"
+                        wire:model.defer="gioi_thieu_birthday"
+                        class="w-full h-11 px-4 py-2.5 bg-white/80 backdrop-blur-sm border border-black/[0.06] rounded-xl
+                            text-sm text-slate-900 shadow-mac-sm
+                            focus:outline-none focus:ring-2 focus:ring-primary-500/25 focus:border-primary-300/40">
+                    @error('gioi_thieu_birthday')
+                    <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                    @enderror
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold text-slate-500 mb-1.5 tracking-wide uppercase">
+                        Địa chỉ <span class="text-red-500 normal-case">*</span>
+                    </label>
+                    <input type="text"
+                        wire:model.defer="gioi_thieu_address"
+                        class="w-full h-11 px-4 py-2.5 bg-white/80 backdrop-blur-sm border border-black/[0.06] rounded-xl
+                            text-sm text-slate-900 shadow-mac-sm
+                            focus:outline-none focus:ring-2 focus:ring-primary-500/25 focus:border-primary-300/40">
+                    @error('gioi_thieu_address')
+                    <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                    @enderror
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold text-slate-500 mb-1.5 tracking-wide uppercase">
+                        Tên bố <span class="text-red-500 normal-case">*</span>
+                    </label>
+                    <input type="text"
+                        wire:model.defer="gioi_thieu_father_name"
+                        class="w-full h-11 px-4 py-2.5 bg-white/80 backdrop-blur-sm border border-black/[0.06] rounded-xl
+                            text-sm text-slate-900 shadow-mac-sm
+                            focus:outline-none focus:ring-2 focus:ring-primary-500/25 focus:border-primary-300/40">
+                    @error('gioi_thieu_father_name')
+                    <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                    @enderror
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold text-slate-500 mb-1.5 tracking-wide uppercase">
+                        Tên mẹ <span class="text-red-500 normal-case">*</span>
+                    </label>
+                    <input type="text"
+                        wire:model.defer="gioi_thieu_mother_name"
+                        class="w-full h-11 px-4 py-2.5 bg-white/80 backdrop-blur-sm border border-black/[0.06] rounded-xl
+                            text-sm text-slate-900 shadow-mac-sm
+                            focus:outline-none focus:ring-2 focus:ring-primary-500/25 focus:border-primary-300/40">
+                    @error('gioi_thieu_mother_name')
+                    <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                    @enderror
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold text-slate-500 mb-1.5 tracking-wide uppercase">
+                        Kính gửi
+                    </label>
+                    <input type="text"
+                        wire:model.defer="gioi_thieu_greeting_to"
+                        class="w-full h-11 px-4 py-2.5 bg-white/80 backdrop-blur-sm border border-black/[0.06] rounded-xl
+                            text-sm text-slate-900 shadow-mac-sm
+                            focus:outline-none focus:ring-2 focus:ring-primary-500/25 focus:border-primary-300/40"
+                        placeholder="VD: Giáo hạt …">
+                    @error('gioi_thieu_greeting_to')
+                    <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                    @enderror
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold text-slate-500 mb-1.5 tracking-wide uppercase">
+                        Nơi học giáo lý dự tòng
+                    </label>
+                    <input type="text"
+                        wire:model.defer="gioi_thieu_course_place"
+                        class="w-full h-11 px-4 py-2.5 bg-white/80 backdrop-blur-sm border border-black/[0.06] rounded-xl
+                            text-sm text-slate-900 shadow-mac-sm
+                            focus:outline-none focus:ring-2 focus:ring-primary-500/25 focus:border-primary-300/40"
+                        placeholder="VD: Giáo xứ …">
+                    @error('gioi_thieu_course_place')
+                    <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                    @enderror
+                </div>
+            </div>
+
+            <div class="flex-shrink-0 px-6 py-4 border-t border-black/[0.06] bg-slate-50/70 flex justify-end gap-3">
+                <x-button type="button" variant="outline" wire:click="$set('showGioiThieuGiaoLyDuTongModal', false)">
+                    Hủy
+                </x-button>
+                <x-button type="button" variant="primary"
+                    wire:click="exportGioiThieuGiaoLyDuTong"
+                    wire:loading.attr="disabled"
+                    wire:target="exportGioiThieuGiaoLyDuTong">
+                    <span wire:loading.remove wire:target="exportGioiThieuGiaoLyDuTong">Xuất file</span>
+                    <span wire:loading wire:target="exportGioiThieuGiaoLyDuTong">Đang xuất…</span>
+                </x-button>
+            </div>
+        </div>
+    </div>
+    @endif
+
+    @if($showChungChiBiTichModal)
+    <div class="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50 p-4"
+        wire:click="$set('showChungChiBiTichModal', false)">
+        <div class="bg-white/90 backdrop-blur-xl rounded-2xl border border-black/[0.06] shadow-mac
+            w-full max-w-lg max-h-[90vh] flex flex-col overflow-hidden"
+            wire:click.stop>
+            <div class="flex-shrink-0 px-6 py-5 border-b border-black/[0.06]">
+                <h2 class="text-xl font-bold text-slate-900">Xuất chứng chỉ bí tích BT – Thêm sức</h2>
+                <p class="text-sm text-slate-500 mt-1">
+                    Thông tin cá nhân và bí tích lấy từ hồ sơ. Điền kính gửi / mục đích cấp chứng chỉ nếu cần.
+                </p>
+            </div>
+
+            <div class="flex-1 overflow-y-auto p-6 space-y-4">
+                <div>
+                    <label class="block text-xs font-semibold text-slate-500 mb-1.5 tracking-wide uppercase">
+                        Kính gửi Cha
+                    </label>
+                    <input type="text"
+                        wire:model.defer="chung_chi_recipient_priest"
+                        class="w-full h-11 px-4 py-2.5 bg-white/80 backdrop-blur-sm border border-black/[0.06] rounded-xl
+                            text-sm text-slate-900 shadow-mac-sm
+                            focus:outline-none focus:ring-2 focus:ring-primary-500/25 focus:border-primary-300/40"
+                        placeholder="Tên / xưng hô Cha nhận chứng chỉ">
+                    @error('chung_chi_recipient_priest')
+                    <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                    @enderror
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold text-slate-500 mb-1.5 tracking-wide uppercase">
+                        Giáo phận nhận
+                    </label>
+                    <input type="text"
+                        wire:model.defer="chung_chi_recipient_diocese"
+                        class="w-full h-11 px-4 py-2.5 bg-white/80 backdrop-blur-sm border border-black/[0.06] rounded-xl
+                            text-sm text-slate-900 shadow-mac-sm
+                            focus:outline-none focus:ring-2 focus:ring-primary-500/25 focus:border-primary-300/40"
+                        placeholder="Mặc định = giáo phận hồ sơ">
+                    @error('chung_chi_recipient_diocese')
+                    <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                    @enderror
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold text-slate-500 mb-1.5 tracking-wide uppercase">
+                        Mục đích cấp chứng chỉ
+                    </label>
+                    <input type="text"
+                        wire:model.defer="chung_chi_purpose"
+                        class="w-full h-11 px-4 py-2.5 bg-white/80 backdrop-blur-sm border border-black/[0.06] rounded-xl
+                            text-sm text-slate-900 shadow-mac-sm
+                            focus:outline-none focus:ring-2 focus:ring-primary-500/25 focus:border-primary-300/40"
+                        placeholder="VD: kết hôn / chuyển xứ / …">
+                    @error('chung_chi_purpose')
+                    <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                    @enderror
+                </div>
+            </div>
+
+            <div class="flex-shrink-0 px-6 py-4 border-t border-black/[0.06] bg-slate-50/70 flex justify-end gap-3">
+                <x-button type="button" variant="outline" wire:click="$set('showChungChiBiTichModal', false)">
+                    Hủy
+                </x-button>
+                <x-button type="button" variant="primary"
+                    wire:click="exportChungChiBiTich"
+                    wire:loading.attr="disabled"
+                    wire:target="exportChungChiBiTich">
+                    <span wire:loading.remove wire:target="exportChungChiBiTich">Xuất file</span>
+                    <span wire:loading wire:target="exportChungChiBiTich">Đang xuất…</span>
+                </x-button>
+            </div>
+        </div>
+    </div>
+    @endif
+
+    <div wire:loading.delay wire:target="saveBasic,saveAddress,saveFamily,saveParish,saveMarriage,saveDeceased,delete,exportDonXinRuaToi,exportPhieuBaoTu,exportGioiThieuGiaoLyDuTong,exportChungChiBiTich"
         class="fixed inset-0 bg-black/20 flex items-center justify-center z-[60]">
         <div class="bg-white rounded-xl px-6 py-4 flex items-center gap-3 shadow-lg">
             <svg class="animate-spin h-5 w-5 text-primary-600" fill="none" viewBox="0 0 24 24">

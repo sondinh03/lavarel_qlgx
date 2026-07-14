@@ -11,9 +11,21 @@
     @if($parishioner->is_deceased)
     <x-parishioner-section-card title="Thông tin qua đời" edit-action="openEditDeceased">
         <x-info-row label="Ngày mất" :value="$parishioner->death_date?->format('d/m/Y')" />
+        <x-info-row label="Giờ từ trần" :value="$parishioner->death_time" />
         <x-info-row label="Số sổ mất" :value="$parishioner->death_book_number" />
         <x-info-row label="Nơi qua đời" :value="$parishioner->death_place" />
         <x-info-row label="Nơi an táng" :value="$parishioner->burial_place" />
+        <x-info-row label="Tẩm liệm" :value="$parishioner->embalm_at?->format('H:i d/m/Y')" />
+        <x-info-row label="Đưa chân" :value="$parishioner->farewell_mass_at?->format('H:i d/m/Y')" />
+        <x-info-row label="An táng" :value="$parishioner->burial_mass_at?->format('H:i d/m/Y')" />
+        @can('update', $parishioner)
+        <div class="pt-3">
+            <x-button type="button" variant="outline" wire:click="openPhieuBaoTuModal">
+                <x-icon name="download" />
+                Xuất giấy báo tử
+            </x-button>
+        </div>
+        @endcan
     </x-parishioner-section-card>
     @else
     <div class="text-center py-12">

@@ -30,12 +30,27 @@ class ParishionerShow extends Component
     public bool $showEditDeceased  = false;
     public bool $showDeleteConfirm = false;
     public bool $showDonXinRuaToiModal = false;
+    public bool $showPhieuBaoTuModal = false;
+    public bool $showGioiThieuGiaoLyDuTongModal = false;
+    public bool $showChungChiBiTichModal = false;
 
     public string $baptism_candidate_name = '';
     public string $godparent_name = '';
     public ?string $baptism_candidate_birthday = null;
     public string $baptism_candidate_birth_place = '';
     public $baptism_candidate_birth_order = null;
+
+    public string $gioi_thieu_full_name = '';
+    public ?string $gioi_thieu_birthday = null;
+    public string $gioi_thieu_address = '';
+    public string $gioi_thieu_father_name = '';
+    public string $gioi_thieu_mother_name = '';
+    public string $gioi_thieu_greeting_to = '';
+    public string $gioi_thieu_course_place = '';
+
+    public string $chung_chi_recipient_priest = '';
+    public string $chung_chi_recipient_diocese = '';
+    public string $chung_chi_purpose = '';
 
     public ?int    $marriage_id          = null;
     public         $spouse_id            = null;
@@ -178,6 +193,184 @@ class ParishionerShow extends Component
         ]);
 
         $this->showDonXinRuaToiModal = false;
+
+        return redirect()->to($url);
+    }
+
+    public function openPhieuBaoTuModal(): void
+    {
+        $this->authorize('update', $this->parishioner);
+
+        $this->mapParishionerToForm($this->parishioner);
+        $this->is_deceased = true;
+        $this->resetErrorBag([
+            'death_date',
+            'death_time',
+            'death_place',
+            'burial_place',
+            'embalm_at',
+            'farewell_mass_at',
+            'burial_mass_at',
+        ]);
+        $this->showPhieuBaoTuModal = true;
+    }
+
+    public function exportPhieuBaoTu()
+    {
+        $this->authorize('update', $this->parishioner);
+
+        $this->is_deceased = true;
+        $this->validate(
+            array_merge(
+                $this->parishionerFormRulesForSection('deceased'),
+                ['death_date' => 'required|date']
+            ),
+            ['death_date.required' => 'Vui lòng nhập ngày mất trước khi xuất giấy báo tử.']
+        );
+
+        try {
+            $wasDeceased = $this->parishioner->death_date !== null;
+            $data = $this->applyParishionerSectionSave($this->parishioner, 'deceased');
+            $this->parishioner->update($data);
+            $this->parishioner->refresh();
+            $this->is_deceased = $this->parishioner->death_date !== null;
+
+            if (! $wasDeceased && $this->is_deceased && $this->parishioner->parish_id) {
+                $recipients = NotificationRecipients::parishRoles(
+                    (int) $this->parishioner->parish_id,
+                    ['parish_admin', 'parishioner_admin'],
+                    auth()->id()
+                );
+                notify_users($recipients, new ParishionerMarkedDeceased($this->parishioner));
+            }
+        } catch (\Exception $e) {
+            Log::error(self::class . ': exportPhieuBaoTu - ' . $e->getMessage(), ['id' => $this->parishioner->id]);
+            $this->emit('toast', 'error', 'Có lỗi khi lưu thông tin tử vong.');
+
+            return;
+        }
+
+        $this->showPhieuBaoTuModal = false;
+
+        return redirect()->to(route('parishioners.export-phieu-bao-tu', $this->parishioner));
+    }
+
+    public function openGioiThieuGiaoLyDuTongModal(): void
+    {
+        $this->authorize('update', $this->parishioner);
+
+        $this->parishioner->loadMissing(['diocese', 'deanery', 'parish']);
+
+        $this->gioi_thieu_full_name   = '';
+        $this->gioi_thieu_birthday    = null;
+        $this->gioi_thieu_address     = '';
+        $this->gioi_thieu_father_name = '';
+        $this->gioi_thieu_mother_name = '';
+
+        $deanery = trim((string) ($this->parishioner->deanery?->name ?? ''));
+        $parish  = trim((string) ($this->parishioner->parish?->name ?? ''));
+
+        if ($deanery === '') {
+            $this->gioi_thieu_greeting_to = '';
+        } elseif (mb_stripos($deanery, 'Giáo hạt') === 0) {
+            $this->gioi_thieu_greeting_to = $deanery;
+        } else {
+            $this->gioi_thieu_greeting_to = 'Giáo hạt ' . $deanery;
+        }
+
+        if ($parish === '') {
+            $this->gioi_thieu_course_place = '';
+        } elseif (mb_stripos($parish, 'Giáo xứ') === 0) {
+            $this->gioi_thieu_course_place = $parish;
+        } else {
+            $this->gioi_thieu_course_place = 'Giáo xứ ' . $parish;
+        }
+
+        $this->resetErrorBag([
+            'gioi_thieu_full_name',
+            'gioi_thieu_birthday',
+            'gioi_thieu_address',
+            'gioi_thieu_father_name',
+            'gioi_thieu_mother_name',
+            'gioi_thieu_greeting_to',
+            'gioi_thieu_course_place',
+        ]);
+        $this->showGioiThieuGiaoLyDuTongModal = true;
+    }
+
+    public function exportGioiThieuGiaoLyDuTong()
+    {
+        $this->authorize('update', $this->parishioner);
+
+        $this->validate([
+            'gioi_thieu_full_name'    => 'required|string|max:200',
+            'gioi_thieu_birthday'     => 'required|date',
+            'gioi_thieu_address'      => 'required|string|max:255',
+            'gioi_thieu_father_name'  => 'required|string|max:200',
+            'gioi_thieu_mother_name'  => 'required|string|max:200',
+            'gioi_thieu_greeting_to'  => 'nullable|string|max:255',
+            'gioi_thieu_course_place' => 'nullable|string|max:255',
+        ], [
+            'gioi_thieu_full_name.required'   => 'Vui lòng nhập họ tên người được giới thiệu',
+            'gioi_thieu_birthday.required'    => 'Vui lòng nhập ngày sinh',
+            'gioi_thieu_birthday.date'        => 'Ngày sinh không hợp lệ',
+            'gioi_thieu_address.required'     => 'Vui lòng nhập địa chỉ',
+            'gioi_thieu_father_name.required' => 'Vui lòng nhập tên bố',
+            'gioi_thieu_mother_name.required' => 'Vui lòng nhập tên mẹ',
+        ]);
+
+        $url = route('parishioners.export-gioi-thieu-giao-ly-du-tong', [
+            'parishioner'  => $this->parishioner,
+            'full_name'    => $this->gioi_thieu_full_name,
+            'birthday'     => $this->gioi_thieu_birthday,
+            'address'      => $this->gioi_thieu_address,
+            'father_name'  => $this->gioi_thieu_father_name,
+            'mother_name'  => $this->gioi_thieu_mother_name,
+            'greeting_to'  => $this->gioi_thieu_greeting_to,
+            'course_place' => $this->gioi_thieu_course_place,
+        ]);
+
+        $this->showGioiThieuGiaoLyDuTongModal = false;
+
+        return redirect()->to($url);
+    }
+
+    public function openChungChiBiTichModal(): void
+    {
+        $this->authorize('update', $this->parishioner);
+
+        $this->parishioner->loadMissing(['diocese', 'baptism', 'confirmation']);
+
+        $this->chung_chi_recipient_priest = '';
+        $this->chung_chi_recipient_diocese = trim((string) ($this->parishioner->diocese?->name ?? ''));
+        $this->chung_chi_purpose = '';
+
+        $this->resetErrorBag([
+            'chung_chi_recipient_priest',
+            'chung_chi_recipient_diocese',
+            'chung_chi_purpose',
+        ]);
+        $this->showChungChiBiTichModal = true;
+    }
+
+    public function exportChungChiBiTich()
+    {
+        $this->authorize('update', $this->parishioner);
+
+        $this->validate([
+            'chung_chi_recipient_priest'  => 'nullable|string|max:255',
+            'chung_chi_recipient_diocese' => 'nullable|string|max:255',
+            'chung_chi_purpose'           => 'nullable|string|max:500',
+        ]);
+
+        $url = route('parishioners.export-chung-chi-bi-tich', [
+            'parishioner'      => $this->parishioner,
+            'recipient_priest' => $this->chung_chi_recipient_priest,
+            'recipient_diocese'=> $this->chung_chi_recipient_diocese,
+            'purpose'          => $this->chung_chi_purpose,
+        ]);
+
+        $this->showChungChiBiTichModal = false;
 
         return redirect()->to($url);
     }

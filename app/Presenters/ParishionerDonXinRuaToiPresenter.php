@@ -6,6 +6,10 @@ use App\Models\Parishioner;
 use App\Support\VietnamAddressResolver;
 use Carbon\Carbon;
 
+/**
+ * Đơn xin rửa tội: luôn xuất từ hồ sơ cha/mẹ.
+ * Người được rửa tội chưa có trong hệ thống — tên/ngày sinh/nơi sinh/con thứ nhập tay.
+ */
 class ParishionerDonXinRuaToiPresenter
 {
     public function __construct(
@@ -30,8 +34,6 @@ class ParishionerDonXinRuaToiPresenter
             'diocese',
             'parish',
             'parishGroup',
-            'father.saint',
-            'mother.saint',
             'family.members.saint',
             'marriageAsHusband.wife.saint',
             'marriageAsWife.husband.saint',
@@ -55,9 +57,7 @@ class ParishionerDonXinRuaToiPresenter
         $parish  = $this->labeledName($p->parish?->name, 'Giáo xứ');
         $group   = $this->labeledName($p->parishGroup?->name, 'Giáo họ');
         $parents = $this->resolveParents();
-        $order   = $this->birthOrder ?? (
-            ($p->birth_order && (int) $p->birth_order > 0) ? (int) $p->birth_order : null
-        );
+        $order   = ($this->birthOrder && $this->birthOrder > 0) ? $this->birthOrder : null;
 
         return [
             'diocese'              => $diocese,
@@ -107,9 +107,7 @@ class ParishionerDonXinRuaToiPresenter
     }
 
     /**
-     * Con Ông / Và Bà:
-     * - Xuất từ hồ sơ cha/mẹ (husband/wife hoặc có hôn phối) → người xuất + vợ/chồng.
-     * - Xuất từ hồ sơ con → cha/mẹ liên kết / tên chữ / chồng-vợ trong hộ.
+     * Con Ông / Và Bà: luôn lấy từ hồ sơ đang mở (cha hoặc mẹ) + vợ/chồng.
      *
      * @return array{father: string, mother: string}
      */
@@ -117,74 +115,23 @@ class ParishionerDonXinRuaToiPresenter
     {
         $p = $this->parishioner;
         $role = (string) ($p->family_role ?? '');
+        $self = $this->displayName($p);
+        $spouse = $this->spouseDisplayName();
 
-        if ($this->isParentExporter()) {
-            $self   = $this->displayName($p);
-            $spouse = $this->spouseDisplayName();
+        $isFather = $role === 'husband'
+            || ($role !== 'wife' && $p->gender === 'male');
 
-            $isFather = $role === 'husband'
-                || ($role !== 'wife' && $p->gender === 'male');
-
-            if ($isFather) {
-                return [
-                    'father' => $self !== '' ? $self : '………………',
-                    'mother' => $spouse !== '' ? $spouse : '………………',
-                ];
-            }
-
+        if ($isFather) {
             return [
-                'father' => $spouse !== '' ? $spouse : '………………',
-                'mother' => $self !== '' ? $self : '………………',
+                'father' => $self !== '' ? $self : '………………',
+                'mother' => $spouse !== '' ? $spouse : '………………',
             ];
         }
 
         return [
-            'father' => $this->parentName('father'),
-            'mother' => $this->parentName('mother'),
+            'father' => $spouse !== '' ? $spouse : '………………',
+            'mother' => $self !== '' ? $self : '………………',
         ];
-    }
-
-    /** Xuất từ hồ sơ cha/mẹ (vai trò chồng/vợ hoặc có hôn phối). */
-    private function isParentExporter(): bool
-    {
-        $role = (string) ($this->parishioner->family_role ?? '');
-        if (in_array($role, ['husband', 'wife'], true)) {
-            return true;
-        }
-
-        return (bool) (
-            $this->parishioner->marriageAsHusband
-            || $this->parishioner->marriageAsWife
-        );
-    }
-
-    /**
-     * Ưu tiên: hồ sơ cha/mẹ đã liên kết → tên chữ trên hồ sơ → chồng/vợ trong hộ GĐ.
-     */
-    private function parentName(string $role): string
-    {
-        $p = $this->parishioner;
-
-        $related = $p->{$role} ?? null;
-        if ($related) {
-            $related->loadMissing('saint');
-            $name = $this->displayName($related);
-            if ($name !== '') {
-                return $name;
-            }
-        }
-
-        $text = trim((string) ($p->{$role . '_name'} ?? ''));
-        if ($text !== '') {
-            return $text;
-        }
-
-        $fromFamily = $this->familyMemberDisplayName($role === 'father' ? 'husband' : 'wife');
-        if ($fromFamily !== '') {
-            return $fromFamily;
-        }
-
-        return '………………';
     }
 
     private function spouseDisplayName(): string
@@ -256,7 +203,6 @@ class ParishionerDonXinRuaToiPresenter
             return '';
         }
 
-        // Khi tìm vợ/chồng: bỏ qua chính người xuất
         if ((int) $member->id === (int) $this->parishioner->id) {
             return '';
         }
