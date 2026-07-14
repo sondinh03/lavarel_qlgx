@@ -143,7 +143,7 @@ class AssignTeacher extends BaseComponent
         $id = (int) $value;
 
         if ($id <= 0) {
-            $this->classId = (int) ($this->class->id ?? 0);
+            $this->classId = (int) ($this->class?->id ?? 0);
 
             return;
         }
@@ -159,7 +159,7 @@ class AssignTeacher extends BaseComponent
 
         if (! $allowed) {
             session()->flash('error', 'Lớp học không hợp lệ.');
-            $this->classId = (int) ($this->class->id ?? 0);
+            $this->classId = (int) ($this->class?->id ?? 0);
 
             return;
         }

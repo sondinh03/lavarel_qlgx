@@ -13,7 +13,7 @@
         ? 'tel:' . preg_replace('/[^\d+]/', '', $phone)
         : '';
     $mailHref = $email !== ''
-        ? 'https://mail.google.com/mail/?view=cm&fs=1&to=' . rawurlencode($email)
+        ? 'mailto:' . $email
         : '';
 @endphp
 
@@ -46,8 +46,6 @@
                     @endif
                     @if($email !== '')
                     <a href="{{ $mailHref }}"
-                        target="_blank"
-                        rel="noopener noreferrer"
                         class="inline-flex items-center gap-1.5 font-medium text-primary-700 hover:text-primary-800 transition">
                         <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -88,8 +86,6 @@
             @endif
             @if($email !== '')
             <a href="{{ $mailHref }}"
-                target="_blank"
-                rel="noopener noreferrer"
                 class="font-medium text-primary-700 hover:text-primary-800 transition">{{ $email }}</a>
             @endif
             @if($email !== '' && $zalo !== '')
@@ -115,8 +111,6 @@
         @endif
         @if($email !== '')
         <a href="{{ $mailHref }}"
-            target="_blank"
-            rel="noopener noreferrer"
             class="font-medium text-primary-700 hover:text-primary-800 transition">{{ $email }}</a>
         @endif
         @if($email !== '' && $zalo !== '')
