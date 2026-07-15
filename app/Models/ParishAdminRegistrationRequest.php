@@ -99,6 +99,13 @@ class ParishAdminRegistrationRequest extends Model
             : '—';
     }
 
+    /** Đăng ký cần tạo giáo xứ mới (chưa có parish_id). */
+    public function createsNewParish(): bool
+    {
+        return $this->parish_id === null
+            && trim((string) $this->custom_parish_name) !== '';
+    }
+
     public function requestedRoleLabels(): array
     {
         $catalog = config('parish-admin-registration.roles', []);

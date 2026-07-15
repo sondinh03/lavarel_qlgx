@@ -14,8 +14,11 @@ class ApproveParishAdminRegistrationAction
     /**
      * @return array{user: User, request: ParishAdminRegistrationRequest}
      */
-    public function handle(ParishAdminRegistrationRequest $request, User $reviewer): array
-    {
+    public function handle(
+        ParishAdminRegistrationRequest $request,
+        User $reviewer,
+        ?string $parishCode = null
+    ): array {
         if (! $request->isPending()) {
             throw new InvalidArgumentException('Yêu cầu đã được xử lý.');
         }
@@ -31,7 +34,9 @@ class ApproveParishAdminRegistrationAction
             $roles = ['parish_admin'];
         }
 
-        return DB::transaction(function () use ($request, $reviewer, $roles) {
+        $normalizedCode = strtoupper(trim((string) $parishCode));
+
+        return DB::transaction(function () use ($request, $reviewer, $roles, $normalizedCode) {
             $parishId = $request->parish_id;
 
             if (! $parishId) {
@@ -41,8 +46,17 @@ class ApproveParishAdminRegistrationAction
                     throw new InvalidArgumentException('Thiếu giáo phận, giáo hạt hoặc tên giáo xứ mới để tạo.');
                 }
 
+                if ($normalizedCode === '') {
+                    throw new InvalidArgumentException('Vui lòng nhập mã giáo xứ trước khi duyệt.');
+                }
+
+                if (ParishNew::query()->where('code', $normalizedCode)->exists()) {
+                    throw new InvalidArgumentException('Mã giáo xứ đã tồn tại.');
+                }
+
                 $parish = ParishNew::create([
                     'name'       => $name,
+                    'code'       => $normalizedCode,
                     'diocese_id' => $request->diocese_id,
                     'deanery_id' => $request->deanery_id,
                     'status'     => true,

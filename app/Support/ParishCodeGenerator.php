@@ -2,6 +2,8 @@
 
 namespace App\Support;
 
+use App\Models\ParishNew;
+
 class ParishCodeGenerator
 {
     /**
@@ -17,6 +19,10 @@ class ParishCodeGenerator
         $words = explode(' ', strtoupper(trim($name)));
         $words = array_filter($words); // bỏ khoảng trắng thừa
 
+        if ($words === []) {
+            return 'GXU';
+        }
+
         $code = match (count($words)) {
             // 1 từ: lấy 3 ký tự đầu — "CHU" → "CHU"
             1 => substr($words[0], 0, 3),
@@ -30,7 +36,31 @@ class ParishCodeGenerator
                      . substr($words[2], 0, 1),
         };
 
+        $code = strtoupper(preg_replace('/[^A-Z0-9]/', '', (string) $code) ?: 'GXU');
+
         return substr($code, 0, 3); // đảm bảo tối đa 3 ký tự
+    }
+
+    /**
+     * Gợi ý mã chưa trùng trên bảng parishes (HDO → HDO2…).
+     */
+    public static function suggestUnique(string $name): string
+    {
+        $base = static::suggest($name);
+        $candidate = $base;
+        $i = 2;
+
+        while (ParishNew::query()->where('code', $candidate)->exists()) {
+            $suffix = (string) $i;
+            $candidate = substr($base, 0, max(1, 10 - strlen($suffix))) . $suffix;
+            $i++;
+
+            if ($i > 999) {
+                return strtoupper(substr(bin2hex(random_bytes(3)), 0, 6));
+            }
+        }
+
+        return $candidate;
     }
 
     private static function removeAccents(string $str): string

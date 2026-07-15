@@ -181,17 +181,21 @@
                         <h2 class="text-xs font-semibold text-slate-500 tracking-wide uppercase mb-3 px-1">
                             Quyền cần tạo <span class="text-red-500 normal-case">*</span>
                         </h2>
+                        <p class="text-xs text-slate-400 mb-3 px-1 leading-relaxed">
+                            Chỉ chọn một quyền quản trị.
+                        </p>
                         <div class="grid grid-cols-1 gap-2.5">
                             @foreach($this->roleCatalog as $roleKey => $roleMeta)
-                            <label class="flex items-start gap-3 p-3.5 rounded-xl border cursor-pointer transition-all
-                                {{ in_array($roleKey, $selectedRoles, true)
+                            <label wire:key="role-{{ $roleKey }}"
+                                wire:click.prevent="selectRole('{{ $roleKey }}')"
+                                class="flex items-start gap-3 p-3.5 rounded-xl border cursor-pointer transition-all
+                                {{ $selectedRole === $roleKey
                                     ? 'border-primary-300/60 bg-primary-50/80 shadow-mac-sm'
                                     : 'border-black/[0.06] bg-white/60 hover:bg-white/80' }}">
-                                <input type="checkbox"
-                                    wire:model="selectedRoles"
-                                    value="{{ $roleKey }}"
-                                    class="mt-0.5 rounded-md border-black/15 text-primary-600
-                                        focus:ring-primary-500/30 shadow-mac-sm">
+                                <x-checkbox
+                                    class="mt-0.5 pointer-events-none"
+                                    :checked="$selectedRole === $roleKey"
+                                    tabindex="-1" />
                                 <span class="min-w-0">
                                     <span class="block text-sm font-semibold text-slate-800">{{ $roleMeta['label'] }}</span>
                                     <span class="block text-xs text-slate-500 mt-0.5 leading-relaxed">{{ $roleMeta['description'] }}</span>
@@ -199,7 +203,7 @@
                             </label>
                             @endforeach
                         </div>
-                        @error('selectedRoles')
+                        @error('selectedRole')
                         <p class="mt-2 text-xs text-red-500 px-1">{{ $message }}</p>
                         @enderror
                     </section>

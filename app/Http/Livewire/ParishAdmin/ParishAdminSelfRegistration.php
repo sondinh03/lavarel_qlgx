@@ -39,8 +39,8 @@ class ParishAdminSelfRegistration extends Component
 
     public string $note = '';
 
-    /** @var array<int, string> */
-    public array $selectedRoles = ['parish_admin'];
+    /** Một trong các role: parish_admin | parishioner_admin | catechism_admin */
+    public string $selectedRole = 'parish_admin';
 
     public bool $submitted = false;
 
@@ -178,8 +178,7 @@ class ParishAdminSelfRegistration extends Component
                 'string',
                 'max:255',
             ],
-            'selectedRoles'     => 'required|array|min:1',
-            'selectedRoles.*'   => ['required', 'string', Rule::in($roleKeys)],
+            'selectedRole'      => ['required', 'string', Rule::in($roleKeys)],
             'name'              => 'nullable|string|max:255',
             'email'             => 'required|email|max:255',
             'phone'             => 'nullable|string|max:20',
@@ -196,10 +195,19 @@ class ParishAdminSelfRegistration extends Component
             'deaneryId.required'        => 'Vui lòng chọn giáo hạt.',
             'targetParishId.required'   => 'Vui lòng chọn giáo xứ hoặc nhập tên giáo xứ mới.',
             'customParishName.required' => 'Vui lòng nhập tên giáo xứ.',
-            'selectedRoles.required'    => 'Vui lòng chọn ít nhất một quyền.',
-            'selectedRoles.min'         => 'Vui lòng chọn ít nhất một quyền.',
+            'selectedRole.required'     => 'Vui lòng chọn một quyền quản trị.',
+            'selectedRole.in'           => 'Quyền quản trị không hợp lệ.',
             'password.confirmed'        => 'Xác nhận mật khẩu không khớp.',
         ];
+    }
+
+    public function selectRole(string $role): void
+    {
+        $roleKeys = array_keys(config('parish-admin-registration.roles', []));
+
+        if (in_array($role, $roleKeys, true)) {
+            $this->selectedRole = $role;
+        }
     }
 
     public function submit(): void
@@ -258,7 +266,7 @@ class ParishAdminSelfRegistration extends Component
             return;
         }
 
-        $roles = array_values(array_unique($this->selectedRoles));
+        $roles = [$this->selectedRole];
 
         try {
             $request = ParishAdminRegistrationRequest::create([
@@ -300,7 +308,7 @@ class ParishAdminSelfRegistration extends Component
             'customParishName',
             'useCustomParish',
         ]);
-        $this->selectedRoles = ['parish_admin'];
+        $this->selectedRole = 'parish_admin';
         $this->submitted = true;
         $this->referenceCode = $request->reference_code;
     }

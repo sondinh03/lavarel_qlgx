@@ -129,13 +129,40 @@ class ParishAdminRegistrationCrudController extends CrudController
         CRUD::addButtonFromView('top', 'reject_parish_admin_registration', 'reject_parish_admin_registration', 'end');
     }
 
-    public function approve(int $id, ApproveParishAdminRegistrationAction $action)
+    public function approve(int $id, Request $request, ApproveParishAdminRegistrationAction $action)
     {
         $entry = ParishAdminRegistrationRequest::findOrFail($id);
         $this->authorize('approve', $entry);
 
+        $parishCode = null;
+
+        if ($entry->createsNewParish()) {
+            try {
+                $validated = $request->validate([
+                    'parish_code' => [
+                        'required',
+                        'string',
+                        'max:10',
+                        'regex:/^[A-Za-z0-9\\-]+$/',
+                        'unique:parishes,code',
+                    ],
+                ], [
+                    'parish_code.required' => 'Vui lòng nhập mã giáo xứ.',
+                    'parish_code.unique'   => 'Mã giáo xứ đã tồn tại.',
+                    'parish_code.max'      => 'Mã giáo xứ không được quá 10 ký tự.',
+                    'parish_code.regex'    => 'Mã giáo xứ chỉ gồm chữ, số và dấu gạch ngang.',
+                ]);
+            } catch (\Illuminate\Validation\ValidationException $e) {
+                Alert::error($e->validator->errors()->first())->flash();
+
+                return redirect()->back()->withInput();
+            }
+
+            $parishCode = strtoupper(trim($validated['parish_code']));
+        }
+
         try {
-            $result = $action->handle($entry, backpack_user());
+            $result = $action->handle($entry, backpack_user(), $parishCode);
             Alert::success('Đã duyệt yêu cầu. Tài khoản: ' . $result['user']->email)->flash();
         } catch (InvalidArgumentException $e) {
             Alert::error($e->getMessage())->flash();
