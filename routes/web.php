@@ -94,6 +94,7 @@ use App\Http\Livewire\Parishioners\ParishionerStatistics;
 use App\Http\Livewire\Parishioners\ParishionersManager;
 use App\Http\Livewire\Parishioners\FamilyRegisterImportPreview;
 use App\Http\Livewire\Parishioners\SacramentsManager;
+use App\Http\Livewire\Score\ScoreEditLogList;
 use App\Http\Livewire\Score\ScoreManager;
 use App\Http\Livewire\Score\ScoreStatistics;
 use App\Http\Livewire\Student\PrintCards;
@@ -190,6 +191,8 @@ Route::middleware('auth')->group(function () {
 
             Route::get('/{id}', StudentDetail::class)->name('show')->whereNumber('id');
         });
+
+        Route::get('/diem-so', ScoreManager::class)->name('scores.index');
     });
 
     Route::middleware('role:parish_admin|catechism_admin')->group(function () {
@@ -199,6 +202,9 @@ Route::middleware('auth')->group(function () {
             Route::get('/{id}/hoc-sinh', ClassStudentManager::class)->name('students')->whereNumber('id');
             Route::get('/{id}/giao-ly-vien', AssignTeacher::class)->name('catechists')->whereNumber('id');
         });
+
+        Route::get('/thong-bao-giao-ly', \App\Http\Livewire\Catechism\CatechistAnnouncementComposer::class)
+            ->name('catechism.announcements');
 
         Route::prefix('giao-ly-vien')->name('catechists.')->group(function () {
             Route::get('/', TeacherManager::class)->name('index');
@@ -212,9 +218,12 @@ Route::middleware('auth')->group(function () {
         Route::get('/phien-diem-danh', SessionManager::class)
             ->name('session.index');
 
+        Route::get('/diem-danh/nhat-ky', \App\Http\Livewire\Attendance\AttendanceEditLogList::class)
+            ->name('attendance.edit-logs');
+
         Route::prefix('diem-so')->name('scores.')->group(function () {
-            Route::get('/', ScoreManager::class)->name('index');
             Route::get('/thong-ke', ScoreStatistics::class)->name('statistics');
+            Route::get('/nhat-ky', ScoreEditLogList::class)->name('edit-logs');
         });
 
         Route::prefix('nam-hoc')->name('school-years.')->group(function () {

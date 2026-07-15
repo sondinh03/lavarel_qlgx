@@ -1,9 +1,17 @@
 @section('topbar')
+@php
+    $isCatechist = auth()->user()?->usesCatechistLayout() ?? false;
+    $homeUrl = $isCatechist
+        ? route('catechist.dashboard')
+        : route('parish-admin.dashboard');
+@endphp
 <x-breadcrumb :items="[
-        ['label' => 'Trang chủ', 'url' => route('parish-admin.dashboard')],
+        ['label' => 'Trang chủ', 'url' => $homeUrl],
         ['label' => 'Kết quả học tập'],
     ]" />
 @endsection
+
+@php $isCatechist = auth()->user()?->usesCatechistLayout() ?? false; @endphp
 
 <div class="min-h-screen bg-apple-gray p-2 sm:p-4 lg:p-6" style="min-height: calc(100vh - 56px - var(--bottom-offset));">
     <a href="#main-content" class="sr-only focus:not-sr-only">Bỏ qua tới nội dung</a>
@@ -12,10 +20,66 @@
         <x-mac-panel :overflow="true">
             <x-page-header
                 title="Kết quả học tập"
-                description="Nhập và quản lý điểm học sinh theo lớp và học kỳ"
+                :description="$isCatechist
+                    ? ($canEditScores ? 'Nhập điểm theo lớp được phân công' : 'Xem điểm theo lớp được phân công')
+                    : ($canEditScores ? 'Nhập và quản lý điểm học sinh theo lớp và học kỳ' : 'Xem điểm học sinh theo lớp và học kỳ')"
                 icon-type="score" />
 
+            @if($canManageScoreConfig || ! $canEditScores)
+            <div class="mx-4 lg:mx-6 mt-4 px-4 py-3 rounded-xl border shadow-mac-sm flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3
+                {{ $scoresEntryOpen
+                    ? 'border-emerald-200/80 bg-emerald-50/80 text-emerald-900'
+                    : 'border-amber-200/80 bg-amber-50/80 text-amber-900' }}">
+                <div class="min-w-0">
+                    <p class="text-sm font-semibold">
+                        {{ $scoresEntryOpen ? 'Đang mở nhập/sửa điểm' : 'Đang khóa nhập/sửa điểm' }}
+                    </p>
+                    <p class="text-xs mt-0.5 opacity-80">
+                        @if($canManageScoreConfig)
+                            Giáo lý viên {{ $scoresEntryOpen ? 'có thể' : 'không thể' }} sửa điểm khi cửa sổ này
+                            {{ $scoresEntryOpen ? 'đang mở' : 'đang khóa' }}.
+                            Ban quản trị luôn được sửa.
+                        @else
+                            Ban giáo lý chưa mở cửa sổ nhập điểm. Bạn chỉ có thể xem.
+                        @endif
+                    </p>
+                </div>
+                @if($canManageScoreConfig)
+                <div class="flex items-center gap-2 flex-shrink-0">
+                    <x-button as="a" href="{{ route('scores.edit-logs') }}" variant="outline" size="sm">
+                        Nhật ký sửa
+                    </x-button>
+                    <x-button wire:click="toggleScoresEntryOpen" variant="{{ $scoresEntryOpen ? 'outline' : 'primary' }}" size="sm">
+                        {{ $scoresEntryOpen ? 'Khóa nhập điểm' : 'Mở nhập điểm' }}
+                    </x-button>
+                </div>
+                @endif
+            </div>
+            @endif
+
             <div class="p-4 lg:p-6 mac-hairline-b bg-white/30">
+                @if($isCatechist)
+                <div class="flex flex-col gap-4">
+                    <livewire:filters.filter-bar
+                        :parish-id="$parishId"
+                        :show-nam-hoc="false"
+                        :show-khoi="false"
+                        :show-lop="true"
+                        :show-ky="true"
+                        :selected-nam-hoc="$selectedNamHoc"
+                        :selected-khoi="$selectedKhoi"
+                        :selected-lop="$selectedLop"
+                        :selected-ky="$selectedSemester" />
+
+                    <div class="flex flex-col sm:flex-row sm:items-center gap-3">
+                        <x-search-input
+                            wire-model="search"
+                            placeholder="Tìm học sinh..."
+                            debounce="400ms"
+                            class="max-w-md flex-1" />
+                    </div>
+                </div>
+                @else
                 <div class="flex flex-col gap-4">
                     <div class="flex-1 min-w-0">
                         <livewire:filters.filter-bar
@@ -39,6 +103,7 @@
 
                         <div class="flex items-center gap-2 flex-wrap justify-end">
                             @if($activeTab === 'scores')
+                            @if($canManageScoreConfig)
                             <x-button
                                 as="a"
                                 href="{{ route('scores.statistics', ['namHoc' => $selectedNamHoc, 'khoi' => $selectedKhoi, 'lop' => $selectedLop, 'semester' => $selectedSemester]) }}"
@@ -49,16 +114,21 @@
                                 </svg>
                                 Thống kê
                             </x-button>
+                            @endif
+                            @if($canEditScores)
                             <x-button wire:click="saveAllScores" variant="primary">
                                 <x-icon name="save" />
                                 Lưu tất cả
                             </x-button>
+                            @endif
+                            @if($canManageScoreConfig)
                             <x-button wire:click="exportScores" variant="outline">
                                 <x-icon name="file-export" />
                                 Xuất Excel
                             </x-button>
                             @endif
-                            @if($activeTab === 'config')
+                            @endif
+                            @if($activeTab === 'config' && $canManageScoreConfig)
                             <x-button wire:click="createScoreType" variant="primary">
                                 <x-icon name="plus" />
                                 Thêm loại điểm
@@ -67,8 +137,10 @@
                         </div>
                     </div>
                 </div>
+                @endif
             </div>
 
+            @if($canManageScoreConfig)
             <div class="px-4 lg:px-6 py-3 mac-hairline-b bg-white/20">
                 <div class="flex gap-1 p-1 rounded-xl bg-black/[0.04] border border-black/[0.04] w-fit">
                     <button
@@ -91,6 +163,7 @@
                     </button>
                 </div>
             </div>
+            @endif
 
         @if($activeTab === 'scores')
         @if(!$selectedLop)
@@ -110,10 +183,14 @@
             :panel="false"
             tone="primary"
             title="Lớp chưa có cấu hình loại điểm"
-            description="Thêm loại điểm trước khi nhập điểm cho học sinh">
+            description="{{ $canManageScoreConfig
+                ? 'Thêm loại điểm trước khi nhập điểm cho học sinh'
+                : 'Liên hệ ban giáo lý để cấu hình loại điểm' }}">
+            @if($canManageScoreConfig)
             <x-button wire:click="switchTab('config')" variant="primary">
                 Cấu hình ngay
             </x-button>
+            @endif
         </x-stats.page-empty>
 
         @else
@@ -146,6 +223,102 @@
             </div>
         </div>
 
+        @if($isCatechist)
+        {{-- ══ CATECHIST: minimal card list ══ --}}
+        <div class="p-4 space-y-3" wire:key="score-cards-{{ $selectedLop }}-{{ $selectedSemester }}">
+            @forelse($students as $index => $sc)
+            @php
+                $avg = $this->getAverage($sc->pivot_id);
+                $ratingLabel = null;
+                $ratingColor = null;
+                if ($avg !== null) {
+                    if ($avg >= 9.5)      { $ratingLabel = 'Xuất sắc';   $ratingColor = 'emerald'; }
+                    elseif ($avg >= 8.0)  { $ratingLabel = 'Giỏi';       $ratingColor = 'blue'; }
+                    elseif ($avg >= 6.5)  { $ratingLabel = 'Khá';        $ratingColor = 'amber'; }
+                    elseif ($avg >= 5.0)  { $ratingLabel = 'Trung bình'; $ratingColor = 'yellow'; }
+                    elseif ($avg >= 3.5)  { $ratingLabel = 'Yếu';        $ratingColor = 'orange'; }
+                    else                  { $ratingLabel = 'Kém';        $ratingColor = 'red'; }
+                }
+                $badgeClass = match($ratingColor) {
+                    'emerald' => 'bg-emerald-50/80 text-emerald-700',
+                    'blue'    => 'bg-blue-50/80 text-blue-700',
+                    'amber'   => 'bg-amber-50/80 text-amber-700',
+                    'yellow'  => 'bg-yellow-50/80 text-yellow-700',
+                    'orange'  => 'bg-orange-50/80 text-orange-700',
+                    'red'     => 'bg-red-50/80 text-red-700',
+                    default   => 'bg-slate-50/80 text-slate-400',
+                };
+                $initials = strtoupper(
+                    mb_substr($sc->last_name ?? '', 0, 1) . mb_substr($sc->first_name ?? '', 0, 1)
+                );
+            @endphp
+            <button type="button"
+                wire:key="score-card-{{ $sc->pivot_id }}"
+                wire:click="openStudentScoreDetail({{ $sc->pivot_id }})"
+                class="w-full text-left bg-white/70 rounded-xl border border-black/[0.06] p-4
+                      flex items-center gap-3 hover:border-primary-300/50
+                      hover:bg-black/[0.02] transition-all active:scale-[0.99]">
+
+                <div class="w-11 h-11 rounded-full flex-shrink-0 flex items-center justify-center
+                    text-sm font-semibold bg-primary-50/80 text-primary-800">
+                    @if(!empty($sc->avatar_path))
+                    <img src="{{ $sc->avatar_url }}" class="w-full h-full rounded-full object-cover" alt="" />
+                    @else
+                    {{ $initials }}
+                    @endif
+                </div>
+
+                <div class="flex-1 min-w-0">
+                    <div class="flex items-center gap-2 mb-0.5">
+                        <span class="text-sm font-medium text-slate-900 truncate">
+                            {{ $sc->saint->name ?? '' }} {{ $sc->last_name }} {{ $sc->first_name }}
+                        </span>
+                    </div>
+                    @if($ratingLabel)
+                    <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold {{ $badgeClass }}">
+                        {{ $ratingLabel }}
+                    </span>
+                    @else
+                    <span class="text-xs text-slate-400">Chưa có điểm tổng kết</span>
+                    @endif
+                </div>
+
+                <div class="flex-shrink-0 flex items-center gap-2">
+                    @if($avg !== null)
+                    <span class="text-base font-bold tabular-nums
+                        {{ $avg >= 8 ? 'text-emerald-600' : ($avg >= 5 ? 'text-primary-600' : 'text-red-500') }}">
+                        {{ number_format($avg, 1) }}
+                    </span>
+                    @else
+                    <span class="text-xs font-semibold text-slate-400 tabular-nums">TB —</span>
+                    @endif
+                    <span class="text-[11px] font-semibold text-primary-600 bg-primary-50/90
+                        ring-1 ring-primary-100/70 rounded-lg px-2 py-1">
+                        Chi tiết
+                    </span>
+                </div>
+            </button>
+            @empty
+            <x-stats.page-empty
+                :panel="false"
+                title="Chưa có học sinh trong lớp này"
+                description="Chọn lớp khác hoặc liên hệ ban giáo lý">
+                <x-slot name="icon">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+                        d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
+                </x-slot>
+            </x-stats.page-empty>
+            @endforelse
+
+            @if($students->hasPages())
+            <div class="pt-2">
+                <x-pagination :paginator="$students" :per-page-options="[10, 15, 25, 50]" />
+            </div>
+            @endif
+        </div>
+
+        @else
+        {{-- ══ ADMIN: Table ══ --}}
         <div class="max-h-[70vh] overflow-y-auto">
             <div class="overflow-x-auto">
                 <table class="w-full text-sm">
@@ -227,6 +400,7 @@
 
                                 @foreach($scoreTypes as $colIndex => $type)
                                 <td class="px-3 py-2 text-center">
+                                    @if($canEditScores)
                                     <input
                                         type="text"
                                         inputmode="decimal"
@@ -245,6 +419,18 @@
                                                {{ isset($scoresMatrix[$sc->pivot_id][$type->id])
                                                    ? 'border-emerald-200/80 bg-emerald-50/80 text-emerald-700'
                                                    : 'border-black/[0.06] bg-white/80 text-slate-600' }}" />
+                                    @else
+                                    @php
+                                        $cell = $scoresMatrix[$sc->pivot_id][$type->id]['value'] ?? null;
+                                    @endphp
+                                    <span @class([
+                                        'inline-flex min-w-[2.5rem] justify-center px-2 py-1 rounded-lg text-sm font-semibold',
+                                        'bg-emerald-50/80 text-emerald-700' => $cell !== null,
+                                        'text-slate-300' => $cell === null,
+                                    ])>
+                                        {{ $cell !== null ? number_format((float) $cell, 1) : '—' }}
+                                    </span>
+                                    @endif
                                 </td>
                                 @endforeach
 
@@ -289,6 +475,7 @@
                 <x-pagination :paginator="$students" :per-page-options="[10, 15, 25, 50, 100]" />
             </div>
             @endif
+        @endif
 
         @endif
         @endif
@@ -377,6 +564,134 @@
         @endif
 
         </x-mac-panel>
+
+        @if($isCatechist && $viewingStudent)
+        @php
+            $sc = $viewingStudent;
+            $avg = $this->getAverage($sc->pivot_id);
+            $ratingLabel = null;
+            $ratingColor = null;
+            if ($avg !== null) {
+                if ($avg >= 9.5)      { $ratingLabel = 'Xuất sắc';   $ratingColor = 'emerald'; }
+                elseif ($avg >= 8.0)  { $ratingLabel = 'Giỏi';       $ratingColor = 'blue'; }
+                elseif ($avg >= 6.5)  { $ratingLabel = 'Khá';        $ratingColor = 'amber'; }
+                elseif ($avg >= 5.0)  { $ratingLabel = 'Trung bình'; $ratingColor = 'yellow'; }
+                elseif ($avg >= 3.5)  { $ratingLabel = 'Yếu';        $ratingColor = 'orange'; }
+                else                  { $ratingLabel = 'Kém';        $ratingColor = 'red'; }
+            }
+            $badgeClass = match($ratingColor) {
+                'emerald' => 'bg-emerald-50/80 text-emerald-700',
+                'blue'    => 'bg-blue-50/80 text-blue-700',
+                'amber'   => 'bg-amber-50/80 text-amber-700',
+                'yellow'  => 'bg-yellow-50/80 text-yellow-700',
+                'orange'  => 'bg-orange-50/80 text-orange-700',
+                'red'     => 'bg-red-50/80 text-red-700',
+                default   => 'bg-slate-50/80 text-slate-400',
+            };
+            $initials = strtoupper(
+                mb_substr($sc->last_name ?? '', 0, 1) . mb_substr($sc->first_name ?? '', 0, 1)
+            );
+        @endphp
+        <div class="fixed inset-0 z-[200] flex items-center justify-center p-4"
+            role="dialog" aria-modal="true"
+            wire:key="score-detail-{{ $sc->pivot_id }}">
+            <div class="absolute inset-0 bg-black/40 backdrop-blur-sm" wire:click="closeStudentScoreDetail"></div>
+            <div class="relative w-full max-w-md max-h-[min(85vh,calc(100vh-2rem-var(--bottom-offset,0px)))] overflow-y-auto
+                bg-white rounded-2xl shadow-mac border border-black/[0.06] p-5 space-y-4">
+                <div class="flex items-start gap-3">
+                    <div class="w-12 h-12 rounded-full flex-shrink-0 flex items-center justify-center
+                        text-sm font-semibold bg-primary-50/80 text-primary-800">
+                        @if(!empty($sc->avatar_path))
+                        <img src="{{ $sc->avatar_url }}" class="w-full h-full rounded-full object-cover" alt="" />
+                        @else
+                        {{ $initials }}
+                        @endif
+                    </div>
+                    <div class="flex-1 min-w-0">
+                        <p class="text-base font-semibold text-slate-900 truncate">
+                            {{ $sc->saint->name ?? '' }} {{ $sc->last_name }} {{ $sc->first_name }}
+                        </p>
+                        <div class="mt-1 flex items-center gap-2 flex-wrap">
+                            @if($avg !== null)
+                            <span class="text-xl font-bold tabular-nums
+                                {{ $avg >= 8 ? 'text-emerald-600' : ($avg >= 5 ? 'text-primary-600' : 'text-red-500') }}">
+                                {{ number_format($avg, 1) }}
+                            </span>
+                            @if($ratingLabel)
+                            <span class="inline-flex px-2 py-0.5 rounded-lg text-xs font-semibold {{ $badgeClass }}">
+                                {{ $ratingLabel }}
+                            </span>
+                            @endif
+                            @else
+                            <span class="text-sm font-semibold text-slate-400">TB —</span>
+                            <span class="text-xs text-slate-400">Chưa có điểm tổng kết</span>
+                            @endif
+                        </div>
+                        @if($avg === null)
+                        <p class="mt-1.5 text-[11px] text-slate-400 leading-snug">
+                            Điểm trung bình chỉ tính khi đã có đủ điểm giữa kỳ và cuối kỳ (nếu lớp có cấu hình các loại này).
+                        </p>
+                        @endif
+                    </div>
+                    <button type="button" wire:click="closeStudentScoreDetail"
+                        class="p-2 -mr-1 rounded-xl text-slate-400 hover:bg-slate-100 hover:text-slate-600">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                    </button>
+                </div>
+
+                <div class="space-y-2.5 pt-1 border-t border-black/[0.06]">
+                    @foreach($scoreTypes as $colIndex => $type)
+                    <div class="flex items-center justify-between gap-3 py-1">
+                        <div class="min-w-0">
+                            <p class="text-sm font-medium text-slate-700 truncate">{{ $type->name }}</p>
+                            <p class="text-[11px] text-slate-400">Hệ số {{ $type->coefficient }}</p>
+                        </div>
+                        @if($canEditScores)
+                        <input
+                            type="text"
+                            inputmode="decimal"
+                            step="0.5"
+                            min="0"
+                            max="{{ $type->max_score }}"
+                            wire:model.defer="draftScores.{{ $sc->pivot_id }}.{{ $type->id }}"
+                            class="score-input w-16 py-2 px-2 text-center rounded-lg text-sm font-semibold
+                                   border shadow-mac-sm outline-none
+                                   focus:ring-2 focus:ring-primary-500/25 focus:border-primary-300/40
+                                   {{ isset($scoresMatrix[$sc->pivot_id][$type->id])
+                                       ? 'border-emerald-200/80 bg-emerald-50/80 text-emerald-700'
+                                       : 'border-black/[0.06] bg-white text-slate-600' }}" />
+                        @else
+                        @php
+                            $cell = $scoresMatrix[$sc->pivot_id][$type->id]['value'] ?? null;
+                        @endphp
+                        <span @class([
+                            'inline-flex min-w-[2.75rem] justify-center px-2.5 py-1.5 rounded-lg text-sm font-semibold',
+                            'bg-emerald-50/80 text-emerald-700' => $cell !== null,
+                            'bg-slate-50 text-slate-300' => $cell === null,
+                        ])>
+                            {{ $cell !== null ? number_format((float) $cell, 1) : '—' }}
+                        </span>
+                        @endif
+                    </div>
+                    @endforeach
+                </div>
+
+                <div class="flex gap-2 pt-1">
+                    <x-button type="button" variant="outline" class="flex-1" wire:click="closeStudentScoreDetail">
+                        Đóng
+                    </x-button>
+                    @if($canEditScores)
+                    <x-button type="button" variant="primary" class="flex-1" wire:click="saveAllScores">
+                        <x-icon name="save" />
+                        Lưu điểm
+                    </x-button>
+                    @endif
+                </div>
+            </div>
+        </div>
+        @endif
 
         @if($activeTab === 'scores')
         <script>

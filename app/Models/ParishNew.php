@@ -27,10 +27,12 @@ class ParishNew extends Model
         'phone',
         'image',
         'status',
+        'scores_entry_open',
     ];
 
     protected $casts = [
-        'status' => 'boolean',
+        'status'            => 'boolean',
+        'scores_entry_open' => 'boolean',
     ];
 
     /*

@@ -134,7 +134,7 @@
 if (request()->routeIs('attendance.statistics', 'scores.statistics', 'students.statistics')) {
     $activeGroup = 'statistics';
 } elseif (
-    request()->routeIs('attendance.*', 'scores.*', 'session.*')
+    request()->routeIs('attendance.*', 'scores.*', 'session.*', 'catechism.announcements')
     || (request()->routeIs('students.*') && !request()->routeIs('students.statistics'))
 ) {
     $activeGroup = 'learning';
@@ -277,7 +277,7 @@ $isDashboard = request()->routeIs('parish-admin.dashboard');
             @php
                 $isStatisticsActive = request()->routeIs('attendance.statistics', 'scores.statistics', 'students.statistics');
                 $isLearningActive = (
-                    request()->routeIs('attendance.*', 'scores.*', 'session.*', 'students.*')
+                    request()->routeIs('attendance.*', 'scores.*', 'session.*', 'students.*', 'catechism.announcements')
                     && ! $isStatisticsActive
                 );
             @endphp
@@ -316,7 +316,10 @@ $isDashboard = request()->routeIs('parish-admin.dashboard');
                     @include('frontend.layout.partials.sidebar-sub-item', ['route' => 'students.index', 'label' => 'Quản lý học sinh'])
                     @include('frontend.layout.partials.sidebar-sub-item', ['route' => 'attendance.show', 'label' => 'Điểm danh'])
                     @include('frontend.layout.partials.sidebar-sub-item', ['route' => 'session.index', 'label' => 'Phiên điểm danh'])
+                    @include('frontend.layout.partials.sidebar-sub-item', ['route' => 'attendance.edit-logs', 'label' => 'Nhật ký điểm danh'])
                     @include('frontend.layout.partials.sidebar-sub-item', ['route' => 'scores.index', 'label' => 'Kết quả học tập'])
+                    @include('frontend.layout.partials.sidebar-sub-item', ['route' => 'scores.edit-logs', 'label' => 'Nhật ký sửa điểm'])
+                    @include('frontend.layout.partials.sidebar-sub-item', ['route' => 'catechism.announcements', 'label' => 'Thông báo GLV'])
                 </div>
 
                 {{-- Flyout (mini sidebar) --}}
@@ -325,7 +328,10 @@ $isDashboard = request()->routeIs('parish-admin.dashboard');
                     @include('frontend.layout.partials.flyout-item', ['route' => 'students.index', 'label' => 'Quản lý học sinh'])
                     @include('frontend.layout.partials.flyout-item', ['route' => 'attendance.show', 'label' => 'Điểm danh'])
                     @include('frontend.layout.partials.flyout-item', ['route' => 'session.index', 'label' => 'Phiên điểm danh'])
+                    @include('frontend.layout.partials.flyout-item', ['route' => 'attendance.edit-logs', 'label' => 'Nhật ký điểm danh'])
                     @include('frontend.layout.partials.flyout-item', ['route' => 'scores.index', 'label' => 'Kết quả học tập'])
+                    @include('frontend.layout.partials.flyout-item', ['route' => 'scores.edit-logs', 'label' => 'Nhật ký sửa điểm'])
+                    @include('frontend.layout.partials.flyout-item', ['route' => 'catechism.announcements', 'label' => 'Thông báo GLV'])
                 </div>
             </div>
 

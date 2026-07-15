@@ -35,7 +35,12 @@
             if (current === status) {
                 delete this.draft[key];
             } else {
-                this.draft[key] = { status: status, note: this.getNote(memberId) || '' };
+                const existingNote = this.getNote(memberId) || '';
+                // Lý do chỉ gắn với vắng có phép (status 2)
+                this.draft[key] = {
+                    status: status,
+                    note: Number(status) === 2 ? existingNote : '',
+                };
             }
         },
 
@@ -298,10 +303,6 @@
                                                    font-bold text-base transition-all active:scale-95 relative"
                                             aria-label="Vắng có phép">
                                             P
-                                            <span x-show="getNote({{ $member->id }})"
-                                                class="absolute -top-1 -right-1 w-2 h-2
-                                                       bg-primary-500 rounded-full ring-2 ring-white">
-                                            </span>
                                         </button>
 
                                         {{-- Vắng không phép --}}

@@ -7,6 +7,8 @@ use App\Http\Livewire\Base\BaseComponent;
 use App\Models\CatechismClass;
 use App\Models\GradeLevel;
 use App\Models\NamHoc;
+use App\Models\ParishNew;
+use App\Models\ScoreEditLog;
 use App\Models\ScoreType;
 use App\Models\StudentScore;
 use Illuminate\Support\Collection;
@@ -55,6 +57,18 @@ class ScoreManager extends BaseComponent
 
     /** @var string Tab hiện tại: 'scores' | 'config' */
     public $activeTab = 'scores';
+
+    /** Giáo xứ đang mở cửa sổ nhập/sửa điểm cho GLV */
+    public bool $scoresEntryOpen = false;
+
+    /** User hiện tại được phép sửa điểm (admin luôn; GLV khi mở cửa sổ) */
+    public bool $canEditScores = false;
+
+    /** Admin: cấu hình loại điểm + bật/tắt cửa sổ nhập điểm */
+    public bool $canManageScoreConfig = false;
+
+    /** GLV: đang xem chi tiết điểm của học sinh (students_class.id) */
+    public ?int $viewingPivotId = null;
 
     // ==================== STATISTICS ====================
 
@@ -204,10 +218,15 @@ class ScoreManager extends BaseComponent
 
         // Không authorize ở đây — guest cũng xem được (phụ huynh tra cứu)
         parent::mount();
+
+        if ($this->activeTab === 'config' && ! auth()->user()?->canManageCatechism()) {
+            $this->activeTab = 'scores';
+        }
     }
 
     protected function loadInitialData(): void
     {
+        $this->refreshScorePermissions();
         $this->loadNamHocs();
         $this->loadGrades();
 
@@ -368,6 +387,7 @@ class ScoreManager extends BaseComponent
         $this->averages     = [];
         $this->draftScores  = [];
         $this->hasDraft     = false;
+        $this->viewingPivotId = null;
         $this->resetPage();
         $this->loadScoreTypes();
     }
@@ -388,6 +408,7 @@ class ScoreManager extends BaseComponent
         $this->averages     = [];
         $this->draftScores  = [];
         $this->hasDraft     = false;
+        $this->viewingPivotId = null;
         $this->resetPage();
         $this->loadScoreTypes();
     }
@@ -402,6 +423,7 @@ class ScoreManager extends BaseComponent
     {
         $this->draftScores = [];
         $this->hasDraft    = false;
+        $this->viewingPivotId = null;
 
         match ($action) {
             'changeLop' => (function () use ($value) {
@@ -425,8 +447,72 @@ class ScoreManager extends BaseComponent
         };
     }
 
+    public function hydrate(): void
+    {
+        $this->refreshScorePermissions();
+    }
+
+    protected function refreshScorePermissions(): void
+    {
+        $user = auth()->user();
+        $this->canManageScoreConfig = (bool) $user?->canManageCatechism();
+
+        if ($this->parishId) {
+            $this->scoresEntryOpen = (bool) ParishNew::query()
+                ->whereKey($this->parishId)
+                ->value('scores_entry_open');
+        } else {
+            $this->scoresEntryOpen = false;
+        }
+
+        $this->canEditScores = $user
+            ? $user->can('enterScores', StudentScore::class)
+            : false;
+    }
+
+    public function openStudentScoreDetail(int $pivotId): void
+    {
+        $this->viewingPivotId = $pivotId;
+    }
+
+    public function closeStudentScoreDetail(): void
+    {
+        $this->viewingPivotId = null;
+    }
+
+    public function toggleScoresEntryOpen(): void
+    {
+        $this->authorize('create', ScoreType::class);
+
+        if (! $this->parishId) {
+            $this->emit('toast', 'error', 'Không xác định được giáo xứ');
+
+            return;
+        }
+
+        $parish = ParishNew::query()->findOrFail($this->parishId);
+        $parish->scores_entry_open = ! $parish->scores_entry_open;
+        $parish->save();
+
+        $this->refreshScorePermissions();
+
+        $this->emit(
+            'toast',
+            'message',
+            $this->scoresEntryOpen
+                ? 'Đã mở nhập/sửa điểm cho giáo lý viên'
+                : 'Đã khóa nhập/sửa điểm'
+        );
+    }
+
     public function updatedDraftScores(): void
     {
+        if (! $this->canEditScores) {
+            $this->hasDraft = false;
+
+            return;
+        }
+
         $this->hasDraft = $this->hasAnyDraftChange();
     }
 
@@ -447,7 +533,14 @@ class ScoreManager extends BaseComponent
 
     public function saveAllScores(): void
     {
-        $this->authorize('update', ScoreType::class);
+        $this->authorize('enterScores', StudentScore::class);
+        $this->refreshScorePermissions();
+
+        if (! $this->canEditScores) {
+            $this->emit('toast', 'error', 'Hiện chưa mở cửa sổ nhập/sửa điểm');
+
+            return;
+        }
 
         // Validate
         foreach ($this->draftScores as $studentClassId => $types) {
@@ -479,6 +572,7 @@ class ScoreManager extends BaseComponent
 
             $saved   = 0;
             $deleted = 0;
+            $userId  = auth()->id();
 
             foreach ($this->draftScores as $studentClassId => $types) {
                 foreach ($types as $scoreTypeId => $value) {
@@ -496,14 +590,34 @@ class ScoreManager extends BaseComponent
                     if ($draft === $original) continue;
 
                     if ($draft === null) {
-                        StudentScore::where('student_class_id', $studentClassId)
+                        $existing = StudentScore::query()
+                            ->where('student_class_id', $studentClassId)
                             ->where('score_type_id', $scoreTypeId)
-                            ->delete();
+                            ->first();
+
+                        if ($this->parishId) {
+                            ScoreEditLog::create([
+                                'parish_id'        => $this->parishId,
+                                'student_class_id' => (int) $studentClassId,
+                                'score_type_id'    => (int) $scoreTypeId,
+                                'student_score_id' => $existing?->id,
+                                'old_value'        => $original,
+                                'new_value'        => null,
+                                'action'           => ScoreEditLog::ACTION_DELETED,
+                                'user_id'          => $userId,
+                            ]);
+                        }
+
+                        $existing?->delete();
 
                         unset($this->scoresMatrix[$studentClassId][$scoreTypeId]);
                         $deleted++;
                     } else {
-                        StudentScore::updateOrCreate(
+                        $action = $hasOriginal
+                            ? ScoreEditLog::ACTION_UPDATED
+                            : ScoreEditLog::ACTION_CREATED;
+
+                        $score = StudentScore::updateOrCreate(
                             [
                                 'student_class_id' => (int) $studentClassId,
                                 'score_type_id'    => (int) $scoreTypeId,
@@ -511,6 +625,19 @@ class ScoreManager extends BaseComponent
                             ],
                             ['score_value' => $draft]
                         );
+
+                        if ($this->parishId) {
+                            ScoreEditLog::create([
+                                'parish_id'        => $this->parishId,
+                                'student_class_id' => (int) $studentClassId,
+                                'score_type_id'    => (int) $scoreTypeId,
+                                'student_score_id' => $score->id,
+                                'old_value'        => $original,
+                                'new_value'        => $draft,
+                                'action'           => $action,
+                                'user_id'          => $userId,
+                            ]);
+                        }
 
                         $this->scoresMatrix[$studentClassId][$scoreTypeId] = [
                             'value'   => $draft,
@@ -552,6 +679,12 @@ class ScoreManager extends BaseComponent
     public function switchTab(string $tab): void
     {
         if (!in_array($tab, ['scores', 'config'])) {
+            return;
+        }
+
+        if ($tab === 'config' && ! $this->canManageScoreConfig) {
+            $this->emit('toast', 'error', 'Bạn không có quyền cấu hình loại điểm');
+
             return;
         }
 
@@ -1116,6 +1249,8 @@ class ScoreManager extends BaseComponent
 
     public function exportScores()
     {
+        $this->authorize('create', ScoreType::class);
+
         if (!$this->selectedLop) {
             $this->emit('toast', 'warning', 'Vui lòng chọn lớp trước khi xuất file');
             return;
@@ -1287,11 +1422,57 @@ class ScoreManager extends BaseComponent
             ? $this->getStudentsPaginated()
             : new \Illuminate\Pagination\LengthAwarePaginator([], 0, $this->perPage, 1);
 
+        $user = auth()->user();
+        $layout = $user && $user->usesCatechistLayout()
+            ? 'frontend.layout.catechist'
+            : 'frontend.layout.main';
+
         return view('livewire.score.score-manager', [
-            'students'  => $students,
-            'parishId'  => $this->parishId,
+            'students'        => $students,
+            'parishId'        => $this->parishId,
+            'viewingStudent'  => $this->resolveViewingStudent($students),
         ])
-            ->extends('frontend.layout.main')
+            ->extends($layout)
             ->section('content');
+    }
+
+    /**
+     * @param  \Illuminate\Contracts\Pagination\Paginator|\Illuminate\Support\Collection  $students
+     */
+    protected function resolveViewingStudent($students)
+    {
+        if (! $this->viewingPivotId || ! $this->selectedLop) {
+            return null;
+        }
+
+        $fromPage = collect($students->items())->firstWhere('pivot_id', $this->viewingPivotId);
+        if ($fromPage) {
+            return $fromPage;
+        }
+
+        $student = \App\Models\StudentNew::query()
+            ->with('saint')
+            ->join('students_class', 'students.id', '=', 'students_class.student_id')
+            ->where('students_class.id', $this->viewingPivotId)
+            ->where('students_class.class_id', $this->selectedLop)
+            ->select(
+                'students_class.id as pivot_id',
+                'students_class.student_id',
+                'students.*',
+            )
+            ->first();
+
+        if (! $student) {
+            $this->viewingPivotId = null;
+
+            return null;
+        }
+
+        if (! isset($this->scoresMatrix[$student->pivot_id])) {
+            $this->loadScoresMatrix([(int) $student->pivot_id]);
+            $this->recalculateAverage((int) $student->pivot_id);
+        }
+
+        return $student;
     }
 }

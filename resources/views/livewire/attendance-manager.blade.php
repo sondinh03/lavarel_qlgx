@@ -186,9 +186,10 @@
                 }
 
                 const existingNote = this.getNote(studentId, sessionId) || '';
+                // Lý do chỉ gắn với vắng có phép (status 2)
                 const next = {
                     status: statusNum,
-                    note: statusNum === 1 ? '' : existingNote,
+                    note: statusNum === 2 ? existingNote : '',
                 };
 
                 if (!this.isDirtyEntry(key, next)) {
@@ -520,9 +521,6 @@
                                                 @mouseleave="open = false"
                                                 class="text-yellow-700 font-medium cursor-help flex items-center gap-0.5">
                                                 P
-                                                @if($dbNote)
-                                                <span class="w-1 h-1 bg-primary-500 rounded-full"></span>
-                                                @endif
                                             </button>
                                             @if($dbNote)
                                             <div x-show="open" x-transition x-cloak
@@ -573,10 +571,6 @@
                                                 class="px-2 py-1 rounded text-xs font-medium transition-all relative"
                                                 aria-label="Vắng có phép">
                                                 P
-                                                <span
-                                                    x-show="getNote({{ $student->id }}, {{ $session['id'] }})"
-                                                    class="absolute -top-1 -right-1 w-2 h-2 bg-primary-500 rounded-full ring-2 ring-white">
-                                                </span>
                                             </button>
 
                                             {{-- Tooltip note --}}

@@ -3,15 +3,28 @@
 namespace App\Http\Livewire\Dashboard;
 
 use App\Http\Livewire\Base\BaseComponent;
+use App\Models\AttendanceSession;
 use App\Models\CatechismClass;
 use App\Models\NamHoc;
+use App\Notifications\CatechismBoardAnnouncement;
 use Carbon\Carbon;
+use Illuminate\Support\Collection;
 
 class CatechistDashboard extends BaseComponent
 {
-    public $myClasses;
+    protected $usePagination = false;
+
     public $activeSchoolYear;
-    public $todayLabel;
+
+    public string $todayLabel = '';
+
+    public int $pendingTodayCount = 0;
+
+    /** @var Collection<int, \Illuminate\Notifications\DatabaseNotification> */
+    public $boardAnnouncements;
+
+    /** @var Collection<int, \Illuminate\Notifications\DatabaseNotification> */
+    public $latestNotifications;
 
     protected function loadInitialData(): void
     {
@@ -22,45 +35,140 @@ class CatechistDashboard extends BaseComponent
             ->isoFormat('dddd, D/M/YYYY');
 
         $this->activeSchoolYear = NamHoc::query()
+            ->when($this->parishId, fn ($q) => $q->ofParish($this->parishId))
             ->active()
+            ->current()
             ->orderByDesc('name')
             ->first();
 
-        $this->loadMyClasses();
+        if (! $this->activeSchoolYear) {
+            $this->activeSchoolYear = NamHoc::query()
+                ->when($this->parishId, fn ($q) => $q->ofParish($this->parishId))
+                ->active()
+                ->orderByDesc('name')
+                ->first();
+        }
+
+        $this->loadPendingTodayCount();
+        $this->loadHighlightNotifications();
     }
 
     public function mount(): void
     {
         if (auth()->user()?->canManageCatechism()) {
             redirect()->route('parish-admin.dashboard');
+
+            return;
         }
+
+        $this->boardAnnouncements = collect();
+        $this->latestNotifications = collect();
 
         parent::mount();
     }
 
-    protected function loadMyClasses(): void
+    protected function loadPendingTodayCount(): void
     {
-        if (!$this->activeSchoolYear) {
-            $this->myClasses = collect();
+        if (! $this->activeSchoolYear || ! $this->parishId) {
+            $this->pendingTodayCount = 0;
+
             return;
         }
 
-        // GLV xem mọi lớp active trong giáo xứ (năm học hiện tại)
-        $this->myClasses = CatechismClass::with('gradeLevel')
-            ->withCount('students')
+        $classIds = CatechismClass::query()
             ->where('school_year_id', $this->activeSchoolYear->id)
-            ->when($this->parishId, fn ($q) => $q->where('parish_id', $this->parishId))
+            ->where('parish_id', $this->parishId)
             ->active()
-            ->orderBy('name')
+            ->pluck('id');
+
+        if ($classIds->isEmpty()) {
+            $this->pendingTodayCount = 0;
+
+            return;
+        }
+
+        $this->pendingTodayCount = AttendanceSession::query()
+            ->whereIn('class_id', $classIds)
+            ->whereDate('date', Carbon::today())
+            ->where('status', '!=', AttendanceSession::STATUS_CANCELLED)
+            ->where(function ($q) {
+                $q->where('status', AttendanceSession::STATUS_OPENING)
+                    ->orWhereHas('records', fn ($r) => $r->whereNull('status'));
+            })
+            ->count();
+    }
+
+    protected function loadHighlightNotifications(): void
+    {
+        $user = auth()->user();
+        if (! $user) {
+            $this->boardAnnouncements = collect();
+            $this->latestNotifications = collect();
+
+            return;
+        }
+
+        $boardType = CatechismBoardAnnouncement::class;
+
+        // Ưu tiên thông báo ban giáo lý chưa đọc, rồi mới nhất gần đây.
+        $unreadBoard = $user->unreadNotifications()
+            ->where('type', $boardType)
+            ->latest()
+            ->limit(3)
             ->get();
+
+        if ($unreadBoard->count() < 3) {
+            $extra = $user->notifications()
+                ->where('type', $boardType)
+                ->whereNotIn('id', $unreadBoard->pluck('id'))
+                ->latest()
+                ->limit(3 - $unreadBoard->count())
+                ->get();
+            $this->boardAnnouncements = $unreadBoard->concat($extra)->values();
+        } else {
+            $this->boardAnnouncements = $unreadBoard;
+        }
+
+        $excludeIds = $this->boardAnnouncements->pluck('id');
+
+        $this->latestNotifications = $user->notifications()
+            ->when($excludeIds->isNotEmpty(), fn ($q) => $q->whereNotIn('id', $excludeIds))
+            ->latest()
+            ->limit(5)
+            ->get();
+    }
+
+    public function openHighlightedNotification(string $id)
+    {
+        $user = auth()->user();
+        if (! $user) {
+            return;
+        }
+
+        $notification = $user->notifications()->where('id', $id)->first();
+        if (! $notification) {
+            return;
+        }
+
+        if ($notification->unread()) {
+            $notification->markAsRead();
+        }
+
+        $url = $notification->data['url'] ?? null;
+
+        return $url
+            ? redirect()->to($url)
+            : redirect()->route('notifications.index');
     }
 
     public function render()
     {
         return view('livewire.dashboard.catechist-dashboard', [
-            'myClasses'        => $this->myClasses,
-            'activeSchoolYear' => $this->activeSchoolYear,
-            'todayLabel'       => $this->todayLabel,
+            'activeSchoolYear'     => $this->activeSchoolYear,
+            'todayLabel'           => $this->todayLabel,
+            'pendingTodayCount'    => $this->pendingTodayCount,
+            'boardAnnouncements'   => $this->boardAnnouncements,
+            'latestNotifications'  => $this->latestNotifications,
         ])
             ->extends('frontend.layout.catechist')
             ->section('content');

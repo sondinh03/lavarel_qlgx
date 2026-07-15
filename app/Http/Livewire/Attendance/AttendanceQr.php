@@ -142,6 +142,11 @@ class AttendanceQr extends BaseComponent
                 return;
             }
 
+            app(\App\Services\AttendanceService::class)->logCreatedRecord(
+                $record,
+                $class->parish_id ?? null
+            );
+
             // 5. Thêm vào in-memory log
             array_unshift($this->scannedLog, [
                 'student_name' => $student->full_name,
