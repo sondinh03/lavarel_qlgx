@@ -33,7 +33,8 @@ $wireClickAttr = 'wire:click.debounce.' . $debounce . 'ms';
             @if($confirm)
                 @click="$dispatch('open-confirm', {
                     message: {{ Js::from($confirm) }},
-                    wireMethod: {{ Js::from($wire) }}
+                    wireMethod: {{ Js::from($wire) }},
+                    componentId: ($el.closest('[wire\\:id]') || {}).getAttribute ? $el.closest('[wire\\:id]').getAttribute('wire:id') : null
                 })"
             @else
                 {{ $wireClickAttr }}="{{ $wire }}"

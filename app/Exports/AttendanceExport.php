@@ -164,10 +164,16 @@ class AttendanceExport implements FromCollection, WithHeadings, WithMapping, Wit
                     ? $this->rowIndex + $headerRow
                     : $headerRow;
 
+                $semesterLabel = match ($this->semester) {
+                    1, 2 => "Học kỳ {$this->semester}",
+                    3 => 'Kỳ hè',
+                    default => 'Cả năm',
+                };
+
                 $sheet->insertNewRowBefore(1, 3);
                 $sheet->setCellValue(
                     'A1',
-                    "Bảng điểm danh - Lớp {$className} - Học kỳ {$this->semester} - {$typeLabel}"
+                    "Bảng điểm danh - Lớp {$className} - {$semesterLabel} - {$typeLabel}"
                 );
                 $sheet->mergeCells("A1:{$lastCol}1");
 
@@ -253,7 +259,14 @@ class AttendanceExport implements FromCollection, WithHeadings, WithMapping, Wit
         $this->sessions = AttendanceSession::query()
             ->where('class_id', $this->classId)
             ->where('type', $this->attendanceType)
-            ->when($this->semester, fn ($q) => $q->where('semester', $this->semester))
+            ->when(
+                in_array($this->semester, [1, 2], true),
+                fn ($q) => $q->where('semester', $this->semester)
+            )
+            ->when(
+                $this->semester === 3,
+                fn ($q) => $q->whereNull('semester')
+            )
             ->orderBy('date')
             ->get();
     }

@@ -1,4 +1,5 @@
-<div class="relative" x-data="{ open: false }" @click.outside="open = false">
+<div class="relative" data-layout-livewire="notification-bell"
+    x-data="{ open: false }" @click.outside="open = false">
     <button type="button"
         @click="open = !open"
         class="relative p-2 rounded-xl text-slate-500 hover:bg-black/[0.04] hover:text-primary-600

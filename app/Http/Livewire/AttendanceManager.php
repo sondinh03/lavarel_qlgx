@@ -12,6 +12,7 @@ use App\Models\NamHoc;
 use App\Models\User;
 use App\Notifications\AttendanceSessionSummary;
 use App\Services\AttendanceService;
+use App\Services\SchoolYearResolver;
 use App\Support\NotificationRecipients;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
@@ -177,12 +178,12 @@ class AttendanceManager extends BaseComponent
     }
 
     /**
-     * Chỉ chấp nhận kỳ 1|2. Giá trị 0 ("Cả năm") / lạ → kỳ hiện tại theo năm học,
-     * tránh selectedKy=null làm loadSessions() lấy cả năm.
+     * Chấp nhận kỳ 1|2 hoặc sentinel 3 (hè / nghỉ giữa kỳ).
+     * Giá trị 0 ("Cả năm") / lạ → kỳ/phase hiện tại theo năm học.
      */
     protected function normalizeAttendanceKy($ky): ?int
     {
-        if (is_numeric($ky) && in_array((int) $ky, [1, 2], true)) {
+        if (is_numeric($ky) && in_array((int) $ky, [1, 2, 3], true)) {
             return (int) $ky;
         }
 
@@ -192,6 +193,55 @@ class AttendanceManager extends BaseComponent
         }
 
         return null;
+    }
+
+    /**
+     * Lọc phiên theo kỳ: 1|2 theo semester; 3 = hè/giữa kỳ (semester null hoặc ngoài khoảng HK).
+     *
+     * @param  \Illuminate\Database\Eloquent\Builder|\Illuminate\Database\Query\Builder  $query
+     */
+    protected function applyAttendanceKyFilter($query): void
+    {
+        $ky = is_numeric($this->selectedKy) ? (int) $this->selectedKy : null;
+
+        if (in_array($ky, [1, 2], true)) {
+            $query->where('semester', $ky);
+
+            return;
+        }
+
+        if ($ky !== 3) {
+            return;
+        }
+
+        $namHoc = is_numeric($this->selectedNamHoc)
+            ? NamHoc::find((int) $this->selectedNamHoc)
+            : null;
+
+        $operating = app(SchoolYearResolver::class)
+            ->resolve($this->parishId ? (int) $this->parishId : null);
+
+        if ($operating && $namHoc && $operating->id() === (int) $namHoc->id) {
+            app(SchoolYearResolver::class)->applySessionPhaseFilter($query, $operating);
+
+            return;
+        }
+
+        // Năm chọn tay khác năm vận hành — vẫn lọc buổi ngoài HK
+        $query->where(function ($q) use ($namHoc) {
+            $q->whereNull('semester');
+
+            if ($namHoc?->end_date_two) {
+                $q->orWhereDate('date', '>', $namHoc->end_date_two->toDateString());
+            }
+
+            if ($namHoc?->end_date_one && $namHoc?->start_date_two) {
+                $q->orWhere(function ($inner) use ($namHoc) {
+                    $inner->whereDate('date', '>', $namHoc->end_date_one->toDateString())
+                        ->whereDate('date', '<', $namHoc->start_date_two->toDateString());
+                });
+            }
+        });
     }
 
     protected function resetToDefaults(): void
@@ -415,9 +465,7 @@ class AttendanceManager extends BaseComponent
             $query = AttendanceSession::where('class_id', $this->selectedClassId)
                 ->where('type', $this->attendanceType);
 
-            if (in_array((int) $this->selectedKy, [1, 2], true)) {
-                $query->where('semester', (int) $this->selectedKy);
-            }
+            $this->applyAttendanceKyFilter($query);
 
             $sessions = $query->orderBy('date')
                 ->get(['id', 'date', 'status', 'type', 'semester']);
@@ -471,9 +519,7 @@ class AttendanceManager extends BaseComponent
                 $q->where('class_id', $this->selectedClassId)
                     ->where('type', $this->attendanceType);
 
-                if (in_array((int) $this->selectedKy, [1, 2], true)) {
-                    $q->where('semester', (int) $this->selectedKy);
-                }
+                $this->applyAttendanceKyFilter($q);
 
                 if ($this->viewMode === 'mobile' && $this->selectedDate) {
                     $q->whereDate('date', $this->selectedDate);
@@ -733,9 +779,7 @@ class AttendanceManager extends BaseComponent
         $sessionsQuery = AttendanceSession::where('class_id', $this->selectedClassId)
             ->where('type', $this->attendanceType);
 
-        if (in_array($ky, [1, 2], true)) {
-            $sessionsQuery->where('semester', $ky);
-        }
+        $this->applyAttendanceKyFilter($sessionsQuery);
 
         if ($sessionsQuery->count() === 0) {
             $this->emit('toast', 'warning', 'Chưa có buổi để xuất');
@@ -744,11 +788,17 @@ class AttendanceManager extends BaseComponent
 
         $className = CatechismClass::findOrFail($this->selectedClassId)->name;
         $typeSlug  = $this->attendanceType === 2 ? 'DiLe' : 'DiHoc';
-        $kyLabel   = in_array($ky, [1, 2], true) ? 'HK' . $ky : 'CaNam';
+        $kyLabel   = match ($ky) {
+            1, 2 => 'HK' . $ky,
+            3 => 'He',
+            default => 'CaNam',
+        };
 
-        return response()->streamDownload(function () use ($ky) {
+        $exportKy = in_array($ky, [1, 2, 3], true) ? $ky : null;
+
+        return response()->streamDownload(function () use ($exportKy) {
             echo \Maatwebsite\Excel\Facades\Excel::raw(
-                new AttendanceExport($this->selectedClassId, $ky ?: null, $this->attendanceType),
+                new AttendanceExport($this->selectedClassId, $exportKy, $this->attendanceType),
                 \Maatwebsite\Excel\Excel::XLSX
             );
         }, 'DiemDanh_' . $className . '_' . $kyLabel . '_' . $typeSlug . '_' . now()->format('dmY_His') . '.xlsx');
@@ -907,70 +957,32 @@ class AttendanceManager extends BaseComponent
         return ['CN', 'T2', 'T3', 'T4', 'T5', 'T6', 'T7'][$date->dayOfWeek];
     }
 
+    /**
+     * Kỳ/phase theo năm: 1|2 trong HK; hè hoặc nghỉ giữa kỳ → sentinel 3 (không ép HK2).
+     */
     protected function detectSemesterForNamHoc(int $namHocId): ?int
     {
+        $operating = app(SchoolYearResolver::class)
+            ->resolve($this->parishId ? (int) $this->parishId : null);
+
+        if ($operating && $operating->id() === $namHocId) {
+            return $operating->semester ?? 3;
+        }
+
         $namHoc = NamHoc::find($namHocId);
-        if (!$namHoc) {
+        if (! $namHoc) {
             return 1;
         }
 
-        $today = now()->toDateString();
+        $semester = app(SchoolYearResolver::class)->semesterForDate($namHoc, now());
 
-        if ($namHoc->start_date_one && $namHoc->end_date_one) {
-            if (
-                $today >= $namHoc->start_date_one->toDateString()
-                && $today <= $namHoc->end_date_one->toDateString()
-            ) {
-                return 1;
-            }
-        }
-
-        if ($namHoc->start_date_two && $namHoc->end_date_two) {
-            if (
-                $today >= $namHoc->start_date_two->toDateString()
-                && $today <= $namHoc->end_date_two->toDateString()
-            ) {
-                return 2;
-            }
-        }
-
-        if ($namHoc->end_date_two && $today > $namHoc->end_date_two->toDateString()) {
-            return 2;
-        }
-
-        return 1;
+        return $semester ?? 3;
     }
 
     protected function getDefaultNamHocId(): ?int
     {
-        $today = now()->toDateString();
-
-        $current = NamHoc::where('parish_id', $this->parishId)
-            ->where('status', true)
-            ->where(
-                fn($q) => $q
-                    ->where(fn($q1) => $q1
-                        ->whereDate('start_date_one', '<=', $today)
-                        ->whereDate('end_date_one', '>=', $today))
-                    ->orWhere(fn($q2) => $q2
-                        ->whereDate('start_date_two', '<=', $today)
-                        ->whereDate('end_date_two', '>=', $today))
-            )->value('id');
-
-        if ($current) return $current;
-
-        $upcoming = NamHoc::where('parish_id', $this->parishId)
-            ->where('status', true)
-            ->whereDate('end_date_two', '>=', $today)
-            ->orderBy('start_date_one')
-            ->value('id');
-
-        if ($upcoming) return $upcoming;
-
-        return NamHoc::where('parish_id', $this->parishId)
-            ->where('status', true)
-            ->orderByDesc('id')
-            ->value('id');
+        return app(SchoolYearResolver::class)
+            ->resolveId($this->parishId ? (int) $this->parishId : null);
     }
 
     // ==================== COMPUTED ====================

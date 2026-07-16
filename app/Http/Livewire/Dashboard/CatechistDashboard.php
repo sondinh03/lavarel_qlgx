@@ -5,7 +5,6 @@ namespace App\Http\Livewire\Dashboard;
 use App\Http\Livewire\Base\BaseComponent;
 use App\Models\AttendanceSession;
 use App\Models\CatechismClass;
-use App\Models\NamHoc;
 use App\Notifications\CatechismBoardAnnouncement;
 use Carbon\Carbon;
 use Illuminate\Support\Collection;
@@ -15,6 +14,8 @@ class CatechistDashboard extends BaseComponent
     protected $usePagination = false;
 
     public $activeSchoolYear;
+
+    public string $schoolYearPhaseLabel = '';
 
     public string $todayLabel = '';
 
@@ -34,20 +35,11 @@ class CatechistDashboard extends BaseComponent
             ->locale('vi')
             ->isoFormat('dddd, D/M/YYYY');
 
-        $this->activeSchoolYear = NamHoc::query()
-            ->when($this->parishId, fn ($q) => $q->ofParish($this->parishId))
-            ->active()
-            ->current()
-            ->orderByDesc('name')
-            ->first();
+        $operating = app(\App\Services\SchoolYearResolver::class)
+            ->resolve($this->parishId ? (int) $this->parishId : null);
 
-        if (! $this->activeSchoolYear) {
-            $this->activeSchoolYear = NamHoc::query()
-                ->when($this->parishId, fn ($q) => $q->ofParish($this->parishId))
-                ->active()
-                ->orderByDesc('name')
-                ->first();
-        }
+        $this->activeSchoolYear = $operating?->namHoc;
+        $this->schoolYearPhaseLabel = $operating?->semesterLabel() ?? '';
 
         $this->loadPendingTodayCount();
         $this->loadHighlightNotifications();
@@ -164,11 +156,12 @@ class CatechistDashboard extends BaseComponent
     public function render()
     {
         return view('livewire.dashboard.catechist-dashboard', [
-            'activeSchoolYear'     => $this->activeSchoolYear,
-            'todayLabel'           => $this->todayLabel,
-            'pendingTodayCount'    => $this->pendingTodayCount,
-            'boardAnnouncements'   => $this->boardAnnouncements,
-            'latestNotifications'  => $this->latestNotifications,
+            'activeSchoolYear'       => $this->activeSchoolYear,
+            'schoolYearPhaseLabel'   => $this->schoolYearPhaseLabel,
+            'todayLabel'             => $this->todayLabel,
+            'pendingTodayCount'      => $this->pendingTodayCount,
+            'boardAnnouncements'     => $this->boardAnnouncements,
+            'latestNotifications'    => $this->latestNotifications,
         ])
             ->extends('frontend.layout.catechist')
             ->section('content');

@@ -63,11 +63,8 @@ class AdminDashboard extends BaseComponent
 
 
             $data = Cache::remember($this->cacheKey(), self::CACHE_TTL, function () use ($parishId) {
-                // Lấy năm học "hiện tại" theo ngày (không phải status hoạt động)
-                $schoolYear = NamHoc::ofParish($parishId)
-                    ->current()
-                    ->orderByDesc('id')
-                    ->first();
+                $operating = app(\App\Services\SchoolYearResolver::class)->resolve((int) $parishId);
+                $schoolYear = $operating?->namHoc;
 
                 if (!$schoolYear) {
                     return $this->emptyData();
@@ -441,11 +438,9 @@ class AdminDashboard extends BaseComponent
 
     public function getCurrentSchoolYearProperty(): ?NamHoc
     {
-        // Lấy năm học hiện tại theo today (scopeCurrent) + đúng giáo xứ
-        return NamHoc::ofParish($this->parishId)
-            ->current()
-            ->orderByDesc('id')
-            ->first();
+        return app(\App\Services\SchoolYearResolver::class)
+            ->resolve($this->parishId ? (int) $this->parishId : null)
+            ?->namHoc;
     }
 
     public function getCurrentSchoolYearLabelProperty(): string
@@ -457,13 +452,10 @@ class AdminDashboard extends BaseComponent
 
     public function getCurrentSemesterLabelProperty(): string
     {
-        if (!$this->currentSchoolYear) {
-            return '';
-        }
+        $operating = app(\App\Services\SchoolYearResolver::class)
+            ->resolve($this->parishId ? (int) $this->parishId : null);
 
-        $semester = $this->currentSchoolYear->current_semester;
-
-        return $semester ? "Học kỳ {$semester}" : 'Chưa xác định học kỳ';
+        return $operating?->semesterLabel() ?? '';
     }
 
     // ==================== RENDER ====================

@@ -30,7 +30,7 @@ class TeacherAssignedToClass extends Notification
         return [
             'title' => 'Được phân công lớp giáo lý',
             'body'  => "Bạn được phân công {$this->roleLabel} lớp {$className}.",
-            'url'   => route('classes.catechists', $this->class->id),
+            'url'   => null,
             'level' => 'info',
         ];
     }

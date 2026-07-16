@@ -75,11 +75,8 @@ class Home extends BaseComponent
             $parishId = $this->parishId;
 
             $data = Cache::remember($this->cacheKey(), self::CACHE_TTL, function () use ($parishId) {
-                // ✅ where('parish_id') thay ofParish() scope
-                $schoolYear = NamHoc::where('parish_id', $parishId)
-                    ->active()
-                    ->orderByDesc('id')
-                    ->first();
+                $operating = app(\App\Services\SchoolYearResolver::class)->resolve((int) $parishId);
+                $schoolYear = $operating?->namHoc;
 
                 if (!$schoolYear) {
                     return $this->emptyData();

@@ -6,6 +6,7 @@ use App\Models\Block;
 use App\Models\CatechismClass;
 use App\Models\GradeLevel;
 use App\Models\NamHoc;
+use App\Services\SchoolYearResolver;
 use Livewire\Component;
 use Illuminate\Support\Collection;
 
@@ -122,6 +123,9 @@ class FilterBar extends Component
         $hadNamHoc = (bool) $this->selectedNamHoc;
         $this->ensureDefaultNamHoc();
 
+        // build lại sau khi năm mặc định đã neo (hè / giữa kỳ phụ thuộc năm đang chọn)
+        $this->kys = $this->buildKyOptions();
+
         if ($this->selectedNamHoc) {
             $this->loadKhois();
             $this->loadLops();
@@ -131,7 +135,7 @@ class FilterBar extends Component
             $this->selectedKy = $this->detectCurrentSemester();
         }
 
-        // Điểm danh không dùng "Cả năm" — ép về kỳ hiện tại
+        // Điểm danh không dùng "Cả năm" — ép về kỳ/phase hiện tại
         if (!$this->allowAllYear && (int) $this->selectedKy === 0) {
             $this->selectedKy = $this->detectCurrentSemester() ?? 1;
         }
@@ -153,7 +157,54 @@ class FilterBar extends Component
             return ['0' => 'Cả năm'] + $options;
         }
 
+        $extraLabel = $this->resolveOffSemesterLabel();
+        if ($extraLabel) {
+            return ['3' => $extraLabel] + $options;
+        }
+
         return $options;
+    }
+
+    /**
+     * Nhãn phase ngoài HK1/HK2 (UI sentinel ky=3). Không ghi semester=3 xuống DB.
+     */
+    protected function resolveOffSemesterLabel(): ?string
+    {
+        $operating = app(SchoolYearResolver::class)->resolve((int) $this->parish_id);
+
+        if ($operating && (! $this->selectedNamHoc || (int) $this->selectedNamHoc === $operating->id())) {
+            if ($operating->isSummer()) {
+                return 'Kỳ hè';
+            }
+            if ($operating->isBetweenSemesters()) {
+                return 'Nghỉ giữa kỳ';
+            }
+        }
+
+        if (! $this->selectedNamHoc) {
+            return null;
+        }
+
+        $namHoc = NamHoc::find($this->selectedNamHoc);
+        if (! $namHoc) {
+            return null;
+        }
+
+        $today = now()->toDateString();
+
+        if ($namHoc->end_date_two && $today > $namHoc->end_date_two->toDateString()) {
+            return 'Kỳ hè';
+        }
+
+        if (
+            $namHoc->end_date_one && $namHoc->start_date_two
+            && $today > $namHoc->end_date_one->toDateString()
+            && $today < $namHoc->start_date_two->toDateString()
+        ) {
+            return 'Nghỉ giữa kỳ';
+        }
+
+        return null;
     }
 
     /**
@@ -194,13 +245,11 @@ class FilterBar extends Component
 
     protected function resolveDefaultNamHocId(): ?int
     {
-        $current = NamHoc::where('parish_id', $this->parish_id)
-            ->active()
-            ->current()
-            ->value('id');
+        $resolved = app(SchoolYearResolver::class)
+            ->resolveId($this->parish_id ? (int) $this->parish_id : null);
 
-        if ($current) {
-            return (int) $current;
+        if ($resolved) {
+            return $resolved;
         }
 
         $first = $this->namHocs->keys()->first();
@@ -307,50 +356,39 @@ class FilterBar extends Component
     }
 
     /**
-     * Xác định kỳ hiện tại dựa vào ngày hôm nay và NamHoc đang chọn
+     * Kỳ hiện tại theo năm đang chọn.
+     * Hè / nghỉ giữa kỳ → sentinel 3 (UI), không dùng HK2 giả.
      */
     protected function detectCurrentSemester(): ?int
     {
-        if (!$this->selectedNamHoc) {
+        if (! $this->selectedNamHoc) {
             return null;
         }
 
-        $namHoc = NamHoc::find($this->selectedNamHoc);
+        $namHocId = (int) $this->selectedNamHoc;
+        $operating = app(SchoolYearResolver::class)
+            ->resolve($this->parish_id ? (int) $this->parish_id : null);
 
-        if (!$namHoc) {
+        if ($operating && $operating->id() === $namHocId) {
+            if ($operating->semester !== null) {
+                return $operating->semester;
+            }
+
+            return $this->allowAllYear ? 0 : 3;
+        }
+
+        $namHoc = NamHoc::find($namHocId);
+        if (! $namHoc) {
             return null;
         }
 
-        $today = now()->toDateString();
+        $semester = app(SchoolYearResolver::class)->semesterForDate($namHoc, now());
 
-        // Trong khoảng kỳ 1
-        if ($namHoc->start_date_one && $namHoc->end_date_one) {
-            if (
-                $today >= $namHoc->start_date_one->toDateString()
-                && $today <= $namHoc->end_date_one->toDateString()
-            ) {
-                return 1;
-            }
+        if ($semester !== null) {
+            return $semester;
         }
 
-        // Trong khoảng kỳ 2
-        if ($namHoc->start_date_two && $namHoc->end_date_two) {
-            if (
-                $today >= $namHoc->start_date_two->toDateString()
-                && $today <= $namHoc->end_date_two->toDateString()
-            ) {
-                return 2;
-            }
-        }
-
-        // Ngoài cả 2 kỳ → fallback theo ngày
-        // Trước kỳ 1 hoặc giữa 2 kỳ → chọn kỳ 1
-        // Sau kỳ 2 → chọn kỳ 2
-        if ($namHoc->end_date_two && $today > $namHoc->end_date_two->toDateString()) {
-            return 2;
-        }
-
-        return 1; // default kỳ 1
+        return $this->allowAllYear ? 0 : 3;
     }
 
     public function loadNamHocs()
@@ -508,6 +546,7 @@ class FilterBar extends Component
 
         $this->reset(['selectedKhoi', 'selectedLop', 'selectedKy']);
 
+        $this->kys = $this->buildKyOptions();
         $this->selectedKy = $this->detectCurrentSemester();
 
         $this->loadKhois();

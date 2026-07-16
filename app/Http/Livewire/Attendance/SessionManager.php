@@ -737,25 +737,12 @@ class SessionManager extends BaseComponent
 
     protected function getSemesterForDate(string|Carbon $date): ?int
     {
-        if (!$this->currentNamHoc) {
+        if (! $this->currentNamHoc) {
             return null;
         }
 
-        $carbon = $date instanceof Carbon ? $date : Carbon::parse($date);
-
-        if ($this->currentNamHoc->start_date_one && $this->currentNamHoc->end_date_one) {
-            if ($carbon->between($this->currentNamHoc->start_date_one, $this->currentNamHoc->end_date_one)) {
-                return 1;
-            }
-        }
-
-        if ($this->currentNamHoc->start_date_two && $this->currentNamHoc->end_date_two) {
-            if ($carbon->between($this->currentNamHoc->start_date_two, $this->currentNamHoc->end_date_two)) {
-                return 2;
-            }
-        }
-
-        return null;
+        return app(\App\Services\SchoolYearResolver::class)
+            ->semesterForDate($this->currentNamHoc, $date);
     }
 
     protected function getCurrentSemester(): ?int
@@ -767,19 +754,8 @@ class SessionManager extends BaseComponent
 
     protected function getDefaultNamHocId(): ?int
     {
-        $current = NamHoc::query()
-            ->active()
-            ->current()
-            ->value('id');
-
-        if ($current) {
-            return $current;
-        }
-
-        return NamHoc::query()
-            ->active()
-            ->orderByDesc('name')
-            ->value('id');
+        return app(\App\Services\SchoolYearResolver::class)
+            ->resolveId($this->parishId ? (int) $this->parishId : null);
     }
 
     protected function getVietnameseDayName(Carbon $date): string

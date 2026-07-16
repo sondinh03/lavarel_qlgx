@@ -1273,21 +1273,8 @@ class StudentListNew extends BaseComponent
 
     protected function getDefaultNamHocId(): ?int
     {
-        // Ưu tiên 1: năm học đang trong khoảng thời gian hiện tại
-        $current = \App\Models\NamHoc::query()
-            ->active()
-            ->current()
-            ->value('id');
-
-        if ($current) {
-            return $current;
-        }
-
-        // Ưu tiên 2: fallback về năm học mới nhất nếu không có năm học hiện tại
-        return \App\Models\NamHoc::query()
-            ->active()
-            ->orderByDesc('name')
-            ->value('id');
+        return app(\App\Services\SchoolYearResolver::class)
+            ->resolveId($this->parishId ? (int) $this->parishId : null);
     }
 
     public function clearBirthYearFilters(): void

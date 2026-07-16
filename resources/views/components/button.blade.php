@@ -44,7 +44,8 @@ $disabledClass = "disabled:opacity-40 disabled:cursor-not-allowed disabled:activ
         @if($confirm && $wire)
             @click="$dispatch('open-confirm', {
                 message: {{ Js::from($confirm) }},
-                wireMethod: {{ Js::from($wire) }}
+                wireMethod: {{ Js::from($wire) }},
+                componentId: ($el.closest('[wire\\:id]') || {}).getAttribute ? $el.closest('[wire\\:id]').getAttribute('wire:id') : null
             })"
         @elseif($wire)
             wire:click="{{ $wire }}"

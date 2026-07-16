@@ -13,9 +13,13 @@
             </h1>
             <p class="mt-1 text-sm text-slate-500">{{ $todayLabel }}</p>
             @if($activeSchoolYear)
-            <p class="mt-2 inline-flex items-center gap-1.5 text-xs font-medium text-primary-700
+            <p class="mt-2 inline-flex flex-wrap items-center gap-1.5 text-xs font-medium text-primary-700
                 bg-primary-50/90 ring-1 ring-primary-100/70 rounded-lg px-2.5 py-1">
-                Năm học {{ $activeSchoolYear->name }}
+                <span>Năm {{ $activeSchoolYear->name }}</span>
+                @if(!empty($schoolYearPhaseLabel))
+                <span class="text-primary-400">·</span>
+                <span>{{ $schoolYearPhaseLabel }}</span>
+                @endif
             </p>
             @endif
         </x-mac-panel>

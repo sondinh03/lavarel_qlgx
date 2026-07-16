@@ -4,7 +4,7 @@ namespace App\Http\Livewire\Parishioners;
 
 use App\Http\Livewire\Base\BaseComponent;
 use App\Models\Parishioner;
-use App\Models\Student;
+use App\Models\StudentNew;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\DB;
@@ -141,7 +141,8 @@ class ParishionersManager extends BaseComponent
             $p = Parishioner::query()->findOrFail($id);
             $this->authorize('delete', $p);
 
-            if (Student::where('parishioner_id', $p->id)->exists()) {
+            if (StudentNew::where('parishioner_id', $p->id)->exists()) {
+                DB::rollBack();
                 $this->emit('toast', 'error', 'Không thể xóa — giáo dân đang có học sinh liên kết');
                 return;
             }

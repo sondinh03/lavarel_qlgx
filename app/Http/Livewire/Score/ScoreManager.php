@@ -1226,10 +1226,8 @@ class ScoreManager extends BaseComponent
 
     protected function getDefaultNamHocId(): ?int
     {
-        return NamHoc::query()
-            ->active()
-            ->orderByDesc('start_date_one')
-            ->value('id');
+        return app(\App\Services\SchoolYearResolver::class)
+            ->resolveId($this->parishId ? (int) $this->parishId : null);
     }
 
     public function getScoreValue(int $studentClassId, int $scoreTypeId): ?float

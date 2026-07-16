@@ -495,10 +495,8 @@ class CatechismClassList extends BaseComponent
 
     protected function getDefaultNamHocId(): ?int
     {
-        return NamHoc::query()
-            ->active()
-            ->orderByDesc('name')
-            ->value('id');
+        return app(\App\Services\SchoolYearResolver::class)
+            ->resolveId($this->parishId ? (int) $this->parishId : null);
     }
 
     // ==================== RENDER ====================
