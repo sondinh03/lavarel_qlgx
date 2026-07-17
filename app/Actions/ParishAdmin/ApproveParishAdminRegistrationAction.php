@@ -3,6 +3,7 @@
 namespace App\Actions\ParishAdmin;
 
 use App\Models\ParishAdminRegistrationRequest;
+use App\Models\ParishGroup;
 use App\Models\ParishNew;
 use App\Models\User;
 use App\Notifications\ParishAdminRegistrationApproved;
@@ -63,6 +64,23 @@ class ApproveParishAdminRegistrationAction
                 ]);
 
                 $parishId = $parish->id;
+
+                foreach ($request->requestedParishGroupNames() as $groupName) {
+                    $exists = ParishGroup::query()
+                        ->where('parish_id', $parishId)
+                        ->whereRaw('LOWER(name) = ?', [mb_strtolower($groupName)])
+                        ->exists();
+
+                    if ($exists) {
+                        continue;
+                    }
+
+                    ParishGroup::create([
+                        'parish_id' => $parishId,
+                        'name'      => $groupName,
+                        'status'    => true,
+                    ]);
+                }
             }
 
             $displayName = trim((string) $request->name);

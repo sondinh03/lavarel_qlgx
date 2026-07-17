@@ -9,6 +9,7 @@ use Backpack\CRUD\app\Http\Controllers\CrudController;
 use Backpack\CRUD\app\Library\CrudPanel\CrudPanelFacade as CRUD;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\View;
 use InvalidArgumentException;
 use Prologue\Alerts\Facades\Alert;
 
@@ -27,6 +28,17 @@ class ParishAdminRegistrationCrudController extends CrudController
         if (! backpack_user()?->isSuperAdmin()) {
             CRUD::denyAccess(['list', 'show']);
         }
+
+        // Script mở modal phải có sẵn trước khi DataTables inject HTML nút (AJAX)
+        $this->pushParishAdminRegistrationModalScript();
+    }
+
+    protected function pushParishAdminRegistrationModalScript(): void
+    {
+        $script = view('vendor.backpack.crud.buttons.inc.parish_admin_registration_modal_js')->render();
+
+        View::startPush('crud_list_scripts', $script);
+        View::startPush('after_scripts', $script);
     }
 
     protected function setupListOperation(): void
@@ -60,6 +72,12 @@ class ParishAdminRegistrationCrudController extends CrudController
             'label'    => 'Giáo xứ',
             'type'     => 'closure',
             'function' => fn ($entry) => $entry->parishDisplayName(),
+        ]);
+        CRUD::addColumn([
+            'name'     => 'parish_groups_display',
+            'label'    => 'Giáo họ yêu cầu',
+            'type'     => 'closure',
+            'function' => fn ($entry) => $entry->parishGroupNamesLabel(),
         ]);
         CRUD::addColumn([
             'name'     => 'requested_roles',
@@ -101,6 +119,12 @@ class ParishAdminRegistrationCrudController extends CrudController
             'label'    => 'Giáo xứ',
             'type'     => 'closure',
             'function' => fn ($entry) => $entry->parishDisplayName(),
+        ]);
+        CRUD::addColumn([
+            'name'     => 'parish_groups_display',
+            'label'    => 'Giáo họ yêu cầu',
+            'type'     => 'closure',
+            'function' => fn ($entry) => $entry->parishGroupNamesLabel(),
         ]);
         CRUD::addColumn([
             'name'     => 'requested_roles',

@@ -39,7 +39,6 @@
         <li class='nav-item'><a class='nav-link' href='{{ backpack_url('diocese') }}'><i class='nav-icon la la-industry'></i> {{ __('backend.dioceses') }}</a></li>
         <li class='nav-item'><a class='nav-link' href='{{ backpack_url('deanery') }}'><i class='nav-icon la la-home'></i> {{ __('backend.deanerys') }}</a></li>
         <li class="nav-item"><a class="nav-link" href="{{ backpack_url('parish-management') }}"><i class="nav-icon la la-biohazard"></i> {{ __('backend.parish_management') }}</a></li>
-        <li class='nav-item'><a class='nav-link' href='{{ backpack_url('parish') }}'><i class='nav-icon la la-handshake'></i> {{ __('backend.parish') }}</a></li>       
         
     </ul>
 </li>

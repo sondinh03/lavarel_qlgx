@@ -172,6 +172,59 @@
                                 <span class="block text-xs text-slate-400 mt-0.5">Tick để nhập tên giáo xứ mới (sẽ gắn giáo hạt đã chọn)</span>
                             </span>
                         </label>
+
+                        @if($useCustomParish)
+                        <div class="mt-4 space-y-3 px-1">
+                            <div class="flex items-center justify-between gap-3">
+                                <div>
+                                    <h3 class="text-xs font-semibold text-slate-500 tracking-wide uppercase">
+                                        Giáo họ <span class="text-red-500 normal-case">*</span>
+                                    </h3>
+                                    <p class="text-xs text-slate-400 mt-0.5">Nhập ít nhất một giáo họ thuộc giáo xứ mới</p>
+                                </div>
+                                <button type="button"
+                                    wire:click="addParishGroupRow"
+                                    class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold
+                                        bg-primary-50/80 text-primary-700 border border-primary-200/60
+                                        hover:bg-primary-100/80 transition shadow-mac-sm">
+                                    + Thêm giáo họ
+                                </button>
+                            </div>
+
+                            <div class="space-y-2">
+                                @foreach($parishGroupNames as $index => $groupName)
+                                <div wire:key="parish-group-row-{{ $index }}" class="flex items-center gap-2">
+                                    <input type="text"
+                                        wire:model.defer="parishGroupNames.{{ $index }}"
+                                        placeholder="Tên giáo họ {{ $index + 1 }}"
+                                        class="flex-1 h-11 px-4 py-2.5 rounded-xl border text-sm bg-white/80 backdrop-blur-sm shadow-mac-sm
+                                            focus:outline-none focus:ring-2 focus:ring-primary-500/25 focus:border-primary-300/40 transition-all
+                                            {{ $errors->has('parishGroupNames') || $errors->has('parishGroupNames.'.$index)
+                                                ? 'border-red-300 bg-red-50/80'
+                                                : 'border-black/[0.06]' }}" />
+                                    <button type="button"
+                                        wire:click="removeParishGroupRow({{ $index }})"
+                                        class="inline-flex items-center justify-center w-10 h-10 rounded-xl
+                                            border border-black/[0.06] text-slate-400 hover:text-red-600 hover:bg-red-50/80
+                                            transition shadow-mac-sm"
+                                        title="Xóa dòng"
+                                        @if(count($parishGroupNames) <= 1) disabled @endif>
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                d="M6 18L18 6M6 6l12 12" />
+                                        </svg>
+                                    </button>
+                                </div>
+                                @endforeach
+                            </div>
+                            @error('parishGroupNames')
+                            <p class="text-xs text-red-500">{{ $message }}</p>
+                            @enderror
+                            @error('parishGroupNames.*')
+                            <p class="text-xs text-red-500">{{ $message }}</p>
+                            @enderror
+                        </div>
+                        @endif
                     </section>
 
                     <div class="mac-hairline-b"></div>

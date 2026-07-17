@@ -470,9 +470,8 @@ class SessionManager extends BaseComponent
         try {
             DB::beginTransaction();
 
-            $classIds   = $this->resolveClassIds();
-            $dates      = $this->generateDates();
-            $validDates = $this->filterValidDates($dates);
+            $classIds = $this->resolveClassIds();
+            $dates    = $this->generateDates();
 
             if (empty($classIds)) {
                 $this->emit('toast', 'warning', 'Không tìm thấy lớp nào trong phạm vi đã chọn');
@@ -486,17 +485,11 @@ class SessionManager extends BaseComponent
                 return;
             }
 
-            if (empty($validDates)) {
-                $this->emit('toast', 'warning', 'Tất cả các ngày đều nằm ngoài khoảng thời gian năm học.');
-                DB::rollBack();
-                return;
-            }
-
             $created = 0;
             $skipped = 0;
 
             foreach ($classIds as $classId) {
-                foreach ($validDates as $date) {
+                foreach ($dates as $date) {
                     $exists = AttendanceSession::where('class_id', $classId)
                         ->where('type', $this->type)
                         ->whereDate('date', $date)
@@ -709,30 +702,6 @@ class SessionManager extends BaseComponent
         }
 
         return array_unique($dates);
-    }
-
-    protected function filterValidDates(array $dates): array
-    {
-        if (!$this->currentNamHoc) {
-            return [];
-        }
-
-        $hk1Start = $this->currentNamHoc->start_date_one;
-        $hk1End   = $this->currentNamHoc->end_date_one;
-        $hk2Start = $this->currentNamHoc->start_date_two;
-        $hk2End   = $this->currentNamHoc->end_date_two;
-
-        // Không có khoảng nào → cho qua hết
-        if (!$hk1Start && !$hk1End && !$hk2Start && !$hk2End) {
-            return $dates;
-        }
-
-        return array_values(array_filter($dates, function ($date) use ($hk1Start, $hk1End, $hk2Start, $hk2End) {
-            $carbon = Carbon::parse($date);
-            $inHk1  = $hk1Start && $hk1End && $carbon->between($hk1Start, $hk1End);
-            $inHk2  = $hk2Start && $hk2End && $carbon->between($hk2Start, $hk2End);
-            return $inHk1 || $inHk2;
-        }));
     }
 
     protected function getSemesterForDate(string|Carbon $date): ?int

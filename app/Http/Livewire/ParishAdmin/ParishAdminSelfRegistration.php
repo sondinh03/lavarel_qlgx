@@ -27,6 +27,9 @@ class ParishAdminSelfRegistration extends Component
 
     public string $customParishName = '';
 
+    /** @var list<string> */
+    public array $parishGroupNames = [''];
+
     public string $name = '';
 
     public string $email = '';
@@ -89,6 +92,7 @@ class ParishAdminSelfRegistration extends Component
         $this->targetParishId = null;
         $this->customParishName = '';
         $this->useCustomParish = false;
+        $this->parishGroupNames = [''];
         $this->loadDeaneryOptions();
         $this->parishOptions = [];
     }
@@ -98,6 +102,7 @@ class ParishAdminSelfRegistration extends Component
         $this->targetParishId = null;
         $this->customParishName = '';
         $this->useCustomParish = false;
+        $this->parishGroupNames = [''];
         $this->loadParishOptions();
     }
 
@@ -105,8 +110,12 @@ class ParishAdminSelfRegistration extends Component
     {
         if ($value) {
             $this->targetParishId = null;
+            if ($this->parishGroupNames === []) {
+                $this->parishGroupNames = [''];
+            }
         } else {
             $this->customParishName = '';
+            $this->parishGroupNames = [''];
         }
     }
 
@@ -115,7 +124,25 @@ class ParishAdminSelfRegistration extends Component
         if ($this->targetParishId) {
             $this->useCustomParish = false;
             $this->customParishName = '';
+            $this->parishGroupNames = [''];
         }
+    }
+
+    public function addParishGroupRow(): void
+    {
+        $this->parishGroupNames[] = '';
+    }
+
+    public function removeParishGroupRow(int $index): void
+    {
+        if (count($this->parishGroupNames) <= 1) {
+            $this->parishGroupNames = [''];
+
+            return;
+        }
+
+        unset($this->parishGroupNames[$index]);
+        $this->parishGroupNames = array_values($this->parishGroupNames);
     }
 
     protected function loadDeaneryOptions(): void
@@ -178,6 +205,11 @@ class ParishAdminSelfRegistration extends Component
                 'string',
                 'max:255',
             ],
+            'parishGroupNames'  => [
+                Rule::requiredIf(fn () => $this->useCustomParish),
+                'array',
+            ],
+            'parishGroupNames.*' => 'nullable|string|max:255',
             'selectedRole'      => ['required', 'string', Rule::in($roleKeys)],
             'name'              => 'nullable|string|max:255',
             'email'             => 'required|email|max:255',
@@ -195,6 +227,7 @@ class ParishAdminSelfRegistration extends Component
             'deaneryId.required'        => 'Vui lòng chọn giáo hạt.',
             'targetParishId.required'   => 'Vui lòng chọn giáo xứ hoặc nhập tên giáo xứ mới.',
             'customParishName.required' => 'Vui lòng nhập tên giáo xứ.',
+            'parishGroupNames.required' => 'Vui lòng nhập ít nhất một giáo họ.',
             'selectedRole.required'     => 'Vui lòng chọn một quyền quản trị.',
             'selectedRole.in'           => 'Quyền quản trị không hợp lệ.',
             'password.confirmed'        => 'Xác nhận mật khẩu không khớp.',
@@ -228,6 +261,14 @@ class ParishAdminSelfRegistration extends Component
             $this->validate($this->rules(), $this->messages());
         } catch (ValidationException $e) {
             throw $e;
+        }
+
+        $groupNames = $this->normalizedParishGroupNames();
+
+        if ($this->useCustomParish && $groupNames === []) {
+            $this->addError('parishGroupNames', 'Vui lòng nhập ít nhất một giáo họ.');
+
+            return;
         }
 
         $deanery = Deanery::query()->find($this->deaneryId);
@@ -275,6 +316,7 @@ class ParishAdminSelfRegistration extends Component
                 'diocese_id'         => (int) $this->dioceseId,
                 'deanery_id'         => (int) $this->deaneryId,
                 'custom_parish_name' => $this->useCustomParish ? trim($this->customParishName) : null,
+                'requested_parish_groups' => $this->useCustomParish ? $groupNames : null,
                 'status'             => ParishAdminRegistrationRequest::STATUS_PENDING,
                 'name'               => trim($this->name) ?: null,
                 'email'              => strtolower(trim($this->email)),
@@ -307,10 +349,23 @@ class ParishAdminSelfRegistration extends Component
             'note',
             'customParishName',
             'useCustomParish',
+            'parishGroupNames',
         ]);
+        $this->parishGroupNames = [''];
         $this->selectedRole = 'parish_admin';
         $this->submitted = true;
         $this->referenceCode = $request->reference_code;
+    }
+
+    /** @return list<string> */
+    protected function normalizedParishGroupNames(): array
+    {
+        return collect($this->parishGroupNames)
+            ->map(fn ($name) => trim((string) $name))
+            ->filter()
+            ->unique(fn ($name) => mb_strtolower($name))
+            ->values()
+            ->all();
     }
 
     public function getRoleCatalogProperty(): array

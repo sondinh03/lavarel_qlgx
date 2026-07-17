@@ -2,14 +2,14 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Factories\HasFactory;
 use App\Traits\BelongsToParish;
-
+use Backpack\CRUD\app\Models\Traits\CrudTrait;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
 
 class ParishGroup extends Model
 {
-    use HasFactory, BelongsToParish;
+    use BelongsToParish, CrudTrait, HasFactory;
 
     protected $table = 'parish_groups';
 

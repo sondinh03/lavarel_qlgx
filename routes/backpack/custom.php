@@ -18,7 +18,6 @@ use App\Http\Controllers\Admin\SacramentGiverCrudController;
 use App\Http\Controllers\Admin\SponsorCrudController;
 use App\Http\Controllers\Admin\DioceseCrudController;
 use App\Http\Controllers\Admin\DeaneryCrudController;
-use App\Http\Controllers\Admin\ParishCrudController;
 use App\Http\Controllers\Admin\ParishGroupCrudController;
 use App\Http\Controllers\Admin\AssociationCrudController;
 use App\Http\Controllers\Admin\GiaDinhCrudController;
@@ -99,7 +98,7 @@ Route::group([
     Route::crud('diocese', DioceseCrudController::class);
     Route::crud('deanery', DeaneryCrudController::class);
     Route::crud('parish-group', ParishGroupCrudController::class);
-    Route::crud('parish', ParishCrudController::class);
+    // Legacy parish CRUD removed — use parish-group (Giáo họ)
     Route::crud('association', AssociationCrudController::class);
     
     Route::crud('gia-dinh', GiaDinhCrudController::class);

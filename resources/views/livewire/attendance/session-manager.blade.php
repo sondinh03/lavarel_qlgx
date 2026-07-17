@@ -528,7 +528,7 @@
                                 d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                         </svg>
                         <ul class="text-sm text-primary-700 space-y-1">
-                            <li>• Chỉ tạo phiên trong khoảng thời gian năm học</li>
+                            <li>• Ngày ngoài HK1/HK2 (kỳ hè, nghỉ giữa kỳ) vẫn tạo được; semester để trống</li>
                             <li>• Phiên đã tồn tại (cùng lớp, loại, ngày) sẽ bị bỏ qua</li>
                             @if($createMode === 'single')
                             <li>• Tạo một phiên cho ngày đã chọn</li>

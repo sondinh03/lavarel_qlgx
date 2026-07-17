@@ -20,6 +20,7 @@ class ParishAdminRegistrationRequest extends Model
         'diocese_id',
         'deanery_id',
         'custom_parish_name',
+        'requested_parish_groups',
         'status',
         'name',
         'email',
@@ -35,8 +36,9 @@ class ParishAdminRegistrationRequest extends Model
     ];
 
     protected $casts = [
-        'reviewed_at'     => 'datetime',
-        'requested_roles' => 'array',
+        'reviewed_at'              => 'datetime',
+        'requested_roles'          => 'array',
+        'requested_parish_groups'  => 'array',
     ];
 
     protected $hidden = [
@@ -104,6 +106,24 @@ class ParishAdminRegistrationRequest extends Model
     {
         return $this->parish_id === null
             && trim((string) $this->custom_parish_name) !== '';
+    }
+
+    /** @return list<string> */
+    public function requestedParishGroupNames(): array
+    {
+        return collect($this->requested_parish_groups ?? [])
+            ->map(fn ($name) => trim((string) $name))
+            ->filter()
+            ->unique(fn ($name) => mb_strtolower($name))
+            ->values()
+            ->all();
+    }
+
+    public function parishGroupNamesLabel(): string
+    {
+        $names = $this->requestedParishGroupNames();
+
+        return $names === [] ? '—' : implode(', ', $names);
     }
 
     public function requestedRoleLabels(): array

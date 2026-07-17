@@ -1,10 +1,14 @@
 @if ($entry->isPending())
-<button type="button" class="btn btn-sm btn-danger" data-toggle="modal" data-target="#rejectModal{{ $entry->getKey() }}">
+@php
+    $modalId = 'rejectModal'.$entry->getKey();
+@endphp
+<button type="button" class="btn btn-sm btn-danger"
+    onclick="parishAdminRegOpenModal('{{ $modalId }}')">
     <i class="la la-times"></i> Từ chối
 </button>
 
-<div class="modal fade" id="rejectModal{{ $entry->getKey() }}" tabindex="-1" role="dialog" aria-hidden="true">
-    <div class="modal-dialog" role="document">
+<div class="modal fade js-parish-admin-reg-modal" id="{{ $modalId }}" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" role="document">
         <form method="POST" action="{{ url($crud->route.'/'.$entry->getKey().'/reject') }}">
             @csrf
             <div class="modal-content">

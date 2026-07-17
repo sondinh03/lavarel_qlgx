@@ -104,11 +104,6 @@
                 <i class="nav-icon la la-layer-group"></i> {{ __('backend.family_areas') }}
             </a>
         </li>
-        <li class="nav-item">
-            <a class="nav-link" href="{{ backpack_url('parish') }}">
-                <i class="nav-icon la la-archive"></i> Giáo họ (legacy)
-            </a>
-        </li>
     </ul>
 </li>
 
