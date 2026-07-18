@@ -180,7 +180,7 @@
                                     <h3 class="text-xs font-semibold text-slate-500 tracking-wide uppercase">
                                         Giáo họ <span class="text-red-500 normal-case">*</span>
                                     </h3>
-                                    <p class="text-xs text-slate-400 mt-0.5">Nhập ít nhất một giáo họ thuộc giáo xứ mới</p>
+                                    <p class="text-xs text-slate-400 mt-0.5 red">Nhập đầy đủ tên các giáo họ/giáo giâu/giáo khu sẽ sử dụng trong hệ thống</p>
                                 </div>
                                 <button type="button"
                                     wire:click="addParishGroupRow"
