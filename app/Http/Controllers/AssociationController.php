@@ -13,7 +13,7 @@ use App\Models\Deanery;
 use App\Models\Diocese;
 use App\Models\Parishioners;
 use App\Models\Holymanagement;
-use App\Models\Parish;
+use App\Models\ParishGroup;
 use Illuminate\Support\Facades\Auth;
 use App\Models\Decen;
 use Illuminate\Database\Query\Builder;
@@ -110,7 +110,7 @@ class AssociationController extends Controller
                             }
                             
                             if($item->paid != ''){
-                                $parish = Parish::where('id', $item['paid'])->first();
+                                $parish = ParishGroup::where('id', $item['paid'])->first();
                                 if(!empty($parish)){
                                     $item['paid'] = $parish->name . ', ';
                                 }else{

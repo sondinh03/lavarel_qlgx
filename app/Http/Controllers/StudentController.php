@@ -10,7 +10,7 @@ use App\Models\Association;
 use App\Models\ParishManagement;
 use App\Models\Deanery;
 use App\Models\Diocese;
-use App\Models\Parish;
+use App\Models\ParishGroup;
 use App\Models\Holymanagement;
 use Faker\Core\DateTime;
 use App\Models\CatechismClass;
@@ -73,7 +73,7 @@ class StudentController extends Controller
                     $student['birthday'] = date("d-m-Y", strtotime($student['birthday']));
                     
                     if($student->paid != ''){
-                        $parish = Parish::where('id', $student['paid'])->first();
+                        $parish = ParishGroup::where('id', $student['paid'])->first();
                         $student['paid'] = $parish->name;
                     }else{
                         $student['paid'] = '';

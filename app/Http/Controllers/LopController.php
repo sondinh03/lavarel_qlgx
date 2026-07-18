@@ -21,7 +21,6 @@ use BaconQrCode\Encoder\QrCode;
 
 use Illuminate\Database\Query\Builder;
 use Illuminate\Support\Facades\Auth;
-use App\Models\Parish;
 use App\Models\NamHoc;
 
 class LopController extends Controller

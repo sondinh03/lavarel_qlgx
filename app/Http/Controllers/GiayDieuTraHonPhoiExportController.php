@@ -5,7 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models\Parishioners;
 use App\Models\Holymanagement;
-use App\Models\Parish;
+use App\Models\ParishGroup;
 use App\Models\ParishManagement;
 use App\Models\Deanery;
 use App\Models\Diocese;
@@ -28,7 +28,7 @@ class GiayDieuTraHonPhoiExportController extends Controller
             $parishioners['holy'] = '';
         }
         if($parishioners->paid != ''){
-            $parish = Parish::where('id', $parishioners['paid'])->first();
+            $parish = ParishGroup::where('id', $parishioners['paid'])->first();
             $parishioners['paid'] = ', Giáo họ ' . $parish->name;
             $parishioners['giaoho'] = $parish->name;
         }else{

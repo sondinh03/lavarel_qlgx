@@ -162,7 +162,7 @@ class DiHocExport implements FromCollection, WithHeadingRow, WithHeadings, WithT
                     $this->rowNumber++;
                     
                     if(!empty($hocsinh->paid)){
-                        $paid = DB::table('parishs')
+                        $paid = DB::table('parish_groups')
                         ->where('status', '1')
                         ->where('id', $hocsinh->paid)
                         ->orderBy('id', 'ASC')

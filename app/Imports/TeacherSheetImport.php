@@ -10,7 +10,7 @@ use Maatwebsite\Excel\Concerns\HasReferencesToOtherSheets;
 use App\Models\Diocese;
 use App\Models\Deanery;
 use App\Models\ParishManagement;
-use App\Models\Parish;
+use App\Models\ParishGroup;
 use App\Models\Association;
 use App\Models\Holymanagement;
 use App\Models\Positionmanagement;
@@ -83,14 +83,14 @@ class TeacherSheetImport implements ToModel, ToArray, HasReferencesToOtherSheets
                     
                     $id_giaoho = '0';
                     if(!empty($row['khu_ho'])){
-                        $giaoho = Parish::where('name', $row['khu_ho'])->first();
+                        $giaoho = ParishGroup::where('name', $row['khu_ho'])
+                            ->where('parish_id', $_POST['giaoxu'])
+                            ->first();
                         if(empty($giaoho)){
-                            $giaoho = Parish::create([
-                                'did'           => $_POST['giaophan'],
-                                'deid'          => $_POST['giaohat'],
-                                'pid'           => $_POST['giaoxu'],
-                                'name'          => $row['khu_ho'],
-                                'status'        => 1,
+                            $giaoho = ParishGroup::create([
+                                'parish_id' => $_POST['giaoxu'],
+                                'name'      => $row['khu_ho'],
+                                'status'    => true,
                             ]);
                         }
                         if(!empty($giaoho->id)){

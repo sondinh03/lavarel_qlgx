@@ -32,7 +32,7 @@ use Maatwebsite\Excel\Concerns\WithHeadingRow;
 use Maatwebsite\Excel\Concerns\WithCustomStartCell;
 use App\Models\Marriage;
 use App\Models\Diocese;
-use App\Models\Parish;
+use App\Models\ParishGroup;
 
 class HonPhoiExport implements FromCollection, WithHeadingRow, WithHeadings, WithTitle, ShouldAutoSize, WithMapping, WithEvents, WithStyles
 {
@@ -171,7 +171,7 @@ class HonPhoiExport implements FromCollection, WithHeadingRow, WithHeadings, Wit
                         $item['mother'] = '';
                     }
                     if(!empty($item['parishs'])){
-                        $giaoho = Parish::where('id', $item['parishs'])->where('status', 1)->get()->first();
+                        $giaoho = ParishGroup::where('id', $item['parishs'])->where('status', 1)->get()->first();
                         $item['giaoho'] = $giaoho->name . ', ';
                     }else{
                         $item['giaoho'] = '';
@@ -196,7 +196,7 @@ class HonPhoiExport implements FromCollection, WithHeadingRow, WithHeadings, Wit
                     }
                     // trước đây
                     if(!empty($item['parishsbefore'])){
-                        $giaoho = Parish::where('id', $item['parishsbefore'])->where('status', 1)->get()->first();
+                        $giaoho = ParishGroup::where('id', $item['parishsbefore'])->where('status', 1)->get()->first();
                         $item['giaoho_before'] = $giaoho->name . ', ';
                     }else{
                         $item['giaoho_before'] = '';

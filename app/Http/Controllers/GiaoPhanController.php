@@ -145,9 +145,9 @@ class GiaoPhanController extends Controller
             $search = $_POST['parish_managements'];
             $array_parish_managements = array();
             if ($search) {
-                $array_parish_management = DB::table('parishs')
+                $array_parish_management = DB::table('parish_groups')
                     ->select('id', 'name')
-                    ->where('pid', '=', $search)
+                    ->where('parish_id', '=', $search)
                     ->where('status', 1)
                     ->get()->toArray();
                 
@@ -174,7 +174,7 @@ class GiaoPhanController extends Controller
             if ($search) {
                 $lop = DB::table('lop')
                 ->select('id', 'name')
-                ->where('pid', '=', $search)
+                ->where('parish_id', '=', $search)
                 ->where('status', 1)
                 ->get()->toArray();
                 

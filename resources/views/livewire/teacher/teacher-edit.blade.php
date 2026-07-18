@@ -57,7 +57,7 @@
                         </h2>
                         <div class="grid grid-cols-1 sm:grid-cols-4 gap-4">
                             <div class="sm:col-span-1">
-                                <label class="block text-xs font-semibold text-slate-500 mb-1.5 tracking-wide uppercase">Tên thánh</label>
+                                <label class="block text-slate-600 mb-1.5">Tên thánh</label>
                                 <x-searchable-select
                                     wireModel="saint_id"
                                     :options="$this->saints"
@@ -67,23 +67,23 @@
                                     :value="$this->saint_id" />
                             </div>
                             <div class="sm:col-span-2">
-                                <label class="block text-xs font-semibold text-slate-500 mb-1.5 tracking-wide uppercase">
-                                    Họ <span class="text-red-500 normal-case">*</span>
+                                <label class="block text-slate-600 mb-1.5">
+                                    Họ <span class="text-red-500">*</span>
                                 </label>
                                 <input type="text" wire:model.defer="last_name" placeholder="Nguyễn Văn"
                                     class="{{ $inputClass }} {{ $errors->has('last_name') ? 'border-red-300 bg-red-50/80' : '' }}" />
                                 @error('last_name') <p class="mt-1 text-xs text-red-500">{{ $message }}</p> @enderror
                             </div>
                             <div class="sm:col-span-1">
-                                <label class="block text-xs font-semibold text-slate-500 mb-1.5 tracking-wide uppercase">
-                                    Tên <span class="text-red-500 normal-case">*</span>
+                                <label class="block text-slate-600 mb-1.5">
+                                    Tên <span class="text-red-500">*</span>
                                 </label>
                                 <input type="text" wire:model.defer="first_name" placeholder="An"
                                     class="{{ $inputClass }} {{ $errors->has('first_name') ? 'border-red-300 bg-red-50/80' : '' }}" />
                                 @error('first_name') <p class="mt-1 text-xs text-red-500">{{ $message }}</p> @enderror
                             </div>
                             <div class="sm:col-span-1">
-                                <label class="block text-xs font-semibold text-slate-500 mb-1.5 tracking-wide uppercase">Giới tính</label>
+                                <label class="block text-slate-600 mb-1.5">Giới tính</label>
                                 <select wire:model.defer="gender" class="{{ $inputClass }}">
                                     <option value="">-- Chọn --</option>
                                     <option value="male">Nam</option>
@@ -91,7 +91,7 @@
                                 </select>
                             </div>
                             <div class="sm:col-span-3">
-                                <label class="block text-xs font-semibold text-slate-500 mb-1.5 tracking-wide uppercase">Ngày sinh</label>
+                                <label class="block text-slate-600 mb-1.5">Ngày sinh</label>
                                 <input type="date" wire:model.defer="birthday" class="{{ $inputClass }}" />
                             </div>
                         </div>
@@ -105,22 +105,22 @@
                         </h2>
                         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                             <div>
-                                <label class="block text-xs font-semibold text-slate-500 mb-1.5 tracking-wide uppercase">Điện thoại</label>
+                                <label class="block text-slate-600 mb-1.5">Điện thoại</label>
                                 <input type="tel" wire:model.defer="phone_number" placeholder="0901234567" class="{{ $inputClass }}" />
                                 @error('phone_number') <p class="mt-1 text-xs text-red-500">{{ $message }}</p> @enderror
                             </div>
                             <div>
-                                <label class="block text-xs font-semibold text-slate-500 mb-1.5 tracking-wide uppercase">Email</label>
+                                <label class="block text-slate-600 mb-1.5">Email</label>
                                 <input type="email" wire:model.defer="email" placeholder="email@example.com"
                                     class="{{ $inputClass }} {{ $errors->has('email') ? 'border-red-300 bg-red-50/80' : '' }}" />
                                 @error('email') <p class="mt-1 text-xs text-red-500">{{ $message }}</p> @enderror
                             </div>
                             <div class="sm:col-span-2">
-                                <label class="block text-xs font-semibold text-slate-500 mb-1.5 tracking-wide uppercase">Địa chỉ</label>
+                                <label class="block text-slate-600 mb-1.5">Địa chỉ</label>
                                 <input type="text" wire:model.defer="address" placeholder="Địa chỉ cư trú" class="{{ $inputClass }}" />
                             </div>
                             <div>
-                                <label class="block text-xs font-semibold text-slate-500 mb-1.5 tracking-wide uppercase">Giáo họ</label>
+                                <label class="block text-slate-600 mb-1.5">Giáo họ</label>
                                 <x-searchable-select
                                     wireModel="parish_group_id"
                                     :options="$this->parishGroups"
@@ -149,7 +149,7 @@
                         </label>
 
                         <div>
-                            <label class="block text-xs font-semibold text-slate-500 mb-1.5 tracking-wide uppercase">Ghi chú</label>
+                            <label class="block text-slate-600 mb-1.5">Ghi chú</label>
                             <textarea wire:model.defer="note" rows="3" placeholder="Ghi chú thêm..."
                                 class="w-full px-4 py-2.5 rounded-xl border border-black/[0.06] bg-white/80 text-sm
                                     shadow-mac-sm focus:outline-none focus:ring-2 focus:ring-primary-500/25 focus:border-primary-300/40 resize-none"></textarea>

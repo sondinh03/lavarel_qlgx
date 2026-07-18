@@ -7,7 +7,7 @@ use PhpOffice\PhpWord\TemplateProcessor;
 use PhpOffice\PhpWord;
 use App\Models\Parishioners;
 use App\Models\ParishManagement;
-use App\Models\Parish;
+use App\Models\ParishGroup;
 use App\Models\Deanery;
 use App\Models\Diocese;
 use App\Models\Association;
@@ -51,7 +51,7 @@ class LyLichCaNhanExportController extends Controller
             $parishioners['assid'] = '';
         }
         if($parishioners->paid != ''){
-            $parish = Parish::where('id', $parishioners['paid'])->first();
+            $parish = ParishGroup::where('id', $parishioners['paid'])->first();
             $parishioners['paid'] = ', Giáo họ ' . $parish->name;
         }else{
             $parishioners['paid'] = '';
@@ -241,7 +241,7 @@ class LyLichCaNhanExportController extends Controller
                 $family['province'] = '';
             }
             if(!empty($family->paid)){
-                $parish = Parish::where('id', $family['paid'])->first();
+                $parish = ParishGroup::where('id', $family['paid'])->first();
                 $family['paid'] = ', Giáo họ ' . $parish->name;
             }else{
                 $family['paid'] = '';

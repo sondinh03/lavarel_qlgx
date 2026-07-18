@@ -11,7 +11,7 @@ use Illuminate\Support\Collection;
 use App\Models\Diocese;
 use App\Models\Deanery;
 use App\Models\ParishManagement;
-use App\Models\Parish;
+use App\Models\ParishGroup;
 use App\Models\Association;
 use App\Models\Holymanagement;
 use App\Models\Positionmanagement;
@@ -144,18 +144,14 @@ class LophocImport implements ToModel, ToCollection, WithHeadingRow, HasReferenc
                 
                 // giáo họ                
                 if(!empty($row['giao_ho'])){
-                    $giaoho = Parish::where('name', $row['giao_ho'])
-                    ->where('did', $decen->did)
-                    ->where('deid', $decen->deid)
-                    ->where('pid', $giaoxu)
+                    $giaoho = ParishGroup::where('name', $row['giao_ho'])
+                    ->where('parish_id', $giaoxu)
                     ->get()->first();
                     if(empty($giaoho)){
-                        $giaoho = Parish::create([
-                            'did'           => $decen->did,
-                            'deid'          => $decen->deid,
-                            'pid'           => $giaoxu,
-                            'name'          => $row['giao_ho'],
-                            'status'        => 1,
+                        $giaoho = ParishGroup::create([
+                            'parish_id' => $giaoxu,
+                            'name'      => $row['giao_ho'],
+                            'status'    => true,
                         ]);
                         $row['giao_ho'] = $giaoho->id;
                     }else{

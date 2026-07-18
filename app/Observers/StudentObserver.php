@@ -7,7 +7,6 @@ use App\Http\Controllers\StudentController;
 use App\Models\Slug;
 use Cocur\Slugify\Slugify;
 use App\Models\CatechismClass;
-use App\Models\Parish;
 use App\Models\Parishioners;
 
 class StudentObserver

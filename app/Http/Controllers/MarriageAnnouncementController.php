@@ -13,7 +13,7 @@ use App\Models\Marriage;
 use App\Models\MarriageAnnouncementParishioners;
 use App\Models\Parishioners;
 use App\Models\Association;
-use App\Models\Parish;
+use App\Models\ParishGroup;
 use App\Models\ParishManagement;
 use App\Models\Deanery;
 use App\Models\Diocese;
@@ -107,7 +107,7 @@ class MarriageAnnouncementController extends Controller
                         $nu['name'] = $girl->name;
                     }
                     if($nu->parishsold != ''){
-                        $parish = Parish::where('id', $nu['parishsold'])->first();
+                        $parish = ParishGroup::where('id', $nu['parishsold'])->first();
                         $nu['parishsold'] = $parish->name . ', ';
                     }else{
                         $nu['parishsold'] = '';
@@ -132,7 +132,7 @@ class MarriageAnnouncementController extends Controller
                     }
                     
                     if($nu->parishs != ''){
-                        $parish = Parish::where('id', $nu['parishs'])->first();
+                        $parish = ParishGroup::where('id', $nu['parishs'])->first();
                         $nu['parishs'] = $parish->name . ', ';
                     }else{
                         $nu['parishs'] = '';
@@ -157,7 +157,7 @@ class MarriageAnnouncementController extends Controller
                     }
                     
                     if($nu->parishsbefore != ''){
-                        $parish = Parish::where('id', $nu['parishsbefore'])->first();
+                        $parish = ParishGroup::where('id', $nu['parishsbefore'])->first();
                         $nu['parishsbefore'] = $parish->name . ', ';
                     }else{
                         $nu['parishsbefore'] = '';
@@ -210,7 +210,7 @@ class MarriageAnnouncementController extends Controller
                         $nam['name'] = '';
                     }
                     if($nam->parishsold != ''){
-                        $parish = Parish::where('id', $nam['parishsold'])->first();
+                        $parish = ParishGroup::where('id', $nam['parishsold'])->first();
                         $nam['parishsold'] = $parish->name . ', ';
                     }else{
                         $nu['parishsold'] = '';
@@ -235,7 +235,7 @@ class MarriageAnnouncementController extends Controller
                     }
                     
                     if($nam->parishs != ''){
-                        $parish = Parish::where('id', $nam['parishs'])->first();
+                        $parish = ParishGroup::where('id', $nam['parishs'])->first();
                         $nam['parishs'] = $parish->name . ', ';
                     }else{
                         $nam['parishs'] = '';
@@ -260,7 +260,7 @@ class MarriageAnnouncementController extends Controller
                     }
                     
                     if($nam->parishsbefore != ''){
-                        $parish = Parish::where('id', $nam['parishsbefore'])->first();
+                        $parish = ParishGroup::where('id', $nam['parishsbefore'])->first();
                         $nam['parishsbefore'] = $parish->name . ', ';
                     }else{
                         $nam['parishsbefore'] = '';

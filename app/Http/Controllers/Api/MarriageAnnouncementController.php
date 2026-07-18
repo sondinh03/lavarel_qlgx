@@ -70,8 +70,8 @@ class MarriageAnnouncementController extends Controller
             $parish_management = $_GET['female_parish_management'];
             $array_parishs = array();
             if(!empty($parish_management)){
-                $array_parishs = DB::table('parishs')
-                ->where('pid', '=', $parish_management)
+                $array_parishs = DB::table('parish_groups')
+                ->where('parish_id', '=', $parish_management)
                 ->where('status', 1)
                 ->get()->toArray();
                 
@@ -144,8 +144,8 @@ class MarriageAnnouncementController extends Controller
             $parish_management = $_GET['male_parish_management'];
             $array_parishs = array();
             if(!empty($parish_management)){
-                $array_parishs = DB::table('parishs')
-                ->where('pid', '=', $parish_management)
+                $array_parishs = DB::table('parish_groups')
+                ->where('parish_id', '=', $parish_management)
                 ->where('status', 1)
                 ->get()->toArray();
                 

@@ -379,10 +379,12 @@ class AssociationCrudController extends CrudController
     public function GetDeanerys($id){
         $array_dea = array();
         if(!empty($id)){
-            $array_deanerys = DB::table('parishs')
-            ->Join('deanerys', 'parishs.did', '=', 'deanerys.did')
-            ->where('parishs.id', '=', $id)
-            ->where('parishs.status', '=', 1)
+            $array_deanerys = DB::table('parish_groups')
+            ->join('parishes', 'parishes.id', '=', 'parish_groups.parish_id')
+            ->join('deanerys', 'deanerys.did', '=', 'parishes.diocese_id')
+            ->where('parish_groups.id', '=', $id)
+            ->where('parish_groups.status', '=', 1)
+            ->select('deanerys.id', 'deanerys.name')
             ->get()->toArray();
             
             $array_deanerys = json_decode(json_encode($array_deanerys, true), true);
@@ -414,11 +416,10 @@ class AssociationCrudController extends CrudController
     public function GetParishs($id){
         $array_par = array();
         if(!empty($id)){
-            $array_parish = DB::table('parishs')
-            //->select('parish_managements.id', 'deanerys.did', 'deanerys.name')
-            ->rightJoin('parish_managements', 'parish_managements.id', '=', 'parishs.pid')
-            ->where('parishs.id', '=', $id)
-            ->where('parish_managements.status', '=', 1)
+            $array_parish = DB::table('parish_groups')
+            ->rightJoin('parishes', 'parishes.id', '=', 'parish_groups.parish_id')
+            ->where('parish_groups.id', '=', $id)
+            ->where('parishes.status', '=', 1)
             ->get()->toArray();
             
             $array_parish = json_decode(json_encode($array_parish, true), true);

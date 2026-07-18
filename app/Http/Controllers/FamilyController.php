@@ -12,7 +12,7 @@ use App\Models\Marriage;
 use App\Models\Diocese;
 use App\Models\Deanery;
 use App\Models\ParishManagement;
-use App\Models\Parish;
+use App\Models\ParishGroup;
 use App\Models\Priest;
 use App\Models\Parishioners;
 use App\Models\Holymanagement;
@@ -80,7 +80,7 @@ class FamilyController extends Controller
             }
             
             if($family->paid != ''){
-                $parish = Parish::where('id', $family->paid)->first();
+                $parish = ParishGroup::where('id', $family->paid)->first();
                 $family['paid'] = 'Giáo họ ' . $parish->name . ', ';
             }else{
                 $family['paid'] = '';
@@ -218,7 +218,7 @@ class FamilyController extends Controller
                             $thanhvien->birthday = date("d-m-Y", strtotime($thanhvien->birthday));
                         }
                         if($thanhvien->paid != ''){
-                            $parish = Parish::where('id', $thanhvien['paid'])->first();
+                            $parish = ParishGroup::where('id', $thanhvien['paid'])->first();
                             $thanhvien['paid'] = $parish->name;
                         }else{
                             $thanhvien['paid'] = '';

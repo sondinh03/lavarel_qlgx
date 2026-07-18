@@ -19,7 +19,7 @@ use App\Models\Deanery;
 use App\Models\Diocese;
 use App\Models\MarriageAnnouncementParishioners;
 use App\Models\ParishManagement;
-use App\Models\Parish;
+use App\Models\ParishGroup;
 
 /**
  * Class MarriageAnnouncementCrudController
@@ -1506,7 +1506,7 @@ class MarriageAnnouncementCrudController extends CrudController
             ->get()->first();
             
             if(!empty($array_parish)){
-                $array_parish = Parish::where('pid', $array_parish->parishmanagements)
+                $array_parish = ParishGroup::where('parish_id', $array_parish->parishmanagements)
                 ->where('status', 1)
                 ->get()->toArray();
                 
@@ -1531,7 +1531,7 @@ class MarriageAnnouncementCrudController extends CrudController
             ->get()->first();
             
             if(!empty($array_parish)){
-                $array_parish = Parish::where('pid', $array_parish->parishmanagementsold)
+                $array_parish = ParishGroup::where('parish_id', $array_parish->parishmanagementsold)
                 ->where('status', 1)
                 ->get()->toArray();
                 
@@ -1555,7 +1555,7 @@ class MarriageAnnouncementCrudController extends CrudController
             ->get()->first();
             
             if(!empty($array_parish)){
-                $array_parish = Parish::where('pid', $array_parish->parishmanagementsbefore)
+                $array_parish = ParishGroup::where('parish_id', $array_parish->parishmanagementsbefore)
                 ->where('status', 1)
                 ->get()->toArray();
                 
@@ -1706,7 +1706,7 @@ class MarriageAnnouncementCrudController extends CrudController
             ->get()->first();
             
             if(!empty($array_parish)){
-                $array_parish = Parish::where('pid', $array_parish->parishmanagements)
+                $array_parish = ParishGroup::where('parish_id', $array_parish->parishmanagements)
                 ->where('status', 1)
                 ->get()->toArray();
                 
@@ -1730,7 +1730,7 @@ class MarriageAnnouncementCrudController extends CrudController
             ->get()->first();
             
             if(!empty($array_parish)){
-                $array_parish = Parish::where('pid', $array_parish->parishmanagementsold)
+                $array_parish = ParishGroup::where('parish_id', $array_parish->parishmanagementsold)
                 ->where('status', 1)
                 ->get()->toArray();
                 
@@ -1754,7 +1754,7 @@ class MarriageAnnouncementCrudController extends CrudController
             ->get()->first();
             
             if(!empty($array_parish)){
-                $array_parish = Parish::where('pid', $array_parish->parishmanagementsbefore)
+                $array_parish = ParishGroup::where('parish_id', $array_parish->parishmanagementsbefore)
                 ->where('status', 1)
                 ->get()->toArray();
                 

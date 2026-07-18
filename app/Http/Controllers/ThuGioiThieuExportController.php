@@ -6,7 +6,7 @@ use Illuminate\Http\Request;
 use PhpOffice\PhpWord\TemplateProcessor;
 use App\Models\Student;
 use App\Models\Holymanagement;
-use App\Models\Parish;
+use App\Models\ParishGroup;
 use App\Models\ParishManagement;
 use App\Models\Deanery;
 use App\Models\Diocese;
@@ -54,7 +54,7 @@ class ThuGioiThieuExportController extends Controller
         }
         
         if($student->paid != ''){
-            $parish = Parish::where('id', $student['paid'])->first();
+            $parish = ParishGroup::where('id', $student['paid'])->first();
             $student['paid'] = ', Giáo họ ' . $parish->name;
             $student['giaoho'] = $parish->name;
         }else{

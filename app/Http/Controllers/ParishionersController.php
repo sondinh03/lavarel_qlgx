@@ -10,7 +10,7 @@ use Illuminate\Support\Facades\DB;
 use App\Models\Parishioners;
 use Spatie\SchemaOrg\Schema;
 use App\Models\ParishManagement;
-use App\Models\Parish;
+use App\Models\ParishGroup;
 use App\Models\Deanery;
 use App\Models\Diocese;
 use App\Models\Association;
@@ -91,7 +91,7 @@ class ParishionersController extends Controller
                 }
                 
                 if(!empty($parishioners->paid)){
-                    $parish = Parish::where('id', $parishioners['paid'])->first();
+                    $parish = ParishGroup::where('id', $parishioners['paid'])->first();
                     $parishioners['paid'] = $parish->name . ', ';
                 }else{
                     $parishioners['paid'] = '';

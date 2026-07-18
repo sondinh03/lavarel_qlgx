@@ -122,7 +122,7 @@ class Student extends Model
      */
     public function paidRelation(): BelongsTo
     {
-        return $this->belongsTo(Parish::class, 'paid');
+        return $this->belongsTo(ParishGroup::class, 'paid');
     }
 
     /**
@@ -292,7 +292,7 @@ class Student extends Model
      */
     public function communionParish(): BelongsTo
     {
-        return $this->belongsTo(Parish::class, 'communion_parish');
+        return $this->belongsTo(ParishManagement::class, 'communion_parish');
     }
 
     /*

@@ -11,7 +11,7 @@ use Illuminate\Support\Facades\DB;
 use Validator;
 use App\Models\Parishioners;
 use App\Models\Holymanagement;
-use App\Models\Parish;
+use App\Models\ParishGroup;
 use App\Models\ParishManagement;
 use App\Models\Deanery;
 use App\Models\Diocese;
@@ -86,7 +86,7 @@ class PageController extends Controller
                     $this->data['giaoxu'] = $parish_mana;
                     
                     if(!empty($_GET['giaoxu'])){
-                        $parish = Parish::where('did', $_GET['giaophan'])->where('deid', $_GET['giaohat'])->where('pid', $_GET['giaoxu'])->where('status', 1)->orderBy('created_at', 'ASC')->get()->toArray();
+                        $parish = ParishGroup::where('parish_id', $_GET['giaoxu'])->where('status', 1)->orderBy('created_at', 'ASC')->get()->toArray();
                         $this->data['giaoho'] = $parish;
                     }
                 }
@@ -103,7 +103,7 @@ class PageController extends Controller
                 $decen = Decen::where('use', $userId)->where('status', '1')->get()->first();
                 if(!empty($decen) AND $decen->parish == 1){
                     $this->data['form'] = 0;
-                    $this->data['giaoho'] = Parish::where('pid', $decen->pid)->where('status', 1)->get()->toArray();
+                    $this->data['giaoho'] = ParishGroup::where('parish_id', $decen->pid)->where('status', 1)->get()->toArray();
                     if(!empty($_GET['giaoho'])){
                         $giaoho = $_GET['giaoho'];
                     }else{
@@ -145,7 +145,7 @@ class PageController extends Controller
                     $this->data['form'] = 1;
                     $giaoho = array();
                     if(!empty($_GET['giaophan']) AND !empty($_GET['giaohat']) AND !empty($_GET['giaoxu'])){
-                        $giaoho = Parish::where('did', $_GET['giaophan'])->where('deid', $_GET['giaohat'])->where('pid', $_GET['giaoxu'])->where('status', 1)->get()->toArray();
+                        $giaoho = ParishGroup::where('parish_id', $_GET['giaoxu'])->where('status', 1)->get()->toArray();
                     }
                     $this->data['giaoho'] = $giaoho;
                     if(!empty($_GET['giaoho'])){
@@ -363,7 +363,7 @@ class PageController extends Controller
                         }
                         
                         if(!empty($parishioners->paid)){
-                            $parish = Parish::where('id', $parishioners['paid'])->first();
+                            $parish = ParishGroup::where('id', $parishioners['paid'])->first();
                             $parishioners['paid'] = $parish->name;
                         }else{
                             $parishioners['paid'] = '';
@@ -411,7 +411,7 @@ class PageController extends Controller
                 $decen = Decen::where('use', $userId)->where('status', '1')->get()->first();
                 if(!empty($decen) AND $decen->parish == 1 AND $userId > 2){
                     $this->data['form'] = 0;
-                    $this->data['giaoho'] = Parish::where('pid', $decen->pid)->where('status', 1)->get()->toArray();
+                    $this->data['giaoho'] = ParishGroup::where('parish_id', $decen->pid)->where('status', 1)->get()->toArray();
                     if(!empty($_GET['giaoho'])){
                         $giaoho = $_GET['giaoho'];
                     }else{
@@ -452,7 +452,7 @@ class PageController extends Controller
                     $this->data['form'] = 1;
                     $giaoho = array();
                     if(!empty($_GET['giaophan']) AND !empty($_GET['giaohat']) AND !empty($_GET['giaoxu'])){
-                        $giaoho = Parish::where('did', $_GET['giaophan'])->where('deid', $_GET['giaohat'])->where('pid', $_GET['giaoxu'])->where('status', 1)->get()->toArray();
+                        $giaoho = ParishGroup::where('parish_id', $_GET['giaoxu'])->where('status', 1)->get()->toArray();
                     }
                     $this->data['giaoho'] = $giaoho;
                     if(!empty($_GET['giaoho'])){
@@ -632,7 +632,7 @@ class PageController extends Controller
                         
                         // giao họ
                         if(!empty($family->paid)){
-                            $parish = Parish::where('id', $family['paid'])->first();
+                            $parish = ParishGroup::where('id', $family['paid'])->first();
                             $family['paid'] = $parish->name;
                         }else{
                             $family['paid'] = '';
@@ -1998,7 +1998,7 @@ class PageController extends Controller
                         
                         // giao họ
                         if($parishioners->paid != ''){
-                            $parish_management = Parish::where('id', $parishioners['paid'])->get()->first();
+                            $parish_management = ParishGroup::where('id', $parishioners['paid'])->get()->first();
                             $parishioners['paid'] = $parish_management->name;
                         }else{
                             $parishioners['paid'] = '';
@@ -2172,7 +2172,7 @@ class PageController extends Controller
                         }
                         
                         if($block->paid != ''){
-                            $parish = Parish::where('id', $block['paid'])->first();
+                            $parish = ParishGroup::where('id', $block['paid'])->first();
                             $block['paid'] = $parish->name;
                         }else{
                             $block['paid'] = '';
@@ -2368,7 +2368,7 @@ class PageController extends Controller
                             
                             // giao họ
                             if(!empty($item->paid)){
-                                $parish_management = Parish::where('id', $item['paid'])->first();
+                                $parish_management = ParishGroup::where('id', $item['paid'])->first();
                                 $item['paid'] = $parish_management->name;
                             }else{
                                 $item['paid'] = '';
@@ -2505,7 +2505,7 @@ class PageController extends Controller
                 $setadmin = SetAdmin::where('use', $userId)->where('status', 1)->get()->first();                
                 $decen = Decen::where('use', $userId)->where('status', '1')->get()->first();
                 if(!empty($decen) AND $decen->student == 1){
-                    $giaoho = Parish::where('pid', $decen->pid)->where('status', 1)->orderBy('name', 'asc')->get()->toArray();
+                    $giaoho = ParishGroup::where('parish_id', $decen->pid)->where('status', 1)->orderBy('name', 'asc')->get()->toArray();
                     $this->data['giaohos'] = $giaoho;
                     
                     if(!empty($_GET['schoolyear'])){
@@ -2520,7 +2520,7 @@ class PageController extends Controller
                     }
                 }elseif(!empty($setadmin)){
                     if(!empty($_GET['giaoxu'])){
-                        $giaho = Parish::where('pid', $_GET['giaoxu'])->get()->toArray();
+                        $giaho = ParishGroup::where('parish_id', $_GET['giaoxu'])->get()->toArray();
                         $this->data['giaohos'] = $giaho;
                     }else{
                         $this->data['giaohos'] = '';
@@ -2725,7 +2725,7 @@ class PageController extends Controller
                         }
                         
                         if(!empty($item->paid)){
-                            $parish = Parish::where('id', $item['paid'])->first();
+                            $parish = ParishGroup::where('id', $item['paid'])->first();
                             if(!empty($parish)){
                                 $item['paid'] = $parish->name;
                             }else{
@@ -2855,7 +2855,7 @@ class PageController extends Controller
                     $this->data['giaoxu'] = $parish_mana;
                     
                     if(!empty($_GET['giaoxu'])){
-                        $parish = Parish::where('did', $_GET['giaophan'])->where('deid', $_GET['giaohat'])->where('pid', $_GET['giaoxu'])->where('status', 1)->orderBy('created_at', 'ASC')->get()->toArray();
+                        $parish = ParishGroup::where('parish_id', $_GET['giaoxu'])->where('status', 1)->orderBy('created_at', 'ASC')->get()->toArray();
                         $this->data['giaoho'] = $parish;
                     }
                 }
@@ -2907,7 +2907,7 @@ class PageController extends Controller
                             
                             // giao họ
                             if(!empty($item->paid)){
-                                $parish_management = Parish::where('id', $item['paid'])->first();
+                                $parish_management = ParishGroup::where('id', $item['paid'])->first();
                                 $item['paid'] = $parish_management->name;
                             }else{
                                 $item['paid'] = '';

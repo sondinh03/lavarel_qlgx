@@ -90,8 +90,8 @@ class FamilyController extends Controller
             $pid = $_GET['pid'];
             $array_parishs = array();
             if(!empty($pid)){
-                $array_parishs = DB::table('parishs')
-                ->where('pid', '=', $pid)
+                $array_parishs = DB::table('parish_groups')
+                ->where('parish_id', '=', $pid)
                 ->where('status', 1)
                 ->get()->toArray();
                 

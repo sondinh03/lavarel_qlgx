@@ -10,7 +10,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Database\Query\Builder;
 use App\Models\CatechismClass;
 use App\Models\Block;
-use App\Models\Parish;
+use App\Models\ParishGroup;
 use App\Models\ParishManagement;
 use App\Models\Deanery;
 use App\Models\Diocese;
@@ -44,7 +44,7 @@ class BlockController extends Controller
         
         if(!empty($block)){
             if(!empty($block->paid)){
-                $parish = Parish::where('id', $block['paid'])->first();
+                $parish = ParishGroup::where('id', $block['paid'])->first();
                 if(!empty($parish)){
                     $block['paid'] = $parish->name;
                 }else{
@@ -110,7 +110,7 @@ class BlockController extends Controller
                 }
                 
                 if($item->paid != ''){
-                    $parish = Parish::where('id', $item['paid'])->first();
+                    $parish = ParishGroup::where('id', $item['paid'])->first();
                     $item['paid'] = $parish->name;
                 }else{
                     $item['paid'] = '';

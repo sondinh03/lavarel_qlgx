@@ -9,7 +9,7 @@ use Maatwebsite\Excel\Concerns\HasReferencesToOtherSheets;
 use App\Models\Diocese;
 use App\Models\Deanery;
 use App\Models\ParishManagement;
-use App\Models\Parish;
+use App\Models\ParishGroup;
 use App\Models\Association;
 use App\Models\Holymanagement;
 use App\Models\Positionmanagement;
@@ -107,18 +107,17 @@ class FirstSheetImport implements ToModel, ToArray, HasReferencesToOtherSheets, 
                         }
                     }
                     if(!empty($item['giao_ho'])){
-                        $parish = Parish::where('name', $item['giao_ho'])
+                        $parish = ParishGroup::where('name', $item['giao_ho'])
+                        ->where('parish_id', $_POST['giaoxu'])
                         ->where('status', 1)
                         ->orderBy('created_at', 'desc')
                         ->get()
                         ->first();
                         if(empty($parish)){
-                            $giaoho = Parish::create([
+                            $giaoho = ParishGroup::create([
                                 'name'      => $item['giao_ho'],
-                                'pid'       => $_POST['giaoxu'],
-                                'deid'      => $_POST['giaohat'],
-                                'did'       => $_POST['giaophan'],
-                                'status'    => 1,
+                                'parish_id' => $_POST['giaoxu'],
+                                'status'    => true,
                             ]);
                             $item['giao_ho'] = $giaoho->id;
                         }else{
@@ -812,10 +811,10 @@ class FirstSheetImport implements ToModel, ToArray, HasReferencesToOtherSheets, 
                         }
                         
                         if(!empty($row['giao_ho'])){
-                            if(is_numeric($row['giao_phan']) AND is_numeric($row['giao_hat']) AND is_numeric($row['giao_xu'])){
-                                $parishs = Parish::where('name', 'like', '%' . $row['giao_ho'] . '%')->where('did', $row['giao_phan'])->where('deid', $row['giao_hat'])->where('pid', $row['giao_xu'])->where('status', 1)->orderBy('created_at', 'desc')->first();
+                            if(is_numeric($row['giao_xu'])){
+                                $parishs = ParishGroup::where('name', 'like', '%' . $row['giao_ho'] . '%')->where('parish_id', $row['giao_xu'])->where('status', 1)->orderBy('created_at', 'desc')->first();
                             }else{
-                                $parishs = Parish::where('name', 'like', '%' . $row['giao_ho'] . '%')->where('status', 1)->orderBy('created_at', 'desc')->first();
+                                $parishs = ParishGroup::where('name', 'like', '%' . $row['giao_ho'] . '%')->where('status', 1)->orderBy('created_at', 'desc')->first();
                             }
                             if(!empty($parishs)){
                                 if($parishs->id){

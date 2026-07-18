@@ -5,7 +5,6 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Contracts\View\View;
 use Illuminate\Support\Facades\Cache;
-use App\Models\Parish;
 use App\Models\Parishioners;
 use App\Models\Family;
 use App\Models\MarriageAnnouncement;

@@ -8,7 +8,6 @@ use PhpOffice\PhpWord\TemplateProcessor;
 use App\Models\Priest;
 use App\Models\MarriageAnnouncementParishioners;
 use App\Models\Parishioners;
-use App\Models\Parish;
 use App\Models\ParishManagement;
 use App\Models\Deanery;
 use App\Models\Diocese;

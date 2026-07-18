@@ -41,7 +41,7 @@ class StudentImportPreview extends BaseComponent
     // ==================== PREVIEW STATE ====================
 
     public array $rows          = [];
-    public array $errors        = [];
+    public array $fileErrors    = [];
     public array $warnings      = [];
     public bool  $readyToImport = false;
 
@@ -141,7 +141,9 @@ class StudentImportPreview extends BaseComponent
         $this->resetPreview();
 
         if (!$this->selectedLop) {
-            $this->addError('selectedLop', 'Vui lòng chọn lớp trước khi upload file');
+            $message = 'Vui lòng chọn lớp trước khi upload file';
+            $this->addError('selectedLop', $message);
+            $this->emit('toast', 'warning', $message);
             $this->file = null;
             return;
         }
@@ -169,7 +171,7 @@ class StudentImportPreview extends BaseComponent
             $data = Excel::toArray(new StudentPreviewImport, $this->file)[0] ?? [];
 
             if (empty($data)) {
-                $this->errors[] = 'File Excel trống hoặc không đúng định dạng.';
+                $this->fileErrors[] = 'File Excel trống hoặc không đúng định dạng.';
                 return;
             }
 
@@ -178,11 +180,11 @@ class StudentImportPreview extends BaseComponent
 
             foreach ($requiredHeaders as $header) {
                 if (!array_key_exists($header, $firstRow)) {
-                    $this->errors[] = "Thiếu cột bắt buộc: <strong>{$header}</strong>.";
+                    $this->fileErrors[] = "Thiếu cột bắt buộc: <strong>{$header}</strong>.";
                 }
             }
 
-            if (!empty($this->errors)) {
+            if (!empty($this->fileErrors)) {
                 return;
             }
 
@@ -190,13 +192,19 @@ class StudentImportPreview extends BaseComponent
                 ->map(fn($n) => strtolower(trim($n)))
                 ->toArray();
 
+            $saintIdByName = Holymanagement::pluck('id', 'name')
+                ->mapWithKeys(fn($id, $name) => [strtolower(trim($name)) => $id])
+                ->toArray();
+
             $groupNames = ParishGroup::active()
                 ->pluck('name')
                 ->map(fn($n) => strtolower(trim($n)))
                 ->toArray();
 
-            $existingStudents = StudentNew::get(['first_name', 'last_name', 'birthday'])
-                ->map(fn($s) => strtolower(trim($s->last_name . ' ' . $s->first_name))
+            // Key trùng: saint_id + họ tên + ngày sinh
+            $existingStudents = StudentNew::get(['saint_id', 'first_name', 'last_name', 'birthday'])
+                ->map(fn($s) => ($s->saint_id ?? '')
+                    . '_' . strtolower(trim($s->last_name . ' ' . $s->first_name))
                     . '_' . ($s->birthday?->format('Y-m-d') ?? ''))
                 ->toArray();
 
@@ -265,10 +273,13 @@ class StudentImportPreview extends BaseComponent
                     $rowWarnings[] = "Số điện thoại <strong>\"{$phoneRaw}\"</strong> không hợp lệ — yêu cầu 10 số, bắt đầu bằng 0.";
                 }
 
-                // Kiểm tra mã học sinh & duplicate
+                // Kiểm tra mã học sinh & duplicate (tên thánh + họ tên + ngày sinh)
                 $studentCode = trim($row['ma_hoc_sinh'] ?? '');
+                $saintId     = !empty($tenThanh)
+                    ? ($saintIdByName[strtolower($tenThanh)] ?? null)
+                    : null;
                 $fullName    = strtolower(trim(($row['ho_ten_dem'] ?? '') . ' ' . ($row['ten'] ?? '')));
-                $key         = $fullName . '_' . ($parsedDate ?? '');
+                $key         = ($saintId ?? '') . '_' . $fullName . '_' . ($parsedDate ?? '');
                 $isDuplicate = false;
                 $willUpdate  = false;
 
@@ -292,7 +303,8 @@ class StudentImportPreview extends BaseComponent
                     }
                 } elseif (in_array($key, $existingStudents)) {
                     $isDuplicate   = true;
-                    $rowWarnings[] = "Học sinh <strong>" . trim(($row['ho_ten_dem'] ?? '') . ' ' . ($row['ten'] ?? '')) . "</strong> đã tồn tại trong hệ thống — dòng này sẽ bị <strong>bỏ qua</strong>.";
+                    $displayName   = trim(($tenThanh ? $tenThanh . ' ' : '') . ($row['ho_ten_dem'] ?? '') . ' ' . ($row['ten'] ?? ''));
+                    $rowWarnings[] = "Học sinh <strong>{$displayName}</strong> (trùng tên thánh, họ tên và ngày sinh) đã tồn tại trong hệ thống — dòng này sẽ bị <strong>bỏ qua</strong>.";
                 }
 
                 if (!empty($rowWarnings)) {
@@ -319,7 +331,7 @@ class StudentImportPreview extends BaseComponent
                 ];
             }
 
-            $this->readyToImport = empty($this->errors) && !empty($this->rows);
+            $this->readyToImport = empty($this->fileErrors) && !empty($this->rows);
 
             if ($this->readyToImport) {
                 $duplicateCount = collect($this->rows)->where('is_duplicate', true)->count();
@@ -343,7 +355,7 @@ class StudentImportPreview extends BaseComponent
             }
         } catch (\Exception $e) {
             $this->logError($e, 'Error previewing student import');
-            $this->errors[] = 'Lỗi khi đọc file: ' . $e->getMessage();
+            $this->fileErrors[] = 'Lỗi khi đọc file: ' . $e->getMessage();
         }
     }
 
@@ -454,7 +466,7 @@ class StudentImportPreview extends BaseComponent
     protected function resetPreview(): void
     {
         $this->rows          = [];
-        $this->errors        = [];
+        $this->fileErrors        = [];
         $this->warnings      = [];
         $this->readyToImport = false;
     }

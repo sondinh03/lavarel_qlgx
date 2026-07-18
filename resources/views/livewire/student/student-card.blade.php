@@ -20,37 +20,43 @@ $birthday = $student->birthday?->format('d/m/Y') ?? '';
 $code = $student->student_code ?? ('HS-' . $student->id);
 $qrToken = $student->qr_token ?? '';
 $isMale = in_array($student->gender, ['male', 1, '1'], true);
-$genderColor = $isMale ? '#2AA14A' : '#be185d';
 $genderLabel = $isMale ? 'Nam' : 'Nữ';
+$genderBg = $isMale ? 'rgba(52, 199, 89, 0.14)' : 'rgba(255, 59, 48, 0.12)';
+$genderFg = $isMale ? '#1F7A38' : '#C0392B';
+$cardShadow = $forPrint ? 'none' : '0 2px 12px rgba(0,0,0,0.06), 0 0 0 0.5px rgba(0,0,0,0.06)';
 @endphp
 
 <div class="student-card"
     data-student-id="{{ $student->id }}"
     data-card-type="{{ $cardType }}"
     style="
-        width: 85.6mm;
-        height: 54mm;
-        background: #fff;
+        width: 85.60mm;
+        height: 53.98mm;
+        box-sizing: border-box;
+        background: #ffffff;
         border-radius: 3mm;
         overflow: hidden;
         position: relative;
-        box-shadow: 0 1px 4px rgba(0,0,0,0.12);
+        box-shadow: {{ $cardShadow }};
         display: flex;
         flex-direction: column;
-        font-family: 'Segoe UI', Arial, sans-serif;
+        font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', Arial, sans-serif;
         flex-shrink: 0;
+        border: 0.3mm solid rgba(0,0,0,0.06);
     ">
 
+    {{-- Accent strip --}}
     <div style="
         position: absolute;
         left: 0; top: 0; bottom: 0;
-        width: 3mm;
-        background: linear-gradient(180deg, #145224 0%, #34C759 50%, #57C37F 100%);
+        width: 2mm;
+        background: linear-gradient(180deg, #57C37F 0%, #34C759 55%, #2AA14A 100%);
     "></div>
 
     {{-- Header --}}
     <div style="
-        background: linear-gradient(135deg, #0f172a 0%, #145224 55%, #2AA14A 100%);
+        background: linear-gradient(180deg, #F3FBF6 0%, #EAF7EF 100%);
+        border-bottom: 0.3mm solid rgba(42, 161, 74, 0.14);
         padding: 2.5mm 3mm 2mm 5mm;
         display: flex;
         align-items: center;
@@ -59,25 +65,25 @@ $genderLabel = $isMale ? 'Nam' : 'Nữ';
         flex-shrink: 0;
     ">
         <div style="flex: 1; min-width: 0;">
-            <div style="color: #ABE1BF; font-size: 5pt; letter-spacing: 1.5px; text-transform: uppercase; font-weight: 600;">
+            <div style="color: #64748b; font-size: 5pt; letter-spacing: 1.2px; text-transform: uppercase; font-weight: 600;">
                 Thẻ Học Sinh Giáo Lý
             </div>
             @if($showClassYear && ($className || $yearName))
-            <div style="color: #fff; font-size: 6.5pt; font-weight: 700; margin-top: 0.5mm; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+            <div style="color: #1e293b; font-size: 6.5pt; font-weight: 700; margin-top: 0.5mm; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
                 {{ implode(' · ', array_filter([$className, $yearName])) }}
             </div>
             @endif
         </div>
 
         <div style="
-            background: {{ $genderColor }};
-            color: white;
+            background: {{ $genderBg }};
+            color: {{ $genderFg }};
             font-size: 5.5pt;
-            font-weight: 700;
+            font-weight: 650;
             padding: 1mm 2.5mm;
             border-radius: 10mm;
             flex-shrink: 0;
-            letter-spacing: 0.5px;
+            letter-spacing: 0.3px;
         ">{{ $genderLabel }}</div>
     </div>
 
@@ -88,6 +94,7 @@ $genderLabel = $isMale ? 'Nam' : 'Nữ';
         gap: 0;
         padding: 2.5mm 3mm 2.5mm 5mm;
         overflow: hidden;
+        background: #ffffff;
     ">
         <div style="
             display: flex;
@@ -100,10 +107,10 @@ $genderLabel = $isMale ? 'Nam' : 'Nữ';
             <div style="
                 width: 14mm;
                 height: 16mm;
-                border-radius: 1.5mm;
+                border-radius: 2mm;
                 overflow: hidden;
-                background: #EAF7EF;
-                border: 0.5mm solid #ABE1BF;
+                background: #F3FBF6;
+                border: 0.3mm solid rgba(0,0,0,0.06);
                 display: flex;
                 align-items: center;
                 justify-content: center;
@@ -127,16 +134,17 @@ $genderLabel = $isMale ? 'Nam' : 'Nữ';
                 style="
                     width: 14mm;
                     height: 14mm;
-                    border: 0.3mm solid #D5F0DF;
-                    border-radius: 1mm;
+                    border: 0.3mm solid rgba(0,0,0,0.06);
+                    border-radius: 1.5mm;
                     display: block;
                     flex-shrink: 0;
+                    background: #fff;
                 "
                 alt="QR {{ $code }}" />
             @endif
         </div>
 
-        <div style="width: 0.3mm; background: #e2e8f0; margin: 0 2.5mm; flex-shrink: 0;"></div>
+        <div style="width: 0.3mm; background: rgba(0,0,0,0.06); margin: 0 2.5mm; flex-shrink: 0;"></div>
 
         <div style="flex: 1; min-width: 0; display: flex; flex-direction: column; justify-content: center; gap: 1.5mm;">
 
@@ -149,14 +157,15 @@ $genderLabel = $isMale ? 'Nam' : 'Nữ';
             <div style="
                 color: #0f172a;
                 font-size: 10pt;
-                font-weight: 800;
+                font-weight: 700;
+                letter-spacing: -0.2px;
                 line-height: 1.2;
                 white-space: nowrap;
                 overflow: hidden;
                 text-overflow: ellipsis;
             ">{{ $fullName }}</div>
 
-            <div style="height: 0.3mm; background: linear-gradient(90deg, #34C759, transparent); width: 70%;"></div>
+            <div style="height: 0.3mm; background: linear-gradient(90deg, rgba(52,199,89,0.45), transparent); width: 70%;"></div>
 
             @if($birthday)
             <div style="display: flex; align-items: center; gap: 1.5mm;">
@@ -169,23 +178,24 @@ $genderLabel = $isMale ? 'Nam' : 'Nữ';
                 display: inline-flex;
                 align-items: center;
                 gap: 1.5mm;
-                background: #EAF7EF;
-                border: 0.3mm solid #ABE1BF;
-                border-radius: 1mm;
+                background: #F3FBF6;
+                border: 0.3mm solid rgba(42, 161, 74, 0.16);
+                border-radius: 1.5mm;
                 padding: 1mm 2mm;
                 width: fit-content;
                 max-width: 100%;
             ">
                 <span style="color: #64748b; font-size: 5pt; text-transform: uppercase; letter-spacing: 0.5px; flex-shrink: 0;">Mã HS</span>
-                <span style="color: #2AA14A; font-size: 6.5pt; font-weight: 700; font-family: monospace; letter-spacing: 0.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{ $code }}</span>
+                <span style="color: #2AA14A; font-size: 6.5pt; font-weight: 700; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; letter-spacing: 0.4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{ $code }}</span>
             </div>
 
         </div>
     </div>
 
-    {{-- Footer: tên giáo xứ (ParishNew) --}}
+    {{-- Footer --}}
     <div style="
-        background: linear-gradient(135deg, #0f172a, #145224);
+        background: #F8FAF9;
+        border-top: 0.3mm solid rgba(0,0,0,0.06);
         padding: 1.5mm 5mm;
         display: flex;
         align-items: center;
@@ -194,15 +204,15 @@ $genderLabel = $isMale ? 'Nam' : 'Nữ';
         min-height: 5mm;
     ">
         <span style="
-            color: #EAF7EF;
+            color: #475569;
             font-size: 5.5pt;
-            font-weight: 700;
-            letter-spacing: 0.3px;
+            font-weight: 650;
+            letter-spacing: 0.2px;
             text-align: center;
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
             max-width: 100%;
-        ">{{ $parishName ?: 'Giáo Xứ' }}</span>
+        ">{{ $parishName ?: 'Giáo xứ' }}</span>
     </div>
 </div>

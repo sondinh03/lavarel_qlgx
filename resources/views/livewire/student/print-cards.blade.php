@@ -1,12 +1,12 @@
 @section('topbar')
 <x-breadcrumb :items="[
-    ['label' => 'Trang chủ', 'url' => route('parish-admin.dashboard')],
+    ['label' => 'Trang chủ', 'url' => auth()->user()->usesCatechistLayout() ? route('catechist.dashboard') : route('parish-admin.dashboard')],
     ['label' => 'Học sinh', 'url' => route('students.index')],
     ['label' => 'In thẻ học sinh'],
 ]" />
 @endsection
 
-<div class="min-h-screen bg-slate-50 p-2 sm:p-4 lg:p-6 print:bg-white print:p-0"
+<div class="min-h-screen bg-apple-gray p-2 sm:p-4 lg:p-6 print:bg-white print:p-0"
     style="min-height: calc(100vh - 56px - var(--bottom-offset));"
     x-data="{
         downloading: false,
@@ -60,10 +60,10 @@
     <a href="#print-cards-main" class="sr-only focus:not-sr-only print:hidden">Bỏ qua tới nội dung</a>
 
     {{-- ══ UI (ẩn khi in) ══ --}}
-    <div id="print-cards-main" class="print:hidden mx-auto max-w-5xl space-y-6">
+    <div id="print-cards-main" class="print:hidden mx-auto max-w-5xl">
 
         @if(session()->has('message') || session()->has('warning') || session()->has('error'))
-        <div role="status" aria-live="polite">
+        <div class="mb-4" role="status" aria-live="polite">
             @if(session()->has('message'))
             <x-toast-notification type="success" :duration="3500">{{ session('message') }}</x-toast-notification>
             @endif
@@ -76,30 +76,28 @@
         </div>
         @endif
 
-        <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
-            @php
-            $headerDesc = collect([
-                $lop ? 'Lớp ' . $lop->name : null,
-                $lop?->schoolYear?->name,
-            ])->filter()->implode(' · ');
-            if ($students->count() > 0) {
-                $headerDesc .= ($headerDesc ? ' · ' : '') . $students->count() . ' thẻ · ' . ceil($students->count() / 8) . ' trang A4';
-            } elseif ($headerDesc === '') {
-                $headerDesc = 'Chọn học sinh hoặc lớp để in thẻ CR80';
-            }
-            @endphp
+        @php
+        $headerDesc = collect([
+            $lop ? 'Lớp ' . $lop->name : null,
+            $lop?->schoolYear?->name,
+        ])->filter()->implode(' · ');
+        if ($students->count() > 0) {
+            $headerDesc .= ($headerDesc ? ' · ' : '') . $students->count() . ' thẻ · ' . ceil($students->count() / 8) . ' trang A4';
+        } elseif ($headerDesc === '') {
+            $headerDesc = 'Chọn học sinh hoặc lớp để in thẻ CR80';
+        }
+        @endphp
+
+        <x-mac-panel :overflow="true">
 
             <x-page-header
-                class="rounded-t-2xl"
                 icon-type="students"
                 title="In thẻ học sinh"
                 :description="$headerDesc"
                 :count="$students->count() ?: null">
                 <x-slot name="actions">
-                    <x-button as="a" href="javascript:history.back()" variant="subtle">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-                        </svg>
+                    <x-button as="a" href="javascript:history.back()" variant="outline">
+                        <x-icon name="cancel" />
                         Quay lại
                     </x-button>
 
@@ -126,70 +124,87 @@
             </x-page-header>
 
             @if($students->count() > 0)
-            <div class="px-4 lg:px-6 py-4 border-t border-slate-200 bg-slate-50/70">
-                <p class="text-sm font-semibold text-slate-700 mb-2">Loại thẻ</p>
-                <div class="inline-flex w-full sm:w-auto rounded-xl bg-slate-200 p-1 text-sm font-medium">
-                    <button type="button" wire:click="$set('cardType', 'permanent')"
-                        class="flex-1 sm:flex-none inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg transition-all
-                            {{ $cardType === 'permanent'
-                                ? 'bg-white shadow-sm text-primary-600 font-semibold'
-                                : 'text-slate-600 hover:text-primary-600 hover:bg-white/50' }}">
-                        Thẻ vĩnh viễn
-                        <span class="hidden sm:inline text-xs font-normal text-slate-400">(không lớp/năm)</span>
-                    </button>
-                    <button type="button" wire:click="$set('cardType', 'annual')"
-                        class="flex-1 sm:flex-none inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg transition-all
-                            {{ $cardType === 'annual'
-                                ? 'bg-white shadow-sm text-primary-600 font-semibold'
-                                : 'text-slate-600 hover:text-primary-600 hover:bg-white/50' }}">
-                        Thẻ theo năm học
-                        <span class="hidden sm:inline text-xs font-normal text-slate-400">(có lớp + năm)</span>
-                    </button>
-                </div>
-                @if($parishName)
-                <p class="mt-2 text-xs text-slate-500">
-                    Giáo xứ trên thẻ: <span class="font-semibold text-slate-700">{{ $parishName }}</span>
-                </p>
-                @endif
-            </div>
+            <div class="p-4 lg:p-6 space-y-6">
 
-            <div class="p-4 lg:p-6 border-t border-slate-100 bg-slate-50/50 rounded-b-2xl">
-                <div class="flex items-center justify-between mb-4">
-                    <p class="text-xs font-semibold text-slate-400 uppercase tracking-wide">
-                        Xem trước · 2 thẻ / hàng · 85.6×54mm (CR80)
+                {{-- Card type --}}
+                <section>
+                    <h2 class="text-xs font-semibold text-slate-500 tracking-wide uppercase mb-3 px-1">
+                        Loại thẻ
+                    </h2>
+                    <div class="inline-flex w-full sm:w-auto rounded-xl bg-black/[0.04] border border-black/[0.04] p-1 text-sm font-medium shadow-mac-sm">
+                        <button type="button" wire:click="$set('cardType', 'permanent')"
+                            class="flex-1 sm:flex-none inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg transition-all
+                                {{ $cardType === 'permanent'
+                                    ? 'bg-white/90 shadow-mac-sm text-primary-600 font-semibold'
+                                    : 'text-slate-600 hover:text-primary-600 hover:bg-white/50' }}">
+                            Thẻ vĩnh viễn
+                            <span class="hidden sm:inline text-xs font-normal text-slate-400">(không lớp/năm)</span>
+                        </button>
+                        <button type="button" wire:click="$set('cardType', 'annual')"
+                            class="flex-1 sm:flex-none inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg transition-all
+                                {{ $cardType === 'annual'
+                                    ? 'bg-white/90 shadow-mac-sm text-primary-600 font-semibold'
+                                    : 'text-slate-600 hover:text-primary-600 hover:bg-white/50' }}">
+                            Thẻ theo năm học
+                            <span class="hidden sm:inline text-xs font-normal text-slate-400">(có lớp + năm)</span>
+                        </button>
+                    </div>
+                    @if($parishName)
+                    <p class="mt-3 text-sm text-slate-600 px-1">
+                        Giáo xứ trên thẻ:
+                        <span class="font-medium text-slate-900">{{ $parishName }}</span>
                     </p>
-                    <span class="text-xs text-slate-500">
-                        {{ $students->count() }} thẻ
-                    </span>
-                </div>
+                    @endif
+                </section>
 
-                <div class="preview-grid" wire:key="preview-{{ $cardType }}">
-                    @foreach($students as $student)
-                    @include('livewire.student.student-card', [
-                        'student' => $student,
-                        'lop' => $lop,
-                        'cardType' => $cardType,
-                        'parishName' => $parishName,
-                    ])
-                    @endforeach
-                </div>
+                <div class="mac-hairline-b"></div>
+
+                {{-- Preview --}}
+                <section>
+                    <div class="flex items-center justify-between mb-3 px-1">
+                        <h2 class="text-xs font-semibold text-slate-500 tracking-wide uppercase">
+                            Xem trước
+                            <span class="font-normal normal-case tracking-normal text-slate-400">
+                                · 2 thẻ / hàng · 85.6×54mm (CR80)
+                            </span>
+                        </h2>
+                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-lg text-xs font-semibold bg-primary-50/80 text-primary-700 shadow-mac-sm">
+                            {{ $students->count() }} thẻ
+                        </span>
+                    </div>
+
+                    <div class="rounded-xl bg-white/40 border border-black/[0.04] p-4 sm:p-6">
+                        <div class="preview-grid" wire:key="preview-{{ $cardType }}">
+                            @foreach($students as $student)
+                            @include('livewire.student.student-card', [
+                                'student' => $student,
+                                'lop' => $lop,
+                                'cardType' => $cardType,
+                                'parishName' => $parishName,
+                            ])
+                            @endforeach
+                        </div>
+                    </div>
+                </section>
+
+            </div>
+            @else
+            <div class="p-4 lg:p-6">
+                <x-stats.page-empty
+                    title="Không có học sinh nào để in"
+                    description="Truyền ?ids=1,2,3 hoặc ?classId=X trên URL">
+                    <x-slot name="icon">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+                            d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
+                    </x-slot>
+                    <p class="mt-3 text-xs text-slate-400 font-mono">
+                        ?ids=1,2,3 · ?classId=5
+                    </p>
+                </x-stats.page-empty>
             </div>
             @endif
-        </div>
 
-        @if($students->count() === 0)
-        <x-stats.page-empty
-            title="Không có học sinh nào để in"
-            description="Truyền ?ids=1,2,3 hoặc ?classId=X trên URL">
-            <x-slot name="icon">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
-                    d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
-            </x-slot>
-            <p class="mt-3 text-xs text-slate-400 font-mono">
-                ?ids=1,2,3 · ?classId=5
-            </p>
-        </x-stats.page-empty>
-        @endif
+        </x-mac-panel>
     </div>
 
     {{-- ══ Vùng in / xuất PDF ══ --}}

@@ -63,7 +63,7 @@
                                 {{-- Personal fields --}}
                                 <div class="flex-1 min-w-0 grid grid-cols-1 sm:grid-cols-4 gap-4">
                                     <div class="sm:col-span-1">
-                                        <label class="block text-xs font-semibold text-slate-500 mb-1.5 tracking-wide uppercase">Tên thánh</label>
+                                        <label class="block text-slate-600 mb-1.5">Tên thánh</label>
                                         <x-searchable-select
                                             wireModel="saint_id"
                                             :options="$this->saints"
@@ -77,8 +77,8 @@
                                     </div>
 
                                     <div class="sm:col-span-2">
-                                        <label class="block text-xs font-semibold text-slate-500 mb-1.5 tracking-wide uppercase">
-                                            Họ <span class="text-red-500 normal-case">*</span>
+                                        <label class="block text-slate-600 mb-1.5">
+                                            Họ <span class="text-red-500">*</span>
                                         </label>
                                         <input type="text" wire:model.defer="last_name" placeholder="Nguyễn"
                                             class="w-full h-11 px-4 py-2.5 rounded-xl border text-sm bg-white/80 backdrop-blur-sm shadow-mac-sm
@@ -90,8 +90,8 @@
                                     </div>
 
                                     <div class="sm:col-span-1">
-                                        <label class="block text-xs font-semibold text-slate-500 mb-1.5 tracking-wide uppercase">
-                                            Tên <span class="text-red-500 normal-case">*</span>
+                                        <label class="block text-slate-600 mb-1.5">
+                                            Tên <span class="text-red-500">*</span>
                                         </label>
                                         <input type="text" wire:model.defer="first_name" placeholder="An"
                                             class="w-full h-11 px-4 py-2.5 rounded-xl border text-sm bg-white/80 backdrop-blur-sm shadow-mac-sm
@@ -103,8 +103,8 @@
                                     </div>
 
                                     <div class="sm:col-span-1">
-                                        <label class="block text-xs font-semibold text-slate-500 mb-1.5 tracking-wide uppercase">
-                                            Giới tính <span class="text-red-500 normal-case">*</span>
+                                        <label class="block text-slate-600 mb-1.5">
+                                            Giới tính <span class="text-red-500">*</span>
                                         </label>
                                         <select wire:model.defer="gender"
                                             class="w-full h-11 px-4 py-2.5 rounded-xl border border-black/[0.06] bg-white/80 backdrop-blur-sm text-sm
@@ -118,7 +118,7 @@
                                     </div>
 
                                     <div class="sm:col-span-3">
-                                        <label class="block text-xs font-semibold text-slate-500 mb-1.5 tracking-wide uppercase">Ngày sinh</label>
+                                        <label class="block text-slate-600 mb-1.5">Ngày sinh</label>
                                         <input type="date" wire:model.defer="birthday"
                                             class="w-full h-11 px-4 py-2.5 rounded-xl border border-black/[0.06] bg-white/80 backdrop-blur-sm text-sm
                                                 shadow-mac-sm focus:outline-none focus:ring-2 focus:ring-primary-500/25 focus:border-primary-300/40 transition-all" />
@@ -139,19 +139,19 @@
                             </h2>
                             <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                 <div>
-                                    <label class="block text-xs font-semibold text-slate-500 mb-1.5 tracking-wide uppercase">Tên cha</label>
+                                    <label class="block text-slate-600 mb-1.5">Tên cha</label>
                                     <input type="text" wire:model.defer="father_name" placeholder="Họ và tên cha"
                                         class="w-full h-11 px-4 py-2.5 rounded-xl border border-black/[0.06] bg-white/80 backdrop-blur-sm text-sm
                                             shadow-mac-sm focus:outline-none focus:ring-2 focus:ring-primary-500/25 focus:border-primary-300/40 transition-all" />
                                 </div>
                                 <div>
-                                    <label class="block text-xs font-semibold text-slate-500 mb-1.5 tracking-wide uppercase">Tên mẹ</label>
+                                    <label class="block text-slate-600 mb-1.5">Tên mẹ</label>
                                     <input type="text" wire:model.defer="mother_name" placeholder="Họ và tên mẹ"
                                         class="w-full h-11 px-4 py-2.5 rounded-xl border border-black/[0.06] bg-white/80 backdrop-blur-sm text-sm
                                             shadow-mac-sm focus:outline-none focus:ring-2 focus:ring-primary-500/25 focus:border-primary-300/40 transition-all" />
                                 </div>
                                 <div>
-                                    <label class="block text-xs font-semibold text-slate-500 mb-1.5 tracking-wide uppercase">Điện thoại</label>
+                                    <label class="block text-slate-600 mb-1.5">Điện thoại</label>
                                     <input type="tel" wire:model.defer="phone" placeholder="0123 456 789"
                                         class="w-full h-11 px-4 py-2.5 rounded-xl border border-black/[0.06] bg-white/80 backdrop-blur-sm text-sm
                                             shadow-mac-sm focus:outline-none focus:ring-2 focus:ring-primary-500/25 focus:border-primary-300/40 transition-all" />
@@ -160,7 +160,7 @@
                                     @enderror
                                 </div>
                                 <div>
-                                    <label class="block text-xs font-semibold text-slate-500 mb-1.5 tracking-wide uppercase">Email</label>
+                                    <label class="block text-slate-600 mb-1.5">Email</label>
                                     <input type="email" wire:model.defer="email" placeholder="email@example.com"
                                         class="w-full h-11 px-4 py-2.5 rounded-xl border text-sm bg-white/80 backdrop-blur-sm shadow-mac-sm
                                             focus:outline-none focus:ring-2 focus:ring-primary-500/25 focus:border-primary-300/40 transition-all
@@ -181,8 +181,8 @@
                             </h2>
                             <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                 <div>
-                                    <label class="block text-xs font-semibold text-slate-500 mb-1.5 tracking-wide uppercase">
-                                        Giáo xứ <span class="text-red-500 normal-case">*</span>
+                                    <label class="block text-slate-600 mb-1.5">
+                                        Giáo xứ <span class="text-red-500">*</span>
                                     </label>
                                     <x-searchable-select
                                         wireModel="parish_id"
@@ -196,7 +196,7 @@
                                     @enderror
                                 </div>
                                 <div>
-                                    <label class="block text-xs font-semibold text-slate-500 mb-1.5 tracking-wide uppercase">Giáo họ</label>
+                                    <label class="block text-slate-600 mb-1.5">Giáo họ</label>
                                     <x-searchable-select
                                         wireModel="parish_group_id"
                                         :options="$this->parishGroups"
@@ -229,7 +229,7 @@
                             </label>
 
                             <div>
-                                <label class="block text-xs font-semibold text-slate-500 mb-1.5 tracking-wide uppercase">Ghi chú</label>
+                                <label class="block text-slate-600 mb-1.5">Ghi chú</label>
                                 <textarea wire:model.defer="note" rows="4"
                                     placeholder="Ghi chú thêm về học sinh..."
                                     class="w-full px-4 py-2.5 rounded-xl border border-black/[0.06] bg-white/80 backdrop-blur-sm text-sm

@@ -12,7 +12,7 @@ use Illuminate\Support\Facades\DB;
 use App\Models\Diocese;
 use App\Models\Deanery;
 use App\Models\ParishManagement;
-use App\Models\Parish;
+use App\Models\ParishGroup;
 use App\Models\Children;
 use App\Models\Family;
 use App\Models\FamilyArea;
@@ -123,10 +123,10 @@ class SecondSheetImport implements ToModel, ToArray, HasReferencesToOtherSheets
                         }
                         
                         if(!empty($row['giao_ho'])){
-                            if(is_numeric($row['giao_phan']) AND is_numeric($row['giao_hat']) AND is_numeric($row['giao_xu'])){
-                                $parishs = Parish::where('name', 'like', '%' . $row['giao_ho'] . '%')->where('did', $row['giao_phan'])->where('deid', $row['giao_hat'])->where('pid', $row['giao_xu'])->where('status', 1)->orderBy('created_at', 'desc')->first();
+                            if(is_numeric($row['giao_xu'])){
+                                $parishs = ParishGroup::where('name', 'like', '%' . $row['giao_ho'] . '%')->where('parish_id', $row['giao_xu'])->where('status', 1)->orderBy('created_at', 'desc')->first();
                             }else{
-                                $parishs = Parish::where('name', 'like', '%' . $row['giao_ho'] . '%')->where('status', 1)->orderBy('created_at', 'desc')->first();
+                                $parishs = ParishGroup::where('name', 'like', '%' . $row['giao_ho'] . '%')->where('status', 1)->orderBy('created_at', 'desc')->first();
                             }
                             if(!empty($parishs)){
                                 $row['giao_ho'] = $parishs->id;

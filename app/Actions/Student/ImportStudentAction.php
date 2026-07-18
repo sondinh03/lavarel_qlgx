@@ -101,13 +101,15 @@ class ImportStudentAction
                     $student->update($data);
                     $updated++;
                 } else {
-                    // Không có mã → check duplicate rồi create
+                    // Không có mã → check duplicate (tên thánh + họ tên + ngày sinh) rồi create
                     $fullName    = mb_strtolower(trim(($row['ho_ten_dem'] ?? '') . ' ' . ($row['ten'] ?? '')), 'UTF-8');
                     $isDuplicate = StudentNew::whereRaw(
                         "LOWER(CONCAT(TRIM(last_name), ' ', TRIM(first_name))) = ?",
                         [$fullName]
                     )->where(function ($q) use ($birthday) {
                         $birthday ? $q->whereDate('birthday', $birthday) : $q->whereNull('birthday');
+                    })->where(function ($q) use ($saintId) {
+                        $saintId ? $q->where('saint_id', $saintId) : $q->whereNull('saint_id');
                     })->exists();
 
                     if ($isDuplicate) {
@@ -233,13 +235,15 @@ class ImportStudentAction
                     $student->update($data);
                     $updated++;
                 } else {
-                    // Không có mã → double-check duplicate rồi create
+                    // Không có mã → double-check duplicate (tên thánh + họ tên + ngày sinh) rồi create
                     $fullName    = mb_strtolower(trim(($row['ho_ten_dem'] ?? '') . ' ' . ($row['ten'] ?? '')), 'UTF-8');
                     $isDuplicate = StudentNew::whereRaw(
                         "LOWER(CONCAT(TRIM(last_name), ' ', TRIM(first_name))) = ?",
                         [$fullName]
                     )->where(function ($q) use ($birthday) {
                         $birthday ? $q->whereDate('birthday', $birthday) : $q->whereNull('birthday');
+                    })->where(function ($q) use ($saintId) {
+                        $saintId ? $q->where('saint_id', $saintId) : $q->whereNull('saint_id');
                     })->exists();
 
                     if ($isDuplicate) {

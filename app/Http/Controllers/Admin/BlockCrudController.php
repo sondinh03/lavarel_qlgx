@@ -472,10 +472,9 @@ class BlockCrudController extends CrudController
             $teacher = Block::where('id', $id)->where('status', 1)->get()->first();
             
             if(!empty($teacher->did)){
-                $array_parish = DB::table('parishs')
-                ->where('did', '=', $teacher->did)
-                ->where('deid', '=', $teacher->deid)
-                ->where('pid', '=', $teacher->pid)
+                $array_parish = DB::table('parish_groups')
+                ->where('parish_id', '=', $teacher->pid)
+                ->where('status', 1)
                 ->get()->toArray();
                 
                 $array_parish = json_decode(json_encode($array_parish, true), true);

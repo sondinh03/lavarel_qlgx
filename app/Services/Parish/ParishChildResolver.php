@@ -2,19 +2,13 @@
 
 namespace App\Services\Parish;
 
-use App\Models\Parish;
+use App\Models\ParishGroup;
 use Illuminate\Support\Facades\Log;
 
 class ParishChildResolver
 {
     /**
-     * Resolve parish name to parish_id (scoped by parishId)
-     * 
-     * @param string|null $parishChildName
-     * @param int $parishId
-     * @param int $deaneryId
-     * @param int $dioceseId
-     * @return int|null
+     * Resolve tên giáo họ → parish_groups.id (scoped theo giáo xứ ParishNew).
      */
     public function resolve(
         ?string $parishChildName,
@@ -29,35 +23,31 @@ class ParishChildResolver
         $parishChildName = trim($parishChildName);
 
         try {
-            // ✅ Tìm (case-insensitive + scoped)
-            $parish = Parish::query()
-                ->where('pid', $parishId)
-                ->whereRaw('LOWER(name) = ?', [strtolower($parishChildName)])
+            $group = ParishGroup::query()
+                ->where('parish_id', $parishId)
+                ->whereRaw('LOWER(name) = ?', [mb_strtolower($parishChildName)])
                 ->first();
 
-            // ✅ Tạo mới nếu chưa có
-            if (!$parish) {
-                $parish = Parish::create([
-                    'name' => $parishChildName,
-                    'pid' => $parishId,
-                    'deid' => $deaneryId,
-                    'did' => $dioceseId,
-                    'status' => 1,
+            if (! $group) {
+                $group = ParishGroup::create([
+                    'name'      => $parishChildName,
+                    'parish_id' => $parishId,
+                    'status'    => true,
                 ]);
 
-                Log::info('Created new parish (giáo họ)', [
-                    'name' => $parishChildName,
-                    'id' => $parish->id,
+                Log::info('Created new parish group (giáo họ)', [
+                    'name'      => $parishChildName,
+                    'id'        => $group->id,
                     'parish_id' => $parishId,
                 ]);
             }
 
-            return $parish->id;
+            return $group->id;
         } catch (\Exception $e) {
-            Log::error('Error resolving parish name', [
-                'name' => $parishChildName,
+            Log::error('Error resolving parish group name', [
+                'name'      => $parishChildName,
                 'parish_id' => $parishId,
-                'error' => $e->getMessage(),
+                'error'     => $e->getMessage(),
             ]);
 
             return null;

@@ -145,7 +145,7 @@ class GiaDinhExport implements FromCollection, WithHeadings, WithTitle, ShouldAu
                     $family->province = $tinh_thanhpho[$family->province];
                     
                     if(!empty($family->paid)){
-                        $paid = DB::table('parishs')
+                        $paid = DB::table('parish_groups')
                         ->where('status', '1')
                         ->where('id', $family->paid)
                         ->orderBy('id', 'ASC')

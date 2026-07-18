@@ -3,13 +3,9 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
-use Illuminate\Http\Request;
-
-/*
 use App\Http\Resources\ParishResource;
-use App\Http\Resources\ParishCollection;
-*/
-use Illuminate\Http\JsonResponse;
+use App\Models\ParishGroup;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
 class ParishController extends Controller
@@ -93,7 +89,7 @@ class ParishController extends Controller
      */
     public function show($id)
     {
-        $Parish = new ParishResource(Parish::find($id));
+        $Parish = new ParishResource(ParishGroup::find($id));
         
         if ($Parish) {
             return response()->json($Parish, 200);

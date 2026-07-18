@@ -15,7 +15,6 @@ use App\Models\Student;
 use App\Models\Holymanagement;
 use App\Models\CatechismClass;
 use App\Models\Block;
-use App\Models\Parish;
 use App\Models\ParishManagement;
 use App\Models\Deanery;
 use App\Models\Diocese;

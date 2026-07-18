@@ -8,7 +8,7 @@ use PhpOffice\PhpWord\TemplateProcessor;
 use App\Models\Priest;
 use App\Models\MarriageAnnouncementParishioners;
 use App\Models\Parishioners;
-use App\Models\Parish;
+use App\Models\ParishGroup;
 use App\Models\ParishManagement;
 use App\Models\Deanery;
 use App\Models\Diocese;
@@ -84,7 +84,7 @@ class RaoHonPhoiNuController extends Controller
                 }
             }
             if($nu->parishsold != ''){
-                $parish = Parish::where('id', $nu['parishsold'])->first();
+                $parish = ParishGroup::where('id', $nu['parishsold'])->first();
                 $nu['parishsold'] = $parish->name . ', ';
             }else{
                 $nu['parishsold'] = '';
@@ -109,7 +109,7 @@ class RaoHonPhoiNuController extends Controller
             }
             
             if($nu->parishs != ''){
-                $parish = Parish::where('id', $nu['parishs'])->first();
+                $parish = ParishGroup::where('id', $nu['parishs'])->first();
                 $nu['parishs'] = $parish->name . ', ';
             }else{
                 $nu['parishs'] = '';
@@ -140,7 +140,7 @@ class RaoHonPhoiNuController extends Controller
             }
             
             if($nu->parishsbefore != ''){
-                $parish = Parish::where('id', $nu['parishsbefore'])->first();
+                $parish = ParishGroup::where('id', $nu['parishsbefore'])->first();
                 $nu['parishsbefore'] = $parish->name . ', ';
             }else{
                 $nu['parishsbefore'] = '';
@@ -225,7 +225,7 @@ class RaoHonPhoiNuController extends Controller
                 }
             }
             if($nam->parishsold != ''){
-                $parish = Parish::where('id', $nam['parishsold'])->first();
+                $parish = ParishGroup::where('id', $nam['parishsold'])->first();
                 $nam['parishsold'] = $parish->name . ', ';
             }else{
                 $nam['parishsold'] = '';
@@ -250,7 +250,7 @@ class RaoHonPhoiNuController extends Controller
             }
             
             if($nam->parishs != ''){
-                $parish = Parish::where('id', $nam['parishs'])->first();
+                $parish = ParishGroup::where('id', $nam['parishs'])->first();
                 $nam['parishs'] = $parish->name . ', ';
             }else{
                 $nam['parishs'] = '';
@@ -275,7 +275,7 @@ class RaoHonPhoiNuController extends Controller
             }
             
             if($nam->parishsbefore != ''){
-                $parish = Parish::where('id', $nam['parishsbefore'])->first();
+                $parish = ParishGroup::where('id', $nam['parishsbefore'])->first();
                 $nam['parishsbefore'] = $parish->name . ', ';
             }else{
                 $nam['parishsbefore'] = '';

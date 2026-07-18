@@ -23,7 +23,7 @@ use Illuminate\Support\Facades\DB;
 use App\Models\Marriage;
 use App\Models\Priest;
 use App\Models\Child;
-use App\Models\Parish;
+use App\Models\ParishGroup;
 use Maatwebsite\Excel\Concerns\WithStyles;
 use Maatwebsite\Excel\Concerns\ShouldAutoSize;
 use Maatwebsite\Excel\Concerns\WithEvents;
@@ -345,7 +345,7 @@ class SoGiaDinhExport implements FromCollection, WithTitle, WithMapping, WithHea
                 $family['province'] = '';
             }        
             if($family->paid != ''){
-                $parish = Parish::where('id', $family['paid'])->first();
+                $parish = ParishGroup::where('id', $family['paid'])->first();
                 $family['paid'] = 'Giáo họ ' . $parish->name . ', ';
             }else{
                 $family['paid'] = '';

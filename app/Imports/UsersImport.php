@@ -26,7 +26,6 @@ use Throwable;
 use App\Models\Diocese;
 use App\Models\Deanery;
 use App\Models\ParishManagement;
-use App\Models\Parish;
 use App\Imports\FirstSheetImport;
 
 class UsersImport implements WithMultipleSheets, WithHeadingRow, SkipsOnError, WithValidation, SkipsOnFailure, WithChunkReading, ShouldQueue, WithEvents

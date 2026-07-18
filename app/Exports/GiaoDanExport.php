@@ -122,7 +122,7 @@ class GiaoDanExport implements FromCollection, WithHeadings, WithTitle, ShouldAu
             if(!empty($decen) AND $decen->parish == 1){
                 if($_POST['giaophan'] == $parishioners->did AND  $_POST['giaohat'] == $parishioners->deid AND $_POST['giaoxu'] == $parishioners->pid){
                     if(!empty($parishioners->paid)){
-                        $paid = DB::table('parishs')
+                        $paid = DB::table('parish_groups')
                         ->where('status', '1')
                         ->where('id', $parishioners->paid)
                         ->orderBy('id', 'ASC')

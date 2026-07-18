@@ -142,7 +142,7 @@ class LopExport implements FromCollection, WithHeadingRow, WithHeadings, WithTit
                 if($_POST['giaophan'] == $hocsinh->did AND  $_POST['giaohat'] == $hocsinh->deid AND $_POST['giaoxu'] == $hocsinh->pid){
                     $this->rowNumber++;
                     if(!empty($hocsinh->paid)){
-                        $paid = DB::table('parishs')
+                        $paid = DB::table('parish_groups')
                         ->where('status', '1')
                         ->where('id', $hocsinh->paid)
                         ->orderBy('id', 'ASC')
