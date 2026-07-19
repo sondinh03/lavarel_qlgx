@@ -18,34 +18,28 @@
                 icon-type="students" />
 
             {{-- Hướng dẫn + download template --}}
-            <div class="px-4 lg:px-6 py-4 mac-hairline-b bg-amber-50/50">
-                <div class="flex items-start gap-3">
-                    <svg class="w-5 h-5 text-amber-500 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
-                    <div class="flex-1 text-sm text-amber-800">
-                        <p class="font-semibold mb-1">Yêu cầu file Excel</p>
-                        <p>File phải có các cột (theo thứ tự không quan trọng, tên cột phải khớp chính xác):</p>
-                        <div class="mt-2 flex flex-wrap gap-2">
-                            @foreach(['ho_ten_dem', 'ten', 'ngay_sinh', 'gioi_tinh'] as $col)
-                            <code class="px-2 py-0.5 bg-amber-100 text-amber-900 rounded text-xs font-mono">{{ $col }}</code>
-                            @endforeach
-                            @foreach(['ten_thanh', 'giao_ho', 'ho_ten_bo', 'ho_ten_me', 'so_dien_thoai', 'email', 'ghi_chu'] as $col)
-                            <code class="px-2 py-0.5 bg-white/70 text-amber-800 border border-amber-200 rounded text-xs font-mono">{{ $col }}</code>
-                            @endforeach
-                        </div>
-                        <p class="mt-2 text-xs text-amber-700">
-                            • <strong>gioi_tinh</strong>: nam / nữ (hoặc male / female)<br>
-                            • <strong>ngay_sinh</strong>: định dạng dd/mm/yyyy<br>
-                            • <strong>ten_thanh</strong>, <strong>giao_ho</strong>: phải khớp tên trong hệ thống (nếu không khớp sẽ bỏ trống)<br>
-                            • <strong>so_dien_thoai</strong>: 9–11 chữ số<br>
-                            • <strong>email</strong>: định dạng email hợp lệ<br>
-                            • Các cột viền trắng là tùy chọn
-                        </p>
+            <div class="px-4 lg:px-6 py-4 mac-hairline-b space-y-3">
+                <x-inline-tip tone="amber">
+                    <p class="font-semibold mb-1 text-sm">Yêu cầu file Excel</p>
+                    <p class="text-amber-800/90">File phải có các cột (thứ tự không quan trọng, tên cột khớp chính xác):</p>
+                    <div class="mt-2 flex flex-wrap gap-2">
+                        @foreach(['ho_ten_dem', 'ten', 'ngay_sinh', 'gioi_tinh'] as $col)
+                        <code class="px-2 py-0.5 bg-amber-100 text-amber-900 rounded text-xs font-mono">{{ $col }}</code>
+                        @endforeach
+                        @foreach(['ten_thanh', 'giao_ho', 'ho_ten_bo', 'ho_ten_me', 'so_dien_thoai', 'email', 'ghi_chu'] as $col)
+                        <code class="px-2 py-0.5 bg-white/70 text-amber-800 border border-amber-200 rounded text-xs font-mono">{{ $col }}</code>
+                        @endforeach
                     </div>
+                    <p class="mt-2 text-amber-800/90">
+                        • <strong>gioi_tinh</strong>: nam / nữ (hoặc male / female)<br>
+                        • <strong>ngay_sinh</strong>: định dạng dd/mm/yyyy<br>
+                        • <strong>ten_thanh</strong>, <strong>giao_ho</strong>: phải khớp tên trong hệ thống (nếu không khớp sẽ bỏ trống)<br>
+                        • <strong>so_dien_thoai</strong>: 9–11 chữ số<br>
+                        • <strong>email</strong>: định dạng email hợp lệ<br>
+                        • Các cột viền trắng là tùy chọn
+                    </p>
                     <a href="{{ asset('templates/student_import_template.xlsx') }}?v={{ filemtime(public_path('templates/student_import_template.xlsx')) }}"
-                        class="flex-shrink-0 inline-flex items-center gap-1.5 px-3 py-2
+                        class="mt-3 inline-flex items-center gap-1.5 px-3 py-2
                                bg-amber-100 hover:bg-amber-200 text-amber-800 text-xs font-semibold
                                rounded-lg transition shadow-mac-sm">
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -54,7 +48,13 @@
                         </svg>
                         Tải file mẫu
                     </a>
-                </div>
+                </x-inline-tip>
+
+                @if(!$selectedLop)
+                <x-inline-tip>
+                    <strong>Bước 1 bắt buộc:</strong> chọn lớp ở bên dưới trước khi upload. Chưa chọn lớp thì không thể tải file.
+                </x-inline-tip>
+                @endif
             </div>
 
             <div class="p-4 lg:p-6 space-y-5">

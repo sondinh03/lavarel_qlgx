@@ -18,30 +18,24 @@
                 icon-type="students" />
 
             {{-- Hướng dẫn + download template --}}
-            <div class="px-4 lg:px-6 py-4 mac-hairline-b bg-amber-50/50">
-                <div class="flex items-start gap-3">
-                    <svg class="w-5 h-5 text-amber-500 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
-                    <div class="flex-1 text-sm text-amber-800">
-                        <p class="font-semibold mb-1">Yêu cầu file Excel</p>
-                        <p>File phải có các cột (tên cột phải khớp chính xác):</p>
-                        <div class="mt-2 flex flex-wrap gap-2">
-                            @foreach(['ten_thanh', 'ho_ten', 'ngay_sinh', 'gioi_tinh', 'email', 'so_dien_thoai', 'giao_ho', 'tao_tai_khoan'] as $col)
-                            <code class="px-2 py-0.5 bg-amber-100 text-amber-900 rounded text-xs font-mono">{{ $col }}</code>
-                            @endforeach
-                        </div>
-                        <p class="mt-2 text-xs text-amber-700">
-                            • <strong>Bắt buộc</strong>: ho_ten, so_dien_thoai<br>
-                            • <strong>gioi_tinh</strong>: nam / nữ<br>
-                            • <strong>ngay_sinh</strong>: định dạng dd/mm/yyyy<br>
-                            • <strong>tao_tai_khoan</strong>: có / không<br>
-                            • <strong>ten_thanh</strong>, <strong>giao_ho</strong>: phải khớp tên trong hệ thống (nếu không khớp sẽ bỏ trống)
-                        </p>
+            <div class="px-4 lg:px-6 py-4 mac-hairline-b space-y-3">
+                <x-inline-tip tone="amber">
+                    <p class="font-semibold mb-1 text-sm">Yêu cầu file Excel</p>
+                    <p class="text-amber-800/90">File phải có các cột (tên cột phải khớp chính xác):</p>
+                    <div class="mt-2 flex flex-wrap gap-2">
+                        @foreach(['ten_thanh', 'ho_ten', 'ngay_sinh', 'gioi_tinh', 'email', 'so_dien_thoai', 'giao_ho', 'tao_tai_khoan'] as $col)
+                        <code class="px-2 py-0.5 bg-amber-100 text-amber-900 rounded text-xs font-mono">{{ $col }}</code>
+                        @endforeach
                     </div>
+                    <p class="mt-2 text-amber-800/90">
+                        • <strong>Bắt buộc</strong>: ho_ten, so_dien_thoai<br>
+                        • <strong>gioi_tinh</strong>: nam / nữ<br>
+                        • <strong>ngay_sinh</strong>: định dạng dd/mm/yyyy<br>
+                        • <strong>tao_tai_khoan</strong>: có / không<br>
+                        • <strong>ten_thanh</strong>, <strong>giao_ho</strong>: phải khớp tên trong hệ thống (nếu không khớp sẽ bỏ trống)
+                    </p>
                     <a href="{{ asset('templates/teacher_import_template.xlsx') }}"
-                        class="flex-shrink-0 inline-flex items-center gap-1.5 px-3 py-2
+                        class="mt-3 inline-flex items-center gap-1.5 px-3 py-2
                                bg-amber-100 hover:bg-amber-200 text-amber-800 text-xs font-semibold
                                rounded-lg transition shadow-mac-sm">
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -50,7 +44,7 @@
                         </svg>
                         Tải file mẫu
                     </a>
-                </div>
+                </x-inline-tip>
             </div>
 
             <div class="p-4 lg:p-6">

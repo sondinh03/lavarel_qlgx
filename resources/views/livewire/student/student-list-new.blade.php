@@ -128,7 +128,7 @@
             </div>
 
             {{-- Banner ngữ cảnh lớp / phạm vi xem --}}
-            <div class="px-4 lg:px-6 py-3 mac-hairline-b bg-slate-100/80 text-sm text-slate-700">
+            <div class="px-4 lg:px-6 py-3 mac-hairline-b bg-slate-50/80 text-sm text-slate-700">
                 @if($lop)
                     <span class="font-semibold text-slate-800">{{ $lop->gradeLevel->name ?? '—' }}</span>
                     <span class="text-slate-400 mx-1">·</span>
@@ -145,6 +145,15 @@
                     <span class="text-slate-500">— chọn lớp để ghi danh / export</span>
                 @endif
             </div>
+
+            @if(!$isCatechist && !$selectedLop)
+            <div class="px-4 lg:px-6 py-3 mac-hairline-b">
+                <x-inline-tip>
+                    Chọn <strong>lớp</strong> ở bộ lọc để bật nút <strong>Ghi danh</strong>
+                    (học sinh có sẵn · tạo mới · import giáo dân) hoặc Import Excel.
+                </x-inline-tip>
+            </div>
+            @endif
 
             @if($isCatechist)
         {{-- ══ CATECHIST: Card list ══ --}}
@@ -215,6 +224,18 @@
             @endif
 
             @else
+            @if($selectedLop && blank($search))
+            <x-stats.page-empty
+                :panel="false"
+                tone="primary"
+                title="Lớp chưa có học sinh"
+                description="Liên hệ quản trị giáo xứ để ghi danh học sinh vào lớp này.">
+                <x-slot name="icon">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+                        d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                </x-slot>
+            </x-stats.page-empty>
+            @else
             <x-stats.page-empty
                 :panel="false"
                 title="Không tìm thấy học sinh"
@@ -224,6 +245,7 @@
                         d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                 </x-slot>
             </x-stats.page-empty>
+            @endif
             @endif
         </div>
 
@@ -398,15 +420,36 @@
             @endif
         </div>
         @else
+        @if($selectedLop && blank($search))
+        <x-stats.page-empty
+            :panel="false"
+            tone="primary"
+            title="Lớp chưa có học sinh"
+            description="Bấm Ghi danh để thêm học sinh có sẵn, tạo mới, hoặc import giáo dân vào lớp này.">
+            <x-slot name="icon">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+                    d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+            </x-slot>
+            <x-button wire:click="openEnrollModal('existing')" variant="primary">
+                <x-icon name="user-plus" />
+                Ghi danh
+            </x-button>
+            <x-button as="a" :href="$this->importUrl" variant="outline">
+                <x-icon name="upload" />
+                Import Excel
+            </x-button>
+        </x-stats.page-empty>
+        @else
         <x-stats.page-empty
             :panel="false"
             title="Không tìm thấy học sinh"
-            description="Không có học sinh nào phù hợp với bộ lọc của bạn">
+            description="Không có học sinh nào phù hợp với bộ lọc của bạn. Thử đổi năm học, khối, lớp hoặc từ khóa tìm kiếm.">
             <x-slot name="icon">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
                     d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
             </x-slot>
         </x-stats.page-empty>
+        @endif
         @endif
         @endif
 
@@ -415,7 +458,7 @@
                 :panel="false"
                 tone="primary"
                 title="Vui lòng chọn năm học"
-                description="Chọn năm học ở bộ lọc phía trên để xem danh sách học sinh">
+                description="Chọn năm học ở bộ lọc phía trên để xem danh sách học sinh.">
                 <x-slot name="icon">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
                         d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />

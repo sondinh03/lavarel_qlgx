@@ -80,6 +80,8 @@ use App\Http\Livewire\Lop\LopDetail;
 use App\Http\Livewire\ModuleSelect;
 use App\Http\Livewire\NamHoc\CopyNamHoc;
 use App\Http\Livewire\NamHoc\NamHocManager;
+use App\Http\Livewire\NamHoc\NamHocSetupGuide;
+use App\Http\Livewire\Help\InstallAppGuide;
 use App\Http\Livewire\Parish\ParishChild;
 use App\Http\Livewire\Parish\ParishGroup;
 use App\Http\Livewire\Parish\ParishGroupManager;
@@ -229,6 +231,11 @@ Route::middleware('auth')->group(function () {
         Route::prefix('nam-hoc')->name('school-years.')->group(function () {
             Route::get('/', NamHocManager::class)->name('index');
             Route::get('/sao-che', CopyNamHoc::class)->name('copy');
+            Route::get('/huong-dan', NamHocSetupGuide::class)->name('guide');
+        });
+
+        Route::prefix('tro-giup')->name('help.')->group(function () {
+            Route::get('/cai-dat-dien-thoai', InstallAppGuide::class)->name('install-app');
         });
     });
 

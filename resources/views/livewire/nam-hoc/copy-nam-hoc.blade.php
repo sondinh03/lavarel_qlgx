@@ -6,7 +6,7 @@
         <x-breadcrumb :items="[
             ['label' => 'Dashboard', 'url' => route('parish-admin.dashboard')],
             ['label' => 'Quản lý năm học', 'url' => route('school-years.index')],
-            ['label' => 'Copy cấu trúc lớp'],
+            ['label' => 'Sao chép cấu trúc lớp'],
         ]" separator="arrow" />
 
         {{-- Toast --}}
@@ -59,10 +59,18 @@
         @if($step === 1)
         <x-mac-panel class="p-6 space-y-6">
             <div>
-                <h2 class="text-lg font-bold text-slate-900">Copy cấu trúc lớp</h2>
+                <h2 class="text-lg font-bold text-slate-900">Sao chép cấu trúc lớp</h2>
                 <p class="text-sm text-slate-500 mt-1">
-                    Tạo lại danh sách lớp cho năm mới. Xếp học sinh vào lớp ở bước sau.
+                    Chọn năm nguồn (đã có lớp) và năm đích (năm mới vừa tạo). Hệ thống sẽ tạo lại danh sách lớp; xếp học sinh ở bước sau.
                 </p>
+                <div class="mt-3">
+                    <x-inline-tip>
+                        Gợi ý: năm đích phải đã được tạo ở trang
+                        <a href="{{ route('school-years.index') }}" class="font-semibold underline hover:text-primary-900">Quản lý năm học</a>
+                        trước khi sao chép.
+                        <a href="{{ route('school-years.guide') }}" class="font-semibold underline hover:text-primary-900 ml-1">Cấu hình năm học mới →</a>
+                    </x-inline-tip>
+                </div>
             </div>
 
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
@@ -146,9 +154,9 @@
                 </div>
             </div>
             @else
-            <div class="border border-amber-200 bg-amber-50 rounded-xl px-4 py-3 text-sm text-amber-700">
+            <x-inline-tip tone="amber">
                 Năm nguồn chưa có lớp nào
-            </div>
+            </x-inline-tip>
             @endif
             @endif
 
@@ -204,9 +212,9 @@
                 </div>
             </div>
 
-            <div class="bg-amber-50 border-l-4 border-amber-400 rounded-xl p-4 text-sm text-amber-700">
+            <x-inline-tip tone="amber">
                 Lớp trùng tên trong năm đích sẽ bị bỏ qua. Thao tác không thể hoàn tác tự động.
-            </div>
+            </x-inline-tip>
 
             <div class="flex justify-between">
                 <x-action-button wire="backToSelectYear" variant="secondary" icon="arrow-left">

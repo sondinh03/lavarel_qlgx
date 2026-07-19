@@ -23,6 +23,7 @@
     <a href="#main-content" class="sr-only focus:not-sr-only">Bỏ qua tới nội dung</a>
 
     <div id="main-content" class="mx-auto max-w-7xl">
+
         <x-mac-panel :overflow="true">
             <x-page-header
                 title="Quản lý năm học"
@@ -37,10 +38,21 @@
                         debounce="500ms"
                         class="max-w-md" />
 
-                    <x-button wire:click="create" variant="primary">
-                        <x-icon name="plus" />
-                        Thêm năm học
-                    </x-button>
+                    <div class="flex flex-wrap items-center gap-2">
+                        @if($namHocs && $namHocs->count() > 0)
+                        <a href="{{ route('school-years.copy') }}"
+                            class="inline-flex items-center gap-2 px-4 py-2.5 text-sm font-semibold
+                                   text-slate-700 bg-white/80 hover:bg-white border border-black/[0.06]
+                                   rounded-xl transition shadow-mac-sm">
+                            <x-icon name="copy" />
+                            Sao chép cấu trúc lớp
+                        </a>
+                        @endif
+                        <x-button wire:click="create" variant="primary">
+                            <x-icon name="plus" />
+                            Thêm năm học
+                        </x-button>
+                    </div>
                 </div>
             </div>
 
@@ -132,7 +144,7 @@
                                         as="a"
                                         :href="route('school-years.copy', ['target' => $nh->id])"
                                         icon="copy">
-                                        Sao chép năm học
+                                        Sao chép cấu trúc lớp
                                     </x-dropdown-item>
 
                                     <div class="h-px bg-slate-100 my-1"></div>

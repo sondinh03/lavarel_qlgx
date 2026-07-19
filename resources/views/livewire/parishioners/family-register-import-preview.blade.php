@@ -18,36 +18,32 @@
                 icon-type="default">
             </x-page-header>
 
-            <div class="px-4 lg:px-6 py-4 mac-hairline-b bg-amber-50/50">
-                <div class="flex flex-col lg:flex-row lg:items-start gap-4">
-                    <div class="flex items-start gap-3 flex-1">
-                        <svg class="w-5 h-5 text-amber-500 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                        </svg>
-                        <div class="text-sm text-amber-800">
-                            <p class="font-semibold mb-1">Cấu trúc file Excel (2 sheet)</p>
-                            <p>Tên cột kỹ thuật ở <strong>dòng 5</strong>. Dữ liệu bắt đầu từ dòng 6.</p>
-                            <ul class="mt-2 text-xs space-y-1 list-disc list-inside">
+            <div class="px-4 lg:px-6 py-4 mac-hairline-b space-y-3">
+                <x-inline-tip tone="amber">
+                    <div class="flex flex-col lg:flex-row lg:items-start gap-4">
+                        <div class="flex-1">
+                            <p class="font-semibold mb-1 text-sm">Cấu trúc file Excel (2 sheet)</p>
+                            <p class="text-amber-800/90">Tên cột kỹ thuật ở <strong>dòng 5</strong>. Dữ liệu bắt đầu từ dòng 6.</p>
+                            <ul class="mt-2 space-y-1 list-disc list-inside text-amber-800/90">
                                 <li><strong>ho_gia_dinh</strong> — ma_ho_gia_dinh, ma_gia_dinh, ten_ho_gia_dinh, giao_ho, dia_chi, hôn phối (hon_phoi_*)…</li>
                                 <li><strong>thanh_vien</strong> — ma_thanh_vien, ma_ho_gia_dinh, vai_tro, ho, ten, hoi_doan, bí tích (rua_toi_*, ruoc_le_*, them_suc_*)</li>
                             </ul>
-                            <p class="mt-2 text-xs text-amber-700">
+                            <p class="mt-2 text-amber-800/90">
                                 • <strong>ma_ho_gia_dinh</strong> / <strong>ma_thanh_vien</strong> là mã tạm để liên kết giữa 2 sheet<br>
                                 • <strong>vai_tro</strong>: Chồng / Vợ / Con / Khác · <strong>gioi_tinh</strong>: Nam / Nữ<br>
                                 • Hôn phối điền trên sheet <strong>ho_gia_dinh</strong>; hệ thống suy ra cặp chồng–vợ từ vai trò thành viên<br>
                                 • Toàn bộ import chạy trong 1 transaction — lỗi sẽ rollback hết
                             </p>
                         </div>
+                        <a href="{{ route('parishioners.import.template') }}"
+                            class="flex-shrink-0 inline-flex items-center gap-1.5 px-3 py-2
+                                   bg-amber-100 hover:bg-amber-200 text-amber-800 text-xs font-semibold
+                                   rounded-lg transition shadow-mac-sm">
+                            <x-icon name="download" class="w-4 h-4" />
+                            Tải file mẫu
+                        </a>
                     </div>
-                    <a href="{{ route('parishioners.import.template') }}"
-                        class="flex-shrink-0 inline-flex items-center gap-1.5 px-3 py-2
-                               bg-amber-100 hover:bg-amber-200 text-amber-800 text-xs font-semibold
-                               rounded-lg transition shadow-mac-sm">
-                        <x-icon name="download" class="w-4 h-4" />
-                        Tải file mẫu
-                    </a>
-                </div>
+                </x-inline-tip>
             </div>
 
             <div class="p-4 lg:p-6">
