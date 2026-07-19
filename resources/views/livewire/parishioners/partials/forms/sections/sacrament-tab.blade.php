@@ -4,8 +4,8 @@
     </div>
 
     @foreach($groupedPendingSacraments as $type => $group)
-    <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden" wire:key="pending-group-{{ $type }}">
-        <div class="flex items-center justify-between px-5 py-3 bg-slate-50 border-b border-slate-200">
+    <x-mac-panel :overflow="true" wire:key="pending-group-{{ $type }}">
+        <div class="flex items-center justify-between px-5 py-3 bg-slate-50/70 mac-hairline-b">
             <div class="flex items-center gap-2">
                 <span class="text-sm font-semibold text-slate-900">{{ $group['label'] }}</span>
                 @if(count($group['records']) > 0)
@@ -81,11 +81,12 @@
         @else
         <div class="px-5 py-4 text-sm text-slate-500 italic">Chưa có thông tin</div>
         @endif
-    </div>
+    </x-mac-panel>
     @endforeach
 
     @if($showSacramentForm)
-    <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 space-y-5">
+    <x-mac-panel :overflow="true">
+        <div class="p-6 space-y-5">
         <h4 class="text-sm font-semibold text-slate-900">
             {{ $editingSacramentIndex !== null ? 'Cập nhật bí tích trong danh sách' : 'Thêm bí tích vào danh sách' }}
         </h4>
@@ -94,7 +95,7 @@
 
         <div class="flex justify-end gap-3">
             <button type="button" wire:click="closeSacramentForm"
-                class="px-4 py-2 text-sm text-slate-600 bg-white border border-slate-300 rounded-xl hover:bg-slate-50 transition">
+                class="px-4 py-2 text-sm text-slate-600 bg-white border border-black/[0.06] rounded-xl hover:bg-slate-50 transition shadow-mac-sm">
                 Hủy
             </button>
             <button type="button" wire:click="addPendingSacrament" wire:loading.attr="disabled"
@@ -105,6 +106,7 @@
                 <span wire:loading wire:target="addPendingSacrament">Đang xử lý...</span>
             </button>
         </div>
-    </div>
+        </div>
+    </x-mac-panel>
     @endif
 </div>

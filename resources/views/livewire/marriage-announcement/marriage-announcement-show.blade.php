@@ -32,72 +32,76 @@ $label = 'block text-xs font-semibold text-slate-500 mb-1.5 tracking-wide upperc
 ]" />
 @endsection
 
-<div class="min-h-screen bg-slate-50 p-2 sm:p-4 lg:p-6" style="min-height: calc(100vh - 56px - var(--bottom-offset));">
+<div class="min-h-screen bg-apple-gray p-2 sm:p-4 lg:p-6" style="min-height: calc(100vh - 56px - var(--bottom-offset));">
     <div class="mx-auto max-w-4xl space-y-5">
 
-        <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-4 lg:p-6">
-            <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
-                <div>
-                    <div class="flex items-center gap-2 flex-wrap">
-                        <h1 class="text-xl font-bold text-slate-900">{{ $item->name }}</h1>
-                        <span class="inline-flex px-2.5 py-0.5 rounded-full text-xs font-semibold {{ $item->status_badge }}">{{ $item->status_label }}</span>
-                    </div>
-                    <p class="text-sm text-slate-500 mt-2">
-                        Linh mục: <strong class="text-slate-700">{{ $item->assignedPriest?->name ?? '—' }}</strong>
-                    </p>
-                </div>
-                <div class="flex flex-wrap gap-2">
-                    @if($canManage)
-                    <x-button type="button" variant="outline" size="sm" wire:click="openGioiThieuHonPhoiModal">
-                        <x-icon name="download" class="w-4 h-4" />
-                        Giấy giới thiệu HP
-                    </x-button>
-                    <x-button as="a" href="{{ route('marriage-announcements.edit', $item->id) }}" variant="outline" size="sm">Sửa</x-button>
-                    @endif
-                    @if($canCreateMarriage)
-                    <x-button as="a" href="{{ route('marriage-announcements.create-marriage', $item->id) }}" variant="primary" size="sm">
-                        Tạo hôn phối chính thức
-                    </x-button>
-                    @endif
-                </div>
-            </div>
-        </div>
-
-        <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-4 lg:p-6">
-            <h2 class="text-sm font-semibold text-slate-800 mb-4">Lịch rao (3 lần)</h2>
-            <div class="space-y-4">
-                @foreach($dates as $i => $step)
-                <div class="flex items-center gap-4">
-                    <div class="w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold flex-shrink-0
-                        {{ $step['done'] ? 'bg-emerald-100 text-emerald-700' : ($step['value'] ? 'bg-amber-100 text-amber-700' : 'bg-slate-100 text-slate-400') }}">
-                        {{ $i + 1 }}
-                    </div>
+        <x-mac-panel :overflow="true">
+            <div class="p-4 lg:p-6">
+                <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
                     <div>
-                        <p class="text-sm font-medium text-slate-800">{{ $step['label'] }}</p>
-                        <p class="text-sm text-slate-500">
-                            @if($formatted = $formatStepDate($step['value']))
-                            {{ $formatted }}
-                            @if($step['done'])
-                            <span class="text-emerald-600 text-xs ml-1 font-semibold">· Đã rao</span>
-                            @else
-                            <span class="text-amber-600 text-xs ml-1">· Chờ rao</span>
-                            @endif
-                            @else
-                            Chưa ghi nhận ngày
-                            @endif
+                        <div class="flex items-center gap-2 flex-wrap">
+                            <h1 class="text-xl font-bold text-slate-900">{{ $item->name }}</h1>
+                            <span class="inline-flex px-2.5 py-0.5 rounded-full text-xs font-semibold {{ $item->status_badge }}">{{ $item->status_label }}</span>
+                        </div>
+                        <p class="text-sm text-slate-500 mt-2">
+                            Linh mục: <strong class="text-slate-700">{{ $item->assignedPriest?->name ?? '—' }}</strong>
                         </p>
                     </div>
+                    <div class="flex flex-wrap gap-2">
+                        @if($canManage)
+                        <x-button type="button" variant="outline" size="sm" wire:click="openGioiThieuHonPhoiModal">
+                            <x-icon name="download" class="w-4 h-4" />
+                            Giấy giới thiệu HP
+                        </x-button>
+                        <x-button as="a" href="{{ route('marriage-announcements.edit', $item->id) }}" variant="outline" size="sm">Sửa</x-button>
+                        @endif
+                        @if($canCreateMarriage)
+                        <x-button as="a" href="{{ route('marriage-announcements.create-marriage', $item->id) }}" variant="primary" size="sm">
+                            Tạo hôn phối chính thức
+                        </x-button>
+                        @endif
+                    </div>
                 </div>
-                @endforeach
             </div>
-        </div>
+        </x-mac-panel>
+
+        <x-mac-panel :overflow="true">
+            <div class="p-4 lg:p-6">
+                <h2 class="text-sm font-semibold text-slate-800 mb-4">Lịch rao (3 lần)</h2>
+                <div class="space-y-4">
+                    @foreach($dates as $i => $step)
+                    <div class="flex items-center gap-4">
+                        <div class="w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold flex-shrink-0
+                            {{ $step['done'] ? 'bg-emerald-100 text-emerald-700' : ($step['value'] ? 'bg-amber-100 text-amber-700' : 'bg-slate-100 text-slate-400') }}">
+                            {{ $i + 1 }}
+                        </div>
+                        <div>
+                            <p class="text-sm font-medium text-slate-800">{{ $step['label'] }}</p>
+                            <p class="text-sm text-slate-500">
+                                @if($formatted = $formatStepDate($step['value']))
+                                {{ $formatted }}
+                                @if($step['done'])
+                                <span class="text-emerald-600 text-xs ml-1 font-semibold">· Đã rao</span>
+                                @else
+                                <span class="text-amber-600 text-xs ml-1">· Chờ rao</span>
+                                @endif
+                                @else
+                                Chưa ghi nhận ngày
+                                @endif
+                            </p>
+                        </div>
+                    </div>
+                    @endforeach
+                </div>
+            </div>
+        </x-mac-panel>
 
         @foreach([
             ['participant' => $groom, 'title' => 'Bên nam'],
             ['participant' => $bride, 'title' => 'Bên nữ'],
         ] as $block)
-        <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
-            <div class="px-4 py-3 border-b border-slate-100 bg-slate-50/80">
+        <x-mac-panel :overflow="true">
+            <div class="px-4 py-3 mac-hairline-b bg-slate-50/80">
                 <h2 class="text-sm font-semibold text-slate-800">{{ $block['title'] }}</h2>
             </div>
             <div class="p-4 space-y-3">
@@ -122,7 +126,7 @@ $label = 'block text-xs font-semibold text-slate-500 mb-1.5 tracking-wide upperc
                 @foreach(['current' => 'Hiện tại', 'old' => 'Gốc', 'before' => 'Trước đó'] as $prefix => $prefixLabel)
                 @php $labels = $block['participant']->parishGroupLabels($prefix); @endphp
                 @if(array_filter($labels))
-                <div class="text-xs text-slate-600 pt-2 border-t border-slate-100">
+                <div class="text-xs text-slate-600 pt-2 mac-hairline-t">
                     <p class="font-semibold text-slate-500 mb-1">{{ $prefixLabel }}</p>
                     <p>{{ implode(' · ', array_filter([$labels['diocese'], $labels['deanery'], $labels['management'], $labels['parish']])) }}</p>
                 </div>
@@ -130,7 +134,7 @@ $label = 'block text-xs font-semibold text-slate-500 mb-1.5 tracking-wide upperc
                 @endforeach
                 @endif
             </div>
-        </div>
+        </x-mac-panel>
         @endforeach
 
     </div>
@@ -141,7 +145,7 @@ $label = 'block text-xs font-semibold text-slate-500 mb-1.5 tracking-wide upperc
         <div class="bg-white/90 backdrop-blur-xl rounded-2xl border border-black/[0.06] shadow-mac
             w-full max-w-2xl max-h-[90vh] flex flex-col overflow-hidden"
             wire:click.stop>
-            <div class="flex-shrink-0 px-6 py-5 border-b border-black/[0.06]">
+            <div class="flex-shrink-0 px-6 py-5 mac-hairline-b">
                 <h2 class="text-xl font-bold text-slate-900">Xuất giấy giới thiệu hôn phối</h2>
                 <p class="text-sm text-slate-500 mt-1">
                     Điền từ hồ sơ rao. Chọn đương sự (bên được giới thiệu), kiểm tra thông tin rồi xuất.
@@ -280,7 +284,7 @@ $label = 'block text-xs font-semibold text-slate-500 mb-1.5 tracking-wide upperc
                 </div>
             </div>
 
-            <div class="flex-shrink-0 px-6 py-4 border-t border-black/[0.06] bg-slate-50/70 flex justify-end gap-3">
+            <div class="flex-shrink-0 px-6 py-4 mac-hairline-t bg-slate-50/70 flex justify-end gap-3">
                 <x-button type="button" variant="outline" wire:click="$set('showGioiThieuHonPhoiModal', false)">Hủy</x-button>
                 <x-button type="button" variant="primary"
                     wire:click="exportGioiThieuHonPhoi"

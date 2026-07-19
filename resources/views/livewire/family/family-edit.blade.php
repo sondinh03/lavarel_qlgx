@@ -6,14 +6,13 @@
 ]" />
 @endsection
 
-<div class="min-h-screen bg-slate-50 p-2 sm:p-4 lg:p-6" style="min-height: calc(100vh - 56px - var(--bottom-offset));">
+<div class="min-h-screen bg-apple-gray p-2 sm:p-4 lg:p-6" style="min-height: calc(100vh - 56px - var(--bottom-offset));">
     <a href="#main-content" class="sr-only focus:not-sr-only">Bỏ qua tới nội dung</a>
 
     <div id="main-content" class="max-w-4xl mx-auto space-y-6">
 
-        <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+        <x-mac-panel :overflow="true">
             <x-page-header
-                class="rounded-t-2xl"
                 :title="$isEdit ? 'Chỉnh sửa gia đình' : 'Thêm gia đình mới'"
                 :description="$isEdit ? 'Cập nhật thông tin gia đình trong giáo xứ' : 'Tạo hồ sơ gia đình mới'"
                 icon-type="default">
@@ -26,20 +25,18 @@
                 </x-slot>
                 @endif
             </x-page-header>
-        </div>
 
         @if($isLoading)
-        {{-- Loading state --}}
-        <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-12">
-            <div class="flex items-center justify-center">
-                <div class="w-8 h-8 border-4 border-primary-200 border-t-primary-500 rounded-full animate-spin"></div>
+            <div class="p-12">
+                <div class="flex items-center justify-center">
+                    <div class="w-8 h-8 border-4 border-primary-200 border-t-primary-500 rounded-full animate-spin"></div>
+                </div>
             </div>
-        </div>
         @else
 
         {{-- Error summary --}}
         @if($errors->any())
-        <div class="bg-red-50 border border-red-200 rounded-2xl p-5">
+        <div class="mx-4 lg:mx-6 mt-4 bg-red-50 border border-red-200 rounded-2xl p-5">
             <div class="flex items-start gap-3">
                 <x-icon name="alert-circle" class="w-5 h-5 text-red-500 flex-shrink-0 mt-0.5" />
                 <div>
@@ -54,9 +51,7 @@
         </div>
         @endif
 
-        {{-- Form --}}
-        <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
-            <div class="px-4 lg:px-6 py-4 border-b border-slate-200 bg-slate-50/70 overflow-x-auto">
+            <div class="px-4 lg:px-6 py-4 mac-hairline-b bg-slate-50/70 overflow-x-auto">
                 <div class="inline-flex rounded-xl bg-slate-200 p-1 text-sm font-medium">
                     <button type="button" wire:click="switchTab('info')"
                         class="px-4 py-2.5 rounded-lg transition-all {{ $activeTab === 'info' ? 'bg-white shadow-sm text-primary-600 font-semibold' : 'text-slate-600' }}">
@@ -212,7 +207,7 @@
 
                         {{-- Danh sách con --}}
                         @if(count($childrenIds) > 0)
-                        <div class="flex flex-wrap gap-2 mt-3 pt-3 border-t border-slate-200">
+                        <div class="flex flex-wrap gap-2 mt-3 pt-3 mac-hairline-t">
                             @foreach($childrenIds as $childId)
                             @php
                             $child = collect($parishionerOptions)->firstWhere('id', $childId);
@@ -239,11 +234,10 @@
             @endif
 
         </div>
-        </div>
 
         {{-- Sticky action bar --}}
-        <div class="sticky bottom-[calc(var(--bottom-offset)+12px)] z-30">
-            <div class="bg-white/90 backdrop-blur rounded-2xl border border-slate-200 shadow-lg p-4">
+        <div class="sticky bottom-[calc(var(--bottom-offset)+12px)] z-30 px-4 lg:px-6 pb-4">
+            <div class="bg-white/90 backdrop-blur rounded-2xl border border-black/[0.06] shadow-mac p-4">
                 <div class="flex flex-col-reverse sm:flex-row items-stretch sm:items-center justify-end gap-3">
                     <x-button wire:click="cancel" variant="secondary">
                         Hủy
@@ -257,6 +251,7 @@
         </div>
 
         @endif
+        </x-mac-panel>
     </div>
 </div>
 

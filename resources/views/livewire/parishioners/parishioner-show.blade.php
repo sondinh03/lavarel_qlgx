@@ -20,25 +20,25 @@
 <x-breadcrumb :items="$crumbItems" />
 @endsection
 
-<div class="min-h-screen bg-slate-50 p-2 sm:p-4 lg:p-6" style="min-height: calc(100vh - 56px - var(--bottom-offset));">
+<div class="min-h-screen bg-apple-gray p-2 sm:p-4 lg:p-6" style="min-height: calc(100vh - 56px - var(--bottom-offset));">
     <a href="#main-content" class="sr-only focus:not-sr-only">Bỏ qua tới nội dung</a>
 
     <div id="main-content" class="mx-auto max-w-7xl space-y-6">
 
-        <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+        <x-mac-panel :overflow="true">
 
             {{-- Profile summary --}}
-            <div class="p-4 lg:p-6 border-b border-slate-200">
+            <div class="p-4 lg:p-6 mac-hairline-b bg-white/40">
                 <div class="flex flex-col sm:flex-row gap-4 sm:items-start justify-between">
                     <div class="flex items-start gap-4 flex-1 min-w-0">
                         @if($parishioner->avatar_path)
                         <img src="{{ $parishioner->avatar_url }}"
                             alt="{{ $parishioner->full_name }}"
-                            class="w-20 h-20 rounded-2xl object-cover shadow-sm ring-4 ring-primary-50 flex-shrink-0">
+                            class="w-20 h-20 rounded-2xl object-cover shadow-mac-sm ring-4 ring-primary-50/80 flex-shrink-0">
                         @else
                         <div class="w-20 h-20 rounded-2xl bg-gradient-to-br from-primary-500 to-primary-700
                             text-white flex items-center justify-center text-2xl font-bold
-                            shadow-sm ring-4 ring-primary-50 flex-shrink-0">
+                            shadow-mac-sm ring-4 ring-primary-50/80 flex-shrink-0">
                             {{ mb_substr($parishioner->full_name, 0, 1, 'UTF-8') }}
                         </div>
                         @endif
@@ -141,7 +141,7 @@
             </div>
 
             {{-- Tabs --}}
-            <div class="px-4 lg:px-6 py-4 border-b border-slate-200 bg-slate-50/70 overflow-x-auto">
+            <div class="px-4 lg:px-6 py-4 mac-hairline-b bg-slate-50/70 overflow-x-auto">
                 <div class="inline-flex w-max max-w-full rounded-xl bg-slate-200 p-1 text-sm font-medium">
                     @foreach([
                         'basic' => 'Cơ bản & Địa chỉ',
@@ -154,7 +154,7 @@
                     <button wire:click="goToTab('{{ $tab }}')" type="button"
                         class="inline-flex items-center justify-center gap-2 px-3 sm:px-4 py-2.5 rounded-lg transition-all whitespace-nowrap
                             {{ $activeTab === $tab
-                                ? 'bg-white shadow-sm text-primary-600 font-semibold'
+                                ? 'bg-white shadow-mac-sm text-primary-600 font-semibold'
                                 : 'text-slate-600 hover:text-primary-600 hover:bg-white/50' }}">
                         {{ $label }}
                         @if($tab === 'deceased' && $parishioner->is_deceased)
@@ -181,14 +181,14 @@
                     @include('livewire.parishioners.partials.show.tab-deceased')
                 @endif
             </div>
-        </div>
+        </x-mac-panel>
     </div>
 
     @include('livewire.parishioners.partials.modals.edit-modals')
 
     @if($showDeleteConfirm)
     <div class="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4">
-        <div class="bg-white rounded-2xl shadow-xl w-full max-w-md p-6 space-y-4">
+        <div class="bg-white/90 backdrop-blur-xl rounded-2xl border border-black/[0.06] shadow-mac w-full max-w-md p-6 space-y-4">
             <h3 class="font-bold text-slate-900">Xóa giáo dân?</h3>
             <p class="text-sm text-slate-500">Bạn có chắc muốn xóa <strong>{{ $parishioner->full_name_with_saint }}</strong>?</p>
             <div class="flex justify-end gap-3">

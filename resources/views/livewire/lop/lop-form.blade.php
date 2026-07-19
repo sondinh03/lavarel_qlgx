@@ -1,4 +1,5 @@
-<div class="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 p-4 sm:p-6">
+<div class="min-h-screen bg-apple-gray p-2 sm:p-4 lg:p-6"
+    style="min-height: calc(100vh - 56px - var(--bottom-offset));">
     <div class="mx-auto max-w-4xl space-y-5">
 
         {{-- Skip link --}}
@@ -34,7 +35,7 @@
 
         {{-- FORM --}}
         <form wire:submit.prevent="save" id="main-content">
-            <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+            <x-mac-panel :overflow="true">
 
                 {{-- ===== Thông tin cơ bản ===== --}}
                 <div class="p-6">
@@ -126,7 +127,7 @@
                 </div>
 
                 {{-- ===== Phân công giáo lý viên ===== --}}
-                <div class="p-6 border-t border-slate-200">
+                <div class="p-6 mac-hairline-t">
                     <h3 class="text-sm font-bold text-slate-900 mb-4 flex items-center gap-2">
                         <svg class="w-4 h-4 text-primary-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -172,7 +173,7 @@
                 </div>
 
                 {{-- ===== Ghi chú ===== --}}
-                <div class="p-6 border-t border-slate-200">
+                <div class="p-6 mac-hairline-t">
                     <h3 class="text-sm font-bold text-slate-900 mb-4 flex items-center gap-2">
                         <svg class="w-4 h-4 text-primary-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -190,7 +191,7 @@
                 </div>
 
                 {{-- ===== Footer ===== --}}
-                <div class="px-6 py-4 bg-slate-50 border-t border-slate-200">
+                <div class="px-6 py-4 bg-white/30 mac-hairline-t">
                     <div class="flex flex-col sm:flex-row justify-end gap-3">
                         <a href="{{ route('lop.index') }}"
                             class="px-6 py-2.5 bg-white border border-slate-300 rounded-xl
@@ -211,7 +212,7 @@
                     </div>
                 </div>
 
-            </div>
+            </x-mac-panel>
         </form>
     </div>
 </div>

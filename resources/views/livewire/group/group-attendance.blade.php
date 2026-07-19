@@ -8,7 +8,8 @@
 ]" separator="arrow" />
 @endsection
 
-<div class="min-h-screen bg-slate-50 p-2 sm:p-4 lg:p-6"
+<div class="min-h-screen bg-apple-gray p-2 sm:p-4 lg:p-6"
+    style="min-height: calc(100vh - 56px - var(--bottom-offset));"
     x-data="{
         records: {},
         draft: {},
@@ -108,8 +109,8 @@
         </div>
 
         {{-- Header Card --}}
-        <div class="bg-white rounded-2xl shadow-sm border border-slate-200">
-            <div class="p-6 border-b border-slate-200">
+        <x-mac-panel :overflow="true">
+            <div class="p-6 mac-hairline-b">
                 <div class="flex items-start justify-between gap-4">
                     <div>
                         <h1 class="text-xl font-bold text-slate-900">
@@ -158,7 +159,7 @@
             </div>
 
             {{-- Action bar --}}
-            <div class="px-6 py-3 bg-slate-50/70 flex items-center justify-between gap-3">
+            <div class="px-6 py-3 bg-white/30 flex items-center justify-between gap-3">
                 <button type="button" x-on:click="markAll()"
                     class="inline-flex items-center gap-2 px-3 py-1.5 text-sm font-semibold
                            text-green-700 bg-green-100 hover:bg-green-200 rounded-lg transition-colors">
@@ -209,14 +210,14 @@
                     </button>
                 </div>
             </div>
-        </div>
+        </x-mac-panel>
 
         {{-- Attendance Table --}}
         @if($members->count() > 0)
-        <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+        <x-mac-panel :overflow="true">
                 <div class="overflow-x-auto">
                     <table class="w-full border-separate border-spacing-0">
-                        <thead class="bg-slate-50 border-b border-slate-200">
+                        <thead class="bg-slate-50/50 mac-hairline-b">
                             <tr>
                                 <th class="px-4 py-3 text-left text-xs font-bold text-slate-500 uppercase w-10">#</th>
                                 <th class="px-4 py-3 text-left text-xs font-bold text-slate-500 uppercase">
@@ -341,7 +342,7 @@
                 </div>
 
                 {{-- Legend --}}
-                <div class="px-6 py-3 border-t border-slate-100 bg-slate-50">
+                <div class="px-6 py-3 mac-hairline-t bg-slate-50/50">
                     <div class="flex items-center gap-4 flex-wrap text-xs text-slate-500">
                         <span class="flex items-center gap-1.5">
                             <span class="w-6 h-6 rounded-lg bg-green-500 flex items-center justify-center">
@@ -371,7 +372,7 @@
                         </span>
                     </div>
                 </div>
-        </div>
+        </x-mac-panel>
 
         @else
         <x-stats.page-empty
@@ -386,7 +387,7 @@
         @endif
 
         {{-- Mobile sticky save bar --}}
-        <div class="lg:hidden fixed left-0 right-0 z-20 bg-white border-t border-slate-200 shadow-lg px-4"
+        <div class="lg:hidden fixed left-0 right-0 z-20 bg-white mac-hairline-t shadow-lg px-4"
             style="bottom: calc(env(safe-area-inset-bottom) + 60px); padding-top:12px; padding-bottom:12px;">
             <div class="flex items-center gap-3 max-w-7xl mx-auto">
                 <button type="button"
@@ -450,7 +451,7 @@
             </div>
 
             {{-- Header desktop --}}
-            <div class="hidden lg:flex items-center justify-between px-5 py-4 border-b border-slate-200">
+            <div class="hidden lg:flex items-center justify-between px-5 py-4 mac-hairline-b">
                 <div>
                     <h3 class="font-semibold text-slate-900">Vắng có phép</h3>
                     <p class="text-sm text-slate-500 mt-0.5" x-text="noteModal.memberName"></p>

@@ -5,7 +5,8 @@
             ['label' => 'Quản lý nhóm'],
         ]" />
 @endsection
-<div class="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 p-4 sm:p-6"
+<div class="min-h-screen bg-apple-gray p-2 sm:p-4 lg:p-6"
+    style="min-height: calc(100vh - 56px - var(--bottom-offset));"
     x-data="{ showForm: false }"
     x-init="
         const register = () => {
@@ -22,7 +23,7 @@
     <div id="main-content" class="mx-auto max-w-7xl space-y-5">
 
         {{-- Main Card --}}
-        <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+        <x-mac-panel :overflow="true">
             <x-page-header
                 title="Quản lý nhóm sinh hoạt"
                 description="Giáo lý viên, ca đoàn và các nhóm trong giáo xứ"
@@ -31,7 +32,7 @@
                 icon-type="group" />
 
             {{-- Actions Bar --}}
-            <div class="px-6 py-4 border-b border-slate-200 bg-slate-50/70">
+            <div class="px-6 py-4 mac-hairline-b bg-white/30">
                 <div class="flex flex-wrap items-center justify-between gap-3">
                     {{-- LEFT: Filters --}}
                     <div class="flex flex-wrap items-center gap-3">
@@ -58,14 +59,14 @@
                     </x-button>
                 </div>
             </div>
-        </div>
+        </x-mac-panel>
 
         {{-- Table --}}
-        <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+        <x-mac-panel :overflow="true">
             @if($groups->count() > 0)
             <div class="overflow-x-auto">
                 <table class="w-full border-separate border-spacing-0">
-                    <thead class="bg-slate-50 border-b border-slate-200">
+                    <thead class="bg-slate-50/50 mac-hairline-b">
                         <tr>
                             <x-table-header>STT</x-table-header>
                             <x-table-header>Tên nhóm</x-table-header>
@@ -190,7 +191,7 @@
 
             {{-- Pagination --}}
             @if($groups->hasPages())
-            <div class="px-6 py-4 border-t border-slate-200">
+            <div class="px-6 py-4 mac-hairline-t">
                 <x-pagination :paginator="$groups" :per-page-options="[10, 15, 25]" />
             </div>
             @endif
@@ -210,7 +211,7 @@
                 </x-button>
             </x-stats.page-empty>
             @endif
-        </div>
+        </x-mac-panel>
 
         {{-- Modal Form --}}
         <div
@@ -230,7 +231,7 @@
                 @click.stop>
 
                 {{-- Header --}}
-                <div class="flex-shrink-0 p-6 border-b border-slate-200 bg-gradient-to-br from-primary-50 to-white">
+                <div class="flex-shrink-0 p-6 mac-hairline-b bg-gradient-to-br from-primary-50 to-white">
                     <div class="flex items-start justify-between gap-4">
                         <div>
                             <h2 class="text-xl font-bold text-slate-900">
@@ -373,7 +374,7 @@
                 </div>
 
                 {{-- Footer --}}
-                <div class="flex-shrink-0 px-6 py-4 border-t border-slate-200 bg-slate-50
+                <div class="flex-shrink-0 px-6 py-4 mac-hairline-t bg-slate-50
                             flex justify-end gap-3">
                     <x-button variant="outline" @click="showForm = false; $wire.closeModal()">Hủy</x-button>
                     <x-button variant="primary" wire:click="save" :loading="true" loading-target="save">

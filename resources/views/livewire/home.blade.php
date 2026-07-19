@@ -1,11 +1,12 @@
-<div class="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 p-4 sm:p-6">
+<div class="min-h-screen bg-apple-gray p-2 sm:p-4 lg:p-6"
+    style="min-height: calc(100vh - 56px - var(--bottom-offset));">
 
     {{-- ========================================================= --}}
     {{-- HEADER: Chào + Năm học + Ngày                             --}}
     {{-- ========================================================= --}}
     <div class="mx-auto max-w-7xl space-y-5">
 
-        <div class="bg-white rounded-2xl shadow-sm border border-slate-200 px-6 py-5">
+        <x-mac-panel class="px-6 py-5">
             <div class="flex items-center justify-between">
                 <div>
                     <h1 class="text-2xl font-bold text-slate-900">
@@ -41,7 +42,7 @@
                     Làm mới
                 </button>
             </div>
-        </div>
+        </x-mac-panel>
 
         {{-- Toast --}}
         @if(session()->has('message'))
@@ -59,7 +60,7 @@
         {{-- TRƯỜNG HỢP: Chưa có năm học active                    --}}
         {{-- ===================================================== --}}
         @if(!$activeSchoolYear)
-        <div class="bg-amber-50 border border-amber-200 rounded-2xl p-8 text-center">
+        <x-mac-panel class="p-8 text-center">
             <svg class="mx-auto w-14 h-14 text-amber-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                     d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
@@ -75,7 +76,7 @@
                 </svg>
                 Thiết lập năm học
             </a>
-        </div>
+        </x-mac-panel>
 
         @else
 
@@ -85,7 +86,7 @@
         <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
 
             {{-- Học sinh — FIX: blue → primary --}}
-            <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-5">
+            <x-mac-panel class="p-5">
                 <div class="flex items-center justify-between">
                     <div>
                         <p class="text-xs font-medium text-slate-500 uppercase tracking-wide">Học sinh</p>
@@ -101,10 +102,10 @@
                     </div>
                 </div>
                 <p class="text-xs text-slate-400 mt-3">Đang theo học</p>
-            </div>
+            </x-mac-panel>
 
             {{-- Lớp học — semantic purple, giữ nguyên --}}
-            <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-5">
+            <x-mac-panel class="p-5">
                 <div class="flex items-center justify-between">
                     <div>
                         <p class="text-xs font-medium text-slate-500 uppercase tracking-wide">Lớp học</p>
@@ -120,10 +121,10 @@
                     </div>
                 </div>
                 <p class="text-xs text-slate-400 mt-3">Đang hoạt động</p>
-            </div>
+            </x-mac-panel>
 
             {{-- Giáo lý viên — semantic green, giữ nguyên --}}
-            <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-5">
+            <x-mac-panel class="p-5">
                 <div class="flex items-center justify-between">
                     <div>
                         <p class="text-xs font-medium text-slate-500 uppercase tracking-wide">Giáo lý viên</p>
@@ -139,10 +140,10 @@
                     </div>
                 </div>
                 <p class="text-xs text-slate-400 mt-3">Đang phân công</p>
-            </div>
+            </x-mac-panel>
 
             {{-- Điểm danh — semantic amber, giữ nguyên --}}
-            <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-5">
+            <x-mac-panel class="p-5">
                 <div class="flex items-center justify-between">
                     <div>
                         <p class="text-xs font-medium text-slate-500 uppercase tracking-wide">Điểm danh</p>
@@ -162,15 +163,15 @@
                     </div>
                 </div>
                 <p class="text-xs text-slate-400 mt-3">Tuần này</p>
-            </div>
+            </x-mac-panel>
         </div>
 
         {{-- ===================================================== --}}
         {{-- SECTION 2: VIỆC CẦN LÀM                              --}}
         {{-- ===================================================== --}}
         @if(count($todos) > 0)
-        <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
-            <div class="px-6 py-4 border-b border-slate-100 flex items-center justify-between">
+        <x-mac-panel :overflow="true">
+            <div class="px-6 py-4 mac-hairline-b flex items-center justify-between">
                 <div class="flex items-center gap-2">
                     <h2 class="text-base font-semibold text-slate-900">Việc cần làm</h2>
                     <span class="inline-flex items-center justify-center w-5 h-5 text-xs
@@ -180,10 +181,10 @@
                 </div>
             </div>
 
-            <div class="divide-y divide-slate-100">
+            <div class="divide-y divide-black/[0.04]">
                 @foreach($todos as $todo)
                 <div class="flex items-center justify-between px-6 py-4
-                            hover:bg-slate-50 transition-colors">
+                            hover:bg-black/[0.03] transition-colors">
                     <div class="flex items-center gap-3">
                         {{-- FIX: type warning giữ amber, type info đổi blue → primary --}}
                         @if($todo['type'] === 'warning')
@@ -216,10 +217,9 @@
                 </div>
                 @endforeach
             </div>
-        </div>
+        </x-mac-panel>
         @else
-        <div class="bg-green-50 border border-green-200 rounded-2xl px-6 py-4
-                    flex items-center gap-3">
+        <x-mac-panel class="px-6 py-4 flex items-center gap-3">
             <svg class="w-5 h-5 text-green-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                     d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -227,7 +227,7 @@
             <p class="text-sm font-medium text-green-800">
                 Mọi thứ đang ổn — không có việc cần xử lý ngay
             </p>
-        </div>
+        </x-mac-panel>
         @endif
 
         {{-- ===================================================== --}}
@@ -236,8 +236,8 @@
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-5">
 
             {{-- Điểm danh hôm nay --}}
-            <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
-                <div class="px-6 py-4 border-b border-slate-100">
+            <x-mac-panel :overflow="true">
+                <div class="px-6 py-4 mac-hairline-b">
                     <h2 class="text-base font-semibold text-slate-900">Điểm danh hôm nay</h2>
                     <p class="text-xs text-slate-400 mt-0.5">
                         Danh sách lớp học đang hoạt động
@@ -245,7 +245,7 @@
                 </div>
 
                 @if(count($todayAttendance) > 0)
-                <div class="divide-y divide-slate-100">
+                <div class="divide-y divide-black/[0.04]">
                     @foreach($todayAttendance as $item)
                     <div class="flex items-center justify-between px-6 py-3">
                         <div class="flex items-center gap-3">
@@ -280,7 +280,7 @@
                 </div>
 
                 @if(count($todayAttendance) >= 10)
-                <div class="px-6 py-3 border-t border-slate-100 text-center">
+                <div class="px-6 py-3 mac-hairline-t text-center">
                     <a href="{{ route('classes.index') }}"
                         class="text-sm text-primary-600 hover:text-primary-700 font-medium">
                         Xem tất cả lớp →
@@ -297,11 +297,11 @@
                     <p class="text-sm text-slate-400">Chưa có lớp nào</p>
                 </div>
                 @endif
-            </div>
+            </x-mac-panel>
 
             {{-- Học sinh theo khối --}}
-            <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
-                <div class="px-6 py-4 border-b border-slate-100">
+            <x-mac-panel :overflow="true">
+                <div class="px-6 py-4 mac-hairline-b">
                     <h2 class="text-base font-semibold text-slate-900">Học sinh theo khối</h2>
                     <div class="flex items-center gap-4 mt-1">
                         <span class="text-xs text-slate-400 flex items-center gap-1">
@@ -344,23 +344,23 @@
                     <p class="text-sm text-slate-400">Chưa có dữ liệu</p>
                 </div>
                 @endif
-            </div>
+            </x-mac-panel>
         </div>
 
         {{-- ===================================================== --}}
         {{-- SECTION 4: TRUY CẬP NHANH                            --}}
         {{-- FIX: Static class thay vì dynamic interpolation       --}}
         {{-- ===================================================== --}}
-        <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
-            <div class="px-6 py-4 border-b border-slate-100">
+        <x-mac-panel :overflow="true">
+            <div class="px-6 py-4 mac-hairline-b">
                 <h2 class="text-base font-semibold text-slate-900">Truy cập nhanh</h2>
             </div>
 
-            <div class="grid grid-cols-2 sm:grid-cols-4 gap-px bg-slate-100">
+            <div class="grid grid-cols-2 sm:grid-cols-4 gap-px bg-black/[0.04]">
 
                 {{-- Quản lý lớp — primary --}}
                 <a href="{{ route('classes.index') }}"
-                    class="flex flex-col items-center justify-center gap-2 py-6 bg-white
+                    class="flex flex-col items-center justify-center gap-2 py-6 bg-white/75
                            hover:bg-primary-50 transition-colors group">
                     <div class="w-10 h-10 bg-primary-100 rounded-xl flex items-center justify-center
                                 group-hover:bg-primary-200 transition-colors">
@@ -376,7 +376,7 @@
 
                 {{-- Học sinh — green semantic --}}
                 <a href="{{ route('students.index') }}"
-                    class="flex flex-col items-center justify-center gap-2 py-6 bg-white
+                    class="flex flex-col items-center justify-center gap-2 py-6 bg-white/75
                            hover:bg-green-50 transition-colors group">
                     <div class="w-10 h-10 bg-green-100 rounded-xl flex items-center justify-center
                                 group-hover:bg-green-200 transition-colors">
@@ -392,7 +392,7 @@
 
                 {{-- Giáo lý viên — purple semantic --}}
                 <a href="{{ route('catechists.index') }}"
-                    class="flex flex-col items-center justify-center gap-2 py-6 bg-white
+                    class="flex flex-col items-center justify-center gap-2 py-6 bg-white/75
                            hover:bg-purple-50 transition-colors group">
                     <div class="w-10 h-10 bg-purple-100 rounded-xl flex items-center justify-center
                                 group-hover:bg-purple-200 transition-colors">
@@ -408,7 +408,7 @@
 
                 {{-- Năm học — amber semantic --}}
                 <a href="{{ route('school-years.index') }}"
-                    class="flex flex-col items-center justify-center gap-2 py-6 bg-white
+                    class="flex flex-col items-center justify-center gap-2 py-6 bg-white/75
                            hover:bg-amber-50 transition-colors group">
                     <div class="w-10 h-10 bg-amber-100 rounded-xl flex items-center justify-center
                                 group-hover:bg-amber-200 transition-colors">
@@ -423,7 +423,7 @@
                 </a>
 
             </div>
-        </div>
+        </x-mac-panel>
 
         @endif {{-- end @if($activeSchoolYear) --}}
 

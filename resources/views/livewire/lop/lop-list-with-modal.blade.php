@@ -1,4 +1,6 @@
-<div class="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 p-4 sm:p-6" x-data="{ 
+<div class="min-h-screen bg-apple-gray p-2 sm:p-4 lg:p-6"
+    style="min-height: calc(100vh - 56px - var(--bottom-offset));"
+    x-data="{ 
     showModal: false,
     isEdit: false,
     formData: {
@@ -74,11 +76,11 @@
         </div>
 
         {{-- ===================== HEADER + FILTER ===================== --}}
-        <section class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+        <x-mac-panel :overflow="true">
 
             {{-- Header --}}
             <div class="flex items-start justify-between gap-4">
-                <div class="p-6 border-b border-slate-200 bg-gradient-to-br from-primary-50 to-white w-full">
+                <div class="p-6 mac-hairline-b bg-gradient-to-br from-primary-50 to-white w-full">
                     <div class="flex items-center justify-between gap-4">
                         <div class="flex items-center gap-4">
                             <div class="w-12 h-12 bg-primary-500 rounded-xl flex items-center justify-center shadow-sm">
@@ -124,7 +126,7 @@
             </div>
 
             {{-- Filter --}}
-            <div class="p-6 bg-slate-50">
+            <div class="p-6 bg-white/30 mac-hairline-t">
                 @livewire('class-filter-selector', [
                 'parish_id' => $parish_id,
                 'selectedNamHoc' => $selectedNamHoc,
@@ -136,10 +138,10 @@
                     wire-target="selectedNamHoc,selectedKhoi,resetFilters"
                     mode="inline" />
             </div>
-        </section>
+        </x-mac-panel>
 
         {{-- ===================== TABLE ===================== --}}
-        <section class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+        <x-mac-panel :overflow="true">
 
             <x-loading.overlay
                 wire-target="selectedNamHoc,selectedKhoi,resetFilters"
@@ -151,7 +153,7 @@
                 <table class="w-full border-separate border-spacing-0"
                     aria-label="Danh sách lớp học">
 
-                    <thead class="bg-slate-50 border-b border-slate-200">
+                    <thead class="bg-slate-50/50 mac-hairline-b">
                         <tr>
                             <x-table-header>STT</x-table-header>
                             <x-table-header>Mã lớp</x-table-header>
@@ -256,13 +258,13 @@
 
             {{-- Pagination --}}
             @if ($lops->hasPages())
-            <div class="border-t border-slate-200">
+            <div class="mac-hairline-t">
                 <x-pagination
                     :paginator="$lops"
                     :per-page-options="[10, 15, 25, 50]" />
             </div>
             @endif
-        </section>
+        </x-mac-panel>
 
     </main>
 
@@ -299,7 +301,7 @@
                 class="relative  w-[95vw] sm:w-[90vw] max-w-lg bg-white rounded-2xl shadow-2xl transform transition-all max-h-[90vh] flex flex-col">
 
                 {{-- Header --}}
-                <div class="sticky top-0 z-10 flex items-center justify-between px-6 py-4 border-b border-slate-200 bg-gradient-to-br from-primary-50 to-white rounded-t-2xl">
+                <div class="sticky top-0 z-10 flex items-center justify-between px-6 py-4 mac-hairline-b bg-gradient-to-br from-primary-50 to-white rounded-t-2xl">
                     <div class="flex items-center gap-3">
                         <div class="w-10 h-10 bg-primary-500 rounded-xl flex items-center justify-center shadow-sm">
                             <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -416,7 +418,7 @@
                     </div>
 
                     {{-- Phân công giáo lý viên --}}
-                    <div class="px-6 pb-6 pt-2 border-t border-slate-200">
+                    <div class="px-6 pb-6 pt-2 mac-hairline-t">
                         <h3 class="text-sm font-bold text-slate-900 mb-4 flex items-center gap-2">
                             <svg class="w-4 h-4 text-primary-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -464,7 +466,7 @@
                     </div>
 
                     {{-- Ghi chú --}}
-                    <div class="px-6 pb-6 pt-2 border-t border-slate-200">
+                    <div class="px-6 pb-6 pt-2 mac-hairline-t">
                         <h3 class="text-sm font-bold text-slate-900 mb-4 flex items-center gap-2">
                             <svg class="w-4 h-4 text-primary-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -484,7 +486,7 @@
                 </form>
 
                 {{-- Footer - STICKY --}}
-                <div class="shrink-0 sticky bottom-0 px-6 py-4 bg-slate-50 border-t border-slate-200 rounded-b-2xl">
+                <div class="shrink-0 sticky bottom-0 px-6 py-4 bg-slate-50 mac-hairline-t rounded-b-2xl">
                     <div class="flex flex-col sm:flex-row justify-end gap-3">
                         <button @click="closeModal()"
                             type="button"

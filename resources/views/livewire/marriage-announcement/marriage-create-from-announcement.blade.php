@@ -9,10 +9,10 @@
 ]" />
 @endsection
 
-<div class="min-h-screen bg-slate-50 p-2 sm:p-4 lg:p-6" style="min-height: calc(100vh - 56px - var(--bottom-offset));">
+<div class="min-h-screen bg-apple-gray p-2 sm:p-4 lg:p-6" style="min-height: calc(100vh - 56px - var(--bottom-offset));">
     <div class="mx-auto max-w-3xl space-y-6">
-        <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
-            <div class="p-4 lg:p-6 border-b border-slate-200">
+        <x-mac-panel :overflow="true">
+            <div class="p-4 lg:p-6 mac-hairline-b">
                 <h1 class="text-xl font-bold text-slate-900">Tạo hôn phối chính thức</h1>
                 <p class="text-sm text-slate-500 mt-1">Từ hồ sơ rao: {{ $announcement->name }}</p>
             </div>
@@ -68,7 +68,7 @@
                 </p>
                 @endif
 
-                <div class="flex justify-end gap-3 pt-4 border-t border-slate-100">
+                <div class="flex justify-end gap-3 pt-4 mac-hairline-t">
                     <x-button as="a" href="{{ route('marriage-announcements.show', $announcement->id) }}" variant="outline">Hủy</x-button>
                     <x-button type="submit" variant="primary" wire:loading.attr="disabled" wire:target="save">
                         <span wire:loading.remove wire:target="save">Lưu hôn phối</span>
@@ -76,7 +76,7 @@
                     </x-button>
                 </div>
             </form>
-        </div>
+        </x-mac-panel>
     </div>
 
     @if($showSuccessModal)

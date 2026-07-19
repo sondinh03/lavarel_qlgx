@@ -1,6 +1,6 @@
 @section('title', 'Đăng ký sổ gia đình')
 
-<div class="min-h-screen py-4 sm:py-8">
+<div class="min-h-screen bg-apple-gray py-4 sm:py-8 px-2 sm:px-4" style="min-height: calc(100vh - 56px - var(--bottom-offset));">
     <div class="mx-auto max-w-lg space-y-5">
 
         <nav class="flex flex-wrap items-center gap-x-4 gap-y-1 px-1">
@@ -19,33 +19,36 @@
         </div>
 
         @if($submitted)
-        <div class="bg-white rounded-2xl shadow-sm border border-emerald-200 p-6 text-center space-y-4">
-            <div class="w-14 h-14 mx-auto rounded-full bg-emerald-100 flex items-center justify-center">
-                <svg class="w-7 h-7 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
-                </svg>
+        <x-mac-panel :overflow="true">
+            <div class="p-6 text-center space-y-4">
+                <div class="w-14 h-14 mx-auto rounded-full bg-emerald-100 flex items-center justify-center">
+                    <svg class="w-7 h-7 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                    </svg>
+                </div>
+                <div>
+                    <h2 class="text-lg font-bold text-slate-900">Đã gửi yêu cầu thành công</h2>
+                    <p class="text-sm text-slate-600 mt-2">Mã gia đình / mã theo dõi:</p>
+                    <p class="text-xl font-mono font-bold text-primary-600 mt-1">{{ $referenceCode }}</p>
+                </div>
+                <p class="text-sm text-slate-500">Quản trị viên sẽ duyệt và tạo hồ sơ gia đình trong hệ thống.</p>
+                <div class="flex flex-wrap items-center justify-center gap-3">
+                    <a href="{{ route('landing') }}" class="inline-flex items-center justify-center px-5 py-2.5 rounded-xl bg-primary-600 text-white text-sm font-semibold hover:bg-primary-700">
+                        Về trang chủ
+                    </a>
+                </div>
             </div>
-            <div>
-                <h2 class="text-lg font-bold text-slate-900">Đã gửi yêu cầu thành công</h2>
-                <p class="text-sm text-slate-600 mt-2">Mã gia đình / mã theo dõi:</p>
-                <p class="text-xl font-mono font-bold text-primary-600 mt-1">{{ $referenceCode }}</p>
-            </div>
-            <p class="text-sm text-slate-500">Quản trị viên sẽ duyệt và tạo hồ sơ gia đình trong hệ thống.</p>
-            <div class="flex flex-wrap items-center justify-center gap-3">
-                <a href="{{ route('landing') }}" class="inline-flex items-center justify-center px-5 py-2.5 rounded-xl bg-primary-600 text-white text-sm font-semibold hover:bg-primary-700">
-                    Về trang chủ
-                </a>
-            </div>
-        </div>
+        </x-mac-panel>
         @else
-        <form wire:submit.prevent="submit" class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+        <x-mac-panel :overflow="true">
+        <form wire:submit.prevent="submit">
 
-            <div class="px-4 py-3 bg-slate-50 border-b border-slate-200 overflow-x-auto">
+            <div class="px-4 py-3 bg-slate-50/70 mac-hairline-b overflow-x-auto">
                 <div class="flex gap-2 text-xs font-medium min-w-max">
                     @foreach($stepLabels as $step => $label)
                     <button type="button" wire:click="goToStep('{{ $step }}')"
                         class="px-3 py-1.5 rounded-lg transition whitespace-nowrap
-                            {{ $activeStep === $step ? 'bg-primary-600 text-white' : 'bg-white text-slate-600 border border-slate-200' }}">
+                            {{ $activeStep === $step ? 'bg-primary-600 text-white' : 'bg-white text-slate-600 border border-black/[0.06] shadow-mac-sm' }}">
                         {{ $label }}
                     </button>
                     @endforeach
@@ -66,10 +69,10 @@
                 @endif
             </div>
 
-            <div class="px-4 sm:px-5 py-4 border-t border-slate-200 bg-slate-50 flex flex-wrap gap-3 justify-between">
+            <div class="px-4 sm:px-5 py-4 mac-hairline-t bg-slate-50/70 flex flex-wrap gap-3 justify-between">
                 @if($activeStep !== 'household')
                 <button type="button" wire:click="prevStep"
-                    class="px-4 py-2.5 rounded-xl border border-slate-300 text-sm font-medium text-slate-700 bg-white">
+                    class="px-4 py-2.5 rounded-xl border border-black/[0.06] text-sm font-medium text-slate-700 bg-white shadow-mac-sm">
                     Quay lại
                 </button>
                 @else
@@ -91,6 +94,7 @@
                 @endif
             </div>
         </form>
+        </x-mac-panel>
         @endif
     </div>
 </div>

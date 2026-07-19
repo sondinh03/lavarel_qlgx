@@ -1,4 +1,5 @@
-<div class="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 p-4 sm:p-6">
+<div class="min-h-screen bg-apple-gray p-2 sm:p-4 lg:p-6"
+    style="min-height: calc(100vh - 56px - var(--bottom-offset));">
     <div class="mx-auto max-w-3xl space-y-5">
 
         {{-- Breadcrumb --}}
@@ -22,7 +23,7 @@
         </div>
 
         {{-- Step Indicator --}}
-        <div class="bg-white rounded-2xl shadow-sm border border-slate-200 px-6 py-4">
+        <x-mac-panel class="px-6 py-4">
             <div class="flex items-center">
                 @foreach([1 => 'Chọn năm', 2 => 'Xác nhận', 3 => 'Hoàn tất', 4 => 'Xếp học sinh'] as $s => $label)
                 <div class="flex items-center {{ !$loop->last ? 'flex-1' : '' }}">
@@ -50,13 +51,13 @@
                 </div>
                 @endforeach
             </div>
-        </div>
+        </x-mac-panel>
 
         {{-- ══════════════════════════════════════════
              BƯỚC 1: Chọn năm
         ══════════════════════════════════════════ --}}
         @if($step === 1)
-        <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 space-y-6">
+        <x-mac-panel class="p-6 space-y-6">
             <div>
                 <h2 class="text-lg font-bold text-slate-900">Copy cấu trúc lớp</h2>
                 <p class="text-sm text-slate-500 mt-1">
@@ -120,7 +121,7 @@
             @if($sourceNamHocId)
             @if($sourceClasses->isNotEmpty())
             <div class="border border-slate-200 rounded-xl overflow-hidden">
-                <div class="px-4 py-2.5 bg-slate-50 border-b border-slate-200 flex items-center justify-between">
+                <div class="px-4 py-2.5 bg-slate-50 mac-hairline-b flex items-center justify-between">
                     <span class="text-xs font-semibold text-slate-500 uppercase tracking-wide">
                         {{ $sourceClasses->count() }} lớp sẽ được copy
                     </span>
@@ -157,7 +158,7 @@
                     Xem xác nhận
                 </x-action-button>
             </div>
-        </div>
+        </x-mac-panel>
         @endif
 
         {{-- ══════════════════════════════════════════
@@ -169,7 +170,7 @@
         $targetYear = $namHocs->find($targetNamHocId);
         $totalScoreTypes = $copyScoreTypes ? $sourceClasses->sum('score_types_count') : 0;
         @endphp
-        <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 space-y-5">
+        <x-mac-panel class="p-6 space-y-5">
             <div>
                 <h2 class="text-lg font-bold text-slate-900">Xác nhận copy</h2>
                 <p class="text-sm text-slate-500 mt-1">Kiểm tra lại trước khi thực hiện</p>
@@ -215,14 +216,14 @@
                     {{ $processing ? 'Đang xử lý...' : 'Xác nhận copy' }}
                 </x-action-button>
             </div>
-        </div>
+        </x-mac-panel>
         @endif
 
         {{-- ══════════════════════════════════════════
              BƯỚC 3: Hoàn tất copy cấu trúc
         ══════════════════════════════════════════ --}}
         @if($step === 3)
-        <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 space-y-5">
+        <x-mac-panel class="p-6 space-y-5">
             <div class="flex items-center gap-4">
                 <div class="w-12 h-12 bg-emerald-100 rounded-full flex items-center justify-center shrink-0">
                     <svg class="w-6 h-6 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -277,7 +278,7 @@
                     Xếp học sinh ngay
                 </a>
             </div>
-        </div>
+        </x-mac-panel>
         @endif
 
         {{-- ══════════════════════════════════════════
@@ -287,7 +288,7 @@
         <div class="space-y-4">
 
             {{-- Header --}}
-            <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-5">
+            <x-mac-panel class="p-5">
                 <div class="flex items-center justify-between">
                     <div>
                         <h2 class="text-lg font-bold text-slate-900">Xếp học sinh</h2>
@@ -300,12 +301,12 @@
                         Làm lại từ đầu
                     </button>
                 </div>
-            </div>
+            </x-mac-panel>
 
             <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
 
                 {{-- CỘT TRÁI: Chọn lớp đích + lớp nguồn --}}
-                <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-5 space-y-4">
+                <x-mac-panel class="p-5 space-y-4">
                     <h3 class="text-sm font-bold text-slate-700 uppercase tracking-wide">Chọn lớp</h3>
 
                     {{-- Lớp đích --}}
@@ -353,7 +354,7 @@
 
                     {{-- Nút lưu --}}
                     @if($targetClassId && !empty($selectedStudents))
-                    <div class="pt-2 border-t border-slate-100">
+                    <div class="pt-2 mac-hairline-t">
                         <button wire:click="saveAssignment"
                             wire:loading.attr="disabled"
                             class="w-full flex items-center justify-center gap-2 px-4 py-2.5
@@ -369,11 +370,11 @@
                         </button>
                     </div>
                     @endif
-                </div>
+                </x-mac-panel>
 
                 {{-- CỘT PHẢI: Danh sách học sinh --}}
-                <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
-                    <div class="px-5 py-3.5 bg-slate-50 border-b border-slate-200 flex items-center justify-between">
+                <x-mac-panel :overflow="true">
+                    <div class="px-5 py-3.5 bg-slate-50 mac-hairline-b flex items-center justify-between">
                         <span class="text-sm font-bold text-slate-700">
                             Học sinh chưa có lớp
                             @if($availableStudents->isNotEmpty())
@@ -434,7 +435,7 @@
                     </div>
                     @endif
                     @endif
-                </div>
+                </x-mac-panel>
             </div>
 
             {{-- Link về năm học --}}

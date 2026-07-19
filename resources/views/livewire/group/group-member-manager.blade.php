@@ -7,7 +7,8 @@
 ]" separator="arrow" />
 @endsection
 
-<div class="min-h-screen bg-slate-50 p-2 sm:p-4 lg:p-6">
+<div class="min-h-screen bg-apple-gray p-2 sm:p-4 lg:p-6"
+    style="min-height: calc(100vh - 56px - var(--bottom-offset));">
     <a href="#main-content" class="sr-only focus:not-sr-only">Bỏ qua tới nội dung</a>
 
     <div id="main-content" class="mx-auto max-w-7xl space-y-6">
@@ -23,7 +24,7 @@
         </div>
 
         {{-- Main Card --}}
-        <div class="bg-white rounded-2xl shadow-sm border border-slate-200">
+        <x-mac-panel :overflow="true">
             <x-page-header
                 class="rounded-t-2xl"
                 title="Thành viên — {{ $group->name }}"
@@ -31,7 +32,7 @@
             </x-page-header>
 
             {{-- Actions Bar --}}
-            <div class="p-4 lg:p-6 border-b border-slate-200 bg-slate-50/70 rounded-b-2xl">
+            <div class="p-4 lg:p-6 mac-hairline-b bg-white/30 rounded-b-2xl">
                 <div class="flex flex-col gap-4">
                     <div class="flex items-center justify-between gap-4">
                         <div class="flex items-center gap-3 flex-wrap">
@@ -89,14 +90,14 @@
                     </div>
                 </div>
             </div>
-        </div>
+        </x-mac-panel>
 
         {{-- Table --}}
         @if($members->count() > 0)
-        <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+        <x-mac-panel :overflow="true">
                 <div class="overflow-x-auto">
                     <table class="w-full border-separate border-spacing-0">
-                        <thead class="bg-slate-50 border-b border-slate-200">
+                        <thead class="bg-slate-50/50 mac-hairline-b">
                             <tr>
                                 <x-table-header>STT</x-table-header>
                                 <x-table-header>Họ tên</x-table-header>
@@ -222,11 +223,11 @@
                 </div>
 
                 @if($members->hasPages())
-                <div class="p-6 border-t border-slate-200">
+                <div class="p-6 mac-hairline-t">
                     <x-pagination :paginator="$members" :per-page-options="[10, 15, 25, 50]" />
                 </div>
                 @endif
-        </div>
+        </x-mac-panel>
 
         @else
         <x-stats.page-empty
@@ -254,7 +255,7 @@
             wire:click.stop>
 
             {{-- Header --}}
-            <div class="flex-shrink-0 p-6 border-b border-slate-200 bg-gradient-to-br from-primary-50 to-white">
+            <div class="flex-shrink-0 p-6 mac-hairline-b bg-gradient-to-br from-primary-50 to-white">
                 <div class="flex items-start justify-between">
                     <div>
                         <h2 class="text-xl font-bold text-slate-900">
@@ -277,7 +278,7 @@
             </div>
 
             {{-- Search --}}
-            <div class="flex-shrink-0 px-6 py-4 border-b border-slate-100">
+            <div class="flex-shrink-0 px-6 py-4 mac-hairline-b">
                 <input
                     wire:model.debounce.300ms="modalSearch"
                     type="text"
@@ -368,7 +369,7 @@
                 </div>
 
                 @if($candidates->hasPages())
-                <div class="px-6 py-3 border-t border-slate-100">
+                <div class="px-6 py-3 mac-hairline-t">
                     {{ $candidates->links() }}
                 </div>
                 @endif
@@ -388,7 +389,7 @@
             </div>
 
             {{-- Footer --}}
-            <div class="flex-shrink-0 px-6 py-4 border-t border-slate-200 bg-slate-50
+            <div class="flex-shrink-0 px-6 py-4 mac-hairline-t bg-slate-50
                         flex items-center justify-between">
                 <span class="text-sm text-slate-600">
                     Đã chọn:

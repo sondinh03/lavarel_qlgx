@@ -1,7 +1,8 @@
-<div class="min-h-screen bg-slate-50 p-3 sm:p-6">
+<div class="min-h-screen bg-apple-gray p-2 sm:p-4 lg:p-6"
+    style="min-height: calc(100vh - 56px - var(--bottom-offset));">
     <div class="mx-auto max-w-7xl space-y-6">
 
-        <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+        <x-mac-panel :overflow="true">
             <x-page-header
                 title="Dashboard quản trị giáo lý"
                 :description="$currentSchoolYear ? ($todayLabel . ' · Năm học ' . $currentSchoolYear->name . ($semesterLabel ? ' · ' . $semesterLabel : '')) : $todayLabel"
@@ -31,7 +32,7 @@
                     <span>Xin chào, <span class="font-semibold text-slate-800">{{ auth()->user()->name ?? 'Quản trị viên' }}</span></span>
                 </div>
             </div>
-        </div>
+        </x-mac-panel>
 
         {{-- Toast --}}
         @if(session()->has('message'))
@@ -84,8 +85,8 @@
         {{-- SECTION 2: VIỆC CẦN LÀM                                     --}}
         {{-- ============================================================ --}}
         @if(count($todos) > 0)
-        <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
-            <div class="px-6 py-4 border-b border-slate-100 flex items-center gap-3">
+        <x-mac-panel :overflow="true">
+            <div class="px-6 py-4 mac-hairline-b flex items-center gap-3">
                 <h2 class="text-base font-semibold text-slate-900">Việc cần làm</h2>
                 <span class="inline-flex items-center justify-center w-5 h-5 text-xs
                              font-bold bg-red-500 text-white rounded-full">
@@ -93,9 +94,9 @@
                 </span>
             </div>
 
-            <div class="divide-y divide-slate-100">
+            <div class="divide-y divide-black/[0.04]">
                 @foreach($todos as $todo)
-                <div class="flex items-center justify-between px-6 py-4 hover:bg-slate-50 transition-colors duration-200">
+                <div class="flex items-center justify-between px-6 py-4 hover:bg-black/[0.03] transition-colors duration-200">
                     <div class="flex items-center gap-3">
                         @if($todo['type'] === 'warning')
                         <div class="w-8 h-8 bg-amber-100 rounded-lg flex items-center justify-center flex-shrink-0">
@@ -124,11 +125,10 @@
                 </div>
                 @endforeach
             </div>
-        </div>
+        </x-mac-panel>
 
         @else
-        <div class="bg-white rounded-2xl shadow-sm border border-slate-200 px-6 py-4
-                    flex items-center gap-3">
+        <x-mac-panel class="px-6 py-4 flex items-center gap-3">
             <div class="w-8 h-8 bg-primary-100 rounded-lg flex items-center justify-center flex-shrink-0">
                 <svg class="w-4 h-4 text-primary-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -138,7 +138,7 @@
             <p class="text-sm font-medium text-slate-700">
                 Mọi thứ đang ổn — không có việc cần xử lý ngay
             </p>
-        </div>
+        </x-mac-panel>
         @endif
 
         {{-- ============================================================ --}}
@@ -279,17 +279,17 @@
         {{-- ============================================================ --}}
         {{-- SECTION 4: TRUY CẬP NHANH                                   --}}
         {{-- ============================================================ --}}
-        <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
-            <div class="px-6 py-4 border-b border-slate-100">
+        <x-mac-panel :overflow="true">
+            <div class="px-6 py-4 mac-hairline-b">
                 <h2 class="text-base font-semibold text-slate-900">Truy cập nhanh</h2>
             </div>
 
-            <div class="grid grid-cols-2 sm:grid-cols-4 gap-px bg-slate-100">
+            <div class="grid grid-cols-2 sm:grid-cols-4 gap-px bg-black/[0.04]">
 
                 {{-- Quản lý lớp --}}
                 <a href="{{ route('classes.index') }}"
-                    class="flex flex-col items-center justify-center gap-2.5 py-7 bg-white
-                          hover:bg-slate-50 transition-all duration-200 group">
+                    class="flex flex-col items-center justify-center gap-2.5 py-7 bg-white/75
+                          hover:bg-black/[0.03] transition-all duration-200 group">
                     <div class="w-10 h-10 bg-primary-100 rounded-xl flex items-center justify-center
                                 group-hover:bg-primary-200 transition-colors duration-200">
                         <svg class="w-5 h-5 text-primary-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -304,8 +304,8 @@
 
                 {{-- Học sinh --}}
                 <a href="{{ route('students.index') }}"
-                    class="flex flex-col items-center justify-center gap-2.5 py-7 bg-white
-                          hover:bg-slate-50 transition-all duration-200 group">
+                    class="flex flex-col items-center justify-center gap-2.5 py-7 bg-white/75
+                          hover:bg-black/[0.03] transition-all duration-200 group">
                     <div class="w-10 h-10 bg-green-100 rounded-xl flex items-center justify-center
                                 group-hover:bg-green-200 transition-colors duration-200">
                         <svg class="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -320,8 +320,8 @@
 
                 {{-- Giáo lý viên --}}
                 <a href="{{ route('catechists.index') }}"
-                    class="flex flex-col items-center justify-center gap-2.5 py-7 bg-white
-                          hover:bg-slate-50 transition-all duration-200 group">
+                    class="flex flex-col items-center justify-center gap-2.5 py-7 bg-white/75
+                          hover:bg-black/[0.03] transition-all duration-200 group">
                     <div class="w-10 h-10 bg-purple-100 rounded-xl flex items-center justify-center
                                 group-hover:bg-purple-200 transition-colors duration-200">
                         <svg class="w-5 h-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -336,8 +336,8 @@
 
                 {{-- Năm học --}}
                 <a href="{{ route('school-years.index') }}"
-                    class="flex flex-col items-center justify-center gap-2.5 py-7 bg-white
-                          hover:bg-slate-50 transition-all duration-200 group">
+                    class="flex flex-col items-center justify-center gap-2.5 py-7 bg-white/75
+                          hover:bg-black/[0.03] transition-all duration-200 group">
                     <div class="w-10 h-10 bg-amber-100 rounded-xl flex items-center justify-center
                                 group-hover:bg-amber-200 transition-colors duration-200">
                         <svg class="w-5 h-5 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -351,7 +351,7 @@
                 </a>
 
             </div>
-        </div>
+        </x-mac-panel>
 
         @endif {{-- end @if($currentSchoolYear) --}}
 

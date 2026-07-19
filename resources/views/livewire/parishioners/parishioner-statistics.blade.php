@@ -5,13 +5,13 @@
 ]" />
 @endsection
 
-<div class="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 p-4 sm:p-6">
+<div class="min-h-screen bg-apple-gray p-2 sm:p-4 lg:p-6" style="min-height: calc(100vh - 56px - var(--bottom-offset));">
     <div class="mx-auto max-w-7xl space-y-5">
 
-        <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
-            <div class="px-6 py-5 flex items-center justify-between gap-4 flex-wrap border-b border-slate-100">
+        <x-mac-panel>
+            <div class="px-4 lg:px-6 py-5 flex items-center justify-between gap-4 flex-wrap mac-hairline-b">
                 <div class="flex items-center gap-3">
-                    <div class="w-10 h-10 rounded-xl bg-primary-100 flex items-center justify-center flex-shrink-0">
+                    <div class="w-10 h-10 rounded-xl bg-primary-50/90 ring-1 ring-primary-100/80 flex items-center justify-center flex-shrink-0 shadow-mac-sm">
                         <svg class="w-5 h-5 text-primary-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                 d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
@@ -25,7 +25,8 @@
 
                 <div class="flex items-center gap-2">
                     <a href="{{ route('parishioners.dashboard') }}"
-                        class="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl border border-slate-300 text-sm font-semibold text-slate-600 hover:bg-slate-50 transition">
+                        class="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl border border-black/[0.08]
+                               text-sm font-semibold text-slate-600 hover:bg-black/[0.03] transition">
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
                         </svg>
@@ -37,7 +38,7 @@
                     </x-button>
                 </div>
             </div>
-        </div>
+        </x-mac-panel>
 
         @if(session()->has('message'))
             <x-toast-notification type="success" :duration="3000">{{ session('message') }}</x-toast-notification>
@@ -154,7 +155,7 @@
             <x-stats.stat-card label="Giáo họ" :value="number_format($stats['parish_groups'] ?? 0)" subline="Đơn vị" />
         </div>
 
-        <div class="bg-white rounded-2xl border border-slate-200 shadow-sm px-6 py-4">
+        <div class="rounded-2xl border border-black/[0.06] bg-white/50 backdrop-blur-sm shadow-mac-sm px-4 lg:px-6 py-4">
             <div class="flex flex-wrap items-center gap-x-6 gap-y-2 text-xs text-slate-500">
                 <span class="font-semibold text-slate-700">Ghi chú:</span>
                 <span>Chỉ tính giáo dân trạng thái hoạt động, chưa ghi nhận qua đời</span>

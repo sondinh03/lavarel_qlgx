@@ -26,11 +26,11 @@
     };
 @endphp
 
-<div class="min-h-screen bg-slate-50 p-2 sm:p-4 lg:p-6">
+<div class="min-h-screen bg-apple-gray p-2 sm:p-4 lg:p-6" style="min-height: calc(100vh - 56px - var(--bottom-offset));">
     <div class="mx-auto max-w-4xl space-y-5">
 
-        <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
-            <div class="p-5 border-b border-slate-200 flex flex-wrap items-start justify-between gap-3">
+        <x-mac-panel :overflow="true">
+            <div class="p-5 mac-hairline-b flex flex-wrap items-start justify-between gap-3">
                 <div>
                     <p class="text-xs font-mono text-slate-500">{{ $registration->reference_code }}</p>
                     <p class="text-xs text-slate-400">Mã gia đình</p>
@@ -63,7 +63,7 @@
                     <h3 class="text-sm font-bold text-slate-800 mb-2">Thành viên ({{ count($members) }})</h3>
                     <div class="space-y-2">
                         @foreach($members as $member)
-                        <div class="rounded-xl border border-slate-200 p-3 text-sm">
+                        <div class="rounded-xl border border-black/[0.06] bg-white/50 shadow-mac-sm p-3 text-sm">
                             <p class="font-semibold text-slate-900">
                                 {{ trim(($member['last_name'] ?? '') . ' ' . ($member['first_name'] ?? '')) }}
                                 @if(($member['ref'] ?? '') === ($payload['submitter_ref'] ?? ''))
@@ -95,7 +95,7 @@
                     <h3 class="text-sm font-bold text-slate-800 mb-2">Hôn phối ({{ count($marriages) }})</h3>
                     <ul class="space-y-2 text-sm">
                         @foreach($marriages as $row)
-                        <li class="rounded-xl border border-slate-200 p-3">
+                        <li class="rounded-xl border border-black/[0.06] bg-white/50 shadow-mac-sm p-3">
                             <span class="font-semibold">{{ $memberName($row['husband_ref'] ?? null) }}</span>
                             <span class="text-slate-400">&</span>
                             <span class="font-semibold">{{ $memberName($row['wife_ref'] ?? null) }}</span>
@@ -140,7 +140,7 @@
                 <div><span class="text-slate-500">Mẹ:</span> <span class="font-medium">{{ $payload['mother_name'] ?? '—' }}</span></div>
             </div>
             @if(!empty($sacraments))
-            <div class="px-5 pb-5 border-t border-slate-100 pt-4">
+            <div class="px-5 pb-5 mac-hairline-t pt-4">
                 <h3 class="text-sm font-semibold text-slate-800 mb-2">Bí tích</h3>
                 <ul class="space-y-1 text-sm text-slate-600">
                     @foreach($sacraments as $row)
@@ -175,10 +175,11 @@
                 <strong>Lý do từ chối:</strong> {{ $registration->rejection_reason }}
             </div>
             @endif
-        </div>
+        </x-mac-panel>
 
         @if($registration->isPending())
-        <div class="bg-white rounded-2xl shadow-sm border border-emerald-200 p-5 space-y-4">
+        <x-mac-panel :overflow="true">
+            <div class="p-5 space-y-4">
             <div class="flex items-start gap-3 p-4 rounded-xl bg-emerald-50 border border-emerald-100">
                 <svg class="w-5 h-5 text-emerald-600 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -191,7 +192,7 @@
             <div>
                 <label class="block text-sm font-medium text-slate-700 mb-1">Ghi chú nội bộ (tùy chọn)</label>
                 <textarea wire:model.defer="adminNote" rows="2"
-                    class="w-full px-3 py-2 rounded-xl border border-slate-300 text-sm"></textarea>
+                    class="w-full px-3 py-2 rounded-xl border border-black/[0.06] text-sm shadow-mac-sm bg-white/80"></textarea>
             </div>
             <div class="flex flex-col sm:flex-row gap-3">
                 <button type="button" wire:click="openApproveModal"
@@ -203,17 +204,18 @@
                     Từ chối
                 </button>
                 <a href="{{ route('parishioners.registrations.index') }}"
-                    class="px-5 py-3 rounded-xl border border-slate-300 text-sm font-medium text-slate-700 text-center hover:bg-slate-50">
+                    class="px-5 py-3 rounded-xl border border-black/[0.06] text-sm font-medium text-slate-700 text-center hover:bg-black/[0.03] shadow-mac-sm bg-white/80">
                     Quay lại
                 </a>
             </div>
-        </div>
+            </div>
+        </x-mac-panel>
         @endif
     </div>
 
     @if($showApproveModal)
     <div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40">
-        <div class="bg-white rounded-2xl shadow-xl w-full max-w-md p-5 space-y-4">
+        <div class="bg-white/90 backdrop-blur-xl rounded-2xl border border-black/[0.06] shadow-mac w-full max-w-md p-5 space-y-4">
             <h3 class="text-lg font-bold text-slate-900">Xác nhận duyệt</h3>
             <p class="text-sm text-slate-600">
                 {{ $isFamilyRegister
@@ -234,10 +236,10 @@
 
     @if($showRejectModal)
     <div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40">
-        <div class="bg-white rounded-2xl shadow-xl w-full max-w-md p-5 space-y-4">
+        <div class="bg-white/90 backdrop-blur-xl rounded-2xl border border-black/[0.06] shadow-mac w-full max-w-md p-5 space-y-4">
             <h3 class="text-lg font-bold text-slate-900">Từ chối yêu cầu</h3>
             <textarea wire:model.defer="rejectionReason" rows="4" placeholder="Nhập lý do từ chối..."
-                class="w-full px-3 py-2 rounded-xl border border-slate-300 text-sm"></textarea>
+                class="w-full px-3 py-2 rounded-xl border border-black/[0.06] text-sm shadow-mac-sm bg-white/80"></textarea>
             @error('rejectionReason') <p class="text-red-500 text-xs">{{ $message }}</p> @enderror
             <div class="flex gap-2 justify-end">
                 <button type="button" wire:click="closeRejectModal" class="px-4 py-2 rounded-xl border text-sm">Hủy</button>

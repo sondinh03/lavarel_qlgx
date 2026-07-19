@@ -1,4 +1,5 @@
-<div class="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 p-6">
+<div class="min-h-screen bg-apple-gray p-2 sm:p-4 lg:p-6"
+    style="min-height: calc(100vh - 56px - var(--bottom-offset));">
     <a href="#lop-detail-main" class="sr-only focus:not-sr-only">Bỏ qua tới nội dung</a>
     <div id="lop-detail-main" class="mx-auto max-w-7xl space-y-5">
 
@@ -49,9 +50,9 @@
             <div class="lg:col-span-2 space-y-5">
 
                 {{-- Main Class Info Card --}}
-                <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+                <x-mac-panel :overflow="true">
                     {{-- Header với stats inline --}}
-                    <div class="p-6 border-b border-slate-200 bg-gradient-to-br from-primary-50 to-white">
+                    <div class="p-6 mac-hairline-b bg-gradient-to-br from-primary-50 to-white">
                         <div class="flex items-start justify-between">
                             <div class="flex items-center gap-4">
                                 <div class="w-14 h-14 bg-primary-500 rounded-xl flex items-center justify-center shadow-sm">
@@ -78,7 +79,7 @@
                     </div>
 
                     {{-- Stats Grid - 4 cột --}}
-                    <div class="grid grid-cols-4 gap-4 p-6 bg-slate-50 border-b border-slate-200">
+                    <div class="grid grid-cols-4 gap-4 p-6 bg-white/30 mac-hairline-b">
                         {{-- Năm học --}}
                         <div class="flex flex-col items-center text-center p-4 bg-white rounded-xl border border-slate-200">
                             <svg class="w-5 h-5 text-primary-600 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -140,11 +141,11 @@
                         <p class="text-slate-700 text-sm leading-relaxed bg-slate-50 p-3 rounded-lg">{{ $lopData['note'] }}</p>
                     </div>
                     @endif
-                </div>
+                </x-mac-panel>
 
                 {{-- Schedule Card --}}
                 @if($namHoc && ($namHoc->start_date_one || $namHoc->start_date_two))
-                <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+                <x-mac-panel :overflow="true">
                     <div class="p-6">
                         <h3 class="text-lg font-bold text-slate-900 mb-4 flex items-center gap-2">
                             <svg class="w-5 h-5 text-primary-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -182,7 +183,7 @@
                             @endif
                         </div>
                     </div>
-                </div>
+                </x-mac-panel>
                 @endif
             </div>
 
@@ -190,8 +191,8 @@
             <div class="space-y-5">
 
                 {{-- Quick Actions Card --}}
-                <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
-                    <div class="p-4 border-b border-slate-200 bg-slate-50">
+                <x-mac-panel :overflow="true">
+                    <div class="p-4 mac-hairline-b bg-white/30">
                         <h3 class="text-sm font-bold text-slate-900">Thao tác nhanh</h3>
                     </div>
                     <div class="p-4 space-y-2">
@@ -229,11 +230,11 @@
                             <span>Chỉnh sửa lớp</span>
                         </a>
                     </div>
-                </div>
+                </x-mac-panel>
 
                 {{-- Teachers Card --}}
-                <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
-                    <div class="p-4 border-b border-slate-200 bg-slate-50">
+                <x-mac-panel :overflow="true">
+                    <div class="p-4 mac-hairline-b bg-white/30">
                         <h3 class="text-sm font-bold text-slate-900 flex items-center gap-2">
                             <svg class="w-4 h-4 text-primary-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
@@ -266,7 +267,7 @@
                         </div>
                         @endif
                     </div>
-                </div>
+                </x-mac-panel>
 
             </div>
         </div>

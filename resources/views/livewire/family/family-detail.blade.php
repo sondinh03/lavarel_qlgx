@@ -6,21 +6,23 @@
 ]" />
 @endsection
 
-<div class="min-h-screen bg-slate-50 p-2 sm:p-4 lg:p-6" style="min-height: calc(100vh - 56px - var(--bottom-offset));">
+<div class="min-h-screen bg-apple-gray p-2 sm:p-4 lg:p-6" style="min-height: calc(100vh - 56px - var(--bottom-offset));">
     <a href="#main-content" class="sr-only focus:not-sr-only">Bỏ qua tới nội dung</a>
 
     <div id="main-content" class="mx-auto max-w-5xl space-y-5">
 
         @if($isLoading)
-        <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-12">
-            <div class="flex justify-center">
-                <div class="w-8 h-8 border-4 border-primary-200 border-t-primary-500 rounded-full animate-spin"></div>
+        <x-mac-panel :overflow="true">
+            <div class="p-12">
+                <div class="flex justify-center">
+                    <div class="w-8 h-8 border-4 border-primary-200 border-t-primary-500 rounded-full animate-spin"></div>
+                </div>
             </div>
-        </div>
+        </x-mac-panel>
         @else
 
         {{-- Header --}}
-        <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+        <x-mac-panel :overflow="true">
             <div class="p-4 lg:p-6">
                 <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
                     <div class="min-w-0 flex-1">
@@ -89,7 +91,7 @@
                 </div>
             </div>
 
-            <div class="px-4 lg:px-6 py-3 border-t border-slate-100 bg-slate-50/70">
+            <div class="px-4 lg:px-6 py-3 mac-hairline-t bg-slate-50/70">
                 <div class="inline-flex w-full sm:w-auto rounded-xl bg-slate-200 p-1 text-sm font-medium">
                     <button wire:click="switchTab('members')" type="button"
                         class="flex-1 sm:flex-none inline-flex items-center justify-center gap-2 px-4 py-2 rounded-lg transition-all whitespace-nowrap
@@ -104,7 +106,7 @@
                     </button>
                 </div>
             </div>
-        </div>
+        </x-mac-panel>
 
         @if($preselectParishioner)
         <div class="px-4 py-3 rounded-2xl bg-primary-50 border border-primary-100 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
@@ -128,8 +130,8 @@
 
             {{-- Vợ chồng --}}
             @if($family['husband'] || $family['wife'])
-            <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
-                <div class="px-4 py-3 border-b border-slate-100 bg-slate-50/80">
+            <x-mac-panel :overflow="true">
+                <div class="px-4 py-3 mac-hairline-b bg-slate-50/80">
                     <h2 class="text-sm font-semibold text-slate-800">Vợ chồng</h2>
                 </div>
                 <div class="grid grid-cols-1 sm:grid-cols-2 divide-y sm:divide-y-0 sm:divide-x divide-slate-100">
@@ -146,7 +148,7 @@
                         'canManage' => $canManageMembers,
                     ])
                 </div>
-            </div>
+            </x-mac-panel>
             @endif
 
             @if(!empty($family['children']))
@@ -209,10 +211,12 @@
             </x-family-section-card>
 
             @if($family['note'])
-            <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-4 lg:p-5">
-                <p class="text-xs font-semibold text-slate-400 uppercase tracking-wide mb-2">Ghi chú</p>
-                <p class="text-sm text-slate-700 whitespace-pre-line leading-relaxed">{{ $family['note'] }}</p>
-            </div>
+            <x-mac-panel :overflow="true">
+                <div class="p-4 lg:p-5">
+                    <p class="text-xs font-semibold text-slate-400 uppercase tracking-wide mb-2">Ghi chú</p>
+                    <p class="text-sm text-slate-700 whitespace-pre-line leading-relaxed">{{ $family['note'] }}</p>
+                </div>
+            </x-mac-panel>
             @endif
 
             <x-family-section-card title="Hệ thống">
@@ -231,7 +235,7 @@
             @click="$wire.closeAddMemberModal()"
             @keydown.escape.window="$wire.closeAddMemberModal()">
             <div class="bg-white rounded-2xl shadow-xl w-full max-w-lg max-h-[85vh] overflow-hidden flex flex-col" @click.stop>
-                <div class="flex-shrink-0 px-5 py-4 border-b border-slate-200">
+                <div class="flex-shrink-0 px-5 py-4 mac-hairline-b">
                     <div class="flex items-start justify-between gap-3">
                         <div>
                             <h2 class="text-lg font-bold text-slate-900">Thêm thành viên</h2>
@@ -249,7 +253,7 @@
 
                 <div class="flex-1 overflow-y-auto min-h-0">
                     @if($availableParishioners && $availableParishioners->count() > 0)
-                    <div class="px-4 py-2.5 border-b border-slate-100 bg-slate-50/80 flex items-center gap-2 sticky top-0">
+                    <div class="px-4 py-2.5 mac-hairline-b bg-slate-50/80 flex items-center gap-2 sticky top-0">
                         <input type="checkbox" wire:model="selectAllParishioners"
                             class="w-4 h-4 rounded border-slate-300 text-primary-600 focus:ring-primary-500">
                         <span class="text-xs font-medium text-slate-600">Chọn tất cả trang này</span>
@@ -271,7 +275,7 @@
                         @endforeach
                     </div>
                     @if($availableParishioners->hasPages())
-                    <div class="p-3 border-t border-slate-100">{{ $availableParishioners->links() }}</div>
+                    <div class="p-3 mac-hairline-t">{{ $availableParishioners->links() }}</div>
                     @endif
                     @else
                     <div class="py-14 text-center px-4">
@@ -281,7 +285,7 @@
                     @endif
                 </div>
 
-                <div class="flex-shrink-0 px-5 py-3.5 border-t border-slate-200 bg-slate-50 flex items-center justify-between gap-3">
+                <div class="flex-shrink-0 px-5 py-3.5 mac-hairline-t bg-slate-50 flex items-center justify-between gap-3">
                     <span class="text-sm text-slate-600">
                         Đã chọn <strong class="text-primary-600">{{ count($selectedParishioners) }}</strong>
                     </span>
@@ -302,7 +306,7 @@
         <div class="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50 p-4"
             role="dialog" aria-modal="true" @keydown.escape.window="$wire.closeRoleModal()">
             <div class="bg-white rounded-2xl shadow-xl w-full max-w-sm overflow-hidden" @click.outside="$wire.closeRoleModal()">
-                <div class="px-5 py-4 border-b border-slate-200">
+                <div class="px-5 py-4 mac-hairline-b">
                     <h3 class="text-base font-bold text-slate-900">Đổi vai trò</h3>
                     <p class="text-sm text-slate-500 mt-0.5 truncate">{{ $roleMemberName }}</p>
                 </div>
@@ -320,7 +324,7 @@
                     </label>
                     @endforeach
                 </div>
-                <div class="px-5 py-3.5 border-t border-slate-200 bg-slate-50 flex justify-end gap-2">
+                <div class="px-5 py-3.5 mac-hairline-t bg-slate-50 flex justify-end gap-2">
                     <x-button type="button" variant="outline" size="sm" wire:click="closeRoleModal">Hủy</x-button>
                     <x-button type="button" variant="primary" size="sm" wire:click="saveRole" wire:loading.attr="disabled" wire:target="saveRole">Lưu</x-button>
                 </div>
