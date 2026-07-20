@@ -945,6 +945,11 @@ class AttendanceManager extends BaseComponent
 
     public function selectDate(string $date): void
     {
+        $allowed = collect($this->sessions)->pluck('dateStr')->all();
+        if (! in_array($date, $allowed, true)) {
+            return;
+        }
+
         $this->selectedDate = $date;
 
         if ($this->viewMode === 'mobile') {
@@ -954,7 +959,15 @@ class AttendanceManager extends BaseComponent
 
     protected function getVietnameseDayName(Carbon $date): string
     {
-        return ['CN', 'T2', 'T3', 'T4', 'T5', 'T6', 'T7'][$date->dayOfWeek];
+        return [
+            'Chúa Nhật',
+            'Thứ Hai',
+            'Thứ Ba',
+            'Thứ Tư',
+            'Thứ Năm',
+            'Thứ Sáu',
+            'Thứ Bảy',
+        ][$date->dayOfWeek];
     }
 
     /**

@@ -28,6 +28,8 @@ use App\Models\ParishGroup;
  */
 class MarriageAnnouncementCrudController extends CrudController
 {
+    use \App\Http\Controllers\Admin\Concerns\ConfiguresBackpackShow;
+
     use \Backpack\CRUD\app\Http\Controllers\Operations\ListOperation;
     use \Backpack\CRUD\app\Http\Controllers\Operations\CreateOperation;
     use \Backpack\CRUD\app\Http\Controllers\Operations\UpdateOperation;
@@ -1812,5 +1814,10 @@ class MarriageAnnouncementCrudController extends CrudController
             }
         }
         return $array_par;
+    }
+
+    protected function setupShowOperation()
+    {
+        $this->setupShowFromListColumns();
     }
 }

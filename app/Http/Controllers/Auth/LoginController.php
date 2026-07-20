@@ -138,6 +138,10 @@ class LoginController extends Controller
             config(['session.remember_expire' => 60 * 24 * 30]);
         }
 
+        if (! $user->isActive()) {
+            return $this->logoutWithError(__('auth.inactive'));
+        }
+
         if (!$user->hasRole('super_admin') && !$user->parish_id) {
             return $this->logoutWithError('Tài khoản chưa được gán giáo xứ. Vui lòng liên hệ quản trị hệ thống.');
         }

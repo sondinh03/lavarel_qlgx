@@ -143,7 +143,16 @@ class AttendanceSession extends Model
 
     public function getDayNameAttribute(): string
     {
-        $days = ['CN', 'T2', 'T3', 'T4', 'T5', 'T6', 'T7'];
+        $days = [
+            'Chúa Nhật',
+            'Thứ Hai',
+            'Thứ Ba',
+            'Thứ Tư',
+            'Thứ Năm',
+            'Thứ Sáu',
+            'Thứ Bảy',
+        ];
+
         return $days[$this->date->dayOfWeek];
     }
 

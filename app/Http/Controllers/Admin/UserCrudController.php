@@ -6,10 +6,11 @@ use App\Http\Requests\UserRequest;
 use Backpack\CRUD\app\Http\Controllers\CrudController;
 use Backpack\CRUD\app\Library\CrudPanel\CrudPanelFacade as CRUD;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Hash;
 
 class UserCrudController extends CrudController
 {
+    use \App\Http\Controllers\Admin\Concerns\ConfiguresBackpackShow;
+
     use \Backpack\CRUD\app\Http\Controllers\Operations\ListOperation;
     use \Backpack\CRUD\app\Http\Controllers\Operations\CreateOperation;
     use \Backpack\CRUD\app\Http\Controllers\Operations\UpdateOperation;
@@ -76,6 +77,22 @@ class UserCrudController extends CrudController
             'label'    => 'Vai trò',
             'function' => fn($entry) => $entry->getRoleNames()->implode(', ') ?: '—',
         ]);
+
+        CRUD::addColumn([
+            'name'     => 'is_active',
+            'type'     => 'closure',
+            'label'    => 'Trạng thái',
+            'orderable' => true,
+            'function' => fn ($entry) => $entry->is_active ? 'Hoạt động' : 'Ngưng',
+        ]);
+    }
+
+    protected function setupShowOperation()
+    {
+        $this->applyStandardShowSettings();
+
+        CRUD::setShowView('admin.user.show');
+        $this->crud->with(['parish', 'roles']);
     }
 
     protected function setupCreateOperation()
@@ -89,7 +106,8 @@ class UserCrudController extends CrudController
             'http_method',
             'current_tab',
             'save_action',
-            'roles'
+            'assigned_role',
+            'roles',
         ]);
 
         CRUD::addField([
@@ -136,20 +154,37 @@ class UserCrudController extends CrudController
             'wrapper'     => ['class' => 'form-group col-md-6'],
         ]);
 
-        // --- Vai trò (Spatie) ---
+        // --- Vai trò (Spatie) — field ảo, tránh trùng quan hệ `roles` ---
         $roles = [];
         foreach (DB::table('roles')->orderBy('name')->get() as $role) {
             $roles[$role->name] = $role->name;
         }
 
+        $currentRole = $this->crud->getCurrentEntry()
+            ? $this->crud->getCurrentEntry()->getRoleNames()->first()
+            : null;
+
         CRUD::addField([
-            'name'        => 'roles',
+            'name'        => 'assigned_role',
             'type'        => 'select_from_array',
             'label'       => 'Vai trò',
             'options'     => $roles,
             'allows_null' => false,
+            'value'       => $currentRole,
+            'default'     => $currentRole,
             'wrapper'     => ['class' => 'form-group col-md-6'],
         ]);
+
+        if (backpack_user()?->isSuperAdmin()) {
+            CRUD::addField([
+                'name'    => 'is_active',
+                'type'    => 'checkbox',
+                'label'   => 'Hoạt động',
+                'default' => true,
+                'hint'    => 'Bỏ chọn để vô hiệu hóa tài khoản (không đăng nhập được). Không nên tắt tài khoản đang đăng nhập của chính bạn.',
+                'wrapper' => ['class' => 'form-group col-md-6'],
+            ]);
+        }
     }
 
     protected function setupUpdateOperation()
@@ -163,8 +198,17 @@ class UserCrudController extends CrudController
             'http_method',
             'current_tab',
             'save_action',
-            'roles'
+            'assigned_role',
+            'roles',
         ]);
+
+        $entry = $this->crud->getCurrentEntry();
+        if ($entry) {
+            $this->crud->modifyField('assigned_role', [
+                'value'   => $entry->getRoleNames()->first(),
+                'default' => $entry->getRoleNames()->first(),
+            ]);
+        }
 
         CRUD::addField([
             'name'    => 'password',

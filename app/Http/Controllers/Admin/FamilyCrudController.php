@@ -19,6 +19,8 @@ use Backpack\ReviseOperation\ReviseOperation;
  */
 class FamilyCrudController extends CrudController
 {
+    use \App\Http\Controllers\Admin\Concerns\ConfiguresBackpackShow;
+
     use \Backpack\CRUD\app\Http\Controllers\Operations\ListOperation;
     use \Backpack\CRUD\app\Http\Controllers\Operations\CreateOperation;
     use \Backpack\CRUD\app\Http\Controllers\Operations\UpdateOperation;
@@ -319,5 +321,10 @@ class FamilyCrudController extends CrudController
             ->orderBy('name')
             ->pluck('name', 'id')
             ->all();
+    }
+
+    protected function setupShowOperation()
+    {
+        $this->setupShowFromListColumns();
     }
 }

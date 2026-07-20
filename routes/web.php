@@ -82,6 +82,7 @@ use App\Http\Livewire\NamHoc\CopyNamHoc;
 use App\Http\Livewire\NamHoc\NamHocManager;
 use App\Http\Livewire\NamHoc\NamHocSetupGuide;
 use App\Http\Livewire\Help\InstallAppGuide;
+use App\Http\Livewire\Help\AttendanceSetupGuide;
 use App\Http\Livewire\Parish\ParishChild;
 use App\Http\Livewire\Parish\ParishGroup;
 use App\Http\Livewire\Parish\ParishGroupManager;
@@ -236,6 +237,7 @@ Route::middleware('auth')->group(function () {
 
         Route::prefix('tro-giup')->name('help.')->group(function () {
             Route::get('/cai-dat-dien-thoai', InstallAppGuide::class)->name('install-app');
+            Route::get('/diem-danh', AttendanceSetupGuide::class)->name('attendance');
         });
     });
 

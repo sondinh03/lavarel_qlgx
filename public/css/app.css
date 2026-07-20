@@ -848,6 +848,10 @@ video {
   margin-top: -1.5rem;
   margin-bottom: -1.5rem;
 }
+.mx-0\.5 {
+  margin-left: 0.125rem;
+  margin-right: 0.125rem;
+}
 .mx-1 {
   margin-left: 0.25rem;
   margin-right: 0.25rem;
@@ -1590,6 +1594,9 @@ video {
 .list-inside {
   list-style-position: inside;
 }
+.list-decimal {
+  list-style-type: decimal;
+}
 .list-disc {
   list-style-type: disc;
 }
@@ -1924,10 +1931,6 @@ video {
 .border-amber-200\/80 {
   border-color: rgb(253 230 138 / 0.8);
 }
-.border-amber-400 {
-  --tw-border-opacity: 1;
-  border-color: rgb(251 191 36 / var(--tw-border-opacity));
-}
 .border-black {
   --tw-border-opacity: 1;
   border-color: rgb(0 0 0 / var(--tw-border-opacity));
@@ -2159,9 +2162,6 @@ video {
 .bg-amber-50 {
   --tw-bg-opacity: 1;
   background-color: rgb(255 251 235 / var(--tw-bg-opacity));
-}
-.bg-amber-50\/50 {
-  background-color: rgb(255 251 235 / 0.5);
 }
 .bg-amber-50\/60 {
   background-color: rgb(255 251 235 / 0.6);
@@ -2936,6 +2936,9 @@ video {
 .align-top {
   vertical-align: top;
 }
+.align-middle {
+  vertical-align: middle;
+}
 .font-mono {
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
 }
@@ -3085,6 +3088,9 @@ video {
 }
 .text-amber-800\/70 {
   color: rgb(146 64 14 / 0.7);
+}
+.text-amber-800\/90 {
+  color: rgb(146 64 14 / 0.9);
 }
 .text-amber-900 {
   --tw-text-opacity: 1;
@@ -4076,6 +4082,11 @@ video {
   --tw-gradient-to: #2AA14A var(--tw-gradient-to-position);
 }
 
+.hover\:text-amber-950:hover {
+  --tw-text-opacity: 1;
+  color: rgb(69 26 3 / var(--tw-text-opacity));
+}
+
 .hover\:text-blue-600:hover {
   --tw-text-opacity: 1;
   color: rgb(37 99 235 / var(--tw-text-opacity));
@@ -4134,6 +4145,11 @@ video {
 .hover\:text-primary-800:hover {
   --tw-text-opacity: 1;
   color: rgb(31 122 56 / var(--tw-text-opacity));
+}
+
+.hover\:text-primary-900:hover {
+  --tw-text-opacity: 1;
+  color: rgb(20 82 36 / var(--tw-text-opacity));
 }
 
 .hover\:text-purple-600:hover {
@@ -4661,6 +4677,10 @@ video {
     justify-content: space-between;
   }
 
+  .sm\:gap-1 {
+    gap: 0.25rem;
+  }
+
   .sm\:gap-3 {
     gap: 0.75rem;
   }
@@ -4760,6 +4780,11 @@ video {
   .sm\:text-base {
     font-size: 1rem;
     line-height: 1.5rem;
+  }
+
+  .sm\:text-sm {
+    font-size: 0.875rem;
+    line-height: 1.25rem;
   }
 
   .sm\:text-xl {

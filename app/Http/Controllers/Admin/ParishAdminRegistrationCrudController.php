@@ -15,6 +15,8 @@ use Prologue\Alerts\Facades\Alert;
 
 class ParishAdminRegistrationCrudController extends CrudController
 {
+    use \App\Http\Controllers\Admin\Concerns\ConfiguresBackpackShow;
+
     use AuthorizesRequests;
     use \Backpack\CRUD\app\Http\Controllers\Operations\ListOperation;
     use \Backpack\CRUD\app\Http\Controllers\Operations\ShowOperation;
@@ -100,6 +102,8 @@ class ParishAdminRegistrationCrudController extends CrudController
 
     protected function setupShowOperation(): void
     {
+        $this->applyStandardShowSettings();
+
         CRUD::column('reference_code')->label('Mã tham chiếu');
         CRUD::column('name')->label('Họ tên');
         CRUD::column('email')->label('Email');

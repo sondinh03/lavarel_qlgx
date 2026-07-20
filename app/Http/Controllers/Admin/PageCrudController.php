@@ -28,6 +28,8 @@ use ReflectionMethod;
  */
 class PageCrudController extends CrudController
 {
+    use \App\Http\Controllers\Admin\Concerns\ConfiguresBackpackShow;
+
     use ListOperation;
     use CreateOperation;
     use UpdateOperation;
@@ -225,5 +227,10 @@ class PageCrudController extends CrudController
         }
         
         return $templates_array;
+    }
+
+    protected function setupShowOperation()
+    {
+        $this->setupShowFromListColumns();
     }
 }

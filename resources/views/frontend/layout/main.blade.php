@@ -484,6 +484,10 @@ $isGroupsActive = request()->routeIs('groups.*');
                         'label' => 'Cấu hình năm học mới',
                     ])
                     @include('frontend.layout.partials.sidebar-sub-item', [
+                        'route' => 'help.attendance',
+                        'label' => 'Hướng dẫn điểm danh',
+                    ])
+                    @include('frontend.layout.partials.sidebar-sub-item', [
                         'route' => 'help.install-app',
                         'label' => 'Cài đặt lên điện thoại',
                     ])
@@ -494,6 +498,10 @@ $isGroupsActive = request()->routeIs('groups.*');
                     @include('frontend.layout.partials.flyout-item', [
                         'route' => 'school-years.guide',
                         'label' => 'Cấu hình năm học mới',
+                    ])
+                    @include('frontend.layout.partials.flyout-item', [
+                        'route' => 'help.attendance',
+                        'label' => 'Hướng dẫn điểm danh',
                     ])
                     @include('frontend.layout.partials.flyout-item', [
                         'route' => 'help.install-app',

@@ -17,6 +17,8 @@ use Backpack\CRUD\app\Library\CrudPanel\CrudPanelFacade as CRUD;
  */
 class LopCrudController extends CrudController
 {
+    use \App\Http\Controllers\Admin\Concerns\ConfiguresBackpackShow;
+
     use \Backpack\CRUD\app\Http\Controllers\Operations\ListOperation;
     use \Backpack\CRUD\app\Http\Controllers\Operations\CreateOperation;
     use \Backpack\CRUD\app\Http\Controllers\Operations\UpdateOperation;
@@ -209,5 +211,10 @@ class LopCrudController extends CrudController
             ->orderBy('sort_order')
             ->pluck('name', 'id')
             ->all();
+    }
+
+    protected function setupShowOperation()
+    {
+        $this->setupShowFromListColumns();
     }
 }

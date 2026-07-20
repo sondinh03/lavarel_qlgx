@@ -21,6 +21,8 @@ use Exception;
  */
 class SlugCrudController extends CrudController
 {
+    use \App\Http\Controllers\Admin\Concerns\ConfiguresBackpackShow;
+
     use ListOperation;
     use CreateOperation;
     use UpdateOperation;
@@ -59,5 +61,10 @@ class SlugCrudController extends CrudController
     protected function setupUpdateOperation()
     {
         $this->setupCreateOperation();
+    }
+
+    protected function setupShowOperation()
+    {
+        $this->setupShowFromListColumns();
     }
 }

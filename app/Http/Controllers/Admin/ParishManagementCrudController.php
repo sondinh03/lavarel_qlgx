@@ -16,6 +16,8 @@ use Illuminate\Support\Facades\DB;
  */
 class ParishManagementCrudController extends CrudController
 {
+    use \App\Http\Controllers\Admin\Concerns\ConfiguresBackpackShow;
+
     use \Backpack\CRUD\app\Http\Controllers\Operations\ListOperation;
     use \Backpack\CRUD\app\Http\Controllers\Operations\CreateOperation;
     use \Backpack\CRUD\app\Http\Controllers\Operations\UpdateOperation;
@@ -367,5 +369,10 @@ class ParishManagementCrudController extends CrudController
             }
         }
         return $array_dea;
+    }
+
+    protected function setupShowOperation()
+    {
+        $this->setupShowFromListColumns();
     }
 }

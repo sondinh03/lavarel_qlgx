@@ -30,6 +30,7 @@ class User extends Authenticatable
         'password',
         'parish_id',
         'avatar_path',
+        'is_active',
     ];
 
     /**
@@ -50,7 +51,13 @@ class User extends Authenticatable
     protected $casts = [
         'email_verified_at' => 'datetime',
         'parish_id'         => 'integer',
+        'is_active'         => 'boolean',
     ];
+
+    public function isActive(): bool
+    {
+        return (bool) $this->is_active;
+    }
 
     public function parishId()
     {
@@ -168,6 +175,19 @@ class User extends Authenticatable
 
     protected static function booted(): void
     {
+        static::updating(function (User $user) {
+            if (! $user->isDirty('is_active') || $user->is_active) {
+                return;
+            }
+
+            $actorId = backpack_user()?->id ?? auth()->id();
+            if ($actorId && (int) $actorId === (int) $user->id) {
+                throw \Illuminate\Validation\ValidationException::withMessages([
+                    'is_active' => 'Bạn không thể vô hiệu hóa chính tài khoản đang đăng nhập.',
+                ]);
+            }
+        });
+
         static::deleting(function (User $user) {
             Teacher::where('user_id', $user->id)->update(['user_id' => null]);
 
@@ -178,8 +198,9 @@ class User extends Authenticatable
 
         static::saved(function ($user) {
             $request = request();
-            if ($request->filled('roles')) {
-                $user->syncRoles([$request->roles]);
+            $role = $request->input('assigned_role') ?: $request->input('roles');
+            if ($role) {
+                $user->syncRoles([$role]);
             }
         });
     }

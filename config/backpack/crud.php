@@ -142,7 +142,9 @@ return [
         'show' => [
             // Define the size/looks of the content div for all CRUDs
             // To override per Controller use $this->crud->setShowContentClass('class-string')
-            'contentClass' => 'col-md-12',
+            'contentClass' => 'col-md-10 col-lg-8',
+            // Không tự dump toàn bộ cột DB — mỗi CRUD nên setupShowOperation (trait ConfiguresBackpackShow)
+            'setFromDb' => false,
         ],
 
         /*

@@ -28,7 +28,9 @@ class UserRequest extends FormRequest
             'name'      => 'required|string|max:255',
             'email'     => 'required|email|unique:users,email,' . $this->route('id'),
             'parish_id' => 'required|exists:parishes,id',
-            'roles'     => 'required|string',
+            'roles'         => 'nullable|string',
+            'assigned_role' => 'required|string|exists:roles,name',
+            'is_active'     => 'nullable|boolean',
         ];
 
         // Tạo mới → password bắt buộc, update → không bắt buộc

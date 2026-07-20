@@ -252,6 +252,16 @@
             @endif
 
             @else
+            <div class="px-4 lg:px-6 py-3 mac-hairline-b">
+                <x-inline-tip>
+                    @if(!$selectedClassId)
+                        Chọn <strong>khối → lớp</strong> ở bộ lọc, rồi bấm <strong>Tạo phiên mới</strong>.
+                    @else
+                        Lớp này chưa có buổi. Bấm <strong>Tạo phiên mới</strong> (theo ngày / tuần / tùy chọn).
+                        <a href="{{ route('help.attendance') }}" class="font-semibold underline hover:text-primary-900 ml-1">Hướng dẫn điểm danh →</a>
+                    @endif
+                </x-inline-tip>
+            </div>
             <x-stats.page-empty
                 :panel="false"
                 tone="primary"

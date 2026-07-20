@@ -8,6 +8,8 @@ use Backpack\CRUD\app\Library\CrudPanel\CrudPanelFacade as CRUD;
 
 class NamHocCrudController extends CrudController
 {
+    use \App\Http\Controllers\Admin\Concerns\ConfiguresBackpackShow;
+
     use \Backpack\CRUD\app\Http\Controllers\Operations\ListOperation;
     use \Backpack\CRUD\app\Http\Controllers\Operations\CreateOperation;
     use \Backpack\CRUD\app\Http\Controllers\Operations\UpdateOperation;
@@ -58,7 +60,7 @@ class NamHocCrudController extends CrudController
 
     protected function setupShowOperation()
     {
-        CRUD::set('show.setFromDb', false); // tắt tự động lấy từ DB
+        $this->applyStandardShowSettings();
 
         CRUD::addColumn([
             'name'  => 'name',

@@ -100,7 +100,7 @@
                 x-on:filter-leave-request.window="onFilterLeave($event.detail)">
             </div>
 
-    <div wire:key="attendance-{{ $selectedClassId }}-{{ $attendanceType }}-{{ $selectedKy }}"
+    <div wire:key="attendance-{{ $selectedClassId }}-{{ $attendanceType }}-{{ $selectedKy }}-{{ $selectedDate }}"
         data-attendance-root
         x-data="{
             records: {},
@@ -115,6 +115,20 @@
 
             toast(type, message) {
                 this.getLivewire()?.emit('toast', type, message);
+            },
+
+            /** Bỏ phần date để so context khi đổi ngày (cùng lớp/type/kỳ). */
+            contextBase(ctx) {
+                return String(ctx || '').replace(/\|date:[^|]*/, '');
+            },
+
+            acceptContext(detail) {
+                if (!detail?.context) return true;
+                if (this.contextBase(detail.context) !== this.contextBase(this.context)) {
+                    return false;
+                }
+                this.context = detail.context;
+                return true;
             },
 
             getStatus(studentId, sessionId) {
@@ -259,7 +273,7 @@
             },
 
             onSaved(detail) {
-                if (detail?.context && detail.context !== this.context) return;
+                if (!this.acceptContext(detail)) return;
                 this.isSaving = false;
                 if (detail && detail.records) {
                     Object.keys(this.records).forEach(k => delete this.records[k]);
@@ -276,7 +290,7 @@
             },
 
             onRecordsLoaded(detail) {
-                if (detail?.context && detail.context !== this.context) return;
+                if (!this.acceptContext(detail)) return;
                 const newRecords = detail?.records || {};
                 Object.keys(this.records).forEach(k => delete this.records[k]);
                 Object.assign(this.records, newRecords);
@@ -342,7 +356,9 @@
 
             <div class="px-4 lg:px-6 py-3 mac-hairline-b bg-white/30 space-y-3">
                 @if($selectedClassId)
-                <div class="hidden lg:flex items-center justify-end gap-3">
+                {{-- Toolbar desktop (admin): luôn hiện theo role, không theo breakpoint --}}
+                @if($this->viewMode !== 'mobile')
+                <div class="flex items-center justify-end gap-3">
                     <x-button as="a" variant="outline" href="{{ route('attendance.statistics', [
                             'namHoc'  => $selectedNamHoc,
                             'classId' => $selectedClassId,
@@ -378,6 +394,7 @@
                         </x-button>
                     </div>
                 </div>
+                @endif
 
                 <div class="flex bg-slate-200 p-1 rounded-xl text-sm font-medium">
                     <button
@@ -436,8 +453,9 @@
             @else
                 @if($students->count() > 0 && count($sessions) > 0)
 
-                {{-- ===================== DESKTOP TABLE ===================== --}}
-                <div class="hidden lg:block overflow-x-auto overscroll-x-contain">
+                {{-- Bảng theo role: desktop = admin; mobile = catechist thuần — không theo breakpoint --}}
+                @if($this->viewMode !== 'mobile')
+                <div class="overflow-x-auto overscroll-x-contain">
                     <table class="w-max min-w-full border-separate border-spacing-0">
                         <colgroup>
                             <col style="width: 3rem">
@@ -641,9 +659,9 @@
                         </tbody>
                     </table>
                 </div>
-
-                {{-- ===================== MOBILE VIEW ===================== --}}
-                <div class="lg:hidden">
+                @else
+                {{-- Catechist / viewMode mobile: một ngày, sticky lưu --}}
+                <div>
                     @php
                     $currentSession = collect($sessions)->firstWhere('dateStr', $selectedDate);
                     $locked = $currentSession['locked'] ?? false;
@@ -653,7 +671,7 @@
                     $mobileSessionId = $currentSession['id'] ?? null;
                     @endphp
 
-                    {{-- Date Selector Sticky --}}
+                    {{-- Date Selector Sticky — đủ phiên trong kỳ --}}
                     <div class="sticky top-0 z-30 bg-white border-b border-slate-200 shadow-sm">
                         <div
                             x-data
@@ -666,7 +684,6 @@
                                 })
                             "
                             class="flex gap-2 overflow-x-auto px-3 py-3 scrollbar-hide snap-x snap-mandatory">
-                            
                             @foreach($sessions as $session)
                             @php
                             $isActive = $session['dateStr'] === $selectedDate;
@@ -690,7 +707,7 @@
                                     </svg>
                                     @endif
                                 </div>
-                                <span class="text-[10px] {{ $isActive ? 'text-white/80' : 'text-slate-400' }}">
+                                <span class="text-[10px] leading-tight text-center {{ $isActive ? 'text-white/80' : 'text-slate-400' }}">
                                     {{ $session['dayName'] }}
                                 </span>
                             </button>
@@ -891,11 +908,11 @@
                         </table>
                     </div>
 
-                    {{-- Mobile Sticky Bottom Bar — ẩn khi đang mở modal lý do --}}
+                    {{-- Sticky Lưu — chỉ render khi viewMode mobile --}}
                     <div
                         x-show="hasDraft() && !noteModal.open"
                         x-cloak
-                        class="lg:hidden fixed left-0 right-0 z-20 bg-white/90 backdrop-blur border-t border-black/[0.06] px-4 py-3"
+                        class="fixed left-0 right-0 z-20 bg-white/90 backdrop-blur border-t border-black/[0.06] px-4 py-3"
                         style="bottom: calc(env(safe-area-inset-bottom) + 60px);">
                         <div class="flex items-center gap-2 max-w-7xl mx-auto">
                             <x-button
@@ -918,10 +935,27 @@
                         </div>
                     </div>
 
-                    <div x-show="hasDraft()" x-cloak class="lg:hidden h-24"></div>
+                    <div x-show="hasDraft()" x-cloak class="h-24"></div>
                 </div>
+                @endif
 
                 @else
+                    @if(empty($sessions))
+                    <div class="px-4 lg:px-6 py-3 mac-hairline-b">
+                        <x-inline-tip tone="amber">
+                            Lớp đã chọn nhưng <strong>chưa có buổi điểm danh</strong>.
+                            @if(auth()->user()->canManage())
+                                Vào
+                                <a href="{{ route('session.index') }}" class="font-semibold underline hover:text-amber-950">Phiên điểm danh</a>
+                                → chọn cùng năm học / lớp → <strong>Tạo phiên mới</strong>
+                                (theo ngày, theo tuần hoặc tùy chọn), rồi quay lại trang này.
+                                <a href="{{ route('help.attendance') }}" class="font-semibold underline hover:text-amber-950 ml-1">Hướng dẫn điểm danh →</a>
+                            @else
+                                Liên hệ quản trị viên để tạo buổi tại <strong>Phiên điểm danh</strong>, rồi tải lại trang này.
+                            @endif
+                        </x-inline-tip>
+                    </div>
+                    @endif
                     <x-stats.page-empty
                         :panel="false"
                         :title="empty($sessions) ? 'Chưa có buổi điểm danh nào' : 'Không có dữ liệu để hiển thị'"
@@ -934,9 +968,14 @@
                                 d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
                         </x-slot>
                         @if(empty($sessions) && auth()->user()->canManage())
-                        <x-button as="a" href="{{ route('session.index') }}" variant="primary">
-                            Mở Phiên điểm danh
-                        </x-button>
+                        <div class="flex flex-wrap items-center justify-center gap-3">
+                            <x-button as="a" href="{{ route('session.index') }}" variant="primary">
+                                Mở Phiên điểm danh
+                            </x-button>
+                            <x-button as="a" href="{{ route('help.attendance') }}" variant="outline">
+                                Xem hướng dẫn
+                            </x-button>
+                        </div>
                         @endif
                     </x-stats.page-empty>
                 @endif
