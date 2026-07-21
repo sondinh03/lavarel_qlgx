@@ -2,7 +2,7 @@
 
 namespace App\Http\Livewire;
 
-use App\Exports\AttendanceExport;
+use App\Exports\AttendanceWorkbookExport;
 use App\Http\Livewire\Base\BaseComponent;
 use App\Models\AttendanceRecord;
 use App\Models\AttendanceSession;
@@ -788,12 +788,8 @@ class AttendanceManager extends BaseComponent
             return;
         }
 
-        $ky = is_numeric($this->selectedKy) ? (int) $this->selectedKy : null;
-
-        $sessionsQuery = AttendanceSession::where('class_id', $this->selectedClassId)
-            ->where('type', $this->attendanceType);
-
-        $this->applyAttendanceKyFilter($sessionsQuery);
+        // Xuất cả năm, gồm cả hai loại Đi học và Đi lễ
+        $sessionsQuery = AttendanceSession::where('class_id', $this->selectedClassId);
 
         if ($sessionsQuery->count() === 0) {
             $this->emit('toast', 'warning', 'Chưa có buổi để xuất');
@@ -801,21 +797,13 @@ class AttendanceManager extends BaseComponent
         }
 
         $className = CatechismClass::findOrFail($this->selectedClassId)->name;
-        $typeSlug  = $this->attendanceType === 2 ? 'DiLe' : 'DiHoc';
-        $kyLabel   = match ($ky) {
-            1, 2 => 'HK' . $ky,
-            3 => 'He',
-            default => 'CaNam',
-        };
 
-        $exportKy = in_array($ky, [1, 2, 3], true) ? $ky : null;
-
-        return response()->streamDownload(function () use ($exportKy) {
+        return response()->streamDownload(function () {
             echo \Maatwebsite\Excel\Facades\Excel::raw(
-                new AttendanceExport($this->selectedClassId, $exportKy, $this->attendanceType),
+                new AttendanceWorkbookExport((int) $this->selectedClassId),
                 \Maatwebsite\Excel\Excel::XLSX
             );
-        }, 'DiemDanh_' . $className . '_' . $kyLabel . '_' . $typeSlug . '_' . now()->format('dmY_His') . '.xlsx');
+        }, 'DiemDanh_' . $className . '_CaNam_' . now()->format('dmY_His') . '.xlsx');
     }
 
     // ==================== EVENT HANDLERS ====================
