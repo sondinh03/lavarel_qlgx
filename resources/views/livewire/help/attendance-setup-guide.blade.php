@@ -39,6 +39,16 @@
             <x-inline-tip>
                 Cần sẵn: năm học đang dùng, lớp học, và học sinh đã được <strong>ghi danh</strong> vào lớp.
             </x-inline-tip>
+            <x-inline-tip tone="amber">
+                <p class="font-semibold text-sm mb-1">Ai điểm danh được?</p>
+                <p class="text-amber-800/90">
+                    <strong>Ban quản trị</strong>: mọi lớp, mọi năm học.
+                    <strong>GLV đã được phân công</strong> vào ít nhất một lớp trong năm học hiện tại: điểm danh được
+                    <em>mọi lớp</em> trong xứ (hỗ trợ điểm danh chéo lớp).
+                    <strong>GLV chưa được phân công</strong> trong năm học hiện tại (kể cả tài khoản từ năm cũ):
+                    đăng nhập được nhưng <em>không thao tác gì</em> — trang sẽ hiện thông báo «Bạn chưa được phân công lớp trong năm học này».
+                </p>
+            </x-inline-tip>
         </x-mac-panel>
 
         <x-mac-panel class="p-4 lg:p-6">
@@ -181,6 +191,14 @@
                     <p class="font-semibold text-slate-900">Không thấy nút Tạo phiên mới?</p>
                     <p class="mt-1 text-slate-600 leading-relaxed">
                         Cần chọn năm học trước; nút bị tắt nếu chưa chọn năm. Tài khoản GLV thuần có thể không có quyền tạo.
+                    </p>
+                </div>
+                <div>
+                    <p class="font-semibold text-slate-900">GLV báo «Bạn chưa được phân công lớp trong năm học này»?</p>
+                    <p class="mt-1 text-slate-600 leading-relaxed">
+                        GLV đó chưa có phân công lớp trong năm học đang vận hành (thường gặp với tài khoản từ năm học cũ).
+                        Ban quản trị vào <strong>Lớp giáo lý → Phân công GLV</strong> (icon GLV ở cột Thao tác) để gán GLV
+                        vào lớp của năm hiện tại; sau đó GLV tải lại trang là điểm danh được (mọi lớp trong xứ).
                     </p>
                 </div>
                 <div>

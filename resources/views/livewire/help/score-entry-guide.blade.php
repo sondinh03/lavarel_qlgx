@@ -34,6 +34,8 @@
                     <strong>Ban quản trị</strong> (parish_admin / catechism_admin): cấu hình loại điểm, mở/khóa cửa sổ nhập, luôn được sửa điểm.
                     <strong>GLV thuần</strong>: chỉ <em>xem</em> điểm lớp được phân công — không nhập/sửa.
                     <strong>GLV có «Quản lý điểm toàn giáo xứ»</strong> (quyền hỗ trợ quản trị): nhập/sửa điểm <em>mọi lớp</em> trong xứ khi cửa sổ đang mở; khi khóa thì chỉ xem như GLV thuần.
+                    Điều kiện chung: GLV (kể cả có quyền hỗ trợ) phải <strong>đang được phân công</strong> vào ít nhất một lớp
+                    trong năm học hiện tại — chưa phân công thì không xem/nhập được gì.
                 </p>
             </x-inline-tip>
             <x-inline-tip>
@@ -188,8 +190,10 @@
                 <div>
                     <p class="font-semibold text-slate-900">GLV báo «không sửa được điểm»?</p>
                     <p class="mt-1 text-slate-600 leading-relaxed">
-                        Kiểm tra lần lượt: (1) GLV đã được cấp «Quản lý điểm toàn giáo xứ» chưa — GLV thuần không nhập được;
-                        (2) banner cửa sổ đang khóa hay mở — nếu khóa thì mở «Mở nhập điểm» rồi bảo GLV tải lại trang.
+                        Kiểm tra lần lượt: (1) GLV đã được <strong>phân công lớp trong năm học hiện tại</strong> chưa —
+                        chưa phân công thì mọi quyền đều không có hiệu lực;
+                        (2) GLV đã được cấp «Quản lý điểm toàn giáo xứ» chưa — GLV thuần không nhập được;
+                        (3) banner cửa sổ đang khóa hay mở — nếu khóa thì mở «Mở nhập điểm» rồi bảo GLV tải lại trang.
                     </p>
                 </div>
                 <div>
@@ -215,6 +219,7 @@
                     <p class="mt-1 text-slate-600 leading-relaxed">
                         Quản trị xứ vào <strong>Giáo lý viên → sửa GLV</strong>, bật <strong>«Quản lý điểm toàn giáo xứ»</strong>
                         trong mục Quyền hỗ trợ quản trị. Sau đó mở cửa sổ nhập điểm — GLV đó sẽ nhập/sửa được điểm mọi lớp trong xứ.
+                        Lưu ý: GLV đó phải đang được phân công vào ít nhất một lớp trong năm học hiện tại thì quyền mới có hiệu lực.
                     </p>
                 </div>
             </div>

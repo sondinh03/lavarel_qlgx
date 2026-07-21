@@ -169,6 +169,7 @@ $addPara('Mặc định GLV chỉ điểm danh và xem lớp được phân côn
 $addBullet('Quản lý điểm toàn giáo xứ: GLV xem, nhập và sửa điểm mọi lớp trong xứ khi cửa sổ nhập điểm đang mở.');
 $addBullet('Sửa thông tin học sinh toàn giáo xứ: GLV cập nhật hồ sơ học sinh toàn xứ (không gồm tạo/xóa học sinh hay liên kết giáo dân).');
 $addPara('Chỉ Quản trị xứ (và Super admin) mới cấp được các quyền này. Bỏ chọn để thu hồi bất cứ lúc nào.');
+$addPara('Điều kiện hiệu lực: các quyền trên chỉ có tác dụng khi GLV đang được phân công vào ít nhất một lớp trong năm học hiện tại. GLV chưa được phân công (kể cả tài khoản từ năm học cũ, đã nghỉ) đăng nhập được nhưng không thao tác gì trên năm hiện tại — không cần thu hồi quyền thủ công từng người khi sang năm mới.');
 $addNote('Mọi thay đổi hồ sơ học sinh đều được ghi Nhật ký sửa học sinh (ai sửa, thời điểm, giá trị cũ/mới) để đối chiếu khi cần.');
 
 $section->addTitle('4.5. Học sinh', 2);
@@ -272,7 +273,7 @@ $section->addTitle('8.1. Không thấy menu Giáo dân hoặc Giáo lý?', 2);
 $addPara('Quay lại trang Chọn phân hệ từ menu người dùng. Nếu vẫn thiếu một module, tài khoản có thể đang mang role hẹp hơn (chỉ Giáo lý hoặc chỉ Giáo dân) — liên hệ Super Admin để gán đúng role Quản trị xứ.');
 
 $section->addTitle('8.2. GLV đăng nhập không vào được lớp?', 2);
-$addPara('Kiểm tra GLV đã được phân công vào lớp thuộc năm học đang active; kiểm tra tài khoản GLV còn hiệu lực và đúng giáo xứ.');
+$addPara('Kiểm tra GLV đã được phân công vào lớp thuộc năm học đang active; kiểm tra tài khoản GLV còn hiệu lực và đúng giáo xứ. Nếu GLV báo thấy thông báo "Bạn chưa được phân công lớp trong năm học này" thì chỉ cần phân công GLV vào một lớp của năm hiện tại là các chức năng mở lại.');
 
 $section->addTitle('8.3. Điểm danh / điểm số không hiện lớp?', 2);
 $addPara('Kiểm tra năm học đang kích hoạt, lớp thuộc năm đó, và học sinh đã được xếp vào lớp.');
