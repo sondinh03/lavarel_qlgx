@@ -25,7 +25,7 @@
                     Quên mật khẩu
                 </h1>
                 <p class="mt-1 text-sm text-slate-500">
-                    Nhập email hoặc SĐT để nhận liên kết đặt lại
+                    Nhập email để nhận liên kết đặt lại
                 </p>
             </div>
 
@@ -41,7 +41,7 @@
 
                 <div>
                     <label for="email" class="block text-sm font-semibold text-slate-700 mb-1">
-                        Email hoặc số điện thoại
+                        Email
                     </label>
                     <input
                         id="email"
@@ -51,14 +51,13 @@
                         required
                         autofocus
                         autocomplete="username"
-                        placeholder="admin@gmail.com hoặc 0901234567"
                         class="w-full px-4 py-3 rounded-xl
                             bg-white border border-slate-300 shadow-mac-sm
                             text-slate-900 placeholder:text-slate-300
                             focus:outline-none focus:ring-2 focus:ring-primary-500/25
                             focus:border-primary-400 transition">
                     <p class="text-xs text-slate-400 mt-1.5">
-                        Tài khoản chỉ đăng nhập bằng SĐT (không có Gmail) vui lòng liên hệ hỗ trợ
+                        Tài khoản chỉ đăng nhập bằng số điện thoại vui lòng liên hệ hỗ trợ
                         @if(
                             trim((string) config('settings.support_phone', '')) !== ''
                             || trim((string) config('settings.support_email', '')) !== ''

@@ -37,7 +37,7 @@ class ApproveParishAdminRegistrationAction
 
         $normalizedCode = strtoupper(trim((string) $parishCode));
 
-        return DB::transaction(function () use ($request, $reviewer, $roles, $normalizedCode) {
+        $result = DB::transaction(function () use ($request, $reviewer, $roles, $normalizedCode) {
             $parishId = $request->parish_id;
 
             if (! $parishId) {
@@ -107,7 +107,6 @@ class ApproveParishAdminRegistrationAction
             ]);
 
             $freshRequest = $request->fresh();
-            notify_users($user, new ParishAdminRegistrationApproved($freshRequest));
             app(\App\Services\Admin\SystemOverviewService::class)->forget();
 
             return [
@@ -115,5 +114,13 @@ class ApproveParishAdminRegistrationAction
                 'request' => $freshRequest,
             ];
         });
+
+        try {
+            notify_users($result['user'], new ParishAdminRegistrationApproved($result['request']));
+        } catch (\Throwable $e) {
+            report($e);
+        }
+
+        return $result;
     }
 }
