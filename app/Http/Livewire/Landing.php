@@ -67,6 +67,14 @@ class Landing extends Component
 
     public function viewStudent(int $studentId): void
     {
+        $allowed = collect($this->results)->firstWhere('id', $studentId);
+        if (! $allowed) {
+            $this->error = 'Không tìm thấy học viên nào với số điện thoại này.';
+            $this->viewingStudentId = null;
+
+            return;
+        }
+
         $this->viewingStudentId = $studentId;
         $this->activeTab        = 'info';
     }
@@ -79,6 +87,10 @@ class Landing extends Component
 
     public function switchTab(string $tab): void
     {
+        if (! $this->assertViewingStudentMatchesSearch()) {
+            return;
+        }
+
         if (in_array($tab, ['info', 'attendance', 'scores'])) {
             $this->activeTab = $tab;
         }
@@ -95,7 +107,10 @@ class Landing extends Component
 
     public function getViewingStudentProperty(): ?array
     {
-        if (!$this->viewingStudentId) return null;
+        if (! $this->assertViewingStudentMatchesSearch()) {
+            return null;
+        }
+
         return collect($this->results)->firstWhere('id', $this->viewingStudentId);
     }
 
@@ -104,7 +119,9 @@ class Landing extends Component
      */
     public function getAttendanceSummaryProperty(): array
     {
-        if (!$this->viewingStudentId) return [];
+        if (! $this->assertViewingStudentMatchesSearch()) {
+            return [];
+        }
 
         // Lấy năm học hiện tại (status = 1)
         $currentYear = NamHoc::where('status', 1)
@@ -115,8 +132,8 @@ class Landing extends Component
 
         $records = DB::table('attendance_records as ar')
             ->join('attendance_sessions as s', 'ar.session_id', '=', 's.id')
-            ->join('classes as c', 's.class_id', '=', 'c.id')  // ← điều chỉnh tên bảng lớp nếu khác
-            ->where('c.school_year_id', $currentYear->id)            // ← điều chỉnh tên cột school_year
+            ->join('classes as c', 's.class_id', '=', 'c.id')
+            ->where('c.school_year_id', $currentYear->id)
             ->where('ar.student_id', $this->viewingStudentId)
             ->select(
                 'c.name as class_name',
@@ -157,7 +174,9 @@ class Landing extends Component
      */
     public function getScoresSummaryProperty(): array
     {
-        if (!$this->viewingStudentId) return [];
+        if (! $this->assertViewingStudentMatchesSearch()) {
+            return [];
+        }
 
         $rows = DB::table('student_scores as sc')
             ->join('score_types as st', 'sc.score_type_id', '=', 'st.id')
@@ -223,6 +242,31 @@ class Landing extends Component
     }
 
     // ==================== HELPERS ====================
+
+    private function assertViewingStudentMatchesSearch(): bool
+    {
+        if (! $this->viewingStudentId) {
+            return false;
+        }
+
+        $match = collect($this->results)->firstWhere('id', $this->viewingStudentId);
+        if (! $match) {
+            $this->viewingStudentId = null;
+            $this->activeTab = 'info';
+
+            return false;
+        }
+
+        $phone = trim((string) $this->phone);
+        if ($phone !== '' && isset($match['phone']) && trim((string) $match['phone']) !== $phone) {
+            $this->viewingStudentId = null;
+            $this->activeTab = 'info';
+
+            return false;
+        }
+
+        return true;
+    }
 
     private function resetState(): void
     {

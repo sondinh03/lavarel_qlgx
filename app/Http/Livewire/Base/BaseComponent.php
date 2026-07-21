@@ -2,9 +2,7 @@
 
 namespace App\Http\Livewire\Base;
 
-use App\Models\ClassTeacher;
-use App\Models\NamHoc;
-use App\Models\Teacher;
+use App\Services\CatechistAccess;
 use App\Traits\FilterTrait;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Support\Facades\Log;
@@ -117,35 +115,14 @@ abstract class BaseComponent extends Component
             $this->parishId = $user->parishId();
         }
 
-        if ($user->isCatechist()) {
-            $teacher = Teacher::where('email', $user->email)->first();
-
-            if ($teacher && $this->parishId) {
-                $currentNamHocId = NamHoc::where('parish_id', $this->parishId)
-                    ->active()
-                    ->current()
-                    ->value('id');
-
-                $query = ClassTeacher::query()
-                    ->where('teacher_id', $teacher->id)
-                    ->where('status', true)
-                    ->whereHas('catechismClass', function ($q) {
-                        $q->where('parish_id', $this->parishId)
-                            ->where('is_active', true);
-                    });
-
-                if ($currentNamHocId) {
-                    $query->where(function ($q) use ($currentNamHocId) {
-                        $q->where('namhoc_id', $currentNamHocId)
-                            ->orWhereHas(
-                                'catechismClass',
-                                fn ($c) => $c->where('school_year_id', $currentNamHocId)
-                            );
-                    });
-                }
-
-                $this->defaultClassId = $query->orderByDesc('role')->value('class_id');
-            }
+        if ($user->isCatechist() && ! $user->canManageCatechism()) {
+            $access = app(CatechistAccess::class);
+            $schoolYearId = $access->currentSchoolYearId($this->parishId);
+            $this->defaultClassId = $access->defaultAssignedClassId(
+                $user,
+                $this->parishId,
+                $schoolYearId
+            );
         }
     }
 

@@ -21,7 +21,9 @@
             <x-page-header
                 title="Kết quả học tập"
                 :description="$isCatechist
-                    ? ($canEditScores ? 'Nhập điểm theo lớp được phân công' : 'Xem điểm theo lớp được phân công')
+                    ? (($canBrowseAllScoreClasses ?? false)
+                        ? ($canEditScores ? 'Nhập điểm toàn giáo xứ khi cửa sổ đang mở' : 'Xem điểm toàn giáo xứ')
+                        : 'Xem điểm theo lớp được phân công')
                     : ($canEditScores ? 'Nhập và quản lý điểm học sinh theo lớp và học kỳ' : 'Xem điểm học sinh theo lớp và học kỳ')"
                 icon-type="score" />
 
@@ -59,7 +61,7 @@
             @endif
 
             <div class="p-4 lg:p-6 mac-hairline-b bg-white/30">
-                @if($isCatechist)
+                @if($isCatechist && !($canBrowseAllScoreClasses ?? false))
                 <div class="flex flex-col gap-4">
                     <livewire:filters.filter-bar
                         :parish-id="$parishId"
@@ -70,7 +72,8 @@
                         :selected-nam-hoc="$selectedNamHoc"
                         :selected-khoi="$selectedKhoi"
                         :selected-lop="$selectedLop"
-                        :selected-ky="$selectedSemester" />
+                        :selected-ky="$selectedSemester"
+                        :allowed-class-ids="$scoreFilterAllowedClassIds ?? []" />
 
                     <div class="flex flex-col sm:flex-row sm:items-center gap-3">
                         <x-search-input

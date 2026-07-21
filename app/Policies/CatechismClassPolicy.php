@@ -3,7 +3,9 @@
 namespace App\Policies;
 
 use App\Models\CatechismClass;
+use App\Models\ParishNew;
 use App\Models\User;
+use App\Services\CatechistAccess;
 use Illuminate\Auth\Access\HandlesAuthorization;
 
 class CatechismClassPolicy
@@ -56,5 +58,50 @@ class CatechismClassPolicy
     {
         return $user->canManageCatechism()
             && $user->parish_id === $class->parish_id;
+    }
+
+    /**
+     * Xem điểm của một lớp (GLV thường: lớp được giao; elevated: toàn xứ).
+     */
+    public function viewScoresForClass(User $user, CatechismClass $class): bool
+    {
+        if ($user->canManageCatechism()) {
+            return (int) $user->parish_id === (int) $class->parish_id;
+        }
+
+        if (! $user->parish_id || (int) $user->parish_id !== (int) $class->parish_id) {
+            return false;
+        }
+
+        return app(CatechistAccess::class)->canViewScoresForClass(
+            $user,
+            (int) $class->id,
+            (int) $user->parish_id
+        );
+    }
+
+    /**
+     * Nhập/sửa điểm của một lớp (chỉ admin hoặc GLV có manage_parish_scores + cửa sổ mở).
+     */
+    public function enterScoresForClass(User $user, CatechismClass $class): bool
+    {
+        if ($user->canManageCatechism()) {
+            return (int) $user->parish_id === (int) $class->parish_id;
+        }
+
+        if (! $user->parish_id || (int) $user->parish_id !== (int) $class->parish_id) {
+            return false;
+        }
+
+        $open = (bool) ParishNew::query()
+            ->whereKey($user->parish_id)
+            ->value('scores_entry_open');
+
+        return app(CatechistAccess::class)->canEnterScoresForClass(
+            $user,
+            (int) $class->id,
+            $open,
+            (int) $user->parish_id
+        );
     }
 }

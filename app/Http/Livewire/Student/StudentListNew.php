@@ -7,6 +7,7 @@ use App\Http\Livewire\Base\BaseComponent;
 use App\Models\CatechismClass;
 use App\Models\Parishioner;
 use App\Models\StudentNew;
+use App\Services\CatechistAccess;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\DB;
@@ -50,6 +51,11 @@ class StudentListNew extends BaseComponent
 
     // ==================== CACHE ====================
     protected $lopCache = null;
+
+    /** GLV thường: chỉ lớp được phân công. Admin / elevated: toàn xứ. */
+    public bool $canBrowseAllClasses = false;
+    public bool $canEditStudents = false;
+    public bool $canManageStudents = false;
 
     // ==================== PARISHIONER LINKING ====================
     public $suggestedParishioners;
@@ -109,21 +115,63 @@ class StudentListNew extends BaseComponent
         $this->suggestedParishioners = collect();
         parent::mount();
         $this->requireParishId();
+        $this->refreshStudentAccessFlags();
+    }
+
+    protected function refreshStudentAccessFlags(): void
+    {
+        $user = auth()->user();
+        $access = app(CatechistAccess::class);
+
+        $this->canManageStudents = (bool) $user?->canManageCatechism();
+        $this->canEditStudents = (bool) ($user && (
+            $user->canManageCatechism() || $access->canEditParishStudents($user)
+        ));
+        $this->canBrowseAllClasses = (bool) ($user && (
+            $user->canManageCatechism() || $access->canEditParishStudents($user)
+        ));
     }
 
     protected function loadInitialData(): void
     {
+        $this->refreshStudentAccessFlags();
+
         if (!$this->selectedNamHoc) {
             $this->selectedNamHoc = $this->getDefaultNamHocId();
         }
 
         if (!$this->selectedLop) {
-            // Catechist → dùng defaultClassId từ BaseComponent
-            // Không catechist → fallback lớp đầu tiên của năm học
             $this->selectedLop = $this->defaultClassId
-                ?? CatechismClass::where('school_year_id', $this->selectedNamHoc)
-                ->orderBy('id')
-                ->value('id');
+                ?? ($this->canBrowseAllClasses
+                    ? CatechismClass::where('school_year_id', $this->selectedNamHoc)
+                        ->orderBy('id')
+                        ->value('id')
+                    : null);
+        }
+
+        $this->assertSelectedLopAllowed();
+    }
+
+    protected function assertSelectedLopAllowed(): void
+    {
+        if (! $this->selectedLop) {
+            return;
+        }
+
+        $user = auth()->user();
+        if (! $user || $this->canBrowseAllClasses) {
+            return;
+        }
+
+        $allowed = app(CatechistAccess::class)->assignedClassIds(
+            $user,
+            $this->parishId,
+            $this->selectedNamHoc ? (int) $this->selectedNamHoc : null
+        );
+
+        if (! in_array((int) $this->selectedLop, $allowed, true)) {
+            $this->selectedLop = $this->defaultClassId
+                ?? ($allowed[0] ?? null);
         }
     }
 
@@ -261,6 +309,7 @@ class StudentListNew extends BaseComponent
             }
         }
 
+        $this->assertSelectedLopAllowed();
         $this->finalizeFilterChange();
     }
 
@@ -325,7 +374,8 @@ class StudentListNew extends BaseComponent
 
     public function openLinkParishioner(int $studentId): void
     {
-        $this->authorize('update', StudentNew::findOrFail($studentId));
+        $student = StudentNew::findOrFail($studentId);
+        $this->authorize('linkParishioner', $student);
 
         try {
             $student = StudentNew::with('saint')->findOrFail($studentId);
@@ -420,7 +470,7 @@ class StudentListNew extends BaseComponent
 
     public function confirmLink(int $parishionerId): void
     {
-        $this->authorize('update', StudentNew::findOrFail($this->linkingStudentId));
+        $this->authorize('linkParishioner', StudentNew::findOrFail($this->linkingStudentId));
 
         try {
             DB::beginTransaction();
@@ -465,7 +515,7 @@ class StudentListNew extends BaseComponent
 
     public function unlinkParishioner(int $studentId): void
     {
-        $this->authorize('update', StudentNew::findOrFail($studentId));
+        $this->authorize('linkParishioner', StudentNew::findOrFail($studentId));
 
         try {
             StudentNew::findOrFail($studentId)->update(['parishioner_id' => null]);
@@ -972,7 +1022,34 @@ class StudentListNew extends BaseComponent
      */
     protected function applyListFilters($query, bool $withSearch = true): void
     {
-        if ($this->selectedNamHoc || $this->selectedKhoi || $this->selectedLop) {
+        $user = auth()->user();
+        $access = app(CatechistAccess::class);
+
+        if ($user && ! $this->canBrowseAllClasses) {
+            $assigned = $access->assignedClassIds(
+                $user,
+                $this->parishId,
+                $this->selectedNamHoc ? (int) $this->selectedNamHoc : null
+            );
+
+            if ($assigned === []) {
+                $query->whereRaw('1 = 0');
+            } else {
+                $query->whereHas('classes', function ($q) use ($assigned) {
+                    $q->whereIn('classes.id', $assigned);
+
+                    if ($this->selectedNamHoc) {
+                        $q->where('classes.school_year_id', $this->selectedNamHoc);
+                    }
+                    if ($this->selectedKhoi) {
+                        $q->where('classes.grade_level_id', $this->selectedKhoi);
+                    }
+                    if ($this->selectedLop) {
+                        $q->where('classes.id', $this->selectedLop);
+                    }
+                });
+            }
+        } elseif ($this->selectedNamHoc || $this->selectedKhoi || $this->selectedLop) {
             $query->whereHas('classes', function ($q) {
                 if ($this->selectedNamHoc) {
                     $q->where('classes.school_year_id', $this->selectedNamHoc);
@@ -1314,6 +1391,24 @@ class StudentListNew extends BaseComponent
 
     // ==================== RENDER ====================
 
+    public function getFilterAllowedClassIdsProperty(): array
+    {
+        if ($this->canBrowseAllClasses) {
+            return [];
+        }
+
+        $user = auth()->user();
+        if (! $user) {
+            return [];
+        }
+
+        return app(CatechistAccess::class)->assignedClassIds(
+            $user,
+            $this->parishId,
+            $this->selectedNamHoc ? (int) $this->selectedNamHoc : null
+        );
+    }
+
     public function render()
     {
         $students  = $this->getStudentsPaginated();
@@ -1347,6 +1442,10 @@ class StudentListNew extends BaseComponent
             'availableStudents'     => $availableStudents,
             'availableParishioners' => $availableParishioners,
             'linkingStudent'        => $linkingStudent,
+            'filterAllowedClassIds' => $this->filterAllowedClassIds,
+            'canEditStudents'       => $this->canEditStudents,
+            'canManageStudents'     => $this->canManageStudents,
+            'canBrowseAllClasses'   => $this->canBrowseAllClasses,
         ])
             ->extends($layout)
             ->section('content');

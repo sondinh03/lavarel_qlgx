@@ -8,6 +8,7 @@ use App\Models\StudentNew;
 use App\Models\ParishNew;
 use App\Models\Holymanagement;
 use App\Models\ParishGroup;
+use App\Models\StudentEditLog;
 use App\Services\UploadService;
 use App\Support\CacheKeys;
 use Illuminate\Support\Facades\DB;
@@ -118,6 +119,11 @@ class StudentEdit extends BaseComponent
                 );
             } else {
                 $this->initializeDefaults();
+            }
+
+            // GLV elevated: luôn khóa về giáo xứ của mình
+            if ($this->parishId && ! auth()->user()?->isSuperAdmin()) {
+                $this->parish_id = $this->parishId;
             }
 
             $this->loadParishGroups(); // ← gọi 1 lần duy nhất ở đây
@@ -232,9 +238,20 @@ class StudentEdit extends BaseComponent
             if ($this->isEdit) {
                 $student = StudentNew::findOrFail($this->studentId);
                 $this->authorize('update', $student);
+                $oldValues = $student->only([
+                    'first_name', 'last_name', 'gender', 'birthday', 'phone', 'email',
+                    'note', 'is_active', 'parish_id', 'parish_group_id', 'saint_id',
+                    'father_name', 'mother_name', 'avatar_path',
+                ]);
             } else {
                 $student = new StudentNew();
                 $this->authorize('create', StudentNew::class);
+                $oldValues = null;
+            }
+
+            // Không cho GLV / admin xứ đổi sang giáo xứ khác
+            if ($this->parishId && ! auth()->user()?->isSuperAdmin()) {
+                $this->parish_id = $this->parishId;
             }
 
             $student->fill([
@@ -267,6 +284,31 @@ class StudentEdit extends BaseComponent
 
             $student->save();
 
+            if ($this->isEdit && $oldValues !== null) {
+                $newValues = $student->only(array_keys($oldValues));
+                $changedOld = [];
+                $changedNew = [];
+                foreach ($oldValues as $key => $old) {
+                    $new = $newValues[$key] ?? null;
+                    $oldCmp = $old instanceof \DateTimeInterface ? $old->format('Y-m-d') : $old;
+                    $newCmp = $new instanceof \DateTimeInterface ? $new->format('Y-m-d') : $new;
+                    if ($oldCmp != $newCmp) {
+                        $changedOld[$key] = $oldCmp;
+                        $changedNew[$key] = $newCmp;
+                    }
+                }
+
+                if ($changedOld !== []) {
+                    StudentEditLog::create([
+                        'parish_id'  => (int) $student->parish_id,
+                        'student_id' => (int) $student->id,
+                        'user_id'    => auth()->id(),
+                        'old_values' => $changedOld,
+                        'new_values' => $changedNew,
+                    ]);
+                }
+            }
+
             if ($this->classId && !$this->isEdit) {
                 $student->classes()->attach($this->classId, [
                     'enrolled_at' => now(),
@@ -285,6 +327,8 @@ class StudentEdit extends BaseComponent
 
             if (!$this->isEdit && $this->classId) {
                 $this->redirect(route('students.index', ['class' => $this->classId]));
+            } elseif ($this->isEdit) {
+                $this->redirect(route('students.show', $this->studentId));
             }
         } catch (\Illuminate\Auth\Access\AuthorizationException $e) {
             DB::rollBack();
@@ -301,9 +345,15 @@ class StudentEdit extends BaseComponent
 
     public function removeAvatar(): void
     {
-        if ($this->isEdit && $this->existing_avatar) {
-            $student = StudentNew::find($this->studentId);
-            if ($student?->avatar_path) {
+        if (! $this->isEdit) {
+            return;
+        }
+
+        $student = StudentNew::findOrFail($this->studentId);
+        $this->authorize('update', $student);
+
+        if ($this->existing_avatar) {
+            if ($student->avatar_path) {
                 delete_stored_media($student->avatar_path);
                 $student->update(['avatar_path' => null]);
             }
@@ -353,10 +403,14 @@ class StudentEdit extends BaseComponent
 
     public function render()
     {
+        $layout = auth()->user()?->usesCatechistLayout()
+            ? 'frontend.layout.catechist'
+            : 'frontend.layout.main';
+
         return view('livewire.student.student-edit', [
             'isLoading' => $this->isLoading,
         ])
-            ->extends('frontend.layout.main')
+            ->extends($layout)
             ->section('content');
     }
 }

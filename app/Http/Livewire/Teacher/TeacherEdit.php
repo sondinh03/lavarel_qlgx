@@ -7,10 +7,13 @@ use App\Models\Holymanagement;
 use App\Models\ParishGroup;
 use App\Models\Teacher;
 use App\Models\User;
+use App\Services\CatechistAccess;
 use App\Support\CatechistDefaultPassword;
+use App\Support\CatechistPermissions;
 use App\Support\UserAccountEmailResolver;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Support\Facades\DB;
+use Spatie\Permission\PermissionRegistrar;
 
 class TeacherEdit extends BaseComponent
 {
@@ -35,6 +38,11 @@ class TeacherEdit extends BaseComponent
     public $has_account = false;
     public $login_identifier = '';
     public $login_is_phone = false;
+
+    /** Chỉ parish_admin / super_admin được chỉnh */
+    public bool $canGrantElevated = false;
+    public bool $perm_manage_parish_scores = false;
+    public bool $perm_edit_parish_students = false;
 
     public $parishGroups;
     public $saints;
@@ -75,6 +83,10 @@ class TeacherEdit extends BaseComponent
     protected function loadInitialData(): void
     {
         try {
+            $actor = auth()->user();
+            $this->canGrantElevated = (bool) $actor
+                && app(CatechistAccess::class)->canGrantElevatedPermissions($actor);
+
             $this->parishGroups = ParishGroup::where('parish_id', $this->parishId)
                 ->orderBy('name')
                 ->get(['id', 'name']);
@@ -105,6 +117,12 @@ class TeacherEdit extends BaseComponent
                 $this->login_is_phone = $teacher->user
                     ? UserAccountEmailResolver::isSyntheticEmail((string) $teacher->user->email)
                     : false;
+
+                if ($teacher->user) {
+                    $names = $teacher->user->getPermissionNames();
+                    $this->perm_manage_parish_scores = $names->contains(CatechistPermissions::MANAGE_PARISH_SCORES);
+                    $this->perm_edit_parish_students = $names->contains(CatechistPermissions::EDIT_PARISH_STUDENTS);
+                }
             }
         } catch (ModelNotFoundException $e) {
             $this->emit('toast', 'error', 'Không tìm thấy giáo lý viên');
@@ -185,6 +203,7 @@ class TeacherEdit extends BaseComponent
             ]);
 
             $user->assignRole('catechist');
+            $this->syncElevatedPermissions($user);
         }
 
         Teacher::create([
@@ -241,6 +260,7 @@ class TeacherEdit extends BaseComponent
             }
 
             $teacher->user->update($userUpdate);
+            $this->syncElevatedPermissions($teacher->user->fresh());
         } elseif ($this->create_account) {
             $accountEmail = UserAccountEmailResolver::resolveAccountEmail($this->email, $normalizedPhone);
 
@@ -256,8 +276,43 @@ class TeacherEdit extends BaseComponent
             ]);
 
             $user->assignRole('catechist');
+            $this->syncElevatedPermissions($user);
             $teacher->update(['user_id' => $user->id]);
         }
+    }
+
+    private function syncElevatedPermissions(User $user): void
+    {
+        $actor = auth()->user();
+        if (! $actor || ! app(CatechistAccess::class)->canGrantElevatedPermissions($actor)) {
+            return;
+        }
+
+        $desired = [];
+        if ($this->perm_manage_parish_scores) {
+            $desired[] = CatechistPermissions::MANAGE_PARISH_SCORES;
+        }
+        if ($this->perm_edit_parish_students) {
+            $desired[] = CatechistPermissions::EDIT_PARISH_STUDENTS;
+        }
+
+        $current = $user->permissions
+            ->pluck('name')
+            ->intersect(CatechistPermissions::all())
+            ->values()
+            ->all();
+
+        $toGive = array_diff($desired, $current);
+        $toRevoke = array_diff($current, $desired);
+
+        if ($toGive !== []) {
+            $user->givePermissionTo($toGive);
+        }
+        if ($toRevoke !== []) {
+            $user->revokePermissionTo($toRevoke);
+        }
+
+        app(PermissionRegistrar::class)->forgetCachedPermissions();
     }
 
     public function render()

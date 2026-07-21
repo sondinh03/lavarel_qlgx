@@ -4,15 +4,13 @@ namespace App\Policies;
 
 use App\Models\StudentNew;
 use App\Models\User;
+use App\Services\CatechistAccess;
 use Illuminate\Auth\Access\HandlesAuthorization;
 
 class StudentPolicy
 {
     use HandlesAuthorization;
 
-    /**
-     * SuperAdmin bỏ qua tất cả checks
-     */
     public function before(User $user): ?bool
     {
         if ($user->isSuperAdmin()) {
@@ -22,50 +20,43 @@ class StudentPolicy
         return null;
     }
 
-    /**
-     * Xem danh sách học sinh
-     */
     public function viewAny(User $user): bool
     {
         return $user->canManageCatechism()
             || $user->isCatechist();
     }
 
-    /**
-     * Xem chi tiết 1 học sinh trong cùng xứ
-     */
     public function view(User $user, StudentNew $student): bool
     {
-        if ($user->canManageCatechism() || $user->isCatechist()) {
-            return $user->parish_id === $student->parish_id;
-        }
-
-        return false;
+        return app(CatechistAccess::class)->canViewStudent($user, $student);
     }
 
-    /**
-     * Tạo học sinh mới
-     */
     public function create(User $user): bool
     {
         return $user->canManageCatechism();
     }
 
-    /**
-     * Sửa học sinh trong cùng xứ
-     */
     public function update(User $user, StudentNew $student): bool
+    {
+        if (! $user->parish_id || (int) $user->parish_id !== (int) $student->parish_id) {
+            return false;
+        }
+
+        if ($user->canManageCatechism()) {
+            return true;
+        }
+
+        return app(CatechistAccess::class)->canEditParishStudents($user);
+    }
+
+    public function delete(User $user, StudentNew $student): bool
     {
         return $user->canManageCatechism()
             && $user->parish_id === $student->parish_id;
     }
 
-    /**
-     * Xóa học sinh trong cùng xứ
-     */
-    public function delete(User $user, StudentNew $student): bool
+    public function linkParishioner(User $user, StudentNew $student): bool
     {
-        return $user->canManageCatechism()
-            && $user->parish_id === $student->parish_id;
+        return $this->delete($user, $student);
     }
 }

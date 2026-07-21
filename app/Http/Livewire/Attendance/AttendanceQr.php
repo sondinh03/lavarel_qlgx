@@ -79,8 +79,10 @@ class AttendanceQr extends BaseComponent
                 return;
             }
 
-            // 1. Tìm học sinh theo qr_token (scope giáo xứ hiện tại)
-            $student = StudentNew::where('qr_token', $token)->first();
+            // 1. Tìm học sinh theo qr_token trong giáo xứ hiện tại
+            $student = StudentNew::where('qr_token', $token)
+                ->when($this->parishId, fn ($q) => $q->where('parish_id', $this->parishId))
+                ->first();
             Log::info('Student found', ['student' => $student?->id]);
 
             if (!$student) {
@@ -88,8 +90,14 @@ class AttendanceQr extends BaseComponent
                 return;
             }
 
+            if ($this->parishId && (int) $student->parish_id !== (int) $this->parishId) {
+                $this->setResult('error', ['message' => 'Học sinh không thuộc giáo xứ của bạn']);
+                return;
+            }
+
             // 2. Lấy lớp hiện tại của học sinh
             $class = $student->classes()
+                ->where('classes.parish_id', $this->parishId)
                 ->wherePivot('status', 1)
                 ->first();
             Log::info('Class found', ['class' => $class?->id, 'name' => $class?->name]);
@@ -100,6 +108,11 @@ class AttendanceQr extends BaseComponent
                     'student_name' => $student->full_name,
                     'saint_name'   => $student->saint_name,
                 ]);
+                return;
+            }
+
+            if ($this->parishId && (int) $class->parish_id !== (int) $this->parishId) {
+                $this->setResult('error', ['message' => 'Lớp không thuộc giáo xứ của bạn']);
                 return;
             }
 

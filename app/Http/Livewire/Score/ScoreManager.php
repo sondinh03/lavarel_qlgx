@@ -11,6 +11,8 @@ use App\Models\ParishNew;
 use App\Models\ScoreEditLog;
 use App\Models\ScoreType;
 use App\Models\StudentScore;
+use App\Models\StudentsClass;
+use App\Services\CatechistAccess;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
@@ -61,11 +63,17 @@ class ScoreManager extends BaseComponent
     /** Giáo xứ đang mở cửa sổ nhập/sửa điểm cho GLV */
     public bool $scoresEntryOpen = false;
 
-    /** User hiện tại được phép sửa điểm (admin luôn; GLV khi mở cửa sổ) */
+    /** User hiện tại được phép sửa điểm (admin luôn; GLV elevated khi mở cửa sổ) */
     public bool $canEditScores = false;
+
+    /** User được xem điểm của lớp đang chọn */
+    public bool $canViewScores = false;
 
     /** Admin: cấu hình loại điểm + bật/tắt cửa sổ nhập điểm */
     public bool $canManageScoreConfig = false;
+
+    /** Admin / elevated: xem mọi lớp; GLV thường: chỉ lớp phân công */
+    public bool $canBrowseAllScoreClasses = false;
 
     /** GLV: đang xem chi tiết điểm của học sinh (students_class.id) */
     public ?int $viewingPivotId = null;
@@ -130,7 +138,8 @@ class ScoreManager extends BaseComponent
     public $averages = [];
 
     /** @var bool Đánh dấu scoresMatrix đã được load trong request hiện tại */
-    protected $scoresLoaded = false;
+    /** @var bool Đã load matrix điểm cho lớp/kỳ hiện tại (public để Livewire giữ qua request) */
+    public bool $scoresLoaded = false;
 
     /** @var bool Enable pagination */
     protected $usePagination = true;
@@ -235,13 +244,16 @@ class ScoreManager extends BaseComponent
         }
 
         if (!$this->selectedLop) {
-            // Catechist → dùng defaultClassId từ BaseComponent
-            // Không catechist → fallback lớp đầu tiên của năm học
             $this->selectedLop = $this->defaultClassId
-                ?? CatechismClass::where('school_year_id', $this->selectedNamHoc)
-                ->orderBy('id')
-                ->value('id');
+                ?? ($this->canBrowseAllScoreClasses
+                    ? CatechismClass::where('school_year_id', $this->selectedNamHoc)
+                        ->when($this->parishId, fn ($q) => $q->where('parish_id', $this->parishId))
+                        ->orderBy('id')
+                        ->value('id')
+                    : null);
         }
+
+        $this->assertSelectedScoreClassAllowed();
 
         if ($this->selectedNamHoc) {
             $this->loadLops();
@@ -249,6 +261,38 @@ class ScoreManager extends BaseComponent
 
         if ($this->selectedLop) {
             $this->loadScoreTypes();
+            $this->refreshScorePermissions();
+        }
+    }
+
+    protected function assertSelectedScoreClassAllowed(): void
+    {
+        if (! $this->selectedLop) {
+            return;
+        }
+
+        $user = auth()->user();
+        if (! $user) {
+            $this->selectedLop = null;
+            return;
+        }
+
+        $class = CatechismClass::query()
+            ->when($this->parishId, fn ($q) => $q->where('parish_id', $this->parishId))
+            ->find($this->selectedLop);
+
+        if (! $class || ! app(CatechistAccess::class)->canViewScoresForClass(
+            $user,
+            (int) $class->id,
+            $this->parishId
+        )) {
+            $allowed = app(CatechistAccess::class)->assignedClassIds(
+                $user,
+                $this->parishId,
+                $this->selectedNamHoc ? (int) $this->selectedNamHoc : null
+            );
+            $this->selectedLop = $this->defaultClassId
+                ?? ($allowed[0] ?? null);
         }
     }
 
@@ -320,6 +364,16 @@ class ScoreManager extends BaseComponent
                 $query->where('grade_level_id', $this->selectedKhoi);
             }
 
+            $user = auth()->user();
+            if ($user && ! $this->canBrowseAllScoreClasses) {
+                $ids = app(CatechistAccess::class)->assignedClassIds(
+                    $user,
+                    $this->parishId,
+                    (int) $this->selectedNamHoc
+                );
+                $query->whereIn('id', $ids !== [] ? $ids : [0]);
+            }
+
             $this->availableLops = $query->orderBy('name')->get(['id', 'name', 'grade_level_id']);
         } catch (\Exception $e) {
             $this->logError($e, 'Error loading lops');
@@ -383,13 +437,16 @@ class ScoreManager extends BaseComponent
         }
 
         $this->selectedLop  = $this->toInt($this->selectedLop);
+        $this->assertSelectedScoreClassAllowed();
         $this->scoresMatrix = [];
         $this->averages     = [];
         $this->draftScores  = [];
         $this->hasDraft     = false;
+        $this->scoresLoaded = false;
         $this->viewingPivotId = null;
         $this->resetPage();
         $this->loadScoreTypes();
+        $this->refreshScorePermissions();
     }
 
     public function updatedSelectedSemester(): void
@@ -408,6 +465,7 @@ class ScoreManager extends BaseComponent
         $this->averages     = [];
         $this->draftScores  = [];
         $this->hasDraft     = false;
+        $this->scoresLoaded = false;
         $this->viewingPivotId = null;
         $this->resetPage();
         $this->loadScoreTypes();
@@ -455,7 +513,12 @@ class ScoreManager extends BaseComponent
     protected function refreshScorePermissions(): void
     {
         $user = auth()->user();
+        $access = app(CatechistAccess::class);
+
         $this->canManageScoreConfig = (bool) $user?->canManageCatechism();
+        $this->canBrowseAllScoreClasses = (bool) ($user && (
+            $user->canManageCatechism() || $access->canManageParishScores($user)
+        ));
 
         if ($this->parishId) {
             $this->scoresEntryOpen = (bool) ParishNew::query()
@@ -465,9 +528,21 @@ class ScoreManager extends BaseComponent
             $this->scoresEntryOpen = false;
         }
 
-        $this->canEditScores = $user
-            ? $user->can('enterScores', StudentScore::class)
-            : false;
+        $this->canViewScores = false;
+        $this->canEditScores = false;
+
+        if ($user && $this->selectedLop) {
+            $class = CatechismClass::query()->find($this->selectedLop);
+            if ($class) {
+                $this->canViewScores = $user->can('viewScoresForClass', $class);
+                $this->canEditScores = $user->can('enterScoresForClass', $class);
+            }
+        } elseif ($user) {
+            // Chưa chọn lớp: chỉ biết khả năng nhập tổng quát (admin / elevated + window)
+            $this->canViewScores = $user->canManageCatechism()
+                || $user->isCatechist();
+            $this->canEditScores = $user->can('enterScores', StudentScore::class);
+        }
     }
 
     public function openStudentScoreDetail(int $pivotId): void
@@ -533,18 +608,54 @@ class ScoreManager extends BaseComponent
 
     public function saveAllScores(): void
     {
-        $this->authorize('enterScores', StudentScore::class);
         $this->refreshScorePermissions();
 
-        if (! $this->canEditScores) {
-            $this->emit('toast', 'error', 'Hiện chưa mở cửa sổ nhập/sửa điểm');
-
+        if (! $this->selectedLop) {
+            $this->emit('toast', 'error', 'Vui lòng chọn lớp');
             return;
         }
 
+        $class = CatechismClass::query()
+            ->when($this->parishId, fn ($q) => $q->where('parish_id', $this->parishId))
+            ->find($this->selectedLop);
+
+        if (! $class) {
+            $this->emit('toast', 'error', 'Lớp không hợp lệ');
+            return;
+        }
+
+        if (! auth()->user()?->can('enterScoresForClass', $class) || ! $this->canEditScores) {
+            $this->emit('toast', 'error', 'Hiện chưa mở cửa sổ nhập/sửa điểm hoặc bạn không có quyền');
+            return;
+        }
+
+        // Luôn lấy lại từ DB — không tin scoreTypes đã serialize qua Livewire.
+        $scoreTypes = ScoreType::query()
+            ->where('class_id', (int) $this->selectedLop)
+            ->get()
+            ->keyBy('id');
+        $this->scoreTypes = $scoreTypes->values();
+
+        $allowedTypeIds = $scoreTypes->keys()->map(fn ($id) => (int) $id)->all();
+        $allowedPivotIds = StudentsClass::query()
+            ->where('class_id', (int) $this->selectedLop)
+            ->pluck('id')
+            ->map(fn ($id) => (int) $id)
+            ->all();
+
         // Validate
         foreach ($this->draftScores as $studentClassId => $types) {
+            if (! in_array((int) $studentClassId, $allowedPivotIds, true)) {
+                $this->emit('toast', 'error', 'Phát hiện dữ liệu điểm không thuộc lớp đang chọn');
+                return;
+            }
+
             foreach ($types as $scoreTypeId => $value) {
+                if (! in_array((int) $scoreTypeId, $allowedTypeIds, true)) {
+                    $this->emit('toast', 'error', 'Loại điểm không thuộc lớp đang chọn');
+                    return;
+                }
+
                 if ($value === '' || $value === null) continue;
 
                 if (!is_numeric($value)) {
@@ -552,7 +663,7 @@ class ScoreManager extends BaseComponent
                     return;
                 }
 
-                $scoreType = $this->scoreTypes->firstWhere('id', (int) $scoreTypeId);
+                $scoreType = $scoreTypes->get((int) $scoreTypeId);
                 $max       = $scoreType?->max_score ?? 10;
                 $val       = (float) $value;
 
@@ -1044,7 +1155,6 @@ class ScoreManager extends BaseComponent
     private function loadScoresForStudents(Collection $students): void
     {
         $pivotIds = $students->pluck('pivot_id')->toArray();
-        $this->scoresLoaded = false;
         $this->loadScoresMatrix($pivotIds);
         $this->recalculateAllAverages($pivotIds);
     }
@@ -1096,7 +1206,6 @@ class ScoreManager extends BaseComponent
             $students = $query->paginate($this->perPage);
 
             $pivotIds = $students->pluck('pivot_id')->toArray();
-            $this->scoresLoaded = false;
             $this->loadScoresMatrix($pivotIds);
             $this->recalculateAllAverages($pivotIds);
 
@@ -1113,9 +1222,13 @@ class ScoreManager extends BaseComponent
 
     protected function loadScoresMatrix(array $studentClassIds): void
     {
-        if (empty($studentClassIds) || $this->scoreTypes->isEmpty()) {
-            $this->scoresMatrix = [];
-            $this->draftScores  = [];
+        $scoreTypes = collect($this->scoreTypes);
+
+        if (empty($studentClassIds) || $scoreTypes->isEmpty()) {
+            if (! $this->hasDraft) {
+                $this->scoresMatrix = [];
+                $this->draftScores  = [];
+            }
             return;
         }
 
@@ -1124,7 +1237,7 @@ class ScoreManager extends BaseComponent
         }
 
         try {
-            $scoreTypeIds = $this->scoreTypes->pluck('id')->toArray();
+            $scoreTypeIds = $scoreTypes->pluck('id')->toArray();
 
             $scores = StudentScore::whereIn('student_class_id', $studentClassIds)
                 ->whereIn('score_type_id', $scoreTypeIds)
@@ -1142,21 +1255,26 @@ class ScoreManager extends BaseComponent
 
             $this->scoresMatrix = $matrix;
 
-            // Khởi tạo draft từ data hiện có
-            $draft = [];
-            foreach ($studentClassIds as $scId) {
-                foreach ($scoreTypeIds as $stId) {
-                    $draft[$scId][$stId] = isset($matrix[$scId][$stId])
-                        ? $matrix[$scId][$stId]['value']
-                        : '';
+            // Không ghi đè draft đang nhập (hasDraft) — tránh mất dữ liệu mỗi lần render.
+            if (! $this->hasDraft) {
+                $draft = [];
+                foreach ($studentClassIds as $scId) {
+                    foreach ($scoreTypeIds as $stId) {
+                        $draft[$scId][$stId] = isset($matrix[$scId][$stId])
+                            ? $matrix[$scId][$stId]['value']
+                            : '';
+                    }
                 }
+                $this->draftScores = $draft;
             }
-            $this->draftScores  = $draft;
+
             $this->scoresLoaded = true;
         } catch (\Exception $e) {
             $this->logError($e, 'Error loading scores matrix');
             $this->scoresMatrix = [];
-            $this->draftScores  = [];
+            if (! $this->hasDraft) {
+                $this->draftScores = [];
+            }
         }
     }
 
@@ -1425,10 +1543,21 @@ class ScoreManager extends BaseComponent
             ? 'frontend.layout.catechist'
             : 'frontend.layout.main';
 
+        $scoreFilterAllowedClassIds = [];
+        if ($user && ! $this->canBrowseAllScoreClasses) {
+            $scoreFilterAllowedClassIds = app(CatechistAccess::class)->assignedClassIds(
+                $user,
+                $this->parishId,
+                $this->selectedNamHoc ? (int) $this->selectedNamHoc : null
+            );
+        }
+
         return view('livewire.score.score-manager', [
-            'students'        => $students,
-            'parishId'        => $this->parishId,
-            'viewingStudent'  => $this->resolveViewingStudent($students),
+            'students'                   => $students,
+            'parishId'                   => $this->parishId,
+            'viewingStudent'             => $this->resolveViewingStudent($students),
+            'scoreFilterAllowedClassIds' => $scoreFilterAllowedClassIds,
+            'canBrowseAllScoreClasses'   => $this->canBrowseAllScoreClasses,
         ])
             ->extends($layout)
             ->section('content');

@@ -58,14 +58,18 @@
                     </div>
 
                     <div class="flex items-center gap-2 flex-shrink-0">
+                        @if($canEditStudent)
                         <x-button wire:click="edit" variant="primary">
                             <x-icon name="edit" />
                             Chỉnh sửa
                         </x-button>
+                        @endif
+                        @if($canDeleteStudent)
                         <x-button variant="danger" confirm="Bạn có chắc muốn xóa học sinh này không?" wire="deleteStudent">
                             <x-icon name="trash" />
                             Xóa
                         </x-button>
+                        @endif
                     </div>
                 </div>
             </div>

@@ -153,6 +153,17 @@
                                     @endif
                                 </p>
                                 <p class="text-xs text-slate-400">Nhập đúng tên đăng nhập trên vào ô “Email hoặc SĐT” khi đăng nhập. Nếu GLV đã đổi mật khẩu thì mật khẩu hiện tại có thể khác.</p>
+                                @if(!empty($teacher['perm_manage_parish_scores']) || !empty($teacher['perm_edit_parish_students']))
+                                <div class="pt-2 border-t border-black/[0.04] space-y-1">
+                                    <p class="text-xs font-semibold text-slate-500 uppercase tracking-wide">Quyền hỗ trợ quản trị</p>
+                                    @if(!empty($teacher['perm_manage_parish_scores']))
+                                    <p class="text-sm text-slate-700">• Quản lý điểm toàn giáo xứ</p>
+                                    @endif
+                                    @if(!empty($teacher['perm_edit_parish_students']))
+                                    <p class="text-sm text-slate-700">• Sửa thông tin học sinh toàn giáo xứ</p>
+                                    @endif
+                                </div>
+                                @endif
                                 @else
                                 <span class="text-sm text-slate-400 italic">Chưa tạo tài khoản</span>
                                 @endif

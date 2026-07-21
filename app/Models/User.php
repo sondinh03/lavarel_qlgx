@@ -12,6 +12,8 @@ use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Facades\Hash;
 use Laravel\Sanctum\HasApiTokens;
 use App\Notifications\ResetPasswordNotification;
+use App\Services\CatechistAccess;
+use App\Support\CatechistPermissions;
 
 class User extends Authenticatable
 {
@@ -134,6 +136,26 @@ class User extends Authenticatable
             'catechism_admin',
             'parishioner_admin',
         ]);
+    }
+
+    public function canManageParishScores(): bool
+    {
+        return app(CatechistAccess::class)->canManageParishScores($this);
+    }
+
+    public function canEditParishStudents(): bool
+    {
+        return app(CatechistAccess::class)->canEditParishStudents($this);
+    }
+
+    public function hasManageParishScoresPermission(): bool
+    {
+        return $this->can(CatechistPermissions::MANAGE_PARISH_SCORES);
+    }
+
+    public function hasEditParishStudentsPermission(): bool
+    {
+        return $this->can(CatechistPermissions::EDIT_PARISH_STUDENTS);
     }
 
     public function parishName(): ?string

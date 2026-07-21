@@ -273,6 +273,33 @@
                             </div>
                             @endif
                         @endif
+
+                        @if($canGrantElevated && ($create_account || $has_account))
+                        <div class="rounded-xl bg-amber-50/60 border border-amber-100 p-4 space-y-3">
+                            <div>
+                                <p class="text-sm font-semibold text-slate-800">Quyền hỗ trợ quản trị</p>
+                                <p class="text-xs text-slate-500 mt-0.5">
+                                    Chỉ cấp cho Trưởng/Phó hỗ trợ quản trị xứ. GLV thường không cần các quyền này.
+                                </p>
+                            </div>
+                            <label class="flex items-start gap-3 cursor-pointer select-none">
+                                <input type="checkbox" wire:model.defer="perm_manage_parish_scores"
+                                    class="w-4 h-4 mt-0.5 rounded border-black/20 text-primary-500 focus:ring-primary-500/25" />
+                                <div>
+                                    <span class="text-sm font-medium text-slate-700">Quản lý điểm toàn giáo xứ</span>
+                                    <p class="text-xs text-slate-500 mt-0.5">Xem, nhập và sửa điểm mọi lớp khi cửa sổ nhập điểm đang mở.</p>
+                                </div>
+                            </label>
+                            <label class="flex items-start gap-3 cursor-pointer select-none">
+                                <input type="checkbox" wire:model.defer="perm_edit_parish_students"
+                                    class="w-4 h-4 mt-0.5 rounded border-black/20 text-primary-500 focus:ring-primary-500/25" />
+                                <div>
+                                    <span class="text-sm font-medium text-slate-700">Sửa thông tin học sinh toàn giáo xứ</span>
+                                    <p class="text-xs text-slate-500 mt-0.5">Cập nhật hồ sơ học sinh; không bao gồm tạo/xóa/liên kết giáo dân.</p>
+                                </div>
+                            </label>
+                        </div>
+                        @endif
                     </section>
                 </div>
 

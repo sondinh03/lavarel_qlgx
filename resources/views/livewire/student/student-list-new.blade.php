@@ -19,16 +19,20 @@
     <a href="#main-content" class="sr-only focus:not-sr-only">Bỏ qua tới nội dung</a>
 
     <div id="main-content" class="mx-auto max-w-7xl">
-        @php $isCatechist = auth()->user()->usesCatechistLayout(); @endphp
+        @php
+            $isCatechist = auth()->user()->usesCatechistLayout();
+            $showManageActions = $canManageStudents ?? false;
+            $showEditActions = $canEditStudents ?? false;
+        @endphp
 
         <x-mac-panel :overflow="true">
             <x-page-header
                 title="Danh sách học sinh"
-                :description="$isCatechist ? 'Lớp được phân công' : 'Quản lý hồ sơ và ghi danh theo năm học'"
+                :description="$isCatechist && !($canBrowseAllClasses ?? false) ? 'Lớp được phân công' : 'Quản lý hồ sơ và ghi danh theo năm học'"
                 icon-type="students" />
 
             <div class="p-4 lg:p-6 mac-hairline-b bg-white/30">
-                @if($isCatechist)
+                @if($isCatechist && !($canBrowseAllClasses ?? false))
                 <div class="flex flex-col gap-4">
                     <livewire:filters.filter-bar
                         :parish-id="$parishId"
@@ -38,7 +42,8 @@
                         :show-ky="false"
                         :selected-nam-hoc="$selectedNamHoc"
                         :selected-khoi="$selectedKhoi"
-                        :selected-lop="$selectedLop" />
+                        :selected-lop="$selectedLop"
+                        :allowed-class-ids="$filterAllowedClassIds ?? []" />
 
                     <x-search-input
                         placeholder="Tìm kiếm học sinh..."
@@ -76,6 +81,7 @@
                             class="max-w-md" />
 
                         <div class="flex items-center gap-2 flex-wrap justify-end">
+                            @if($showManageActions)
                             <x-tooltip content="Vui lòng chọn lớp trước" :show="!$selectedLop">
                                 <x-button
                                     wire:click="openEnrollModal('existing')"
@@ -84,6 +90,7 @@
                                     Ghi danh
                                 </x-button>
                             </x-tooltip>
+                            @endif
 
                             <x-button
                                 as="a"
@@ -342,6 +349,7 @@
 
                             <td class="px-4 py-3 overflow-visible">
                                 <div class="flex items-center justify-center gap-1">
+                                    @if($showManageActions)
                                     @if($student->parishioner_id)
                                     <x-tooltip content="Xem hồ sơ giáo dân (tab mới)">
                                         <a href="{{ route('parishioners.show', $student->parishioner_id) }}"
@@ -360,6 +368,7 @@
                                         </button>
                                     </x-tooltip>
                                     @endif
+                                    @endif
 
                                     <x-tooltip content="Xem chi tiết">
                                         <a href="{{ route('students.show', $student->id) }}"
@@ -368,12 +377,15 @@
                                         </a>
                                     </x-tooltip>
 
+                                    @if($showEditActions)
                                     <x-tooltip content="Chỉnh sửa">
                                         <a href="{{ route('students.edit', $student->id) }}"
                                             class="p-2 hover:bg-primary-50 text-primary-600 rounded-lg transition-all">
                                             <x-icon name="edit" />
                                         </a>
                                     </x-tooltip>
+                                    @endif
+                                    @if($showManageActions)
                                     <x-dropdown icon="more-vertical" align="right" variant="subtle" position="fixed">
                                         @if($student->parishioner_id)
                                         <x-dropdown-item
@@ -405,6 +417,7 @@
                                             Gỡ khỏi lớp
                                         </x-dropdown-item>
                                     </x-dropdown>
+                                    @endif
                                 </div>
                             </td>
                         </tr>

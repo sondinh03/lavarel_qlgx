@@ -6,6 +6,7 @@ use App\Http\Livewire\Base\BaseComponent;
 use App\Models\Teacher;
 use App\Models\User;
 use App\Support\CatechistDefaultPassword;
+use App\Support\CatechistPermissions;
 use App\Support\UserAccountEmailResolver;
 use Illuminate\Support\Facades\DB;
 
@@ -77,6 +78,12 @@ class TeacherDetail extends BaseComponent
                     : false,
                 'default_password'     => CatechistDefaultPassword::fromBirthday($teacher->birthday),
                 'has_birthday'         => (bool) $teacher->birthday,
+                'perm_manage_parish_scores' => $teacher->user
+                    ? $teacher->user->getPermissionNames()->contains(CatechistPermissions::MANAGE_PARISH_SCORES)
+                    : false,
+                'perm_edit_parish_students' => $teacher->user
+                    ? $teacher->user->getPermissionNames()->contains(CatechistPermissions::EDIT_PARISH_STUDENTS)
+                    : false,
                 'note'                 => $teacher->note ?? '',
                 'created_at'           => $teacher->created_at?->format('d/m/Y H:i') ?? '',
                 'updated_at'           => $teacher->updated_at?->format('d/m/Y H:i') ?? '',

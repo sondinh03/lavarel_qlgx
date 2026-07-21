@@ -11,6 +11,8 @@ class StudentDetail extends BaseComponent
     public $studentData = [];
     public $isLoading = true;
     public $confirmingDelete = false;
+    public bool $canEditStudent = false;
+    public bool $canDeleteStudent = false;
 
     private ?StudentNew $cachedStudent = null;
 
@@ -66,6 +68,9 @@ class StudentDetail extends BaseComponent
             ]);
 
             $this->authorize('view', $student);
+
+            $this->canEditStudent = auth()->user()->can('update', $student);
+            $this->canDeleteStudent = auth()->user()->can('delete', $student);
 
             $this->studentData = $this->mapStudentData($student);
         } catch (\Illuminate\Auth\Access\AuthorizationException $e) {

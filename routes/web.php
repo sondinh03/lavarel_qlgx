@@ -190,8 +190,12 @@ Route::middleware('auth')->group(function () {
                 Route::get('/nhap', StudentImportPreview::class)->name('import');
                 Route::get('/nhap/mau', [StudentImportController::class, 'template'])->name('import.template');
                 Route::get('/in-the', PrintCards::class)->name('print-cards');
-                Route::get('/{id}/sua', StudentEdit::class)->name('edit')->whereNumber('id');
             });
+
+            // GLV có permission edit_parish_students cũng vào được; StudentPolicy chặn cuối.
+            Route::get('/{id}/sua', StudentEdit::class)
+                ->name('edit')
+                ->whereNumber('id');
 
             Route::get('/{id}', StudentDetail::class)->name('show')->whereNumber('id');
         });

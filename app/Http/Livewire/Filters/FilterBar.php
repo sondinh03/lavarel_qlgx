@@ -64,6 +64,14 @@ class FilterBar extends Component
      */
     public int $parish_id;
 
+    /**
+     * Khi không rỗng: chỉ hiện các lớp trong danh sách (GLV thường).
+     * Mảng rỗng = không hạn chế thêm.
+     *
+     * @var array<int, int>
+     */
+    public array $allowedClassIds = [];
+
     protected $listeners = [
         'resetFilters' => 'handleReset',
         'confirmFilterLeave' => 'confirmFilterLeave',
@@ -80,7 +88,8 @@ class FilterBar extends Component
         $selectedNamHoc = null,
         $selectedKhoi = null,
         $selectedLop = null,
-        $selectedKy = null
+        $selectedKy = null,
+        $allowedClassIds = []
     ): void {
         if (!$parishId) {
             session()->flash('warning', 'Vui lòng chọn giáo xứ');
@@ -88,6 +97,12 @@ class FilterBar extends Component
         }
 
         $this->parish_id = $parishId;
+        $this->allowedClassIds = collect($allowedClassIds)
+            ->filter(fn ($id) => is_numeric($id))
+            ->map(fn ($id) => (int) $id)
+            ->unique()
+            ->values()
+            ->all();
 
         if ($selectedNamHoc !== null && $selectedNamHoc !== '') {
             $this->selectedNamHoc = (int) $selectedNamHoc;
@@ -423,6 +438,10 @@ class FilterBar extends Component
             ->when(
                 $this->selectedKhoi,
                 fn($q) => $q->where('grade_level_id', $this->selectedKhoi)
+            )
+            ->when(
+                $this->allowedClassIds !== [],
+                fn ($q) => $q->whereIn('id', $this->allowedClassIds)
             )
             ->active()
             ->orderBy('grade_level_id')
