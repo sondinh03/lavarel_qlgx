@@ -94,4 +94,56 @@ class CatechistLivewireScopeTest extends TestCase
             ->assertSet('selectedClassId', $this->fx->classOtherSameParish->id)
             ->assertHasNoErrors();
     }
+
+    public function test_attendance_blocks_unassigned_catechist(): void
+    {
+        Livewire::actingAs($this->fx->unassignedCatechist)
+            ->test(AttendanceManager::class)
+            ->assertSet('assignmentBlocked', true)
+            ->assertSet('selectedClassId', null)
+            ->set('selectedClassId', $this->fx->classAssigned->id)
+            ->assertSet('selectedClassId', null);
+    }
+
+    public function test_attendance_blocks_old_year_catechist_on_current_year(): void
+    {
+        Livewire::actingAs($this->fx->oldYearCatechist)
+            ->test(AttendanceManager::class)
+            ->assertSet('assignmentBlocked', true)
+            ->assertSet('selectedClassId', null)
+            ->set('selectedClassId', $this->fx->classAssigned->id)
+            ->assertSet('selectedClassId', null);
+    }
+
+    public function test_attendance_save_rejected_for_unassigned_catechist(): void
+    {
+        Livewire::actingAs($this->fx->unassignedCatechist)
+            ->test(AttendanceManager::class)
+            ->call('saveFromClient', ['1_1' => ['status' => 1, 'note' => '']])
+            ->assertEmitted('toast', 'warning', 'Vui lòng chọn lớp');
+    }
+
+    public function test_attendance_qr_rejects_unassigned_catechist(): void
+    {
+        Livewire::actingAs($this->fx->unassignedCatechist)
+            ->test(\App\Http\Livewire\Attendance\AttendanceQr::class)
+            ->assertSet('assignmentBlocked', true)
+            ->call('handleQrScanned', '11111111-2222-3333-4444-555555555555')
+            ->assertSet('lastResultType', 'error');
+    }
+
+    public function test_attendance_statistics_blocked_for_unassigned_catechist(): void
+    {
+        Livewire::actingAs($this->fx->unassignedCatechist)
+            ->test(\App\Http\Livewire\Attendance\AttendanceStatistics::class)
+            ->assertSet('assignmentBlocked', true)
+            ->assertSet('summary', []);
+    }
+
+    public function test_assigned_catechist_not_blocked(): void
+    {
+        Livewire::actingAs($this->fx->ordinaryCatechist)
+            ->test(AttendanceManager::class)
+            ->assertSet('assignmentBlocked', false);
+    }
 }

@@ -1402,11 +1402,14 @@ class StudentListNew extends BaseComponent
             return [];
         }
 
-        return app(CatechistAccess::class)->assignedClassIds(
+        $assigned = app(CatechistAccess::class)->assignedClassIds(
             $user,
             $this->parishId,
             $this->selectedNamHoc ? (int) $this->selectedNamHoc : null
         );
+
+        // GLV không có lớp: sentinel [0] để dropdown lớp trống (mảng rỗng = không hạn chế)
+        return $assigned !== [] ? $assigned : [0];
     }
 
     public function render()

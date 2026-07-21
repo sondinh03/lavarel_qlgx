@@ -113,8 +113,65 @@ class CatechistAuthorizationMatrixTest extends TestCase
         $this->assertSame([(int) $this->fx->classAssigned->id], $ids);
         $this->assertSame(
             [],
-            $this->access->assignedClassIds($this->fx->scoreManagerCatechist, $this->fx->parishA->id)
+            $this->access->assignedClassIds($this->fx->unassignedCatechist, $this->fx->parishA->id)
         );
+    }
+
+    public function test_unassigned_catechist_has_no_active_assignment_and_cannot_operate(): void
+    {
+        $user = $this->fx->unassignedCatechist;
+
+        $this->assertFalse($this->access->hasActiveAssignmentThisYear($user, $this->fx->parishA->id));
+        $this->assertFalse($this->access->canOperateCatechism($user, $this->fx->parishA->id));
+
+        $this->assertFalse($user->can('view', $this->fx->studentAssigned));
+        $this->assertFalse($user->can('viewScoresForClass', $this->fx->classAssigned));
+    }
+
+    public function test_old_year_catechist_cannot_operate_on_current_year(): void
+    {
+        $user = $this->fx->oldYearCatechist;
+
+        // Vẫn có phân công (năm cũ) nhưng không thuộc năm đang vận hành
+        $this->assertNotSame(
+            [],
+            $this->access->assignedClassIds($user, $this->fx->parishA->id)
+        );
+        $this->assertFalse($this->access->hasActiveAssignmentThisYear($user, $this->fx->parishA->id));
+        $this->assertFalse($this->access->canOperateCatechism($user, $this->fx->parishA->id));
+    }
+
+    public function test_assigned_catechist_passes_year_gate(): void
+    {
+        $user = $this->fx->ordinaryCatechist;
+
+        $this->assertTrue($this->access->hasActiveAssignmentThisYear($user, $this->fx->parishA->id));
+        $this->assertTrue($this->access->canOperateCatechism($user, $this->fx->parishA->id));
+    }
+
+    public function test_elevated_permissions_require_current_year_assignment(): void
+    {
+        // Cấp quyền hỗ trợ cho GLV không có phân công → quyền không có hiệu lực
+        $this->fx->unassignedCatechist->givePermissionTo(
+            \App\Support\CatechistPermissions::MANAGE_PARISH_SCORES,
+            \App\Support\CatechistPermissions::EDIT_PARISH_STUDENTS
+        );
+        $user = $this->fx->unassignedCatechist->fresh();
+
+        $this->assertFalse($this->access->canManageParishScores($user));
+        $this->assertFalse($this->access->canEditParishStudents($user));
+        $this->assertFalse($user->can('enterScores', StudentScore::class));
+        $this->assertFalse($user->can('update', $this->fx->studentOtherSameParish));
+    }
+
+    public function test_inactive_teacher_record_blocks_assignment(): void
+    {
+        $this->fx->ordinaryTeacher->update(['is_active' => false]);
+        $user = $this->fx->ordinaryCatechist->fresh();
+        $access = new CatechistAccess();
+
+        $this->assertSame([], $access->assignedClassIds($user, $this->fx->parishA->id));
+        $this->assertFalse($access->hasActiveAssignmentThisYear($user, $this->fx->parishA->id));
     }
 
     public function test_authorize_enter_scores_for_class_denies_ordinary_catechist(): void

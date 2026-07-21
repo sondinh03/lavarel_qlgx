@@ -1550,6 +1550,11 @@ class ScoreManager extends BaseComponent
                 $this->parishId,
                 $this->selectedNamHoc ? (int) $this->selectedNamHoc : null
             );
+
+            // GLV không có lớp: sentinel [0] để dropdown lớp trống (mảng rỗng = không hạn chế)
+            if ($scoreFilterAllowedClassIds === []) {
+                $scoreFilterAllowedClassIds = [0];
+            }
         }
 
         return view('livewire.score.score-manager', [

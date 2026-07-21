@@ -24,6 +24,27 @@
             @endif
         </x-mac-panel>
 
+        @if($assignmentBlocked)
+        <div class="flex items-start gap-3 px-4 py-4 rounded-2xl
+                bg-amber-50/90 border border-amber-200/80 shadow-mac-sm">
+            <div class="w-10 h-10 rounded-xl bg-amber-100/90 ring-1 ring-amber-200/70
+                flex items-center justify-center flex-shrink-0 text-amber-700 mt-0.5">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+            </div>
+            <div class="min-w-0 flex-1">
+                <p class="text-sm font-semibold text-amber-950">
+                    Bạn chưa được phân công lớp trong năm học này
+                </p>
+                <p class="text-xs text-amber-800/70 mt-0.5">
+                    Các chức năng điểm danh, học sinh, điểm số sẽ mở sau khi Ban quản trị giáo lý phân công bạn vào lớp.
+                </p>
+            </div>
+        </div>
+        @endif
+
         @if($pendingTodayCount > 0)
         <a href="{{ route('attendance.show') }}"
             class="flex items-start gap-3 px-4 py-4 rounded-2xl

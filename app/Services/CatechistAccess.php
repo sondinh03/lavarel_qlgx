@@ -12,16 +12,64 @@ use Illuminate\Support\Collection;
 
 class CatechistAccess
 {
+    /** @var array<string, bool> Memo trong request: "userId:parishId" => có phân công năm hiện tại */
+    private array $activeAssignmentMemo = [];
+
     public function teacherFor(User $user): ?Teacher
     {
         if ($user->relationLoaded('teacher')) {
-            return $user->teacher;
+            $teacher = $user->teacher;
+
+            return ($teacher && $teacher->is_active) ? $teacher : null;
         }
 
         return Teacher::query()
             ->where('user_id', $user->id)
+            ->where('is_active', true)
             ->when($user->parish_id, fn ($q) => $q->where('parish_id', $user->parish_id))
             ->first();
+    }
+
+    /**
+     * GLV còn "đang dạy": có ít nhất một phân công hợp lệ trong năm học đang vận hành.
+     * Chặn tài khoản năm cũ / đã nghỉ thao tác trên năm mới.
+     */
+    public function hasActiveAssignmentThisYear(User $user, ?int $parishId = null): bool
+    {
+        $parishId = $parishId ?? $user->parish_id;
+        if (! $parishId) {
+            return false;
+        }
+
+        $memoKey = $user->id . ':' . $parishId;
+        if (array_key_exists($memoKey, $this->activeAssignmentMemo)) {
+            return $this->activeAssignmentMemo[$memoKey];
+        }
+
+        $yearId = app(SchoolYearResolver::class)->resolveId((int) $parishId);
+
+        $result = $yearId
+            ? $this->assignedClassIds($user, (int) $parishId, $yearId) !== []
+            : false;
+
+        return $this->activeAssignmentMemo[$memoKey] = $result;
+    }
+
+    /**
+     * Cổng vào module Giáo lý: admin luôn qua; GLV (kể cả có quyền hỗ trợ)
+     * phải có phân công trong năm học đang vận hành.
+     */
+    public function canOperateCatechism(User $user, ?int $parishId = null): bool
+    {
+        if ($user->canManageCatechism()) {
+            return true;
+        }
+
+        if (! $user->isCatechist()) {
+            return false;
+        }
+
+        return $this->hasActiveAssignmentThisYear($user, $parishId);
     }
 
     public function canManageParishScores(User $user): bool
@@ -31,7 +79,8 @@ class CatechistAccess
         }
 
         return $user->isCatechist()
-            && $user->can(CatechistPermissions::MANAGE_PARISH_SCORES);
+            && $user->can(CatechistPermissions::MANAGE_PARISH_SCORES)
+            && $this->hasActiveAssignmentThisYear($user);
     }
 
     public function canEditParishStudents(User $user): bool
@@ -41,7 +90,8 @@ class CatechistAccess
         }
 
         return $user->isCatechist()
-            && $user->can(CatechistPermissions::EDIT_PARISH_STUDENTS);
+            && $user->can(CatechistPermissions::EDIT_PARISH_STUDENTS)
+            && $this->hasActiveAssignmentThisYear($user);
     }
 
     public function canGrantElevatedPermissions(User $actor): bool

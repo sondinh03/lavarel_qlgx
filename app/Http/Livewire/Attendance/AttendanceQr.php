@@ -24,6 +24,9 @@ class AttendanceQr extends BaseComponent
     /** @var array Danh sách đã điểm danh trong session này (in-memory) */
     public array $scannedLog = [];
 
+    /** GLV chưa có phân công trong năm học đang vận hành → chặn quét */
+    public bool $assignmentBlocked = false;
+
     // ==================== LISTENERS ====================
 
     protected $listeners = [
@@ -36,6 +39,14 @@ class AttendanceQr extends BaseComponent
     {
         parent::mount();
         $this->requireParishId();
+
+        $user = auth()->user();
+        if ($user && $user->isCatechist() && ! $user->canManage()
+            && ! app(\App\Services\CatechistAccess::class)
+                ->hasActiveAssignmentThisYear($user, $this->parishId)
+        ) {
+            $this->assignmentBlocked = true;
+        }
     }
 
     protected function loadInitialData(): void
@@ -66,6 +77,15 @@ class AttendanceQr extends BaseComponent
      */
     public function handleQrScanned(string $token): void
     {
+        if ($this->assignmentBlocked) {
+            $this->setResult('error', [
+                'message' => 'Bạn chưa được phân công lớp trong năm học này',
+            ]);
+            $this->dispatchBrowserEvent('qr-done');
+
+            return;
+        }
+
         $token = trim($token);
 
         Log::info('QR scanned', [

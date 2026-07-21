@@ -54,11 +54,27 @@ class CatechistAuthFixture
 
     public User $studentEditorCatechist;
 
+    /** GLV có hồ sơ nhưng không được phân công lớp nào */
+    public User $unassignedCatechist;
+
+    /** GLV chỉ có phân công ở năm học cũ (đã nghỉ) */
+    public User $oldYearCatechist;
+
     public User $catechismAdmin;
 
     public User $parishAdmin;
 
     public Teacher $ordinaryTeacher;
+
+    public Teacher $unassignedTeacher;
+
+    public Teacher $oldYearTeacher;
+
+    /** Năm học cũ (đã kết thúc) của parish A */
+    public NamHoc $yearAOld;
+
+    /** Lớp thuộc năm học cũ */
+    public CatechismClass $classOldYear;
 
     public static function make(): self
     {
@@ -110,6 +126,17 @@ class CatechistAuthFixture
             'status' => NamHoc::STATUS_ACTIVE,
         ]);
 
+        // Năm học cũ đã kết thúc (tài khoản GLV năm cũ chỉ có phân công ở đây)
+        $this->yearAOld = NamHoc::query()->create([
+            'name' => 'NH-A-OLD-' . $suffix,
+            'parish_id' => $this->parishA->id,
+            'start_date_one' => now()->subMonths(14)->toDateString(),
+            'end_date_one' => now()->subMonths(10)->toDateString(),
+            'start_date_two' => now()->subMonths(9)->toDateString(),
+            'end_date_two' => now()->subMonths(6)->toDateString(),
+            'status' => NamHoc::STATUS_ACTIVE,
+        ]);
+
         $gradeId = GradeLevel::query()->value('id') ?? 1;
 
         $this->classAssigned = CatechismClass::query()->create([
@@ -133,6 +160,14 @@ class CatechistAuthFixture
             'school_year_id' => $this->yearB->id,
             'grade_level_id' => $gradeId,
             'name' => 'Lop Other B ' . $suffix,
+            'is_active' => true,
+        ]);
+
+        $this->classOldYear = CatechismClass::query()->create([
+            'parish_id' => $this->parishA->id,
+            'school_year_id' => $this->yearAOld->id,
+            'grade_level_id' => $gradeId,
+            'name' => 'Lop Old Year ' . $suffix,
             'is_active' => true,
         ]);
 
@@ -203,6 +238,8 @@ class CatechistAuthFixture
         $this->ordinaryCatechist = $this->makeUser('glv-ordinary-' . $suffix . '@test.local', 'catechist', $this->parishA->id);
         $this->scoreManagerCatechist = $this->makeUser('glv-scores-' . $suffix . '@test.local', 'catechist', $this->parishA->id);
         $this->studentEditorCatechist = $this->makeUser('glv-students-' . $suffix . '@test.local', 'catechist', $this->parishA->id);
+        $this->unassignedCatechist = $this->makeUser('glv-unassigned-' . $suffix . '@test.local', 'catechist', $this->parishA->id);
+        $this->oldYearCatechist = $this->makeUser('glv-oldyear-' . $suffix . '@test.local', 'catechist', $this->parishA->id);
         $this->catechismAdmin = $this->makeUser('cat-admin-' . $suffix . '@test.local', 'catechism_admin', $this->parishA->id);
         $this->parishAdmin = $this->makeUser('parish-admin-' . $suffix . '@test.local', 'parish_admin', $this->parishA->id);
 
@@ -218,7 +255,7 @@ class CatechistAuthFixture
             'is_active' => true,
         ]);
 
-        Teacher::query()->create([
+        $scoreManagerTeacher = Teacher::query()->create([
             'parish_id' => $this->parishA->id,
             'user_id' => $this->scoreManagerCatechist->id,
             'first_name' => 'GLV',
@@ -227,7 +264,7 @@ class CatechistAuthFixture
             'is_active' => true,
         ]);
 
-        Teacher::query()->create([
+        $studentEditorTeacher = Teacher::query()->create([
             'parish_id' => $this->parishA->id,
             'user_id' => $this->studentEditorCatechist->id,
             'first_name' => 'GLV',
@@ -236,10 +273,54 @@ class CatechistAuthFixture
             'is_active' => true,
         ]);
 
+        $this->unassignedTeacher = Teacher::query()->create([
+            'parish_id' => $this->parishA->id,
+            'user_id' => $this->unassignedCatechist->id,
+            'first_name' => 'GLV',
+            'last_name' => 'ChuaPhanCong',
+            'email' => $this->unassignedCatechist->email,
+            'is_active' => true,
+        ]);
+
+        $this->oldYearTeacher = Teacher::query()->create([
+            'parish_id' => $this->parishA->id,
+            'user_id' => $this->oldYearCatechist->id,
+            'first_name' => 'GLV',
+            'last_name' => 'NamCu',
+            'email' => $this->oldYearCatechist->email,
+            'is_active' => true,
+        ]);
+
         ClassTeacher::query()->create([
             'teacher_id' => $this->ordinaryTeacher->id,
             'class_id' => $this->classAssigned->id,
             'namhoc_id' => $this->yearA->id,
+            'role' => ClassTeacher::ROLE_CHU_NHIEM,
+            'status' => true,
+        ]);
+
+        // GLV quyền hỗ trợ quản trị vẫn phải có phân công trong năm hiện tại
+        ClassTeacher::query()->create([
+            'teacher_id' => $scoreManagerTeacher->id,
+            'class_id' => $this->classAssigned->id,
+            'namhoc_id' => $this->yearA->id,
+            'role' => ClassTeacher::ROLE_PHO,
+            'status' => true,
+        ]);
+
+        ClassTeacher::query()->create([
+            'teacher_id' => $studentEditorTeacher->id,
+            'class_id' => $this->classAssigned->id,
+            'namhoc_id' => $this->yearA->id,
+            'role' => ClassTeacher::ROLE_PHO,
+            'status' => true,
+        ]);
+
+        // GLV năm cũ: chỉ có phân công ở năm học đã kết thúc
+        ClassTeacher::query()->create([
+            'teacher_id' => $this->oldYearTeacher->id,
+            'class_id' => $this->classOldYear->id,
+            'namhoc_id' => $this->yearAOld->id,
             'role' => ClassTeacher::ROLE_CHU_NHIEM,
             'status' => true,
         ]);

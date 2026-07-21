@@ -35,6 +35,19 @@
             </div>
 
             <div class="p-4 lg:p-6 mac-hairline-b bg-white/30">
+                @if($assignmentBlocked)
+                <div class="mb-3 flex items-start gap-3 px-4 py-3 rounded-xl bg-amber-50/90 border border-amber-200/80">
+                    <svg class="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    <div class="text-sm">
+                        <p class="font-semibold text-amber-950">Bạn chưa được phân công lớp trong năm học này</p>
+                        <p class="text-amber-800/80 mt-0.5">Liên hệ Ban quản trị giáo lý để được phân công.</p>
+                    </div>
+                </div>
+                @endif
+
                 <div class="flex flex-wrap items-center justify-between gap-4">
                     <livewire:filters.filter-bar
                         :parish-id="$parishId"
@@ -45,7 +58,8 @@
                         :selected-nam-hoc="$selectedNamHoc"
                         :selected-khoi="$selectedKhoi"
                         :selected-lop="$selectedClassId"
-                        :selected-ky="$selectedKy" />
+                        :selected-ky="$selectedKy"
+                        :allowed-class-ids="$assignmentBlocked ? [0] : []" />
 
                     <div class="flex items-center gap-3 flex-wrap">
                         {{-- Type toggle: Đi học / Đi lễ --}}

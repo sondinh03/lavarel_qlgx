@@ -36,6 +36,19 @@
             <div class="p-3 sm:p-4 lg:p-6 mac-hairline-b bg-white/30">
                 @php $isAdmin = auth()->user()->canManage(); @endphp
 
+                @if($assignmentBlocked)
+                <div class="mb-3 flex items-start gap-3 px-4 py-3 rounded-xl bg-amber-50/90 border border-amber-200/80">
+                    <svg class="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    <div class="text-sm">
+                        <p class="font-semibold text-amber-950">Bạn chưa được phân công lớp trong năm học này</p>
+                        <p class="text-amber-800/80 mt-0.5">Liên hệ Ban quản trị giáo lý để được phân công trước khi điểm danh.</p>
+                    </div>
+                </div>
+                @endif
+
                 <div class="flex flex-col gap-2 lg:gap-4">
                     {{-- Filters ngoài wire:key — remount khi class/năm/kỳ parent đổi để khớp URL --}}
                     <div class="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-2 lg:gap-4">
@@ -51,7 +64,8 @@
                             :selected-nam-hoc="$selectedNamHoc"
                             :selected-khoi="$selectedKhoi"
                             :selected-lop="$selectedClassId"
-                            :selected-ky="$selectedKy" />
+                            :selected-ky="$selectedKy"
+                            :allowed-class-ids="$this->filterAllowedClassIds" />
 
                         <div class="hidden lg:block w-72">
                             <x-search-input

@@ -37,6 +37,9 @@ class AttendanceManager extends BaseComponent
     public $viewMode     = 'desktop';
     public $selectedDate = null;
 
+    /** GLV chưa có phân công trong năm học đang vận hành → chặn mọi thao tác */
+    public bool $assignmentBlocked = false;
+
     // ==================== DATA ====================
 
     public $students;
@@ -109,6 +112,17 @@ class AttendanceManager extends BaseComponent
         // GLV: luôn neo năm học đang mở. Admin: giữ năm từ filter/URL hoặc mặc định hiện tại.
         if ($isCatechistOnly || !$this->selectedNamHoc) {
             $this->selectedNamHoc = $currentNamHocId;
+        }
+
+        // GLV chưa được phân công lớp trong năm đang vận hành → không thao tác gì
+        if ($isCatechistOnly && ! app(\App\Services\CatechistAccess::class)
+            ->hasActiveAssignmentThisYear(auth()->user(), $this->parishId)
+        ) {
+            $this->assignmentBlocked = true;
+            $this->selectedClassId = null;
+            $this->selectedClassName = '';
+
+            return;
         }
 
         // classId URL/cũ phải thuộc đúng xứ + năm đang chọn
@@ -310,10 +324,11 @@ class AttendanceManager extends BaseComponent
 
     /**
      * Admin / GLV cùng xứ: điểm danh mọi lớp thuộc giáo xứ (và năm đang chọn nếu có).
+     * GLV phải có ít nhất một phân công trong năm đang vận hành (chặn tài khoản năm cũ).
      */
     protected function assertCanMarkClass(?int $classId): bool
     {
-        if (!$classId) {
+        if (!$classId || $this->assignmentBlocked) {
             return false;
         }
 
@@ -323,6 +338,13 @@ class AttendanceManager extends BaseComponent
         }
 
         if (!($user->canManage() || $user->isSuperAdmin() || $user->isCatechist())) {
+            return false;
+        }
+
+        if ($user->isCatechist() && ! $user->canManage()
+            && ! app(\App\Services\CatechistAccess::class)
+                ->hasActiveAssignmentThisYear($user, $this->parishId)
+        ) {
             return false;
         }
 
@@ -1002,6 +1024,17 @@ class AttendanceManager extends BaseComponent
     public function getSelectedClassNameProperty(): string
     {
         return $this->selectedClassName ?: 'Chọn lớp';
+    }
+
+    /**
+     * GLV bị chặn → sentinel [0] để FilterBar không hiện lớp nào.
+     * Còn lại: [] = không hạn chế (GLV đã phân công điểm danh được mọi lớp trong xứ).
+     *
+     * @return array<int, int>
+     */
+    public function getFilterAllowedClassIdsProperty(): array
+    {
+        return $this->assignmentBlocked ? [0] : [];
     }
 
     // ==================== RENDER ====================
