@@ -9,7 +9,7 @@
     $weeks = collect($regs['weeks'] ?? []);
     $maxWeek = max(1, (int) $weeks->max(fn ($w) => max($w['submitted'] ?? 0, $w['approved'] ?? 0, $w['rejected'] ?? 0)));
     $roleLabels = [
-        'super_admin'       => 'Super admin',
+        'super_admin'       => 'Quản trị hệ thống',
         'parish_admin'      => 'Quản trị xứ',
         'parishioner_admin' => 'Quản trị giáo dân',
         'catechism_admin'   => 'Quản trị giáo lý',
@@ -18,7 +18,7 @@
 @endphp
 
 <div class="bp-dash-welcome">
-    <h2>Xin chào, {{ backpack_user()->name ?? 'Super Admin' }}</h2>
+    <h2>Xin chào, {{ backpack_user()->name ?? 'Quản trị hệ thống' }}</h2>
     <p>
         Tổng quan vận hành hệ thống
         @if(!empty($stats['generated_at']))

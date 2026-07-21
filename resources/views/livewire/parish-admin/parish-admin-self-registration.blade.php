@@ -34,7 +34,9 @@
                     <p class="mt-2 text-xl font-mono font-semibold text-primary-600 tracking-wide">{{ $referenceCode }}</p>
                 </div>
                 <p class="text-sm text-slate-500 max-w-md mx-auto leading-relaxed">
-                    Super admin sẽ duyệt yêu cầu. Sau khi được duyệt, đăng nhập bằng email và mật khẩu đã đăng ký.
+                    Bạn đã đăng ký tài khoản với vai trò
+                    <strong class="font-semibold text-slate-700">{{ $submittedRoleLabel }}</strong>.
+                    Quản trị hệ thống sẽ duyệt yêu cầu. Sau khi được duyệt, đăng nhập bằng email và mật khẩu đã đăng ký.
                 </p>
                 <div class="flex flex-wrap items-center justify-center gap-3 pt-2">
                     <a href="{{ route('login') }}"
@@ -57,7 +59,7 @@
             <x-page-header
                 icon-type="default"
                 title="Đăng ký quản trị xứ"
-                description="Gửi yêu cầu tài khoản. Super admin duyệt trước khi bạn đăng nhập được.">
+                description="Gửi yêu cầu tài khoản. Quản trị hệ thống duyệt trước khi bạn đăng nhập được.">
                 <x-slot name="actions">
                     <span class="inline-flex items-center px-3 py-1 rounded-lg text-xs font-semibold
                         bg-primary-50/80 text-primary-700 shadow-mac-sm">
@@ -136,10 +138,13 @@
                                 @if($useCustomParish)
                                 <input type="text"
                                     wire:model.defer="customParishName"
-                                    placeholder="Nhập tên giáo xứ mới"
+                                    placeholder="Ví dụ: Bùi Chu"
                                     class="w-full h-11 px-4 py-2.5 rounded-xl border text-sm bg-white/80 backdrop-blur-sm shadow-mac-sm
                                         focus:outline-none focus:ring-2 focus:ring-primary-500/25 focus:border-primary-300/40 transition-all
                                         {{ $errors->has('customParishName') ? 'border-red-300 bg-red-50/80' : 'border-black/[0.06]' }}" />
+                                <p class="mt-1 text-xs text-slate-400">
+                                    Chỉ nhập tên riêng; hệ thống tự thêm tiền tố “Giáo xứ”.
+                                </p>
                                 @else
                                 <x-searchable-select
                                     wire:key="parish-{{ $deaneryId ?? 'none' }}-{{ $targetParishId ?? 'none' }}"

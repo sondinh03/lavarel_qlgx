@@ -137,11 +137,13 @@ class ParishManagementCrudController extends CrudController
 
         // --- Tên giáo xứ ---
         CRUD::addField([
-            'name'    => 'name',
-            'type'    => 'text',
-            'label'   => __('backend.name'),
-            'wrapper' => ['class' => 'form-group col-md-4'],
-            'tab'     => __('backend.general'),
+            'name'       => 'name',
+            'type'       => 'text',
+            'label'      => __('backend.name'),
+            'attributes' => ['placeholder' => 'Ví dụ: Bùi Chu'],
+            'hint'       => 'Có thể nhập “Bùi Chu” hoặc “Giáo xứ Bùi Chu”; hệ thống sẽ tự chuẩn hóa tiền tố.',
+            'wrapper'    => ['class' => 'form-group col-md-4'],
+            'tab'        => __('backend.general'),
         ]);
 
         // --- Mã giáo xứ ---

@@ -9,7 +9,7 @@
     $breadcrumbs = $breadcrumbs ?? $defaultBreadcrumbs;
 
     $roleLabels = [
-        'super_admin'        => 'Super Admin',
+        'super_admin'        => 'Quản trị hệ thống',
         'parish_admin'       => 'Quản trị giáo xứ',
         'catechism_admin'    => 'Quản trị giáo lý',
         'parishioner_admin'  => 'Quản trị giáo dân',

@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests;
 
+use App\Models\ParishNew;
 use Illuminate\Foundation\Http\FormRequest;
 
 class ParishManagementRequest extends FormRequest
@@ -15,6 +16,13 @@ class ParishManagementRequest extends FormRequest
     {
         // only allow updates if the user is logged in
         return backpack_auth()->check();
+    }
+
+    protected function prepareForValidation(): void
+    {
+        $this->merge([
+            'name' => ParishNew::normalizeName($this->input('name')),
+        ]);
     }
 
     public function rules()

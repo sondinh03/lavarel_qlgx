@@ -49,6 +49,8 @@ class ParishAdminSelfRegistration extends Component
 
     public ?string $referenceCode = null;
 
+    public string $submittedRoleLabel = '';
+
     public array $dioceseOptions = [];
 
     public array $deaneryOptions = [];
@@ -315,7 +317,9 @@ class ParishAdminSelfRegistration extends Component
                 'parish_id'          => $this->useCustomParish ? null : (int) $this->targetParishId,
                 'diocese_id'         => (int) $this->dioceseId,
                 'deanery_id'         => (int) $this->deaneryId,
-                'custom_parish_name' => $this->useCustomParish ? trim($this->customParishName) : null,
+                'custom_parish_name' => $this->useCustomParish
+                    ? ParishNew::normalizeName($this->customParishName)
+                    : null,
                 'requested_parish_groups' => $this->useCustomParish ? $groupNames : null,
                 'status'             => ParishAdminRegistrationRequest::STATUS_PENDING,
                 'name'               => trim($this->name) ?: null,
@@ -355,6 +359,7 @@ class ParishAdminSelfRegistration extends Component
         $this->selectedRole = 'parish_admin';
         $this->submitted = true;
         $this->referenceCode = $request->reference_code;
+        $this->submittedRoleLabel = implode(', ', $request->requestedRoleLabels());
     }
 
     /** @return list<string> */

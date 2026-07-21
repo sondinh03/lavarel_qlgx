@@ -34,6 +34,7 @@ class ParishAdminRegistrationRejected extends Notification
 
         return $message
             ->action('Đăng ký lại', route('parish-admin.register.public'))
-            ->line('Bạn có thể kiểm tra lại thông tin và gửi một yêu cầu mới.');
+            ->line('Bạn có thể kiểm tra lại thông tin và gửi một yêu cầu mới.')
+            ->salutation('Trân trọng, ' . config('app.name'));
     }
 }

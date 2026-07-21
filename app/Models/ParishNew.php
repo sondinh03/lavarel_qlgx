@@ -14,6 +14,8 @@ class ParishNew extends Model
     use CrudTrait;
     use RevisionableTrait;
 
+    public const NAME_PREFIX = 'Giáo xứ';
+
     protected $table = 'parishes';
 
     protected $fillable = [
@@ -34,6 +36,24 @@ class ParishNew extends Model
         'status'            => 'boolean',
         'scores_entry_open' => 'boolean',
     ];
+
+    public static function normalizeName(?string $name): string
+    {
+        $name = trim((string) $name);
+
+        if ($name === '') {
+            return '';
+        }
+
+        $name = trim((string) preg_replace('/^(?:giáo\s*xứ\s*)+/iu', '', $name));
+
+        return self::NAME_PREFIX . ($name !== '' ? ' ' . $name : '');
+    }
+
+    public function setNameAttribute($value): void
+    {
+        $this->attributes['name'] = self::normalizeName($value);
+    }
 
     /*
     |--------------------------------------------------------------------------

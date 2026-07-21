@@ -22,6 +22,7 @@ class ResetPasswordNotification extends BaseResetPassword
             ->line('Chúng tôi nhận được yêu cầu đặt lại mật khẩu cho tài khoản của bạn.')
             ->action('Đặt lại mật khẩu', $url)
             ->line("Liên kết có hiệu lực trong {$expire} phút.")
-            ->line('Nếu bạn không gửi yêu cầu này, hãy bỏ qua email.');
+            ->line('Nếu bạn không gửi yêu cầu này, hãy bỏ qua email.')
+            ->salutation('Trân trọng, ' . config('app.name'));
     }
 }

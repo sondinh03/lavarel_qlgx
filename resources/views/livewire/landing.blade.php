@@ -241,7 +241,7 @@
                         </div>
                         <div class="min-w-0 flex-1">
                             <p class="text-sm font-semibold text-slate-900 group-hover:text-primary-800">Đăng ký quản trị xứ</p>
-                            <p class="text-xs text-slate-500 mt-0.5 truncate">Chờ super admin duyệt</p>
+                            <p class="text-xs text-slate-500 mt-0.5 truncate">Chờ quản trị hệ thống duyệt</p>
                         </div>
                     </a>
                 </div>
