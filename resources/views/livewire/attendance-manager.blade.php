@@ -479,10 +479,10 @@
                         </colgroup>
                         <thead class="bg-slate-50 mac-hairline-b">
                             <tr>
-                                <x-table-header class="sticky left-0 z-[30] w-12 max-w-[3rem] shrink-0 bg-slate-50">#</x-table-header>
-                                <x-table-header class="sticky left-[3rem] z-[31] w-28 max-w-[7rem] shrink-0 bg-slate-50">Tên thánh</x-table-header>
-                                <x-table-header class="sticky left-[10rem] z-[32] w-44 max-w-[11rem] shrink-0 bg-slate-50">Họ và tên</x-table-header>
-                                <x-table-header class="sticky left-[21rem] z-[33] w-36 max-w-[9rem] shrink-0 bg-slate-50 border-r border-black/[0.08] shadow-[4px_0_12px_-4px_rgba(0,0,0,0.12)]">Giáo họ</x-table-header>
+                                <x-table-header class="static md:sticky md:left-0 z-[30] w-12 max-w-[3rem] shrink-0 !bg-slate-50">#</x-table-header>
+                                <x-table-header class="static md:sticky md:left-[3rem] z-[31] w-28 max-w-[7rem] shrink-0 !bg-slate-50">Tên thánh</x-table-header>
+                                <x-table-header class="sticky left-0 md:left-[10rem] z-[32] w-44 max-w-[11rem] shrink-0 !bg-slate-50 border-r border-black/[0.08] shadow-[4px_0_12px_-4px_rgba(0,0,0,0.12)] md:border-r-0 md:shadow-none">Họ và tên</x-table-header>
+                                <x-table-header class="static md:sticky md:left-[21rem] z-[33] w-36 max-w-[9rem] shrink-0 !bg-slate-50 md:border-r md:border-black/[0.08] md:shadow-[4px_0_12px_-4px_rgba(0,0,0,0.12)]">Giáo họ</x-table-header>
                                 @foreach($sessions as $session)
                                 <x-table-header class="text-center min-w-[7.5rem] w-[7.5rem] shrink-0">
                                     <div class="flex flex-col gap-1">
@@ -517,21 +517,21 @@
                             <tr class="group hover:bg-black/[0.03] transition-colors"
                                 wire:key="student-{{ $student->id }}">
 
-                                <td class="px-4 py-3 text-sm text-slate-500 sticky left-0 z-[20] w-12 max-w-[3rem] shrink-0 bg-white group-hover:bg-slate-50">
+                                <td class="px-4 py-3 text-sm text-slate-500 static md:sticky md:left-0 z-[20] w-12 max-w-[3rem] shrink-0 bg-white group-hover:bg-slate-50">
                                     {{ $index + 1 }}
                                 </td>
 
-                                <td class="px-4 py-3 text-sm text-slate-600 sticky left-[3rem] z-[21] w-28 max-w-[7rem] shrink-0 bg-white group-hover:bg-slate-50">
+                                <td class="px-4 py-3 text-sm text-slate-600 static md:sticky md:left-[3rem] z-[21] w-28 max-w-[7rem] shrink-0 bg-white group-hover:bg-slate-50">
                                     <span class="block truncate" title="{{ $student->saint_name !== '-' ? $student->saint_name : '' }}">
                                         {{ $student->saint_name !== '-' ? $student->saint_name : '—' }}
                                     </span>
                                 </td>
 
-                                <td class="px-4 py-3 sticky left-[10rem] z-[22] w-44 max-w-[11rem] shrink-0 bg-white group-hover:bg-slate-50">
+                                <td class="px-4 py-3 sticky left-0 md:left-[10rem] z-[22] w-44 max-w-[11rem] shrink-0 bg-white group-hover:bg-slate-50 border-r border-black/[0.08] shadow-[4px_0_12px_-4px_rgba(0,0,0,0.12)] md:border-r-0 md:shadow-none">
                                     <span class="block font-semibold text-slate-900 text-sm truncate" title="{{ $student->full_name }}">{{ $student->full_name }}</span>
                                 </td>
 
-                                <td class="px-4 py-3 text-sm text-slate-600 sticky left-[21rem] z-[23] w-36 max-w-[9rem] shrink-0 bg-white group-hover:bg-slate-50 border-r border-black/[0.08] shadow-[4px_0_12px_-4px_rgba(0,0,0,0.12)]">
+                                <td class="px-4 py-3 text-sm text-slate-600 static md:sticky md:left-[21rem] z-[23] w-36 max-w-[9rem] shrink-0 bg-white group-hover:bg-slate-50 md:border-r md:border-black/[0.08] md:shadow-[4px_0_12px_-4px_rgba(0,0,0,0.12)]">
                                     <span class="line-clamp-2" title="{{ $student->parishGroup?->name }}">
                                         {{ $student->parishGroup?->name ?? '—' }}
                                     </span>
@@ -645,8 +645,8 @@
 
                             {{-- Stats Row — server pre-computed --}}
                             <tr class="bg-slate-50 font-semibold border-t-2 border-slate-300">
-                                <td colspan="5"
-                                    class="px-4 py-3 text-sm text-slate-900 sticky left-0 z-[24] w-[37rem] max-w-[37rem] bg-slate-50 border-r border-black/[0.08] shadow-[4px_0_12px_-4px_rgba(0,0,0,0.12)]">
+                                <td colspan="4"
+                                    class="px-4 py-3 text-sm text-slate-900 static md:sticky left-0 z-[24] w-[30rem] max-w-[30rem] bg-slate-50 md:border-r md:border-black/[0.08] md:shadow-[4px_0_12px_-4px_rgba(0,0,0,0.12)]">
                                     Thống kê
                                     <span class="ml-2 text-xs font-normal text-slate-500">({{ count($sessions) }} buổi — kéo ngang để xem thêm)</span>
                                 </td>

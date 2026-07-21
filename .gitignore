@@ -22,3 +22,7 @@
 
 *.sql
 *.zip
+
+# Tài liệu bàn giao chứa bí mật — chỉ bản .template.md được commit
+docs/HANDOVER-SECRETS.md
+HANDOVER-SECRETS.md
