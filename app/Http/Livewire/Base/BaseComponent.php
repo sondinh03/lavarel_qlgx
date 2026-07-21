@@ -37,6 +37,9 @@ abstract class BaseComponent extends Component
 
     public ?int $defaultClassId = null;
 
+    /** GLV chưa đủ điều kiện thao tác module Giáo lý trong năm đang vận hành. */
+    public bool $assignmentBlocked = false;
+
     // ==================== PAGINATION & SEARCH ====================
 
     /** @var string Search query */
@@ -124,6 +127,23 @@ abstract class BaseComponent extends Component
                 $schoolYearId
             );
         }
+
+        $this->refreshCatechistAssignmentGuard();
+    }
+
+    /**
+     * Đồng bộ cờ UI với cổng nghiệp vụ tập trung trong CatechistAccess.
+     */
+    protected function refreshCatechistAssignmentGuard(): bool
+    {
+        /** @var \App\Models\User|null $user */
+        $user = auth()->user();
+
+        $this->assignmentBlocked = (bool) ($user
+            && $user->isCatechist()
+            && ! app(CatechistAccess::class)->canOperateCatechism($user, $this->parishId));
+
+        return $this->assignmentBlocked;
     }
 
     /**

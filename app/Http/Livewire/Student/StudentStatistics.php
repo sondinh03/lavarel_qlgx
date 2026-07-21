@@ -26,9 +26,6 @@ class StudentStatistics extends BaseComponent
     public array $classChartData = [];
     public array $summary = [];
 
-    /** GLV chưa có phân công trong năm học đang vận hành → không xem thống kê */
-    public bool $assignmentBlocked = false;
-
     protected function queryString(): array
     {
         return array_merge([
@@ -50,12 +47,7 @@ class StudentStatistics extends BaseComponent
 
     protected function loadInitialData(): void
     {
-        $user = auth()->user();
-        if ($user && $user->isCatechist() && ! $user->canManage()
-            && ! app(\App\Services\CatechistAccess::class)
-                ->hasActiveAssignmentThisYear($user, $this->parishId)
-        ) {
-            $this->assignmentBlocked = true;
+        if ($this->assignmentBlocked) {
             $this->clearChartData();
 
             return;

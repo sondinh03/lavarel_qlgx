@@ -37,9 +37,6 @@ class AttendanceManager extends BaseComponent
     public $viewMode     = 'desktop';
     public $selectedDate = null;
 
-    /** GLV chưa có phân công trong năm học đang vận hành → chặn mọi thao tác */
-    public bool $assignmentBlocked = false;
-
     // ==================== DATA ====================
 
     public $students;
@@ -115,10 +112,7 @@ class AttendanceManager extends BaseComponent
         }
 
         // GLV chưa được phân công lớp trong năm đang vận hành → không thao tác gì
-        if ($isCatechistOnly && ! app(\App\Services\CatechistAccess::class)
-            ->hasActiveAssignmentThisYear(auth()->user(), $this->parishId)
-        ) {
-            $this->assignmentBlocked = true;
+        if ($this->assignmentBlocked) {
             $this->selectedClassId = null;
             $this->selectedClassName = '';
 
@@ -341,10 +335,9 @@ class AttendanceManager extends BaseComponent
             return false;
         }
 
-        if ($user->isCatechist() && ! $user->canManage()
+        if ($user->isCatechist()
             && ! app(\App\Services\CatechistAccess::class)
-                ->hasActiveAssignmentThisYear($user, $this->parishId)
-        ) {
+                ->canOperateCatechism($user, $this->parishId)) {
             return false;
         }
 

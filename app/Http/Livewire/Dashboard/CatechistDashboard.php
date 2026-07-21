@@ -21,9 +21,6 @@ class CatechistDashboard extends BaseComponent
 
     public int $pendingTodayCount = 0;
 
-    /** GLV chưa có phân công trong năm học đang vận hành */
-    public bool $assignmentBlocked = false;
-
     /** @var Collection<int, \Illuminate\Notifications\DatabaseNotification> */
     public $boardAnnouncements;
 
@@ -43,11 +40,6 @@ class CatechistDashboard extends BaseComponent
 
         $this->activeSchoolYear = $operating?->namHoc;
         $this->schoolYearPhaseLabel = $operating?->semesterLabel() ?? '';
-
-        $user = auth()->user();
-        $this->assignmentBlocked = $user
-            && ! app(\App\Services\CatechistAccess::class)
-                ->hasActiveAssignmentThisYear($user, $this->parishId);
 
         if (! $this->assignmentBlocked) {
             $this->loadPendingTodayCount();
