@@ -15,7 +15,7 @@
         <x-mac-panel :overflow="true">
             <x-page-header
                 title="Hướng dẫn nhập điểm"
-                description="Cấu hình loại điểm, mở cửa sổ nhập cho GLV, rồi nhập điểm theo lớp và học kỳ trên trang Kết quả học tập."
+                description="Cấu hình loại điểm, cấp quyền nhập cho GLV hỗ trợ, mở cửa sổ nhập, rồi nhập điểm theo lớp và học kỳ trên trang Kết quả học tập."
                 icon-type="score">
                 <x-slot name="actions">
                     <a href="{{ route('scores.index') }}"
@@ -29,14 +29,16 @@
 
         <x-mac-panel class="p-4 lg:p-6 space-y-3">
             <x-inline-tip tone="amber">
-                <p class="font-semibold text-sm mb-1">Hai vai trò khác nhau</p>
+                <p class="font-semibold text-sm mb-1">Ai được nhập điểm?</p>
                 <p class="text-amber-800/90">
                     <strong>Ban quản trị</strong> (parish_admin / catechism_admin): cấu hình loại điểm, mở/khóa cửa sổ nhập, luôn được sửa điểm.
-                    <strong>Giáo lý viên</strong>: chỉ nhập/sửa điểm khi cửa sổ đang mở; khi khóa thì chỉ xem.
+                    <strong>GLV thuần</strong>: chỉ <em>xem</em> điểm lớp được phân công — không nhập/sửa.
+                    <strong>GLV có «Quản lý điểm toàn giáo xứ»</strong> (quyền hỗ trợ quản trị): nhập/sửa điểm <em>mọi lớp</em> trong xứ khi cửa sổ đang mở; khi khóa thì chỉ xem như GLV thuần.
                 </p>
             </x-inline-tip>
             <x-inline-tip>
-                Cần sẵn: năm học đang dùng, lớp có học sinh đã ghi danh, và (nên có) ít nhất một <strong>loại điểm</strong> đang bật.
+                Cần sẵn: năm học đang dùng, lớp có học sinh đã ghi danh, ít nhất một <strong>loại điểm</strong> đang bật,
+                và (nếu muốn GLV nhập giúp) đã cấp quyền «Quản lý điểm toàn giáo xứ» trên hồ sơ GLV.
             </x-inline-tip>
         </x-mac-panel>
 
@@ -130,7 +132,7 @@
                 <span class="w-8 h-8 rounded-full bg-primary-600 text-white text-sm font-bold flex items-center justify-center flex-shrink-0">3</span>
                 <div>
                     <h2 class="text-base font-semibold text-slate-900">Mở / khóa cửa sổ nhập điểm</h2>
-                    <p class="text-xs text-slate-500">Cho phép hoặc dừng GLV sửa điểm</p>
+                    <p class="text-xs text-slate-500">Cho phép hoặc dừng GLV hỗ trợ sửa điểm</p>
                 </div>
             </div>
             <div class="p-4 lg:p-6 space-y-3 text-sm text-slate-700 leading-relaxed">
@@ -145,7 +147,8 @@
                     <li>Ban quản trị <strong>luôn</strong> sửa được điểm, kể cả khi cửa sổ đang khóa.</li>
                 </ol>
                 <x-inline-tip>
-                    Cửa sổ áp dụng theo giáo xứ — mở một lần là GLV các lớp trong xứ đều nhập được (theo lớp được phân công).
+                    Cửa sổ áp dụng theo giáo xứ — mở một lần thì mọi GLV đã được cấp «Quản lý điểm toàn giáo xứ» đều nhập được
+                    điểm <strong>mọi lớp</strong> trong xứ. GLV thuần (chưa cấp quyền) vẫn chỉ xem, dù cửa sổ đang mở.
                 </x-inline-tip>
             </div>
         </x-mac-panel>
@@ -164,7 +167,9 @@
                         <a href="{{ route('scores.index') }}" class="font-semibold text-primary-700 underline">Kết quả học tập</a>
                         → tab <strong>Bảng điểm</strong>.
                     </li>
-                    <li>Chọn <strong>năm học → khối → lớp → học kỳ</strong> (GLV thường chỉ chọn lớp / học kỳ được phân công).</li>
+                    <li>Chọn <strong>năm học → khối → lớp → học kỳ</strong>.
+                        GLV có quyền hỗ trợ chọn được mọi lớp trong xứ; GLV thuần chỉ xem lớp được phân công.
+                    </li>
                     <li>Nhập điểm từng ô theo cột loại điểm. Điểm không vượt quá điểm tối đa của cột.</li>
                     <li>Bấm <strong>Lưu tất cả</strong> để ghi nhận (đừng chỉ thoát trang).</li>
                     <li>Hệ thống tự tính điểm trung bình và xếp loại (Xuất sắc, Giỏi, Khá…).</li>
@@ -183,7 +188,8 @@
                 <div>
                     <p class="font-semibold text-slate-900">GLV báo «không sửa được điểm»?</p>
                     <p class="mt-1 text-slate-600 leading-relaxed">
-                        Kiểm tra banner: cửa sổ đang khóa. Quản trị viên mở «Mở nhập điểm» rồi báo GLV tải lại trang.
+                        Kiểm tra lần lượt: (1) GLV đã được cấp «Quản lý điểm toàn giáo xứ» chưa — GLV thuần không nhập được;
+                        (2) banner cửa sổ đang khóa hay mở — nếu khóa thì mở «Mở nhập điểm» rồi bảo GLV tải lại trang.
                     </p>
                 </div>
                 <div>
@@ -201,7 +207,14 @@
                 <div>
                     <p class="font-semibold text-slate-900">Không thấy tab Cấu hình loại điểm?</p>
                     <p class="mt-1 text-slate-600 leading-relaxed">
-                        Chỉ quản trị giáo lý / quản trị xứ mới thấy. GLV chỉ dùng tab Bảng điểm.
+                        Chỉ quản trị giáo lý / quản trị xứ mới thấy. GLV (kể cả có quyền hỗ trợ) chỉ dùng tab Bảng điểm.
+                    </p>
+                </div>
+                <div>
+                    <p class="font-semibold text-slate-900">Muốn một GLV nhập điểm giúp ban quản trị?</p>
+                    <p class="mt-1 text-slate-600 leading-relaxed">
+                        Quản trị xứ vào <strong>Giáo lý viên → sửa GLV</strong>, bật <strong>«Quản lý điểm toàn giáo xứ»</strong>
+                        trong mục Quyền hỗ trợ quản trị. Sau đó mở cửa sổ nhập điểm — GLV đó sẽ nhập/sửa được điểm mọi lớp trong xứ.
                     </p>
                 </div>
             </div>

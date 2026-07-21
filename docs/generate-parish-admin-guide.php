@@ -164,6 +164,13 @@ $addBullet('Import danh sách từ Excel (nếu có mẫu sẵn).');
 $addBullet('Tạo tài khoản đăng nhập cho GLV (thường bằng số điện thoại) để GLV tự điểm danh, xem lớp phụ trách.');
 $addNote('Mật khẩu mặc định (nếu hệ thống tạo sẵn) nên được GLV đổi sau lần đăng nhập đầu. Liên hệ quản trị nếu cần reset.');
 
+$section->addTitle('4.4.1. Cấp quyền hỗ trợ quản trị cho GLV', 3);
+$addPara('Mặc định GLV chỉ điểm danh và xem lớp được phân công. Khi cần một GLV (thường là Trưởng/Phó) hỗ trợ quản trị, mở màn sửa GLV (tài khoản đã tạo) và bật ở mục "Quyền hỗ trợ quản trị":');
+$addBullet('Quản lý điểm toàn giáo xứ: GLV xem, nhập và sửa điểm mọi lớp trong xứ khi cửa sổ nhập điểm đang mở.');
+$addBullet('Sửa thông tin học sinh toàn giáo xứ: GLV cập nhật hồ sơ học sinh toàn xứ (không gồm tạo/xóa học sinh hay liên kết giáo dân).');
+$addPara('Chỉ Quản trị xứ (và Super admin) mới cấp được các quyền này. Bỏ chọn để thu hồi bất cứ lúc nào.');
+$addNote('Mọi thay đổi hồ sơ học sinh đều được ghi Nhật ký sửa học sinh (ai sửa, thời điểm, giá trị cũ/mới) để đối chiếu khi cần.');
+
 $section->addTitle('4.5. Học sinh', 2);
 $addPara('Vào Giáo lý → Quản lý học sinh.');
 $addBullet('Thêm học sinh thủ công hoặc import Excel.');
