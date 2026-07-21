@@ -645,11 +645,13 @@
 
                             {{-- Stats Row — server pre-computed --}}
                             <tr class="bg-slate-50 font-semibold border-t-2 border-slate-300">
-                                <td colspan="4"
-                                    class="px-4 py-3 text-sm text-slate-900 static md:sticky left-0 z-[24] w-[30rem] max-w-[30rem] bg-slate-50 md:border-r md:border-black/[0.08] md:shadow-[4px_0_12px_-4px_rgba(0,0,0,0.12)]">
+                                <td class="px-4 py-3 static md:sticky md:left-0 z-[24] w-12 max-w-[3rem] bg-slate-50"></td>
+                                <td class="px-4 py-3 static md:sticky md:left-[3rem] z-[24] w-28 max-w-[7rem] bg-slate-50"></td>
+                                <td class="px-4 py-3 text-sm text-slate-900 sticky left-0 md:left-[10rem] z-[24] w-44 max-w-[11rem] bg-slate-50 border-r border-black/[0.08] shadow-[4px_0_12px_-4px_rgba(0,0,0,0.12)] md:border-r-0 md:shadow-none">
                                     Thống kê
-                                    <span class="ml-2 text-xs font-normal text-slate-500">({{ count($sessions) }} buổi — kéo ngang để xem thêm)</span>
+                                    <span class="block text-xs font-normal text-slate-500">({{ count($sessions) }} buổi — kéo ngang để xem thêm)</span>
                                 </td>
+                                <td class="px-4 py-3 static md:sticky md:left-[21rem] z-[24] w-36 max-w-[9rem] bg-slate-50 md:border-r md:border-black/[0.08] md:shadow-[4px_0_12px_-4px_rgba(0,0,0,0.12)]"></td>
                                 @foreach($sessions as $session)
                                 @php
                                 $stats = $sessionStats[$session['dateStr']]
