@@ -6,13 +6,21 @@
             <x-page-header
                 icon-type="default"
                 title="Tài khoản"
-                description="Email dùng để đăng nhập. Họ tên khuyến khích điền để hiển thị trong hệ thống.">
+                description="Tên đăng nhập là số điện thoại hoặc email bạn nhập khi đăng nhập.">
             </x-page-header>
 
             <form wire:submit.prevent="updateProfile" class="p-4 lg:p-6 space-y-5">
                 <h2 class="text-xs font-semibold text-slate-500 tracking-wide uppercase px-1">
                     Thông tin tài khoản
                 </h2>
+
+                @if($login_is_phone && $login_identifier !== '')
+                <div class="rounded-xl bg-primary-50/80 border border-primary-100 px-4 py-3 text-sm text-primary-800">
+                    Tên đăng nhập hiện tại:
+                    <code class="font-mono text-xs bg-primary-100 px-1.5 py-0.5 rounded">{{ $login_identifier }}</code>
+                    (số điện thoại). Ô email bên dưới chỉ dùng khi bạn muốn đổi sang email thật.
+                </div>
+                @endif
 
                 <div class="flex flex-col sm:flex-row gap-5 sm:gap-6">
                     <x-avatar-upload
@@ -38,8 +46,13 @@
 
                         <div>
                             <label class="block text-xs font-semibold text-slate-500 mb-1.5 tracking-wide uppercase">
-                                Email <span class="text-red-500 normal-case">*</span>
-                                <span class="font-normal normal-case text-slate-400">— dùng để đăng nhập</span>
+                                @if($login_is_phone)
+                                    Email đăng nhập
+                                    <span class="font-normal normal-case text-slate-400">— tùy chọn đổi sang email thật</span>
+                                @else
+                                    Email <span class="text-red-500 normal-case">*</span>
+                                    <span class="font-normal normal-case text-slate-400">— tên đăng nhập</span>
+                                @endif
                             </label>
                             <input type="email" wire:model.defer="email" placeholder="email@example.com"
                                 class="w-full h-11 px-4 py-2.5 rounded-xl border text-sm bg-white/80 backdrop-blur-sm shadow-mac-sm
@@ -48,6 +61,9 @@
                             @error('email')
                             <p class="mt-1 text-xs text-red-500">{{ $message }}</p>
                             @enderror
+                            @if($login_is_phone)
+                            <p class="mt-1 text-xs text-slate-400">Không cần sửa nếu vẫn muốn đăng nhập bằng số điện thoại.</p>
+                            @endif
                         </div>
                     </div>
                 </div>

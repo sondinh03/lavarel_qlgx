@@ -32,6 +32,18 @@ class LoginController extends Controller
         $this->middleware('guest')->except('logout');
     }
 
+    protected function validateLogin(Request $request): void
+    {
+        $request->validate([
+            $this->username() => 'required|string',
+            'password'        => 'required|string|min:8',
+        ], [
+            $this->username() . '.required' => 'Vui lòng nhập tên đăng nhập (email hoặc số điện thoại).',
+            'password.required'             => 'Vui lòng nhập mật khẩu.',
+            'password.min'                  => 'Mật khẩu phải có ít nhất 8 ký tự.',
+        ]);
+    }
+
     protected function credentials(Request $request): array
     {
         return [

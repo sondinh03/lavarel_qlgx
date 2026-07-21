@@ -31,7 +31,7 @@
                         • <strong>Bắt buộc</strong>: ho_ten, so_dien_thoai<br>
                         • <strong>gioi_tinh</strong>: nam / nữ<br>
                         • <strong>ngay_sinh</strong>: định dạng dd/mm/yyyy<br>
-                        • <strong>tao_tai_khoan</strong>: có / không<br>
+                        • <strong>tao_tai_khoan</strong>: có / không — mật khẩu mặc định = chuỗi ngày sinh <code class="font-mono">ddmmyyyy</code> (vd: 15/08/2000 → 15082000)<br>
                         • <strong>ten_thanh</strong>, <strong>giao_ho</strong>: phải khớp tên trong hệ thống (nếu không khớp sẽ bỏ trống)
                     </p>
                     <a href="{{ asset('templates/teacher_import_template.xlsx') }}"

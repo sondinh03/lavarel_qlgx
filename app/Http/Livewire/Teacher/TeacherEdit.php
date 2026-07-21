@@ -7,6 +7,7 @@ use App\Models\Holymanagement;
 use App\Models\ParishGroup;
 use App\Models\Teacher;
 use App\Models\User;
+use App\Support\CatechistDefaultPassword;
 use App\Support\UserAccountEmailResolver;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Support\Facades\DB;
@@ -32,6 +33,8 @@ class TeacherEdit extends BaseComponent
     public $create_account = true;
     public $reset_password = false;
     public $has_account = false;
+    public $login_identifier = '';
+    public $login_is_phone = false;
 
     public $parishGroups;
     public $saints;
@@ -95,6 +98,13 @@ class TeacherEdit extends BaseComponent
                 $this->has_account     = (bool) $teacher->user_id;
                 $this->create_account  = false;
                 $this->reset_password  = false;
+                $this->login_identifier = UserAccountEmailResolver::displayLoginIdentifier(
+                    $teacher->user->email ?? null,
+                    $teacher->phone_number
+                );
+                $this->login_is_phone = $teacher->user
+                    ? UserAccountEmailResolver::isSyntheticEmail((string) $teacher->user->email)
+                    : false;
             }
         } catch (ModelNotFoundException $e) {
             $this->emit('toast', 'error', 'Không tìm thấy giáo lý viên');
@@ -171,7 +181,7 @@ class TeacherEdit extends BaseComponent
                 'name'      => trim($this->last_name . ' ' . $this->first_name),
                 'email'     => $accountEmail,
                 'parish_id' => $this->parishId,
-                'password'  => config('qlgx.catechist_default_password', '12345678'),
+                'password'  => CatechistDefaultPassword::fromBirthday($this->birthday),
             ]);
 
             $user->assignRole('catechist');
@@ -227,7 +237,7 @@ class TeacherEdit extends BaseComponent
             ];
 
             if ($this->reset_password) {
-                $userUpdate['password'] = config('qlgx.catechist_default_password', '12345678');
+                $userUpdate['password'] = CatechistDefaultPassword::fromBirthday($this->birthday);
             }
 
             $teacher->user->update($userUpdate);
@@ -242,7 +252,7 @@ class TeacherEdit extends BaseComponent
                 'name'      => trim($this->last_name . ' ' . $this->first_name),
                 'email'     => $accountEmail,
                 'parish_id' => $this->parishId,
-                'password'  => config('qlgx.catechist_default_password', '12345678'),
+                'password'  => CatechistDefaultPassword::fromBirthday($this->birthday),
             ]);
 
             $user->assignRole('catechist');

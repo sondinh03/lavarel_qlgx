@@ -5,6 +5,8 @@ namespace App\Http\Livewire\Teacher;
 use App\Http\Livewire\Base\BaseComponent;
 use App\Models\Teacher;
 use App\Models\User;
+use App\Support\CatechistDefaultPassword;
+use App\Support\UserAccountEmailResolver;
 use Illuminate\Support\Facades\DB;
 
 class TeacherDetail extends BaseComponent
@@ -66,7 +68,15 @@ class TeacherDetail extends BaseComponent
                     ? 'bg-green-100 text-green-700'
                     : 'bg-slate-200 text-slate-600',
                 'has_account'          => (bool) $teacher->user_id,
-                'login_email'          => $teacher->user->email ?? '',
+                'login_identifier'     => UserAccountEmailResolver::displayLoginIdentifier(
+                    $teacher->user->email ?? null,
+                    $teacher->phone_number
+                ),
+                'login_is_phone'       => $teacher->user
+                    ? UserAccountEmailResolver::isSyntheticEmail((string) $teacher->user->email)
+                    : false,
+                'default_password'     => CatechistDefaultPassword::fromBirthday($teacher->birthday),
+                'has_birthday'         => (bool) $teacher->birthday,
                 'note'                 => $teacher->note ?? '',
                 'created_at'           => $teacher->created_at?->format('d/m/Y H:i') ?? '',
                 'updated_at'           => $teacher->updated_at?->format('d/m/Y H:i') ?? '',

@@ -1,7 +1,20 @@
 @php
     $inputClass = 'w-full h-11 px-4 py-2.5 rounded-xl border text-sm bg-white/80 backdrop-blur-sm shadow-mac-sm
         focus:outline-none focus:ring-2 focus:ring-primary-500/25 focus:border-primary-300/40 transition-all border-black/[0.06]';
-    $defaultPassword = config('qlgx.catechist_default_password', '12345678');
+    $defaultPassword = \App\Support\CatechistDefaultPassword::fromBirthday($birthday ?? null);
+    $fallbackPassword = config('qlgx.catechist_default_password', '12345678');
+
+    $previewLogin = '';
+    $previewIsPhone = false;
+    if (trim((string) ($email ?? '')) !== '') {
+        $previewLogin = strtolower(trim($email));
+    } else {
+        $normalizedPhone = \App\Support\UserAccountEmailResolver::normalizePhone((string) ($phone_number ?? ''));
+        if ($normalizedPhone) {
+            $previewLogin = $normalizedPhone;
+            $previewIsPhone = true;
+        }
+    }
 @endphp
 
 @section('topbar')
@@ -92,7 +105,7 @@
                             </div>
                             <div class="sm:col-span-3">
                                 <label class="block text-slate-600 mb-1.5">Ngày sinh</label>
-                                <input type="date" wire:model.defer="birthday" class="{{ $inputClass }}" />
+                                <input type="date" wire:model="birthday" class="{{ $inputClass }}" />
                             </div>
                         </div>
                     </section>
@@ -106,12 +119,12 @@
                         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                             <div>
                                 <label class="block text-slate-600 mb-1.5">Điện thoại</label>
-                                <input type="tel" wire:model.defer="phone_number" placeholder="0901234567" class="{{ $inputClass }}" />
+                                <input type="tel" wire:model="phone_number" placeholder="0901234567" class="{{ $inputClass }}" />
                                 @error('phone_number') <p class="mt-1 text-xs text-red-500">{{ $message }}</p> @enderror
                             </div>
                             <div>
                                 <label class="block text-slate-600 mb-1.5">Email</label>
-                                <input type="email" wire:model.defer="email" placeholder="email@example.com"
+                                <input type="email" wire:model="email" placeholder="email@example.com"
                                     class="{{ $inputClass }} {{ $errors->has('email') ? 'border-red-300 bg-red-50/80' : '' }}" />
                                 @error('email') <p class="mt-1 text-xs text-red-500">{{ $message }}</p> @enderror
                             </div>
@@ -165,38 +178,98 @@
 
                         @if(!$isEdit)
                         <label class="flex items-start gap-3 cursor-pointer select-none rounded-xl bg-white/40 border border-black/[0.04] p-4">
-                            <input type="checkbox" wire:model.defer="create_account"
+                            <input type="checkbox" wire:model="create_account"
                                 class="w-4 h-4 mt-0.5 rounded border-black/20 text-primary-500 focus:ring-primary-500/25" />
                             <div>
                                 <span class="text-sm font-semibold text-slate-700">Tạo tài khoản đăng nhập tự động</span>
-                                <p class="text-xs text-slate-500 mt-0.5">Cần có SĐT hoặc email</p>
+                                <p class="text-xs text-slate-500 mt-0.5">Cần có SĐT hoặc email — đó chính là tên đăng nhập</p>
                             </div>
                         </label>
 
                         @if($create_account)
                         <div class="rounded-xl bg-primary-50/80 border border-primary-100 px-4 py-3 text-xs text-primary-700 space-y-1">
-                            <p>Email đăng nhập: email thật (nếu có) hoặc <code class="font-mono bg-primary-100 px-1 rounded">SĐT@giaoly.local</code></p>
-                            <p>Mật khẩu mặc định: <code class="font-mono bg-primary-100 px-1 rounded">{{ $defaultPassword }}</code></p>
+                            <p>
+                                Tên đăng nhập:
+                                @if($previewLogin !== '')
+                                    <code class="font-mono bg-primary-100 px-1 rounded">{{ $previewLogin }}</code>
+                                    @if($previewIsPhone)
+                                        (số điện thoại)
+                                    @else
+                                        (email)
+                                    @endif
+                                @else
+                                    nhập <strong>số điện thoại</strong> hoặc <strong>email</strong> ở trên — GLV sẽ dùng đúng giá trị đó để đăng nhập
+                                @endif
+                            </p>
+                            <p class="text-primary-600/90">Ưu tiên email nếu có; không có email thì đăng nhập bằng số điện thoại.</p>
+                            <p>
+                                Mật khẩu mặc định: chuỗi ngày sinh
+                                <code class="font-mono bg-primary-100 px-1 rounded">ddmmyyyy</code>
+                                @if(!empty($birthday))
+                                    → <code class="font-mono bg-primary-100 px-1 rounded">{{ $defaultPassword }}</code>
+                                @else
+                                    (chưa có ngày sinh → dùng <code class="font-mono bg-primary-100 px-1 rounded">{{ $fallbackPassword }}</code>)
+                                @endif
+                            </p>
                         </div>
                         @endif
                         @else
                             @if($has_account)
                             <div class="rounded-xl bg-white/40 border border-black/[0.04] p-4 space-y-3">
-                                <p class="text-sm text-slate-700">Đã có tài khoản đăng nhập.</p>
+                                <p class="text-sm text-slate-700">
+                                    Đã có tài khoản. Tên đăng nhập
+                                    @if($login_is_phone)
+                                        (số điện thoại):
+                                    @else
+                                        (email):
+                                    @endif
+                                    <code class="font-mono text-xs bg-slate-100 px-1.5 py-0.5 rounded">{{ $login_identifier ?: '—' }}</code>
+                                </p>
                                 <label class="flex items-center gap-3 cursor-pointer">
                                     <input type="checkbox" wire:model.defer="reset_password"
                                         class="w-4 h-4 rounded border-black/20 text-amber-500 focus:ring-amber-400" />
-                                    <span class="text-sm text-slate-700">Reset mật khẩu về {{ $defaultPassword }}</span>
+                                    <span class="text-sm text-slate-700">
+                                        Reset mật khẩu về chuỗi ngày sinh
+                                        @if(!empty($birthday))
+                                            (<code class="font-mono text-xs bg-slate-100 px-1 rounded">{{ $defaultPassword }}</code>)
+                                        @else
+                                            (không có ngày sinh → <code class="font-mono text-xs bg-slate-100 px-1 rounded">{{ $fallbackPassword }}</code>)
+                                        @endif
+                                    </span>
                                 </label>
                             </div>
                             @else
                             <div class="rounded-xl bg-white/40 border border-black/[0.04] p-4 space-y-3">
                                 <p class="text-sm text-amber-700">Chưa có tài khoản đăng nhập.</p>
                                 <label class="flex items-center gap-3 cursor-pointer">
-                                    <input type="checkbox" wire:model.defer="create_account"
+                                    <input type="checkbox" wire:model="create_account"
                                         class="w-4 h-4 rounded border-black/20 text-primary-500 focus:ring-primary-500/25" />
                                     <span class="text-sm text-slate-700">Tạo tài khoản ngay</span>
                                 </label>
+                                @if($create_account)
+                                <div class="rounded-xl bg-primary-50/80 border border-primary-100 px-4 py-3 text-xs text-primary-700 space-y-1">
+                                    <p>
+                                        Tên đăng nhập:
+                                        @if($previewLogin !== '')
+                                            <code class="font-mono bg-primary-100 px-1 rounded">{{ $previewLogin }}</code>
+                                            @if($previewIsPhone)
+                                                (số điện thoại)
+                                            @else
+                                                (email)
+                                            @endif
+                                        @else
+                                            cần có số điện thoại hoặc email ở trên
+                                        @endif
+                                    </p>
+                                    <p>
+                                        Mật khẩu mặc định: chuỗi ngày sinh
+                                        <code class="font-mono bg-primary-100 px-1 rounded">ddmmyyyy</code>
+                                        @if(!empty($birthday))
+                                            → <code class="font-mono bg-primary-100 px-1 rounded">{{ $defaultPassword }}</code>
+                                        @endif
+                                    </p>
+                                </div>
+                                @endif
                             </div>
                             @endif
                         @endif

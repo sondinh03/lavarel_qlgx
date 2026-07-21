@@ -461,7 +461,6 @@
                             <col style="width: 3rem">
                             <col style="width: 7rem">
                             <col style="width: 11rem">
-                            <col style="width: 7rem">
                             <col style="width: 9rem">
                         </colgroup>
                         <thead class="bg-slate-50 mac-hairline-b">
@@ -469,8 +468,7 @@
                                 <x-table-header class="sticky left-0 z-[30] w-12 max-w-[3rem] shrink-0 bg-slate-50">#</x-table-header>
                                 <x-table-header class="sticky left-[3rem] z-[31] w-28 max-w-[7rem] shrink-0 bg-slate-50">Tên thánh</x-table-header>
                                 <x-table-header class="sticky left-[10rem] z-[32] w-44 max-w-[11rem] shrink-0 bg-slate-50">Họ và tên</x-table-header>
-                                <x-table-header class="sticky left-[21rem] z-[33] w-28 max-w-[7rem] shrink-0 bg-slate-50 whitespace-nowrap">Ngày sinh</x-table-header>
-                                <x-table-header class="sticky left-[28rem] z-[34] w-36 max-w-[9rem] shrink-0 bg-slate-50 border-r border-black/[0.08] shadow-[4px_0_12px_-4px_rgba(0,0,0,0.12)]">Giáo họ</x-table-header>
+                                <x-table-header class="sticky left-[21rem] z-[33] w-36 max-w-[9rem] shrink-0 bg-slate-50 border-r border-black/[0.08] shadow-[4px_0_12px_-4px_rgba(0,0,0,0.12)]">Giáo họ</x-table-header>
                                 @foreach($sessions as $session)
                                 <x-table-header class="text-center min-w-[7.5rem] w-[7.5rem] shrink-0">
                                     <div class="flex flex-col gap-1">
@@ -519,11 +517,7 @@
                                     <span class="block font-semibold text-slate-900 text-sm truncate" title="{{ $student->full_name }}">{{ $student->full_name }}</span>
                                 </td>
 
-                                <td class="px-4 py-3 text-sm text-slate-600 whitespace-nowrap sticky left-[21rem] z-[23] w-28 max-w-[7rem] shrink-0 bg-white group-hover:bg-slate-50">
-                                    {{ $student->birthday ? optional($student->birthday)->format('d/m/Y') : '—' }}
-                                </td>
-
-                                <td class="px-4 py-3 text-sm text-slate-600 sticky left-[28rem] z-[24] w-36 max-w-[9rem] shrink-0 bg-white group-hover:bg-slate-50 border-r border-black/[0.08] shadow-[4px_0_12px_-4px_rgba(0,0,0,0.12)]">
+                                <td class="px-4 py-3 text-sm text-slate-600 sticky left-[21rem] z-[23] w-36 max-w-[9rem] shrink-0 bg-white group-hover:bg-slate-50 border-r border-black/[0.08] shadow-[4px_0_12px_-4px_rgba(0,0,0,0.12)]">
                                     <span class="line-clamp-2" title="{{ $student->parishGroup?->name }}">
                                         {{ $student->parishGroup?->name ?? '—' }}
                                     </span>
@@ -809,11 +803,7 @@
                                                     {{ $student->full_name }}
                                                 </div>
                                                 <div class="text-xs text-slate-500 mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-0.5">
-                                                    @if($student->birthday)
-                                                        <span>{{ optional($student->birthday)->format('d/m/Y') }}</span>
-                                                    @endif
                                                     @if($student->parishGroup?->name)
-                                                        <span class="text-slate-300">•</span>
                                                         <span class="truncate max-w-[160px]" title="{{ $student->parishGroup->name }}">
                                                             {{ $student->parishGroup->name }}
                                                         </span>

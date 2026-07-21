@@ -6,6 +6,7 @@ use App\Models\Teacher;
 use App\Services\Holy\HolyResolver;
 use App\Services\Parish\ParishChildResolver;
 use App\Services\User\CreateCatechistAccount;
+use App\Support\CatechistDefaultPassword;
 use Illuminate\Support\Carbon;
 use Maatwebsite\Excel\Concerns\{
     ToModel,
@@ -58,7 +59,9 @@ class TeacherImport implements ToModel, WithHeadingRow
                 ? $phone
                 : uniqid('glv') . '@giaoxu.com';
 
-            $password = $this->passwordFromBirthday($row['ngay_sinh'] ?? null);
+            $password = CatechistDefaultPassword::fromBirthday(
+                $this->parseDate($row['ngay_sinh'] ?? null)
+            );
 
             $user = app(CreateCatechistAccount::class)
                 ->create($row['ho_ten'], $email, $password, $this->parishId);
@@ -102,12 +105,4 @@ class TeacherImport implements ToModel, WithHeadingRow
         }
     }
 
-    private function passwordFromBirthday($birthday): string
-    {
-        try {
-            return Carbon::parse($birthday)->format('dmy');
-        } catch (\Exception $e) {
-            return rand(100000, 999999);
-        }
-    }
 }

@@ -6,9 +6,9 @@ use App\Models\Holymanagement;
 use App\Models\ParishGroup;
 use App\Models\Teacher;
 use App\Models\User;
+use App\Support\CatechistDefaultPassword;
 use App\Support\ExcelDateParser;
 use App\Support\UserAccountEmailResolver;
-use Illuminate\Support\Facades\Hash;
 
 class ImportTeacherAction
 {
@@ -110,7 +110,7 @@ class ImportTeacherAction
                         $user = User::create([
                             'name'      => $fullName,
                             'email'     => $accountEmail,
-                            'password'  => config('qlgx.catechist_default_password', '12345678'),
+                            'password'  => CatechistDefaultPassword::fromBirthday($birthday),
                             'parish_id' => $parishId,
                         ]);
 

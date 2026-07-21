@@ -54,6 +54,32 @@ class UserAccountEmailResolver
         return str_ends_with(strtolower(trim($email)), '@' . $domain);
     }
 
+    /**
+     * Tên đăng nhập người dùng nhập trên form (SĐT hoặc email thật).
+     * Không lộ email giả @giaoly.local trong hướng dẫn UI.
+     */
+    public static function displayLoginIdentifier(?string $userEmail, ?string $phoneFallback = null): string
+    {
+        $userEmail = trim((string) $userEmail);
+
+        if ($userEmail === '') {
+            return self::normalizePhone((string) $phoneFallback) ?? '';
+        }
+
+        if (self::isSyntheticEmail($userEmail)) {
+            $local = explode('@', $userEmail, 2)[0] ?? '';
+            $fromEmail = self::normalizePhone($local);
+
+            if ($fromEmail) {
+                return $fromEmail;
+            }
+
+            return self::normalizePhone((string) $phoneFallback) ?? $local;
+        }
+
+        return strtolower($userEmail);
+    }
+
     public static function resolveLoginIdentifier(string $input): string
     {
         $input = trim($input);

@@ -130,10 +130,29 @@
                             <h2 class="text-xs font-semibold text-slate-500 tracking-wide uppercase mb-2 px-1">
                                 Tài khoản đăng nhập
                             </h2>
-                            <div class="rounded-xl bg-white/40 border border-black/[0.04] px-4 py-3 space-y-1">
+                            <div class="rounded-xl bg-white/40 border border-black/[0.04] px-4 py-3 space-y-2">
                                 @if(!empty($teacher['has_account']))
                                 <p class="text-sm font-semibold text-slate-700">Đã có tài khoản</p>
-                                <p class="text-sm text-slate-500 font-mono">{{ $teacher['login_email'] }}</p>
+                                <p class="text-sm text-slate-500">
+                                    Tên đăng nhập
+                                    @if(!empty($teacher['login_is_phone']))
+                                        (số điện thoại):
+                                    @else
+                                        (email):
+                                    @endif
+                                    <code class="font-mono text-xs bg-slate-100 px-1.5 py-0.5 rounded text-slate-700">{{ $teacher['login_identifier'] ?: '—' }}</code>
+                                </p>
+                                <p class="text-sm text-slate-500">
+                                    Mật khẩu mặc định (khi tạo / reset):
+                                    @if(!empty($teacher['has_birthday']))
+                                        chuỗi ngày sinh
+                                        <code class="font-mono text-xs bg-slate-100 px-1.5 py-0.5 rounded text-slate-700">{{ $teacher['default_password'] }}</code>
+                                    @else
+                                        <code class="font-mono text-xs bg-slate-100 px-1.5 py-0.5 rounded text-slate-700">{{ $teacher['default_password'] }}</code>
+                                        <span class="text-xs text-amber-600">(chưa có ngày sinh)</span>
+                                    @endif
+                                </p>
+                                <p class="text-xs text-slate-400">Nhập đúng tên đăng nhập trên vào ô “Email hoặc SĐT” khi đăng nhập. Nếu GLV đã đổi mật khẩu thì mật khẩu hiện tại có thể khác.</p>
                                 @else
                                 <span class="text-sm text-slate-400 italic">Chưa tạo tài khoản</span>
                                 @endif

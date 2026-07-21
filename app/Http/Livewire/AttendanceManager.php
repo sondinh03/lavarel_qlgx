@@ -419,7 +419,6 @@ class AttendanceManager extends BaseComponent
                         'students.parish_group_id',
                         'students.last_name',
                         'students.first_name',
-                        'students.birthday',
                     )
                         ->wherePivot('status', 1)
                         ->orderBy('first_name')

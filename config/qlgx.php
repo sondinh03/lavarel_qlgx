@@ -10,8 +10,10 @@ return [
 
     /*
     |--------------------------------------------------------------------------
-    | Mật khẩu mặc định khi tạo / reset tài khoản giáo lý viên
+    | Mật khẩu dự phòng khi tạo / reset tài khoản giáo lý viên
     |--------------------------------------------------------------------------
+    | Mặc định ưu tiên chuỗi ngày sinh (ddmmyyyy). Giá trị này chỉ dùng khi
+    | hồ sơ không có ngày sinh.
     */
     'catechist_default_password' => env('QLGX_CATECHIST_DEFAULT_PASSWORD', '12345678'),
 ];

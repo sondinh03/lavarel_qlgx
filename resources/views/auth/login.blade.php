@@ -42,7 +42,7 @@
 
                 <div>
                     <label for="email" class="block text-sm font-medium text-slate-600 mb-1.5">
-                        Email hoặc SĐT
+                        Tên đăng nhập
                     </label>
                     <input
                         id="email"
@@ -52,7 +52,7 @@
                         required
                         autofocus
                         autocomplete="username"
-                        placeholder="email hoặc 0901234567"
+                        placeholder="email hoặc số điện thoại"
                         class="w-full h-11 px-3.5 rounded-xl text-sm
                             bg-white border shadow-mac-sm
                             text-slate-900 placeholder:text-slate-300
@@ -71,6 +71,7 @@
                             :type="show ? 'text' : 'password'"
                             name="password"
                             required
+                            minlength="8"
                             autocomplete="current-password"
                             class="w-full h-11 px-3.5 pr-10 rounded-xl text-sm
                                 bg-white border border-slate-300 shadow-mac-sm

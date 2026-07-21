@@ -39,6 +39,7 @@
                             Giáo lý viên {{ $scoresEntryOpen ? 'có thể' : 'không thể' }} sửa điểm khi cửa sổ này
                             {{ $scoresEntryOpen ? 'đang mở' : 'đang khóa' }}.
                             Ban quản trị luôn được sửa.
+                            <a href="{{ route('help.scores') }}" class="font-semibold underline hover:opacity-100 ml-1">Hướng dẫn nhập điểm →</a>
                         @else
                             Ban giáo lý chưa mở cửa sổ nhập điểm. Bạn chỉ có thể xem.
                         @endif

@@ -3,6 +3,7 @@
 namespace App\Http\Livewire\Account;
 
 use App\Services\UploadService;
+use App\Support\UserAccountEmailResolver;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rule;
@@ -17,6 +18,10 @@ class AccountSettings extends Component
     public string $name = '';
 
     public string $email = '';
+
+    public string $login_identifier = '';
+
+    public bool $login_is_phone = false;
 
     public string $current_password = '';
 
@@ -37,6 +42,8 @@ class AccountSettings extends Component
 
         $this->name = (string) ($user->name ?? '');
         $this->email = (string) ($user->email ?? '');
+        $this->login_is_phone = UserAccountEmailResolver::isSyntheticEmail($this->email);
+        $this->login_identifier = UserAccountEmailResolver::displayLoginIdentifier($this->email);
         $this->existing_avatar = $user->avatar_path;
     }
 
@@ -87,6 +94,8 @@ class AccountSettings extends Component
 
         $this->name = $user->name;
         $this->email = $user->email;
+        $this->login_is_phone = UserAccountEmailResolver::isSyntheticEmail($this->email);
+        $this->login_identifier = UserAccountEmailResolver::displayLoginIdentifier($this->email);
 
         $this->emit('toast', 'message', 'Đã cập nhật thông tin tài khoản.');
     }

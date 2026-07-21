@@ -156,7 +156,6 @@ if (request()->routeIs('attendance.statistics', 'scores.statistics', 'students.s
     $activeGroup = null;
 }
 $isDashboard = request()->routeIs('parish-admin.dashboard');
-$isGroupsActive = request()->routeIs('groups.*');
 @endphp
 
 <body class="min-h-screen bg-apple-gray text-slate-800 antialiased"
@@ -321,18 +320,42 @@ $isGroupsActive = request()->routeIs('groups.*');
                     x-transition:leave-start="opacity-100"
                     x-transition:leave-end="opacity-0"
                     class="mt-0.5 ml-4 pl-3 border-l border-slate-100 space-y-0.5">
-                    @include('frontend.layout.partials.sidebar-sub-item', ['route' => 'students.index', 'label' => 'Học sinh'])
-                    @include('frontend.layout.partials.sidebar-sub-item', ['route' => 'attendance.show', 'label' => 'Điểm danh'])
-                    @include('frontend.layout.partials.sidebar-sub-item', ['route' => 'scores.index', 'label' => 'Kết quả học tập'])
+                    @include('frontend.layout.partials.sidebar-sub-item', [
+                        'route' => 'students.index',
+                        'label' => 'Học sinh',
+                        'active' => request()->routeIs('students.*') && ! request()->routeIs('students.statistics'),
+                    ])
+                    @include('frontend.layout.partials.sidebar-sub-item', [
+                        'route' => 'attendance.show',
+                        'label' => 'Điểm danh',
+                        'active' => ['attendance.show', 'attendance.qr'],
+                    ])
+                    @include('frontend.layout.partials.sidebar-sub-item', [
+                        'route' => 'scores.index',
+                        'label' => 'Kết quả học tập',
+                        'active' => 'scores.index',
+                    ])
                     @include('frontend.layout.partials.sidebar-sub-item', ['route' => 'catechism.announcements', 'label' => 'Thông báo GLV'])
                 </div>
 
                 {{-- Flyout (mini sidebar) --}}
                 <div class="flyout-menu" x-cloak>
                     <div class="px-3 py-2 text-xs font-semibold text-slate-400 uppercase tracking-wide">Giáo lý</div>
-                    @include('frontend.layout.partials.flyout-item', ['route' => 'students.index', 'label' => 'Học sinh'])
-                    @include('frontend.layout.partials.flyout-item', ['route' => 'attendance.show', 'label' => 'Điểm danh'])
-                    @include('frontend.layout.partials.flyout-item', ['route' => 'scores.index', 'label' => 'Kết quả học tập'])
+                    @include('frontend.layout.partials.flyout-item', [
+                        'route' => 'students.index',
+                        'label' => 'Học sinh',
+                        'active' => request()->routeIs('students.*') && ! request()->routeIs('students.statistics'),
+                    ])
+                    @include('frontend.layout.partials.flyout-item', [
+                        'route' => 'attendance.show',
+                        'label' => 'Điểm danh',
+                        'active' => ['attendance.show', 'attendance.qr'],
+                    ])
+                    @include('frontend.layout.partials.flyout-item', [
+                        'route' => 'scores.index',
+                        'label' => 'Kết quả học tập',
+                        'active' => 'scores.index',
+                    ])
                     @include('frontend.layout.partials.flyout-item', ['route' => 'catechism.announcements', 'label' => 'Thông báo GLV'])
                 </div>
             </div>
@@ -381,22 +404,6 @@ $isGroupsActive = request()->routeIs('groups.*');
                 </div>
             </div>
 
-            {{-- Quản lý nhóm (link thẳng, không nhóm 1 mục) --}}
-            <a href="{{ route('groups.index') }}"
-                class="relative flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition group
-                    {{ $isGroupsActive ? 'text-primary-700 font-semibold' : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900' }}">
-                <svg class="w-5 h-5 flex-shrink-0
-                    {{ $isGroupsActive ? 'text-primary-600' : 'text-slate-400 group-hover:text-slate-600' }}"
-                    fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                        d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
-                </svg>
-                <span class="sidebar-label truncate">Quản lý nhóm</span>
-                @if($isGroupsActive)
-                <span class="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-6 bg-primary-500 rounded-r-full"></span>
-                @endif
-            </a>
-
             {{-- ── Nhóm: HỆ THỐNG ── --}}
             <div class="relative has-flyout">
                 <button @click="toggleGroup('system')"
@@ -429,20 +436,52 @@ $isGroupsActive = request()->routeIs('groups.*');
                     x-transition:leave-start="opacity-100"
                     x-transition:leave-end="opacity-0"
                     class="mt-0.5 ml-4 pl-3 border-l border-slate-100 space-y-0.5">
-                    @include('frontend.layout.partials.sidebar-sub-item', ['route' => 'school-years.index', 'label' => 'Năm học'])
-                    @include('frontend.layout.partials.sidebar-sub-item', ['route' => 'classes.index', 'label' => 'Lớp học'])
-                    @include('frontend.layout.partials.sidebar-sub-item', ['route' => 'catechists.index', 'label' => 'Giáo lý viên'])
-                    @include('frontend.layout.partials.sidebar-sub-item', ['route' => 'session.index', 'label' => 'Phiên điểm danh'])
+                    @include('frontend.layout.partials.sidebar-sub-item', [
+                        'route' => 'school-years.index',
+                        'label' => 'Năm học',
+                        'active' => ['school-years.index', 'school-years.copy'],
+                    ])
+                    @include('frontend.layout.partials.sidebar-sub-item', [
+                        'route' => 'classes.index',
+                        'label' => 'Lớp học',
+                        'active' => 'classes.*',
+                    ])
+                    @include('frontend.layout.partials.sidebar-sub-item', [
+                        'route' => 'catechists.index',
+                        'label' => 'Giáo lý viên',
+                        'active' => 'catechists.*',
+                    ])
+                    @include('frontend.layout.partials.sidebar-sub-item', [
+                        'route' => 'session.index',
+                        'label' => 'Phiên điểm danh',
+                        'active' => 'session.*',
+                    ])
                     @include('frontend.layout.partials.sidebar-sub-item', ['route' => 'attendance.edit-logs', 'label' => 'Nhật ký điểm danh'])
                     @include('frontend.layout.partials.sidebar-sub-item', ['route' => 'scores.edit-logs', 'label' => 'Nhật ký sửa điểm'])
                 </div>
 
                 <div class="flyout-menu" x-cloak>
                     <div class="px-3 py-2 text-xs font-semibold text-slate-400 uppercase tracking-wide">Hệ thống</div>
-                    @include('frontend.layout.partials.flyout-item', ['route' => 'school-years.index', 'label' => 'Năm học'])
-                    @include('frontend.layout.partials.flyout-item', ['route' => 'classes.index', 'label' => 'Lớp học'])
-                    @include('frontend.layout.partials.flyout-item', ['route' => 'catechists.index', 'label' => 'Giáo lý viên'])
-                    @include('frontend.layout.partials.flyout-item', ['route' => 'session.index', 'label' => 'Phiên điểm danh'])
+                    @include('frontend.layout.partials.flyout-item', [
+                        'route' => 'school-years.index',
+                        'label' => 'Năm học',
+                        'active' => ['school-years.index', 'school-years.copy'],
+                    ])
+                    @include('frontend.layout.partials.flyout-item', [
+                        'route' => 'classes.index',
+                        'label' => 'Lớp học',
+                        'active' => 'classes.*',
+                    ])
+                    @include('frontend.layout.partials.flyout-item', [
+                        'route' => 'catechists.index',
+                        'label' => 'Giáo lý viên',
+                        'active' => 'catechists.*',
+                    ])
+                    @include('frontend.layout.partials.flyout-item', [
+                        'route' => 'session.index',
+                        'label' => 'Phiên điểm danh',
+                        'active' => 'session.*',
+                    ])
                     @include('frontend.layout.partials.flyout-item', ['route' => 'attendance.edit-logs', 'label' => 'Nhật ký điểm danh'])
                     @include('frontend.layout.partials.flyout-item', ['route' => 'scores.edit-logs', 'label' => 'Nhật ký sửa điểm'])
                 </div>
@@ -488,6 +527,10 @@ $isGroupsActive = request()->routeIs('groups.*');
                         'label' => 'Hướng dẫn điểm danh',
                     ])
                     @include('frontend.layout.partials.sidebar-sub-item', [
+                        'route' => 'help.scores',
+                        'label' => 'Hướng dẫn nhập điểm',
+                    ])
+                    @include('frontend.layout.partials.sidebar-sub-item', [
                         'route' => 'help.install-app',
                         'label' => 'Cài đặt lên điện thoại',
                     ])
@@ -502,6 +545,10 @@ $isGroupsActive = request()->routeIs('groups.*');
                     @include('frontend.layout.partials.flyout-item', [
                         'route' => 'help.attendance',
                         'label' => 'Hướng dẫn điểm danh',
+                    ])
+                    @include('frontend.layout.partials.flyout-item', [
+                        'route' => 'help.scores',
+                        'label' => 'Hướng dẫn nhập điểm',
                     ])
                     @include('frontend.layout.partials.flyout-item', [
                         'route' => 'help.install-app',
@@ -588,9 +635,9 @@ $isGroupsActive = request()->routeIs('groups.*');
                         Thông tin giáo xứ
                     </a>
                     @endif
-                    <a href="{{ route('parish-admin.dashboard') }}"
+                    <a href="{{ route('module.select') }}"
                         class="block px-4 py-2 text-sm text-slate-700 hover:bg-slate-50">
-                        Dashboard Giáo lý
+                        Chọn phân hệ
                     </a>
                     <div class="border-t border-slate-100 my-1"></div>
                     <form method="POST" action="{{ route('logout') }}">
