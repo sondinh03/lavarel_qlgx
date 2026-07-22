@@ -54,8 +54,8 @@ class StudentImportDuplicateMessage
                 $parts[] = 'Chưa được xếp lớp trong năm học đang import.';
             }
             $parts[] = '→ Học sinh đang thuộc lớp <strong>năm học cũ</strong>. '
-                . 'Vào <strong>Hệ thống → Năm học → Sao chép cấu trúc lớp</strong> để tạo lớp từ năm nguồn sang năm đích, '
-                . 'sau đó <strong>Học sinh → Ghi danh → Học sinh có sẵn</strong> để thêm vào lớp năm mới. '
+                . 'Vào <strong>Hệ thống → Năm học → Sao chép cấu trúc lớp</strong> để tạo lớp từ năm nguồn sang năm đích '
+                . 'và <strong>xếp học sinh</strong> sang lớp năm mới (bước «Xếp học sinh»). '
                 . "Hoặc điền mã <strong>{$code}</strong> để cập nhật thông tin.";
         } else {
             if ($importSchoolYearName) {
@@ -103,8 +103,8 @@ class StudentImportDuplicateMessage
         } elseif ($latest = self::latestEnrollment($student)) {
             $parts[] = 'Lần ghi danh gần nhất: lớp <strong>' . e($latest->name) . '</strong> — năm học ' . e($latest->schoolYear?->name ?? '—') . '.';
             $parts[] = '→ Học sinh chưa thuộc lớp đang import và đang ở <strong>năm học cũ</strong>. '
-                . 'Có thể <strong>Hệ thống → Năm học → Sao chép cấu trúc lớp</strong> từ năm nguồn, '
-                . 'rồi <strong>Học sinh → Ghi danh → Học sinh có sẵn</strong> để thêm vào lớp năm mới.';
+                . 'Vào <strong>Hệ thống → Năm học → Sao chép cấu trúc lớp</strong> để copy lớp từ năm nguồn '
+                . 'và <strong>xếp học sinh</strong> sang lớp năm mới (bước «Xếp học sinh»).';
         } else {
             $parts[] = 'Học sinh chưa thuộc lớp đang import.';
             $parts[] = '→ Dùng <strong>Học sinh → Ghi danh → Học sinh có sẵn</strong> để thêm vào lớp trước, sau đó import lại với mã học sinh để cập nhật thông tin.';

@@ -103,7 +103,7 @@ class StudentImportDuplicateMessageTest extends TestCase
         $this->assertStringContainsString($this->fx->classOldYear->name, $message);
         $this->assertStringContainsString('năm học cũ', $message);
         $this->assertStringContainsString('Sao chép cấu trúc lớp', $message);
-        $this->assertStringContainsString('Học sinh có sẵn', $message);
+        $this->assertStringContainsString('Xếp học sinh', $message);
     }
 
     public function test_invalid_code_message(): void
