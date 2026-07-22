@@ -247,6 +247,11 @@ Route::middleware('auth')->group(function () {
         });
     });
 
+    Route::middleware('role:parish_admin|parishioner_admin|catechism_admin')->group(function () {
+        Route::get('/ten-thanh', HolyManager::class)
+            ->name('holy-names.index');
+    });
+
     // Redirect URL cũ → tiếng Việt
     Route::redirect('/catechist-dashboard', '/bang-dieu-khien', 301);
     Route::redirect('/attendance', '/diem-danh', 301);
@@ -396,9 +401,6 @@ Route::middleware('auth')->group(function () {
     });
 
     Route::middleware('role:parish_admin|parishioner_admin')->group(function () {
-        Route::get('/ten-thanh', HolyManager::class)
-            ->name('holy-names.index');
-
         Route::get('/giao-ho', ParishGroupManager::class)
             ->name('parish-group.index');
 

@@ -42,6 +42,12 @@ class HolyManager extends BaseComponent
      */
     protected function loadInitialData(): void {}
 
+    public function mount(): void
+    {
+        parent::mount();
+        $this->authorize('viewAny', Holymanagement::class);
+    }
+
     /** ========== Render ========== */
     public function render()
     {
@@ -53,10 +59,17 @@ class HolyManager extends BaseComponent
             ->orderBy('name', 'asc')
             ->paginate($this->perPage);
 
+        $user = auth()->user();
+        $layout = match (true) {
+            $user?->usesCatechistLayout() => 'frontend.layout.catechist',
+            $user?->canManageCatechism() => 'frontend.layout.main',
+            default => 'frontend.layout.parishioner',
+        };
+
         return view('livewire.holy.holy-manager', [
             'holies' => $holies,
         ])
-            ->extends('frontend.layout.parishioner')
+            ->extends($layout)
             ->section('content');
     }
 

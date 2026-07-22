@@ -343,7 +343,14 @@
 
                     @if($this->duplicateCount > 0)
                     <p class="text-xs text-slate-400">
-                        Bỏ qua {{ $this->duplicateCount }} học sinh trùng hoặc không hợp lệ
+                        Bỏ qua {{ $this->duplicateCount }} dòng
+                        @if($duplicateProfileCount > 0)
+                        ({{ $duplicateProfileCount }} đã có hồ sơ trong giáo xứ
+                        @if($duplicateInvalidCount > 0), {{ $duplicateInvalidCount }} lỗi mã/không hợp lệ@endif)
+                        @elseif($duplicateInvalidCount > 0)
+                        ({{ $duplicateInvalidCount }} lỗi mã/không hợp lệ)
+                        @endif
+                        — xem chi tiết bên dưới
                     </p>
                     @endif
                 </div>

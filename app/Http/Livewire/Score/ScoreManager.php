@@ -482,6 +482,7 @@ class ScoreManager extends BaseComponent
         $this->draftScores = [];
         $this->hasDraft    = false;
         $this->viewingPivotId = null;
+        $this->scoresLoaded = false;
 
         match ($action) {
             'changeLop' => (function () use ($value) {
@@ -630,11 +631,12 @@ class ScoreManager extends BaseComponent
         }
 
         // Luôn lấy lại từ DB — không tin scoreTypes đã serialize qua Livewire.
+        // Chỉ dùng cục bộ để validate; KHÔNG gán vào $this->scoreTypes vì danh sách
+        // này gồm cả 2 học kỳ, sẽ làm bảng điểm hiện cả cột của kỳ còn lại.
         $scoreTypes = ScoreType::query()
             ->where('class_id', (int) $this->selectedLop)
             ->get()
             ->keyBy('id');
-        $this->scoreTypes = $scoreTypes->values();
 
         $allowedTypeIds = $scoreTypes->keys()->map(fn ($id) => (int) $id)->all();
         $allowedPivotIds = StudentsClass::query()
@@ -763,6 +765,8 @@ class ScoreManager extends BaseComponent
             }
 
             DB::commit();
+
+            $this->loadScoreTypes();
 
             $this->scoresLoaded = true;
             $this->hasDraft     = false;
@@ -1318,6 +1322,10 @@ class ScoreManager extends BaseComponent
         $this->scoreTypes   = collect();
         $this->scoresMatrix = [];
         $this->averages     = [];
+        $this->draftScores  = [];
+        $this->hasDraft     = false;
+        $this->scoresLoaded = false;
+        $this->viewingPivotId = null;
         $this->resetPage();
 
         if ($namHocChanged) {
@@ -1372,7 +1380,12 @@ class ScoreManager extends BaseComponent
             return;
         }
 
-        if ($this->scoreTypes->isEmpty()) {
+        $hasScoreTypes = ScoreType::query()
+            ->where('class_id', (int) $this->selectedLop)
+            ->where('is_active', true)
+            ->exists();
+
+        if (!$hasScoreTypes) {
             $this->emit('toast', 'warning', 'Lớp chưa có cấu hình loại điểm');
             return;
         }
@@ -1381,10 +1394,10 @@ class ScoreManager extends BaseComponent
 
         return response()->streamDownload(function () {
             echo \Maatwebsite\Excel\Facades\Excel::raw(
-                new ScoreExport($this->selectedLop, $this->selectedSemester, $this->filterByRating),
+                new ScoreExport($this->selectedLop, $this->filterByRating),
                 \Maatwebsite\Excel\Excel::XLSX
             );
-        }, 'BangDiem_' . $selectedNameClass . '_HK' . $this->selectedSemester . '_' . now()->format('dmY_His') . '.xlsx');
+        }, 'BangDiemCaNam_' . $selectedNameClass . '_' . now()->format('dmY_His') . '.xlsx');
     }
 
     // ==================== RATING & STATISTICS ====================

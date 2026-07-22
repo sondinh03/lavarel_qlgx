@@ -143,7 +143,8 @@ if (request()->routeIs('attendance.statistics', 'scores.statistics', 'students.s
         'catechists.*',
         'school-years.index',
         'school-years.copy',
-        'classes.*'
+        'classes.*',
+        'holy-names.*'
     )
 ) {
     $activeGroup = 'system';
@@ -458,6 +459,11 @@ $isDashboard = request()->routeIs('parish-admin.dashboard');
                     ])
                     @include('frontend.layout.partials.sidebar-sub-item', ['route' => 'attendance.edit-logs', 'label' => 'Nhật ký điểm danh'])
                     @include('frontend.layout.partials.sidebar-sub-item', ['route' => 'scores.edit-logs', 'label' => 'Nhật ký sửa điểm'])
+                    @include('frontend.layout.partials.sidebar-sub-item', [
+                        'route' => 'holy-names.index',
+                        'label' => 'Tên thánh',
+                        'active' => 'holy-names.*',
+                    ])
                 </div>
 
                 <div class="flyout-menu" x-cloak>
@@ -484,6 +490,11 @@ $isDashboard = request()->routeIs('parish-admin.dashboard');
                     ])
                     @include('frontend.layout.partials.flyout-item', ['route' => 'attendance.edit-logs', 'label' => 'Nhật ký điểm danh'])
                     @include('frontend.layout.partials.flyout-item', ['route' => 'scores.edit-logs', 'label' => 'Nhật ký sửa điểm'])
+                    @include('frontend.layout.partials.flyout-item', [
+                        'route' => 'holy-names.index',
+                        'label' => 'Tên thánh',
+                        'active' => 'holy-names.*',
+                    ])
                 </div>
             </div>
 

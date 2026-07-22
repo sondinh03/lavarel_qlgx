@@ -23,17 +23,17 @@ class HolymanagementPolicy
 
     public function viewAny(User $user): bool
     {
-        return $user->canManageParishioners();
+        return $user->canManageParishioners() || $user->canManageCatechism();
     }
 
     public function create(User $user): bool
     {
-        return $user->canManageParishioners();
+        return $user->canManageParishioners() || $user->canManageCatechism();
     }
 
     public function update(User $user, Holymanagement $holy): bool
     {
-        return $user->canManageParishioners();
+        return $user->canManageParishioners() || $user->canManageCatechism();
     }
 
     public function delete(User $user, Holymanagement $holy): bool

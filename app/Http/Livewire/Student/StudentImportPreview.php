@@ -11,6 +11,7 @@ use App\Models\NamHoc;
 use App\Models\ParishGroup;
 use App\Models\StudentNew;
 use App\Support\ExcelDateParser;
+use App\Support\StudentImportDuplicateMessage;
 use Illuminate\Support\Facades\Log;
 use Livewire\WithFileUploads;
 use Maatwebsite\Excel\Facades\Excel;
@@ -44,6 +45,8 @@ class StudentImportPreview extends BaseComponent
     public array $fileErrors    = [];
     public array $warnings      = [];
     public bool  $readyToImport = false;
+    public int   $duplicateProfileCount = 0;
+    public int   $duplicateInvalidCount = 0;
 
     // ==================== VALIDATION ====================
 
@@ -159,10 +162,6 @@ class StudentImportPreview extends BaseComponent
 
     public function preview(): void
     {
-        $existingCodes = StudentNew::whereNotNull('student_code')
-            ->pluck('student_code')
-            ->toArray();
-
         $this->validate($this->formRules, $this->messages);
 
         $this->resetPreview();
@@ -188,6 +187,13 @@ class StudentImportPreview extends BaseComponent
                 return;
             }
 
+            $importClass = $this->selectedLop
+                ? CatechismClass::with('schoolYear')->find($this->selectedLop)
+                : null;
+            $importSchoolYearId   = $importClass?->school_year_id;
+            $importSchoolYearName = $importClass?->schoolYear?->name;
+            $importClassName      = $importClass?->name;
+
             $saintNames = Holymanagement::pluck('name')
                 ->map(fn($n) => strtolower(trim($n)))
                 ->toArray();
@@ -201,14 +207,25 @@ class StudentImportPreview extends BaseComponent
                 ->map(fn($n) => strtolower(trim($n)))
                 ->toArray();
 
-            // Key trùng: saint_id + họ tên + ngày sinh
-            $existingStudents = StudentNew::get(['saint_id', 'first_name', 'last_name', 'birthday'])
-                ->map(fn($s) => ($s->saint_id ?? '')
-                    . '_' . strtolower(trim($s->last_name . ' ' . $s->first_name))
-                    . '_' . ($s->birthday?->format('Y-m-d') ?? ''))
-                ->toArray();
+            $studentsByKey  = [];
+            $studentsByCode = [];
+
+            StudentNew::with(['saint', 'classes.schoolYear'])->get()->each(function (StudentNew $student) use (&$studentsByKey, &$studentsByCode) {
+                if ($student->student_code) {
+                    $studentsByCode[$student->student_code] = $student;
+                }
+
+                $studentsByKey[StudentImportDuplicateMessage::duplicateKey(
+                    $student->saint_id,
+                    $student->last_name,
+                    $student->first_name,
+                    $student->birthday?->format('Y-m-d'),
+                )] = $student;
+            });
 
             $validGenders = ['nam', 'nữ', 'nu', 'male', 'female', 'm', 'f', '1', '0'];
+            $duplicateProfileCount = 0;
+            $duplicateInvalidCount = 0;
 
             foreach ($data as $index => $row) {
                 $rowNumber = $index + 6;
@@ -278,33 +295,48 @@ class StudentImportPreview extends BaseComponent
                 $saintId     = !empty($tenThanh)
                     ? ($saintIdByName[strtolower($tenThanh)] ?? null)
                     : null;
-                $fullName    = strtolower(trim(($row['ho_ten_dem'] ?? '') . ' ' . ($row['ten'] ?? '')));
-                $key         = ($saintId ?? '') . '_' . $fullName . '_' . ($parsedDate ?? '');
+                $key         = StudentImportDuplicateMessage::duplicateKey(
+                    $saintId,
+                    trim($row['ho_ten_dem'] ?? ''),
+                    trim($row['ten'] ?? ''),
+                    $parsedDate,
+                );
                 $isDuplicate = false;
                 $willUpdate  = false;
 
                 if ($studentCode) {
-                    if (in_array($studentCode, $existingCodes)) {
-                        $belongsToClass = StudentNew::where('student_code', $studentCode)
-                            ->whereHas('classes', fn($q) => $q->where('class_id', $this->selectedLop))
-                            ->exists();
+                    if (isset($studentsByCode[$studentCode])) {
+                        $matchedStudent = $studentsByCode[$studentCode];
+                        $belongsToClass = $matchedStudent->classes->contains('id', (int) $this->selectedLop);
 
                         if ($belongsToClass) {
                             $willUpdate    = true;
-                            $rowWarnings[] = "Học sinh mã <strong>{$studentCode}</strong> đã có trong lớp — thông tin sẽ được <strong>cập nhật</strong> khi xác nhận.";
+                            $rowWarnings[] = StudentImportDuplicateMessage::forCodeWillUpdate($studentCode);
                         } else {
-                            $isDuplicate   = true;
-                            $rowWarnings[] = "Học sinh mã <strong>{$studentCode}</strong> không thuộc lớp này — dòng này sẽ bị <strong>bỏ qua</strong>.";
+                            $isDuplicate = true;
+                            $duplicateInvalidCount++;
+                            $rowWarnings[] = StudentImportDuplicateMessage::forCodeWrongClass(
+                                $matchedStudent,
+                                $studentCode,
+                                $importSchoolYearId,
+                                $importClassName,
+                            );
                         }
                     } else {
-                        // Có mã nhưng không tồn tại trong hệ thống
-                        $isDuplicate   = true;
-                        $rowWarnings[] = "Mã học sinh <strong>{$studentCode}</strong> không tồn tại trong hệ thống — dòng này sẽ bị <strong>bỏ qua</strong>.";
+                        $isDuplicate = true;
+                        $duplicateInvalidCount++;
+                        $rowWarnings[] = StudentImportDuplicateMessage::forInvalidCode($studentCode);
                     }
-                } elseif (in_array($key, $existingStudents)) {
-                    $isDuplicate   = true;
-                    $displayName   = trim(($tenThanh ? $tenThanh . ' ' : '') . ($row['ho_ten_dem'] ?? '') . ' ' . ($row['ten'] ?? ''));
-                    $rowWarnings[] = "Học sinh <strong>{$displayName}</strong> (trùng tên thánh, họ tên và ngày sinh) đã tồn tại trong hệ thống — dòng này sẽ bị <strong>bỏ qua</strong>.";
+                } elseif (isset($studentsByKey[$key])) {
+                    $isDuplicate = true;
+                    $duplicateProfileCount++;
+                    $rowWarnings[] = StudentImportDuplicateMessage::forProfileMatch(
+                        $studentsByKey[$key],
+                        $importSchoolYearId,
+                        $this->selectedLop ? (int) $this->selectedLop : null,
+                        $importClassName,
+                        $importSchoolYearName,
+                    );
                 }
 
                 if (!empty($rowWarnings)) {
@@ -332,6 +364,8 @@ class StudentImportPreview extends BaseComponent
             }
 
             $this->readyToImport = empty($this->fileErrors) && !empty($this->rows);
+            $this->duplicateProfileCount = $duplicateProfileCount;
+            $this->duplicateInvalidCount = $duplicateInvalidCount;
 
             if ($this->readyToImport) {
                 $duplicateCount = collect($this->rows)->where('is_duplicate', true)->count();
@@ -348,7 +382,14 @@ class StudentImportPreview extends BaseComponent
                     $parts[] = "Cập nhật {$updateCount} học sinh.";
                 }
                 if ($duplicateCount > 0) {
-                    $parts[] = "Bỏ qua {$duplicateCount} học sinh trùng hoặc không hợp lệ.";
+                    $skipParts = [];
+                    if ($duplicateProfileCount > 0) {
+                        $skipParts[] = "{$duplicateProfileCount} học sinh đã có hồ sơ trong giáo xứ";
+                    }
+                    if ($duplicateInvalidCount > 0) {
+                        $skipParts[] = "{$duplicateInvalidCount} dòng lỗi mã/không hợp lệ";
+                    }
+                    $parts[] = 'Bỏ qua ' . ($skipParts ? implode(', ', $skipParts) : "{$duplicateCount} dòng") . '. Xem chi tiết bên dưới.';
                 }
 
                 $this->emit('toast', 'info', implode(' ', $parts));
@@ -465,10 +506,12 @@ class StudentImportPreview extends BaseComponent
 
     protected function resetPreview(): void
     {
-        $this->rows          = [];
-        $this->fileErrors        = [];
-        $this->warnings      = [];
-        $this->readyToImport = false;
+        $this->rows                  = [];
+        $this->fileErrors            = [];
+        $this->warnings              = [];
+        $this->readyToImport         = false;
+        $this->duplicateProfileCount = 0;
+        $this->duplicateInvalidCount = 0;
     }
 
     // ==================== RENDER ====================

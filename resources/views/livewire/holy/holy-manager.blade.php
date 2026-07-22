@@ -1,6 +1,9 @@
 @section('topbar')
+@php
+    $isCatechismAdmin = auth()->user()?->canManageCatechism();
+@endphp
 <x-breadcrumb :items="[
-    ['label' => 'Trang chủ', 'url' => route('parishioners.dashboard')],
+    ['label' => $isCatechismAdmin ? 'Giáo lý' : 'Trang chủ', 'url' => $isCatechismAdmin ? route('parish-admin.dashboard') : route('parishioners.dashboard')],
     ['label' => 'Tên thánh']
 ]" />
 @endsection

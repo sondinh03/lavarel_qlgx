@@ -122,7 +122,7 @@
                             @if($canEditScores)
                             <x-button wire:click="saveAllScores" variant="primary">
                                 <x-icon name="save" />
-                                Lưu tất cả
+                                Lưu
                             </x-button>
                             @endif
                             @if($canManageScoreConfig)
