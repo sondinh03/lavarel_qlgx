@@ -77,6 +77,35 @@ class StudentImportDuplicateMessageTest extends TestCase
         $this->assertStringContainsString('Điền mã học sinh', $message);
     }
 
+    public function test_profile_match_message_when_student_only_in_previous_school_year(): void
+    {
+        StudentsClass::query()
+            ->where('student_id', $this->fx->studentAssigned->id)
+            ->delete();
+
+        StudentsClass::query()->create([
+            'student_id' => $this->fx->studentAssigned->id,
+            'class_id'   => $this->fx->classOldYear->id,
+            'status'     => StudentsClass::STATUS_ENROLLED,
+        ]);
+
+        $student = StudentNew::with(['saint', 'classes.schoolYear'])->findOrFail($this->fx->studentAssigned->id);
+
+        $message = StudentImportDuplicateMessage::forProfileMatch(
+            $student,
+            $this->fx->yearA->id,
+            $this->fx->classAssigned->id,
+            $this->fx->classAssigned->name,
+            $this->fx->yearA->name,
+        );
+
+        $this->assertStringContainsString('Lần ghi danh gần nhất', $message);
+        $this->assertStringContainsString($this->fx->classOldYear->name, $message);
+        $this->assertStringContainsString('năm học cũ', $message);
+        $this->assertStringContainsString('Sao chép cấu trúc lớp', $message);
+        $this->assertStringContainsString('Học sinh có sẵn', $message);
+    }
+
     public function test_invalid_code_message(): void
     {
         $message = StudentImportDuplicateMessage::forInvalidCode('HDO-99-9999');
