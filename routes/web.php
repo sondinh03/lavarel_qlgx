@@ -215,6 +215,8 @@ Route::middleware('auth')->group(function () {
             ->name('catechism.announcements');
 
         Route::prefix('giao-ly-vien')->name('catechists.')->group(function () {
+            Route::get('/phan-cong', AssignTeacher::class)->name('assign');
+            Route::get('/phan-cong/{classId}', AssignTeacher::class)->name('assign.class')->whereNumber('classId');
             Route::get('/', TeacherManager::class)->name('index');
             Route::get('/tao', TeacherEdit::class)->name('create');
             Route::get('/nhap', TeacherImportPreview::class)->name('import');

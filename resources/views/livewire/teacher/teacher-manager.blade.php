@@ -58,6 +58,10 @@
                             class="max-w-md" />
 
                         <div class="flex items-center gap-2 flex-wrap justify-end">
+                            <x-button as="a" href="{{ route('catechists.assign') }}" variant="outline">
+                                <x-icon name="catechists" />
+                                Phân công giảng dạy
+                            </x-button>
                             <x-button as="a" href="{{ route('catechists.import') }}" variant="outline">
                                 <x-icon name="upload" />
                                 Import Excel

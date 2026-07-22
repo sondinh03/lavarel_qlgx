@@ -1,13 +1,21 @@
 @section('topbar')
-<x-breadcrumb :items="[
-    ['label' => 'Trang chủ', 'url' => route('parish-admin.dashboard')],
-    ['label' => 'Quản lý lớp học', 'url' => route('classes.index')],
-    ['label' => 'Phân công Giáo lý viên'],
-]" />
+@php
+    $breadcrumbItems = [
+        ['label' => 'Trang chủ', 'url' => route('parish-admin.dashboard')],
+    ];
+    if ($fromCatechistHub) {
+        $breadcrumbItems[] = ['label' => 'Giáo lý viên', 'url' => route('catechists.index')];
+        $breadcrumbItems[] = ['label' => 'Phân công giảng dạy'];
+    } else {
+        $breadcrumbItems[] = ['label' => 'Quản lý lớp học', 'url' => route('classes.index')];
+        $breadcrumbItems[] = ['label' => 'Phân công Giáo lý viên'];
+    }
+@endphp
+<x-breadcrumb :items="$breadcrumbItems" />
 @endsection
 
 @php
-    $yearLabel = $class->schoolYear?->name;
+    $yearLabel = $class?->schoolYear?->name;
     $glvCount = $currentTeachers->count();
 @endphp
 
@@ -20,27 +28,30 @@
         <x-mac-panel :overflow="true">
             <x-page-header
                 title="Phân công Giáo lý viên"
-                :description="$yearLabel ? 'Năm học: ' . $yearLabel : 'Chọn lớp để phân công giáo lý viên'"
+                :description="$class
+                    ? ($yearLabel ? 'Năm học: ' . $yearLabel : 'Phân công GLV cho lớp đã chọn')
+                    : 'Chọn năm học và lớp để phân công giáo lý viên'"
                 icon-type="teacher">
                 <x-slot name="actions">
-                    <x-button as="a" href="{{ route('classes.index') }}" variant="subtle">
+                    <x-button as="a" href="{{ $fromCatechistHub ? route('catechists.index') : route('classes.index') }}" variant="subtle">
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
                         </svg>
-                        Về danh sách lớp
+                        {{ $fromCatechistHub ? 'Về danh sách GLV' : 'Về danh sách lớp' }}
                     </x-button>
                 </x-slot>
             </x-page-header>
 
             <div class="p-4 lg:p-6 mac-hairline-b bg-white/30">
-                <div class="max-w-md">
-                    <x-select-input
-                        label="Lớp học"
-                        placeholder="Chọn lớp"
-                        :options="$classOptions"
-                        wire:model="classId"
-                        :value="$classId" />
-                </div>
+                <livewire:filters.filter-bar
+                    :parish-id="$parishId"
+                    :show-nam-hoc="true"
+                    :show-khoi="false"
+                    :show-lop="true"
+                    :show-ky="false"
+                    :allow-all-year="false"
+                    :selected-nam-hoc="$selectedNamHoc"
+                    :selected-lop="$selectedLop" />
             </div>
 
             @if (session()->has('message'))
@@ -53,6 +64,7 @@
             <x-toast-notification type="warning" :duration="4500">{{ session('warning') }}</x-toast-notification>
             @endif
 
+            @if($class)
             <div class="grid grid-cols-1 lg:grid-cols-5 lg:divide-x lg:divide-black/[0.06]">
                 {{-- GLV hiện tại --}}
                 <div class="lg:col-span-2 flex flex-col min-h-0">
@@ -292,6 +304,11 @@
                     </div>
                 </div>
             </div>
+            @else
+            <div class="px-4 lg:px-6 py-16 text-center">
+                <p class="text-sm font-medium text-slate-700">Chọn lớp ở bộ lọc phía trên để bắt đầu phân công giáo lý viên</p>
+            </div>
+            @endif
         </x-mac-panel>
     </div>
 </div>

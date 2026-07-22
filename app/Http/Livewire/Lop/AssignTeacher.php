@@ -13,14 +13,15 @@ class AssignTeacher extends BaseComponent
 {
     // ==================== PROPS ====================
 
-    /** @var int ID của lớp */
     public $classId = 0;
 
-    /** @var \App\Models\CatechismClass */
+    /** @var \App\Models\CatechismClass|null */
     public $class;
 
-    /** @var array<int|string, string> options cho select lớp */
-    public $classOptions = [];
+    public $selectedNamHoc = null;
+    public $selectedLop = null;
+
+    public bool $fromCatechistHub = false;
 
     // ==================== FORM STATE ====================
 
@@ -48,37 +49,77 @@ class AssignTeacher extends BaseComponent
         'selectedRole.in'            => 'Vai trò không hợp lệ',
     ];
 
+    // ==================== QUERY STRING ====================
+
+    protected function queryString()
+    {
+        return array_merge([
+            'selectedNamHoc' => ['as' => 'namHoc', 'except' => null],
+            'selectedLop'    => ['as' => 'lop', 'except' => null],
+        ], parent::queryString());
+    }
+
     // ==================== LISTENERS ====================
 
     protected $listeners = [
         'openAssignModal' => 'openModal',
         'refresh'         => '$refresh',
+        'filterChanged'   => 'handleFilterChanged',
     ];
 
     // ==================== LIFECYCLE ====================
 
-    public function mount($id = null)
+    public function mount($id = null, $classId = null)
     {
-        if (empty($id)) {
-            session()->flash('error', 'Thiếu ID lớp học.');
-            $this->redirectRoute('classes.index');
-            return;
-        }
-
-        $this->classId = (int) $id;
-
-        if ($this->classId <= 0) {
-            session()->flash('error', 'ID lớp học không hợp lệ.');
-            $this->redirectRoute('classes.index');
-            return;
-        }
+        $this->fromCatechistHub = request()->routeIs('catechists.assign', 'catechists.assign.class');
+        $resolvedId = (int) ($classId ?? $id ?? 0);
 
         parent::mount();
 
         $this->requireManager();
         $this->requireParishId();
 
-        $this->loadClass();
+        if ($resolvedId <= 0 && ! $this->fromCatechistHub) {
+            session()->flash('error', 'Thiếu ID lớp học.');
+            $this->redirectRoute('classes.index');
+
+            return;
+        }
+
+        if ($resolvedId > 0) {
+            $this->classId = $resolvedId;
+            $this->selectedLop = $resolvedId;
+            $this->loadClass();
+
+            return;
+        }
+
+        if ($this->selectedLop) {
+            $this->classId = (int) $this->selectedLop;
+            $this->loadClass();
+
+            return;
+        }
+
+        if (! $this->selectedNamHoc) {
+            $this->selectedNamHoc = $this->getDefaultNamHocId();
+        }
+
+        $this->currentTeachers   = collect();
+        $this->availableTeachers = collect();
+    }
+
+    protected function sanitizeQueryString(): void
+    {
+        parent::sanitizeQueryString();
+
+        $this->selectedNamHoc = ($this->selectedNamHoc !== '' && $this->selectedNamHoc !== null && is_numeric($this->selectedNamHoc))
+            ? (int) $this->selectedNamHoc
+            : null;
+
+        $this->selectedLop = ($this->selectedLop !== '' && $this->selectedLop !== null && is_numeric($this->selectedLop))
+            ? (int) $this->selectedLop
+            : null;
     }
 
     protected function loadInitialData(): void
@@ -99,59 +140,65 @@ class AssignTeacher extends BaseComponent
                 ->where('parish_id', $this->parishId)
                 ->findOrFail($this->classId);
 
-            $this->loadClassOptions();
+            $this->selectedNamHoc = (int) $this->class->school_year_id;
+            $this->selectedLop  = (int) $this->class->id;
             $this->loadInitialData();
         } catch (\Exception $e) {
             $this->logError($e, 'Error loading class', ['class_id' => $this->classId]);
             session()->flash('error', 'Không tìm thấy lớp học');
-            $this->redirectRoute('classes.index');
+            $this->clearClassSelection();
+
+            if ($this->fromCatechistHub) {
+                $this->redirectRoute('catechists.assign');
+            } else {
+                $this->redirectRoute('classes.index');
+            }
         }
     }
 
-    protected function loadClassOptions(): void
+    public function handleFilterChanged($filters): void
     {
-        if (! $this->class) {
-            $this->classOptions = [];
-
+        if (! is_array($filters)) {
             return;
         }
 
-        // Sắp xếp: order khối → tên lớp A→Z. Dùng string key để Livewire không đảo thứ tự.
-        $this->classOptions = CatechismClass::query()
-            ->with(['gradeLevel:id,name,sort_order'])
-            ->where('parish_id', $this->parishId)
-            ->where('school_year_id', $this->class->school_year_id)
-            ->get(['id', 'name', 'grade_level_id'])
-            ->sortBy([
-                fn (CatechismClass $item) => $item->gradeLevel->sort_order ?? PHP_INT_MAX,
-                fn (CatechismClass $item) => mb_strtolower($item->name ?? '', 'UTF-8'),
-            ])
-            ->values()
-            ->mapWithKeys(function (CatechismClass $item) {
-                $grade = $item->gradeLevel?->name;
-                $label = $grade
-                    ? trim($grade) . ' — ' . $item->name
-                    : $item->name;
+        if (array_key_exists('namHoc', $filters)) {
+            $newNamHoc = is_numeric($filters['namHoc']) ? (int) $filters['namHoc'] : null;
 
-                return [(string) $item->id => $label];
-            })
-            ->all();
+            if ($newNamHoc !== $this->selectedNamHoc) {
+                $this->selectedNamHoc = $newNamHoc;
+                $this->clearClassSelection();
+            }
+        }
+
+        if (! array_key_exists('lop', $filters)) {
+            return;
+        }
+
+        $newLop = is_numeric($filters['lop']) ? (int) $filters['lop'] : null;
+
+        if ($newLop === $this->selectedLop) {
+            return;
+        }
+
+        if ($newLop) {
+            $this->selectClass($newLop);
+        } else {
+            $this->clearClassSelection();
+        }
     }
 
-    public function updatedClassId($value): void
+    protected function clearClassSelection(): void
     {
-        $id = (int) $value;
+        $this->classId = 0;
+        $this->selectedLop = null;
+        $this->class = null;
+        $this->currentTeachers   = collect();
+        $this->availableTeachers = collect();
+    }
 
-        if ($id <= 0) {
-            $this->classId = (int) ($this->class?->id ?? 0);
-
-            return;
-        }
-
-        if ($this->class && $id === (int) $this->class->id) {
-            return;
-        }
-
+    protected function selectClass(int $id): void
+    {
         $allowed = CatechismClass::query()
             ->where('parish_id', $this->parishId)
             ->where('id', $id)
@@ -159,12 +206,14 @@ class AssignTeacher extends BaseComponent
 
         if (! $allowed) {
             session()->flash('error', 'Lớp học không hợp lệ.');
-            $this->classId = (int) ($this->class?->id ?? 0);
+            $this->clearClassSelection();
 
             return;
         }
 
-        $this->redirect(route('classes.catechists', $id));
+        $this->classId = $id;
+        $this->selectedLop = $id;
+        $this->loadClass();
     }
 
     protected function loadCurrentTeachers(): void
@@ -262,8 +311,15 @@ class AssignTeacher extends BaseComponent
     {
         $this->requireManager();
 
-        if (!$this->selectedTeacherId) {
+        if (! $this->class) {
+            session()->flash('error', 'Vui lòng chọn lớp trước khi phân công.');
+
+            return;
+        }
+
+        if (! $this->selectedTeacherId) {
             $this->addError('selectedTeacherId', 'Vui lòng chọn Giáo lý viên');
+
             return;
         }
 
@@ -279,6 +335,7 @@ class AssignTeacher extends BaseComponent
 
                 if ($existingChuNhiem) {
                     session()->flash('error', 'Lớp đã có Chủ nhiệm. Vui lòng xóa Chủ nhiệm hiện tại trước.');
+
                     return;
                 }
             }
@@ -293,6 +350,7 @@ class AssignTeacher extends BaseComponent
 
             if ($alreadyAssigned) {
                 session()->flash('error', 'Giáo lý viên đã được phân công cho lớp này');
+
                 return;
             }
 
@@ -383,7 +441,7 @@ class AssignTeacher extends BaseComponent
         try {
             DB::beginTransaction();
 
-            if (!in_array($newRole, [ClassTeacher::ROLE_CHU_NHIEM, ClassTeacher::ROLE_PHO])) {
+            if (! in_array($newRole, [ClassTeacher::ROLE_CHU_NHIEM, ClassTeacher::ROLE_PHO])) {
                 throw new \Exception('Invalid role');
             }
 
@@ -403,6 +461,7 @@ class AssignTeacher extends BaseComponent
 
                 if ($existingChuNhiem) {
                     session()->flash('error', 'Lớp đã có Chủ nhiệm. Vui lòng xóa Chủ nhiệm hiện tại trước.');
+
                     return;
                 }
             }
@@ -438,6 +497,12 @@ class AssignTeacher extends BaseComponent
     {
         $this->showModal = false;
         $this->resetForm();
+    }
+
+    protected function getDefaultNamHocId(): ?int
+    {
+        return app(\App\Services\SchoolYearResolver::class)
+            ->resolveId($this->parishId ? (int) $this->parishId : null);
     }
 
     // ==================== RENDER ====================

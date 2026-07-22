@@ -136,11 +136,16 @@ if (request()->routeIs('attendance.statistics', 'scores.statistics', 'students.s
 } elseif (request()->routeIs('school-years.guide', 'help.*')) {
     $activeGroup = 'help';
 } elseif (
+    request()->routeIs('attendance.*', 'scores.*', 'catechism.announcements', 'catechists.*')
+    || (request()->routeIs('students.*') && ! request()->routeIs('students.statistics'))
+    || request()->routeIs('classes.catechists')
+) {
+    $activeGroup = 'learning';
+} elseif (
     request()->routeIs(
         'session.*',
         'attendance.edit-logs',
         'scores.edit-logs',
-        'catechists.*',
         'school-years.index',
         'school-years.copy',
         'classes.*',
@@ -148,11 +153,6 @@ if (request()->routeIs('attendance.statistics', 'scores.statistics', 'students.s
     )
 ) {
     $activeGroup = 'system';
-} elseif (
-    request()->routeIs('attendance.*', 'scores.*', 'catechism.announcements')
-    || (request()->routeIs('students.*') && ! request()->routeIs('students.statistics'))
-) {
-    $activeGroup = 'learning';
 } else {
     $activeGroup = null;
 }
@@ -336,6 +336,13 @@ $isDashboard = request()->routeIs('parish-admin.dashboard');
                         'label' => 'Kết quả học tập',
                         'active' => 'scores.index',
                     ])
+                    @if(auth()->user()?->canManageCatechism())
+                    @include('frontend.layout.partials.sidebar-sub-item', [
+                        'route' => 'catechists.index',
+                        'label' => 'Giáo lý viên',
+                        'active' => request()->routeIs('catechists.*', 'classes.catechists'),
+                    ])
+                    @endif
                     @include('frontend.layout.partials.sidebar-sub-item', ['route' => 'catechism.announcements', 'label' => 'Thông báo GLV'])
                 </div>
 
@@ -357,6 +364,13 @@ $isDashboard = request()->routeIs('parish-admin.dashboard');
                         'label' => 'Kết quả học tập',
                         'active' => 'scores.index',
                     ])
+                    @if(auth()->user()?->canManageCatechism())
+                    @include('frontend.layout.partials.flyout-item', [
+                        'route' => 'catechists.index',
+                        'label' => 'Giáo lý viên',
+                        'active' => request()->routeIs('catechists.*', 'classes.catechists'),
+                    ])
+                    @endif
                     @include('frontend.layout.partials.flyout-item', ['route' => 'catechism.announcements', 'label' => 'Thông báo GLV'])
                 </div>
             </div>
@@ -445,12 +459,7 @@ $isDashboard = request()->routeIs('parish-admin.dashboard');
                     @include('frontend.layout.partials.sidebar-sub-item', [
                         'route' => 'classes.index',
                         'label' => 'Lớp học',
-                        'active' => 'classes.*',
-                    ])
-                    @include('frontend.layout.partials.sidebar-sub-item', [
-                        'route' => 'catechists.index',
-                        'label' => 'Giáo lý viên',
-                        'active' => 'catechists.*',
+                        'active' => request()->routeIs('classes.*') && ! request()->routeIs('classes.catechists'),
                     ])
                     @include('frontend.layout.partials.sidebar-sub-item', [
                         'route' => 'session.index',
@@ -476,12 +485,7 @@ $isDashboard = request()->routeIs('parish-admin.dashboard');
                     @include('frontend.layout.partials.flyout-item', [
                         'route' => 'classes.index',
                         'label' => 'Lớp học',
-                        'active' => 'classes.*',
-                    ])
-                    @include('frontend.layout.partials.flyout-item', [
-                        'route' => 'catechists.index',
-                        'label' => 'Giáo lý viên',
-                        'active' => 'catechists.*',
+                        'active' => request()->routeIs('classes.*') && ! request()->routeIs('classes.catechists'),
                     ])
                     @include('frontend.layout.partials.flyout-item', [
                         'route' => 'session.index',
