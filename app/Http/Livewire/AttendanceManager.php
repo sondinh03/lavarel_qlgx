@@ -550,6 +550,64 @@ class AttendanceManager extends BaseComponent
 
     // ==================== DATA LOADING ====================
 
+    protected function mapStudentToRosterRow($student): array
+    {
+        return [
+            'id' => (int) $student->id,
+            'full_name' => $student->full_name,
+            'saint_name' => $student->saint_name ?: '-',
+            'parishGroup' => [
+                'name' => $student->parishGroup?->name,
+            ],
+        ];
+    }
+
+    protected function mapTeacherToRosterRow(Teacher $teacher): array
+    {
+        return [
+            'id' => (int) $teacher->id,
+            'full_name' => $teacher->full_name,
+            'teacher_code' => $teacher->teacher_code,
+            'saint' => [
+                'name' => $teacher->saint?->name,
+            ],
+            'parishGroup' => [
+                'name' => $teacher->parishGroup?->name,
+            ],
+        ];
+    }
+
+    /**
+     * Cast roster DTOs to objects for Blade — no DB. Livewire hydrates public props as arrays.
+     */
+    protected function hydrateRosterRows($rows)
+    {
+        return collect($rows ?? [])->map(function ($row) {
+            if ($row instanceof Teacher) {
+                $row = $this->mapTeacherToRosterRow($row);
+            } elseif ($row instanceof \Illuminate\Database\Eloquent\Model) {
+                $row = $this->mapStudentToRosterRow($row);
+            }
+
+            $data = is_array($row) ? $row : (array) $row;
+            $obj = (object) $data;
+
+            if (isset($data['parishGroup'])) {
+                $obj->parishGroup = is_array($data['parishGroup'])
+                    ? (object) $data['parishGroup']
+                    : $data['parishGroup'];
+            }
+
+            if (isset($data['saint'])) {
+                $obj->saint = is_array($data['saint'])
+                    ? (object) $data['saint']
+                    : $data['saint'];
+            }
+
+            return $obj;
+        })->values();
+    }
+
     protected function loadStudents(): void
     {
         if (!$this->selectedClassId) {
@@ -587,7 +645,7 @@ class AttendanceManager extends BaseComponent
 
 
             $this->students = $class
-                ? $class->students
+                ? $class->students->map(fn ($s) => $this->mapStudentToRosterRow($s))->values()
                 : collect();
         } catch (\Exception $e) {
             $this->logError($e, 'Error loading students');
@@ -737,7 +795,9 @@ class AttendanceManager extends BaseComponent
                 })
                 ->orderBy('last_name')
                 ->orderBy('first_name')
-                ->get(['id', 'saint_id', 'parish_group_id', 'last_name', 'first_name', 'teacher_code', 'phone_number']);
+                ->get(['id', 'saint_id', 'parish_group_id', 'last_name', 'first_name', 'teacher_code', 'phone_number'])
+                ->map(fn (Teacher $t) => $this->mapTeacherToRosterRow($t))
+                ->values();
         } catch (\Exception $e) {
             $this->logError($e, 'Error loading teachers for attendance');
             $this->teachers = collect();
@@ -1140,7 +1200,7 @@ class AttendanceManager extends BaseComponent
 
         $this->loadTeacherAttendanceRecords();
 
-        $this->emit('toast', 'success', 'Đã lưu điểm danh GLV (' . count($savedKeys) . ')');
+        $this->emit('toast', 'success', 'Đã lưu điểm danh');
 
         $this->dispatchBrowserEvent('attendance-saved', [
             'records'   => $this->teacherAttendanceRecords,
@@ -1516,21 +1576,10 @@ class AttendanceManager extends BaseComponent
 
     public function render()
     {
-        // Livewire hydrate Collection model → array; nạp lại model khi cần dùng accessor/relation
-        if ($this->subjectTarget === 'teachers') {
-            $firstTeacher = collect($this->teachers ?? [])->first();
-            if ($firstTeacher !== null && ! $firstTeacher instanceof Teacher) {
-                $this->loadTeachers();
-            }
-        } else {
-            $firstStudent = collect($this->students ?? [])->first();
-            if ($firstStudent !== null && ! is_object($firstStudent)) {
-                $this->loadStudents();
-            }
-        }
-
-        $students = collect($this->students ?? []);
-        $teachers = collect($this->teachers ?? []);
+        // DTO arrays survive Livewire hydrate — cast for Blade only, never re-query roster here.
+        // Re-assign Collections so Livewire public props support ->count()/->isEmpty() in the view.
+        $students = $this->hydrateRosterRows($this->students);
+        $teachers = $this->hydrateRosterRows($this->teachers);
         $this->students = $students;
         $this->teachers = $teachers;
 

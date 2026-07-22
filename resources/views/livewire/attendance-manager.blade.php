@@ -4,7 +4,7 @@
         ['label' => 'Điểm danh', 'url' => route('attendance.show')],
         $subjectTarget === 'teachers'
             ? ['label' => 'Giáo lý viên']
-            : ($selectedClassName ? ['label' => $selectedClassName] : null),
+            : ['label' => 'Học sinh' . ($selectedClassName ? ' · ' . $selectedClassName : '')],
     ]))" />
 @endsection
 
@@ -20,7 +20,9 @@
         <x-mac-panel :overflow="true">
             @if ($this->viewMode != 'mobile')
             <x-page-header
-                title="Điểm danh{{ $subjectTarget === 'teachers' ? ' GLV' : ($selectedClassId ? ' - ' . $selectedClassName : '') }}"
+                title="{{ $subjectTarget === 'teachers'
+                    ? 'Điểm danh giáo lý viên'
+                    : ('Điểm danh học sinh' . ($selectedClassId ? ' - ' . $selectedClassName : '')) }}"
                 description="{{ $subjectTarget === 'teachers'
                     ? ('Điểm danh ' . (\App\Models\TeacherAttendanceSession::typeLabel((int) $attendanceType)) . ' • ' . ($teachers->count() ?? 0) . ' GLV • ' . count($sessions) . ' buổi')
                     : ('Điểm danh ' . ($attendanceType == 1 ? 'đi học' : 'đi lễ') . ($selectedClassId ? ' • ' . $students->count() . ' học sinh • ' . count($sessions) . ' buổi' : '')) }}"
@@ -28,7 +30,11 @@
             @else
             <div id="page-big-title" class="px-4 sm:px-6 pt-5 pb-3 mac-hairline-b transition-opacity duration-300">
                 <h1 class="text-2xl font-bold text-slate-800">
-                    Điểm danh{{ $subjectTarget === 'teachers' ? ' GLV' : ($selectedClassId ? ' · ' . $selectedClassName : '') }}
+                    @if($subjectTarget === 'teachers')
+                        Điểm danh giáo lý viên
+                    @else
+                        Điểm danh học sinh{{ $selectedClassId ? ' · ' . $selectedClassName : '' }}
+                    @endif
                 </h1>
                 <p class="text-sm text-slate-500 mt-0.5">
                     @if($subjectTarget === 'teachers')
@@ -478,6 +484,7 @@
                                 </x-button>
                             </div>
                             @endif
+                            @if($this->viewMode !== 'mobile')
                             <div x-show="hasDraft()" x-cloak class="flex items-center gap-2">
                                 <x-button variant="ghost" size="sm" x-on:click="discard()" x-bind:disabled="isSaving">
                                     Hủy
@@ -486,6 +493,7 @@
                                     <span x-text="saveButtonLabel()"></span>
                                 </x-button>
                             </div>
+                            @endif
                         @elseif($selectedClassId && $this->viewMode !== 'mobile')
                             <x-button as="a" variant="outline" size="sm" href="{{ route('attendance.statistics', [
                                     'namHoc'  => $selectedNamHoc,
