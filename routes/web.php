@@ -50,6 +50,7 @@ use App\Http\Controllers\ParishionerGioiThieuGiaoLyDuTongExportController;
 use App\Http\Controllers\ParishionerChungChiBiTichExportController;
 use App\Http\Controllers\MarriageAnnouncementGioiThieuHonPhoiExportController;
 use App\Http\Controllers\StudentQrController;
+use App\Http\Controllers\TeacherQrController;
 use App\Http\Livewire\Attendance\AttendanceQr as AttendanceAttendanceQr;
 use App\Http\Livewire\Attendance\AttendanceStatistics;
 use App\Http\Livewire\Attendance\SessionManager;
@@ -217,6 +218,9 @@ Route::middleware('auth')->group(function () {
         Route::prefix('giao-ly-vien')->name('catechists.')->group(function () {
             Route::get('/phan-cong', AssignTeacher::class)->name('assign');
             Route::get('/phan-cong/{classId}', AssignTeacher::class)->name('assign.class')->whereNumber('classId');
+            Route::get('/qr/{token}', [TeacherQrController::class, 'show'])
+                ->where('token', '[0-9a-fA-F-]{36}')
+                ->name('qr-image');
             Route::get('/', TeacherManager::class)->name('index');
             Route::get('/tao', TeacherEdit::class)->name('create');
             Route::get('/nhap', TeacherImportPreview::class)->name('import');

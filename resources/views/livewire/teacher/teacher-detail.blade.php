@@ -71,12 +71,31 @@
                                 Thông tin cá nhân
                             </h2>
                             <div class="divide-y divide-black/[0.04] rounded-xl bg-white/40 border border-black/[0.04]">
+                                <x-info-row label="Mã GLV" :value="$teacher['teacher_code'] ?? '—'" />
                                 <x-info-row label="Tên thánh" :value="$teacher['saint_name'] ?? ''" />
                                 <x-info-row label="Họ và tên" :value="$teacher['full_name'] ?? ''" />
                                 <x-info-row label="Ngày sinh" :value="$teacher['birthday'] ?? ''" />
                                 <x-info-row label="Giới tính" :value="$teacher['gender_label'] ?? ''" />
                             </div>
                         </section>
+
+                        @if(!empty($teacher['qr_token']))
+                        <section>
+                            <h2 class="text-xs font-semibold text-slate-500 tracking-wide uppercase mb-1 px-1">
+                                Thẻ QR điểm danh
+                            </h2>
+                            <div class="rounded-xl bg-white/40 border border-black/[0.04] p-4 flex flex-col sm:flex-row items-center gap-4">
+                                <img
+                                    src="{{ route('catechists.qr-image', $teacher['qr_token']) }}?size=180"
+                                    alt="QR GLV"
+                                    class="w-40 h-40 rounded-xl border border-black/[0.06] bg-white shadow-mac-sm" />
+                                <div class="text-sm text-slate-600 space-y-1 text-center sm:text-left">
+                                    <p>Quét mã này trên trang <strong>Điểm danh QR</strong> để ghi nhận GLV có mặt.</p>
+                                    <p class="font-mono text-xs text-slate-500">{{ $teacher['teacher_code'] ?? '' }}</p>
+                                </div>
+                            </div>
+                        </section>
+                        @endif
 
                         <section>
                             <h2 class="text-xs font-semibold text-slate-500 tracking-wide uppercase mb-1 px-1">
@@ -153,7 +172,7 @@
                                     @endif
                                 </p>
                                 <p class="text-xs text-slate-400">Nhập đúng tên đăng nhập trên vào ô “Email hoặc SĐT” khi đăng nhập. Nếu GLV đã đổi mật khẩu thì mật khẩu hiện tại có thể khác.</p>
-                                @if(!empty($teacher['perm_manage_parish_scores']) || !empty($teacher['perm_edit_parish_students']))
+                                @if(!empty($teacher['perm_manage_parish_scores']) || !empty($teacher['perm_edit_parish_students']) || !empty($teacher['perm_mark_teacher_attendance']))
                                 <div class="pt-2 border-t border-black/[0.04] space-y-1">
                                     <p class="text-xs font-semibold text-slate-500 uppercase tracking-wide">Quyền hỗ trợ quản trị</p>
                                     @if(!empty($teacher['perm_manage_parish_scores']))
@@ -161,6 +180,9 @@
                                     @endif
                                     @if(!empty($teacher['perm_edit_parish_students']))
                                     <p class="text-sm text-slate-700">• Sửa thông tin học sinh toàn giáo xứ</p>
+                                    @endif
+                                    @if(!empty($teacher['perm_mark_teacher_attendance']))
+                                    <p class="text-sm text-slate-700">• Điểm danh giáo lý viên</p>
                                     @endif
                                 </div>
                                 @endif

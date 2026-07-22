@@ -114,7 +114,8 @@ class TeacherManager extends BaseComponent
                     $q->where('first_name', 'like', $term)
                         ->orWhere('last_name', 'like', $term)
                         ->orWhere('phone_number', 'like', $term)
-                        ->orWhere('email', 'like', $term);
+                        ->orWhere('email', 'like', $term)
+                        ->orWhere('teacher_code', 'like', $term);
                 });
             }
 

@@ -43,6 +43,7 @@ class TeacherEdit extends BaseComponent
     public bool $canGrantElevated = false;
     public bool $perm_manage_parish_scores = false;
     public bool $perm_edit_parish_students = false;
+    public bool $perm_mark_teacher_attendance = false;
 
     public $parishGroups;
     public $saints;
@@ -122,6 +123,7 @@ class TeacherEdit extends BaseComponent
                     $names = $teacher->user->getPermissionNames();
                     $this->perm_manage_parish_scores = $names->contains(CatechistPermissions::MANAGE_PARISH_SCORES);
                     $this->perm_edit_parish_students = $names->contains(CatechistPermissions::EDIT_PARISH_STUDENTS);
+                    $this->perm_mark_teacher_attendance = $names->contains(CatechistPermissions::MARK_TEACHER_ATTENDANCE);
                 }
             }
         } catch (ModelNotFoundException $e) {
@@ -294,6 +296,9 @@ class TeacherEdit extends BaseComponent
         }
         if ($this->perm_edit_parish_students) {
             $desired[] = CatechistPermissions::EDIT_PARISH_STUDENTS;
+        }
+        if ($this->perm_mark_teacher_attendance) {
+            $desired[] = CatechistPermissions::MARK_TEACHER_ATTENDANCE;
         }
 
         $current = $user->permissions

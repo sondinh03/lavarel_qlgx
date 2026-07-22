@@ -17,6 +17,8 @@ class Teacher extends Model
 
     protected $fillable = [
         'parish_id',
+        'teacher_code',
+        'qr_token',
         'parish_group_id',
         'user_id',
         'saint_id',
@@ -36,6 +38,48 @@ class Teacher extends Model
         'birthday'  => 'date',
         'is_active' => 'boolean',
     ];
+
+    protected static function boot()
+    {
+        parent::boot();
+
+        static::creating(function (self $teacher) {
+            if (empty($teacher->teacher_code)) {
+                $teacher->teacher_code = static::generateCode($teacher->parish_id);
+            }
+
+            if (empty($teacher->qr_token)) {
+                $teacher->qr_token = (string) \Illuminate\Support\Str::uuid();
+            }
+        });
+
+        static::updating(function (self $teacher) {
+            if (empty($teacher->teacher_code)) {
+                $teacher->teacher_code = static::generateCode($teacher->parish_id);
+            }
+
+            if (empty($teacher->qr_token)) {
+                $teacher->qr_token = (string) \Illuminate\Support\Str::uuid();
+            }
+        });
+    }
+
+    public static function generateCode(?int $parishId): string
+    {
+        $parishCode = ParishNew::find($parishId)?->code ?? 'GXU';
+        $year = substr((string) now()->year, -2);
+        $prefix = "{$parishCode}-GV-{$year}-";
+
+        $last = static::where('parish_id', $parishId)
+            ->where('teacher_code', 'like', "{$prefix}%")
+            ->max('teacher_code');
+
+        $lastNumber = $last
+            ? (int) substr($last, strlen($prefix))
+            : 0;
+
+        return $prefix . str_pad((string) ($lastNumber + 1), 4, '0', STR_PAD_LEFT);
+    }
 
     /*
     |--------------------------------------------------------------------------

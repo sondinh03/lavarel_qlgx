@@ -1,9 +1,11 @@
 @section('topbar')
-<x-breadcrumb :items="[
+<x-breadcrumb :items="array_values(array_filter([
         ['label' => 'Trang chủ', 'url' => auth()->user()->usesCatechistLayout() ? route('catechist.dashboard') : route('parish-admin.dashboard')],
         ['label' => 'Điểm danh', 'url' => route('attendance.show')],
-        ['label' => $selectedClassName],
-    ]" />
+        $subjectTarget === 'teachers'
+            ? ['label' => 'Giáo lý viên']
+            : ($selectedClassName ? ['label' => $selectedClassName] : null),
+    ]))" />
 @endsection
 
 <div class="min-h-screen bg-apple-gray p-2 sm:p-4 lg:p-6" style="min-height: calc(100vh - 56px - var(--bottom-offset));">
@@ -18,17 +20,24 @@
         <x-mac-panel :overflow="true">
             @if ($this->viewMode != 'mobile')
             <x-page-header
-                title="Điểm danh{{ $selectedClassId ? ' - ' . $selectedClassName : '' }}"
-                description="Điểm danh {{ $attendanceType == 1 ? 'đi học' : 'đi lễ' }}{{ $selectedClassId ? ' • ' . $students->count() . ' học sinh • ' . count($sessions) . ' buổi' : '' }}"
+                title="Điểm danh{{ $subjectTarget === 'teachers' ? ' GLV' : ($selectedClassId ? ' - ' . $selectedClassName : '') }}"
+                description="{{ $subjectTarget === 'teachers'
+                    ? ('Điểm danh ' . (\App\Models\TeacherAttendanceSession::typeLabel((int) $attendanceType)) . ' • ' . ($teachers->count() ?? 0) . ' GLV • ' . count($sessions) . ' buổi')
+                    : ('Điểm danh ' . ($attendanceType == 1 ? 'đi học' : 'đi lễ') . ($selectedClassId ? ' • ' . $students->count() . ' học sinh • ' . count($sessions) . ' buổi' : '')) }}"
                 icon-type="attendance" />
             @else
             <div id="page-big-title" class="px-4 sm:px-6 pt-5 pb-3 mac-hairline-b transition-opacity duration-300">
                 <h1 class="text-2xl font-bold text-slate-800">
-                    Điểm danh{{ $selectedClassId ? ' · ' . $selectedClassName : '' }}
+                    Điểm danh{{ $subjectTarget === 'teachers' ? ' GLV' : ($selectedClassId ? ' · ' . $selectedClassName : '') }}
                 </h1>
                 <p class="text-sm text-slate-500 mt-0.5">
-                    {{ $attendanceType == 1 ? 'Đi học' : 'Đi lễ' }}
-                    {{ $selectedClassId ? ' · ' . $students->count() . ' học sinh' : '' }}
+                    @if($subjectTarget === 'teachers')
+                        {{ \App\Models\TeacherAttendanceSession::typeLabel((int) $attendanceType) }}
+                        · {{ $teachers->count() ?? 0 }} GLV
+                    @else
+                        {{ $attendanceType == 1 ? 'Đi học' : 'Đi lễ' }}
+                        {{ $selectedClassId ? ' · ' . $students->count() . ' học sinh' : '' }}
+                    @endif
                 </p>
             </div>
             @endif
@@ -50,8 +59,18 @@
                 @endif
 
                 <div class="flex flex-col gap-2 lg:gap-4">
-                    {{-- Filters ngoài wire:key — remount khi class/năm/kỳ parent đổi để khớp URL --}}
                     <div class="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-2 lg:gap-4">
+                        @if($subjectTarget === 'teachers')
+                        <livewire:filters.filter-bar
+                            wire:key="attendance-teacher-filter-{{ $selectedNamHoc }}"
+                            :parish-id="$parishId"
+                            :show-nam-hoc="true"
+                            :show-khoi="false"
+                            :show-lop="false"
+                            :show-ky="false"
+                            :allow-all-year="false"
+                            :selected-nam-hoc="$selectedNamHoc" />
+                        @else
                         <livewire:filters.filter-bar
                             wire:key="attendance-filter-{{ $selectedClassId }}-{{ $selectedNamHoc }}-{{ $selectedKy }}"
                             :parish-id="$parishId"
@@ -66,10 +85,11 @@
                             :selected-lop="$selectedClassId"
                             :selected-ky="$selectedKy"
                             :allowed-class-ids="$this->filterAllowedClassIds" />
+                        @endif
 
                         <div class="hidden lg:block w-72">
                             <x-search-input
-                                placeholder="Tìm học sinh..."
+                                placeholder="{{ $subjectTarget === 'teachers' ? 'Tìm GLV...' : 'Tìm học sinh...' }}"
                                 wire-model="search"
                                 debounce="500ms" />
                         </div>
@@ -77,7 +97,7 @@
 
                     <div class="lg:hidden">
                         <x-search-input
-                            placeholder="Tìm học sinh..."
+                            placeholder="{{ $subjectTarget === 'teachers' ? 'Tìm GLV...' : 'Tìm học sinh...' }}"
                             wire-model="search"
                             debounce="500ms" />
                     </div>
@@ -114,13 +134,13 @@
                 x-on:filter-leave-request.window="onFilterLeave($event.detail)">
             </div>
 
-    <div wire:key="attendance-{{ $selectedClassId }}-{{ $attendanceType }}-{{ $selectedKy }}-{{ $selectedDate }}"
+    <div wire:key="attendance-{{ $subjectTarget }}-{{ $selectedClassId }}-{{ $selectedNamHoc }}-{{ $attendanceType }}-{{ $selectedKy }}-{{ $selectedDate }}"
         data-attendance-root
         x-data="{
             records: {},
             draft: {},
             isSaving: false,
-            context: @js('class:' . ($selectedClassId ?? 'none') . '|type:' . ($attendanceType ?? 'none') . '|mode:' . ($this->viewMode ?? 'none') . '|date:' . ($selectedDate ?? 'all') . '|ky:' . ($selectedKy ?? 'all')),
+            context: @js($this->getClientContext()),
             livewireId: null,
 
             getLivewire() {
@@ -345,7 +365,7 @@
         }"
         x-init="
             livewireId = $el.closest('[wire\\:id]')?.getAttribute('wire:id');
-            records = @js($attendanceRecords ?? []);
+            records = @js(($subjectTarget === 'teachers' ? ($teacherAttendanceRecords ?? []) : ($attendanceRecords ?? [])));
             draft = {};
             isSaving = false;
 
@@ -368,68 +388,614 @@
 
             @php $isAdmin = auth()->user()->canManage(); @endphp
 
-            <div class="px-4 lg:px-6 py-3 mac-hairline-b bg-white/30 space-y-3">
-                @if($selectedClassId)
-                {{-- Toolbar desktop (admin): luôn hiện theo role, không theo breakpoint --}}
-                @if($this->viewMode !== 'mobile')
-                <div class="flex items-center justify-end gap-3">
-                    <x-button as="a" variant="outline" href="{{ route('attendance.statistics', [
-                            'namHoc'  => $selectedNamHoc,
-                            'classId' => $selectedClassId,
-                            'khoi'    => $selectedKhoi,
-                            'ky'      => $selectedKy,
-                            'type'    => $attendanceType,
-                    ]) }}"
-                        x-on:click="if (!confirmLeave('xem thống kê')) { $event.preventDefault(); return; } resetEditingState();">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-                        </svg>
-                        Thống kê
-                    </x-button>
+            <div class="px-4 lg:px-6 py-3 mac-hairline-b bg-white/20">
+                <div class="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+                    <div class="flex flex-wrap items-center gap-2 sm:gap-3 min-w-0">
+                        @if($this->canMarkTeacherAttendance())
+                        <div class="flex gap-1 p-1 rounded-xl bg-black/[0.04] border border-black/[0.04] w-fit flex-shrink-0">
+                            <button
+                                type="button"
+                                wire:click="switchSubjectTarget('students')"
+                                x-on:click="
+                                    if (@js($subjectTarget ?? 'students') === 'students') { $event.stopImmediatePropagation(); return; }
+                                    if (hasDraft() && !confirm('Bạn có thay đổi chưa lưu. Nếu đổi đối tượng điểm danh sẽ mất thay đổi. Tiếp tục?')) {
+                                        $event.stopImmediatePropagation();
+                                        $event.preventDefault();
+                                        return;
+                                    }
+                                    resetEditingState();
+                                "
+                                class="px-4 py-1.5 text-sm font-semibold rounded-lg transition-all
+                                       {{ $subjectTarget !== 'teachers'
+                                           ? 'bg-white/90 text-primary-600 shadow-mac-sm'
+                                           : 'text-slate-600 hover:text-slate-900' }}">
+                                Học sinh
+                            </button>
+                            <button
+                                type="button"
+                                wire:click="switchSubjectTarget('teachers')"
+                                x-on:click="
+                                    if (@js($subjectTarget ?? 'students') === 'teachers') { $event.stopImmediatePropagation(); return; }
+                                    if (hasDraft() && !confirm('Bạn có thay đổi chưa lưu. Nếu đổi đối tượng điểm danh sẽ mất thay đổi. Tiếp tục?')) {
+                                        $event.stopImmediatePropagation();
+                                        $event.preventDefault();
+                                        return;
+                                    }
+                                    resetEditingState();
+                                "
+                                class="px-4 py-1.5 text-sm font-semibold rounded-lg transition-all
+                                       {{ $subjectTarget === 'teachers'
+                                           ? 'bg-white/90 text-primary-600 shadow-mac-sm'
+                                           : 'text-slate-600 hover:text-slate-900' }}">
+                                Giáo lý viên
+                            </button>
+                        </div>
+                        @endif
 
-                    @if($isAdmin)
-                    <x-button variant="outline" x-on:click="requestExport()">
-                        <x-icon name="file-export" />
-                        Xuất Excel
-                    </x-button>
-                    @endif
+                        @if($subjectTarget === 'teachers')
+                        <div class="flex gap-1 p-1 rounded-xl bg-black/[0.04] border border-black/[0.04] w-fit flex-shrink-0">
+                            <button type="button" x-on:click="requestSwitchType(1)"
+                                class="px-3 sm:px-4 py-1.5 text-sm font-semibold rounded-lg transition-all
+                                {{ (int) $attendanceType === 1 ? 'bg-white/90 text-primary-600 shadow-mac-sm' : 'text-slate-600 hover:text-slate-900' }}">
+                                Đi dạy
+                            </button>
+                            <button type="button" x-on:click="requestSwitchType(2)"
+                                class="px-3 sm:px-4 py-1.5 text-sm font-semibold rounded-lg transition-all
+                                {{ (int) $attendanceType === 2 ? 'bg-white/90 text-primary-600 shadow-mac-sm' : 'text-slate-600 hover:text-slate-900' }}">
+                                Đi lễ
+                            </button>
+                            <button type="button" x-on:click="requestSwitchType(3)"
+                                class="px-3 sm:px-4 py-1.5 text-sm font-semibold rounded-lg transition-all
+                                {{ (int) $attendanceType === 3 ? 'bg-white/90 text-primary-600 shadow-mac-sm' : 'text-slate-600 hover:text-slate-900' }}">
+                                Họp
+                            </button>
+                        </div>
+                        @elseif($selectedClassId)
+                        <div class="flex gap-1 p-1 rounded-xl bg-black/[0.04] border border-black/[0.04] w-fit flex-shrink-0">
+                            <button type="button" x-on:click="requestSwitchType(1)"
+                                class="px-3 sm:px-4 py-1.5 text-sm font-semibold rounded-lg transition-all
+                                {{ (int) $attendanceType === 1 ? 'bg-white/90 text-primary-600 shadow-mac-sm' : 'text-slate-600 hover:text-slate-900' }}">
+                                Đi học
+                            </button>
+                            <button type="button" x-on:click="requestSwitchType(2)"
+                                class="px-3 sm:px-4 py-1.5 text-sm font-semibold rounded-lg transition-all
+                                {{ (int) $attendanceType === 2 ? 'bg-white/90 text-primary-600 shadow-mac-sm' : 'text-slate-600 hover:text-slate-900' }}">
+                                Đi lễ
+                            </button>
+                        </div>
+                        @endif
+                    </div>
 
-                    <div x-show="hasDraft()" x-cloak class="flex items-center gap-2">
-                        <x-button variant="ghost" size="sm" x-on:click="discard()" x-bind:disabled="isSaving">
-                            Hủy
-                        </x-button>
-                        <x-button
-                            variant="primary"
-                            size="sm"
-                            x-on:click="save()"
-                            x-bind:disabled="isSaving">
-                            <span x-text="saveButtonLabel()"></span>
-                        </x-button>
+                    <div class="flex flex-wrap items-center gap-2 justify-end flex-shrink-0">
+                        @if($subjectTarget === 'teachers')
+                            @if(auth()->user()?->canManageCatechism())
+                            <div class="flex flex-wrap items-center gap-2">
+                                <input type="date" wire:model.defer="newTeacherSessionDate"
+                                    class="px-3 py-1.5 rounded-xl border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500" />
+                                <x-button wire:click="createTeacherSession" variant="primary" size="sm"
+                                    x-on:click="if (!confirmLeave('tạo buổi')) { $event.stopImmediatePropagation(); $event.preventDefault(); }">
+                                    Thêm buổi
+                                </x-button>
+                            </div>
+                            @endif
+                            <div x-show="hasDraft()" x-cloak class="flex items-center gap-2">
+                                <x-button variant="ghost" size="sm" x-on:click="discard()" x-bind:disabled="isSaving">
+                                    Hủy
+                                </x-button>
+                                <x-button variant="primary" size="sm" x-on:click="save()" x-bind:disabled="isSaving">
+                                    <span x-text="saveButtonLabel()"></span>
+                                </x-button>
+                            </div>
+                        @elseif($selectedClassId && $this->viewMode !== 'mobile')
+                            <x-button as="a" variant="outline" size="sm" href="{{ route('attendance.statistics', [
+                                    'namHoc'  => $selectedNamHoc,
+                                    'classId' => $selectedClassId,
+                                    'khoi'    => $selectedKhoi,
+                                    'ky'      => $selectedKy,
+                                    'type'    => $attendanceType,
+                            ]) }}"
+                                x-on:click="if (!confirmLeave('xem thống kê')) { $event.preventDefault(); return; } resetEditingState();">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                                </svg>
+                                Thống kê
+                            </x-button>
+
+                            @if($isAdmin)
+                            <x-button variant="outline" size="sm" x-on:click="requestExport()">
+                                <x-icon name="file-export" />
+                                Xuất Excel
+                            </x-button>
+                            @endif
+
+                            <div x-show="hasDraft()" x-cloak class="flex items-center gap-2">
+                                <x-button variant="ghost" size="sm" x-on:click="discard()" x-bind:disabled="isSaving">
+                                    Hủy
+                                </x-button>
+                                <x-button variant="primary" size="sm" x-on:click="save()" x-bind:disabled="isSaving">
+                                    <span x-text="saveButtonLabel()"></span>
+                                </x-button>
+                            </div>
+                        @endif
                     </div>
                 </div>
-                @endif
-
-                <div class="flex bg-slate-200 p-1 rounded-xl text-sm font-medium">
-                    <button
-                        type="button"
-                        x-on:click="requestSwitchType(1)"
-                        class="flex-1 py-2 rounded-lg text-sm font-semibold transition-all
-                        {{ $attendanceType == 1 ? 'bg-white text-primary-600 shadow-sm' : 'text-slate-600 hover:text-slate-900' }}">
-                        Điểm danh đi học
-                    </button>
-                    <button
-                        type="button"
-                        x-on:click="requestSwitchType(2)"
-                        class="flex-1 py-2 rounded-lg text-sm font-semibold transition-all
-                        {{ $attendanceType == 2 ? 'bg-white text-primary-600 shadow-sm' : 'text-slate-600 hover:text-slate-900' }}">
-                        Điểm danh đi lễ
-                    </button>
-                </div>
-                @endif
             </div>
 
-            @if (!$selectedClassId)
+            @if($subjectTarget === 'teachers')
+            @if(!$selectedNamHoc)
+            <x-stats.page-empty
+                :panel="false"
+                title="Chọn năm học để điểm danh GLV"
+                description="Chọn năm học ở bộ lọc, tạo buổi (đi dạy / đi lễ / họp), rồi điểm danh."
+                tone="primary">
+                <x-slot name="icon">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+                        d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
+                </x-slot>
+            </x-stats.page-empty>
+            @elseif($teachers->isEmpty())
+            <x-stats.page-empty
+                :panel="false"
+                title="Chưa có giáo lý viên"
+                description="Thêm GLV ở menu Giáo lý viên trước khi điểm danh."
+                tone="primary">
+                <x-slot name="icon">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+                        d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                </x-slot>
+                @if(auth()->user()->canManage())
+                <x-button as="a" href="{{ route('catechists.index') }}" variant="primary">
+                    <x-icon name="user-plus" />
+                    Sang trang Giáo lý viên
+                </x-button>
+                @endif
+            </x-stats.page-empty>
+            @elseif(count($sessions) === 0)
+            <div class="px-4 lg:px-6 py-3 mac-hairline-b">
+                <x-inline-tip tone="amber">
+                    Chưa có buổi {{ \App\Models\TeacherAttendanceSession::typeLabel((int) $attendanceType) }}.
+                    @if(auth()->user()?->canManageCatechism())
+                    Chọn ngày ở trên rồi bấm <strong>Thêm buổi</strong>.
+                    @else
+                    Liên hệ Ban quản trị giáo lý để tạo buổi.
+                    @endif
+                </x-inline-tip>
+            </div>
+            <x-stats.page-empty
+                :panel="false"
+                title="Chưa có buổi điểm danh GLV"
+                description="Tạo buổi điểm danh rồi quay lại trang này để điểm."
+                tone="primary">
+                <x-slot name="icon">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+                        d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
+                </x-slot>
+            </x-stats.page-empty>
+            @else
+                @if($this->viewMode !== 'mobile')
+                <div class="overflow-x-auto overscroll-x-contain">
+                    <table class="w-max min-w-full border-separate border-spacing-0">
+                        <colgroup>
+                            <col style="width: 3rem">
+                            <col style="width: 7rem">
+                            <col style="width: 11rem">
+                            <col style="width: 9rem">
+                        </colgroup>
+                        <thead class="bg-slate-50 mac-hairline-b">
+                            <tr>
+                                <x-table-header class="static md:sticky md:left-0 z-[30] w-12 max-w-[3rem] shrink-0 !bg-slate-50">#</x-table-header>
+                                <x-table-header class="static md:sticky md:left-[3rem] z-[31] w-28 max-w-[7rem] shrink-0 !bg-slate-50">Tên thánh</x-table-header>
+                                <x-table-header class="sticky left-0 md:left-[10rem] z-[32] w-44 max-w-[11rem] shrink-0 !bg-slate-50 border-r border-black/[0.08] shadow-[4px_0_12px_-4px_rgba(0,0,0,0.12)] md:border-r-0 md:shadow-none">Họ và tên</x-table-header>
+                                <x-table-header class="static md:sticky md:left-[21rem] z-[33] w-36 max-w-[9rem] shrink-0 !bg-slate-50 md:border-r md:border-black/[0.08] md:shadow-[4px_0_12px_-4px_rgba(0,0,0,0.12)]">Giáo họ</x-table-header>
+                                @foreach($sessions as $session)
+                                <x-table-header class="text-center min-w-[7.5rem] w-[7.5rem] shrink-0">
+                                    <div class="flex flex-col gap-1">
+                                        <div class="{{ $session['locked'] ? 'text-slate-400' : '' }} flex items-center justify-center gap-1">
+                                            <span>{{ $session['dayName'] }}</span>
+                                            @if($session['locked'])
+                                            <svg class="w-3 h-3 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                    d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                                            </svg>
+                                            @endif
+                                        </div>
+                                        <div class="text-[10px] {{ $session['locked'] ? 'text-slate-400' : 'text-slate-600' }}">
+                                            {{ $session['fullDate'] }}
+                                        </div>
+                                        @if(!$session['locked'])
+                                        <button
+                                            type="button"
+                                            x-on:click="markAll({{ $session['id'] }}, @js($teachers->pluck('id')->toArray()))"
+                                            class="text-[9px] text-green-600 hover:text-green-700 hover:underline">
+                                            ✓ Tất cả
+                                        </button>
+                                        @endif
+                                    </div>
+                                </x-table-header>
+                                @endforeach
+                            </tr>
+                        </thead>
+
+                        <tbody class="divide-y divide-black/[0.04]">
+                            @foreach ($teachers as $index => $teacher)
+                            <tr class="group hover:bg-black/[0.03] transition-colors"
+                                wire:key="teacher-{{ $teacher->id }}">
+
+                                <td class="px-4 py-3 text-sm text-slate-500 static md:sticky md:left-0 z-[20] w-12 max-w-[3rem] shrink-0 bg-white group-hover:bg-slate-50">
+                                    {{ $index + 1 }}
+                                </td>
+
+                                <td class="px-4 py-3 text-sm text-slate-600 static md:sticky md:left-[3rem] z-[21] w-28 max-w-[7rem] shrink-0 bg-white group-hover:bg-slate-50">
+                                    <span class="block truncate" title="{{ $teacher->saint?->name }}">
+                                        {{ $teacher->saint?->name ?: '—' }}
+                                    </span>
+                                </td>
+
+                                <td class="px-4 py-3 sticky left-0 md:left-[10rem] z-[22] w-44 max-w-[11rem] shrink-0 bg-white group-hover:bg-slate-50 border-r border-black/[0.08] shadow-[4px_0_12px_-4px_rgba(0,0,0,0.12)] md:border-r-0 md:shadow-none">
+                                    <span class="block font-semibold text-slate-900 text-sm truncate" title="{{ $teacher->full_name }}">{{ $teacher->full_name }}</span>
+                                    @if($teacher->teacher_code)
+                                    <span class="block text-[10px] font-mono text-primary-700 truncate mt-0.5">{{ $teacher->teacher_code }}</span>
+                                    @endif
+                                </td>
+
+                                <td class="px-4 py-3 text-sm text-slate-600 static md:sticky md:left-[21rem] z-[23] w-36 max-w-[9rem] shrink-0 bg-white group-hover:bg-slate-50 md:border-r md:border-black/[0.08] md:shadow-[4px_0_12px_-4px_rgba(0,0,0,0.12)]">
+                                    <span class="line-clamp-2" title="{{ $teacher->parishGroup?->name }}">
+                                        {{ $teacher->parishGroup?->name ?? '—' }}
+                                    </span>
+                                </td>
+
+                                @foreach($sessions as $session)
+                                <td class="px-3 py-3 text-center min-w-[7.5rem] w-[7.5rem] shrink-0"
+                                    wire:key="tcell-{{ $teacher->id }}-{{ $session['id'] }}">
+
+                                    @if($session['locked'])
+                                    @php $status = $attendanceGrid[$teacher->id][$session['id']] ?? null; @endphp
+                                    <div class="flex items-center justify-center h-8">
+                                        @if((int) $status === 1)
+                                        <span class="text-green-700 font-medium">✓</span>
+                                        @elseif((int) $status === 2)
+                                        <span class="text-yellow-700 font-medium">P</span>
+                                        @elseif((int) $status === 3)
+                                        <span class="text-red-700 font-medium">✕</span>
+                                        @else
+                                        <span class="text-xs text-slate-400">-</span>
+                                        @endif
+                                    </div>
+                                    @else
+                                    <div class="flex gap-1 justify-center">
+                                        <button type="button"
+                                            x-on:click="toggle({{ $teacher->id }}, {{ $session['id'] }}, 1)"
+                                            :class="getStatus({{ $teacher->id }}, {{ $session['id'] }}) == 1
+                                                    ? 'bg-green-500 text-white shadow-md scale-105'
+                                                    : 'bg-green-50 text-green-700 border border-green-200 hover:bg-green-100'"
+                                            class="px-2 py-1 rounded text-xs font-medium transition-all"
+                                            aria-label="Có mặt">
+                                            ✓
+                                        </button>
+                                        <div class="relative inline-block" x-data="{ open: false }">
+                                            <button type="button"
+                                                x-on:click="openNoteAlpine({{ $teacher->id }}, {{ $session['id'] }}, '{{ addslashes($teacher->full_name) }}')"
+                                                @mouseenter="open = true"
+                                                @mouseleave="open = false"
+                                                :class="getStatus({{ $teacher->id }}, {{ $session['id'] }}) == 2
+                                                ? 'bg-yellow-400 text-slate-900 shadow-md scale-105'
+                                                : 'bg-amber-100 text-amber-800 border border-yellow-200 hover:bg-yellow-100'"
+                                                class="px-2 py-1 rounded text-xs font-medium transition-all relative"
+                                                aria-label="Vắng có phép">
+                                                P
+                                            </button>
+                                            <div
+                                                x-show="open && getNote({{ $teacher->id }}, {{ $session['id'] }})"
+                                                x-transition x-cloak
+                                                class="absolute left-1/2 -translate-x-1/2 bottom-full mb-2 w-48
+                                                   p-2 bg-slate-900 text-white text-[10px] rounded-lg shadow-xl z-30">
+                                                <div class="font-semibold mb-1">Lý do:</div>
+                                                <div class="text-slate-200 line-clamp-2"
+                                                    x-text="getNote({{ $teacher->id }}, {{ $session['id'] }})"></div>
+                                            </div>
+                                        </div>
+                                        <button type="button"
+                                            x-on:click="toggle({{ $teacher->id }}, {{ $session['id'] }}, 3)"
+                                            :class="getStatus({{ $teacher->id }}, {{ $session['id'] }}) == 3
+                                            ? 'bg-red-500 text-white shadow-md scale-105'
+                                            : 'bg-red-50 text-red-700 border border-red-200 hover:bg-red-100'"
+                                            class="px-2 py-1 rounded text-xs font-medium transition-all"
+                                            aria-label="Vắng không phép">
+                                            ✕
+                                        </button>
+                                    </div>
+                                    @endif
+                                </td>
+                                @endforeach
+                            </tr>
+                            @endforeach
+
+                            <tr class="bg-slate-50 font-semibold border-t-2 border-slate-300">
+                                <td class="px-4 py-3 static md:sticky md:left-0 z-[24] w-12 max-w-[3rem] bg-slate-50"></td>
+                                <td class="px-4 py-3 static md:sticky md:left-[3rem] z-[24] w-28 max-w-[7rem] bg-slate-50"></td>
+                                <td class="px-4 py-3 text-sm text-slate-900 sticky left-0 md:left-[10rem] z-[24] w-44 max-w-[11rem] bg-slate-50 border-r border-black/[0.08] shadow-[4px_0_12px_-4px_rgba(0,0,0,0.12)] md:border-r-0 md:shadow-none">
+                                    Thống kê
+                                    <span class="block text-xs font-normal text-slate-500">({{ count($sessions) }} buổi — kéo ngang để xem thêm)</span>
+                                </td>
+                                <td class="px-4 py-3 static md:sticky md:left-[21rem] z-[24] w-36 max-w-[9rem] bg-slate-50 md:border-r md:border-black/[0.08] md:shadow-[4px_0_12px_-4px_rgba(0,0,0,0.12)]"></td>
+                                @foreach($sessions as $session)
+                                @php
+                                $stats = $sessionStats[$session['dateStr']]
+                                    ?? ['present' => 0, 'absentPermitted' => 0, 'absentNotPermitted' => 0];
+                                @endphp
+                                <td class="px-3 py-3 text-center min-w-[7.5rem] w-[7.5rem] shrink-0">
+                                    <div class="flex flex-col gap-1 text-xs">
+                                        <div class="text-green-600">✓ {{ $stats['present'] }}</div>
+                                        <div class="text-yellow-600">P {{ $stats['absentPermitted'] }}</div>
+                                        <div class="text-red-600">✕ {{ $stats['absentNotPermitted'] }}</div>
+                                    </div>
+                                </td>
+                                @endforeach
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                @else
+                {{-- Mobile / catechist: một ngày --}}
+                <div>
+                    @php
+                    $currentSession = collect($sessions)->firstWhere('dateStr', $selectedDate);
+                    $locked = $currentSession['locked'] ?? false;
+                    $mobileStats = $sessionStats[$selectedDate ?? '']
+                        ?? ['present' => 0, 'absentPermitted' => 0, 'absentNotPermitted' => 0];
+                    $total = $teachers->count();
+                    $mobileSessionId = $currentSession['id'] ?? null;
+                    @endphp
+
+                    <div class="sticky top-0 z-30 bg-white border-b border-slate-200 shadow-sm">
+                        <div
+                            x-data
+                            x-init="
+                                $nextTick(() => {
+                                    const active = $el.querySelector('[data-active=true]');
+                                    if (active) {
+                                        active.scrollIntoView({ inline: 'center', block: 'nearest', behavior: 'smooth' });
+                                    }
+                                })
+                            "
+                            class="flex gap-2 overflow-x-auto px-3 py-3 scrollbar-hide snap-x snap-mandatory">
+                            @foreach($sessions as $session)
+                            @php $isActive = $session['dateStr'] === $selectedDate; @endphp
+                            <button
+                                type="button"
+                                data-active="{{ $isActive ? 'true' : 'false' }}"
+                                x-on:click="requestSelectDate('{{ $session['dateStr'] }}')"
+                                class="flex-shrink-0 snap-start flex flex-col items-center gap-1 px-3 py-2
+                                   rounded-xl border transition-all min-w-[72px]
+                                {{ $isActive
+                                    ? 'bg-primary-600 border-primary-600 text-white shadow-md'
+                                    : 'bg-white border-slate-200 text-slate-600 hover:border-primary-300' }}">
+                                <div class="flex items-center gap-1">
+                                    <span class="text-xs font-bold">{{ $session['fullDate'] }}</span>
+                                    @if($session['locked'])
+                                    <svg class="w-2.5 h-2.5 {{ $isActive ? 'text-white/70' : 'text-slate-400' }}"
+                                        fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                                    </svg>
+                                    @endif
+                                </div>
+                                <span class="text-[10px] leading-tight text-center {{ $isActive ? 'text-white/80' : 'text-slate-400' }}">
+                                    {{ $session['dayName'] }}
+                                </span>
+                            </button>
+                            @endforeach
+                        </div>
+
+                        @if($currentSession)
+                        <div class="flex items-center justify-between px-4 py-2 bg-slate-50 border-t border-slate-100">
+                            <div class="flex items-center gap-3 text-xs">
+                                <span class="flex items-center gap-1 text-green-600 font-semibold">
+                                    <span class="w-2 h-2 rounded-full bg-green-500 inline-block"></span>
+                                    {{ $mobileStats['present'] }}
+                                </span>
+                                <span class="flex items-center gap-1 text-yellow-600 font-semibold">
+                                    <span class="w-2 h-2 rounded-full bg-yellow-400 inline-block"></span>
+                                    {{ $mobileStats['absentPermitted'] }}
+                                </span>
+                                <span class="flex items-center gap-1 text-red-600 font-semibold">
+                                    <span class="w-2 h-2 rounded-full bg-red-500 inline-block"></span>
+                                    {{ $mobileStats['absentNotPermitted'] }}
+                                </span>
+                                <span class="text-slate-400">/ {{ $total }}</span>
+                            </div>
+
+                            @if($locked)
+                            <span class="inline-flex items-center gap-1 text-[10px] font-medium text-slate-500
+                             bg-slate-200 rounded-full px-2 py-0.5">
+                                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                                </svg>
+                                Đã khóa
+                            </span>
+                            @else
+                            <button
+                                type="button"
+                                x-on:click="markAll({{ $currentSession['id'] }}, @js($teachers->pluck('id')->toArray()))"
+                                class="inline-flex items-center gap-1 text-xs font-semibold text-green-700
+                                   bg-green-100 hover:bg-green-200 rounded-full px-3 py-1 transition-colors">
+                                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5"
+                                        d="M5 13l4 4L19 7" />
+                                </svg>
+                                Tất cả có mặt
+                            </button>
+                            @endif
+                        </div>
+                        @endif
+                    </div>
+
+                    <div class="overflow-x-auto">
+                        <table class="w-full border-separate border-spacing-0">
+                            <thead class="bg-slate-50/50 mac-hairline-b">
+                                <tr>
+                                    <th class="px-4 py-3 text-left text-xs font-bold text-slate-500 uppercase tracking-wider w-full">
+                                        Giáo lý viên
+                                        <span class="ml-1 font-normal text-slate-400">({{ $teachers->count() }})</span>
+                                    </th>
+                                    <th class="px-3 py-3 text-center text-xs font-bold text-slate-500 uppercase tracking-wider whitespace-nowrap">
+                                        @if($locked)
+                                        <span class="inline-flex items-center gap-1 text-slate-400">
+                                            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                    d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                                            </svg>
+                                            Đã khóa
+                                        </span>
+                                        @else
+                                        Điểm danh
+                                        @endif
+                                    </th>
+                                </tr>
+                            </thead>
+
+                            <tbody class="divide-y divide-black/[0.04] bg-white">
+                                @foreach ($teachers as $index => $teacher)
+                                <tr wire:key="mobile-teacher-{{ $teacher->id }}-{{ $mobileSessionId }}"
+                                    @if($mobileSessionId)
+                                    :class="{
+                                    'bg-green-50/40': getStatus({{ $teacher->id }}, {{ $mobileSessionId }}) == 1,
+                                    'bg-red-50/30':   getStatus({{ $teacher->id }}, {{ $mobileSessionId }}) == 3,
+                                }"
+                                    @endif
+                                    class="transition-colors">
+
+                                    <td class="px-4 py-3">
+                                        <div class="flex items-center gap-3">
+                                            <div class="w-7 h-7 rounded-full bg-slate-100 flex items-center justify-center
+                                            flex-shrink-0 text-xs font-semibold text-slate-500">
+                                                {{ $index + 1 }}
+                                            </div>
+                                            <div class="min-w-0">
+                                                <div class="text-xs text-slate-400 leading-tight mt-0.5">
+                                                    {{ $teacher->saint?->name ?: '—' }}
+                                                </div>
+                                                <div class="text-sm font-semibold text-slate-900 leading-tight">
+                                                    {{ $teacher->full_name }}
+                                                </div>
+                                                <div class="text-xs text-slate-500 mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-0.5">
+                                                    @if($teacher->teacher_code)
+                                                    <span class="font-mono text-primary-700">{{ $teacher->teacher_code }}</span>
+                                                    @endif
+                                                    @if($teacher->parishGroup?->name)
+                                                    <span class="truncate max-w-[140px]" title="{{ $teacher->parishGroup->name }}">
+                                                        {{ $teacher->parishGroup->name }}
+                                                    </span>
+                                                    @endif
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </td>
+
+                                    <td class="px-3 py-3" wire:key="mobile-tcell-{{ $teacher->id }}-{{ $mobileSessionId }}">
+                                        @if($locked)
+                                        @php
+                                            $mobileStatus = $mobileSessionId
+                                                ? ($attendanceGrid[$teacher->id][$mobileSessionId] ?? null)
+                                                : null;
+                                        @endphp
+                                        <div class="flex justify-center">
+                                            @if((int) $mobileStatus === 1)
+                                            <span class="w-11 h-11 rounded-xl bg-green-500 flex items-center justify-center shadow-sm">
+                                                <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7" />
+                                                </svg>
+                                            </span>
+                                            @elseif((int) $mobileStatus === 2)
+                                            <span class="w-11 h-11 rounded-xl bg-yellow-400 flex items-center justify-center shadow-sm">
+                                                <span class="text-slate-900 font-bold text-base">P</span>
+                                            </span>
+                                            @elseif((int) $mobileStatus === 3)
+                                            <span class="w-11 h-11 rounded-xl bg-red-500 flex items-center justify-center shadow-sm">
+                                                <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M6 18L18 6M6 6l12 12" />
+                                                </svg>
+                                            </span>
+                                            @else
+                                            <span class="w-11 h-11 flex items-center justify-center text-slate-300 text-lg">—</span>
+                                            @endif
+                                        </div>
+                                        @elseif($mobileSessionId)
+                                        <div class="flex gap-1.5 justify-center">
+                                            <button type="button"
+                                                x-on:click="toggle({{ $teacher->id }}, {{ $mobileSessionId }}, 1)"
+                                                :class="getStatus({{ $teacher->id }}, {{ $mobileSessionId }}) == 1
+                                                ? 'bg-green-500 text-white shadow-md ring-2 ring-green-300'
+                                                : 'bg-green-50 text-green-700 border border-green-200 active:bg-green-100'"
+                                                class="w-11 h-11 rounded-xl flex items-center justify-center transition-all active:scale-95"
+                                                aria-label="Có mặt">
+                                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7" />
+                                                </svg>
+                                            </button>
+                                            <button type="button"
+                                                x-on:click="openNoteAlpine({{ $teacher->id }}, {{ $mobileSessionId }}, '{{ addslashes($teacher->full_name) }}')"
+                                                :class="getStatus({{ $teacher->id }}, {{ $mobileSessionId }}) == 2
+                                                ? 'bg-yellow-400 text-slate-900 shadow-md ring-2 ring-yellow-300'
+                                                : 'bg-yellow-50 text-yellow-700 border border-yellow-200 active:bg-yellow-100'"
+                                                class="w-11 h-11 rounded-xl flex items-center justify-center font-bold text-base transition-all active:scale-95"
+                                                aria-label="Vắng có phép">
+                                                P
+                                            </button>
+                                            <button type="button"
+                                                x-on:click="toggle({{ $teacher->id }}, {{ $mobileSessionId }}, 3)"
+                                                :class="getStatus({{ $teacher->id }}, {{ $mobileSessionId }}) == 3
+                                                ? 'bg-red-500 text-white shadow-md ring-2 ring-red-300'
+                                                : 'bg-red-50 text-red-700 border border-red-200 active:bg-red-100'"
+                                                class="w-11 h-11 rounded-xl flex items-center justify-center transition-all active:scale-95"
+                                                aria-label="Vắng không phép">
+                                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M6 18L18 6M6 6l12 12" />
+                                                </svg>
+                                            </button>
+                                        </div>
+                                        @endif
+                                    </td>
+                                </tr>
+                                @endforeach
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div
+                        x-show="hasDraft() && !noteModal.open"
+                        x-cloak
+                        class="fixed left-0 right-0 z-20 bg-white/90 backdrop-blur border-t border-black/[0.06] px-4 py-3"
+                        style="bottom: calc(env(safe-area-inset-bottom) + 60px);">
+                        <div class="flex items-center gap-2 max-w-7xl mx-auto">
+                            <x-button
+                                variant="ghost"
+                                size="sm"
+                                class="flex-shrink-0"
+                                x-on:click="discard()"
+                                x-bind:disabled="isSaving">
+                                Hủy
+                            </x-button>
+
+                            <x-button
+                                variant="primary"
+                                size="sm"
+                                class="flex-1"
+                                x-on:click="save()"
+                                x-bind:disabled="isSaving">
+                                <span x-text="saveButtonLabel()"></span>
+                            </x-button>
+                        </div>
+                    </div>
+
+                    <div x-show="hasDraft()" x-cloak class="h-24"></div>
+                </div>
+                @endif
+            @endif
+
+            @elseif (!$selectedClassId)
             <div class="px-4 lg:px-6 py-3 mac-hairline-b">
                 <x-inline-tip>
                     Chọn <strong>năm học → khối → lớp</strong> (và học kỳ nếu có) ở bộ lọc phía trên để bắt đầu điểm danh.

@@ -29,21 +29,28 @@
             </div>
         </div>
 
-        {{-- Type toggle --}}
+        {{-- Type toggle: HS = học/lễ; GLV = dạy/lễ/họp --}}
         <div class="flex items-center gap-0.5 bg-slate-100 border border-slate-200 rounded-xl p-1 flex-shrink-0">
             <button wire:click="setType(1)" type="button"
-                class="px-3 py-1.5 rounded-lg text-sm font-medium transition-all
+                class="px-2.5 sm:px-3 py-1.5 rounded-lg text-xs sm:text-sm font-medium transition-all
                        {{ $type === 1
                            ? 'bg-primary-500 text-white shadow-mac-sm'
                            : 'text-slate-500 hover:text-slate-700' }}">
-                Đi học
+                Học/Dạy
             </button>
             <button wire:click="setType(2)" type="button"
-                class="px-3 py-1.5 rounded-lg text-sm font-medium transition-all
+                class="px-2.5 sm:px-3 py-1.5 rounded-lg text-xs sm:text-sm font-medium transition-all
                        {{ $type === 2
                            ? 'bg-primary-500 text-white shadow-mac-sm'
                            : 'text-slate-500 hover:text-slate-700' }}">
                 Đi lễ
+            </button>
+            <button wire:click="setType(3)" type="button"
+                class="px-2.5 sm:px-3 py-1.5 rounded-lg text-xs sm:text-sm font-medium transition-all
+                       {{ $type === 3
+                           ? 'bg-primary-500 text-white shadow-mac-sm'
+                           : 'text-slate-500 hover:text-slate-700' }}">
+                Họp
             </button>
         </div>
     </div>

@@ -82,6 +82,7 @@
                         <tr>
                             <x-table-header class="w-12">STT</x-table-header>
                             <x-table-header class="w-14">Ảnh</x-table-header>
+                            <x-table-header>Mã GLV</x-table-header>
                             <x-table-header>Tên thánh</x-table-header>
                             <x-table-header class="w-[160px]">Họ & Tên đệm</x-table-header>
                             <x-table-header>Tên</x-table-header>
@@ -106,6 +107,10 @@
                                 <div class="w-9 h-9 rounded-full overflow-hidden bg-slate-100 flex items-center justify-center flex-shrink-0 text-xs font-semibold text-slate-500">
                                     {{ strtoupper(mb_substr($teacher->last_name ?? '', 0, 1) . mb_substr($teacher->first_name ?? '', 0, 1)) }}
                                 </div>
+                            </td>
+
+                            <td class="px-4 py-3 text-sm font-mono text-primary-700 whitespace-nowrap">
+                                {{ $teacher->teacher_code ?? '—' }}
                             </td>
 
                             <td class="px-4 py-3 text-sm text-slate-900 whitespace-nowrap">

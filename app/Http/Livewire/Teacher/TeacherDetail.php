@@ -54,6 +54,8 @@ class TeacherDetail extends BaseComponent
 
             $this->teacherData = [
                 'id'                   => $teacher->id,
+                'teacher_code'         => $teacher->teacher_code ?? '',
+                'qr_token'             => $teacher->qr_token ?? '',
                 'full_name'            => $teacher->full_name,
                 'full_name_with_saint' => $teacher->full_name_with_saint,
                 'saint_name'           => $teacher->saint->name ?? '',
@@ -83,6 +85,9 @@ class TeacherDetail extends BaseComponent
                     : false,
                 'perm_edit_parish_students' => $teacher->user
                     ? $teacher->user->getPermissionNames()->contains(CatechistPermissions::EDIT_PARISH_STUDENTS)
+                    : false,
+                'perm_mark_teacher_attendance' => $teacher->user
+                    ? $teacher->user->getPermissionNames()->contains(CatechistPermissions::MARK_TEACHER_ATTENDANCE)
                     : false,
                 'note'                 => $teacher->note ?? '',
                 'created_at'           => $teacher->created_at?->format('d/m/Y H:i') ?? '',

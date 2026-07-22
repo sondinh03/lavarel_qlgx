@@ -94,6 +94,21 @@ class CatechistAccess
             && $this->hasActiveAssignmentThisYear($user);
     }
 
+    /**
+     * Điểm danh GLV: quản trị giáo lý luôn được;
+     * GLV thuần chỉ khi được cấp quyền hỗ trợ + còn phân công năm hiện tại.
+     */
+    public function canMarkTeacherAttendance(User $user, ?int $parishId = null): bool
+    {
+        if ($user->canManageCatechism()) {
+            return true;
+        }
+
+        return $user->isCatechist()
+            && $user->can(CatechistPermissions::MARK_TEACHER_ATTENDANCE)
+            && $this->hasActiveAssignmentThisYear($user, $parishId);
+    }
+
     public function canGrantElevatedPermissions(User $actor): bool
     {
         return $actor->isSuperAdmin() || $actor->isParishAdmin();

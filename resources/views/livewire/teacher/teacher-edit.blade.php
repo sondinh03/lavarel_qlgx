@@ -298,6 +298,14 @@
                                     <p class="text-xs text-slate-500 mt-0.5">Cập nhật hồ sơ học sinh; không bao gồm tạo/xóa/liên kết giáo dân.</p>
                                 </div>
                             </label>
+                            <label class="flex items-start gap-3 cursor-pointer select-none">
+                                <input type="checkbox" wire:model.defer="perm_mark_teacher_attendance"
+                                    class="w-4 h-4 mt-0.5 rounded border-black/20 text-primary-500 focus:ring-primary-500/25" />
+                                <div>
+                                    <span class="text-sm font-medium text-slate-700">Điểm danh giáo lý viên</span>
+                                    <p class="text-xs text-slate-500 mt-0.5">Điểm danh GLV (đi dạy / đi lễ / họp) trên màn Điểm danh và quét QR GLV.</p>
+                                </div>
+                            </label>
                         </div>
                         @endif
                     </section>

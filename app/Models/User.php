@@ -158,6 +158,16 @@ class User extends Authenticatable
         return $this->can(CatechistPermissions::EDIT_PARISH_STUDENTS);
     }
 
+    public function canMarkTeacherAttendance(?int $parishId = null): bool
+    {
+        return app(CatechistAccess::class)->canMarkTeacherAttendance($this, $parishId);
+    }
+
+    public function hasMarkTeacherAttendancePermission(): bool
+    {
+        return $this->can(CatechistPermissions::MARK_TEACHER_ATTENDANCE);
+    }
+
     public function parishName(): ?string
     {
         return $this->parish?->name ?? null;

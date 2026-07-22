@@ -9,6 +9,9 @@ use App\Models\AttendanceSession;
 use App\Models\CatechismClass;
 use App\Models\ClassTeacher;
 use App\Models\NamHoc;
+use App\Models\Teacher;
+use App\Models\TeacherAttendanceRecord;
+use App\Models\TeacherAttendanceSession;
 use App\Models\User;
 use App\Notifications\AttendanceSessionSummary;
 use App\Services\AttendanceService;
@@ -32,6 +35,9 @@ class AttendanceManager extends BaseComponent
     public $selectedKy      = '';
     public $attendanceType  = 1;
 
+    /** students | teachers */
+    public string $subjectTarget = 'students';
+
     // ==================== VIEW STATE ====================
 
     public $viewMode     = 'desktop';
@@ -40,8 +46,12 @@ class AttendanceManager extends BaseComponent
     // ==================== DATA ====================
 
     public $students;
+    public $teachers;
     public $sessions          = [];
     public $attendanceRecords = [];
+    public $teacherAttendanceRecords = [];
+
+    public string $newTeacherSessionDate = '';
 
     // ==================== CLASS NAME ====================
 
@@ -51,8 +61,9 @@ class AttendanceManager extends BaseComponent
 
     protected $rules = [
         'selectedClassId' => 'nullable|integer|exists:classes,id',
-        'attendanceType'  => 'required|integer|in:1,2',
+        'attendanceType'  => 'required|integer|in:1,2,3',
         'search'          => 'nullable|string|max:255',
+        'subjectTarget'   => 'required|string|in:students,teachers',
     ];
 
     protected $messages = [
@@ -69,6 +80,7 @@ class AttendanceManager extends BaseComponent
             'attendanceType'  => ['as' => 'type',    'except' => 1],
             'selectedDate'    => ['as' => 'date',    'except' => null],
             'selectedKy'      => ['as' => 'ky',      'except' => null],
+            'subjectTarget'   => ['as' => 'target',  'except' => 'students'],
         ], parent::queryString());
     }
 
@@ -89,6 +101,7 @@ class AttendanceManager extends BaseComponent
     public function mount()
     {
         $this->students = collect();
+        $this->teachers = collect();
         parent::mount();
         $this->requireParishId();
     }
@@ -106,12 +119,16 @@ class AttendanceManager extends BaseComponent
         $currentNamHocId = $this->getDefaultNamHocId();
         $isCatechistOnly = auth()->user()?->isCatechist() && !auth()->user()?->canManage();
 
-        // GLV: luôn neo năm học đang mở. Admin: giữ năm từ filter/URL hoặc mặc định hiện tại.
-        if ($isCatechistOnly || !$this->selectedNamHoc) {
+        if ($isCatechistOnly || ! $this->selectedNamHoc) {
             $this->selectedNamHoc = $currentNamHocId;
         }
 
-        // GLV chưa được phân công lớp trong năm đang vận hành → không thao tác gì
+        $this->subjectTarget = $this->subjectTarget === 'teachers' ? 'teachers' : 'students';
+
+        if ($this->subjectTarget === 'teachers' && ! $this->canMarkTeacherAttendance()) {
+            $this->subjectTarget = 'students';
+        }
+
         if ($this->assignmentBlocked) {
             $this->selectedClassId = null;
             $this->selectedClassName = '';
@@ -119,21 +136,32 @@ class AttendanceManager extends BaseComponent
             return;
         }
 
-        // classId URL/cũ phải thuộc đúng xứ + năm đang chọn
-        if ($this->selectedClassId && !$this->isValidAttendanceClass((int) $this->selectedClassId)) {
+        if ($this->subjectTarget === 'teachers') {
+            $this->normalizeTeacherAttendanceType();
+            if (trim((string) $this->newTeacherSessionDate) === '') {
+                $this->newTeacherSessionDate = now()->toDateString();
+            }
+            $this->reloadTeacherAttendanceData();
+
+            return;
+        }
+
+        $this->normalizeStudentAttendanceType();
+
+        if ($this->selectedClassId && ! $this->isValidAttendanceClass((int) $this->selectedClassId)) {
             $this->selectedClassId = null;
         }
 
-        if (!$this->selectedClassId && $this->selectedNamHoc) {
+        if (! $this->selectedClassId && $this->selectedNamHoc) {
             $this->selectedClassId = $this->resolveDefaultClassForYear((int) $this->selectedNamHoc);
         }
 
-        if ($this->selectedClassId && !$this->assertCanMarkClass((int) $this->selectedClassId)) {
+        if ($this->selectedClassId && ! $this->assertCanMarkClass((int) $this->selectedClassId)) {
             $this->selectedClassId = $this->resolveDefaultClassForYear((int) ($this->selectedNamHoc ?? 0));
-            if ($this->selectedClassId && !$this->assertCanMarkClass((int) $this->selectedClassId)) {
+            if ($this->selectedClassId && ! $this->assertCanMarkClass((int) $this->selectedClassId)) {
                 $this->selectedClassId = null;
             }
-            if (!$this->selectedClassId) {
+            if (! $this->selectedClassId) {
                 $this->emit('toast', 'warning', 'Bạn không có quyền');
             }
         }
@@ -151,7 +179,6 @@ class AttendanceManager extends BaseComponent
             }
         }
 
-        // Đồng bộ kỳ nếu URL chỉ có classId (FilterBar cũng detect kỳ — tránh lệch lần emit đầu)
         if ($this->selectedNamHoc && $this->selectedKy === null) {
             $this->selectedKy = $this->detectSemesterForNamHoc((int) $this->selectedNamHoc);
         }
@@ -160,6 +187,24 @@ class AttendanceManager extends BaseComponent
             $this->loadStudents();
             $this->loadSessions();
             $this->loadAttendanceRecords();
+        }
+    }
+
+    protected function normalizeStudentAttendanceType(): void
+    {
+        if (! in_array((int) $this->attendanceType, [1, 2], true)) {
+            $this->attendanceType = 1;
+        }
+    }
+
+    protected function normalizeTeacherAttendanceType(): void
+    {
+        if (! in_array((int) $this->attendanceType, [
+            TeacherAttendanceSession::TYPE_TEACH,
+            TeacherAttendanceSession::TYPE_CEREMONY,
+            TeacherAttendanceSession::TYPE_MEETING,
+        ], true)) {
+            $this->attendanceType = TeacherAttendanceSession::TYPE_TEACH;
         }
     }
 
@@ -178,7 +223,10 @@ class AttendanceManager extends BaseComponent
         $this->selectedKhoi = is_numeric($this->selectedKhoi)
             ? (int) $this->selectedKhoi : null;
 
-        $this->attendanceType = in_array((int) $this->attendanceType, [1, 2], true)
+        $this->subjectTarget = $this->subjectTarget === 'teachers' ? 'teachers' : 'students';
+
+        $allowedTypes = $this->subjectTarget === 'teachers' ? [1, 2, 3] : [1, 2];
+        $this->attendanceType = in_array((int) $this->attendanceType, $allowedTypes, true)
             ? (int) $this->attendanceType : 1;
 
         // Điểm danh không dùng "Cả năm" (0) — ép về kỳ 1|2 (hoặc null để mount detect sau)
@@ -264,11 +312,20 @@ class AttendanceManager extends BaseComponent
     public function updatedSearch(): void
     {
         parent::updatedSearch();
-        $this->loadStudents();
+
+        if ($this->subjectTarget === 'teachers') {
+            $this->loadTeachers();
+        } else {
+            $this->loadStudents();
+        }
     }
 
     public function updatedSelectedClassId(): void
     {
+        if ($this->subjectTarget === 'teachers') {
+            return;
+        }
+
         $this->selectedClassId = is_numeric($this->selectedClassId)
             ? (int) $this->selectedClassId : null;
 
@@ -298,23 +355,42 @@ class AttendanceManager extends BaseComponent
     public function updatedSelectedDate(): void
     {
         if ($this->viewMode === 'mobile' && $this->selectedDate) {
-            $this->loadAttendanceRecords();
+            if ($this->subjectTarget === 'teachers') {
+                $this->loadTeacherAttendanceRecords();
+            } else {
+                $this->loadAttendanceRecords();
+            }
         }
     }
 
     public function updatedAttendanceType(): void
     {
-        $this->attendanceType = in_array((int) $this->attendanceType, [1, 2])
-            ? (int) $this->attendanceType : 1;
+        if ($this->subjectTarget === 'teachers') {
+            $this->normalizeTeacherAttendanceType();
+            $this->selectedDate = null;
+            $this->reloadTeacherAttendanceData();
 
+            return;
+        }
+
+        $this->normalizeStudentAttendanceType();
         $this->selectedDate = null;
         $this->loadSessions();
         $this->loadAttendanceRecords();
-
         $this->resetPage();
     }
 
     // ==================== AUTHORIZATION ====================
+
+    public function canMarkTeacherAttendance(): bool
+    {
+        $user = auth()->user();
+        if (! $user) {
+            return false;
+        }
+
+        return $user->canMarkTeacherAttendance($this->parishId ? (int) $this->parishId : null);
+    }
 
     /**
      * Admin / GLV cùng xứ: điểm danh mọi lớp thuộc giáo xứ (và năm đang chọn nếu có).
@@ -398,8 +474,10 @@ class AttendanceManager extends BaseComponent
         $this->selectedClassId   = null;
         $this->selectedClassName = '';
         $this->students          = collect();
+        $this->teachers          = collect();
         $this->sessions          = [];
         $this->attendanceRecords = [];
+        $this->teacherAttendanceRecords = [];
         $this->selectedDate      = null;
 
         $this->dispatchBrowserEvent('attendance-state-cleared');
@@ -407,12 +485,67 @@ class AttendanceManager extends BaseComponent
 
     public function handleRefresh(): void
     {
-        if ($this->selectedClassId) {
+        if ($this->subjectTarget === 'teachers') {
+            $this->reloadTeacherAttendanceData();
+        } elseif ($this->selectedClassId) {
             $this->loadStudents();
             $this->loadSessions();
             $this->loadAttendanceRecords();
         }
         $this->resetPage();
+    }
+
+    public function switchSubjectTarget(string $target): void
+    {
+        $target = $target === 'teachers' ? 'teachers' : 'students';
+        if ($target === $this->subjectTarget) {
+            return;
+        }
+
+        if ($target === 'teachers' && ! $this->canMarkTeacherAttendance()) {
+            $this->emit('toast', 'error', 'Bạn không có quyền điểm danh giáo lý viên');
+
+            return;
+        }
+
+        $this->dispatchBrowserEvent('attendance-state-cleared');
+
+        $this->subjectTarget = $target;
+        $this->selectedDate = null;
+        $this->search = '';
+        $this->sessions = [];
+        $this->attendanceRecords = [];
+        $this->teacherAttendanceRecords = [];
+        $this->students = collect();
+        $this->teachers = collect();
+
+        if ($target === 'teachers') {
+            $this->selectedClassId = null;
+            $this->selectedClassName = '';
+            $this->normalizeTeacherAttendanceType();
+            if (! $this->selectedNamHoc) {
+                $this->selectedNamHoc = $this->getDefaultNamHocId();
+            }
+            $this->newTeacherSessionDate = now()->toDateString();
+            $this->reloadTeacherAttendanceData();
+        } else {
+            $this->normalizeStudentAttendanceType();
+            if ($this->selectedNamHoc && ! $this->selectedClassId) {
+                $this->selectedClassId = $this->resolveDefaultClassForYear((int) $this->selectedNamHoc);
+            }
+            if ($this->selectedClassId && ! $this->assertCanMarkClass((int) $this->selectedClassId)) {
+                $this->selectedClassId = $this->resolveDefaultClassForYear((int) ($this->selectedNamHoc ?? 0));
+                if ($this->selectedClassId && ! $this->assertCanMarkClass((int) $this->selectedClassId)) {
+                    $this->selectedClassId = null;
+                }
+            }
+            if ($this->selectedClassId) {
+                $this->selectedClassName = CatechismClass::where('id', $this->selectedClassId)->value('name') ?? '';
+                $this->loadStudents();
+                $this->loadSessions();
+                $this->loadAttendanceRecords();
+            }
+        }
     }
 
     // ==================== DATA LOADING ====================
@@ -555,8 +688,9 @@ class AttendanceManager extends BaseComponent
 
     protected function loadAttendanceRecords(): void
     {
-        if (!$this->selectedClassId) {
+        if (! $this->selectedClassId) {
             $this->attendanceRecords = [];
+
             return;
         }
 
@@ -568,14 +702,198 @@ class AttendanceManager extends BaseComponent
         ]);
     }
 
-    protected function getClientContext(): string
+    protected function reloadTeacherAttendanceData(): void
+    {
+        if (! $this->canMarkTeacherAttendance() || $this->assignmentBlocked || ! $this->selectedNamHoc || ! $this->parishId) {
+            $this->teachers = collect();
+            $this->sessions = [];
+            $this->teacherAttendanceRecords = [];
+
+            return;
+        }
+
+        $this->loadTeachers();
+        $this->loadTeacherSessions();
+        $this->loadTeacherAttendanceRecords();
+    }
+
+    protected function loadTeachers(): void
+    {
+        try {
+            $search = trim((string) $this->search);
+
+            $this->teachers = Teacher::query()
+                ->with(['saint:id,name', 'parishGroup:id,name'])
+                ->where('parish_id', $this->parishId)
+                ->active()
+                ->when($search !== '', function ($q) use ($search) {
+                    $term = '%' . $search . '%';
+                    $q->where(function ($qq) use ($term) {
+                        $qq->where('first_name', 'like', $term)
+                            ->orWhere('last_name', 'like', $term)
+                            ->orWhere('teacher_code', 'like', $term)
+                            ->orWhere('phone_number', 'like', $term);
+                    });
+                })
+                ->orderBy('last_name')
+                ->orderBy('first_name')
+                ->get(['id', 'saint_id', 'parish_group_id', 'last_name', 'first_name', 'teacher_code', 'phone_number']);
+        } catch (\Exception $e) {
+            $this->logError($e, 'Error loading teachers for attendance');
+            $this->teachers = collect();
+        }
+    }
+
+    protected function loadTeacherSessions(): void
+    {
+        if (! $this->selectedNamHoc || ! $this->parishId) {
+            $this->sessions = [];
+            $this->selectedDate = null;
+
+            return;
+        }
+
+        try {
+            $sessions = TeacherAttendanceSession::query()
+                ->where('parish_id', $this->parishId)
+                ->where('namhoc_id', (int) $this->selectedNamHoc)
+                ->where('type', (int) $this->attendanceType)
+                ->orderBy('date')
+                ->get(['id', 'date', 'status', 'type']);
+
+            $this->sessions = $sessions->map(function (TeacherAttendanceSession $s) {
+                $date = Carbon::parse($s->date);
+                $locked = in_array((int) $s->status, [
+                    TeacherAttendanceSession::STATUS_CLOSED,
+                    TeacherAttendanceSession::STATUS_CANCELLED,
+                ], true);
+
+                return [
+                    'id'       => $s->id,
+                    'dateStr'  => $date->format('Y-m-d'),
+                    'fullDate' => $date->format('d/m'),
+                    'dayName'  => $this->getVietnameseDayName($date),
+                    'type'     => $s->type,
+                    'status'   => $s->status,
+                    'locked'   => $locked,
+                ];
+            })->toArray();
+
+            if ($this->viewMode === 'mobile' && ! $this->selectedDate && ! empty($this->sessions)) {
+                $this->autoSelectDateForMobile();
+            }
+        } catch (\Exception $e) {
+            $this->logError($e, 'Error loading teacher sessions');
+            $this->sessions = [];
+        }
+    }
+
+    protected function loadTeacherAttendanceRecords(): void
+    {
+        $sessionIds = collect($this->sessions)->pluck('id')->filter()->map(fn ($id) => (int) $id)->all();
+
+        if ($sessionIds === []) {
+            $this->teacherAttendanceRecords = [];
+            $this->dispatchBrowserEvent('attendance-records-loaded', [
+                'records' => [],
+                'context' => $this->getClientContext(),
+            ]);
+
+            return;
+        }
+
+        try {
+            $this->teacherAttendanceRecords = TeacherAttendanceRecord::query()
+                ->whereIn('session_id', $sessionIds)
+                ->get(['teacher_id', 'session_id', 'status', 'note'])
+                ->mapWithKeys(function (TeacherAttendanceRecord $r) {
+                    return [
+                        $r->teacher_id . '_' . $r->session_id => [
+                            'status' => $r->status,
+                            'note'   => $r->note,
+                        ],
+                    ];
+                })
+                ->all();
+        } catch (\Exception $e) {
+            $this->logError($e, 'Error loading teacher attendance');
+            $this->teacherAttendanceRecords = [];
+        }
+
+        $this->dispatchBrowserEvent('attendance-records-loaded', [
+            'records' => $this->teacherAttendanceRecords,
+            'context' => $this->getClientContext(),
+        ]);
+    }
+
+    public function createTeacherSession(): void
+    {
+        if ($this->subjectTarget !== 'teachers') {
+            return;
+        }
+
+        if ($this->assignmentBlocked || ! auth()->user()?->canManageCatechism()) {
+            $this->emit('toast', 'error', 'Bạn không có quyền tạo buổi điểm danh GLV');
+
+            return;
+        }
+
+        if (! $this->selectedNamHoc || ! $this->parishId) {
+            $this->emit('toast', 'warning', 'Vui lòng chọn năm học');
+
+            return;
+        }
+
+        $this->normalizeTeacherAttendanceType();
+
+        $date = trim($this->newTeacherSessionDate) !== ''
+            ? $this->newTeacherSessionDate
+            : now()->toDateString();
+
+        try {
+            Carbon::parse($date);
+        } catch (\Exception $e) {
+            $this->emit('toast', 'error', 'Ngày không hợp lệ');
+
+            return;
+        }
+
+        try {
+            $session = TeacherAttendanceSession::firstOrCreate(
+                [
+                    'parish_id' => $this->parishId,
+                    'namhoc_id' => (int) $this->selectedNamHoc,
+                    'date'      => $date,
+                    'type'      => (int) $this->attendanceType,
+                ],
+                [
+                    'status' => TeacherAttendanceSession::STATUS_OPENING,
+                ]
+            );
+
+            $this->reloadTeacherAttendanceData();
+
+            if ($session->wasRecentlyCreated) {
+                $this->emit('toast', 'success', 'Đã tạo buổi điểm danh GLV');
+            } else {
+                $this->emit('toast', 'info', 'Buổi này đã tồn tại');
+            }
+        } catch (\Exception $e) {
+            $this->logError($e, 'Error creating teacher session');
+            $this->emit('toast', 'error', 'Không tạo được buổi điểm danh GLV');
+        }
+    }
+
+    public function getClientContext(): string
     {
         return implode('|', [
+            'target:' . ($this->subjectTarget ?? 'students'),
             'class:' . ($this->selectedClassId ?? 'none'),
             'type:' . ($this->attendanceType ?? 'none'),
             'mode:' . ($this->viewMode ?? 'none'),
             'date:' . ($this->selectedDate ?? 'all'),
             'ky:' . ($this->selectedKy ?? 'all'),
+            'namHoc:' . ($this->selectedNamHoc ?? 'none'),
         ]);
     }
 
@@ -585,6 +903,12 @@ class AttendanceManager extends BaseComponent
     public function saveFromClient(array $draft): void
     {
         try {
+            if ($this->subjectTarget === 'teachers') {
+                $this->saveTeacherAttendanceFromClient($draft);
+
+                return;
+            }
+
             if (empty($draft)) {
                 $this->emit('toast', 'warning', 'Không có dữ liệu để lưu');
                 return;
@@ -703,6 +1027,128 @@ class AttendanceManager extends BaseComponent
         }
     }
 
+    protected function saveTeacherAttendanceFromClient(array $draft): void
+    {
+        if ($this->assignmentBlocked || ! $this->canMarkTeacherAttendance()) {
+            $this->emit('toast', 'error', 'Bạn không có quyền điểm danh giáo lý viên');
+
+            return;
+        }
+
+        if (empty($draft)) {
+            $this->emit('toast', 'warning', 'Không có dữ liệu để lưu');
+
+            return;
+        }
+
+        if (! $this->selectedNamHoc || ! $this->parishId) {
+            $this->emit('toast', 'warning', 'Vui lòng chọn năm học');
+
+            return;
+        }
+
+        $this->normalizeTeacherAttendanceType();
+        $type = (int) $this->attendanceType;
+
+        $allowedSessionIds = TeacherAttendanceSession::query()
+            ->where('parish_id', $this->parishId)
+            ->where('namhoc_id', (int) $this->selectedNamHoc)
+            ->where('type', $type)
+            ->where('status', TeacherAttendanceSession::STATUS_OPENING)
+            ->pluck('id')
+            ->map(fn ($id) => (int) $id)
+            ->all();
+
+        $allowedTeacherIds = Teacher::query()
+            ->where('parish_id', $this->parishId)
+            ->active()
+            ->pluck('id')
+            ->map(fn ($id) => (int) $id)
+            ->all();
+
+        $allowedSessionLookup = array_flip($allowedSessionIds);
+        $allowedTeacherLookup = array_flip($allowedTeacherIds);
+
+        $normalized = [];
+
+        foreach ($draft as $key => $item) {
+            if (! is_string($key) || ! preg_match('/^\d+_\d+$/', $key)) {
+                $this->emit('toast', 'error', 'Dữ liệu không hợp lệ');
+
+                return;
+            }
+
+            [$teacherId, $sessionId] = array_map('intval', explode('_', $key, 2));
+
+            if (! isset($allowedTeacherLookup[$teacherId]) || ! isset($allowedSessionLookup[$sessionId])) {
+                $this->emit('toast', 'error', 'Dữ liệu không hợp lệ hoặc buổi đã khóa');
+
+                return;
+            }
+
+            $status = isset($item['status']) && is_numeric($item['status'])
+                ? (int) $item['status']
+                : null;
+
+            if (! TeacherAttendanceRecord::isValidStatus($status)) {
+                $this->emit('toast', 'error', 'Dữ liệu không hợp lệ');
+
+                return;
+            }
+
+            $note = (string) ($item['note'] ?? '');
+            if (mb_strlen($note) > 500) {
+                $this->emit('toast', 'error', 'Ghi chú tối đa 500 ký tự');
+
+                return;
+            }
+
+            if ((int) $status !== TeacherAttendanceRecord::STATUS_ABSENT_EXCUSED) {
+                $note = '';
+            }
+
+            $normalized[$key] = [
+                'teacher_id' => $teacherId,
+                'session_id' => $sessionId,
+                'status'     => $status,
+                'note'       => $note,
+            ];
+        }
+
+        $this->dispatchBrowserEvent('saving-attendance');
+
+        $savedKeys = [];
+
+        DB::transaction(function () use ($normalized, &$savedKeys) {
+            foreach ($normalized as $key => $row) {
+                $record = TeacherAttendanceRecord::firstOrNew([
+                    'session_id' => $row['session_id'],
+                    'teacher_id' => $row['teacher_id'],
+                ]);
+
+                $record->status = $row['status'];
+                $record->note = $row['note'];
+                $record->updated_by = auth()->id();
+                if (! $record->exists) {
+                    $record->created_by = auth()->id();
+                }
+                $record->save();
+
+                $savedKeys[] = $key;
+            }
+        });
+
+        $this->loadTeacherAttendanceRecords();
+
+        $this->emit('toast', 'success', 'Đã lưu điểm danh GLV (' . count($savedKeys) . ')');
+
+        $this->dispatchBrowserEvent('attendance-saved', [
+            'records'   => $this->teacherAttendanceRecords,
+            'savedKeys' => $savedKeys,
+            'context'   => $this->getClientContext(),
+        ]);
+    }
+
     /**
      * Gửi tóm tắt điểm danh (1 thông báo/lần lưu) tới GLV lớp + admin giáo lý, trừ người đang lưu.
      *
@@ -763,6 +1209,25 @@ class AttendanceManager extends BaseComponent
 
     public function switchType(int $type): void
     {
+        if ($this->subjectTarget === 'teachers') {
+            $allowed = [
+                TeacherAttendanceSession::TYPE_TEACH,
+                TeacherAttendanceSession::TYPE_CEREMONY,
+                TeacherAttendanceSession::TYPE_MEETING,
+            ];
+            $type = in_array($type, $allowed, true) ? $type : TeacherAttendanceSession::TYPE_TEACH;
+
+            if ($type === (int) $this->attendanceType) {
+                return;
+            }
+
+            $this->attendanceType = $type;
+            $this->selectedDate = null;
+            $this->reloadTeacherAttendanceData();
+
+            return;
+        }
+
         $type = in_array($type, [1, 2], true) ? $type : 1;
 
         if ($type === $this->attendanceType) {
@@ -778,6 +1243,12 @@ class AttendanceManager extends BaseComponent
 
     public function exportAttendance()
     {
+        if ($this->subjectTarget === 'teachers') {
+            $this->emit('toast', 'info', 'Xuất điểm danh GLV sẽ bổ sung sau');
+
+            return;
+        }
+
         if (!$this->selectedClassId) {
             $this->emit('toast', 'warning', 'Vui lòng chọn lớp');
             return;
@@ -811,6 +1282,25 @@ class AttendanceManager extends BaseComponent
     public function handleFilterChanged($filters): void
     {
         if (!is_array($filters)) {
+            return;
+        }
+
+        if ($this->subjectTarget === 'teachers') {
+            $id = static function ($value): ?int {
+                return is_numeric($value) ? (int) $value : null;
+            };
+
+            if (array_key_exists('namHoc', $filters)) {
+                $newNamHoc = $id($filters['namHoc']);
+                if ($newNamHoc !== $id($this->selectedNamHoc)) {
+                    $this->selectedNamHoc = $newNamHoc;
+                    $this->selectedDate = null;
+                    $this->reloadTeacherAttendanceData();
+                }
+            }
+
+            $this->resetPage();
+
             return;
         }
 
@@ -955,7 +1445,11 @@ class AttendanceManager extends BaseComponent
         $this->selectedDate = $date;
 
         if ($this->viewMode === 'mobile') {
-            $this->loadAttendanceRecords();
+            if ($this->subjectTarget === 'teachers') {
+                $this->loadTeacherAttendanceRecords();
+            } else {
+                $this->loadAttendanceRecords();
+            }
         }
     }
 
@@ -1022,37 +1516,95 @@ class AttendanceManager extends BaseComponent
 
     public function render()
     {
-        $students = $this->students ?? collect();
-
-        $grid = [];
-        foreach ($students as $student) {
-            $grid[$student->id] = [];
-            foreach ($this->sessions as $session) {
-                $key = $student->id . '_' . $session['id'];
-                $grid[$student->id][$session['id']] = $this->attendanceRecords[$key]['status'] ?? null;
+        // Livewire hydrate Collection model → array; nạp lại model khi cần dùng accessor/relation
+        if ($this->subjectTarget === 'teachers') {
+            $firstTeacher = collect($this->teachers ?? [])->first();
+            if ($firstTeacher !== null && ! $firstTeacher instanceof Teacher) {
+                $this->loadTeachers();
+            }
+        } else {
+            $firstStudent = collect($this->students ?? [])->first();
+            if ($firstStudent !== null && ! is_object($firstStudent)) {
+                $this->loadStudents();
             }
         }
 
-        $stats = array_map(function ($session) use ($students) {
-            $s = ['present' => 0, 'absentPermitted' => 0, 'absentNotPermitted' => 0];
+        $students = collect($this->students ?? []);
+        $teachers = collect($this->teachers ?? []);
+        $this->students = $students;
+        $this->teachers = $teachers;
 
-            foreach ($students as $student) {
-                $key    = $student->id . '_' . $session['id'];
-                $status = $this->attendanceRecords[$key]['status'] ?? null;
-                match ($status) {
-                    AttendanceRecord::STATUS_PRESENT          => $s['present']++,
-                    AttendanceRecord::STATUS_ABSENT_EXCUSED   => $s['absentPermitted']++,
-                    AttendanceRecord::STATUS_ABSENT_UNEXCUSED => $s['absentNotPermitted']++,
-                    default => null,
-                };
+        $grid = [];
+        $statsAssoc = [];
+
+        if ($this->subjectTarget === 'teachers') {
+            foreach ($teachers as $teacher) {
+                $tid = is_array($teacher) ? (int) ($teacher['id'] ?? 0) : (int) $teacher->id;
+                if ($tid <= 0) {
+                    continue;
+                }
+                $grid[$tid] = [];
+                foreach ($this->sessions as $session) {
+                    $key = $tid . '_' . $session['id'];
+                    $grid[$tid][$session['id']] = $this->teacherAttendanceRecords[$key]['status'] ?? null;
+                }
             }
 
-            return $s;
-        }, $this->sessions);
+            foreach ($this->sessions as $session) {
+                $s = ['present' => 0, 'absentPermitted' => 0, 'absentNotPermitted' => 0];
+                foreach ($teachers as $teacher) {
+                    $tid = is_array($teacher) ? (int) ($teacher['id'] ?? 0) : (int) $teacher->id;
+                    if ($tid <= 0) {
+                        continue;
+                    }
+                    $key = $tid . '_' . $session['id'];
+                    $status = $this->teacherAttendanceRecords[$key]['status'] ?? null;
+                    match ((int) $status) {
+                        TeacherAttendanceRecord::STATUS_PRESENT => $s['present']++,
+                        TeacherAttendanceRecord::STATUS_ABSENT_EXCUSED => $s['absentPermitted']++,
+                        TeacherAttendanceRecord::STATUS_ABSENT_UNEXCUSED => $s['absentNotPermitted']++,
+                        default => null,
+                    };
+                }
+                $statsAssoc[$session['dateStr']] = $s;
+            }
+        } else {
+            foreach ($students as $student) {
+                $sid = is_array($student) ? (int) ($student['id'] ?? 0) : (int) $student->id;
+                if ($sid <= 0) {
+                    continue;
+                }
+                $grid[$sid] = [];
+                foreach ($this->sessions as $session) {
+                    $key = $sid . '_' . $session['id'];
+                    $grid[$sid][$session['id']] = $this->attendanceRecords[$key]['status'] ?? null;
+                }
+            }
 
-        $statsAssoc = [];
-        foreach ($this->sessions as $index => $session) {
-            $statsAssoc[$session['dateStr']] = $stats[$index];
+            $stats = array_map(function ($session) use ($students) {
+                $s = ['present' => 0, 'absentPermitted' => 0, 'absentNotPermitted' => 0];
+
+                foreach ($students as $student) {
+                    $sid = is_array($student) ? (int) ($student['id'] ?? 0) : (int) $student->id;
+                    if ($sid <= 0) {
+                        continue;
+                    }
+                    $key = $sid . '_' . $session['id'];
+                    $status = $this->attendanceRecords[$key]['status'] ?? null;
+                    match ((int) $status) {
+                        AttendanceRecord::STATUS_PRESENT => $s['present']++,
+                        AttendanceRecord::STATUS_ABSENT_EXCUSED => $s['absentPermitted']++,
+                        AttendanceRecord::STATUS_ABSENT_UNEXCUSED => $s['absentNotPermitted']++,
+                        default => null,
+                    };
+                }
+
+                return $s;
+            }, $this->sessions);
+
+            foreach ($this->sessions as $index => $session) {
+                $statsAssoc[$session['dateStr']] = $stats[$index];
+            }
         }
 
         $layout = $this->viewMode === 'mobile'
@@ -1061,6 +1613,7 @@ class AttendanceManager extends BaseComponent
 
         return view('livewire.attendance-manager', [
             'students'       => $students,
+            'teachers'       => $teachers,
             'parishId'       => $this->parishId,
             'attendanceGrid' => $grid,
             'sessionStats'   => $statsAssoc,
