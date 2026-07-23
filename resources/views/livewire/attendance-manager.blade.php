@@ -140,7 +140,8 @@
                 x-on:filter-leave-request.window="onFilterLeave($event.detail)">
             </div>
 
-    <div wire:key="attendance-{{ $subjectTarget }}-{{ $selectedClassId }}-{{ $selectedNamHoc }}-{{ $attendanceType }}-{{ $selectedKy }}-{{ $selectedDate }}"
+    <div wire:ignore
+        wire:key="attendance-{{ $subjectTarget }}-{{ $selectedClassId }}-{{ $selectedNamHoc }}-{{ $attendanceType }}-{{ $selectedKy }}-{{ $selectedDate }}"
         data-attendance-root
         x-data="{
             records: {},
@@ -148,6 +149,7 @@
             isSaving: false,
             context: @js($this->getClientContext()),
             livewireId: null,
+            personIds: @js(($subjectTarget === 'teachers' ? collect($teachers ?? []) : collect($students ?? []))->pluck('id')->map(fn ($id) => (int) $id)->values()->all()),
 
             getLivewire() {
                 return window.Livewire.find(this.livewireId);
@@ -181,6 +183,18 @@
                 const key = studentId + '_' + sessionId;
                 if (this.draft[key] !== undefined) return this.draft[key].note || null;
                 return this.records[key]?.note || null;
+            },
+
+            /** Thống kê live từ records+draft — cần vì wire:ignore chặn morph Blade. */
+            sessionStat(sessionId, field) {
+                let present = 0, absentPermitted = 0, absentNotPermitted = 0;
+                (this.personIds || []).forEach(id => {
+                    const s = Number(this.getStatus(id, sessionId));
+                    if (s === 1) present++;
+                    else if (s === 2) absentPermitted++;
+                    else if (s === 3) absentNotPermitted++;
+                });
+                return ({ present, absentPermitted, absentNotPermitted })[field] ?? 0;
             },
 
             isDirtyEntry(key, item) {
@@ -313,18 +327,20 @@
             },
 
             onSaved(detail) {
+                const savedKeys = Array.isArray(detail?.savedKeys) ? detail.savedKeys : [];
+                const patches = detail?.patches || detail?.records || {};
                 if (!this.acceptContext(detail)) return;
                 this.isSaving = false;
-                if (detail && detail.records) {
-                    Object.keys(this.records).forEach(k => delete this.records[k]);
-                    Object.assign(this.records, detail.records);
-                }
-                const keys = detail?.savedKeys;
-                if (Array.isArray(keys) && keys.length > 0) {
-                    keys.forEach(k => delete this.draft[k]);
+                // Patch-merge only: wire:ignore giữ nguyên Alpine records còn lại
+                savedKeys.forEach(k => {
+                    if (patches[k] !== undefined) {
+                        this.records[k] = patches[k];
+                    }
+                });
+                if (savedKeys.length > 0) {
+                    savedKeys.forEach(k => delete this.draft[k]);
                     this.pruneDraft();
-                } else if (!Array.isArray(keys) || keys.length === 0) {
-                    // success với 0 key (hiếm) hoặc legacy — prune theo records mới
+                } else {
                     this.pruneDraft();
                 }
             },
@@ -332,8 +348,7 @@
             onRecordsLoaded(detail) {
                 if (!this.acceptContext(detail)) return;
                 const newRecords = detail?.records || {};
-                Object.keys(this.records).forEach(k => delete this.records[k]);
-                Object.assign(this.records, newRecords);
+                this.records = Object.assign({}, newRecords);
                 this.pruneDraft();
             },
 
@@ -728,15 +743,11 @@
                                 </td>
                                 <td class="px-4 py-3 static md:sticky md:left-[21rem] z-[24] w-36 max-w-[9rem] bg-slate-50 md:border-r md:border-black/[0.08] md:shadow-[4px_0_12px_-4px_rgba(0,0,0,0.12)]"></td>
                                 @foreach($sessions as $session)
-                                @php
-                                $stats = $sessionStats[$session['dateStr']]
-                                    ?? ['present' => 0, 'absentPermitted' => 0, 'absentNotPermitted' => 0];
-                                @endphp
                                 <td class="px-3 py-3 text-center min-w-[7.5rem] w-[7.5rem] shrink-0">
                                     <div class="flex flex-col gap-1 text-xs">
-                                        <div class="text-green-600">✓ {{ $stats['present'] }}</div>
-                                        <div class="text-yellow-600">P {{ $stats['absentPermitted'] }}</div>
-                                        <div class="text-red-600">✕ {{ $stats['absentNotPermitted'] }}</div>
+                                        <div class="text-green-600">✓ <span x-text="sessionStat({{ $session['id'] }}, 'present')"></span></div>
+                                        <div class="text-yellow-600">P <span x-text="sessionStat({{ $session['id'] }}, 'absentPermitted')"></span></div>
+                                        <div class="text-red-600">✕ <span x-text="sessionStat({{ $session['id'] }}, 'absentNotPermitted')"></span></div>
                                     </div>
                                 </td>
                                 @endforeach
@@ -750,8 +761,6 @@
                     @php
                     $currentSession = collect($sessions)->firstWhere('dateStr', $selectedDate);
                     $locked = $currentSession['locked'] ?? false;
-                    $mobileStats = $sessionStats[$selectedDate ?? '']
-                        ?? ['present' => 0, 'absentPermitted' => 0, 'absentNotPermitted' => 0];
                     $total = $teachers->count();
                     $mobileSessionId = $currentSession['id'] ?? null;
                     @endphp
@@ -801,15 +810,15 @@
                             <div class="flex items-center gap-3 text-xs">
                                 <span class="flex items-center gap-1 text-green-600 font-semibold">
                                     <span class="w-2 h-2 rounded-full bg-green-500 inline-block"></span>
-                                    {{ $mobileStats['present'] }}
+                                    <span x-text="sessionStat({{ (int) $mobileSessionId }}, 'present')"></span>
                                 </span>
                                 <span class="flex items-center gap-1 text-yellow-600 font-semibold">
                                     <span class="w-2 h-2 rounded-full bg-yellow-400 inline-block"></span>
-                                    {{ $mobileStats['absentPermitted'] }}
+                                    <span x-text="sessionStat({{ (int) $mobileSessionId }}, 'absentPermitted')"></span>
                                 </span>
                                 <span class="flex items-center gap-1 text-red-600 font-semibold">
                                     <span class="w-2 h-2 rounded-full bg-red-500 inline-block"></span>
-                                    {{ $mobileStats['absentNotPermitted'] }}
+                                    <span x-text="sessionStat({{ (int) $mobileSessionId }}, 'absentNotPermitted')"></span>
                                 </span>
                                 <span class="text-slate-400">/ {{ $total }}</span>
                             </div>
@@ -1227,15 +1236,11 @@
                                 </td>
                                 <td class="px-4 py-3 static md:sticky md:left-[21rem] z-[24] w-36 max-w-[9rem] bg-slate-50 md:border-r md:border-black/[0.08] md:shadow-[4px_0_12px_-4px_rgba(0,0,0,0.12)]"></td>
                                 @foreach($sessions as $session)
-                                @php
-                                $stats = $sessionStats[$session['dateStr']]
-                                ?? ['present' => 0, 'absentPermitted' => 0, 'absentNotPermitted' => 0];
-                                @endphp
                                 <td class="px-3 py-3 text-center min-w-[7.5rem] w-[7.5rem] shrink-0">
                                     <div class="flex flex-col gap-1 text-xs">
-                                        <div class="text-green-600">✓ {{ $stats['present'] }}</div>
-                                        <div class="text-yellow-600">P {{ $stats['absentPermitted'] }}</div>
-                                        <div class="text-red-600">✕ {{ $stats['absentNotPermitted'] }}</div>
+                                        <div class="text-green-600">✓ <span x-text="sessionStat({{ $session['id'] }}, 'present')"></span></div>
+                                        <div class="text-yellow-600">P <span x-text="sessionStat({{ $session['id'] }}, 'absentPermitted')"></span></div>
+                                        <div class="text-red-600">✕ <span x-text="sessionStat({{ $session['id'] }}, 'absentNotPermitted')"></span></div>
                                     </div>
                                 </td>
                                 @endforeach
@@ -1249,8 +1254,6 @@
                     @php
                     $currentSession = collect($sessions)->firstWhere('dateStr', $selectedDate);
                     $locked = $currentSession['locked'] ?? false;
-                    $mobileStats = $sessionStats[$selectedDate ?? '']
-                    ?? ['present' => 0, 'absentPermitted' => 0, 'absentNotPermitted' => 0];
                     $total = $students->count();
                     $mobileSessionId = $currentSession['id'] ?? null;
                     @endphp
@@ -1304,15 +1307,15 @@
                             <div class="flex items-center gap-3 text-xs">
                                 <span class="flex items-center gap-1 text-green-600 font-semibold">
                                     <span class="w-2 h-2 rounded-full bg-green-500 inline-block"></span>
-                                    {{ $mobileStats['present'] }}
+                                    <span x-text="sessionStat({{ (int) $mobileSessionId }}, 'present')"></span>
                                 </span>
                                 <span class="flex items-center gap-1 text-yellow-600 font-semibold">
                                     <span class="w-2 h-2 rounded-full bg-yellow-400 inline-block"></span>
-                                    {{ $mobileStats['absentPermitted'] }}
+                                    <span x-text="sessionStat({{ (int) $mobileSessionId }}, 'absentPermitted')"></span>
                                 </span>
                                 <span class="flex items-center gap-1 text-red-600 font-semibold">
                                     <span class="w-2 h-2 rounded-full bg-red-500 inline-block"></span>
-                                    {{ $mobileStats['absentNotPermitted'] }}
+                                    <span x-text="sessionStat({{ (int) $mobileSessionId }}, 'absentNotPermitted')"></span>
                                 </span>
                                 <span class="text-slate-400">/ {{ $total }}</span>
                             </div>

@@ -1057,7 +1057,8 @@ class AttendanceManager extends BaseComponent
             $result = $this->attendanceService->saveBulkAttendance($drafts, $classId, $type);
 
             if ($result['success']) {
-                $this->loadAttendanceRecords();
+                // Quiet reload: tránh bắn attendance-records-loaded trùng với attendance-saved
+                $this->loadAttendanceRecordsQuiet();
 
                 $toastType = !empty($result['errors']) ? 'warning' : 'success';
                 $this->emit('toast', $toastType, $result['message'] ?? 'Đã lưu điểm danh');
@@ -1071,9 +1072,17 @@ class AttendanceManager extends BaseComponent
                     ]);
                 }
 
+                $savedKeys = $result['savedKeys'] ?? [];
+                $patches = [];
+                foreach ($savedKeys as $key) {
+                    if (isset($this->attendanceRecords[$key])) {
+                        $patches[$key] = $this->attendanceRecords[$key];
+                    }
+                }
+
                 $this->dispatchBrowserEvent('attendance-saved', [
-                    'records'   => $this->attendanceRecords,
-                    'savedKeys' => $result['savedKeys'] ?? [],
+                    'patches'   => $patches,
+                    'savedKeys' => $savedKeys,
                     'context'   => $this->getClientContext(),
                 ]);
             } else {

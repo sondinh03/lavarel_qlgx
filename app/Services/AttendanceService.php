@@ -232,33 +232,43 @@ class AttendanceService
 
         $statusSql = 'CASE id';
         $noteSql   = 'CASE id';
-        $bindings  = [];
+
+        $statusBindings = [];
+        $noteBindings   = [];
 
         foreach ($toUpdate as $r) {
+            $recordId = (int) $r['record_id'];
+
             $statusSql .= ' WHEN ? THEN ?';
-            $bindings[] = (int) $r['record_id'];
-            $bindings[] = (int) $r['status'];
+            $statusBindings[] = $recordId;
+            $statusBindings[] = (int) $r['status'];
 
             $noteSql .= ' WHEN ? THEN ?';
-            $bindings[] = (int) $r['record_id'];
-            $bindings[] = ($r['note'] ?? '') !== '' ? $r['note'] : null;
+            $noteBindings[] = $recordId;
+            $noteBindings[] = ($r['note'] ?? '') !== '' ? $r['note'] : null;
         }
 
         $statusSql .= ' END';
         $noteSql   .= ' END';
 
         $placeholders = implode(',', array_fill(0, count($ids), '?'));
-        $bindings[]   = $userId;
-        $bindings[]   = $now;
-        $bindings     = array_merge($bindings, $ids);
+
+        // Thứ tự bindings PHẢI khớp đúng thứ tự placeholder xuất hiện trong SQL:
+        // statusSql (N cặp) -> noteSql (N cặp) -> updated_by -> updated_at -> WHERE IN ids
+        $bindings = array_merge(
+            $statusBindings,
+            $noteBindings,
+            [$userId, $now],
+            $ids
+        );
 
         DB::update(
             "UPDATE attendance_records
-             SET status = {$statusSql},
-                 note = {$noteSql},
-                 updated_by = ?,
-                 updated_at = ?
-             WHERE id IN ({$placeholders})",
+            SET status = {$statusSql},
+                note = {$noteSql},
+                updated_by = ?,
+                updated_at = ?
+            WHERE id IN ({$placeholders})",
             $bindings
         );
     }
