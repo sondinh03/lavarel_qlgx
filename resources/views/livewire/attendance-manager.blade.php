@@ -8,7 +8,17 @@
     ]))" />
 @endsection
 
-<div class="min-h-screen bg-apple-gray p-2 sm:p-4 lg:p-6" style="min-height: calc(100vh - 56px - var(--bottom-offset));">
+<div class="min-h-screen bg-apple-gray p-2 sm:p-4 lg:p-6"
+    style="min-height: calc(100vh - 56px - var(--bottom-offset));"
+    x-data="{ showAbsentExport: false, showSummaryExport: false }"
+    x-init="
+        document.addEventListener('livewire:load', () => {
+            Livewire.on('openAbsentExportModal', () => { showAbsentExport = true; });
+            Livewire.on('closeAbsentExportModal', () => { showAbsentExport = false; });
+            Livewire.on('openSummaryExportModal', () => { showSummaryExport = true; });
+            Livewire.on('closeSummaryExportModal', () => { showSummaryExport = false; });
+        });
+    ">
 
     <a href="#main-content" class="sr-only focus:not-sr-only">Bỏ qua tới nội dung</a>
 
@@ -147,6 +157,7 @@
             records: {},
             draft: {},
             isSaving: false,
+            exportMenuOpen: false,
             context: @js($this->getClientContext()),
             livewireId: null,
             personIds: @js(($subjectTarget === 'teachers' ? collect($teachers ?? []) : collect($students ?? []))->pluck('id')->map(fn ($id) => (int) $id)->values()->all()),
@@ -305,8 +316,16 @@
             },
 
             requestExport() {
+                this.exportMenuOpen = false;
                 this.requestLeave('xuất Excel', () => {
-                    this.getLivewire().call('exportAttendance');
+                    this.getLivewire().call('openSummaryExportModal');
+                });
+            },
+
+            requestAbsentExport() {
+                this.exportMenuOpen = false;
+                this.requestLeave('xuất học sinh vắng', () => {
+                    this.getLivewire().call('openAbsentExportModal');
                 });
             },
 
@@ -490,14 +509,12 @@
                     <div class="flex flex-wrap items-center gap-2 justify-end flex-shrink-0">
                         @if($subjectTarget === 'teachers')
                             @if(auth()->user()?->canManageCatechism())
-                            <div class="flex flex-wrap items-center gap-2">
-                                <input type="date" wire:model.defer="newTeacherSessionDate"
-                                    class="px-3 py-1.5 rounded-xl border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500" />
-                                <x-button wire:click="createTeacherSession" variant="primary" size="sm"
-                                    x-on:click="if (!confirmLeave('tạo buổi')) { $event.stopImmediatePropagation(); $event.preventDefault(); }">
-                                    Thêm buổi
-                                </x-button>
-                            </div>
+                            <x-button as="a" variant="outline" size="sm"
+                                href="{{ route('session.index', ['target' => 'teachers', 'namHoc' => $selectedNamHoc]) }}"
+                                x-on:click="if (!confirmLeave('tạo buổi')) { $event.preventDefault(); return; }">
+                                <x-icon name="plus" />
+                                Tạo buổi
+                            </x-button>
                             @endif
                             @if($this->viewMode !== 'mobile')
                             <div x-show="hasDraft()" x-cloak class="flex items-center gap-2">
@@ -510,6 +527,19 @@
                             </div>
                             @endif
                         @elseif($selectedClassId && $this->viewMode !== 'mobile')
+                            @if($isAdmin)
+                            <x-button as="a" variant="outline" size="sm"
+                                href="{{ route('session.index', array_filter([
+                                    'namHoc'  => $selectedNamHoc,
+                                    'classId' => $selectedClassId,
+                                    'khoi'    => $selectedKhoi ?: null,
+                                ])) }}"
+                                x-on:click="if (!confirmLeave('tạo phiên')) { $event.preventDefault(); return; }">
+                                <x-icon name="plus" />
+                                Tạo phiên
+                            </x-button>
+                            @endif
+
                             <x-button as="a" variant="outline" size="sm" href="{{ route('attendance.statistics', [
                                     'namHoc'  => $selectedNamHoc,
                                     'classId' => $selectedClassId,
@@ -526,10 +556,49 @@
                             </x-button>
 
                             @if($isAdmin)
-                            <x-button variant="outline" size="sm" x-on:click="requestExport()">
-                                <x-icon name="file-export" />
-                                Xuất Excel
-                            </x-button>
+                            <div class="relative" @keydown.escape.window="exportMenuOpen = false">
+                                <x-button type="button" variant="outline" size="sm"
+                                    x-on:click="exportMenuOpen = !exportMenuOpen"
+                                    x-bind:aria-expanded="exportMenuOpen.toString()"
+                                    aria-haspopup="true">
+                                    <x-icon name="file-export" />
+                                    Xuất Excel
+                                    <svg class="w-3.5 h-3.5 transition-transform duration-150"
+                                        :class="{ 'rotate-180': exportMenuOpen }"
+                                        fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M19 9l-7 7-7-7" />
+                                    </svg>
+                                </x-button>
+                                <div
+                                    x-show="exportMenuOpen"
+                                    x-cloak
+                                    @click.away="exportMenuOpen = false"
+                                    x-transition:enter="transition ease-out duration-150"
+                                    x-transition:enter-start="opacity-0 scale-95 -translate-y-1"
+                                    x-transition:enter-end="opacity-100 scale-100 translate-y-0"
+                                    x-transition:leave="transition ease-in duration-100"
+                                    x-transition:leave-start="opacity-100 scale-100 translate-y-0"
+                                    x-transition:leave-end="opacity-0 scale-95 -translate-y-1"
+                                    class="absolute right-0 mt-2 w-56 bg-white/85 backdrop-blur-xl rounded-xl
+                                        border border-black/[0.06] shadow-mac py-1.5 z-50"
+                                    role="menu">
+                                    <button type="button" role="menuitem"
+                                        x-on:click="requestExport()"
+                                        class="w-full flex items-center gap-2.5 px-4 py-2 text-sm text-left
+                                            text-slate-700 hover:bg-slate-50 cursor-pointer transition-colors">
+                                        <x-icon name="file-export" class="w-4 h-4 flex-shrink-0" />
+                                        <span class="flex-1">Tổng kết điểm danh</span>
+                                    </button>
+                                    <button type="button" role="menuitem"
+                                        x-on:click="requestAbsentExport()"
+                                        class="w-full flex items-center gap-2.5 px-4 py-2 text-sm text-left
+                                            text-slate-700 hover:bg-slate-50 cursor-pointer transition-colors">
+                                        <x-icon name="file-export" class="w-4 h-4 flex-shrink-0" />
+                                        <span class="flex-1">Học sinh vắng</span>
+                                    </button>
+                                </div>
+                            </div>
                             @endif
 
                             <div x-show="hasDraft()" x-cloak class="flex items-center gap-2">
@@ -579,7 +648,10 @@
                 <x-inline-tip tone="amber">
                     Chưa có buổi {{ \App\Models\TeacherAttendanceSession::typeLabel((int) $attendanceType) }}.
                     @if(auth()->user()?->canManageCatechism())
-                    Chọn ngày ở trên rồi bấm <strong>Thêm buổi</strong>.
+                    Vào
+                    <a href="{{ route('session.index', ['target' => 'teachers', 'namHoc' => $selectedNamHoc]) }}"
+                        class="font-semibold underline hover:text-amber-950">Phiên điểm danh → Giáo lý viên</a>
+                    để tạo buổi, rồi quay lại trang này.
                     @else
                     Liên hệ Ban quản trị giáo lý để tạo buổi.
                     @endif
@@ -588,12 +660,19 @@
             <x-stats.page-empty
                 :panel="false"
                 title="Chưa có buổi điểm danh GLV"
-                description="Tạo buổi điểm danh rồi quay lại trang này để điểm."
+                description="Tạo buổi tại Phiên điểm danh, rồi quay lại trang này để điểm."
                 tone="primary">
                 <x-slot name="icon">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
                         d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
                 </x-slot>
+                @if(auth()->user()?->canManageCatechism())
+                <x-button as="a" variant="primary"
+                    href="{{ route('session.index', ['target' => 'teachers', 'namHoc' => $selectedNamHoc]) }}">
+                    <x-icon name="plus" />
+                    Tạo buổi GLV
+                </x-button>
+                @endif
             </x-stats.page-empty>
             @else
                 @if($this->viewMode !== 'mobile')
@@ -657,9 +736,6 @@
 
                                 <td class="px-4 py-3 sticky left-0 md:left-[10rem] z-[22] w-44 max-w-[11rem] shrink-0 bg-white group-hover:bg-slate-50 border-r border-black/[0.08] shadow-[4px_0_12px_-4px_rgba(0,0,0,0.12)] md:border-r-0 md:shadow-none">
                                     <span class="block font-semibold text-slate-900 text-sm truncate" title="{{ $teacher->full_name }}">{{ $teacher->full_name }}</span>
-                                    @if($teacher->teacher_code)
-                                    <span class="block text-[10px] font-mono text-primary-700 truncate mt-0.5">{{ $teacher->teacher_code }}</span>
-                                    @endif
                                 </td>
 
                                 <td class="px-4 py-3 text-sm text-slate-600 static md:sticky md:left-[21rem] z-[23] w-36 max-w-[9rem] shrink-0 bg-white group-hover:bg-slate-50 md:border-r md:border-black/[0.08] md:shadow-[4px_0_12px_-4px_rgba(0,0,0,0.12)]">
@@ -898,11 +974,8 @@
                                                     {{ $teacher->full_name }}
                                                 </div>
                                                 <div class="text-xs text-slate-500 mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-0.5">
-                                                    @if($teacher->teacher_code)
-                                                    <span class="font-mono text-primary-700">{{ $teacher->teacher_code }}</span>
-                                                    @endif
                                                     @if($teacher->parishGroup?->name)
-                                                    <span class="truncate max-w-[140px]" title="{{ $teacher->parishGroup->name }}">
+                                                    <span class="truncate max-w-[160px]" title="{{ $teacher->parishGroup->name }}">
                                                         {{ $teacher->parishGroup->name }}
                                                     </span>
                                                     @endif
@@ -1643,6 +1716,212 @@
     </div>{{-- /alpine wire:key --}}
 
         </x-mac-panel>
+
+        {{-- Modal xuất tổng kết — ngoài mac-panel (giống trang Học sinh) --}}
+        <div
+            x-show="showSummaryExport"
+            x-cloak
+            x-transition.opacity
+            class="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50 p-4"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="summary-export-title"
+            @click="showSummaryExport = false; $wire.closeSummaryExportModal()"
+            @keydown.escape.window="showSummaryExport = false; $wire.closeSummaryExportModal()">
+
+            <div
+                x-show="showSummaryExport"
+                x-transition
+                class="bg-white/90 backdrop-blur-xl rounded-2xl border border-black/[0.06] shadow-mac
+                    w-full max-w-xl max-h-[90vh] overflow-hidden flex flex-col"
+                @click.stop>
+
+                <div class="flex-shrink-0 px-6 py-5 border-b border-black/[0.06]">
+                    <div class="flex items-start justify-between gap-4">
+                        <div class="min-w-0">
+                            <h2 id="summary-export-title" class="text-xl font-semibold tracking-tight text-slate-900">
+                                Xuất tổng kết điểm danh
+                            </h2>
+                            <p class="text-sm text-slate-500 mt-1">
+                                Toàn giáo xứ · mỗi lớp một sheet · cả năm
+                                @if($selectedNamHoc)
+                                · {{ \App\Models\NamHoc::find($selectedNamHoc)?->name }}
+                                @endif
+                            </p>
+                        </div>
+                        <button type="button"
+                            @click="showSummaryExport = false; $wire.closeSummaryExportModal()"
+                            class="flex-shrink-0 p-1.5 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-black/[0.04] transition-colors">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="flex-1 overflow-y-auto p-6 space-y-5">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-500 mb-2 tracking-wide uppercase">
+                            Loại buổi
+                        </label>
+                        <div class="grid grid-cols-3 gap-3">
+                            <x-radio-card wire:model="summaryExportType" :value="0" label="Đi học và đi lễ" :checked="(int) $summaryExportType === 0" />
+                            <x-radio-card wire:model="summaryExportType" :value="1" label="Đi học" :checked="(int) $summaryExportType === 1" />
+                            <x-radio-card wire:model="summaryExportType" :value="2" label="Đi lễ" :checked="(int) $summaryExportType === 2" />
+                        </div>
+                    </div>
+
+                    <div class="bg-primary-50/80 border border-primary-200/60 rounded-xl p-4 shadow-mac-sm">
+                        <ul class="text-sm text-primary-700 space-y-1">
+                            <li>• Xuất <strong>tất cả lớp</strong> của năm học đang chọn</li>
+                            <li>• Mỗi lớp là <strong>một sheet</strong> (ma trận cả năm)</li>
+                            <li>• Chọn «Đi học và đi lễ»: cột ngày ghi rõ loại buổi</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="flex-shrink-0 px-6 py-4 border-t border-black/[0.06] bg-slate-50/70 flex justify-end gap-3">
+                    <x-button type="button" variant="outline"
+                        @click="showSummaryExport = false; $wire.closeSummaryExportModal()">
+                        Hủy
+                    </x-button>
+                    <x-button type="button" variant="primary"
+                        wire:click="exportAttendance"
+                        wire:loading.attr="disabled"
+                        wire:target="exportAttendance">
+                        <span wire:loading.remove wire:target="exportAttendance" class="inline-flex items-center gap-2">
+                            <x-icon name="file-export" />
+                            Xuất Excel
+                        </span>
+                        <span wire:loading wire:target="exportAttendance">Đang xuất…</span>
+                    </x-button>
+                </div>
+            </div>
+        </div>
+
+        {{-- Modal xuất học sinh vắng — ngoài mac-panel --}}
+        <div
+            x-show="showAbsentExport"
+            x-cloak
+            x-transition.opacity
+            class="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50 p-4"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="absent-export-title"
+            @click="showAbsentExport = false; $wire.closeAbsentExportModal()"
+            @keydown.escape.window="showAbsentExport = false; $wire.closeAbsentExportModal()">
+
+            <div
+                x-show="showAbsentExport"
+                x-transition
+                class="bg-white/90 backdrop-blur-xl rounded-2xl border border-black/[0.06] shadow-mac
+                    w-full max-w-xl max-h-[90vh] overflow-hidden flex flex-col"
+                @click.stop>
+
+                <div class="flex-shrink-0 px-6 py-5 border-b border-black/[0.06]">
+                    <div class="flex items-start justify-between gap-4">
+                        <div class="min-w-0">
+                            <h2 id="absent-export-title" class="text-xl font-semibold tracking-tight text-slate-900">
+                                Xuất học sinh vắng
+                            </h2>
+                            <p class="text-sm text-slate-500 mt-1">
+                                Toàn giáo xứ · mỗi lớp một sheet
+                                @if($selectedNamHoc)
+                                · {{ \App\Models\NamHoc::find($selectedNamHoc)?->name }}
+                                @endif
+                            </p>
+                        </div>
+                        <button type="button"
+                            @click="showAbsentExport = false; $wire.closeAbsentExportModal()"
+                            class="flex-shrink-0 p-1.5 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-black/[0.04] transition-colors">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="flex-1 overflow-y-auto p-6 space-y-5">
+                    @if($errors->has('absentFromDate') || $errors->has('absentToDate') || $errors->has('absentExportType') || $errors->has('absentExportStatus'))
+                    <div class="bg-red-50/90 border border-red-200/80 rounded-xl p-4 shadow-mac-sm text-sm text-red-700">
+                        {{ $errors->first('absentFromDate')
+                            ?: ($errors->first('absentToDate')
+                            ?: ($errors->first('absentExportType') ?: $errors->first('absentExportStatus'))) }}
+                    </div>
+                    @endif
+
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-500 mb-1.5 tracking-wide uppercase">
+                                Từ ngày <span class="text-red-500 normal-case">*</span>
+                            </label>
+                            <input type="date" wire:model.defer="absentFromDate"
+                                class="w-full h-11 px-4 py-2.5 rounded-xl border border-black/[0.06] bg-white/80 text-sm
+                                    text-slate-900 shadow-mac-sm
+                                    focus:outline-none focus:ring-2 focus:ring-primary-500/25 focus:border-primary-300/40" />
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-500 mb-1.5 tracking-wide uppercase">
+                                Đến ngày <span class="text-red-500 normal-case">*</span>
+                            </label>
+                            <input type="date" wire:model.defer="absentToDate"
+                                class="w-full h-11 px-4 py-2.5 rounded-xl border border-black/[0.06] bg-white/80 text-sm
+                                    text-slate-900 shadow-mac-sm
+                                    focus:outline-none focus:ring-2 focus:ring-primary-500/25 focus:border-primary-300/40" />
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-500 mb-2 tracking-wide uppercase">
+                            Loại buổi
+                        </label>
+                        <div class="grid grid-cols-3 gap-3">
+                            <x-radio-card wire:model="absentExportType" :value="0" label="Đi học và đi lễ" :checked="(int) $absentExportType === 0" />
+                            <x-radio-card wire:model="absentExportType" :value="1" label="Đi học" :checked="(int) $absentExportType === 1" />
+                            <x-radio-card wire:model="absentExportType" :value="2" label="Đi lễ" :checked="(int) $absentExportType === 2" />
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-500 mb-2 tracking-wide uppercase">
+                            Loại vắng
+                        </label>
+                        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                            <x-radio-card wire:model="absentExportStatus" :value="0" label="Có phép và không phép" :checked="(int) $absentExportStatus === 0" />
+                            <x-radio-card wire:model="absentExportStatus" :value="2" label="Vắng có phép" :checked="(int) $absentExportStatus === 2" />
+                            <x-radio-card wire:model="absentExportStatus" :value="3" label="Vắng không phép" :checked="(int) $absentExportStatus === 3" />
+                        </div>
+                    </div>
+
+                    <div class="bg-primary-50/80 border border-primary-200/60 rounded-xl p-4 shadow-mac-sm">
+                        <ul class="text-sm text-primary-700 space-y-1">
+                            <li>• Xuất <strong>tất cả lớp</strong> của năm học đang chọn</li>
+                            <li>• Mỗi lớp là <strong>một sheet</strong> trong file Excel</li>
+                            <li>• Định dạng giống bảng tổng kết điểm danh</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="flex-shrink-0 px-6 py-4 border-t border-black/[0.06] bg-slate-50/70 flex justify-end gap-3">
+                    <x-button type="button" variant="outline"
+                        @click="showAbsentExport = false; $wire.closeAbsentExportModal()">
+                        Hủy
+                    </x-button>
+                    <x-button type="button" variant="primary"
+                        wire:click="exportAbsentStudents"
+                        wire:loading.attr="disabled"
+                        wire:target="exportAbsentStudents">
+                        <span wire:loading.remove wire:target="exportAbsentStudents" class="inline-flex items-center gap-2">
+                            <x-icon name="file-export" />
+                            Xuất Excel
+                        </span>
+                        <span wire:loading wire:target="exportAbsentStudents">Đang xuất…</span>
+                    </x-button>
+                </div>
+            </div>
+        </div>
     </div>{{-- /main-content --}}
 </div>{{-- /min-h-screen --}}
 

@@ -99,7 +99,7 @@ class CatechismClass extends Model
 
     public function scopeActive($query)
     {
-        return $query->where('is_active', true);
+        return $query->where('classes.is_active', true);
     }
 
     public function scopeOrdered($query)

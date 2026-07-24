@@ -2,7 +2,8 @@
 
 namespace App\Http\Livewire;
 
-use App\Exports\AttendanceWorkbookExport;
+use App\Exports\AbsentStudentsWorkbookExport;
+use App\Exports\AttendanceParishWorkbookExport;
 use App\Http\Livewire\Base\BaseComponent;
 use App\Models\AttendanceRecord;
 use App\Models\AttendanceSession;
@@ -51,11 +52,28 @@ class AttendanceManager extends BaseComponent
     public $attendanceRecords = [];
     public $teacherAttendanceRecords = [];
 
-    public string $newTeacherSessionDate = '';
-
     // ==================== CLASS NAME ====================
 
     public string $selectedClassName = '';
+
+    // ==================== ABSENT EXPORT MODAL ====================
+
+    public bool $showAbsentExportModal = false;
+
+    public ?string $absentFromDate = null;
+
+    public ?string $absentToDate = null;
+
+    /** 0 = cả hai, 1 = đi học, 2 = đi lễ */
+    public int $absentExportType = 0;
+
+    /** 0 = cả hai loại vắng, 2 = có phép, 3 = không phép */
+    public int $absentExportStatus = 0;
+
+    public bool $showSummaryExportModal = false;
+
+    /** 0 = cả hai, 1 = đi học, 2 = đi lễ */
+    public int $summaryExportType = 0;
 
     // ==================== VALIDATION ====================
 
@@ -138,9 +156,6 @@ class AttendanceManager extends BaseComponent
 
         if ($this->subjectTarget === 'teachers') {
             $this->normalizeTeacherAttendanceType();
-            if (trim((string) $this->newTeacherSessionDate) === '') {
-                $this->newTeacherSessionDate = now()->toDateString();
-            }
             $this->reloadTeacherAttendanceData();
 
             return;
@@ -526,7 +541,6 @@ class AttendanceManager extends BaseComponent
             if (! $this->selectedNamHoc) {
                 $this->selectedNamHoc = $this->getDefaultNamHocId();
             }
-            $this->newTeacherSessionDate = now()->toDateString();
             $this->reloadTeacherAttendanceData();
         } else {
             $this->normalizeStudentAttendanceType();
@@ -567,7 +581,6 @@ class AttendanceManager extends BaseComponent
         return [
             'id' => (int) $teacher->id,
             'full_name' => $teacher->full_name,
-            'teacher_code' => $teacher->teacher_code,
             'saint' => [
                 'name' => $teacher->saint?->name,
             ],
@@ -793,8 +806,8 @@ class AttendanceManager extends BaseComponent
                             ->orWhere('phone_number', 'like', $term);
                     });
                 })
-                ->orderBy('last_name')
                 ->orderBy('first_name')
+                ->orderBy('last_name')
                 ->get(['id', 'saint_id', 'parish_group_id', 'last_name', 'first_name', 'teacher_code', 'phone_number'])
                 ->map(fn (Teacher $t) => $this->mapTeacherToRosterRow($t))
                 ->values();
@@ -884,64 +897,6 @@ class AttendanceManager extends BaseComponent
             'records' => $this->teacherAttendanceRecords,
             'context' => $this->getClientContext(),
         ]);
-    }
-
-    public function createTeacherSession(): void
-    {
-        if ($this->subjectTarget !== 'teachers') {
-            return;
-        }
-
-        if ($this->assignmentBlocked || ! auth()->user()?->canManageCatechism()) {
-            $this->emit('toast', 'error', 'Bạn không có quyền tạo buổi điểm danh GLV');
-
-            return;
-        }
-
-        if (! $this->selectedNamHoc || ! $this->parishId) {
-            $this->emit('toast', 'warning', 'Vui lòng chọn năm học');
-
-            return;
-        }
-
-        $this->normalizeTeacherAttendanceType();
-
-        $date = trim($this->newTeacherSessionDate) !== ''
-            ? $this->newTeacherSessionDate
-            : now()->toDateString();
-
-        try {
-            Carbon::parse($date);
-        } catch (\Exception $e) {
-            $this->emit('toast', 'error', 'Ngày không hợp lệ');
-
-            return;
-        }
-
-        try {
-            $session = TeacherAttendanceSession::firstOrCreate(
-                [
-                    'parish_id' => $this->parishId,
-                    'namhoc_id' => (int) $this->selectedNamHoc,
-                    'date'      => $date,
-                    'type'      => (int) $this->attendanceType,
-                ],
-                [
-                    'status' => TeacherAttendanceSession::STATUS_OPENING,
-                ]
-            );
-
-            $this->reloadTeacherAttendanceData();
-
-            if ($session->wasRecentlyCreated) {
-                $this->emit('toast', 'success', 'Đã tạo buổi điểm danh GLV');
-            } else {
-                $this->emit('toast', 'info', 'Buổi này đã tồn tại');
-            }
-        } catch (\Exception $e) {
-            $this->logError($e, 'Error creating teacher session');
-            $this->emit('toast', 'error', 'Không tạo được buổi điểm danh GLV');
-        }
     }
 
     public function getClientContext(): string
@@ -1310,6 +1265,39 @@ class AttendanceManager extends BaseComponent
         $this->loadAttendanceRecords();
     }
 
+    public function openSummaryExportModal(): void
+    {
+        if ($this->subjectTarget === 'teachers') {
+            $this->emit('toast', 'info', 'Xuất điểm danh GLV sẽ bổ sung sau');
+
+            return;
+        }
+
+        if (! auth()->user()?->canManage()) {
+            $this->emit('toast', 'error', 'Bạn không có quyền xuất danh sách');
+
+            return;
+        }
+
+        if (! $this->selectedNamHoc || ! $this->parishId) {
+            $this->emit('toast', 'warning', 'Vui lòng chọn năm học');
+
+            return;
+        }
+
+        $this->summaryExportType = 0;
+        $this->showSummaryExportModal = true;
+        $this->resetValidation();
+        $this->emit('openSummaryExportModal');
+    }
+
+    public function closeSummaryExportModal(): void
+    {
+        $this->showSummaryExportModal = false;
+        $this->resetValidation();
+        $this->emit('closeSummaryExportModal');
+    }
+
     public function exportAttendance()
     {
         if ($this->subjectTarget === 'teachers') {
@@ -1318,32 +1306,194 @@ class AttendanceManager extends BaseComponent
             return;
         }
 
-        if (!$this->selectedClassId) {
-            $this->emit('toast', 'warning', 'Vui lòng chọn lớp');
+        if (! auth()->user()?->canManage()) {
+            $this->emit('toast', 'error', 'Bạn không có quyền xuất danh sách');
+
             return;
         }
 
-        if (!$this->assertCanMarkClass((int) $this->selectedClassId)) {
-            $this->emit('toast', 'error', 'Bạn không có quyền');
+        if (! $this->selectedNamHoc || ! $this->parishId) {
+            $this->emit('toast', 'warning', 'Vui lòng chọn năm học');
+
             return;
         }
 
-        // Xuất cả năm, gồm cả hai loại Đi học và Đi lễ
-        $sessionsQuery = AttendanceSession::where('class_id', $this->selectedClassId);
+        $this->validate([
+            'summaryExportType' => 'required|integer|in:0,1,2',
+        ]);
+
+        $classIds = CatechismClass::query()
+            ->where('parish_id', $this->parishId)
+            ->where('school_year_id', (int) $this->selectedNamHoc)
+            ->active()
+            ->pluck('id');
+
+        if ($classIds->isEmpty()) {
+            $this->emit('toast', 'warning', 'Năm học chưa có lớp để xuất');
+
+            return;
+        }
+
+        $type = (int) $this->summaryExportType;
+        $exportType = $type === 0 ? null : $type;
+
+        $sessionsQuery = AttendanceSession::query()
+            ->whereIn('class_id', $classIds)
+            ->when($exportType !== null, fn ($q) => $q->where('type', $exportType));
 
         if ($sessionsQuery->count() === 0) {
             $this->emit('toast', 'warning', 'Chưa có buổi để xuất');
+
             return;
         }
 
-        $className = CatechismClass::findOrFail($this->selectedClassId)->name;
+        $namHocName = NamHoc::where('id', $this->selectedNamHoc)->value('name') ?? 'NamHoc';
+        $parishId = (int) $this->parishId;
+        $namHocId = (int) $this->selectedNamHoc;
+        $safeYear = preg_replace('/[\\\\\/\?\*\[\]\:]/', '-', (string) $namHocName) ?: 'NamHoc';
 
-        return response()->streamDownload(function () {
+        $this->showSummaryExportModal = false;
+        $this->emit('closeSummaryExportModal');
+
+        return response()->streamDownload(function () use ($parishId, $namHocId, $exportType) {
             echo \Maatwebsite\Excel\Facades\Excel::raw(
-                new AttendanceWorkbookExport((int) $this->selectedClassId),
+                new AttendanceParishWorkbookExport($parishId, $namHocId, $exportType),
                 \Maatwebsite\Excel\Excel::XLSX
             );
-        }, 'DiemDanh_' . $className . '_CaNam_' . now()->format('dmY_His') . '.xlsx');
+        }, 'DiemDanh_ToanXu_' . $safeYear . '_CaNam_' . now()->format('dmY_His') . '.xlsx');
+    }
+
+    public function openAbsentExportModal(): void
+    {
+        if ($this->subjectTarget === 'teachers') {
+            return;
+        }
+
+        if (! auth()->user()?->canManage()) {
+            $this->emit('toast', 'error', 'Bạn không có quyền xuất danh sách');
+
+            return;
+        }
+
+        if (! $this->selectedNamHoc || ! $this->parishId) {
+            $this->emit('toast', 'warning', 'Vui lòng chọn năm học');
+
+            return;
+        }
+
+        $this->initAbsentExportDefaults();
+        $this->showAbsentExportModal = true;
+        $this->emit('openAbsentExportModal');
+    }
+
+    public function closeAbsentExportModal(): void
+    {
+        $this->showAbsentExportModal = false;
+        $this->resetValidation();
+        $this->emit('closeAbsentExportModal');
+    }
+
+    protected function initAbsentExportDefaults(): void
+    {
+        $today = Carbon::today()->format('Y-m-d');
+
+        $this->absentFromDate = $today;
+        $this->absentToDate = $today;
+        $this->absentExportType = 0;
+        $this->absentExportStatus = 0;
+        $this->resetValidation();
+    }
+
+    public function exportAbsentStudents()
+    {
+        if ($this->subjectTarget === 'teachers') {
+            return;
+        }
+
+        if (! auth()->user()?->canManage()) {
+            $this->emit('toast', 'error', 'Bạn không có quyền xuất danh sách');
+
+            return;
+        }
+
+        if (! $this->selectedNamHoc || ! $this->parishId) {
+            $this->emit('toast', 'warning', 'Vui lòng chọn năm học');
+
+            return;
+        }
+
+        $this->validate([
+            'absentFromDate' => 'required|date',
+            'absentToDate' => 'required|date|after_or_equal:absentFromDate',
+            'absentExportType' => 'required|integer|in:0,1,2',
+            'absentExportStatus' => 'required|integer|in:0,2,3',
+        ], [
+            'absentFromDate.required' => 'Vui lòng chọn từ ngày',
+            'absentToDate.required' => 'Vui lòng chọn đến ngày',
+            'absentToDate.after_or_equal' => 'Đến ngày phải từ ngày bắt đầu trở đi',
+        ]);
+
+        $classIds = CatechismClass::query()
+            ->where('parish_id', $this->parishId)
+            ->where('school_year_id', (int) $this->selectedNamHoc)
+            ->active()
+            ->pluck('id');
+
+        if ($classIds->isEmpty()) {
+            $this->emit('toast', 'warning', 'Năm học chưa có lớp để xuất');
+
+            return;
+        }
+
+        $type = (int) $this->absentExportType;
+        $statusFilter = (int) $this->absentExportStatus;
+        $statuses = $statusFilter === 0
+            ? [AttendanceRecord::STATUS_ABSENT_EXCUSED, AttendanceRecord::STATUS_ABSENT_UNEXCUSED]
+            : [$statusFilter];
+
+        $hasAbsent = AttendanceRecord::query()
+            ->whereIn('status', $statuses)
+            ->whereHas('session', function ($q) use ($classIds, $type) {
+                $q->whereIn('class_id', $classIds)
+                    ->whereDate('date', '>=', $this->absentFromDate)
+                    ->whereDate('date', '<=', $this->absentToDate)
+                    ->when($type !== 0, fn ($qq) => $qq->where('type', $type));
+            })
+            ->exists();
+
+        if (! $hasAbsent) {
+            $this->emit('toast', 'warning', 'Không có học sinh vắng trong khoảng đã chọn');
+
+            return;
+        }
+
+        $namHocName = NamHoc::where('id', $this->selectedNamHoc)->value('name') ?? 'NamHoc';
+        $fromLabel = Carbon::parse($this->absentFromDate)->format('dmY');
+        $toLabel = Carbon::parse($this->absentToDate)->format('dmY');
+        $fromDate = $this->absentFromDate;
+        $toDate = $this->absentToDate;
+        $parishId = (int) $this->parishId;
+        $namHocId = (int) $this->selectedNamHoc;
+        $exportType = $type === 0 ? null : $type;
+
+        $this->showAbsentExportModal = false;
+        $this->emit('closeAbsentExportModal');
+
+        $safeYear = preg_replace('/[\\\\\/\?\*\[\]\:]/', '-', (string) $namHocName) ?: 'NamHoc';
+
+        return response()->streamDownload(function () use ($parishId, $namHocId, $fromDate, $toDate, $exportType, $statuses) {
+            echo \Maatwebsite\Excel\Facades\Excel::raw(
+                new AbsentStudentsWorkbookExport(
+                    $parishId,
+                    $namHocId,
+                    $fromDate,
+                    $toDate,
+                    $exportType,
+                    $statuses,
+                ),
+                \Maatwebsite\Excel\Excel::XLSX
+            );
+        }, 'HocSinhVang_ToanXu_' . $safeYear . "_{$fromLabel}_{$toLabel}_" . now()->format('His') . '.xlsx');
     }
 
     // ==================== EVENT HANDLERS ====================

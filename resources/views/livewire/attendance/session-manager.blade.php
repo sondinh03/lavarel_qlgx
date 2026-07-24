@@ -20,25 +20,65 @@
         <x-mac-panel :overflow="true">
             <x-page-header
                 title="Quản lý phiên điểm danh"
-                description="Danh sách buổi điểm danh theo lớp và năm học"
+                :description="$subjectTarget === 'teachers'
+                    ? 'Danh sách buổi điểm danh giáo lý viên theo năm học'
+                    : 'Danh sách buổi điểm danh theo lớp và năm học'"
                 icon-type="attendance"
                 :count="$total" />
 
             <div class="p-4 lg:p-6 mac-hairline-b bg-white/30">
                 <div class="flex flex-col gap-4">
+                    @if(auth()->user()?->canManageCatechism())
+                    <div class="flex gap-1 p-1 rounded-xl bg-black/[0.04] border border-black/[0.04] w-fit flex-shrink-0">
+                        <button type="button" wire:click="switchSubjectTarget('students')"
+                            class="px-4 py-1.5 text-sm font-semibold rounded-lg transition-all
+                                {{ $subjectTarget !== 'teachers'
+                                    ? 'bg-white/90 text-primary-600 shadow-mac-sm'
+                                    : 'text-slate-600 hover:text-slate-900' }}">
+                            Học sinh
+                        </button>
+                        <button type="button" wire:click="switchSubjectTarget('teachers')"
+                            class="px-4 py-1.5 text-sm font-semibold rounded-lg transition-all
+                                {{ $subjectTarget === 'teachers'
+                                    ? 'bg-white/90 text-primary-600 shadow-mac-sm'
+                                    : 'text-slate-600 hover:text-slate-900' }}">
+                            Giáo lý viên
+                        </button>
+                    </div>
+                    @endif
+
                     <div class="flex items-end gap-3">
                         <div class="flex-1 min-w-0">
                             <livewire:filters.filter-bar
+                                wire:key="session-filters-{{ $subjectTarget }}"
                                 :parish-id="$parishId"
                                 :show-nam-hoc="true"
-                                :show-khoi="true"
-                                :show-lop="true"
+                                :show-khoi="$subjectTarget !== 'teachers'"
+                                :show-lop="$subjectTarget !== 'teachers'"
                                 :show-ky="false"
                                 :selected-nam-hoc="$selectedNamHoc"
                                 :selected-khoi="$selectedKhoi"
                                 :selected-lop="$selectedClassId" />
                         </div>
                     </div>
+
+                    @if($subjectTarget !== 'teachers' && $selectedNamHoc)
+                    <x-inline-tip>
+                        Để tạo phiên <strong>đồng loạt toàn giáo xứ</strong>, để trống bộ lọc
+                        <strong>Khối</strong> và <strong>Lớp</strong> (tức chọn tất cả), rồi bấm
+                        <strong>Tạo phiên mới</strong> — hệ thống sẽ tạo cho mọi lớp trong năm học.
+                        @if(!$selectedKhoi && !$selectedClassId)
+                        <span class="block mt-1 text-primary-800">
+                            Hiện đang áp dụng cho <strong>toàn bộ {{ count($this->resolveClassIds()) }} lớp</strong> của năm học.
+                        </span>
+                        @elseif($selectedKhoi && !$selectedClassId)
+                        <span class="block mt-1">
+                            Hiện đang áp dụng cho <strong>toàn khối</strong>
+                            ({{ count($this->resolveClassIds()) }} lớp). Bỏ chọn khối nếu muốn tạo toàn xứ.
+                        </span>
+                        @endif
+                    </x-inline-tip>
+                    @endif
 
                     <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                         <x-search-input
@@ -125,9 +165,11 @@
                             {{-- Loại --}}
                             <td class="px-4 py-3">
                                 <span class="inline-flex items-center px-2.5 py-0.5 rounded-lg text-xs font-semibold
-                                    {{ $session['type'] == 1
+                                    {{ (int) $session['type'] === 1
                                         ? 'bg-primary-50/80 text-primary-700'
-                                        : 'bg-purple-50/80 text-purple-700' }}">
+                                        : ((int) $session['type'] === 3
+                                            ? 'bg-amber-50/80 text-amber-700'
+                                            : 'bg-purple-50/80 text-purple-700') }}">
                                     {{ $session['typeLabel'] }}
                                 </span>
                             </td>
@@ -183,6 +225,17 @@
                                 <div class="flex items-center justify-center gap-2">
                                     {{-- Điểm danh --}}
                                     <x-tooltip content="Điểm danh">
+                                        @if($subjectTarget === 'teachers')
+                                        <a href="{{ route('attendance.show', [
+                                                'target' => 'teachers',
+                                                'namHoc' => $selectedNamHoc,
+                                                'type'   => $session['type'],
+                                                'date'   => $session['dateStr'],
+                                            ]) }}"
+                                            class="p-2 hover:bg-primary-50 text-primary-600 rounded-lg transition-all">
+                                            <x-icon name="clipboard" />
+                                        </a>
+                                        @else
                                         <a href="{{ route('attendance.show', [
                                                 'classId' => $selectedClassId ?? '',
                                                 'type'    => $session['type'],
@@ -191,6 +244,7 @@
                                             class="p-2 hover:bg-primary-50 text-primary-600 rounded-lg transition-all">
                                             <x-icon name="clipboard" />
                                         </a>
+                                        @endif
                                     </x-tooltip>
 
                                     {{-- Toggle trạng thái --}}
@@ -254,7 +308,9 @@
             @else
             <div class="px-4 lg:px-6 py-3 mac-hairline-b">
                 <x-inline-tip>
-                    @if(!$selectedClassId)
+                    @if($subjectTarget === 'teachers')
+                        Chưa có buổi điểm danh GLV. Bấm <strong>Tạo phiên mới</strong> (theo ngày / tuần / tùy chọn).
+                    @elseif(!$selectedClassId)
                         Chọn <strong>khối → lớp</strong> ở bộ lọc, rồi bấm <strong>Tạo phiên mới</strong>.
                     @else
                         Lớp này chưa có buổi. Bấm <strong>Tạo phiên mới</strong> (theo ngày / tuần / tùy chọn).
@@ -265,13 +321,21 @@
             <x-stats.page-empty
                 :panel="false"
                 tone="primary"
-                :title="!empty(trim($search)) ? 'Không tìm thấy phiên điểm danh' : (!$selectedClassId ? 'Vui lòng chọn lớp' : 'Chưa có phiên điểm danh')"
-                :description="!empty(trim($search)) ? 'Thử thay đổi từ khóa tìm kiếm' : (!$selectedClassId ? 'Chọn lớp ở bộ lọc phía trên' : 'Tạo phiên điểm danh đầu tiên cho lớp')">
+                :title="!empty(trim($search))
+                    ? 'Không tìm thấy phiên điểm danh'
+                    : ($subjectTarget === 'teachers'
+                        ? 'Chưa có buổi điểm danh GLV'
+                        : (!$selectedClassId ? 'Vui lòng chọn lớp' : 'Chưa có phiên điểm danh'))"
+                :description="!empty(trim($search))
+                    ? 'Thử thay đổi từ khóa tìm kiếm'
+                    : ($subjectTarget === 'teachers'
+                        ? 'Tạo buổi điểm danh GLV đầu tiên cho năm học'
+                        : (!$selectedClassId ? 'Chọn lớp ở bộ lọc phía trên' : 'Tạo phiên điểm danh đầu tiên cho lớp'))">
                 <x-slot name="icon">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
                         d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                 </x-slot>
-                @if(empty(trim($search)) && $selectedClassId)
+                @if(empty(trim($search)) && ($subjectTarget === 'teachers' || $selectedClassId))
                 <x-button wire:click="create" variant="primary">
                     <x-icon name="plus" />
                     Tạo phiên đầu tiên
@@ -319,11 +383,15 @@
                 <div class="flex items-start justify-between gap-4">
                     <div class="flex-1 min-w-0">
                         <h2 id="session-modal-title" class="text-xl font-semibold tracking-tight text-slate-900">
-                            Tạo phiên điểm danh
+                            {{ $subjectTarget === 'teachers' ? 'Tạo buổi điểm danh GLV' : 'Tạo phiên điểm danh' }}
                         </h2>
                         <p class="mt-1 text-sm text-slate-500 flex items-center gap-2 flex-wrap">
                             <span>Áp dụng:</span>
-                            @if($selectedClassId)
+                            @if($subjectTarget === 'teachers')
+                            <span class="font-semibold text-primary-700">
+                                Toàn giáo xứ · {{ $currentNamHoc?->name ?? 'Năm học' }}
+                            </span>
+                            @elseif($selectedClassId)
                             <span class="font-semibold text-primary-700">
                                 Lớp {{ $this->selectedClassName }}
                             </span>
@@ -336,9 +404,11 @@
                                 Toàn bộ năm học
                             </span>
                             @endif
+                            @if($subjectTarget !== 'teachers')
                             <span class="text-xs text-slate-400">
                                 ({{ count($this->resolveClassIds()) }} lớp)
                             </span>
+                            @endif
                         </p>
                     </div>
                     <button wire:click="closeModal" type="button"
@@ -378,10 +448,18 @@
                     <label class="block text-xs font-semibold text-slate-500 mb-2 tracking-wide uppercase">
                         Loại điểm danh <span class="text-red-500 normal-case">*</span>
                     </label>
+                    @if($subjectTarget === 'teachers')
+                    <div class="grid grid-cols-3 gap-3">
+                        <x-radio-card wire:model="type" :value="1" label="Đi dạy" :checked="$type == 1" />
+                        <x-radio-card wire:model="type" :value="2" label="Đi lễ"  :checked="$type == 2" />
+                        <x-radio-card wire:model="type" :value="3" label="Họp"    :checked="$type == 3" />
+                    </div>
+                    @else
                     <div class="grid grid-cols-2 gap-3">
                         <x-radio-card wire:model="type" :value="1" label="Điểm danh đi học" :checked="$type == 1" />
                         <x-radio-card wire:model="type" :value="2" label="Điểm danh đi lễ"  :checked="$type == 2" />
                     </div>
+                    @endif
                 </div>
 
                 {{-- Chế độ tạo --}}
@@ -538,8 +616,13 @@
                                 d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                         </svg>
                         <ul class="text-sm text-primary-700 space-y-1">
+                            @if($subjectTarget === 'teachers')
+                            <li>• Mỗi buổi áp dụng cho toàn bộ GLV của giáo xứ (không theo lớp)</li>
+                            <li>• Buổi đã tồn tại (cùng năm học, loại, ngày) sẽ bị bỏ qua</li>
+                            @else
                             <li>• Ngày ngoài HK1/HK2 (kỳ hè, nghỉ giữa kỳ) vẫn tạo được; semester để trống</li>
                             <li>• Phiên đã tồn tại (cùng lớp, loại, ngày) sẽ bị bỏ qua</li>
+                            @endif
                             @if($createMode === 'single')
                             <li>• Tạo một phiên cho ngày đã chọn</li>
                             @elseif($createMode === 'weekly')

@@ -37,11 +37,13 @@ class AttendanceExport implements FromCollection, WithHeadings, WithMapping, Wit
 
     /**
      * @param  int|null  $semester  1|2 = học kỳ, 3 = hè, null = cả năm
+     * @param  int|null  $attendanceType  1=đi học, 2=đi lễ, null=cả hai
      */
     public function __construct(
         private ?int $classId,
         private ?int $semester = null,
-        private int $attendanceType = 1,
+        private ?int $attendanceType = 1,
+        private string $sheetTitle = '',
     ) {}
 
     public function collection()
@@ -82,12 +84,16 @@ class AttendanceExport implements FromCollection, WithHeadings, WithMapping, Wit
         foreach ($this->sessions ?? [] as $session) {
             $date = $session->date;
             $dayName = ['CN', 'T2', 'T3', 'T4', 'T5', 'T6', 'T7'][$date->dayOfWeek];
-            $headings[] = "{$dayName} {$date->format('d/m')}";
+            $typePrefix = '';
+            if ($this->attendanceType === null) {
+                $typePrefix = ((int) $session->type === AttendanceSession::TYPE_CEREMONY ? 'Lễ ' : 'Học ');
+            }
+            $headings[] = "{$typePrefix}{$dayName} {$date->format('d/m')}";
         }
 
         $headings[] = 'Có mặt';
-        $headings[] = 'Vắng CP';
-        $headings[] = 'Vắng KP';
+        $headings[] = 'Vắng có phép';
+        $headings[] = 'Vắng không phép';
         $headings[] = 'Tỷ lệ có mặt (%)';
 
         return $headings;
@@ -152,9 +158,15 @@ class AttendanceExport implements FromCollection, WithHeadings, WithMapping, Wit
 
     public function title(): string
     {
-        return $this->attendanceType === AttendanceSession::TYPE_CEREMONY
-            ? 'Đi lễ'
-            : 'Đi học';
+        if ($this->sheetTitle !== '') {
+            return mb_substr($this->sheetTitle, 0, 31);
+        }
+
+        return match ($this->attendanceType) {
+            AttendanceSession::TYPE_CEREMONY => 'Đi lễ',
+            AttendanceSession::TYPE_CLASS => 'Đi học',
+            default => 'Điểm danh',
+        };
     }
 
     public function registerEvents(): array
@@ -166,7 +178,11 @@ class AttendanceExport implements FromCollection, WithHeadings, WithMapping, Wit
 
                 $class = CatechismClass::find($this->classId);
                 $className = $class->name ?? '-';
-                $typeLabel = $this->attendanceType === AttendanceSession::TYPE_CEREMONY ? 'Đi lễ' : 'Đi học';
+                $typeLabel = match ($this->attendanceType) {
+                    AttendanceSession::TYPE_CEREMONY => 'Đi lễ',
+                    AttendanceSession::TYPE_CLASS => 'Đi học',
+                    default => 'Đi học + Đi lễ',
+                };
                 $sessionCount = $this->sessions?->count() ?? 0;
                 $lastColIndex = self::FIXED_COLUMNS + $sessionCount + self::SUMMARY_COLUMNS;
                 $lastCol = Coordinate::stringFromColumnIndex($lastColIndex);
@@ -389,8 +405,8 @@ class AttendanceExport implements FromCollection, WithHeadings, WithMapping, Wit
 
         $rows = [
             ['label' => 'Thống kê — Có mặt', 'key' => 'present'],
-            ['label' => 'Thống kê — Vắng CP', 'key' => 'excused'],
-            ['label' => 'Thống kê — Vắng KP', 'key' => 'unexcused'],
+            ['label' => 'Thống kê — Vắng có phép', 'key' => 'excused'],
+            ['label' => 'Thống kê — Vắng không phép', 'key' => 'unexcused'],
         ];
 
         $rowNum = $dataLastRow;
@@ -435,7 +451,10 @@ class AttendanceExport implements FromCollection, WithHeadings, WithMapping, Wit
 
         $this->sessions = AttendanceSession::query()
             ->where('class_id', $this->classId)
-            ->where('type', $this->attendanceType)
+            ->when(
+                $this->attendanceType !== null,
+                fn ($q) => $q->where('type', $this->attendanceType)
+            )
             ->when(
                 in_array($this->semester, [1, 2], true),
                 fn ($q) => $q->where('semester', $this->semester)
@@ -445,6 +464,7 @@ class AttendanceExport implements FromCollection, WithHeadings, WithMapping, Wit
                 fn ($q) => $q->whereNull('semester')
             )
             ->orderBy('date')
+            ->orderBy('type')
             ->get();
     }
 
@@ -476,8 +496,8 @@ class AttendanceExport implements FromCollection, WithHeadings, WithMapping, Wit
     {
         return match ($status) {
             AttendanceRecord::STATUS_PRESENT => 'Có mặt',
-            AttendanceRecord::STATUS_ABSENT_EXCUSED => 'Vắng CP',
-            AttendanceRecord::STATUS_ABSENT_UNEXCUSED => 'Vắng KP',
+            AttendanceRecord::STATUS_ABSENT_EXCUSED => 'Vắng có phép',
+            AttendanceRecord::STATUS_ABSENT_UNEXCUSED => 'Vắng không phép',
             default => '',
         };
     }

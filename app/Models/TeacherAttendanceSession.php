@@ -64,4 +64,35 @@ class TeacherAttendanceSession extends Model
             default => 'Khác',
         };
     }
+
+    public function getStatistics(): array
+    {
+        $records = $this->relationLoaded('records') ? $this->records : $this->records()->get();
+        $total   = $records->count();
+
+        if ($total === 0) {
+            return [
+                'total'            => 0,
+                'present'          => 0,
+                'absent_excused'   => 0,
+                'absent_unexcused' => 0,
+                'not_checked'      => 0,
+                'present_rate'     => 0,
+            ];
+        }
+
+        $present         = $records->where('status', TeacherAttendanceRecord::STATUS_PRESENT)->count();
+        $absentExcused   = $records->where('status', TeacherAttendanceRecord::STATUS_ABSENT_EXCUSED)->count();
+        $absentUnexcused = $records->where('status', TeacherAttendanceRecord::STATUS_ABSENT_UNEXCUSED)->count();
+        $notChecked      = $records->whereNull('status')->count();
+
+        return [
+            'total'            => $total,
+            'present'          => $present,
+            'absent_excused'   => $absentExcused,
+            'absent_unexcused' => $absentUnexcused,
+            'not_checked'      => $notChecked,
+            'present_rate'     => round(($present / $total) * 100, 1),
+        ];
+    }
 }

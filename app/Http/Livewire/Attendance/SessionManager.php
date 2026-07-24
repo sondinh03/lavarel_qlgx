@@ -7,6 +7,7 @@ use App\Models\AttendanceSession;
 use App\Models\CatechismClass;
 use App\Models\GradeLevel;
 use App\Models\NamHoc;
+use App\Models\TeacherAttendanceSession;
 use Carbon\Carbon;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\DB;
@@ -19,6 +20,9 @@ use Illuminate\Validation\ValidationException;
 class SessionManager extends BaseComponent
 {
     // ==================== FILTERS ====================
+
+    /** students | teachers */
+    public string $subjectTarget = 'students';
 
     /** @var int|null Selected năm học ID */
     public $selectedNamHoc = null;
@@ -106,6 +110,7 @@ class SessionManager extends BaseComponent
     protected function queryString(): array
     {
         return array_merge([
+            'subjectTarget'   => ['as' => 'target',  'except' => 'students'],
             'selectedNamHoc'  => ['as' => 'namHoc',  'except' => null],
             'selectedKhoi'    => ['as' => 'khoi',    'except' => null],
             'selectedClassId' => ['as' => 'classId', 'except' => null],
@@ -134,8 +139,20 @@ class SessionManager extends BaseComponent
 
     protected function loadInitialData(): void
     {
+        $this->subjectTarget = $this->subjectTarget === 'teachers' ? 'teachers' : 'students';
+
+        if ($this->isTeachersTarget() && ! $this->canManageTeacherSessions()) {
+            $this->subjectTarget = 'students';
+        }
+
         if (!$this->selectedNamHoc) {
             $this->selectedNamHoc = $this->getDefaultNamHocId();
+        }
+
+        if ($this->isTeachersTarget()) {
+            $this->currentNamHoc = NamHoc::find($this->selectedNamHoc);
+
+            return;
         }
 
         if (!$this->selectedClassId) {
@@ -156,6 +173,8 @@ class SessionManager extends BaseComponent
     protected function sanitizeQueryString(): void
     {
         parent::sanitizeQueryString();
+
+        $this->subjectTarget = $this->subjectTarget === 'teachers' ? 'teachers' : 'students';
 
         $this->selectedNamHoc = is_numeric($this->selectedNamHoc)
             ? (int) $this->selectedNamHoc
@@ -208,9 +227,48 @@ class SessionManager extends BaseComponent
 
         $this->selectedKhoi    = null;
         $this->selectedClassId = null;
-        $this->currentNamHoc   = null;
+        $this->currentNamHoc   = $this->selectedNamHoc
+            ? NamHoc::find($this->selectedNamHoc)
+            : null;
         $this->search          = '';
         $this->resetPage();
+    }
+
+    public function switchSubjectTarget(string $target): void
+    {
+        $target = $target === 'teachers' ? 'teachers' : 'students';
+
+        if ($target === 'teachers' && ! $this->canManageTeacherSessions()) {
+            $this->emit('toast', 'error', 'Bạn không có quyền quản lý phiên điểm danh GLV');
+
+            return;
+        }
+
+        if ($this->subjectTarget === $target) {
+            return;
+        }
+
+        $this->subjectTarget = $target;
+        $this->search = '';
+        $this->type = 1;
+        $this->resetPage();
+
+        if ($this->isTeachersTarget()) {
+            $this->currentNamHoc = NamHoc::find($this->selectedNamHoc);
+        } elseif ($this->selectedClassId) {
+            $this->loadClassInfo();
+            $this->syncDateDefaults();
+        }
+    }
+
+    protected function isTeachersTarget(): bool
+    {
+        return $this->subjectTarget === 'teachers';
+    }
+
+    protected function canManageTeacherSessions(): bool
+    {
+        return (bool) auth()->user()?->canManageCatechism();
     }
 
     public function updatedSelectedKhoi(): void
@@ -299,6 +357,10 @@ class SessionManager extends BaseComponent
      */
     protected function getCurrentSessionsQuery()
     {
+        if ($this->isTeachersTarget()) {
+            return $this->getTeacherSessionsQuery();
+        }
+
         $query = AttendanceSession::query();
 
         if ($this->selectedClassId) {
@@ -312,10 +374,37 @@ class SessionManager extends BaseComponent
             $query->whereIn('class_id', $classIds);
         }
 
-
-
         if (!empty(trim($this->search))) {
             $query->searchByDate($this->search);
+        }
+
+        $this->applySorting($query);
+
+        return $query;
+    }
+
+    protected function getTeacherSessionsQuery()
+    {
+        $query = TeacherAttendanceSession::query()
+            ->with('records')
+            ->where('parish_id', $this->parishId);
+
+        if ($this->selectedNamHoc) {
+            $query->where('namhoc_id', (int) $this->selectedNamHoc);
+        } else {
+            $query->whereRaw('1 = 0');
+        }
+
+        $search = trim((string) $this->search);
+        if ($search !== '') {
+            try {
+                $parsed = Carbon::createFromFormat('d/m/Y', $search);
+                if ($parsed) {
+                    $query->whereDate('date', $parsed->toDateString());
+                }
+            } catch (\Exception $e) {
+                // ignore invalid search
+            }
         }
 
         $this->applySorting($query);
@@ -330,6 +419,7 @@ class SessionManager extends BaseComponent
                 ->paginate($this->perPage);
         } catch (\Exception $e) {
             $this->logError($e, 'Error loading sessions', [
+                'target'  => $this->subjectTarget,
                 'namhoc'  => $this->selectedNamHoc,
                 'classId' => $this->selectedClassId,
                 'search'  => $this->search,
@@ -366,6 +456,28 @@ class SessionManager extends BaseComponent
         ];
     }
 
+    protected function mapTeacherSession(TeacherAttendanceSession $session): array
+    {
+        $stats = $session->getStatistics();
+
+        return [
+            'id'          => $session->id,
+            'dateStr'     => $session->date->format('Y-m-d'),
+            'fullDate'    => $session->date->format('d/m/Y'),
+            'dayName'     => $this->getVietnameseDayName($session->date),
+            'type'        => $session->type,
+            'typeLabel'   => TeacherAttendanceSession::typeLabel((int) $session->type),
+            'title'       => $session->note,
+            'status'      => $session->status,
+            'statusLabel' => $this->getStatusLabel((int) $session->status),
+            'statusClass' => $this->getStatusClass((int) $session->status),
+            'locked'      => (int) $session->status === TeacherAttendanceSession::STATUS_CLOSED,
+            'start_time'  => $session->start_time?->format('H:i'),
+            'end_time'    => $session->end_time?->format('H:i'),
+            'stats'       => $stats,
+        ];
+    }
+
     // ==================== EVENT HANDLERS ====================
 
     public function handleFilterChanged(array $filters): void
@@ -380,7 +492,7 @@ class SessionManager extends BaseComponent
                 $this->selectedNamHoc  = $newNamHoc;
                 $this->selectedKhoi    = null;
                 $this->selectedClassId = null;
-                $this->currentNamHoc   = null;
+                $this->currentNamHoc   = $newNamHoc ? NamHoc::find($newNamHoc) : null;
                 $this->search          = '';
             }
         }
@@ -419,7 +531,15 @@ class SessionManager extends BaseComponent
 
     public function create(): void
     {
-        $this->authorize('create', AttendanceSession::class);
+        if ($this->isTeachersTarget()) {
+            if (! $this->canManageTeacherSessions()) {
+                $this->emit('toast', 'error', 'Bạn không có quyền tạo buổi điểm danh GLV');
+
+                return;
+            }
+        } else {
+            $this->authorize('create', AttendanceSession::class);
+        }
 
         $this->currentNamHoc = NamHoc::find($this->selectedNamHoc);
 
@@ -448,6 +568,12 @@ class SessionManager extends BaseComponent
 
     public function save(): void
     {
+        if ($this->isTeachersTarget()) {
+            $this->saveTeacherSessions();
+
+            return;
+        }
+
         $this->authorize('create', AttendanceSession::class);
 
         if ($this->createMode === 'weekly' && empty($this->weekDays)) {
@@ -543,8 +669,111 @@ class SessionManager extends BaseComponent
         }
     }
 
+    protected function saveTeacherSessions(): void
+    {
+        if (! $this->canManageTeacherSessions()) {
+            $this->emit('toast', 'error', 'Bạn không có quyền tạo buổi điểm danh GLV');
+
+            return;
+        }
+
+        if (! $this->parishId || ! $this->selectedNamHoc) {
+            $this->emit('toast', 'warning', 'Vui lòng chọn năm học');
+
+            return;
+        }
+
+        if ($this->createMode === 'weekly' && empty($this->weekDays)) {
+            $this->emit('toast', 'error', 'Vui lòng chọn ít nhất 1 ngày trong tuần.');
+
+            return;
+        }
+
+        if ($this->createMode === 'custom' && empty($this->selectedDates)) {
+            $this->emit('toast', 'error', 'Vui lòng chọn ít nhất 1 ngày.');
+
+            return;
+        }
+
+        if (in_array($this->createMode, ['single', 'weekly'], true) && ! $this->startDate) {
+            $this->emit('toast', 'error', 'Vui lòng chọn ngày bắt đầu.');
+
+            return;
+        }
+
+        $rules = $this->rules;
+        $rules['type'] = 'required|integer|in:1,2,3';
+        $this->validate($rules, $this->messages);
+
+        try {
+            DB::beginTransaction();
+
+            $dates = $this->generateDates();
+
+            if (empty($dates)) {
+                $this->emit('toast', 'warning', 'Không có ngày nào được tạo. Vui lòng kiểm tra lại.');
+                DB::rollBack();
+
+                return;
+            }
+
+            $created = 0;
+            $skipped = 0;
+
+            foreach ($dates as $date) {
+                $exists = TeacherAttendanceSession::query()
+                    ->where('parish_id', $this->parishId)
+                    ->where('namhoc_id', (int) $this->selectedNamHoc)
+                    ->where('type', (int) $this->type)
+                    ->whereDate('date', $date)
+                    ->exists();
+
+                if ($exists) {
+                    $skipped++;
+                    continue;
+                }
+
+                TeacherAttendanceSession::create([
+                    'parish_id'  => $this->parishId,
+                    'namhoc_id'  => (int) $this->selectedNamHoc,
+                    'date'       => $date,
+                    'type'       => (int) $this->type,
+                    'status'     => TeacherAttendanceSession::STATUS_OPENING,
+                    'start_time' => $this->startTime ? Carbon::parse($this->startTime) : null,
+                    'end_time'   => $this->endTime ? Carbon::parse($this->endTime) : null,
+                    'note'       => $this->title ?: null,
+                ]);
+                $created++;
+            }
+
+            DB::commit();
+
+            $message = "Đã tạo {$created} buổi điểm danh GLV";
+            if ($skipped > 0) {
+                $message .= " ({$skipped} buổi đã tồn tại, bỏ qua)";
+            }
+
+            $this->emit('toast', 'success', $message);
+            $this->closeModal();
+            $this->resetPage();
+        } catch (\Exception $e) {
+            DB::rollBack();
+            $this->logError($e, 'Error creating teacher sessions', [
+                'namhoc' => $this->selectedNamHoc,
+                'mode'   => $this->createMode,
+            ]);
+            $this->emit('toast', 'error', 'Có lỗi khi tạo buổi điểm danh GLV. Vui lòng thử lại.');
+        }
+    }
+
     public function toggleStatus(int $id): void
     {
+        if ($this->isTeachersTarget()) {
+            $this->toggleTeacherStatus($id);
+
+            return;
+        }
+
         $this->authorize('update', AttendanceSession::class);
 
         try {
@@ -567,8 +796,44 @@ class SessionManager extends BaseComponent
         }
     }
 
+    protected function toggleTeacherStatus(int $id): void
+    {
+        if (! $this->canManageTeacherSessions()) {
+            $this->emit('toast', 'error', 'Bạn không có quyền thay đổi trạng thái buổi GLV');
+
+            return;
+        }
+
+        try {
+            $session = TeacherAttendanceSession::query()
+                ->where('parish_id', $this->parishId)
+                ->findOrFail($id);
+
+            $newStatus = (int) $session->status === TeacherAttendanceSession::STATUS_OPENING
+                ? TeacherAttendanceSession::STATUS_CLOSED
+                : TeacherAttendanceSession::STATUS_OPENING;
+
+            $session->update(['status' => $newStatus]);
+
+            $label = $newStatus === TeacherAttendanceSession::STATUS_CLOSED
+                ? 'Đã khóa buổi điểm danh GLV'
+                : 'Đã mở lại buổi điểm danh GLV';
+
+            $this->emit('toast', 'success', $label);
+        } catch (\Exception $e) {
+            $this->logError($e, 'Error toggling teacher session status', ['id' => $id]);
+            $this->emit('toast', 'error', 'Có lỗi khi thay đổi trạng thái');
+        }
+    }
+
     public function delete(int $id): void
     {
+        if ($this->isTeachersTarget()) {
+            $this->deleteTeacherSession($id);
+
+            return;
+        }
+
         $this->authorize('delete', AttendanceSession::class);
 
         try {
@@ -588,6 +853,37 @@ class SessionManager extends BaseComponent
             DB::rollBack();
             $this->logError($e, 'Error deleting session', ['id' => $id]);
             $this->emit('toast', 'error', 'Có lỗi khi xóa phiên điểm danh');
+        }
+    }
+
+    protected function deleteTeacherSession(int $id): void
+    {
+        if (! $this->canManageTeacherSessions()) {
+            $this->emit('toast', 'error', 'Bạn không có quyền xóa buổi điểm danh GLV');
+
+            return;
+        }
+
+        try {
+            $session = TeacherAttendanceSession::query()
+                ->where('parish_id', $this->parishId)
+                ->findOrFail($id);
+
+            if ($session->records()->whereNotNull('status')->exists()) {
+                $this->emit('toast', 'error', 'Không thể xóa buổi đã có dữ liệu điểm danh');
+
+                return;
+            }
+
+            DB::beginTransaction();
+            $session->delete();
+            DB::commit();
+
+            $this->emit('toast', 'success', 'Đã xóa buổi điểm danh GLV');
+        } catch (\Exception $e) {
+            DB::rollBack();
+            $this->logError($e, 'Error deleting teacher session', ['id' => $id]);
+            $this->emit('toast', 'error', 'Có lỗi khi xóa buổi điểm danh GLV');
         }
     }
 
@@ -776,14 +1072,20 @@ class SessionManager extends BaseComponent
 
     public function render()
     {
+        if ($this->isTeachersTarget() && ! $this->currentNamHoc && $this->selectedNamHoc) {
+            $this->currentNamHoc = NamHoc::find($this->selectedNamHoc);
+        }
+
         $paginator = $this->getSessionsPaginated();
 
-        // Map model → array hiển thị (giữ nguyên cấu trúc blade cũ)
-        $sessions = $paginator->through(fn($session) => $this->mapSession($session));
+        $sessions = $paginator->through(fn ($session) => $this->isTeachersTarget()
+            ? $this->mapTeacherSession($session)
+            : $this->mapSession($session)
+        );
 
         return view('livewire.attendance.session-manager', [
             'parishId'  => $this->parishId,
-            'sessions'  => $sessions,   // LengthAwarePaginator (đã map)
+            'sessions'  => $sessions,
             'total'     => $paginator->total(),
         ])
             ->extends('frontend.layout.main')

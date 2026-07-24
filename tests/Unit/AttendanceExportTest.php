@@ -187,12 +187,13 @@ class AttendanceExportTest extends TestCase
             'type'     => AttendanceSession::TYPE_CLASS,
         ]);
 
-        // UI đang chọn HK1 — trước đây sẽ báo "Chưa có buổi"; giờ vẫn xuất cả năm
+        // Xuất toàn xứ theo năm học — không phụ thuộc học kỳ UI
         Livewire::actingAs($this->fx->parishAdmin)
             ->test(AttendanceManager::class)
+            ->set('selectedNamHoc', $this->fx->yearA->id)
             ->set('selectedClassId', $class->id)
             ->set('selectedKy', 1)
-            ->set('attendanceType', AttendanceSession::TYPE_CLASS)
+            ->set('summaryExportType', 1)
             ->call('exportAttendance')
             ->assertHasNoErrors()
             ->assertFileDownloaded();
@@ -200,18 +201,10 @@ class AttendanceExportTest extends TestCase
 
     public function test_export_attendance_warns_when_no_sessions(): void
     {
-        $emptyClass = CatechismClass::query()->create([
-            'name'            => 'Empty Export Class',
-            'parish_id'       => $this->fx->parishA->id,
-            'school_year_id'  => $this->fx->yearA->id,
-            'grade_level_id'  => $this->fx->classAssigned->grade_level_id,
-            'is_active'       => true,
-        ]);
-
         Livewire::actingAs($this->fx->parishAdmin)
             ->test(AttendanceManager::class)
-            ->set('selectedClassId', $emptyClass->id)
-            ->set('attendanceType', AttendanceSession::TYPE_CLASS)
+            ->set('selectedNamHoc', $this->fx->yearA->id)
+            ->set('summaryExportType', 1)
             ->call('exportAttendance')
             ->assertHasNoErrors()
             ->assertEmitted('toast', 'warning', 'Chưa có buổi để xuất');
