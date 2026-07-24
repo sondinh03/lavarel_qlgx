@@ -61,6 +61,12 @@ return [
             'options' => extension_loaded('pdo_mysql') ? array_filter([
                 PDO::MYSQL_ATTR_SSL_CA => env('MYSQL_ATTR_SSL_CA'),
             ]) : [],
+            // Spatie laravel-backup / mysqldump (optional path on shared hosting)
+            'dump' => [
+                'use_single_transaction' => true,
+                'timeout' => 60 * 5,
+                // 'dump_binary_path' => '/usr/bin/', // path only, without mysqldump
+            ],
         ],
 
         'pgsql' => [

@@ -259,6 +259,7 @@ Routes: `routes/web.php` dùng URL tiếng Việt (`/diem-danh`, `/nhap-diem`, `
 |-----|------|
 | 04:00 | `backup:clean` |
 | 05:00 | `backup:run` (Spatie Backup → disk `storage/backups`) |
+| 06:00 | `backup:monitor` |
 | hằng ngày | `telescope:prune` |
 
 Cần cron `schedule:run` trên server (xem `DEPLOYMENT.md` mục 5). Lệnh custom:

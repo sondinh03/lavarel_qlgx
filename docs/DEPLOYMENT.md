@@ -187,7 +187,8 @@ Scheduler hiện chạy các việc sau (định nghĩa trong `app/Console/Kerne
 | Giờ | Lệnh | Việc |
 |-----|------|------|
 | 04:00 hằng ngày | `backup:clean` | Xóa bản backup cũ theo chính sách giữ |
-| 05:00 hằng ngày | `backup:run` | **Backup database + file** |
+| 05:00 hằng ngày | `backup:run` | **Backup database + file** → `storage/backups` |
+| 06:00 hằng ngày | `backup:monitor` | Kiểm tra sức khỏe bản backup (tuổi / dung lượng) |
 | hằng ngày | `telescope:prune` | Dọn dữ liệu debug Telescope |
 
 > Nếu cron chưa cấu hình thì **backup tự động không chạy** — kiểm tra ngay sau khi tiếp quản.
@@ -197,8 +198,10 @@ Scheduler hiện chạy các việc sau (định nghĩa trong `app/Console/Kerne
 ### 6.1. Backup tự động
 
 - Dùng gói **Backpack BackupManager** (nền Spatie laravel-backup), chạy qua cron ở mục 5.
-- File backup nằm trong `storage/app/<APP_NAME>/` (file `.zip` chứa dump SQL + file).
-- Xem/tải bản backup trong khu admin: đăng nhập `super_admin` → `/admin` → mục **Backups**.
+- Cấu hình: `config/backup.php` — đích disk `backups` → thư mục `storage/backups/<APP_NAME>/` (file `.zip` chứa dump SQL + file).
+- Lịch (`app/Console/Kernel.php`): `backup:clean` 04:00, `backup:run` 05:00, `backup:monitor` 06:00.
+- Email khi backup/cleanup **lỗi**: set `BACKUP_NOTIFICATION_EMAIL` trong `.env` (mặc định dùng `MAIL_FROM_ADDRESS`). Bật mail thành công: `BACKUP_NOTIFY_SUCCESS=true`.
+- Xem/tải bản backup trong khu admin: đăng nhập `super_admin` → `/admin/backup`.
 
 ### 6.2. Backup thủ công trước thao tác rủi ro
 
@@ -260,7 +263,7 @@ php artisan up
 | Giao diện vỡ sau deploy | Quên `npm run prod` ở máy dev trước khi đưa code lên (asset cũ/thiếu `mix-manifest.json`) |
 | Email không đến người dùng | Mục 7 — Track Delivery + Email Deliverability + log Laravel |
 | Backup không thấy chạy | Cron mục 5 chưa cấu hình, hoặc đường dẫn/php trong cron sai |
-| Hết dung lượng hosting | Dọn `storage/logs`, bản backup cũ trong `storage/app`, và kiểm tra `telescope_entries` trong DB |
+| Hết dung lượng hosting | Dọn `storage/logs`, bản backup cũ trong `storage/backups`, và kiểm tra `telescope_entries` trong DB |
 
 ## 10. Việc định kỳ cho người vận hành
 
