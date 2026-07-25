@@ -58,7 +58,15 @@
                             class="max-w-md" />
 
                         <div class="flex items-center gap-2 flex-wrap justify-end">
-                            <x-dropdown label="Excel" icon="download" align="right" position="fixed">
+                            <x-button as="a" href="{{ route('catechists.create') }}" variant="primary">
+                                <x-icon name="plus" />
+                                Thêm giáo lý viên
+                            </x-button>
+                            <x-button as="a" href="{{ route('catechists.assign') }}" variant="outline">
+                                <x-icon name="catechists" />
+                                Phân công giảng dạy
+                            </x-button>
+                            <x-dropdown label="Khác" icon="grid" align="right" position="fixed">
                                 <x-dropdown-item wire:click="export" icon="download">
                                     Xuất Excel
                                 </x-dropdown-item>
@@ -66,14 +74,6 @@
                                     Import Excel
                                 </x-dropdown-item>
                             </x-dropdown>
-                            <x-button as="a" href="{{ route('catechists.assign') }}" variant="outline">
-                                <x-icon name="catechists" />
-                                Phân công giảng dạy
-                            </x-button>
-                            <x-button as="a" href="{{ route('catechists.create') }}" variant="primary">
-                                <x-icon name="plus" />
-                                Thêm giáo lý viên
-                            </x-button>
                         </div>
                     </div>
                 </div>

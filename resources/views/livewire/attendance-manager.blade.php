@@ -157,7 +157,6 @@
             records: {},
             draft: {},
             isSaving: false,
-            exportMenuOpen: false,
             context: @js($this->getClientContext()),
             livewireId: null,
             personIds: @js(($subjectTarget === 'teachers' ? collect($teachers ?? []) : collect($students ?? []))->pluck('id')->map(fn ($id) => (int) $id)->values()->all()),
@@ -316,14 +315,12 @@
             },
 
             requestExport() {
-                this.exportMenuOpen = false;
                 this.requestLeave('xuất Excel', () => {
                     this.getLivewire().call('openSummaryExportModal');
                 });
             },
 
             requestAbsentExport() {
-                this.exportMenuOpen = false;
                 this.requestLeave('xuất học sinh vắng', () => {
                     this.getLivewire().call('openAbsentExportModal');
                 });
@@ -424,7 +421,9 @@
         x-on:attendance-records-loaded.window="onRecordsLoaded($event.detail)"
         x-on:attendance-saved.window="onSaved($event.detail)"
         x-on:attendance-state-cleared.window="onCleared()"
-        x-on:attendance-save-completed.window="onSavingCompleted()">
+        x-on:attendance-save-completed.window="onSavingCompleted()"
+        x-on:attendance-export="requestExport()"
+        x-on:attendance-absent-export="requestAbsentExport()">
 
             @php $isAdmin = auth()->user()->canManage(); @endphp
 
@@ -556,49 +555,18 @@
                             </x-button>
 
                             @if($isAdmin)
-                            <div class="relative" @keydown.escape.window="exportMenuOpen = false">
-                                <x-button type="button" variant="outline" size="sm"
-                                    x-on:click="exportMenuOpen = !exportMenuOpen"
-                                    x-bind:aria-expanded="exportMenuOpen.toString()"
-                                    aria-haspopup="true">
-                                    <x-icon name="file-export" />
-                                    Xuất Excel
-                                    <svg class="w-3.5 h-3.5 transition-transform duration-150"
-                                        :class="{ 'rotate-180': exportMenuOpen }"
-                                        fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                            d="M19 9l-7 7-7-7" />
-                                    </svg>
-                                </x-button>
-                                <div
-                                    x-show="exportMenuOpen"
-                                    x-cloak
-                                    @click.away="exportMenuOpen = false"
-                                    x-transition:enter="transition ease-out duration-150"
-                                    x-transition:enter-start="opacity-0 scale-95 -translate-y-1"
-                                    x-transition:enter-end="opacity-100 scale-100 translate-y-0"
-                                    x-transition:leave="transition ease-in duration-100"
-                                    x-transition:leave-start="opacity-100 scale-100 translate-y-0"
-                                    x-transition:leave-end="opacity-0 scale-95 -translate-y-1"
-                                    class="absolute right-0 mt-2 w-56 bg-white/85 backdrop-blur-xl rounded-xl
-                                        border border-black/[0.06] shadow-mac py-1.5 z-50"
-                                    role="menu">
-                                    <button type="button" role="menuitem"
-                                        x-on:click="requestExport()"
-                                        class="w-full flex items-center gap-2.5 px-4 py-2 text-sm text-left
-                                            text-slate-700 hover:bg-slate-50 cursor-pointer transition-colors">
-                                        <x-icon name="file-export" class="w-4 h-4 flex-shrink-0" />
-                                        <span class="flex-1">Tổng kết điểm danh</span>
-                                    </button>
-                                    <button type="button" role="menuitem"
-                                        x-on:click="requestAbsentExport()"
-                                        class="w-full flex items-center gap-2.5 px-4 py-2 text-sm text-left
-                                            text-slate-700 hover:bg-slate-50 cursor-pointer transition-colors">
-                                        <x-icon name="file-export" class="w-4 h-4 flex-shrink-0" />
-                                        <span class="flex-1">Học sinh vắng</span>
-                                    </button>
-                                </div>
-                            </div>
+                            <x-dropdown label="Khác" icon="grid" align="right" width="56">
+                                <x-dropdown-item
+                                    icon="download"
+                                    x-on:click="open = false; $dispatch('attendance-export')">
+                                    Tổng kết điểm danh
+                                </x-dropdown-item>
+                                <x-dropdown-item
+                                    icon="download"
+                                    x-on:click="open = false; $dispatch('attendance-absent-export')">
+                                    Học sinh vắng
+                                </x-dropdown-item>
+                            </x-dropdown>
                             @endif
 
                             <div x-show="hasDraft()" x-cloak class="flex items-center gap-2">
