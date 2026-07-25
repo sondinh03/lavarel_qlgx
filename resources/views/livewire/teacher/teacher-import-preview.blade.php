@@ -21,20 +21,24 @@
             <div class="px-4 lg:px-6 py-4 mac-hairline-b space-y-3">
                 <x-inline-tip tone="amber">
                     <p class="font-semibold mb-1 text-sm">Yêu cầu file Excel</p>
-                    <p class="text-amber-800/90">File phải có các cột (tên cột phải khớp chính xác):</p>
+                    <p class="text-amber-800/90">Dùng đúng file mẫu, giữ nguyên thứ tự các cột theo tiêu đề:</p>
                     <div class="mt-2 flex flex-wrap gap-2">
-                        @foreach(['ten_thanh', 'ho_ten', 'ngay_sinh', 'gioi_tinh', 'email', 'so_dien_thoai', 'giao_ho', 'tao_tai_khoan'] as $col)
-                        <code class="px-2 py-0.5 bg-amber-100 text-amber-900 rounded text-xs font-mono">{{ $col }}</code>
+                        @foreach(['Họ và tên', 'Số điện thoại'] as $col)
+                        <code class="px-2 py-0.5 bg-amber-100 text-amber-900 rounded text-xs">{{ $col }}</code>
+                        @endforeach
+                        @foreach(['Tên thánh', 'Ngày sinh', 'Giới tính', 'Email', 'Giáo họ', 'Tạo tài khoản'] as $col)
+                        <code class="px-2 py-0.5 bg-white/70 text-amber-800 border border-amber-200 rounded text-xs">{{ $col }}</code>
                         @endforeach
                     </div>
                     <p class="mt-2 text-amber-800/90">
-                        • <strong>Bắt buộc</strong>: ho_ten, so_dien_thoai<br>
-                        • <strong>gioi_tinh</strong>: nam / nữ<br>
-                        • <strong>ngay_sinh</strong>: định dạng dd/mm/yyyy<br>
-                        • <strong>tao_tai_khoan</strong>: có / không — mật khẩu mặc định = chuỗi ngày sinh <code class="font-mono">ddmmyyyy</code> (vd: 15/08/2000 → 15082000)<br>
-                        • <strong>ten_thanh</strong>, <strong>giao_ho</strong>: phải khớp tên trong hệ thống (nếu không khớp sẽ bỏ trống)
+                        • Nhập dữ liệu bắt đầu từ dòng ngay dưới dòng mô tả; không xoá / chèn thêm dòng tiêu đề<br>
+                        • <strong>Giới tính</strong>: nam / nữ<br>
+                        • <strong>Ngày sinh</strong>: định dạng dd/mm/yyyy<br>
+                        • <strong>Tạo tài khoản</strong>: có / không — mật khẩu mặc định = chuỗi ngày sinh <code>ddmmyyyy</code> (vd: 15/08/2000 → 15082000)<br>
+                        • <strong>Tên thánh</strong>, <strong>Giáo họ</strong>: phải khớp tên trong hệ thống (nếu không khớp sẽ bỏ trống)<br>
+                        • Các cột viền trắng là tùy chọn
                     </p>
-                    <a href="{{ asset('templates/teacher_import_template.xlsx') }}"
+                    <a href="{{ asset('templates/teacher_import_template.xlsx') }}?v={{ filemtime(public_path('templates/teacher_import_template.xlsx')) }}"
                         class="mt-3 inline-flex items-center gap-1.5 px-3 py-2
                                bg-amber-100 hover:bg-amber-200 text-amber-800 text-xs font-semibold
                                rounded-lg transition shadow-mac-sm">

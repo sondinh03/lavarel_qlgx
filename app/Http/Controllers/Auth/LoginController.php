@@ -146,10 +146,6 @@ class LoginController extends Controller
      */
     protected function authenticated($request, $user)
     {
-        if ($request->filled('remember')) {
-            config(['session.remember_expire' => 60 * 24 * 30]);
-        }
-
         if (! $user->isActive()) {
             return $this->logoutWithError(__('auth.inactive'));
         }

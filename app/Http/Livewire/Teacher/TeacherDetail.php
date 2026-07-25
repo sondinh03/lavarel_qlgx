@@ -90,6 +90,8 @@ class TeacherDetail extends BaseComponent
                     ? $teacher->user->getPermissionNames()->contains(CatechistPermissions::MARK_TEACHER_ATTENDANCE)
                     : false,
                 'note'                 => $teacher->note ?? '',
+                'avatar_path'          => $teacher->avatar_path ?? '',
+                'avatar_url'           => $teacher->avatar_url,
                 'created_at'           => $teacher->created_at?->format('d/m/Y H:i') ?? '',
                 'updated_at'           => $teacher->updated_at?->format('d/m/Y H:i') ?? '',
                 'classes'              => $teacher->classes->map(fn ($c) => [
@@ -122,6 +124,10 @@ class TeacherDetail extends BaseComponent
             DB::beginTransaction();
 
             $teacher = Teacher::where('parish_id', $this->parishId)->findOrFail($this->teacherId);
+
+            if ($teacher->avatar_path) {
+                delete_stored_media($teacher->avatar_path);
+            }
 
             if ($teacher->user_id) {
                 User::find($teacher->user_id)?->delete();

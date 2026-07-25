@@ -5,13 +5,17 @@ namespace App\Http\Livewire\Parish;
 use App\Models\Deanery;
 use App\Models\Diocese;
 use App\Models\ParishNew;
+use App\Services\UploadService;
 use App\Support\VietnamAddressResolver;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\Rule;
 use Livewire\Component;
+use Livewire\WithFileUploads;
 
 class ParishSettings extends Component
 {
+    use WithFileUploads;
+
     public string $name = '';
 
     public string $code = '';
@@ -27,6 +31,10 @@ class ParishSettings extends Component
     public ?string $province = null;
 
     public ?string $ward = null;
+
+    public $logo = null;
+
+    public ?string $currentLogoPath = null;
 
     public array $dioceseOptions = [];
 
@@ -55,6 +63,7 @@ class ParishSettings extends Component
         $this->ward = $parish->ward !== null && $parish->ward !== ''
             ? (string) $parish->ward
             : null;
+        $this->currentLogoPath = $parish->image ?: null;
 
         $this->dioceseOptions = Diocese::query()
             ->orderBy('name')
@@ -131,11 +140,15 @@ class ParishSettings extends Component
             'deaneryId'          => 'required|integer|exists:deanerys,id',
             'province'           => 'nullable|string|max:20',
             'ward'               => 'nullable|string|max:20',
+            'logo'               => 'nullable|image|mimes:jpg,jpeg,png,webp|max:2048',
         ], [
             'name.required'      => 'Tên giáo xứ là bắt buộc.',
             'name.unique'        => 'Tên giáo xứ đã tồn tại.',
             'dioceseId.required' => 'Vui lòng chọn giáo phận.',
             'deaneryId.required' => 'Vui lòng chọn giáo hạt.',
+            'logo.image'         => 'Logo phải là tệp hình ảnh.',
+            'logo.mimes'         => 'Logo chỉ chấp nhận định dạng JPG, PNG hoặc WEBP.',
+            'logo.max'           => 'Logo không được vượt quá 2MB.',
         ]);
 
         $deanery = Deanery::query()->find($validated['deaneryId']);
@@ -146,7 +159,7 @@ class ParishSettings extends Component
             return;
         }
 
-        $parish->update([
+        $data = [
             'name'               => trim($validated['name']),
             'parish_priest_name' => trim((string) ($validated['parish_priest_name'] ?? '')) ?: null,
             'phone'              => trim((string) ($validated['phone'] ?? '')) ?: null,
@@ -154,9 +167,44 @@ class ParishSettings extends Component
             'deanery_id'         => (int) $validated['deaneryId'],
             'province'           => $validated['province'] ?: null,
             'ward'               => $validated['ward'] ?: null,
-        ]);
+        ];
+
+        if ($this->logo) {
+            $newPath = app(UploadService::class)->upload($this->logo, 'parishes');
+
+            if ($this->currentLogoPath) {
+                delete_stored_media($this->currentLogoPath);
+            }
+
+            $data['image'] = $newPath;
+            $this->currentLogoPath = $newPath;
+        }
+
+        $parish->update($data);
+
+        $this->logo = null;
 
         $this->emit('toast', 'message', 'Đã cập nhật thông tin giáo xứ.');
+    }
+
+    public function removeLogo(): void
+    {
+        $user = Auth::user();
+        abort_unless($user && $user->isParishAdmin() && $user->parish_id, 403);
+
+        $parish = ParishNew::query()->findOrFail($user->parish_id);
+
+        if ($this->currentLogoPath) {
+            if ($parish->image) {
+                delete_stored_media($parish->image);
+                $parish->update(['image' => null]);
+            }
+
+            $this->currentLogoPath = null;
+        }
+
+        $this->logo = null;
+        $this->emit('toast', 'message', 'Đã xóa logo giáo xứ.');
     }
 
     public function render()

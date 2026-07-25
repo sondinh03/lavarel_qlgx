@@ -58,13 +58,17 @@
                             class="max-w-md" />
 
                         <div class="flex items-center gap-2 flex-wrap justify-end">
+                            <x-dropdown label="Excel" icon="download" align="right" position="fixed">
+                                <x-dropdown-item wire:click="export" icon="download">
+                                    Xuất Excel
+                                </x-dropdown-item>
+                                <x-dropdown-item as="a" href="{{ route('catechists.import') }}" icon="upload">
+                                    Import Excel
+                                </x-dropdown-item>
+                            </x-dropdown>
                             <x-button as="a" href="{{ route('catechists.assign') }}" variant="outline">
                                 <x-icon name="catechists" />
                                 Phân công giảng dạy
-                            </x-button>
-                            <x-button as="a" href="{{ route('catechists.import') }}" variant="outline">
-                                <x-icon name="upload" />
-                                Import Excel
                             </x-button>
                             <x-button as="a" href="{{ route('catechists.create') }}" variant="primary">
                                 <x-icon name="plus" />
@@ -76,20 +80,40 @@
             </div>
 
             @if($teachers->count() > 0)
+            <div class="px-4 lg:px-6 py-3 mac-hairline-b">
+                <x-inline-tip>
+                    Chọn checkbox từng giáo lý viên (hoặc chọn cả trang) để <strong>In thẻ</strong>,
+                    <strong>Đánh dấu đã nghỉ</strong> hoặc <strong>Xóa</strong> hàng loạt.
+                </x-inline-tip>
+            </div>
+
             <div class="overflow-x-auto">
                 <table class="w-full">
                     <thead class="bg-slate-50/50 mac-hairline-b">
                         <tr>
+                            <x-table-header class="w-12 text-center">
+                                <x-checkbox wire:model="selectAll" />
+                            </x-table-header>
                             <x-table-header class="w-12">STT</x-table-header>
                             <x-table-header class="w-14">Ảnh</x-table-header>
-                            <x-table-header>Mã GLV</x-table-header>
                             <x-table-header>Tên thánh</x-table-header>
-                            <x-table-header class="w-[160px]">Họ & Tên đệm</x-table-header>
-                            <x-table-header>Tên</x-table-header>
+                            <x-table-header>Họ đệm</x-table-header>
+                            <x-table-header
+                                :sortable="true"
+                                sort-field="first_name"
+                                :current-sort="$sortField"
+                                :sort-direction="$sortDirection">
+                                Tên
+                            </x-table-header>
                             <x-table-header>Giới tính</x-table-header>
-                            <x-table-header>Ngày sinh</x-table-header>
+                            <x-table-header
+                                :sortable="true"
+                                sort-field="birthday"
+                                :current-sort="$sortField"
+                                :sort-direction="$sortDirection">
+                                Ngày sinh
+                            </x-table-header>
                             <x-table-header>Điện thoại</x-table-header>
-                            <x-table-header>Email</x-table-header>
                             <x-table-header>Giáo họ</x-table-header>
                             <x-table-header class="text-center">Trạng thái</x-table-header>
                             <x-table-header class="text-center w-28">Thao tác</x-table-header>
@@ -99,25 +123,29 @@
                         @foreach($teachers as $index => $teacher)
                         <tr class="hover:bg-black/[0.03] transition-colors" wire:key="teacher-{{ $teacher->id }}">
 
+                            <td class="px-4 py-3 text-center">
+                                <x-checkbox wire:model="selectedTeachers" value="{{ $teacher->id }}" />
+                            </td>
+
                             <td class="px-4 py-3 text-sm text-slate-500">
                                 {{ ($teachers->firstItem() ?? 0) + $index }}
                             </td>
 
                             <td class="px-4 py-3">
                                 <div class="w-9 h-9 rounded-full overflow-hidden bg-slate-100 flex items-center justify-center flex-shrink-0 text-xs font-semibold text-slate-500">
+                                    @if($teacher->avatar_path)
+                                    <img src="{{ $teacher->avatar_url }}" alt="" class="w-full h-full object-cover" />
+                                    @else
                                     {{ strtoupper(mb_substr($teacher->last_name ?? '', 0, 1) . mb_substr($teacher->first_name ?? '', 0, 1)) }}
+                                    @endif
                                 </div>
-                            </td>
-
-                            <td class="px-4 py-3 text-sm font-mono text-primary-700 whitespace-nowrap">
-                                {{ $teacher->teacher_code ?? '—' }}
                             </td>
 
                             <td class="px-4 py-3 text-sm text-slate-900 whitespace-nowrap">
                                 {{ $teacher->saint->name ?? '—' }}
                             </td>
 
-                            <td class="px-4 py-3 text-sm font-semibold text-slate-900 whitespace-nowrap">
+                            <td class="px-4 py-3 text-sm text-slate-900 whitespace-nowrap">
                                 {{ $teacher->last_name ?: '—' }}
                             </td>
 
@@ -144,12 +172,6 @@
 
                             <td class="px-4 py-3 text-sm text-slate-700 whitespace-nowrap">
                                 {{ $teacher->phone_number ?: '—' }}
-                            </td>
-
-                            <td class="px-4 py-3 text-sm text-slate-500 max-w-[180px]">
-                                <span class="block truncate" title="{{ $teacher->email }}">
-                                    {{ $teacher->email ?: '—' }}
-                                </span>
                             </td>
 
                             <td class="px-4 py-3 text-sm text-slate-700 whitespace-nowrap">
@@ -225,4 +247,44 @@
             @endif
         </x-mac-panel>
     </div>
+
+    @if(count($selectedTeachers) > 0)
+    <div class="fixed right-0 z-40 px-3 sm:px-4"
+        style="left: var(--sidebar-current, 0px); bottom: calc(var(--bottom-offset, 0px) + env(safe-area-inset-bottom, 0px) + 0.75rem);">
+        <div class="mx-auto max-w-7xl">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3
+                px-4 py-3 rounded-2xl
+                bg-white/90 backdrop-blur-xl border border-black/[0.06] shadow-mac">
+                <span class="text-sm font-semibold text-slate-800">
+                    Đã chọn <span class="text-primary-700">{{ count($selectedTeachers) }}</span> giáo lý viên
+                </span>
+                <div class="flex items-center gap-2 flex-wrap justify-end">
+                    <x-button wire:click="printSelected" variant="primary" size="sm">
+                        <x-icon name="printer" />
+                        In thẻ
+                    </x-button>
+                    <x-button
+                        variant="warning"
+                        size="sm"
+                        wire="markSelectedInactive"
+                        confirm="Đánh dấu các giáo lý viên đã chọn là đã nghỉ? Họ sẽ không còn ở trạng thái hoạt động.">
+                        <x-icon name="archive" />
+                        Đánh dấu đã nghỉ
+                    </x-button>
+                    <x-button
+                        variant="danger"
+                        size="sm"
+                        wire="deleteSelected"
+                        confirm="Xóa các giáo lý viên đã chọn sẽ xóa luôn tài khoản đăng nhập. Bạn chắc chắn?">
+                        <x-icon name="trash" />
+                        Xóa
+                    </x-button>
+                    <x-button type="button" variant="subtle" size="sm" wire:click="$set('selectedTeachers', [])">
+                        Bỏ chọn
+                    </x-button>
+                </div>
+            </div>
+        </div>
+    </div>
+    @endif
 </div>

@@ -8,15 +8,19 @@ use App\Models\ParishGroup;
 use App\Models\Teacher;
 use App\Models\User;
 use App\Services\CatechistAccess;
+use App\Services\UploadService;
 use App\Support\CatechistDefaultPassword;
 use App\Support\CatechistPermissions;
 use App\Support\UserAccountEmailResolver;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Support\Facades\DB;
+use Livewire\WithFileUploads;
 use Spatie\Permission\PermissionRegistrar;
 
 class TeacherEdit extends BaseComponent
 {
+    use WithFileUploads;
+
     public $teacherId = null;
     public $isEdit = false;
     public $isLoading = true;
@@ -34,10 +38,13 @@ class TeacherEdit extends BaseComponent
     public $is_active = true;
     public $note = '';
     public $create_account = true;
-    public $reset_password = false;
+    public $new_password = '';
+    public $new_password_confirmation = '';
     public $has_account = false;
     public $login_identifier = '';
     public $login_is_phone = false;
+    public $avatar_path = null;
+    public $existing_avatar = null;
 
     /** Chỉ parish_admin / super_admin được chỉnh */
     public bool $canGrantElevated = false;
@@ -60,6 +67,7 @@ class TeacherEdit extends BaseComponent
         'parish_group_id' => 'nullable|integer|exists:parish_groups,id',
         'is_active'       => 'boolean',
         'note'            => 'nullable|string',
+        'avatar_path'     => 'nullable|image|max:2048',
     ];
 
     protected $messages = [
@@ -70,6 +78,10 @@ class TeacherEdit extends BaseComponent
         'email.email'            => 'Email không đúng định dạng',
         'saint_id.exists'        => 'Tên thánh không tồn tại',
         'parish_group_id.exists' => 'Giáo họ không tồn tại',
+        'avatar_path.image'      => 'Ảnh đại diện phải là tệp hình ảnh',
+        'avatar_path.max'        => 'Ảnh đại diện không được vượt quá 2MB',
+        'new_password.min'       => 'Mật khẩu mới phải có ít nhất 8 ký tự',
+        'new_password.confirmed' => 'Xác nhận mật khẩu không khớp',
     ];
 
     public function mount($id = null): void
@@ -110,7 +122,10 @@ class TeacherEdit extends BaseComponent
                 $this->note            = $teacher->note ?? '';
                 $this->has_account     = (bool) $teacher->user_id;
                 $this->create_account  = false;
-                $this->reset_password  = false;
+                $this->new_password    = '';
+                $this->new_password_confirmation = '';
+                $this->avatar_path     = null;
+                $this->existing_avatar = $teacher->avatar_path;
                 $this->login_identifier = UserAccountEmailResolver::displayLoginIdentifier(
                     $teacher->user->email ?? null,
                     $teacher->phone_number
@@ -141,6 +156,12 @@ class TeacherEdit extends BaseComponent
     {
         $this->requireManager();
         $this->validate($this->formRules, $this->messages);
+
+        if ($this->isEdit && $this->has_account && filled($this->new_password)) {
+            $this->validate([
+                'new_password' => 'required|string|min:8|confirmed',
+            ], $this->messages);
+        }
 
         $needsAccount = (!$this->isEdit && $this->create_account)
             || ($this->isEdit && !$this->has_account && $this->create_account);
@@ -220,6 +241,9 @@ class TeacherEdit extends BaseComponent
             'address'         => $this->address ?: null,
             'saint_id'        => $this->saint_id ?: null,
             'parish_group_id' => $this->parish_group_id ?: null,
+            'avatar_path'     => $this->avatar_path
+                ? app(UploadService::class)->upload($this->avatar_path, 'avatars')
+                : null,
             'is_active'       => $this->is_active,
             'note'            => $this->note ?: null,
         ]);
@@ -251,14 +275,26 @@ class TeacherEdit extends BaseComponent
             'note'            => $this->note ?: null,
         ]);
 
+        if ($this->avatar_path) {
+            $path = app(UploadService::class)->upload($this->avatar_path, 'avatars');
+
+            if ($this->existing_avatar) {
+                delete_stored_media($this->existing_avatar);
+            }
+
+            $teacher->update(['avatar_path' => $path]);
+            $this->existing_avatar = $path;
+            $this->avatar_path = null;
+        }
+
         if ($teacher->user) {
             $userUpdate = [
                 'name'      => trim($this->last_name . ' ' . $this->first_name),
                 'parish_id' => $this->parishId,
             ];
 
-            if ($this->reset_password) {
-                $userUpdate['password'] = CatechistDefaultPassword::fromBirthday($this->birthday);
+            if (filled($this->new_password)) {
+                $userUpdate['password'] = $this->new_password;
             }
 
             $teacher->user->update($userUpdate);
@@ -318,6 +354,30 @@ class TeacherEdit extends BaseComponent
         }
 
         app(PermissionRegistrar::class)->forgetCachedPermissions();
+    }
+
+    public function removeAvatar(): void
+    {
+        $this->requireManager();
+
+        if (! $this->isEdit) {
+            $this->avatar_path = null;
+            $this->existing_avatar = null;
+
+            return;
+        }
+
+        $teacher = Teacher::where('parish_id', $this->parishId)->findOrFail($this->teacherId);
+
+        if ($this->existing_avatar) {
+            if ($teacher->avatar_path) {
+                delete_stored_media($teacher->avatar_path);
+                $teacher->update(['avatar_path' => null]);
+            }
+            $this->existing_avatar = null;
+        }
+
+        $this->avatar_path = null;
     }
 
     public function render()

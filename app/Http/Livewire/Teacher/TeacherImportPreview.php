@@ -73,13 +73,16 @@ class TeacherImportPreview extends BaseComponent
                 return;
             }
 
-            // Kiểm tra cột bắt buộc
-            $requiredHeaders = ['ho_ten', 'so_dien_thoai'];
-            $firstRow        = $data[0] ?? [];
+            // Kiểm tra cột bắt buộc — hiển thị theo tiêu đề tiếng Việt người dùng thấy trong file
+            $requiredHeaders = [
+                'ho_ten'        => 'Họ và tên',
+                'so_dien_thoai' => 'Số điện thoại',
+            ];
+            $firstRow = $data[0] ?? [];
 
-            foreach ($requiredHeaders as $header) {
+            foreach ($requiredHeaders as $header => $label) {
                 if (!array_key_exists($header, $firstRow)) {
-                    $this->fileErrors[] = "Thiếu cột bắt buộc: <strong>{$header}</strong>";
+                    $this->fileErrors[] = "Thiếu cột bắt buộc: <strong>{$label}</strong> — hãy tải lại file mẫu và không thay đổi các dòng tiêu đề.";
                 }
             }
 

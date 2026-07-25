@@ -112,6 +112,7 @@ use App\Http\Livewire\Teacher\TeacherDetail;
 use App\Http\Livewire\Teacher\TeacherEdit;
 use App\Http\Livewire\Teacher\TeacherImportPreview;
 use App\Http\Livewire\Teacher\TeacherManager;
+use App\Http\Livewire\Teacher\PrintCards as TeacherPrintCards;
 use Illuminate\Support\Facades\Auth;
 
 Paginator::useBootstrap();
@@ -221,6 +222,7 @@ Route::middleware('auth')->group(function () {
             Route::get('/qr/{token}', [TeacherQrController::class, 'show'])
                 ->where('token', '[0-9a-fA-F-]{36}')
                 ->name('qr-image');
+            Route::get('/in-the', TeacherPrintCards::class)->name('print-cards');
             Route::get('/', TeacherManager::class)->name('index');
             Route::get('/tao', TeacherEdit::class)->name('create');
             Route::get('/nhap', TeacherImportPreview::class)->name('import');

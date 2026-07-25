@@ -20,6 +20,19 @@
                 </div>
                 @endif
 
+                <div wire:key="parish-logo-{{ $currentLogoPath ?? 'none' }}">
+                    <label class="block text-xs font-semibold text-slate-500 mb-1.5 tracking-wide uppercase">
+                        Logo giáo xứ
+                    </label>
+                    <x-avatar-upload
+                        wireModel="logo"
+                        :existing="$currentLogoPath"
+                        inputId="parish_logo_upload"
+                        removeMethod="removeLogo"
+                        sizeClass="w-28 h-28" />
+                    <div wire:loading wire:target="logo" class="mt-1.5 text-xs text-primary-600">Đang tải ảnh lên...</div>
+                </div>
+
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div class="sm:col-span-2">
                         <label class="block text-xs font-semibold text-slate-500 mb-1.5 tracking-wide uppercase">
@@ -146,13 +159,14 @@
                 <div class="pt-2 flex justify-end">
                     <button type="submit"
                         wire:loading.attr="disabled"
+                        wire:target="logo,save"
                         class="inline-flex items-center justify-center px-5 py-2.5 rounded-xl
                             bg-primary-500 text-white text-sm font-semibold shadow-mac-sm
                             hover:bg-primary-600 disabled:opacity-60
                             focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/40
                             active:scale-[0.98] transition-all">
-                        <span wire:loading.remove wire:target="save">Lưu thay đổi</span>
-                        <span wire:loading wire:target="save">Đang lưu...</span>
+                        <span wire:loading.remove wire:target="logo,save">Lưu thay đổi</span>
+                        <span wire:loading wire:target="logo,save">Đang lưu...</span>
                     </button>
                 </div>
             </form>

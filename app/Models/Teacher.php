@@ -143,6 +143,11 @@ class Teacher extends Model
         };
     }
 
+    public function getAvatarUrlAttribute(): ?string
+    {
+        return media_url($this->avatar_path);
+    }
+
     /*
     |--------------------------------------------------------------------------
     | Scopes

@@ -68,7 +68,14 @@
                         <h2 class="text-xs font-semibold text-slate-500 tracking-wide uppercase mb-3 px-1">
                             Thông tin cá nhân
                         </h2>
-                        <div class="grid grid-cols-1 sm:grid-cols-4 gap-4">
+                        <div class="flex flex-col sm:flex-row gap-5 sm:gap-6">
+                            <x-avatar-upload
+                                wireModel="avatar_path"
+                                :existing="$existing_avatar"
+                                inputId="teacher_avatar_upload"
+                                removeMethod="removeAvatar" />
+
+                            <div class="flex-1 min-w-0 grid grid-cols-1 sm:grid-cols-4 gap-4">
                             <div class="sm:col-span-1">
                                 <label class="block text-slate-600 mb-1.5">Tên thánh</label>
                                 <x-searchable-select
@@ -106,6 +113,7 @@
                             <div class="sm:col-span-3">
                                 <label class="block text-slate-600 mb-1.5">Ngày sinh</label>
                                 <input type="date" wire:model="birthday" class="{{ $inputClass }}" />
+                            </div>
                             </div>
                         </div>
                     </section>
@@ -225,18 +233,32 @@
                                     @endif
                                     <code class="font-mono text-xs bg-slate-100 px-1.5 py-0.5 rounded">{{ $login_identifier ?: '—' }}</code>
                                 </p>
-                                <label class="flex items-center gap-3 cursor-pointer">
-                                    <input type="checkbox" wire:model.defer="reset_password"
-                                        class="w-4 h-4 rounded border-black/20 text-amber-500 focus:ring-amber-400" />
-                                    <span class="text-sm text-slate-700">
-                                        Reset mật khẩu về chuỗi ngày sinh
-                                        @if(!empty($birthday))
-                                            (<code class="font-mono text-xs bg-slate-100 px-1 rounded">{{ $defaultPassword }}</code>)
-                                        @else
-                                            (không có ngày sinh → <code class="font-mono text-xs bg-slate-100 px-1 rounded">{{ $fallbackPassword }}</code>)
-                                        @endif
-                                    </span>
-                                </label>
+                                <div class="space-y-3">
+                                    <p class="text-xs text-slate-500">
+                                        Để đổi mật khẩu, nhập mật khẩu mới bên dưới. Để trống nếu giữ nguyên mật khẩu hiện tại.
+                                    </p>
+                                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                        <div>
+                                            <label class="block text-slate-600 mb-1.5 text-sm">Mật khẩu mới</label>
+                                            <x-password-input
+                                                wire:model.defer="new_password"
+                                                :error="$errors->has('new_password')"
+                                                autocomplete="new-password"
+                                                placeholder="Nhập mật khẩu mới" />
+                                            @error('new_password')
+                                            <p class="mt-1 text-sm text-red-500">{{ $message }}</p>
+                                            @enderror
+                                        </div>
+                                        <div>
+                                            <label class="block text-slate-600 mb-1.5 text-sm">Xác nhận mật khẩu mới</label>
+                                            <x-password-input
+                                                wire:model.defer="new_password_confirmation"
+                                                :error="$errors->has('new_password_confirmation')"
+                                                autocomplete="new-password"
+                                                placeholder="Nhập lại mật khẩu mới" />
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
                             @else
                             <div class="rounded-xl bg-white/40 border border-black/[0.04] p-4 space-y-3">
@@ -318,7 +340,7 @@
                         <x-icon name="cancel" />
                         Hủy
                     </x-button>
-                    <x-button type="submit" variant="primary" wire:loading.attr="disabled" wire:target="save">
+                    <x-button type="submit" variant="primary" wire:loading.attr="disabled" wire:target="avatar_path,save">
                         <x-icon name="save" />
                         Lưu
                     </x-button>

@@ -16,11 +16,17 @@
             <div class="p-4 lg:p-6 mac-hairline-b bg-white/40">
                 <div class="flex flex-col sm:flex-row gap-4 sm:items-start justify-between">
                     <div class="flex items-start gap-4 flex-1 min-w-0">
+                        @if(!empty($teacher['avatar_url']))
+                        <img src="{{ $teacher['avatar_url'] }}"
+                            alt="{{ $teacher['full_name'] ?? '' }}"
+                            class="w-20 h-20 rounded-2xl object-cover shadow-mac-sm ring-4 ring-primary-50/80 flex-shrink-0" />
+                        @else
                         <div class="w-20 h-20 rounded-2xl bg-gradient-to-br from-primary-500 to-primary-700
                             text-white flex items-center justify-center text-2xl font-semibold
                             shadow-mac-sm ring-4 ring-primary-50/80 flex-shrink-0">
                             {{ mb_substr($teacher['full_name'] ?? 'G', 0, 1, 'UTF-8') }}
                         </div>
+                        @endif
 
                         <div class="flex-1 min-w-0">
                             <h1 class="text-[22px] font-semibold tracking-tight text-slate-900 truncate">
@@ -162,7 +168,7 @@
                                     <code class="font-mono text-xs bg-slate-100 px-1.5 py-0.5 rounded text-slate-700">{{ $teacher['login_identifier'] ?: '—' }}</code>
                                 </p>
                                 <p class="text-sm text-slate-500">
-                                    Mật khẩu mặc định (khi tạo / reset):
+                                    Mật khẩu mặc định khi tạo:
                                     @if(!empty($teacher['has_birthday']))
                                         chuỗi ngày sinh
                                         <code class="font-mono text-xs bg-slate-100 px-1.5 py-0.5 rounded text-slate-700">{{ $teacher['default_password'] }}</code>

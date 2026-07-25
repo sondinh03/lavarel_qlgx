@@ -1279,9 +1279,6 @@ video {
 .w-9 {
   width: 2.25rem;
 }
-.w-\[160px\] {
-  width: 160px;
-}
 .w-\[180px\] {
   width: 180px;
 }
@@ -1380,9 +1377,6 @@ video {
 }
 .max-w-\[160px\] {
   max-width: 160px;
-}
-.max-w-\[180px\] {
-  max-width: 180px;
 }
 .max-w-\[200px\] {
   max-width: 200px;
