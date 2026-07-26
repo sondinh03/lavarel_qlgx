@@ -40,10 +40,16 @@
                         debounce="500ms"
                         class="max-w-md" />
 
-                    <x-button wire:click="create" variant="primary">
-                        <x-icon name="plus"/>
-                        Thêm Tên thánh
-                    </x-button>
+                    <div class="flex items-center gap-2 flex-wrap justify-end">
+                        <x-button wire:click="export" variant="outline" wire:loading.attr="disabled">
+                            <x-icon name="download"/>
+                            Xuất Excel
+                        </x-button>
+                        <x-button wire:click="create" variant="primary">
+                            <x-icon name="plus"/>
+                            Thêm Tên thánh
+                        </x-button>
+                    </div>
                 </div>
             </div>
 
@@ -53,12 +59,19 @@
                         <tr>
                             <x-table-header>STT</x-table-header>
                             <x-table-header>Tên thánh</x-table-header>
+                            <x-table-header class="text-center">Đang dùng</x-table-header>
                             <x-table-header class="text-center">Thao tác</x-table-header>
                         </tr>
                     </thead>
 
                     <tbody class="divide-y divide-black/[0.04]">
                         @forelse ($holies as $i => $holy)
+                        @php
+                            $usageCount = (int) $holy->students_count
+                                + (int) $holy->parishioners_count
+                                + (int) $holy->teachers_count;
+                            $canDelete = $usageCount === 0;
+                        @endphp
                         <tr class="hover:bg-black/[0.03] transition-colors" wire:key="holy-{{ $holy->id }}">
                             <td class="px-4 py-3 text-sm text-slate-500">
                                 {{ $holies->firstItem() + $i }}
@@ -68,6 +81,10 @@
                                 <div class="font-semibold text-slate-900">
                                     {{ $holy->name }}
                                 </div>
+                            </td>
+
+                            <td class="px-4 py-3 text-center text-sm text-slate-500">
+                                {{ $usageCount }}
                             </td>
 
                             <td class="px-4 py-3">
@@ -81,10 +98,6 @@
                                     </x-tooltip>
 
                                     <span class="text-slate-300">|</span>
-
-                                    @php
-                                    $canDelete = $holy->students_count == 0;
-                                    @endphp
 
                                     <x-tooltip :content="$canDelete 
                                         ? 'Xóa tên thánh' 
@@ -109,7 +122,7 @@
                         </tr>
                         @empty
                         <tr>
-                            <td colspan="3" class="p-0 border-none">
+                            <td colspan="4" class="p-0 border-none">
                                 <x-stats.page-empty
                                     :panel="false"
                                     tone="primary"

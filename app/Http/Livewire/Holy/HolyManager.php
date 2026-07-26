@@ -2,9 +2,11 @@
 
 namespace App\Http\Livewire\Holy;
 
+use App\Exports\HolyExport;
 use App\Http\Livewire\Base\BaseComponent;
 use App\Models\Holymanagement;
 use Illuminate\Support\Str;
+use Maatwebsite\Excel\Facades\Excel;
 
 /**
  * Component quản lý Holy (CRUD)
@@ -12,6 +14,7 @@ use Illuminate\Support\Str;
  * Features:
  * - List Holy với pagination
  * - Create / Edit / Delete
+ * - Xuất Excel danh sách tên thánh
  * - Validation cơ bản
  */
 class HolyManager extends BaseComponent
@@ -52,7 +55,7 @@ class HolyManager extends BaseComponent
     public function render()
     {
         $holies = Holymanagement::query()
-            ->withCount('students')
+            ->withCount(['students', 'parishioners', 'teachers'])
             ->when($this->search, function ($q) {
                 $q->where('name', 'like', '%' . trim($this->search) . '%');
             })
@@ -125,8 +128,19 @@ class HolyManager extends BaseComponent
     public function delete(int $id): void
     {
         try {
-            $holy = Holymanagement::findOrFail($id);
+            $holy = Holymanagement::query()
+                ->withCount(['students', 'parishioners', 'teachers'])
+                ->findOrFail($id);
             $this->authorize('delete', $holy);
+
+            $usage = (int) $holy->students_count
+                + (int) $holy->parishioners_count
+                + (int) $holy->teachers_count;
+
+            if ($usage > 0) {
+                $this->emit('toast', 'error', 'Không thể xóa tên thánh đang được sử dụng');
+                return;
+            }
 
             $holy->delete();
 
@@ -139,6 +153,30 @@ class HolyManager extends BaseComponent
             $this->logError($e, 'Error deleting holy', ['id' => $id]);
             $this->emit('toast', 'error', 'Có lỗi khi xóa tên thánh');
         }
+    }
+
+    public function export()
+    {
+        $this->authorize('viewAny', Holymanagement::class);
+
+        $count = Holymanagement::query()
+            ->when($this->search, function ($q) {
+                $q->where('name', 'like', '%' . trim($this->search) . '%');
+            })
+            ->count();
+
+        if ($count === 0) {
+            $this->emit('toast', 'warning', 'Không có tên thánh nào để xuất.');
+
+            return;
+        }
+
+        return response()->streamDownload(function () {
+            echo Excel::raw(
+                new HolyExport($this->search !== '' ? (string) $this->search : null),
+                \Maatwebsite\Excel\Excel::XLSX
+            );
+        }, 'DanhSachTenThanh_' . now()->format('dmY_His') . '.xlsx');
     }
 
     /** ========== Helpers ========== */

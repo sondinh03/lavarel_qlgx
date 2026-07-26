@@ -85,6 +85,8 @@ Route::group([
     Route::crud('parish-management', ParishManagementCrudController::class);
     Route::crud('careermanagement', CareermanagementCrudController::class);
     Route::crud('ethnicmanagement', EthnicmanagementCrudController::class);
+    Route::get('holymanagement/export', [HolymanagementCrudController::class, 'export'])
+        ->name('holymanagement.export');
     Route::crud('holymanagement', HolymanagementCrudController::class);
     Route::crud('languagemanagement', LanguagemanagementCrudController::class);
     Route::crud('levelmanagement', LevelmanagementCrudController::class);

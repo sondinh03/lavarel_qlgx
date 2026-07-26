@@ -38,6 +38,16 @@ class Holymanagement extends Model
         return $this->hasMany(StudentNew::class, 'saint_id');
     }
 
+    public function parishioners()
+    {
+        return $this->hasMany(Parishioner::class, 'saint_id');
+    }
+
+    public function teachers()
+    {
+        return $this->hasMany(Teacher::class, 'saint_id');
+    }
+
     /*
     |--------------------------------------------------------------------------
     | SCOPES

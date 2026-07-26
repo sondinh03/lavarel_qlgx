@@ -109,17 +109,17 @@
 
 {{-- Danh mục --}}
 <li class="nav-title">Danh mục dùng chung</li>
+<li class="nav-item">
+    <a class="nav-link" href="{{ backpack_url('holymanagement') }}">
+        <i class="nav-icon la la-bible"></i> {{ __('backend.holymanagements') }}
+    </a>
+</li>
 <li class="nav-item nav-dropdown">
     <a href="#" class="nav-link nav-dropdown-toggle">
         <i class="nav-icon la la-list"></i>
         <span>Danh mục tra cứu</span>
     </a>
     <ul class="nav-dropdown-items">
-        <li class="nav-item">
-            <a class="nav-link" href="{{ backpack_url('holymanagement') }}">
-                <i class="nav-icon la la-bible"></i> {{ __('backend.holymanagements') }}
-            </a>
-        </li>
         <li class="nav-item">
             <a class="nav-link" href="{{ backpack_url('ethnicmanagement') }}">
                 <i class="nav-icon la la-users"></i> {{ __('backend.ethnicmanagements') }}

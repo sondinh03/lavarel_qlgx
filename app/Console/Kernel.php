@@ -18,9 +18,18 @@ class Kernel extends ConsoleKernel
     {
         // $schedule->command('inspire')->hourly();
         // Periodic backup (Spatie + Backpack BackupManager → disk "backups")
-        $schedule->command('backup:clean')->daily()->at('04:00');
-        $schedule->command('backup:run')->daily()->at('05:00');
-        $schedule->command('backup:monitor')->daily()->at('06:00');
+        // #region agent log
+        $backupLog = storage_path('logs/backup-schedule.log');
+        // #endregion
+        $schedule->command('backup:clean')
+            ->daily()->at('04:00')
+            ->appendOutputTo($backupLog);
+        $schedule->command('backup:run')
+            ->daily()->at('05:00')
+            ->appendOutputTo($backupLog);
+        $schedule->command('backup:monitor')
+            ->daily()->at('06:00')
+            ->appendOutputTo($backupLog);
 
         $schedule->command('telescope:prune')->daily();
     }

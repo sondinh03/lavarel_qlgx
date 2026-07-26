@@ -3,6 +3,8 @@
 namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Support\Str;
+use Illuminate\Validation\Rule;
 
 class HolymanagementRequest extends FormRequest
 {
@@ -13,43 +15,51 @@ class HolymanagementRequest extends FormRequest
      */
     public function authorize()
     {
-        // only allow updates if the user is logged in
         return backpack_auth()->check();
     }
 
     /**
-     * Get the validation rules that apply to the request.
-     *
-     * @return array
+     * @return array<string, mixed>
      */
     public function rules()
     {
         return [
-            // 'name' => 'required|min:5|max:255'
+            'name' => [
+                'required',
+                'string',
+                'max:255',
+                Rule::unique('holymanagements', 'name')->ignore($this->id ?? $this->route('id')),
+            ],
         ];
     }
 
     /**
-     * Get the validation attributes that apply to the request.
-     *
-     * @return array
+     * @return array<string, string>
      */
     public function attributes()
     {
         return [
-            //
+            'name' => 'tên thánh',
         ];
     }
 
     /**
-     * Get the validation messages that apply to the request.
-     *
-     * @return array
+     * @return array<string, string>
      */
     public function messages()
     {
         return [
-            //
+            'name.required' => 'Vui lòng nhập tên thánh.',
+            'name.unique'   => 'Tên thánh này đã tồn tại.',
         ];
+    }
+
+    protected function prepareForValidation(): void
+    {
+        if ($this->has('name')) {
+            $this->merge([
+                'name' => Str::title(trim((string) $this->input('name'))),
+            ]);
+        }
     }
 }
