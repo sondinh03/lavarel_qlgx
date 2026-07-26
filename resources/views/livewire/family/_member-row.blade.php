@@ -1,23 +1,23 @@
-@php $canManage = $canManage ?? false; @endphp
+@php
+    $canManage = $canManage ?? false;
+    $avatarClass = match($member['family_role'] ?? '') {
+        'husband' => 'bg-blue-100 text-blue-700 font-bold',
+        'wife'    => 'bg-pink-100 text-pink-700 font-bold',
+        'child'   => 'bg-emerald-100 text-emerald-700 font-bold',
+        default   => 'bg-slate-100 text-slate-600 font-bold',
+    };
+@endphp
 
 <div class="px-4 py-3 flex items-center justify-between gap-3 hover:bg-white/60 transition-colors">
     <div class="flex items-center gap-3 min-w-0 flex-1">
-        @if($member['avatar'])
-        <img src="{{ $member['avatar'] }}" alt=""
-            class="w-10 h-10 rounded-xl object-cover flex-shrink-0 ring-2 ring-white shadow-sm" />
-        @else
-        @php
-        $avatarClass = match($member['family_role']) {
-            'husband' => 'bg-blue-100 text-blue-700',
-            'wife'    => 'bg-pink-100 text-pink-700',
-            'child'   => 'bg-emerald-100 text-emerald-700',
-            default   => 'bg-slate-100 text-slate-600',
-        };
-        @endphp
-        <div class="w-10 h-10 rounded-xl {{ $avatarClass }} flex items-center justify-center text-xs font-bold flex-shrink-0">
-            {{ $member['initials'] }}
-        </div>
-        @endif
+        <x-entity-avatar
+            :src="$member['avatar'] ?? null"
+            :name="$member['name'] ?? ''"
+            :initials="$member['initials'] ?? null"
+            size="lg"
+            shape="rounded-xl"
+            :fallback-class="$avatarClass"
+            ring="white" />
 
         <div class="min-w-0">
             <a href="{{ $member['url'] }}" class="text-sm font-semibold text-primary-600 hover:text-primary-700 truncate block">

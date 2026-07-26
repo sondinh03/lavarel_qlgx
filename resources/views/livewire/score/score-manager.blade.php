@@ -263,14 +263,11 @@
                       flex items-center gap-3 hover:border-primary-300/50
                       hover:bg-black/[0.02] transition-all active:scale-[0.99]">
 
-                <div class="w-11 h-11 rounded-full flex-shrink-0 flex items-center justify-center
-                    text-sm font-semibold bg-primary-50/80 text-primary-800">
-                    @if(!empty($sc->avatar_path))
-                    <img src="{{ $sc->avatar_url }}" class="w-full h-full rounded-full object-cover" alt="" />
-                    @else
-                    {{ $initials }}
-                    @endif
-                </div>
+                <x-entity-avatar
+                    :src="!empty($sc->avatar_path) ? $sc->avatar_url : null"
+                    :name="trim(($sc->last_name ?? '') . ' ' . ($sc->first_name ?? ''))"
+                    :initials="$initials"
+                    size="xl" />
 
                 <div class="flex-1 min-w-0">
                     <div class="flex items-center gap-2 mb-0.5">
@@ -603,14 +600,11 @@
             <div class="relative w-full max-w-md max-h-[min(85vh,calc(100vh-2rem-var(--bottom-offset,0px)))] overflow-y-auto
                 bg-white rounded-2xl shadow-mac border border-black/[0.06] p-5 space-y-4">
                 <div class="flex items-start gap-3">
-                    <div class="w-12 h-12 rounded-full flex-shrink-0 flex items-center justify-center
-                        text-sm font-semibold bg-primary-50/80 text-primary-800">
-                        @if(!empty($sc->avatar_path))
-                        <img src="{{ $sc->avatar_url }}" class="w-full h-full rounded-full object-cover" alt="" />
-                        @else
-                        {{ $initials }}
-                        @endif
-                    </div>
+                    <x-entity-avatar
+                        :src="!empty($sc->avatar_path) ? $sc->avatar_url : null"
+                        :name="trim(($sc->last_name ?? '') . ' ' . ($sc->first_name ?? ''))"
+                        :initials="$initials"
+                        size="2xl" />
                     <div class="flex-1 min-w-0">
                         <p class="text-base font-semibold text-slate-900 truncate">
                             {{ $sc->saint->name ?? '' }} {{ $sc->last_name }} {{ $sc->first_name }}

@@ -150,16 +150,12 @@
                             hover:bg-primary-50/60 hover:border-primary-200/60 transition-all
                             {{ $viewingStudentId === $student['id'] ? 'ring-2 ring-primary-400/40 border-primary-300/50 bg-primary-50/70' : '' }}">
 
-                        @if($student['avatar_path'])
-                        <img src="{{ media_url($student['avatar_path']) }}"
-                            class="w-10 h-10 rounded-xl object-cover flex-shrink-0 shadow-mac-sm"
-                            alt="{{ $student['full_name'] }}">
-                        @else
-                        <div class="w-10 h-10 rounded-xl bg-primary-500 text-white
-                            flex items-center justify-center text-base font-bold flex-shrink-0 shadow-mac-sm">
-                            {{ mb_substr($student['full_name'], 0, 1, 'UTF-8') }}
-                        </div>
-                        @endif
+                        <x-entity-avatar
+                            :src="!empty($student['avatar_path']) ? media_url($student['avatar_path']) : null"
+                            :name="$student['full_name'] ?? ''"
+                            size="lg"
+                            shape="rounded-xl"
+                            variant="solid" />
 
                         <div class="flex-1 min-w-0">
                             <p class="font-semibold text-slate-900 truncate text-sm">
@@ -265,16 +261,12 @@
                     </button>
                     @endif
 
-                    @if($viewingStudent['avatar_path'])
-                    <img src="{{ media_url($viewingStudent['avatar_path']) }}"
-                        class="w-12 h-12 rounded-2xl object-cover flex-shrink-0 shadow-mac-sm"
-                        alt="{{ $viewingStudent['full_name'] }}">
-                    @else
-                    <div class="w-12 h-12 rounded-2xl bg-primary-500 text-white
-                        flex items-center justify-center text-lg font-bold flex-shrink-0 shadow-mac-sm">
-                        {{ mb_substr($viewingStudent['full_name'], 0, 1, 'UTF-8') }}
-                    </div>
-                    @endif
+                    <x-entity-avatar
+                        :src="!empty($viewingStudent['avatar_path']) ? media_url($viewingStudent['avatar_path']) : null"
+                        :name="$viewingStudent['full_name'] ?? ''"
+                        size="2xl"
+                        shape="rounded"
+                        variant="solid" />
 
                     <div class="flex-1 min-w-0">
                         <h2 class="text-lg sm:text-xl font-semibold tracking-tight text-slate-900 truncate">

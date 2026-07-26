@@ -5,6 +5,7 @@ namespace App\Http\Livewire\Teacher;
 use App\Http\Livewire\Base\BaseComponent;
 use App\Models\ParishNew;
 use App\Models\Teacher;
+use App\Support\CardTheme;
 
 /**
  * In thẻ giáo lý viên CR80.
@@ -17,6 +18,12 @@ class PrintCards extends BaseComponent
 
     public string $parishName = '';
 
+    /** URL logo giáo xứ (nếu có) */
+    public ?string $parishLogoUrl = null;
+
+    /** Màu chủ đạo: green | blue | yellow | red */
+    public string $theme = CardTheme::DEFAULT;
+
     /** @var \Illuminate\Support\Collection */
     public $teachers;
 
@@ -27,6 +34,7 @@ class PrintCards extends BaseComponent
         $this->teachers = collect();
 
         parent::mount();
+        $this->theme = CardTheme::normalize($this->theme);
         $this->requireManager();
         $this->requireParishId();
     }
@@ -34,14 +42,20 @@ class PrintCards extends BaseComponent
     protected function loadInitialData(): void
     {
         $this->loadTeachers();
-        $this->resolveParishName();
+        $this->resolveParishInfo();
     }
 
     protected function queryString(): array
     {
         return array_merge([
-            'ids' => ['except' => null],
+            'ids'   => ['except' => null],
+            'theme' => ['except' => CardTheme::DEFAULT],
         ], parent::queryString());
+    }
+
+    public function updatedTheme(string $value): void
+    {
+        $this->theme = CardTheme::normalize($value);
     }
 
     protected function loadTeachers(): void
@@ -79,6 +93,7 @@ class PrintCards extends BaseComponent
                 'teacher_code',
                 'birthday',
                 'gender',
+                'phone_number',
                 'saint_id',
                 'parish_id',
                 'parish_group_id',
@@ -87,11 +102,23 @@ class PrintCards extends BaseComponent
             ]);
     }
 
-    protected function resolveParishName(): void
+    protected function resolveParishInfo(): void
     {
-        $this->parishName = $this->parishId
-            ? (ParishNew::query()->whereKey($this->parishId)->value('name') ?? '')
-            : '';
+        $this->parishName = '';
+        $this->parishLogoUrl = null;
+
+        if (!$this->parishId) {
+            return;
+        }
+
+        $parish = ParishNew::query()->whereKey($this->parishId)->first(['id', 'name', 'image']);
+        if (!$parish) {
+            return;
+        }
+
+        $this->parishName = (string) ($parish->name ?? '');
+        $logoPath = trim((string) ($parish->image ?? ''));
+        $this->parishLogoUrl = $logoPath !== '' ? media_url($logoPath) : null;
     }
 
     public function printCards(): void
@@ -108,8 +135,12 @@ class PrintCards extends BaseComponent
     public function render()
     {
         return view('livewire.teacher.print-cards', [
-            'teachers'   => $this->teachers,
-            'parishName' => $this->parishName,
+            'teachers'      => $this->teachers,
+            'parishName'    => $this->parishName,
+            'parishLogoUrl' => $this->parishLogoUrl,
+            'theme'         => $this->theme,
+            'themes'        => CardTheme::all(),
+            'colors'        => CardTheme::resolve($this->theme),
         ])
             ->extends('frontend.layout.main')
             ->section('content');

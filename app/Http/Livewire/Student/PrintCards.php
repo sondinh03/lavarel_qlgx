@@ -6,6 +6,7 @@ use App\Http\Livewire\Base\BaseComponent;
 use App\Models\CatechismClass;
 use App\Models\ParishNew;
 use App\Models\StudentNew;
+use App\Support\CardTheme;
 
 /**
  * Component in thẻ học sinh
@@ -32,8 +33,14 @@ class PrintCards extends BaseComponent
      */
     public string $cardType = 'permanent';
 
+    /** Màu chủ đạo: green | blue | yellow | red */
+    public string $theme = CardTheme::DEFAULT;
+
     /** Tên giáo xứ (ParishNew) hiển thị trên thẻ */
     public string $parishName = '';
+
+    /** URL logo giáo xứ (nếu có) */
+    public ?string $parishLogoUrl = null;
 
     // ==================== DATA ====================
 
@@ -50,6 +57,7 @@ class PrintCards extends BaseComponent
         $this->students = collect();
 
         parent::mount();
+        $this->theme = CardTheme::normalize($this->theme);
         // $this->requireParishId();
     }
 
@@ -61,7 +69,7 @@ class PrintCards extends BaseComponent
         }
 
         $this->loadStudents();
-        $this->resolveParishName();
+        $this->resolveParishInfo();
     }
 
     protected function queryString(): array
@@ -70,6 +78,7 @@ class PrintCards extends BaseComponent
             'ids'      => ['except' => null],
             'classId'  => ['except' => null],
             'cardType' => ['except' => 'permanent'],
+            'theme'    => ['except' => CardTheme::DEFAULT],
         ], parent::queryString());
     }
 
@@ -78,6 +87,11 @@ class PrintCards extends BaseComponent
         if (!in_array($value, ['permanent', 'annual'], true)) {
             $this->cardType = 'permanent';
         }
+    }
+
+    public function updatedTheme(string $value): void
+    {
+        $this->theme = CardTheme::normalize($value);
     }
 
     // ==================== DATA LOADING ====================
@@ -119,6 +133,7 @@ class PrintCards extends BaseComponent
             'student_code',
             'birthday',
             'gender',
+            'phone',
             'saint_id',
             'parish_id',
             'parish_group_id',
@@ -127,7 +142,7 @@ class PrintCards extends BaseComponent
         ]);
     }
 
-    protected function resolveParishName(): void
+    protected function resolveParishInfo(): void
     {
         $parishId = $this->parishId;
 
@@ -139,9 +154,21 @@ class PrintCards extends BaseComponent
             $parishId = (int) $this->students->first()->parish_id;
         }
 
-        $this->parishName = $parishId
-            ? (ParishNew::query()->whereKey($parishId)->value('name') ?? '')
-            : '';
+        $this->parishName = '';
+        $this->parishLogoUrl = null;
+
+        if (!$parishId) {
+            return;
+        }
+
+        $parish = ParishNew::query()->whereKey($parishId)->first(['id', 'name', 'image']);
+        if (!$parish) {
+            return;
+        }
+
+        $this->parishName = (string) ($parish->name ?? '');
+        $logoPath = trim((string) ($parish->image ?? ''));
+        $this->parishLogoUrl = $logoPath !== '' ? media_url($logoPath) : null;
     }
 
     // ==================== ACTIONS ====================
@@ -161,10 +188,14 @@ class PrintCards extends BaseComponent
     public function render()
     {
         return view('livewire.student.print-cards', [
-            'students'   => $this->students,
-            'lop'        => $this->lop,
-            'cardType'   => $this->cardType,
-            'parishName' => $this->parishName,
+            'students'      => $this->students,
+            'lop'           => $this->lop,
+            'cardType'      => $this->cardType,
+            'parishName'    => $this->parishName,
+            'parishLogoUrl' => $this->parishLogoUrl,
+            'theme'         => $this->theme,
+            'themes'        => CardTheme::all(),
+            'colors'        => CardTheme::resolve($this->theme),
         ])
             ->extends('frontend.layout.main')
             ->section('content');

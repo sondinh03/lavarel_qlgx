@@ -31,17 +31,12 @@
             <div class="p-4 lg:p-6 mac-hairline-b bg-white/40">
                 <div class="flex flex-col sm:flex-row gap-4 sm:items-start justify-between">
                     <div class="flex items-start gap-4 flex-1 min-w-0">
-                        @if($parishioner->avatar_path)
-                        <img src="{{ $parishioner->avatar_url }}"
-                            alt="{{ $parishioner->full_name }}"
-                            class="w-20 h-20 rounded-2xl object-cover shadow-mac-sm ring-4 ring-primary-50/80 flex-shrink-0">
-                        @else
-                        <div class="w-20 h-20 rounded-2xl bg-gradient-to-br from-primary-500 to-primary-700
-                            text-white flex items-center justify-center text-2xl font-bold
-                            shadow-mac-sm ring-4 ring-primary-50/80 flex-shrink-0">
-                            {{ mb_substr($parishioner->full_name, 0, 1, 'UTF-8') }}
-                        </div>
-                        @endif
+                        <x-entity-avatar
+                            :src="$parishioner->avatar_path ? $parishioner->avatar_url : null"
+                            :name="$parishioner->full_name"
+                            size="profile"
+                            shape="rounded"
+                            variant="profile" />
 
                         <div class="flex-1 min-w-0">
                             <h1 class="text-xl sm:text-2xl font-bold text-slate-900 truncate">

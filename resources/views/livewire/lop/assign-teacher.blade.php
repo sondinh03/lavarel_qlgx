@@ -251,10 +251,13 @@
                                         value="{{ $teacher->id }}"
                                         class="w-4 h-4 accent-primary-600 focus:ring-primary-500/30 flex-shrink-0">
 
-                                    <div class="w-9 h-9 rounded-xl bg-primary-100 text-primary-700
-                                        flex items-center justify-center font-semibold text-sm flex-shrink-0 shadow-mac-sm">
-                                        {{ mb_strtoupper(mb_substr($teacher->first_name ?: $teacher->full_name, 0, 1)) }}
-                                    </div>
+                                    <x-entity-avatar
+                                        :src="$teacher->avatar_path ? $teacher->avatar_url : null"
+                                        :name="$teacher->full_name"
+                                        :initials="mb_substr($teacher->first_name ?: $teacher->full_name, 0, 1)"
+                                        size="md"
+                                        shape="rounded-xl"
+                                        fallback-class="bg-primary-100 text-primary-700 font-semibold" />
 
                                     <div class="flex-1 min-w-0">
                                         <p class="font-semibold text-slate-900 text-sm truncate">

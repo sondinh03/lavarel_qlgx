@@ -132,13 +132,12 @@
                             </td>
 
                             <td class="px-4 py-3">
-                                <div class="w-9 h-9 rounded-full overflow-hidden bg-slate-100 flex items-center justify-center flex-shrink-0 text-xs font-semibold text-slate-500">
-                                    @if($teacher->avatar_path)
-                                    <img src="{{ $teacher->avatar_url }}" alt="" class="w-full h-full object-cover" />
-                                    @else
-                                    {{ strtoupper(mb_substr($teacher->last_name ?? '', 0, 1) . mb_substr($teacher->first_name ?? '', 0, 1)) }}
-                                    @endif
-                                </div>
+                                <x-entity-avatar
+                                    :src="$teacher->avatar_path ? $teacher->avatar_url : null"
+                                    :name="trim(($teacher->last_name ?? '') . ' ' . ($teacher->first_name ?? ''))"
+                                    :initials="mb_substr($teacher->last_name ?? '', 0, 1) . mb_substr($teacher->first_name ?? '', 0, 1)"
+                                    size="md"
+                                    variant="slate" />
                             </td>
 
                             <td class="px-4 py-3 text-sm text-slate-900 whitespace-nowrap">

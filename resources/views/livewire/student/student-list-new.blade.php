@@ -174,17 +174,11 @@
                       flex items-center gap-3 hover:border-primary-300/50
                       hover:bg-black/[0.02] transition-all active:scale-[0.99] block">
 
-                {{-- Avatar --}}
-                <div class="w-11 h-11 rounded-full flex-shrink-0 flex items-center justify-center
-                    text-sm font-semibold
-                    bg-primary-50/80 text-primary-800">
-                    @if($student->avatar_path)
-                    <img src="{{ $student->avatar_url }}"
-                        class="w-full h-full rounded-full object-cover" />
-                    @else
-                    {{ strtoupper(mb_substr($student->last_name, 0, 1) . mb_substr($student->first_name, 0, 1)) }}
-                    @endif
-                </div>
+                <x-entity-avatar
+                    :src="$student->avatar_path ? $student->avatar_url : null"
+                    :name="trim(($student->last_name ?? '') . ' ' . ($student->first_name ?? ''))"
+                    :initials="mb_substr($student->last_name ?? '', 0, 1) . mb_substr($student->first_name ?? '', 0, 1)"
+                    size="xl" />
 
                 {{-- Info --}}
                 <div class="flex-1 min-w-0">
@@ -303,15 +297,12 @@
                             </td>
 
                             <td class="px-4 py-3">
-                                <div class="w-9 h-9 rounded-full overflow-hidden bg-slate-100 flex items-center justify-center flex-shrink-0 text-xs font-semibold text-slate-500">
-                                    @if($student->avatar_path)
-                                    <img src="{{ $student->avatar_url }}"
-                                        alt="{{ $student->full_name_with_saint }}"
-                                        class="w-full h-full object-cover" />
-                                    @else
-                                    {{ strtoupper(mb_substr($student->last_name, 0, 1) . mb_substr($student->first_name, 0, 1)) }}
-                                    @endif
-                                </div>
+                                <x-entity-avatar
+                                    :src="$student->avatar_path ? $student->avatar_url : null"
+                                    :name="$student->full_name_with_saint"
+                                    :initials="mb_substr($student->last_name ?? '', 0, 1) . mb_substr($student->first_name ?? '', 0, 1)"
+                                    size="md"
+                                    variant="slate" />
                             </td>
 
                             <td class="px-4 py-3 text-sm font-mono text-primary-600 whitespace-nowrap">
@@ -549,17 +540,13 @@
                             hover:border-primary-300/50 hover:bg-primary-50/40 transition-all shadow-mac-sm">
                             <div class="flex items-center justify-between gap-4">
                                 <div class="flex items-center gap-3 min-w-0">
-                                    <div class="w-10 h-10 rounded-2xl overflow-hidden bg-slate-100/80 flex-shrink-0 shadow-mac-sm">
-                                        @if($p->avatar_path)
-                                        <img src="{{ avatar_url($p->avatar_path) }}"
-                                            alt="{{ $p->full_name_with_saint }}"
-                                            class="w-full h-full object-cover" />
-                                        @else
-                                        <div class="w-full h-full flex items-center justify-center text-xs font-semibold text-slate-500">
-                                            {{ strtoupper(mb_substr($p->last_name, 0, 1) . mb_substr($p->first_name, 0, 1)) }}
-                                        </div>
-                                        @endif
-                                    </div>
+                                    <x-entity-avatar
+                                        :src="$p->avatar_path ? avatar_url($p->avatar_path) : null"
+                                        :name="$p->full_name_with_saint"
+                                        :initials="mb_substr($p->last_name ?? '', 0, 1) . mb_substr($p->first_name ?? '', 0, 1)"
+                                        size="lg"
+                                        shape="rounded"
+                                        variant="slate" />
 
                                     <div class="min-w-0">
                                         <div class="font-semibold text-sm text-slate-900 truncate">{{ $p->full_name_with_saint }}</div>

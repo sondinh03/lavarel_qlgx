@@ -18,17 +18,12 @@
                 <div class="flex flex-col sm:flex-row gap-4 sm:items-start justify-between">
 
                     <div class="flex items-start gap-4 flex-1 min-w-0">
-                        @if($student['avatar_path'])
-                        <img src="{{ media_url($student['avatar_path']) }}"
-                            alt="{{ $student['full_name'] }}"
-                            class="w-20 h-20 rounded-2xl object-cover shadow-mac-sm ring-4 ring-primary-50/80 flex-shrink-0">
-                        @else
-                        <div class="w-20 h-20 rounded-2xl bg-gradient-to-br from-primary-500 to-primary-700
-                            text-white flex items-center justify-center text-2xl font-semibold
-                            shadow-mac-sm ring-4 ring-primary-50/80 flex-shrink-0">
-                            {{ mb_substr($student['full_name'], 0, 1, 'UTF-8') }}
-                        </div>
-                        @endif
+                        <x-entity-avatar
+                            :src="!empty($student['avatar_path']) ? media_url($student['avatar_path']) : null"
+                            :name="$student['full_name'] ?? ''"
+                            size="profile"
+                            shape="rounded"
+                            variant="profile" />
 
                         <div class="flex-1 min-w-0">
                             <h1 class="text-[22px] font-semibold tracking-tight text-slate-900 truncate">

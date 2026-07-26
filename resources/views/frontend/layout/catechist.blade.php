@@ -109,7 +109,7 @@
                 <button type="button" @click="showMenu = !showMenu"
                     class="rounded-full hover:opacity-90 active:scale-95 transition touch-feedback"
                     aria-label="Menu">
-                    <x-user-avatar :user="Auth::user()" size="sm" class="ring-1 ring-primary-400/40 shadow-mac-sm" />
+                    <x-user-avatar :user="Auth::user()" size="sm" ring="ring-1 ring-primary-400/40" />
                 </button>
             </div>
         </div>
@@ -151,7 +151,7 @@
                     </button>
                 </div>
                 <div class="flex items-center gap-3">
-                    <x-user-avatar :user="Auth::user()" size="md" class="rounded-2xl ring-1 ring-primary-100/80 shadow-mac-sm" />
+                    <x-user-avatar :user="Auth::user()" size="md" shape="rounded" ring="ring-1 ring-primary-100/80" />
                     <div class="min-w-0">
                         <p class="font-semibold tracking-tight text-slate-900 truncate">{{ Auth::user()->name ?? '' }}</p>
                         <p class="text-xs text-slate-500">Giáo lý viên</p>

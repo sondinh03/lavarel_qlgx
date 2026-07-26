@@ -119,14 +119,53 @@
             <div class="p-4 lg:p-6 space-y-6">
                 <section>
                     <h2 class="text-xs font-semibold text-slate-500 tracking-wide uppercase mb-3 px-1">
+                        Màu thẻ
+                    </h2>
+                    <div class="flex flex-wrap items-center gap-2.5 px-1">
+                        @foreach($themes as $key => $t)
+                        <button type="button"
+                            wire:click="$set('theme', '{{ $key }}')"
+                            title="{{ $t['label'] }}"
+                            aria-label="{{ $t['label'] }}"
+                            aria-pressed="{{ $theme === $key ? 'true' : 'false' }}"
+                            class="w-8 h-8 rounded-full flex-shrink-0 flex items-center justify-center ring-2 ring-offset-2 transition-all
+                                {{ $theme === $key
+                                    ? 'ring-slate-600 scale-110 shadow-mac-sm'
+                                    : 'ring-transparent hover:ring-slate-300' }}"
+                            style="background: {{ $t['primary'] }};">
+                            @if($theme === $key)
+                            <svg class="w-4 h-4 text-white drop-shadow" fill="none" stroke="currentColor" stroke-width="3" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
+                            </svg>
+                            @endif
+                        </button>
+                        @endforeach
+                    </div>
+                    <p class="mt-3 text-sm text-slate-500 px-1">
+                        Thêm logo giáo xứ để hiển thị trong thẻ
+                        @if(Route::has('parish.settings'))
+                        —
+                        <a href="{{ route('parish.settings') }}" class="font-medium text-primary-600 hover:text-primary-700 underline-offset-2 hover:underline">
+                            Cài đặt giáo xứ
+                        </a>
+                        @endif
+                    </p>
+                </section>
+
+                <div class="mac-hairline-b"></div>
+
+                <section>
+                    <h2 class="text-xs font-semibold text-slate-500 tracking-wide uppercase mb-3 px-1">
                         Xem trước
                     </h2>
                     <div class="rounded-xl bg-white/40 border border-black/[0.04] p-4 overflow-x-auto">
-                        <div class="preview-grid">
+                        <div class="preview-grid" wire:key="preview-{{ $theme }}">
                             @foreach($teachers as $teacher)
                             @include('livewire.teacher.teacher-card', [
                                 'teacher' => $teacher,
                                 'parishName' => $parishName,
+                                'parishLogoUrl' => $parishLogoUrl,
+                                'colors' => $colors,
                             ])
                             @endforeach
                         </div>
@@ -153,6 +192,7 @@
 
     @if($teachers->count() > 0)
     <div id="print-area"
+        wire:key="print-{{ $theme }}"
         style="display:none; width: 794px; padding: 38px; box-sizing: border-box;">
         @foreach($teachers->chunk(8) as $chunk)
         <div class="print-page">
@@ -161,6 +201,8 @@
                 @include('livewire.teacher.teacher-card', [
                     'teacher' => $teacher,
                     'parishName' => $parishName,
+                    'parishLogoUrl' => $parishLogoUrl,
+                    'colors' => $colors,
                     'forPrint' => true,
                 ])
                 @endforeach

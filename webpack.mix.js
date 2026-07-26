@@ -26,9 +26,11 @@ mix.js("resources/js/jquery.min.js", "public/js")
 mix.js("resources/js/main.js", "public/js")
 mix.js("resources/js/char.js", "public/js")
 mix.js('resources/js/custom.js', 'public/js')
-mix.copyDirectory("node_modules/bootstrap-icons", "public/assets/bootstrap-icons")	
-mix.copyDirectory("node_modules/apexcharts/dist/apexcharts.min.js", "public/js/apexcharts.min.js")
-mix.copyDirectory("node_modules/apexcharts/dist/apexcharts.css", "public/css/apexcharts.css")
+// Chỉ copy icon font (~6 file). Copy cả package sẽ ghi đè >2000 file SVG mỗi lần
+// build, gây EBUSY trên Windows và không file nào trong số đó được dùng.
+mix.copyDirectory("node_modules/bootstrap-icons/font", "public/assets/bootstrap-icons/font")
+mix.copy("node_modules/apexcharts/dist/apexcharts.min.js", "public/js/apexcharts.min.js")
+mix.copy("node_modules/apexcharts/dist/apexcharts.css", "public/css/apexcharts.css")
 
 mix.webpackConfig({
     stats: {

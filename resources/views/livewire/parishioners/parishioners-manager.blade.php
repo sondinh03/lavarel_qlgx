@@ -210,15 +210,12 @@
                                 </td>
 
                                 <td class="px-4 py-3">
-                                    <div class="w-9 h-9 rounded-full overflow-hidden bg-slate-100 flex items-center justify-center flex-shrink-0">
-                                        @if($p->avatar_path)
-                                        <img src="{{ avatar_url($p->avatar_path) }}" alt="{{ $p->full_name }}" class="w-full h-full object-cover" />
-                                        @else
-                                        <svg class="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                                        </svg>
-                                        @endif
-                                    </div>
+                                    <x-entity-avatar
+                                        :src="$p->avatar_path ? avatar_url($p->avatar_path) : null"
+                                        :name="$p->full_name"
+                                        :initials="mb_substr($p->last_name ?? '', 0, 1) . mb_substr($p->first_name ?? '', 0, 1)"
+                                        size="md"
+                                        variant="slate" />
                                 </td>
 
                                 <td class="px-4 py-3">
