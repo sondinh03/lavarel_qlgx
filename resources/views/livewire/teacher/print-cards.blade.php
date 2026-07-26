@@ -37,7 +37,7 @@
                     filename: '{{ \Str::slug('the-glv-' . ($parishName ?: 'giao-xu')) }}.pdf',
                     image: { type: 'jpeg', quality: 0.95 },
                     html2canvas: {
-                        scale: 2,
+                        scale: 3,
                         useCORS: true,
                         allowTaint: false,
                         logging: false,
