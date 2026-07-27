@@ -111,7 +111,7 @@ class CatechistAccess
 
     public function canGrantElevatedPermissions(User $actor): bool
     {
-        return $actor->isSuperAdmin() || $actor->isParishAdmin();
+        return $actor->canManageCatechism();
     }
 
     /**

@@ -4,6 +4,7 @@ namespace App\Exports;
 
 use App\Models\ParishNew;
 use App\Models\Teacher;
+use App\Support\CatechistPermissions;
 use App\Support\UserAccountEmailResolver;
 use Illuminate\Support\Collection;
 use Maatwebsite\Excel\Concerns\FromCollection;
@@ -24,7 +25,7 @@ class TeacherExport implements FromCollection, WithHeadings, WithMapping, WithSt
     public function __construct(
         private int $parishId,
         private ?string $filterParishGroup = null,
-        private ?string $filterGender = null,
+        private ?string $filterPermission = null,
         private ?string $filterActive = null,
         private ?string $search = null,
     ) {}
@@ -50,9 +51,7 @@ class TeacherExport implements FromCollection, WithHeadings, WithMapping, WithSt
             $query->where('parish_group_id', $this->filterParishGroup);
         }
 
-        if ($this->filterGender !== null && $this->filterGender !== '') {
-            $query->where('gender', $this->filterGender);
-        }
+        $this->applyPermissionFilter($query);
 
         if ($this->filterActive !== null && $this->filterActive !== '') {
             $query->where('is_active', (bool) $this->filterActive);
@@ -62,6 +61,38 @@ class TeacherExport implements FromCollection, WithHeadings, WithMapping, WithSt
             ->orderBy('first_name')
             ->orderBy('last_name')
             ->get();
+    }
+
+    /**
+     * @param  \Illuminate\Database\Eloquent\Builder  $query
+     */
+    private function applyPermissionFilter($query): void
+    {
+        $filter = (string) ($this->filterPermission ?? '');
+        if ($filter === '') {
+            return;
+        }
+
+        $elevated = CatechistPermissions::all();
+
+        if ($filter === 'none') {
+            $query->where(function ($q) use ($elevated) {
+                $q->whereNull('user_id')
+                    ->orWhereDoesntHave('user.permissions', function ($pq) use ($elevated) {
+                        $pq->whereIn('name', $elevated);
+                    });
+            });
+
+            return;
+        }
+
+        if (! in_array($filter, $elevated, true)) {
+            return;
+        }
+
+        $query->whereHas('user.permissions', function ($pq) use ($filter) {
+            $pq->where('name', $filter);
+        });
     }
 
     public function headings(): array

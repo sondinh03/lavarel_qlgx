@@ -71,7 +71,7 @@ Hằng số trong `app/Support/CatechistPermissions.php`:
 | `manage_parish_scores` | Nhập/sửa điểm cho **toàn giáo xứ** (không chỉ lớp mình) |
 | `edit_parish_students` | Sửa hồ sơ học sinh **toàn giáo xứ** |
 
-- Chỉ `super_admin` / `parish_admin` được cấp (`CatechistAccess::canGrantElevatedPermissions`),
+- `super_admin` / `parish_admin` / `catechism_admin` được cấp (`CatechistAccess::canGrantElevatedPermissions`),
   thao tác trong màn hình sửa GLV (`TeacherEdit`).
 - **Quan trọng**: có permission chưa đủ — còn phải có phân công năm hiện tại (mục 3).
 

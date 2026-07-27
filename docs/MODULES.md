@@ -119,9 +119,11 @@ Lưu ý:
   mật khẩu mặc định từ ngày sinh (`CatechistDefaultPassword::fromBirthday`), email chuẩn hóa qua
   `UserAccountEmailResolver`.
 - **Cấp 2 quyền nâng cao** (`manage_parish_scores`, `edit_parish_students`) cũng ở màn này —
-  `TeacherEdit::syncElevatedPermissions`, chỉ parish_admin/super_admin thấy
+  `TeacherEdit::syncElevatedPermissions`, parish_admin/catechism_admin/super_admin thấy
   (`CatechistAccess::canGrantElevatedPermissions`).
 - Import: `ImportTeacherAction` (tạo kèm tài khoản qua `CreateCatechistAccount`).
+- Quick upload ảnh trên list (`TeacherManager` + `x-quick-avatar-upload`): chỉ
+  `canManageCatechism()` (parish_admin / catechism_admin / super_admin), `capture=environment`.
 
 ## 6. Điểm danh
 

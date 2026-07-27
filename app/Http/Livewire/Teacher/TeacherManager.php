@@ -7,14 +7,20 @@ use App\Http\Livewire\Base\BaseComponent;
 use App\Models\ParishGroup;
 use App\Models\Teacher;
 use App\Models\User;
+use App\Services\UploadService;
+use App\Support\CatechistPermissions;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\ValidationException;
+use Livewire\WithFileUploads;
 use Maatwebsite\Excel\Facades\Excel;
 
 class TeacherManager extends BaseComponent
 {
+    use WithFileUploads;
+
     public $filterParishGroup = '';
-    public $filterGender = '';
+    public $filterPermission = '';
     public $filterActive = '';
 
     public $parishGroups;
@@ -28,11 +34,17 @@ class TeacherManager extends BaseComponent
 
     protected array $allowedSortFields = ['first_name', 'birthday'];
 
+    /** @var array<int|string, mixed> */
+    public array $quickAvatars = [];
+
+    /** Chỉ parish_admin / catechism_admin / super_admin */
+    public bool $canQuickUploadAvatars = false;
+
     protected function queryString()
     {
         return array_merge(parent::queryString(), [
             'filterParishGroup' => ['except' => ''],
-            'filterGender'      => ['except' => ''],
+            'filterPermission'  => ['except' => ''],
             'filterActive'      => ['except' => ''],
             'sortField'         => ['except' => 'first_name', 'as' => 'sort'],
         ]);
@@ -52,9 +64,86 @@ class TeacherManager extends BaseComponent
 
     protected function loadInitialData(): void
     {
+        $this->canQuickUploadAvatars = (bool) auth()->user()?->canManageCatechism();
+
         $this->parishGroups = ParishGroup::where('parish_id', $this->parishId)
             ->orderBy('name')
             ->get(['id', 'name']);
+    }
+
+    public function updatedQuickAvatars($value, $key): void
+    {
+        if (! $value || ! $this->canQuickUploadAvatars) {
+            return;
+        }
+
+        $this->saveQuickAvatar((int) $key);
+    }
+
+    public function saveQuickAvatar(int $teacherId): void
+    {
+        if (! $this->canQuickUploadAvatars) {
+            $this->emit('toast', 'error', 'Bạn không có quyền cập nhật ảnh giáo lý viên.');
+
+            return;
+        }
+
+        $fileKey = 'quickAvatars.' . $teacherId;
+
+        try {
+            $this->validate([
+                $fileKey => 'required|image|mimes:jpg,jpeg,png,webp|max:2048',
+            ], [
+                $fileKey . '.required' => 'Vui lòng chọn ảnh.',
+                $fileKey . '.image'    => 'Tệp phải là hình ảnh.',
+                $fileKey . '.mimes'    => 'Ảnh chỉ chấp nhận JPG, PNG hoặc WEBP.',
+                $fileKey . '.max'      => 'Ảnh không được vượt quá 2MB.',
+            ]);
+        } catch (ValidationException $e) {
+            unset($this->quickAvatars[$teacherId]);
+            $message = collect($e->validator->errors()->all())->first() ?: 'Ảnh không hợp lệ.';
+            $this->emit('toast', 'error', $message);
+
+            return;
+        }
+
+        $teacher = Teacher::query()
+            ->whereKey($teacherId)
+            ->where('parish_id', $this->parishId)
+            ->first();
+
+        if (! $teacher) {
+            unset($this->quickAvatars[$teacherId]);
+            $this->emit('toast', 'error', 'Không tìm thấy giáo lý viên.');
+
+            return;
+        }
+
+        $upload = $this->quickAvatars[$teacherId] ?? null;
+        if (! $upload) {
+            return;
+        }
+
+        try {
+            $path = app(UploadService::class)->upload($upload, 'avatars');
+
+            if ($teacher->avatar_path) {
+                delete_stored_media($teacher->avatar_path);
+            }
+
+            $teacher->update(['avatar_path' => $path]);
+            unset($this->quickAvatars[$teacherId]);
+
+            $this->emit(
+                'toast',
+                'message',
+                'Đã cập nhật ảnh: ' . trim($teacher->last_name . ' ' . $teacher->first_name)
+            );
+        } catch (\Exception $e) {
+            unset($this->quickAvatars[$teacherId]);
+            $this->logError($e, 'Quick teacher avatar upload failed', ['teacher_id' => $teacherId]);
+            $this->emit('toast', 'error', 'Không thể lưu ảnh. Vui lòng thử lại.');
+        }
     }
 
     public function updatedFilterParishGroup(): void
@@ -63,7 +152,7 @@ class TeacherManager extends BaseComponent
         $this->syncSelectAllForCurrentPage();
     }
 
-    public function updatedFilterGender(): void
+    public function updatedFilterPermission(): void
     {
         $this->resetPage();
         $this->syncSelectAllForCurrentPage();
@@ -190,9 +279,9 @@ class TeacherManager extends BaseComponent
 
     public function resetFilters(): void
     {
-        $hadFilters = $this->search || $this->filterParishGroup || $this->filterGender || $this->filterActive !== '';
+        $hadFilters = $this->search || $this->filterParishGroup || $this->filterPermission || $this->filterActive !== '';
 
-        $this->reset(['search', 'filterParishGroup', 'filterGender', 'filterActive']);
+        $this->reset(['search', 'filterParishGroup', 'filterPermission', 'filterActive']);
         $this->resetPage();
         $this->syncSelectAllForCurrentPage();
 
@@ -219,7 +308,7 @@ class TeacherManager extends BaseComponent
                 new TeacherExport(
                     (int) $this->parishId,
                     $this->filterParishGroup !== '' ? (string) $this->filterParishGroup : null,
-                    $this->filterGender !== '' ? (string) $this->filterGender : null,
+                    $this->filterPermission !== '' ? (string) $this->filterPermission : null,
                     $this->filterActive !== '' ? (string) $this->filterActive : null,
                     $this->search !== '' ? (string) $this->search : null,
                 ),
@@ -297,15 +386,54 @@ class TeacherManager extends BaseComponent
             $query->where('parish_group_id', $this->filterParishGroup);
         }
 
-        if ($this->filterGender !== '') {
-            $query->where('gender', $this->filterGender);
-        }
+        $this->applyPermissionFilter($query);
 
         if ($this->filterActive !== '') {
             $query->where('is_active', (bool) $this->filterActive);
         }
 
         return $query;
+    }
+
+    /**
+     * @param  \Illuminate\Database\Eloquent\Builder  $query
+     */
+    private function applyPermissionFilter($query): void
+    {
+        $filter = (string) $this->filterPermission;
+        if ($filter === '') {
+            return;
+        }
+
+        $elevated = CatechistPermissions::all();
+
+        if ($filter === 'none') {
+            $query->where(function ($q) use ($elevated) {
+                $q->whereNull('user_id')
+                    ->orWhereDoesntHave('user.permissions', function ($pq) use ($elevated) {
+                        $pq->whereIn('name', $elevated);
+                    });
+            });
+
+            return;
+        }
+
+        if (! in_array($filter, $elevated, true)) {
+            return;
+        }
+
+        $query->whereHas('user.permissions', function ($pq) use ($filter) {
+            $pq->where('name', $filter);
+        });
+    }
+
+    /** @return array<string, string> */
+    public function permissionFilterOptions(): array
+    {
+        return array_merge(
+            ['none' => 'GLV thường (không hỗ trợ)'],
+            CatechistPermissions::labels()
+        );
     }
 
     private function getTeachersPaginated()
@@ -376,6 +504,8 @@ class TeacherManager extends BaseComponent
     {
         return view('livewire.teacher.teacher-manager', [
             'teachers' => $this->getTeachersPaginated(),
+            'canQuickUploadAvatars' => $this->canQuickUploadAvatars,
+            'permissionFilterOptions' => $this->permissionFilterOptions(),
         ])
             ->extends('frontend.layout.main')
             ->section('content');

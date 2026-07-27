@@ -46,7 +46,7 @@ class TeacherEdit extends BaseComponent
     public $avatar_path = null;
     public $existing_avatar = null;
 
-    /** Chỉ parish_admin / super_admin được chỉnh */
+    /** parish_admin / catechism_admin / super_admin được chỉnh */
     public bool $canGrantElevated = false;
     public bool $perm_manage_parish_scores = false;
     public bool $perm_edit_parish_students = false;

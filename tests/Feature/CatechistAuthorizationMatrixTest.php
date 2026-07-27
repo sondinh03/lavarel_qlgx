@@ -85,7 +85,7 @@ class CatechistAuthorizationMatrixTest extends TestCase
         $this->assertFalse($user->can('enterScoresForClass', $this->fx->classAssigned));
     }
 
-    public function test_catechism_admin_manages_students_and_scores_in_parish_but_cannot_grant_elevated(): void
+    public function test_catechism_admin_manages_students_and_scores_in_parish_and_can_grant_elevated(): void
     {
         $user = $this->fx->catechismAdmin;
 
@@ -96,14 +96,14 @@ class CatechistAuthorizationMatrixTest extends TestCase
         $this->assertTrue($user->can('enterScoresForClass', $this->fx->classAssigned));
         $this->assertFalse($user->can('enterScoresForClass', $this->fx->classOtherParish));
 
-        $this->assertFalse($this->access->canGrantElevatedPermissions($user));
+        $this->assertTrue($this->access->canGrantElevatedPermissions($user));
     }
 
-    public function test_parish_admin_can_grant_elevated_permissions(): void
+    public function test_admins_can_grant_elevated_permissions_but_ordinary_catechist_cannot(): void
     {
         $this->assertTrue($this->access->canGrantElevatedPermissions($this->fx->parishAdmin));
+        $this->assertTrue($this->access->canGrantElevatedPermissions($this->fx->catechismAdmin));
         $this->assertFalse($this->access->canGrantElevatedPermissions($this->fx->ordinaryCatechist));
-        $this->assertFalse($this->access->canGrantElevatedPermissions($this->fx->catechismAdmin));
     }
 
     public function test_assigned_class_ids_come_from_class_teachers_user_id(): void

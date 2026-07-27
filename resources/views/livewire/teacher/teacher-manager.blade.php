@@ -28,11 +28,11 @@
                                 placeholder="-- Tất cả giáo họ --" />
 
                             <x-select-input
-                                label="Giới tính"
-                                wire:model="filterGender"
-                                :value="$filterGender"
-                                :options="['male' => 'Nam', 'female' => 'Nữ']"
-                                placeholder="-- Tất cả giới tính --" />
+                                label="Quyền hỗ trợ"
+                                wire:model="filterPermission"
+                                :value="$filterPermission"
+                                :options="$permissionFilterOptions"
+                                placeholder="-- Tất cả quyền --" />
 
                             <x-select-input
                                 label="Trạng thái"
@@ -79,12 +79,19 @@
                 </div>
             </div>
 
+            @php $showQuickAvatar = $canQuickUploadAvatars ?? false; @endphp
+
             @if($teachers->count() > 0)
-            <div class="px-4 lg:px-6 py-3 mac-hairline-b">
+            <div class="px-4 lg:px-6 py-3 mac-hairline-b space-y-2">
                 <x-inline-tip>
                     Chọn checkbox từng giáo lý viên (hoặc chọn cả trang) để <strong>In thẻ</strong>,
                     <strong>Đánh dấu đã nghỉ</strong> hoặc <strong>Xóa</strong> hàng loạt.
                 </x-inline-tip>
+                @if($showQuickAvatar)
+                <p class="text-xs text-slate-500 px-0.5">
+                    Chạm biểu tượng máy ảnh trên ảnh giáo lý viên để chụp hoặc chọn ảnh từ thư viện.
+                </p>
+                @endif
             </div>
 
             <div class="overflow-x-auto">
@@ -132,12 +139,16 @@
                             </td>
 
                             <td class="px-4 py-3">
-                                <x-entity-avatar
-                                    :src="$teacher->avatar_path ? $teacher->avatar_url : null"
+                                <x-quick-avatar-upload
+                                    :id="$teacher->id"
                                     :name="trim(($teacher->last_name ?? '') . ' ' . ($teacher->first_name ?? ''))"
                                     :initials="mb_substr($teacher->last_name ?? '', 0, 1) . mb_substr($teacher->first_name ?? '', 0, 1)"
+                                    :src="$teacher->avatar_path ? $teacher->avatar_url : null"
+                                    wire-target="quickAvatars.{{ $teacher->id }}"
+                                    :enabled="$showQuickAvatar"
                                     size="md"
-                                    variant="slate" />
+                                    variant="slate"
+                                    input-prefix="quick-avatar-teacher" />
                             </td>
 
                             <td class="px-4 py-3 text-sm text-slate-900 whitespace-nowrap">
@@ -230,13 +241,13 @@
             <x-stats.page-empty
                 :panel="false"
                 tone="primary"
-                :title="($search || $filterParishGroup || $filterGender || $filterActive) ? 'Không tìm thấy kết quả' : 'Chưa có giáo lý viên'"
-                :description="($search || $filterParishGroup || $filterGender || $filterActive) ? 'Thử đổi bộ lọc hoặc từ khóa tìm kiếm' : 'Thêm giáo lý viên đầu tiên hoặc import từ Excel'">
+                :title="($search || $filterParishGroup || $filterPermission || $filterActive) ? 'Không tìm thấy kết quả' : 'Chưa có giáo lý viên'"
+                :description="($search || $filterParishGroup || $filterPermission || $filterActive) ? 'Thử đổi bộ lọc hoặc từ khóa tìm kiếm' : 'Thêm giáo lý viên đầu tiên hoặc import từ Excel'">
                 <x-slot name="icon">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
                         d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
                 </x-slot>
-                @if(!($search || $filterParishGroup || $filterGender || $filterActive))
+                @if(!($search || $filterParishGroup || $filterPermission || $filterActive))
                 <x-button as="a" href="{{ route('catechists.create') }}" variant="primary">
                     <x-icon name="plus" />
                     Thêm giáo lý viên
