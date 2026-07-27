@@ -89,7 +89,7 @@
                 </x-inline-tip>
                 @if($showQuickAvatar)
                 <p class="text-xs text-slate-500 px-0.5">
-                    Chạm biểu tượng máy ảnh trên ảnh giáo lý viên để chụp hoặc chọn ảnh từ thư viện.
+                    Chạm máy ảnh → chọn <strong>Chụp ảnh</strong> hoặc <strong>Thư viện</strong>.
                 </p>
                 @endif
             </div>

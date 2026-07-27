@@ -168,7 +168,7 @@
         <div class="p-4 lg:p-4 space-y-3" wire:key="student-cards-{{ $listContext }}">
             @if($showQuickAvatar && $students && $students->count() > 0)
             <p class="text-xs text-slate-500 px-0.5">
-                Chạm biểu tượng máy ảnh trên ảnh học sinh để chụp hoặc chọn ảnh từ thư viện.
+                Chạm máy ảnh → chọn <strong>Chụp ảnh</strong> hoặc <strong>Thư viện</strong>.
             </p>
             @endif
 
