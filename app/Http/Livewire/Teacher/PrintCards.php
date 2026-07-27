@@ -18,7 +18,7 @@ class PrintCards extends BaseComponent
 
     public string $parishName = '';
 
-    /** URL logo ban giáo lý — cột parishes.image (nếu có) */
+    /** URL logo ban giáo lý — parishes.image, fallback public/images/logo-tntt.png */
     public ?string $parishLogoUrl = null;
 
     /** Màu chủ đạo: green | blue | yellow | red */
@@ -105,7 +105,7 @@ class PrintCards extends BaseComponent
     protected function resolveParishInfo(): void
     {
         $this->parishName = '';
-        $this->parishLogoUrl = null;
+        $this->parishLogoUrl = asset('images/logo-tntt.png');
 
         if (!$this->parishId) {
             return;
@@ -118,7 +118,9 @@ class PrintCards extends BaseComponent
 
         $this->parishName = (string) ($parish->name ?? '');
         $logoPath = trim((string) ($parish->image ?? ''));
-        $this->parishLogoUrl = $logoPath !== '' ? media_url($logoPath) : null;
+        if ($logoPath !== '') {
+            $this->parishLogoUrl = media_url($logoPath);
+        }
     }
 
     public function printCards(): void

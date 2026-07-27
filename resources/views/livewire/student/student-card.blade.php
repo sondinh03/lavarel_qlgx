@@ -5,7 +5,7 @@
       - $lop (nullable)
       - $cardType: permanent | annual
       - $parishName: tên giáo xứ (ParishNew)
-      - $parishLogoUrl: URL logo ban giáo lý (nullable, từ parishes.image)
+      - $parishLogoUrl: URL logo ban giáo lý (fallback logo-tntt.png)
       - $colors: palette từ CardTheme::resolve()
       - $forPrint (bool, default false)
 --}}
