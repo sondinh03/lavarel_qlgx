@@ -257,6 +257,22 @@ class CatechistAccess
             ->exists();
     }
 
+    /**
+     * Upload ảnh đại diện: cùng phạm vi với sửa hồ sơ học sinh.
+     */
+    public function canUploadStudentAvatar(User $user, StudentNew $student): bool
+    {
+        if (! $user->parish_id || (int) $user->parish_id !== (int) $student->parish_id) {
+            return false;
+        }
+
+        if ($user->canManageCatechism()) {
+            return true;
+        }
+
+        return $this->canEditParishStudents($user);
+    }
+
     public function canViewScoresForClass(User $user, int $classId, ?int $parishId = null): bool
     {
         if ($user->canManageCatechism() || $this->canManageParishScores($user)) {

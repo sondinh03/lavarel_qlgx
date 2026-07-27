@@ -149,7 +149,7 @@ Route::middleware('auth')->group(function () {
         ->name('notifications.index');
 
     Route::get('/thong-tin-giao-xu', ParishSettings::class)
-        ->middleware('role:parish_admin')
+        ->middleware('role:parish_admin|catechism_admin')
         ->name('parish.settings');
 
     Route::get('/dashboard', function () {

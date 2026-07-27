@@ -455,7 +455,7 @@ $isDashboard = request()->routeIs('parishioners.dashboard');
                         class="block px-4 py-2.5 text-sm text-slate-700 hover:bg-slate-50">
                         Tài khoản
                     </a>
-                    @if(Auth::user()->isParishAdmin())
+                    @if(Auth::user()->isParishAdmin() || Auth::user()->isCatechismAdmin())
                     <a href="{{ route('parish.settings') }}"
                         class="block px-4 py-2.5 text-sm text-slate-700 hover:bg-slate-50">
                         Thông tin giáo xứ
@@ -484,7 +484,7 @@ $isDashboard = request()->routeIs('parishioners.dashboard');
                         class="block px-4 py-2 text-sm text-slate-700 hover:bg-slate-50">
                         Tài khoản
                     </a>
-                    @if(Auth::user()->isParishAdmin())
+                    @if(Auth::user()->isParishAdmin() || Auth::user()->isCatechismAdmin())
                     <a href="{{ route('parish.settings') }}"
                         class="block px-4 py-2 text-sm text-slate-700 hover:bg-slate-50">
                         Thông tin giáo xứ

@@ -37,7 +37,7 @@
                     filename: '{{ \Str::slug(($cardType === 'annual' ? 'the-nam-hoc' : 'the-vinh-vien') . '-' . ($lop->name ?? 'hoc-sinh') . '-' . ($parishName ?: 'giao-xu')) }}.pdf',
                     image: { type: 'jpeg', quality: 0.95 },
                     html2canvas: {
-                        scale: 2,
+                        scale: 3,
                         useCORS: true,
                         allowTaint: false,
                         logging: false,
@@ -150,7 +150,7 @@
                         </button>
                     </div>
                     <p class="mt-3 text-sm text-slate-500 px-1">
-                        Thêm logo giáo xứ để hiển thị trong thẻ
+                        Thêm logo ban giáo lý để hiển thị trong thẻ
                         @if(Route::has('parish.settings'))
                         —
                         <a href="{{ route('parish.settings') }}" class="font-medium text-primary-600 hover:text-primary-700 underline-offset-2 hover:underline">

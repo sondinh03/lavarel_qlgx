@@ -3,7 +3,7 @@
     Props:
       - $teacher
       - $parishName
-      - $parishLogoUrl: URL logo giáo xứ (nullable)
+      - $parishLogoUrl: URL logo ban giáo lý (nullable, từ parishes.image)
       - $colors: palette từ CardTheme::resolve()
       - $forPrint (bool, default false)
 --}}

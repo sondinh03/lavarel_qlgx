@@ -49,6 +49,14 @@ class StudentPolicy
         return app(CatechistAccess::class)->canEditParishStudents($user);
     }
 
+    /**
+     * Đổi ảnh đại diện — cùng quyền với update (sửa hồ sơ).
+     */
+    public function uploadAvatar(User $user, StudentNew $student): bool
+    {
+        return $this->update($user, $student);
+    }
+
     public function delete(User $user, StudentNew $student): bool
     {
         return $user->canManageCatechism()

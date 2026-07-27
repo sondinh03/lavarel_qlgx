@@ -18,7 +18,7 @@ class PrintCards extends BaseComponent
 
     public string $parishName = '';
 
-    /** URL logo giáo xứ (nếu có) */
+    /** URL logo ban giáo lý — cột parishes.image (nếu có) */
     public ?string $parishLogoUrl = null;
 
     /** Màu chủ đạo: green | blue | yellow | red */

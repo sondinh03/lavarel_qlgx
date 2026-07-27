@@ -72,7 +72,14 @@ class ParishManagementCrudController extends CrudController
             'name'      => 'image',
             'type'      => 'image',
             'orderable' => false,
-            'label'     => __('backend.image'),
+            'label'     => 'Logo ban giáo lý',
+        ]);
+
+        CRUD::addColumn([
+            'name'      => 'parish_logo',
+            'type'      => 'image',
+            'orderable' => false,
+            'label'     => 'Logo giáo xứ',
         ]);
 
         CRUD::addColumn([
@@ -229,12 +236,24 @@ class ParishManagementCrudController extends CrudController
             'tab'     => __('backend.general'),
         ]);
 
-        // --- Hình ảnh ---
+        // --- Logo ban giáo lý (parishes.image — dùng trên thẻ HS/GLV) ---
         CRUD::addField([
             'name'    => 'image',
             'type'    => 'browse_custom',
             'mimes'   => ['image'],
-            'label'   => __('backend.images'),
+            'label'   => 'Logo ban giáo lý',
+            'hint'    => 'Hiển thị trên thẻ học sinh / GLV.',
+            'wrapper' => ['class' => 'form-group col-md-6'],
+            'tab'     => __('backend.general'),
+        ]);
+
+        // --- Logo giáo xứ chính thức ---
+        CRUD::addField([
+            'name'    => 'parish_logo',
+            'type'    => 'browse_custom',
+            'mimes'   => ['image'],
+            'label'   => 'Logo giáo xứ',
+            'hint'    => 'Logo chính thức của giáo xứ.',
             'wrapper' => ['class' => 'form-group col-md-6'],
             'tab'     => __('backend.general'),
         ]);

@@ -21,6 +21,7 @@ class ParishManagementResource extends JsonResource
             'name' => $this->name,
             'slug' => slug($this).config('settings.url_prefix'),
             'images' => $this->image,
+            'parish_logo' => $this->parish_logo,
             'created_at' => $this->created_at,
             'updated_at' => $this->updated_at,
         ];

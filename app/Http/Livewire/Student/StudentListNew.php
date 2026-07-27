@@ -8,13 +8,17 @@ use App\Models\CatechismClass;
 use App\Models\Parishioner;
 use App\Models\StudentNew;
 use App\Services\CatechistAccess;
+use App\Services\UploadService;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
+use Livewire\WithFileUploads;
 
 class StudentListNew extends BaseComponent
 {
+    use WithFileUploads;
+
     // ==================== FILTERS ====================
     public $selectedNamHoc = null;
     public $selectedKhoi = null;
@@ -44,6 +48,9 @@ class StudentListNew extends BaseComponent
     public $showEnrollNewModal = false;
     public $enrollTab = 'existing';
 
+    /** @var array<int|string, mixed> Quick avatar uploads keyed by student id */
+    public array $quickAvatars = [];
+
     protected array $allowedSortFields = ['last_name', 'first_name', 'birthday', 'gender'];
 
     public string $sortField = 'first_name';
@@ -56,6 +63,7 @@ class StudentListNew extends BaseComponent
     public bool $canBrowseAllClasses = false;
     public bool $canEditStudents = false;
     public bool $canManageStudents = false;
+    public bool $canQuickUploadAvatars = false;
 
     // ==================== PARISHIONER LINKING ====================
     public $suggestedParishioners;
@@ -130,6 +138,88 @@ class StudentListNew extends BaseComponent
         $this->canBrowseAllClasses = (bool) ($user && (
             $user->canManageCatechism() || $access->canEditParishStudents($user)
         ));
+        // Quick upload ảnh cùng quyền sửa hồ sơ (edit_parish_students / admin).
+        $this->canQuickUploadAvatars = $this->canEditStudents;
+    }
+
+    public function updatedQuickAvatars($value, $key): void
+    {
+        if (! $value || ! $this->canQuickUploadAvatars) {
+            return;
+        }
+
+        $this->saveQuickAvatar((int) $key);
+    }
+
+    public function saveQuickAvatar(int $studentId): void
+    {
+        if (! $this->canQuickUploadAvatars) {
+            $this->emit('toast', 'error', 'Bạn không có quyền cập nhật ảnh học sinh.');
+
+            return;
+        }
+
+        $fileKey = 'quickAvatars.' . $studentId;
+
+        try {
+            $this->validate([
+                $fileKey => 'required|image|mimes:jpg,jpeg,png,webp|max:2048',
+            ], [
+                $fileKey . '.required' => 'Vui lòng chọn ảnh.',
+                $fileKey . '.image'    => 'Tệp phải là hình ảnh.',
+                $fileKey . '.mimes'    => 'Ảnh chỉ chấp nhận JPG, PNG hoặc WEBP.',
+                $fileKey . '.max'      => 'Ảnh không được vượt quá 2MB.',
+            ]);
+        } catch (ValidationException $e) {
+            unset($this->quickAvatars[$studentId]);
+            $message = collect($e->validator->errors()->all())->first() ?: 'Ảnh không hợp lệ.';
+            $this->emit('toast', 'error', $message);
+
+            return;
+        }
+
+        $student = StudentNew::query()
+            ->whereKey($studentId)
+            ->where('parish_id', $this->parishId)
+            ->first();
+
+        if (! $student) {
+            unset($this->quickAvatars[$studentId]);
+            $this->emit('toast', 'error', 'Không tìm thấy học sinh.');
+
+            return;
+        }
+
+        try {
+            $this->authorize('uploadAvatar', $student);
+        } catch (\Illuminate\Auth\Access\AuthorizationException $e) {
+            unset($this->quickAvatars[$studentId]);
+            $this->emit('toast', 'error', 'Bạn không có quyền cập nhật ảnh học sinh này.');
+
+            return;
+        }
+
+        $upload = $this->quickAvatars[$studentId] ?? null;
+        if (! $upload) {
+            return;
+        }
+
+        try {
+            $path = app(UploadService::class)->upload($upload, 'avatars');
+
+            if ($student->avatar_path) {
+                delete_stored_media($student->avatar_path);
+            }
+
+            $student->update(['avatar_path' => $path]);
+            unset($this->quickAvatars[$studentId]);
+
+            $this->emit('toast', 'message', 'Đã cập nhật ảnh: ' . trim($student->last_name . ' ' . $student->first_name));
+        } catch (\Exception $e) {
+            unset($this->quickAvatars[$studentId]);
+            $this->logError($e, 'Quick avatar upload failed', ['student_id' => $studentId]);
+            $this->emit('toast', 'error', 'Không thể lưu ảnh. Vui lòng thử lại.');
+        }
     }
 
     protected function loadInitialData(): void

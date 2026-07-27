@@ -96,6 +96,7 @@ Guard chung: bộ 3 giáo lý. Tạo / import / in thẻ: chỉ `parish_admin|ca
 Lưu ý:
 
 - Route sửa cho phép cả catechist vì GLV có quyền `edit_parish_students` được sửa (chặn tiếp ở `StudentPolicy`).
+- Quick upload ảnh trên danh sách: cùng quyền `update` / `edit_parish_students` (không mở riêng cho GLV thường).
 - `StudentNew.qr_token` (UUID) tự sinh khi lưu — dùng cho thẻ QR và điểm danh QR.
 - In thẻ: `?ids=` hoặc `?classId=`, 2 loại thẻ (vĩnh viễn / theo năm), nhúng QR.
 - List có: liên kết/hủy liên kết hồ sơ giáo dân (`linkParishioner`), xóa hàng loạt, export Excel (`StudentExport`).
@@ -269,7 +270,7 @@ Lưu ý: khi đổi luật phân quyền GLV, nhớ cập nhật cả 3 trang n�
 
 | Route | Guard | Component | Ghi chú |
 |-------|-------|-----------|---------|
-| `/thong-tin-giao-xu` | parish_admin | `Parish\ParishSettings` | Thông tin giáo xứ, logo |
+| `/thong-tin-giao-xu` | parish_admin\|catechism_admin | `Parish\ParishSettings` | Thông tin giáo xứ; `image` = logo ban giáo lý (thẻ HS/GLV), `parish_logo` = logo giáo xứ |
 | `/giao-ho` | parish_admin\|parishioner_admin | `Parish\ParishGroupManager` | Giáo họ — dùng chung cả 2 phân hệ |
 | `/ten-thanh` | — | `Holy\HolyManager` | Danh mục tên thánh |
 | `/thong-bao-giao-ly` | parish_admin\|catechism_admin | `Catechism\CatechistAnnouncementComposer` | Gửi `CatechismBoardAnnouncement` tới GLV (tất cả hoặc theo khối) |

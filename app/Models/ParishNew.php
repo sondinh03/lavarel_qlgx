@@ -28,6 +28,7 @@ class ParishNew extends Model
         'province',
         'phone',
         'image',
+        'parish_logo',
         'status',
         'scores_entry_open',
     ];

@@ -23,6 +23,7 @@
             $isCatechist = auth()->user()->usesCatechistLayout();
             $showManageActions = $canManageStudents ?? false;
             $showEditActions = $canEditStudents ?? false;
+            $showQuickAvatar = $canQuickUploadAvatars ?? false;
         @endphp
 
         <x-mac-panel :overflow="true">
@@ -165,23 +166,29 @@
             @if($isCatechist)
         {{-- ══ CATECHIST: Card list ══ --}}
         <div class="p-4 lg:p-4 space-y-3" wire:key="student-cards-{{ $listContext }}">
+            @if($showQuickAvatar && $students && $students->count() > 0)
+            <p class="text-xs text-slate-500 px-0.5">
+                Chạm biểu tượng máy ảnh trên ảnh học sinh để thêm / đổi ảnh nhanh (có thể chụp trực tiếp từ điện thoại).
+            </p>
+            @endif
+
             @if($students && $students->count() > 0)
 
             @foreach($students as $student)
-            <a href="{{ route('students.show', $student->id) }}"
+            <div
                 wire:key="student-card-{{ $student->id }}"
                 class="bg-white/70 rounded-xl border border-black/[0.06] p-4
                       flex items-center gap-3 hover:border-primary-300/50
-                      hover:bg-black/[0.02] transition-all active:scale-[0.99] block">
+                      hover:bg-black/[0.02] transition-all">
 
-                <x-entity-avatar
-                    :src="$student->avatar_path ? $student->avatar_url : null"
-                    :name="trim(($student->last_name ?? '') . ' ' . ($student->first_name ?? ''))"
-                    :initials="mb_substr($student->last_name ?? '', 0, 1) . mb_substr($student->first_name ?? '', 0, 1)"
-                    size="xl" />
+                <x-quick-student-avatar
+                    :student="$student"
+                    size="xl"
+                    :enabled="$showQuickAvatar" />
 
                 {{-- Info --}}
-                <div class="flex-1 min-w-0">
+                <a href="{{ route('students.show', $student->id) }}"
+                    class="flex-1 min-w-0 block">
                     <div class="flex items-center gap-2 mb-0.5">
                         <span class="text-sm font-medium text-slate-900 truncate">
                             {{ $student->saint->name ?? '' }} {{ $student->last_name }} {{ $student->first_name }}
@@ -206,15 +213,19 @@
                         <span>{{ $student->phone }}</span>
                         @endif
                     </div>
-                </div>
+                </a>
 
                 {{-- Arrow --}}
-                <svg class="w-4 h-4 text-slate-300 flex-shrink-0" fill="none"
-                    stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round"
-                        stroke-width="2" d="M9 5l7 7-7 7" />
-                </svg>
-            </a>
+                <a href="{{ route('students.show', $student->id) }}"
+                    class="flex-shrink-0 p-1 text-slate-300 hover:text-slate-500"
+                    aria-label="Xem chi tiết">
+                    <svg class="w-4 h-4" fill="none"
+                        stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round"
+                            stroke-width="2" d="M9 5l7 7-7 7" />
+                    </svg>
+                </a>
+            </div>
             @endforeach
 
             {{-- Pagination --}}
@@ -297,12 +308,11 @@
                             </td>
 
                             <td class="px-4 py-3">
-                                <x-entity-avatar
-                                    :src="$student->avatar_path ? $student->avatar_url : null"
-                                    :name="$student->full_name_with_saint"
-                                    :initials="mb_substr($student->last_name ?? '', 0, 1) . mb_substr($student->first_name ?? '', 0, 1)"
+                                <x-quick-student-avatar
+                                    :student="$student"
                                     size="md"
-                                    variant="slate" />
+                                    variant="slate"
+                                    :enabled="$showQuickAvatar" />
                             </td>
 
                             <td class="px-4 py-3 text-sm font-mono text-primary-600 whitespace-nowrap">

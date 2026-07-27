@@ -39,7 +39,7 @@ class PrintCards extends BaseComponent
     /** Tên giáo xứ (ParishNew) hiển thị trên thẻ */
     public string $parishName = '';
 
-    /** URL logo giáo xứ (nếu có) */
+    /** URL logo ban giáo lý — cột parishes.image (nếu có) */
     public ?string $parishLogoUrl = null;
 
     // ==================== DATA ====================

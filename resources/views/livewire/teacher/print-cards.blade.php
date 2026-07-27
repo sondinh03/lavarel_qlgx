@@ -142,7 +142,7 @@
                         @endforeach
                     </div>
                     <p class="mt-3 text-sm text-slate-500 px-1">
-                        Thêm logo giáo xứ để hiển thị trong thẻ
+                        Thêm logo ban giáo lý để hiển thị trong thẻ
                         @if(Route::has('parish.settings'))
                         —
                         <a href="{{ route('parish.settings') }}" class="font-medium text-primary-600 hover:text-primary-700 underline-offset-2 hover:underline">
