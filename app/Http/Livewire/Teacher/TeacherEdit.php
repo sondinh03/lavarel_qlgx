@@ -51,6 +51,7 @@ class TeacherEdit extends BaseComponent
     public bool $perm_manage_parish_scores = false;
     public bool $perm_edit_parish_students = false;
     public bool $perm_mark_teacher_attendance = false;
+    public bool $perm_create_attendance_sessions = false;
 
     public $parishGroups;
     public $saints;
@@ -139,6 +140,7 @@ class TeacherEdit extends BaseComponent
                     $this->perm_manage_parish_scores = $names->contains(CatechistPermissions::MANAGE_PARISH_SCORES);
                     $this->perm_edit_parish_students = $names->contains(CatechistPermissions::EDIT_PARISH_STUDENTS);
                     $this->perm_mark_teacher_attendance = $names->contains(CatechistPermissions::MARK_TEACHER_ATTENDANCE);
+                    $this->perm_create_attendance_sessions = $names->contains(CatechistPermissions::CREATE_ATTENDANCE_SESSIONS);
                 }
             }
         } catch (ModelNotFoundException $e) {
@@ -335,6 +337,9 @@ class TeacherEdit extends BaseComponent
         }
         if ($this->perm_mark_teacher_attendance) {
             $desired[] = CatechistPermissions::MARK_TEACHER_ATTENDANCE;
+        }
+        if ($this->perm_create_attendance_sessions) {
+            $desired[] = CatechistPermissions::CREATE_ATTENDANCE_SESSIONS;
         }
 
         $current = $user->permissions

@@ -72,6 +72,29 @@
         </a>
         @endif
 
+        @if(! $assignmentBlocked && auth()->user()?->canCreateAttendanceSessions())
+        <a href="{{ route('session.index') }}"
+            class="flex items-start gap-3 px-4 py-4 rounded-2xl
+                bg-white/75 border border-black/[0.06] shadow-mac-sm
+                hover:bg-white transition-all touch-feedback group">
+            <div class="w-10 h-10 rounded-xl bg-primary-50 ring-1 ring-primary-100
+                flex items-center justify-center flex-shrink-0 text-primary-700 mt-0.5">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                </svg>
+            </div>
+            <div class="min-w-0 flex-1">
+                <p class="text-sm font-semibold text-slate-900">Tạo phiên điểm danh</p>
+                <p class="text-xs text-slate-500 mt-0.5">Mở / khóa buổi điểm danh học sinh và GLV</p>
+            </div>
+            <svg class="w-5 h-5 text-slate-300 flex-shrink-0 mt-1 group-hover:text-primary-500"
+                fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+            </svg>
+        </a>
+        @endif
+
         {{-- Từ ban giáo lý --}}
         @if($boardAnnouncements->isNotEmpty())
         <section class="space-y-2.5">

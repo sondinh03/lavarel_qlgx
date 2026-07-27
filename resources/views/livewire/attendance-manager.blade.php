@@ -59,7 +59,10 @@
             @endif
 
             <div class="p-3 sm:p-4 lg:p-6 mac-hairline-b bg-white/30">
-                @php $isAdmin = auth()->user()->canManage(); @endphp
+                @php
+                    $isAdmin = auth()->user()->canManage();
+                    $canCreateSessions = (bool) auth()->user()?->canCreateAttendanceSessions();
+                @endphp
 
                 @if($assignmentBlocked)
                 <div class="mb-3 flex items-start gap-3 px-4 py-3 rounded-xl bg-amber-50/90 border border-amber-200/80">
@@ -425,7 +428,10 @@
         x-on:attendance-export="requestExport()"
         x-on:attendance-absent-export="requestAbsentExport()">
 
-            @php $isAdmin = auth()->user()->canManage(); @endphp
+            @php
+                $isAdmin = auth()->user()->canManage();
+                $canCreateSessions = (bool) auth()->user()?->canCreateAttendanceSessions();
+            @endphp
 
             <div class="px-4 lg:px-6 py-3 mac-hairline-b bg-white/20">
                 <div class="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
@@ -505,14 +511,15 @@
                         @endif
                     </div>
 
-                    <div class="flex flex-wrap items-center gap-2 justify-end flex-shrink-0">
+                    <div class="flex flex-wrap items-center gap-2 justify-end flex-shrink-0 w-full lg:w-auto">
                         @if($subjectTarget === 'teachers')
-                            @if(auth()->user()?->canManageCatechism())
-                            <x-button as="a" variant="outline" size="sm"
+                            @if($canCreateSessions)
+                            <x-button as="a" variant="{{ $this->viewMode === 'mobile' ? 'primary' : 'outline' }}" size="sm"
+                                class="{{ $this->viewMode === 'mobile' ? 'w-full justify-center' : '' }}"
                                 href="{{ route('session.index', ['target' => 'teachers', 'namHoc' => $selectedNamHoc]) }}"
-                                x-on:click="if (!confirmLeave('tạo buổi')) { $event.preventDefault(); return; }">
+                                x-on:click="if (!confirmLeave('tạo phiên')) { $event.preventDefault(); return; }">
                                 <x-icon name="plus" />
-                                Tạo buổi
+                                Tạo phiên
                             </x-button>
                             @endif
                             @if($this->viewMode !== 'mobile')
@@ -525,9 +532,10 @@
                                 </x-button>
                             </div>
                             @endif
-                        @elseif($selectedClassId && $this->viewMode !== 'mobile')
-                            @if($isAdmin)
-                            <x-button as="a" variant="outline" size="sm"
+                        @elseif($selectedClassId)
+                            @if($canCreateSessions)
+                            <x-button as="a" variant="{{ $this->viewMode === 'mobile' ? 'primary' : 'outline' }}" size="sm"
+                                class="{{ $this->viewMode === 'mobile' ? 'w-full justify-center' : '' }}"
                                 href="{{ route('session.index', array_filter([
                                     'namHoc'  => $selectedNamHoc,
                                     'classId' => $selectedClassId,
@@ -539,6 +547,7 @@
                             </x-button>
                             @endif
 
+                            @if($this->viewMode !== 'mobile')
                             <x-button as="a" variant="outline" size="sm" href="{{ route('attendance.statistics', [
                                     'namHoc'  => $selectedNamHoc,
                                     'classId' => $selectedClassId,
@@ -577,6 +586,7 @@
                                     <span x-text="saveButtonLabel()"></span>
                                 </x-button>
                             </div>
+                            @endif
                         @endif
                     </div>
                 </div>
@@ -615,30 +625,30 @@
             <div class="px-4 lg:px-6 py-3 mac-hairline-b">
                 <x-inline-tip tone="amber">
                     Chưa có buổi {{ \App\Models\TeacherAttendanceSession::typeLabel((int) $attendanceType) }}.
-                    @if(auth()->user()?->canManageCatechism())
+                    @if($canCreateSessions)
                     Vào
                     <a href="{{ route('session.index', ['target' => 'teachers', 'namHoc' => $selectedNamHoc]) }}"
                         class="font-semibold underline hover:text-amber-950">Phiên điểm danh → Giáo lý viên</a>
-                    để tạo buổi, rồi quay lại trang này.
+                    để tạo phiên, rồi quay lại trang này.
                     @else
-                    Liên hệ Ban quản trị giáo lý để tạo buổi.
+                    Liên hệ Ban quản trị giáo lý để tạo phiên.
                     @endif
                 </x-inline-tip>
             </div>
             <x-stats.page-empty
                 :panel="false"
-                title="Chưa có buổi điểm danh GLV"
-                description="Tạo buổi tại Phiên điểm danh, rồi quay lại trang này để điểm."
+                title="Chưa có phiên điểm danh GLV"
+                description="Tạo phiên tại Phiên điểm danh, rồi quay lại trang này để điểm."
                 tone="primary">
                 <x-slot name="icon">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
                         d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
                 </x-slot>
-                @if(auth()->user()?->canManageCatechism())
+                @if($canCreateSessions)
                 <x-button as="a" variant="primary"
                     href="{{ route('session.index', ['target' => 'teachers', 'namHoc' => $selectedNamHoc]) }}">
                     <x-icon name="plus" />
-                    Tạo buổi GLV
+                    Tạo phiên
                 </x-button>
                 @endif
             </x-stats.page-empty>
@@ -1568,12 +1578,15 @@
                     <div class="px-4 lg:px-6 py-3 mac-hairline-b">
                         <x-inline-tip tone="amber">
                             Lớp đã chọn nhưng <strong>chưa có buổi điểm danh</strong>.
-                            @if(auth()->user()->canManage())
+                            @if($canCreateSessions)
                                 Vào
-                                <a href="{{ route('session.index') }}" class="font-semibold underline hover:text-amber-950">Phiên điểm danh</a>
-                                → chọn cùng năm học / lớp → <strong>Tạo phiên mới</strong>
-                                (theo ngày, theo tuần hoặc tùy chọn), rồi quay lại trang này.
-                                <a href="{{ route('help.attendance') }}" class="font-semibold underline hover:text-amber-950 ml-1">Hướng dẫn điểm danh →</a>
+                                <a href="{{ route('session.index', array_filter([
+                                    'namHoc' => $selectedNamHoc,
+                                    'classId' => $selectedClassId,
+                                    'khoi' => $selectedKhoi ?: null,
+                                ])) }}" class="font-semibold underline hover:text-amber-950">Phiên điểm danh</a>
+                                → <strong>Tạo phiên mới</strong>, rồi quay lại trang này.
+                                <a href="{{ route('help.attendance') }}" class="font-semibold underline hover:text-amber-950 ml-1">Hướng dẫn →</a>
                             @else
                                 Liên hệ quản trị viên để tạo buổi tại <strong>Phiên điểm danh</strong>, rồi tải lại trang này.
                             @endif
@@ -1591,10 +1604,15 @@
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
                                 d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
                         </x-slot>
-                        @if(empty($sessions) && auth()->user()->canManage())
+                        @if(empty($sessions) && $canCreateSessions)
                         <div class="flex flex-wrap items-center justify-center gap-3">
-                            <x-button as="a" href="{{ route('session.index') }}" variant="primary">
-                                Mở Phiên điểm danh
+                            <x-button as="a" href="{{ route('session.index', array_filter([
+                                'namHoc' => $selectedNamHoc,
+                                'classId' => $selectedClassId,
+                                'khoi' => $selectedKhoi ?: null,
+                            ])) }}" variant="primary">
+                                <x-icon name="plus" />
+                                Tạo phiên điểm danh
                             </x-button>
                             <x-button as="a" href="{{ route('help.attendance') }}" variant="outline">
                                 Xem hướng dẫn

@@ -87,9 +87,15 @@
                     Chọn checkbox từng giáo lý viên (hoặc chọn cả trang) để <strong>In thẻ</strong>,
                     <strong>Đánh dấu đã nghỉ</strong> hoặc <strong>Xóa</strong> hàng loạt.
                 </x-inline-tip>
+                <x-inline-tip tone="amber">
+                    Cấp <strong>quyền hỗ trợ quản trị</strong> (điểm / sửa HS / điểm danh GLV / tạo phiên)
+                    khi <strong>Sửa</strong> GLV đã có tài khoản. Chi tiết:
+                    <a href="{{ route('help.scores') }}" class="underline font-semibold">nhập điểm</a>,
+                    <a href="{{ route('help.attendance') }}" class="underline font-semibold">điểm danh</a>.
+                </x-inline-tip>
                 @if($showQuickAvatar)
                 <p class="text-xs text-slate-500 px-0.5">
-                    Chạm máy ảnh → chọn <strong>Chụp ảnh</strong> hoặc <strong>Thư viện</strong>.
+                    Chạm máy ảnh trên ảnh giáo lý viên để chụp hoặc chọn ảnh từ thư viện / file.
                 </p>
                 @endif
             </div>

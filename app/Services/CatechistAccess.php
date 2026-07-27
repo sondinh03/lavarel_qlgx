@@ -109,6 +109,22 @@ class CatechistAccess
             && $this->hasActiveAssignmentThisYear($user, $parishId);
     }
 
+    /**
+     * Tạo / khóa phiên điểm danh học sinh và buổi điểm danh GLV:
+     * quản trị giáo lý luôn được; GLV chỉ khi được cấp quyền hỗ trợ
+     * + còn phân công năm hiện tại. (Xóa phiên vẫn chỉ quản trị.)
+     */
+    public function canCreateAttendanceSessions(User $user, ?int $parishId = null): bool
+    {
+        if ($user->canManageCatechism()) {
+            return true;
+        }
+
+        return $user->isCatechist()
+            && $user->can(CatechistPermissions::CREATE_ATTENDANCE_SESSIONS)
+            && $this->hasActiveAssignmentThisYear($user, $parishId);
+    }
+
     public function canGrantElevatedPermissions(User $actor): bool
     {
         return $actor->canManageCatechism();

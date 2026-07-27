@@ -93,6 +93,7 @@
                             </x-tooltip>
                             @endif
 
+                            @if($showManageActions)
                             <x-button
                                 as="a"
                                 href="{{ route('students.statistics', ['namHoc' => $selectedNamHoc]) }}"
@@ -116,6 +117,7 @@
                                     Export Excel
                                 </x-dropdown-item>
                             </x-dropdown>
+                            @endif
                         </div>
                     </div>
                 </div>
@@ -168,7 +170,7 @@
         <div class="p-4 lg:p-4 space-y-3" wire:key="student-cards-{{ $listContext }}">
             @if($showQuickAvatar && $students && $students->count() > 0)
             <p class="text-xs text-slate-500 px-0.5">
-                Chạm máy ảnh → chọn <strong>Chụp ảnh</strong> hoặc <strong>Thư viện</strong>.
+                Chạm máy ảnh trên ảnh học sinh để chụp hoặc chọn ảnh từ thư viện / file.
             </p>
             @endif
 

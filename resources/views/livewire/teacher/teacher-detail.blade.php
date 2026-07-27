@@ -173,7 +173,7 @@
                                     @endif
                                 </p>
                                 <p class="text-xs text-slate-400">Nhập đúng tên đăng nhập trên vào ô “Email hoặc SĐT” khi đăng nhập. Nếu GLV đã đổi mật khẩu thì mật khẩu hiện tại có thể khác.</p>
-                                @if(!empty($teacher['perm_manage_parish_scores']) || !empty($teacher['perm_edit_parish_students']) || !empty($teacher['perm_mark_teacher_attendance']))
+                                @if(!empty($teacher['perm_manage_parish_scores']) || !empty($teacher['perm_edit_parish_students']) || !empty($teacher['perm_mark_teacher_attendance']) || !empty($teacher['perm_create_attendance_sessions']))
                                 <div class="pt-2 border-t border-black/[0.04] space-y-1">
                                     <p class="text-xs font-semibold text-slate-500 uppercase tracking-wide">Quyền hỗ trợ quản trị</p>
                                     @if(!empty($teacher['perm_manage_parish_scores']))
@@ -184,6 +184,9 @@
                                     @endif
                                     @if(!empty($teacher['perm_mark_teacher_attendance']))
                                     <p class="text-sm text-slate-700">• Điểm danh giáo lý viên</p>
+                                    @endif
+                                    @if(!empty($teacher['perm_create_attendance_sessions']))
+                                    <p class="text-sm text-slate-700">• Tạo phiên điểm danh</p>
                                     @endif
                                 </div>
                                 @endif

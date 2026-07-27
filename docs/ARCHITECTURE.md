@@ -62,14 +62,16 @@ Role được gán ở: Backpack user CRUD (`User::booted` sync từ request), t
 (`CreateCatechistAccount`, `TeacherEdit`, `ImportTeacherAction` → `catechist`), duyệt đăng ký
 quản trị xứ (`ApproveParishAdminRegistrationAction` → `parish_admin`).
 
-### 2.2. Hai quyền nâng cao của GLV
+### 2.2. Quyền hỗ trợ quản trị của GLV
 
 Hằng số trong `app/Support/CatechistPermissions.php`:
 
 | Permission | Ý nghĩa |
 |------------|---------|
 | `manage_parish_scores` | Nhập/sửa điểm cho **toàn giáo xứ** (không chỉ lớp mình) |
-| `edit_parish_students` | Sửa hồ sơ học sinh **toàn giáo xứ** |
+| `edit_parish_students` | Sửa hồ sơ học sinh **toàn giáo xứ** (không thống kê/import/tạo-xóa) |
+| `mark_teacher_attendance` | Điểm danh giáo lý viên (đi dạy / lễ / họp) |
+| `create_attendance_sessions` | Tạo và khóa/mở phiên điểm danh học sinh + buổi điểm danh GLV (không xóa phiên) |
 
 - `super_admin` / `parish_admin` / `catechism_admin` được cấp (`CatechistAccess::canGrantElevatedPermissions`),
   thao tác trong màn hình sửa GLV (`TeacherEdit`).
@@ -106,8 +108,8 @@ chạy console/seeder. Hầu hết bảng chính đều có cột `parish_id`.
 - GLV **không có phân công lớp nào trong năm học hiện tại** (kể cả tài khoản năm cũ, GLV đã nghỉ)
   vẫn đăng nhập được, nhưng **không thao tác được bất cứ gì** trong phân hệ giáo lý: không điểm
   danh, không quét QR, không xem thống kê, dropdown lớp trống, dashboard hiện banner giải thích.
-- Luật này áp cho **cả 2 quyền nâng cao**: có `manage_parish_scores` / `edit_parish_students`
-  mà không có phân công năm nay thì quyền cũng vô hiệu. Nhờ đó quản trị xứ **không cần thu hồi
+- Luật này áp cho **các quyền hỗ trợ**: có permission nâng cao mà không có phân công năm nay
+  thì quyền cũng vô hiệu. Nhờ đó quản trị xứ **không cần thu hồi
   quyền thủ công** khi GLV nghỉ — chỉ cần không phân công ở năm mới.
 - `Teacher.is_active = false` cũng chặn tương tự (GLV nghỉ hẳn).
 
@@ -119,12 +121,13 @@ lớp trong giáo xứ** (không chỉ lớp mình). Đây là quyết định n
 
 Ma trận tóm tắt:
 
-| GLV | Điểm danh | Nhập điểm | Sửa học sinh |
-|-----|-----------|-----------|--------------|
-| Không phân công năm nay | ✗ | ✗ | ✗ |
-| Có phân công, không quyền nâng cao | ✓ toàn xứ | chỉ xem điểm lớp mình | chỉ xem |
-| Có phân công + `manage_parish_scores` | ✓ toàn xứ | ✓ toàn xứ (khi cửa nhập điểm mở) | — |
-| Có phân công + `edit_parish_students` | ✓ toàn xứ | — | ✓ toàn xứ |
+| GLV | Điểm danh | Nhập điểm | Sửa học sinh | Tạo phiên ĐD |
+|-----|-----------|-----------|--------------|--------------|
+| Không phân công năm nay | ✗ | ✗ | ✗ | ✗ |
+| Có phân công, không quyền nâng cao | ✓ toàn xứ | chỉ xem điểm lớp mình | chỉ xem | ✗ |
+| Có phân công + `manage_parish_scores` | ✓ toàn xứ | ✓ toàn xứ (khi cửa nhập điểm mở) | — | — |
+| Có phân công + `edit_parish_students` | ✓ toàn xứ | — | ✓ toàn xứ | — |
+| Có phân công + `create_attendance_sessions` | ✓ toàn xứ | — | — | ✓ tạo/khóa phiên HS + buổi GLV |
 
 ### 3.3. `CatechistAccess` là cổng trung tâm
 
@@ -138,6 +141,8 @@ Ma trận tóm tắt:
 | `canOperateCatechism(User)` | Quản trị: luôn true. GLV: true khi có phân công năm nay. **Cổng chính** |
 | `canManageParishScores(User)` | Quản trị, hoặc GLV + permission + phân công năm nay |
 | `canEditParishStudents(User)` | Tương tự với `edit_parish_students` |
+| `canMarkTeacherAttendance(User)` | Tương tự với `mark_teacher_attendance` |
+| `canCreateAttendanceSessions(User)` | Tương tự với `create_attendance_sessions` |
 | `assignedClassIds(User, $yearId)` | Lớp được phân công: `class_teachers` active, lớp active cùng xứ; năm khớp qua `namhoc_id` **hoặc** `classes.school_year_id` (dữ liệu cũ chỉ có 1 trong 2) |
 | `canViewClass / canViewStudent / canViewScoresForClass / canEnterScoresForClass` | Kiểm tra chi tiết theo đối tượng |
 | `restrictClassQuery` | Thu hẹp query lớp theo phân công (quản trị/quyền nâng cao: không thu hẹp) |

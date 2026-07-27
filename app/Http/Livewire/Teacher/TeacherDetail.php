@@ -89,6 +89,9 @@ class TeacherDetail extends BaseComponent
                 'perm_mark_teacher_attendance' => $teacher->user
                     ? $teacher->user->getPermissionNames()->contains(CatechistPermissions::MARK_TEACHER_ATTENDANCE)
                     : false,
+                'perm_create_attendance_sessions' => $teacher->user
+                    ? $teacher->user->getPermissionNames()->contains(CatechistPermissions::CREATE_ATTENDANCE_SESSIONS)
+                    : false,
                 'note'                 => $teacher->note ?? '',
                 'avatar_path'          => $teacher->avatar_path ?? '',
                 'avatar_url'           => $teacher->avatar_url,

@@ -128,8 +128,10 @@
                     <li>Chọn loại buổi (đi học / đi lễ nếu hệ thống hỗ trợ), giờ bắt đầu–kết thúc nếu cần, rồi lưu.</li>
                 </ol>
                 <x-inline-tip tone="amber">
-                    Giáo lý viên thuần thường <strong>không</strong> tạo phiên — chỉ quản trị viên / người có quyền quản lý.
-                    GLV vào thẳng trang Điểm danh sau khi đã có buổi.
+                    Giáo lý viên thuần thường <strong>không</strong> tạo phiên — chỉ quản trị,
+                    hoặc GLV được cấp quyền hỗ trợ <strong>Tạo phiên điểm danh</strong>
+                    (cấp khi sửa GLV → Quyền hỗ trợ quản trị) — gồm cả phiên học sinh và buổi GLV.
+                    GLV không có quyền này vào thẳng trang Điểm danh sau khi đã có buổi.
                 </x-inline-tip>
             </div>
         </x-mac-panel>

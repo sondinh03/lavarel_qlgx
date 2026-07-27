@@ -26,7 +26,7 @@ class AttendanceSessionPolicy
     public function viewAny(User $user): bool
     {
         return $user->canManageCatechism()
-            || $user->isCatechist();
+            || app(\App\Services\CatechistAccess::class)->canCreateAttendanceSessions($user);
     }
 
     /**
@@ -49,16 +49,18 @@ class AttendanceSessionPolicy
 
     public function create(User $user): bool
     {
-        return $user->canManageCatechism();
+        return app(\App\Services\CatechistAccess::class)->canCreateAttendanceSessions($user);
     }
 
     public function update(User $user, AttendanceSession $session): bool
     {
         $class = $session->catechismClass;
 
-        return $user->canManageCatechism()
-            && $class
-            && (int) $user->parish_id === (int) $class->parish_id;
+        if (! $class || (int) $user->parish_id !== (int) $class->parish_id) {
+            return false;
+        }
+
+        return app(\App\Services\CatechistAccess::class)->canCreateAttendanceSessions($user);
     }
 
     public function delete(User $user, AttendanceSession $session): bool

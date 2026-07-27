@@ -167,8 +167,10 @@ $addNote('Mật khẩu mặc định (nếu hệ thống tạo sẵn) nên đư�
 $section->addTitle('4.4.1. Cấp quyền hỗ trợ quản trị cho GLV', 3);
 $addPara('Mặc định GLV chỉ điểm danh và xem lớp được phân công. Khi cần một GLV (thường là Trưởng/Phó) hỗ trợ quản trị, mở màn sửa GLV (tài khoản đã tạo) và bật ở mục "Quyền hỗ trợ quản trị":');
 $addBullet('Quản lý điểm toàn giáo xứ: GLV xem, nhập và sửa điểm mọi lớp trong xứ khi cửa sổ nhập điểm đang mở.');
-$addBullet('Sửa thông tin học sinh toàn giáo xứ: GLV cập nhật hồ sơ học sinh toàn xứ (không gồm tạo/xóa học sinh hay liên kết giáo dân).');
-$addPara('Chỉ Quản trị xứ (và Super admin) mới cấp được các quyền này. Bỏ chọn để thu hồi bất cứ lúc nào.');
+$addBullet('Sửa thông tin học sinh toàn giáo xứ: GLV cập nhật hồ sơ học sinh toàn xứ (không gồm tạo/xóa học sinh, thống kê hay import).');
+$addBullet('Điểm danh giáo lý viên: GLV điểm danh được các buổi GLV (đi dạy / đi lễ / họp).');
+$addBullet('Tạo phiên điểm danh: GLV tạo và khóa/mở phiên điểm danh học sinh và buổi điểm danh GLV (không xóa phiên).');
+$addPara('Quản trị xứ và Quản trị giáo lý mới cấp được các quyền này. Bỏ chọn để thu hồi bất cứ lúc nào.');
 $addPara('Điều kiện hiệu lực: các quyền trên chỉ có tác dụng khi GLV đang được phân công vào ít nhất một lớp trong năm học hiện tại. GLV chưa được phân công (kể cả tài khoản từ năm học cũ, đã nghỉ) đăng nhập được nhưng không thao tác gì trên năm hiện tại — không cần thu hồi quyền thủ công từng người khi sang năm mới.');
 $addNote('Mọi thay đổi hồ sơ học sinh đều được ghi Nhật ký sửa học sinh (ai sửa, thời điểm, giá trị cũ/mới) để đối chiếu khi cần.');
 

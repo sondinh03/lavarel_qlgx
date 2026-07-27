@@ -302,6 +302,10 @@
                                 <p class="text-sm font-semibold text-slate-800">Quyền hỗ trợ quản trị</p>
                                 <p class="text-xs text-slate-500 mt-0.5">
                                     Chỉ cấp cho Trưởng/Phó hỗ trợ quản trị xứ. GLV thường không cần các quyền này.
+                                    Quyền chỉ có hiệu lực khi GLV còn được phân công lớp trong năm học hiện tại.
+                                    Xem thêm:
+                                    <a href="{{ route('help.scores') }}" class="text-primary-700 underline">nhập điểm</a>,
+                                    <a href="{{ route('help.attendance') }}" class="text-primary-700 underline">điểm danh</a>.
                                 </p>
                             </div>
                             <label class="flex items-start gap-3 cursor-pointer select-none">
@@ -317,7 +321,7 @@
                                     class="w-4 h-4 mt-0.5 rounded border-black/20 text-primary-500 focus:ring-primary-500/25" />
                                 <div>
                                     <span class="text-sm font-medium text-slate-700">Sửa thông tin học sinh toàn giáo xứ</span>
-                                    <p class="text-xs text-slate-500 mt-0.5">Cập nhật hồ sơ học sinh; không bao gồm tạo/xóa/liên kết giáo dân.</p>
+                                    <p class="text-xs text-slate-500 mt-0.5">Cập nhật hồ sơ học sinh và ảnh đại diện; không gồm tạo/xóa/liên kết giáo dân, thống kê hay import.</p>
                                 </div>
                             </label>
                             <label class="flex items-start gap-3 cursor-pointer select-none">
@@ -326,6 +330,14 @@
                                 <div>
                                     <span class="text-sm font-medium text-slate-700">Điểm danh giáo lý viên</span>
                                     <p class="text-xs text-slate-500 mt-0.5">Điểm danh GLV (đi dạy / đi lễ / họp) trên màn Điểm danh và quét QR GLV.</p>
+                                </div>
+                            </label>
+                            <label class="flex items-start gap-3 cursor-pointer select-none">
+                                <input type="checkbox" wire:model.defer="perm_create_attendance_sessions"
+                                    class="w-4 h-4 mt-0.5 rounded border-black/20 text-primary-500 focus:ring-primary-500/25" />
+                                <div>
+                                    <span class="text-sm font-medium text-slate-700">Tạo phiên điểm danh</span>
+                                    <p class="text-xs text-slate-500 mt-0.5">Tạo và khóa/mở phiên điểm danh học sinh và buổi điểm danh GLV (không gồm xóa phiên).</p>
                                 </div>
                             </label>
                         </div>

@@ -154,14 +154,17 @@ class CatechistAuthorizationMatrixTest extends TestCase
         // Cấp quyền hỗ trợ cho GLV không có phân công → quyền không có hiệu lực
         $this->fx->unassignedCatechist->givePermissionTo(
             \App\Support\CatechistPermissions::MANAGE_PARISH_SCORES,
-            \App\Support\CatechistPermissions::EDIT_PARISH_STUDENTS
+            \App\Support\CatechistPermissions::EDIT_PARISH_STUDENTS,
+            \App\Support\CatechistPermissions::CREATE_ATTENDANCE_SESSIONS
         );
         $user = $this->fx->unassignedCatechist->fresh();
 
         $this->assertFalse($this->access->canManageParishScores($user));
         $this->assertFalse($this->access->canEditParishStudents($user));
+        $this->assertFalse($this->access->canCreateAttendanceSessions($user));
         $this->assertFalse($user->can('enterScores', StudentScore::class));
         $this->assertFalse($user->can('update', $this->fx->studentOtherSameParish));
+        $this->assertFalse($user->can('create', \App\Models\AttendanceSession::class));
     }
 
     public function test_inactive_teacher_record_blocks_assignment(): void

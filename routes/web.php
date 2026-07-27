@@ -203,6 +203,10 @@ Route::middleware('auth')->group(function () {
         });
 
         Route::get('/diem-so', ScoreManager::class)->name('scores.index');
+
+        // GLV có quyền create_attendance_sessions cũng vào được; policy chặn tạo/sửa.
+        Route::get('/phien-diem-danh', SessionManager::class)
+            ->name('session.index');
     });
 
     Route::middleware('role:parish_admin|catechism_admin')->group(function () {
@@ -230,9 +234,6 @@ Route::middleware('auth')->group(function () {
             Route::get('/{id}/sua', TeacherEdit::class)->name('edit')->whereNumber('id');
             Route::get('/{id}', TeacherDetail::class)->name('show')->whereNumber('id');
         });
-
-        Route::get('/phien-diem-danh', SessionManager::class)
-            ->name('session.index');
 
         Route::get('/diem-danh/nhat-ky', \App\Http\Livewire\Attendance\AttendanceEditLogList::class)
             ->name('attendance.edit-logs');

@@ -266,9 +266,16 @@ class SessionManager extends BaseComponent
         return $this->subjectTarget === 'teachers';
     }
 
+    /**
+     * Tạo / khóa buổi điểm danh GLV: cùng quyền tạo phiên học sinh
+     * (quản trị giáo lý hoặc GLV có create_attendance_sessions + phân công).
+     * Xóa buổi GLV vẫn chỉ dành cho quản trị — xem deleteTeacherSession().
+     */
     protected function canManageTeacherSessions(): bool
     {
-        return (bool) auth()->user()?->canManageCatechism();
+        return (bool) auth()->user()?->canCreateAttendanceSessions(
+            $this->parishId ? (int) $this->parishId : null
+        );
     }
 
     public function updatedSelectedKhoi(): void
@@ -774,10 +781,9 @@ class SessionManager extends BaseComponent
             return;
         }
 
-        $this->authorize('update', AttendanceSession::class);
-
         try {
             $session = AttendanceSession::findOrFail($id);
+            $this->authorize('update', $session);
 
             $newStatus = $session->status === AttendanceSession::STATUS_OPENING
                 ? AttendanceSession::STATUS_CLOSED
@@ -790,6 +796,8 @@ class SessionManager extends BaseComponent
                 : 'Đã mở lại phiên điểm danh';
 
             $this->emit('toast', 'success', $label);
+        } catch (\Illuminate\Auth\Access\AuthorizationException $e) {
+            $this->emit('toast', 'error', 'Bạn không có quyền thay đổi trạng thái phiên');
         } catch (\Exception $e) {
             $this->logError($e, 'Error toggling session status', ['id' => $id]);
             $this->emit('toast', 'error', 'Có lỗi khi thay đổi trạng thái');
@@ -834,10 +842,9 @@ class SessionManager extends BaseComponent
             return;
         }
 
-        $this->authorize('delete', AttendanceSession::class);
-
         try {
             $session = AttendanceSession::findOrFail($id);
+            $this->authorize('delete', $session);
 
             if ($session->records()->whereNotNull('status')->exists()) {
                 $this->emit('toast', 'error', 'Không thể xóa phiên đã có dữ liệu điểm danh');
@@ -849,6 +856,8 @@ class SessionManager extends BaseComponent
             DB::commit();
 
             $this->emit('toast', 'success', 'Đã xóa phiên điểm danh');
+        } catch (\Illuminate\Auth\Access\AuthorizationException $e) {
+            $this->emit('toast', 'error', 'Bạn không có quyền xóa phiên điểm danh');
         } catch (\Exception $e) {
             DB::rollBack();
             $this->logError($e, 'Error deleting session', ['id' => $id]);
@@ -858,7 +867,7 @@ class SessionManager extends BaseComponent
 
     protected function deleteTeacherSession(int $id): void
     {
-        if (! $this->canManageTeacherSessions()) {
+        if (! auth()->user()?->canManageCatechism()) {
             $this->emit('toast', 'error', 'Bạn không có quyền xóa buổi điểm danh GLV');
 
             return;
@@ -1087,8 +1096,12 @@ class SessionManager extends BaseComponent
             'parishId'  => $this->parishId,
             'sessions'  => $sessions,
             'total'     => $paginator->total(),
+            'canDeleteSessions' => (bool) auth()->user()?->canManageCatechism(),
+            'isMobileUi' => (bool) auth()->user()?->usesCatechistLayout(),
         ])
-            ->extends('frontend.layout.main')
+            ->extends(auth()->user()?->usesCatechistLayout()
+                ? 'frontend.layout.catechist'
+                : 'frontend.layout.main')
             ->section('content');
     }
 }
