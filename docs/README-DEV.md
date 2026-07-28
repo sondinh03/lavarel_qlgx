@@ -244,6 +244,7 @@ php artisan test                  # chạy test
 php docs/generate-catechist-guide.php
 php docs/generate-parish-admin-guide.php
 php docs/generate-parishioner-guide.php
+php docs/generate-vgiaoxu-guide-v3.php   # HUONG_DAN_VGIAOXU_ORG_V3.docx
 ```
 
 ---
@@ -268,7 +269,8 @@ php docs/generate-parishioner-guide.php
 - `docs/ARCHITECTURE.md` — kiến trúc, mô hình dữ liệu, **các luật nghiệp vụ ngầm** (phân quyền GLV, năm học, quyền hỗ trợ quản trị). *(nên tạo)*
 - `docs/KNOWN-ISSUES.md` — nợ kỹ thuật & test đang fail đã biết. *(nên tạo)*
 - `docs/*.docx` — hướng dẫn sử dụng cho người dùng cuối (GLV, giáo dân, quản trị xứ).
-- `docs/DESIGN_SYSTEM.pdf`, `docs/HUONG_DAN_VGIAOXU_ORG_V2.pdf` — tài liệu thiết kế/hướng dẫn có sẵn.
+- `docs/DESIGN_SYSTEM.pdf`, `docs/HUONG_DAN_VGIAOXU_ORG_V2.pdf` — tài liệu thiết kế / hướng dẫn V2 có sẵn.
+- `docs/HUONG_DAN_VGIAOXU_ORG_V3.docx` / `.pdf` — hướng dẫn Mục vụ Quản lý Thiếu nhi bản V3 (sinh bằng `php docs/generate-vgiaoxu-guide-v3.php`).
 
 ---
 

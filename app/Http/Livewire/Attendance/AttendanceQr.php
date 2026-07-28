@@ -227,6 +227,7 @@ class AttendanceQr extends BaseComponent
             'class_name'   => $class->name,
             'time'         => now()->format('H:i'),
             'kind'         => 'student',
+            'subject_id'   => (int) $student->id,
         ]);
 
         $this->setResult('success', [
@@ -304,14 +305,6 @@ class AttendanceQr extends BaseComponent
             ]
         );
 
-        array_unshift($this->scannedLog, [
-            'student_name' => $teacher->full_name,
-            'saint_name'   => $teacher->saint?->name ?? 'GLV',
-            'class_name'   => TeacherAttendanceSession::typeLabel($type),
-            'time'         => now()->format('H:i'),
-            'kind'         => 'teacher',
-        ]);
-
         if (! $record->wasRecentlyCreated) {
             $this->setResult('warning', [
                 'message'      => 'GLV đã điểm danh trước đó',
@@ -322,6 +315,15 @@ class AttendanceQr extends BaseComponent
 
             return;
         }
+
+        array_unshift($this->scannedLog, [
+            'student_name' => $teacher->full_name,
+            'saint_name'   => $teacher->saint?->name ?? '',
+            'class_name'   => TeacherAttendanceSession::typeLabel($type),
+            'time'         => now()->format('H:i'),
+            'kind'         => 'teacher',
+            'subject_id'   => (int) $teacher->id,
+        ]);
 
         $this->setResult('success', [
             'message'      => 'Điểm danh GLV thành công!',

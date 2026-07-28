@@ -169,7 +169,7 @@
                     <span class="text-xs font-semibold text-slate-500 uppercase tracking-wide">
                         Vừa điểm danh
                     </span>
-                    <span class="text-xs text-slate-400">{{ count($scannedLog) }} học sinh</span>
+                    <span class="text-xs text-slate-400">{{ count($scannedLog) }} lượt</span>
                 </div>
                 <div class="divide-y divide-slate-100">
                     @foreach($scannedLog as $log)
@@ -177,11 +177,15 @@
                         $saint = ($log['saint_name'] ?? '') && ($log['saint_name'] ?? '') !== '-'
                             ? $log['saint_name']
                             : '';
+                        $isTeacher = ($log['kind'] ?? '') === 'teacher';
                     @endphp
                     <div class="flex items-center gap-3 px-4 py-3">
-                        <div class="w-8 h-8 rounded-xl bg-emerald-50 border border-emerald-100
-                            flex items-center justify-center flex-shrink-0">
-                            <svg class="w-4 h-4 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <div class="w-8 h-8 rounded-xl border flex items-center justify-center flex-shrink-0
+                            {{ $isTeacher
+                                ? 'bg-primary-50 border-primary-100'
+                                : 'bg-emerald-50 border-emerald-100' }}">
+                            <svg class="w-4 h-4 {{ $isTeacher ? 'text-primary-600' : 'text-emerald-600' }}"
+                                fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7" />
                             </svg>
                         </div>
@@ -189,9 +193,9 @@
                             <div class="text-sm font-semibold tracking-tight text-slate-900 truncate">
                                 @if($saint){{ $saint }} @endif{{ $log['student_name'] }}
                             </div>
-                            @if(!empty($log['class_name']))
-                            <div class="text-xs text-slate-400 truncate">{{ $log['class_name'] }}</div>
-                            @endif
+                            <div class="text-xs text-slate-400 truncate">
+                                @if($isTeacher)GLV · @endif{{ $log['class_name'] ?? '' }}
+                            </div>
                         </div>
                         <div class="text-xs text-slate-400 flex-shrink-0">{{ $log['time'] }}</div>
                     </div>
@@ -214,7 +218,7 @@
             style="padding-bottom: calc(12px + var(--safe-bottom));">
             <div class="flex items-center justify-between mb-2">
                 <span class="text-xs text-slate-500">
-                    Đã quét <span class="font-semibold text-slate-900">{{ count($scannedLog) }}</span> học sinh
+                    Đã quét <span class="font-semibold text-slate-900">{{ count($scannedLog) }}</span> lượt thành công
                 </span>
                 <span class="text-xs text-slate-400">{{ now()->format('d/m/Y') }}</span>
             </div>
