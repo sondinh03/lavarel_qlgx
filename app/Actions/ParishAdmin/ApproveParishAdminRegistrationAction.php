@@ -2,6 +2,7 @@
 
 namespace App\Actions\ParishAdmin;
 
+use App\Models\Deanery;
 use App\Models\ParishAdminRegistrationRequest;
 use App\Models\ParishGroup;
 use App\Models\ParishNew;
@@ -38,12 +39,37 @@ class ApproveParishAdminRegistrationAction
         $normalizedCode = strtoupper(trim((string) $parishCode));
 
         $result = DB::transaction(function () use ($request, $reviewer, $roles, $normalizedCode) {
+            $deaneryId = $request->deanery_id;
+
+            if (! $deaneryId) {
+                $deaneryName = Deanery::normalizeName($request->custom_deanery_name);
+
+                if ($deaneryName === '' || $deaneryName === Deanery::NAME_PREFIX || ! $request->diocese_id) {
+                    throw new InvalidArgumentException('Thiếu giáo phận hoặc tên giáo hạt mới để tạo.');
+                }
+
+                $existingDeanery = Deanery::query()
+                    ->where('did', $request->diocese_id)
+                    ->whereRaw('LOWER(name) = ?', [mb_strtolower($deaneryName)])
+                    ->first();
+
+                if ($existingDeanery) {
+                    $deaneryId = $existingDeanery->id;
+                } else {
+                    $deanery = Deanery::create([
+                        'name' => $deaneryName,
+                        'did'  => $request->diocese_id,
+                    ]);
+                    $deaneryId = $deanery->id;
+                }
+            }
+
             $parishId = $request->parish_id;
 
             if (! $parishId) {
-                $name = trim((string) $request->custom_parish_name);
+                $name = ParishNew::normalizeName($request->custom_parish_name);
 
-                if ($name === '' || ! $request->diocese_id || ! $request->deanery_id) {
+                if ($name === '' || $name === ParishNew::NAME_PREFIX || ! $request->diocese_id || ! $deaneryId) {
                     throw new InvalidArgumentException('Thiếu giáo phận, giáo hạt hoặc tên giáo xứ mới để tạo.');
                 }
 
@@ -55,11 +81,20 @@ class ApproveParishAdminRegistrationAction
                     throw new InvalidArgumentException('Mã giáo xứ đã tồn tại.');
                 }
 
+                $duplicateParish = ParishNew::query()
+                    ->where('deanery_id', $deaneryId)
+                    ->whereRaw('LOWER(name) = ?', [mb_strtolower($name)])
+                    ->exists();
+
+                if ($duplicateParish) {
+                    throw new InvalidArgumentException('Giáo xứ “' . $name . '” đã tồn tại trong giáo hạt này.');
+                }
+
                 $parish = ParishNew::create([
                     'name'       => $name,
                     'code'       => $normalizedCode,
                     'diocese_id' => $request->diocese_id,
-                    'deanery_id' => $request->deanery_id,
+                    'deanery_id' => $deaneryId,
                     'status'     => true,
                 ]);
 
@@ -101,6 +136,7 @@ class ApproveParishAdminRegistrationAction
             $request->update([
                 'status'      => ParishAdminRegistrationRequest::STATUS_APPROVED,
                 'parish_id'   => $parishId,
+                'deanery_id'  => $deaneryId,
                 'user_id'     => $user->id,
                 'reviewed_by' => $reviewer->id,
                 'reviewed_at' => now(),

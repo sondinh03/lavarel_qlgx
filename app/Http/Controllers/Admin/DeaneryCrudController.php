@@ -124,6 +124,7 @@ class DeaneryCrudController extends CrudController
             'name' => 'name',
             'type' => 'text',
             'label' => __('backend.name'),
+            'hint' => 'Có thể nhập “Bùi Chu” hoặc “Giáo hạt Bùi Chu”; hệ thống sẽ tự chuẩn hóa tiền tố.',
             'wrapper' => [
                 'class' => 'form-group col-md-6',
             ],

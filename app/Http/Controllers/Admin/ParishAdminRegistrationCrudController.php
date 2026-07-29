@@ -65,9 +65,10 @@ class ParishAdminRegistrationCrudController extends CrudController
             'type'  => 'text',
         ]);
         CRUD::addColumn([
-            'name'  => 'deanery.name',
-            'label' => 'Giáo hạt',
-            'type'  => 'text',
+            'name'     => 'deanery_display',
+            'label'    => 'Giáo hạt',
+            'type'     => 'closure',
+            'function' => fn ($entry) => $entry->deaneryDisplayName(),
         ]);
         CRUD::addColumn([
             'name'     => 'parish_display',
@@ -114,9 +115,10 @@ class ParishAdminRegistrationCrudController extends CrudController
             'type'  => 'text',
         ]);
         CRUD::addColumn([
-            'name'  => 'deanery.name',
-            'label' => 'Giáo hạt',
-            'type'  => 'text',
+            'name'     => 'deanery_display',
+            'label'    => 'Giáo hạt',
+            'type'     => 'closure',
+            'function' => fn ($entry) => $entry->deaneryDisplayName(),
         ]);
         CRUD::addColumn([
             'name'     => 'parish_display',

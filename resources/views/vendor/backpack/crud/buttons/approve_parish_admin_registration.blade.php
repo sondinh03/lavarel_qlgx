@@ -22,8 +22,11 @@
                         </div>
                         <div class="modal-body">
                             <p class="mb-3">
-                                Yêu cầu <strong>#{{ $entry->reference_code }}</strong> sẽ tạo giáo xứ
-                                <strong>{{ $entry->custom_parish_name }}</strong>.
+                                Yêu cầu <strong>#{{ $entry->reference_code }}</strong> sẽ tạo
+                                @if ($entry->createsNewDeanery())
+                                    giáo hạt <strong>{{ $entry->custom_deanery_name }}</strong> và
+                                @endif
+                                giáo xứ <strong>{{ $entry->custom_parish_name }}</strong>.
                                 Vui lòng nhập mã giáo xứ (bắt buộc).
                             </p>
                             @if ($entry->parishGroupNamesLabel() !== '—')

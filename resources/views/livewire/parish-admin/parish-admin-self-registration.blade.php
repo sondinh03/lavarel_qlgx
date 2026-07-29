@@ -117,6 +117,17 @@
                                 <label class="block text-xs font-semibold text-slate-500 mb-1.5 tracking-wide uppercase">
                                     Giáo hạt <span class="text-red-500 normal-case">*</span>
                                 </label>
+                                @if($useCustomDeanery)
+                                <input type="text"
+                                    wire:model.defer="customDeaneryName"
+                                    placeholder="Ví dụ: Bùi Chu"
+                                    class="w-full h-11 px-4 py-2.5 rounded-xl border text-sm bg-white/80 backdrop-blur-sm shadow-mac-sm
+                                        focus:outline-none focus:ring-2 focus:ring-primary-500/25 focus:border-primary-300/40 transition-all
+                                        {{ $errors->has('customDeaneryName') ? 'border-red-300 bg-red-50/80' : 'border-black/[0.06]' }}" />
+                                <p class="mt-1 text-xs text-slate-400">
+                                    Chỉ nhập tên riêng; hệ thống tự thêm tiền tố “Giáo hạt”.
+                                </p>
+                                @else
                                 <x-searchable-select
                                     wire:key="deanery-{{ $dioceseId ?? 'none' }}-{{ $deaneryId ?? 'none' }}"
                                     wireModel="deaneryId"
@@ -126,9 +137,28 @@
                                     labelKey="name"
                                     valueKey="id"
                                     :value="$deaneryId" />
+                                @endif
                                 @error('deaneryId')
                                 <p class="mt-1 text-xs text-red-500">{{ $message }}</p>
                                 @enderror
+                                @error('customDeaneryName')
+                                <p class="mt-1 text-xs text-red-500">{{ $message }}</p>
+                                @enderror
+                            </div>
+
+                            <div class="sm:col-span-2">
+                                <label class="mt-0 mb-3 inline-flex items-start gap-2.5 cursor-pointer select-none
+                                    {{ $dioceseId ? '' : 'opacity-50 pointer-events-none' }}">
+                                    <input type="checkbox"
+                                        wire:model="useCustomDeanery"
+                                        @if(! $dioceseId) disabled @endif
+                                        class="mt-0.5 rounded-md border-black/15 text-primary-600
+                                            focus:ring-primary-500/30 shadow-mac-sm">
+                                    <span>
+                                        <span class="block text-sm font-medium text-slate-700">Giáo hạt chưa có trong danh sách</span>
+                                        <span class="block text-xs text-slate-400 mt-0.5">Tick để nhập tên giáo hạt mới (gắn giáo phận đã chọn). Sẽ cần tạo giáo xứ mới kèm theo.</span>
+                                    </span>
+                                </label>
                             </div>
 
                             <div class="sm:col-span-2">
@@ -166,15 +196,22 @@
                         </div>
 
                         <label class="mt-3 inline-flex items-start gap-2.5 cursor-pointer select-none px-1
-                            {{ $deaneryId ? '' : 'opacity-50 pointer-events-none' }}">
+                            {{ ($deaneryId || $useCustomDeanery) ? '' : 'opacity-50 pointer-events-none' }}">
                             <input type="checkbox"
                                 wire:model="useCustomParish"
-                                @if(! $deaneryId) disabled @endif
+                                @if(! $deaneryId && ! $useCustomDeanery) disabled @endif
+                                @if($useCustomDeanery) disabled @endif
                                 class="mt-0.5 rounded-md border-black/15 text-primary-600
                                     focus:ring-primary-500/30 shadow-mac-sm">
                             <span>
                                 <span class="block text-sm font-medium text-slate-700">Giáo xứ chưa có trong danh sách</span>
-                                <span class="block text-xs text-slate-400 mt-0.5">Tick để nhập tên giáo xứ mới (sẽ gắn giáo hạt đã chọn)</span>
+                                <span class="block text-xs text-slate-400 mt-0.5">
+                                    @if($useCustomDeanery)
+                                        Bắt buộc khi tạo giáo hạt mới.
+                                    @else
+                                        Tick để nhập tên giáo xứ mới (sẽ gắn giáo hạt đã chọn)
+                                    @endif
+                                </span>
                             </span>
                         </label>
 

@@ -23,6 +23,10 @@ class ParishAdminSelfRegistration extends Component
 
     public $targetParishId = null;
 
+    public bool $useCustomDeanery = false;
+
+    public string $customDeaneryName = '';
+
     public bool $useCustomParish = false;
 
     public string $customParishName = '';
@@ -92,6 +96,8 @@ class ParishAdminSelfRegistration extends Component
     {
         $this->deaneryId = null;
         $this->targetParishId = null;
+        $this->customDeaneryName = '';
+        $this->useCustomDeanery = false;
         $this->customParishName = '';
         $this->useCustomParish = false;
         $this->parishGroupNames = [''];
@@ -105,7 +111,28 @@ class ParishAdminSelfRegistration extends Component
         $this->customParishName = '';
         $this->useCustomParish = false;
         $this->parishGroupNames = [''];
+
+        if ($this->deaneryId) {
+            $this->useCustomDeanery = false;
+            $this->customDeaneryName = '';
+        }
+
         $this->loadParishOptions();
+    }
+
+    public function updatedUseCustomDeanery($value): void
+    {
+        if ($value) {
+            $this->deaneryId = null;
+            $this->parishOptions = [];
+            $this->targetParishId = null;
+            $this->useCustomParish = true;
+            if ($this->parishGroupNames === []) {
+                $this->parishGroupNames = [''];
+            }
+        } else {
+            $this->customDeaneryName = '';
+        }
     }
 
     public function updatedUseCustomParish($value): void
@@ -116,6 +143,12 @@ class ParishAdminSelfRegistration extends Component
                 $this->parishGroupNames = [''];
             }
         } else {
+            if ($this->useCustomDeanery) {
+                // Giáo hạt mới bắt buộc tạo giáo xứ mới.
+                $this->useCustomParish = true;
+
+                return;
+            }
             $this->customParishName = '';
             $this->parishGroupNames = [''];
         }
@@ -193,46 +226,58 @@ class ParishAdminSelfRegistration extends Component
         $roleKeys = array_keys(config('parish-admin-registration.roles', []));
 
         return [
-            'dioceseId'         => 'required|integer|exists:dioceses,id',
-            'deaneryId'         => 'required|integer|exists:deanerys,id',
-            'targetParishId'    => [
+            'dioceseId'          => 'required|integer|exists:dioceses,id',
+            'deaneryId'          => [
+                Rule::requiredIf(fn () => ! $this->useCustomDeanery),
+                'nullable',
+                'integer',
+                'exists:deanerys,id',
+            ],
+            'customDeaneryName'  => [
+                Rule::requiredIf(fn () => $this->useCustomDeanery),
+                'nullable',
+                'string',
+                'max:255',
+            ],
+            'targetParishId'     => [
                 Rule::requiredIf(fn () => ! $this->useCustomParish),
                 'nullable',
                 'integer',
                 'exists:parishes,id',
             ],
-            'customParishName'  => [
+            'customParishName'   => [
                 Rule::requiredIf(fn () => $this->useCustomParish),
                 'nullable',
                 'string',
                 'max:255',
             ],
-            'parishGroupNames'  => [
+            'parishGroupNames'   => [
                 Rule::requiredIf(fn () => $this->useCustomParish),
                 'array',
             ],
             'parishGroupNames.*' => 'nullable|string|max:255',
-            'selectedRole'      => ['required', 'string', Rule::in($roleKeys)],
-            'name'              => 'nullable|string|max:255',
-            'email'             => 'required|email|max:255',
-            'phone'             => 'nullable|string|max:20',
-            'password'          => 'required|string|min:8|confirmed',
+            'selectedRole'       => ['required', 'string', Rule::in($roleKeys)],
+            'name'               => 'nullable|string|max:255',
+            'email'              => 'required|email|max:255',
+            'phone'              => 'nullable|string|max:20',
+            'password'           => 'required|string|min:8|confirmed',
             'password_confirmation' => 'required|string|min:8',
-            'note'              => 'nullable|string|max:1000',
+            'note'               => 'nullable|string|max:1000',
         ];
     }
 
     protected function messages(): array
     {
         return [
-            'dioceseId.required'        => 'Vui lòng chọn giáo phận.',
-            'deaneryId.required'        => 'Vui lòng chọn giáo hạt.',
-            'targetParishId.required'   => 'Vui lòng chọn giáo xứ hoặc nhập tên giáo xứ mới.',
-            'customParishName.required' => 'Vui lòng nhập tên giáo xứ.',
-            'parishGroupNames.required' => 'Vui lòng nhập ít nhất một giáo họ.',
-            'selectedRole.required'     => 'Vui lòng chọn một quyền quản trị.',
-            'selectedRole.in'           => 'Quyền quản trị không hợp lệ.',
-            'password.confirmed'        => 'Xác nhận mật khẩu không khớp.',
+            'dioceseId.required'         => 'Vui lòng chọn giáo phận.',
+            'deaneryId.required'         => 'Vui lòng chọn giáo hạt hoặc nhập tên giáo hạt mới.',
+            'customDeaneryName.required' => 'Vui lòng nhập tên giáo hạt.',
+            'targetParishId.required'    => 'Vui lòng chọn giáo xứ hoặc nhập tên giáo xứ mới.',
+            'customParishName.required'  => 'Vui lòng nhập tên giáo xứ.',
+            'parishGroupNames.required'  => 'Vui lòng nhập ít nhất một giáo họ.',
+            'selectedRole.required'      => 'Vui lòng chọn một quyền quản trị.',
+            'selectedRole.in'            => 'Quyền quản trị không hợp lệ.',
+            'password.confirmed'         => 'Xác nhận mật khẩu không khớp.',
         ];
     }
 
@@ -259,6 +304,10 @@ class ParishAdminSelfRegistration extends Component
             return;
         }
 
+        if ($this->useCustomDeanery) {
+            $this->useCustomParish = true;
+        }
+
         try {
             $this->validate($this->rules(), $this->messages());
         } catch (ValidationException $e) {
@@ -273,19 +322,64 @@ class ParishAdminSelfRegistration extends Component
             return;
         }
 
-        $deanery = Deanery::query()->find($this->deaneryId);
+        $normalizedDeaneryName = null;
+        $deaneryId = null;
 
-        if (! $deanery || (int) $deanery->did !== (int) $this->dioceseId) {
-            $this->addError('deaneryId', 'Giáo hạt không thuộc giáo phận đã chọn.');
+        if ($this->useCustomDeanery) {
+            $normalizedDeaneryName = Deanery::normalizeName($this->customDeaneryName);
 
-            return;
+            if ($normalizedDeaneryName === '' || $normalizedDeaneryName === Deanery::NAME_PREFIX) {
+                $this->addError('customDeaneryName', 'Vui lòng nhập tên giáo hạt.');
+
+                return;
+            }
+
+            if ($this->deaneryNameExists((int) $this->dioceseId, $normalizedDeaneryName)) {
+                $this->addError(
+                    'customDeaneryName',
+                    'Giáo hạt “' . $normalizedDeaneryName . '” đã có trong giáo phận này. Vui lòng chọn từ danh sách.'
+                );
+
+                return;
+            }
+        } else {
+            $deanery = Deanery::query()->find($this->deaneryId);
+
+            if (! $deanery || (int) $deanery->did !== (int) $this->dioceseId) {
+                $this->addError('deaneryId', 'Giáo hạt không thuộc giáo phận đã chọn.');
+
+                return;
+            }
+
+            $deaneryId = (int) $deanery->id;
         }
 
-        if ($this->targetParishId) {
+        if ($this->useCustomParish) {
+            $normalizedParishName = ParishNew::normalizeName($this->customParishName);
+
+            if ($normalizedParishName === '' || $normalizedParishName === ParishNew::NAME_PREFIX) {
+                $this->addError('customParishName', 'Vui lòng nhập tên giáo xứ.');
+
+                return;
+            }
+
+            if ($this->parishNameExists(
+                (int) $this->dioceseId,
+                $deaneryId,
+                $normalizedParishName
+            )) {
+                $this->addError(
+                    'customParishName',
+                    'Giáo xứ “' . $normalizedParishName . '” đã tồn tại. Vui lòng chọn từ danh sách hoặc đổi tên.'
+                );
+
+                return;
+            }
+        } elseif ($this->targetParishId) {
             $parish = ParishNew::query()->find($this->targetParishId);
 
             if (! $parish
-                || (int) $parish->deanery_id !== (int) $this->deaneryId
+                || (int) $parish->deanery_id !== (int) $deaneryId
                 || (int) $parish->diocese_id !== (int) $this->dioceseId
             ) {
                 $this->addError('targetParishId', 'Giáo xứ không thuộc giáo hạt / giáo phận đã chọn.');
@@ -313,22 +407,23 @@ class ParishAdminSelfRegistration extends Component
 
         try {
             $request = ParishAdminRegistrationRequest::create([
-                'reference_code'     => ParishAdminRegistrationRequest::generateReferenceCode(),
-                'parish_id'          => $this->useCustomParish ? null : (int) $this->targetParishId,
-                'diocese_id'         => (int) $this->dioceseId,
-                'deanery_id'         => (int) $this->deaneryId,
-                'custom_parish_name' => $this->useCustomParish
+                'reference_code'      => ParishAdminRegistrationRequest::generateReferenceCode(),
+                'parish_id'           => $this->useCustomParish ? null : (int) $this->targetParishId,
+                'diocese_id'          => (int) $this->dioceseId,
+                'deanery_id'          => $deaneryId,
+                'custom_deanery_name' => $this->useCustomDeanery ? $normalizedDeaneryName : null,
+                'custom_parish_name'  => $this->useCustomParish
                     ? ParishNew::normalizeName($this->customParishName)
                     : null,
                 'requested_parish_groups' => $this->useCustomParish ? $groupNames : null,
-                'status'             => ParishAdminRegistrationRequest::STATUS_PENDING,
-                'name'               => trim($this->name) ?: null,
-                'email'              => strtolower(trim($this->email)),
-                'phone'              => trim($this->phone) ?: null,
-                'password_hash'      => Hash::make($this->password),
-                'note'               => trim($this->note) ?: null,
-                'requested_roles'    => $roles,
-                'ip_address'         => request()->ip(),
+                'status'              => ParishAdminRegistrationRequest::STATUS_PENDING,
+                'name'                => trim($this->name) ?: null,
+                'email'               => strtolower(trim($this->email)),
+                'phone'               => trim($this->phone) ?: null,
+                'password_hash'       => Hash::make($this->password),
+                'note'                => trim($this->note) ?: null,
+                'requested_roles'     => $roles,
+                'ip_address'          => request()->ip(),
             ]);
         } catch (\Throwable $e) {
             report($e);
@@ -351,6 +446,8 @@ class ParishAdminSelfRegistration extends Component
             'password',
             'password_confirmation',
             'note',
+            'customDeaneryName',
+            'useCustomDeanery',
             'customParishName',
             'useCustomParish',
             'parishGroupNames',
@@ -360,6 +457,57 @@ class ParishAdminSelfRegistration extends Component
         $this->submitted = true;
         $this->referenceCode = $request->reference_code;
         $this->submittedRoleLabel = implode(', ', $request->requestedRoleLabels());
+    }
+
+    protected function deaneryNameExists(int $dioceseId, string $normalizedName): bool
+    {
+        $lower = mb_strtolower($normalizedName);
+
+        if (Deanery::query()
+            ->where('did', $dioceseId)
+            ->whereRaw('LOWER(name) = ?', [$lower])
+            ->exists()
+        ) {
+            return true;
+        }
+
+        return ParishAdminRegistrationRequest::query()
+            ->where('diocese_id', $dioceseId)
+            ->where('status', ParishAdminRegistrationRequest::STATUS_PENDING)
+            ->whereNotNull('custom_deanery_name')
+            ->whereRaw('LOWER(custom_deanery_name) = ?', [$lower])
+            ->exists();
+    }
+
+    protected function parishNameExists(int $dioceseId, ?int $deaneryId, string $normalizedName): bool
+    {
+        $lower = mb_strtolower($normalizedName);
+
+        $parishQuery = ParishNew::query()
+            ->where('diocese_id', $dioceseId)
+            ->whereRaw('LOWER(name) = ?', [$lower]);
+
+        if ($deaneryId) {
+            $parishQuery->where('deanery_id', $deaneryId);
+        }
+
+        if ($parishQuery->exists()) {
+            return true;
+        }
+
+        $pendingQuery = ParishAdminRegistrationRequest::query()
+            ->where('diocese_id', $dioceseId)
+            ->where('status', ParishAdminRegistrationRequest::STATUS_PENDING)
+            ->whereNotNull('custom_parish_name')
+            ->whereRaw('LOWER(custom_parish_name) = ?', [$lower]);
+
+        if ($deaneryId) {
+            $pendingQuery->where('deanery_id', $deaneryId);
+        } else {
+            $pendingQuery->whereNull('deanery_id');
+        }
+
+        return $pendingQuery->exists();
     }
 
     /** @return list<string> */

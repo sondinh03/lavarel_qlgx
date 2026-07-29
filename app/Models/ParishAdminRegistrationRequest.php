@@ -19,6 +19,7 @@ class ParishAdminRegistrationRequest extends Model
         'parish_id',
         'diocese_id',
         'deanery_id',
+        'custom_deanery_name',
         'custom_parish_name',
         'requested_parish_groups',
         'status',
@@ -99,6 +100,24 @@ class ParishAdminRegistrationRequest extends Model
         return $this->custom_parish_name
             ? $this->custom_parish_name . ' (mới)'
             : '—';
+    }
+
+    public function deaneryDisplayName(): string
+    {
+        if ($this->deanery) {
+            return $this->deanery->name;
+        }
+
+        return $this->custom_deanery_name
+            ? $this->custom_deanery_name . ' (mới)'
+            : '—';
+    }
+
+    /** Đăng ký cần tạo giáo hạt mới (chưa có deanery_id). */
+    public function createsNewDeanery(): bool
+    {
+        return $this->deanery_id === null
+            && trim((string) $this->custom_deanery_name) !== '';
     }
 
     /** Đăng ký cần tạo giáo xứ mới (chưa có parish_id). */
