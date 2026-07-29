@@ -172,19 +172,19 @@
                 <div class="rounded-xl bg-slate-50/80 border border-black/[0.04] p-3 space-y-2">
                     <p class="font-semibold text-slate-800">Quy tắc chung</p>
                     <ul class="list-disc ml-5 space-y-1 text-slate-600">
-                        <li>Buổi đã có ít nhất một người điểm danh: sau giờ chốt, học sinh chưa có bản ghi được <em>coi là vắng không phép</em>.</li>
-                        <li>Hệ thống chỉ suy luận khi xem số liệu, không tạo bản ghi vắng và không tự khóa buổi.</li>
-                        <li><strong>Khóa</strong> — kết luận sớm theo quy tắc trên và không cho sửa/quét thêm (trừ khi mở lại).</li>
+                        <li>Buổi đã có ít nhất một em được điểm danh: sau giờ chốt, những em chưa được điểm danh sẽ <em>tính là vắng không phép</em>.</li>
+                        <li>Số liệu được tính lại mỗi lần xem, nên điểm danh bù muộn thì báo cáo tự đúng lại.</li>
+                        <li><strong>Khóa</strong> — chốt sớm theo quy tắc trên và không cho sửa/quét thêm (trừ khi mở lại).</li>
                     </ul>
                 </div>
 
                 <p class="font-semibold text-slate-800">Kết luận theo giờ chốt</p>
                 <ol class="list-decimal list-inside space-y-2">
                     <li>Ban quản trị vào
-                        <a href="{{ route('parish.settings') }}" class="font-semibold text-primary-700 underline">Thông tin giáo xứ</a>
-                        → mục <strong>Điểm danh</strong>.
+                        <a href="{{ route('session.index', ['tab' => 'settings']) }}" class="font-semibold text-primary-700 underline">Phiên điểm danh</a>
+                        → tab <strong>Cài đặt điểm danh</strong>.
                     </li>
-                    <li>Bật <strong>Tự động kết luận sau giờ chốt</strong> và chọn giờ (mặc định <strong>20:00</strong>).</li>
+                    <li>Bật <strong>Tự động tính vắng sau giờ chốt</strong> và chọn giờ (mặc định <strong>20:00</strong>).</li>
                     <li>Khi xem báo cáo, xuất Excel hoặc tính điểm chuyên cần:
                         <ul class="mt-2 ml-5 list-disc space-y-1 text-slate-600">
                             <li>Đã có người điểm danh và đã qua giờ chốt → phần còn lại được tính vắng không phép.</li>
@@ -205,7 +205,7 @@
                 </x-inline-tip>
 
                 <p class="text-slate-600">
-                    Vì trạng thái vắng này được suy luận khi đọc nên không có bản ghi «Tự động chốt» trong nhật ký.
+                    Nhật ký điểm danh sẽ không có dòng nào cho việc chốt tự động, vì hệ thống không sửa dữ liệu của em nào cả.
                     Nếu cần sửa, hãy mở lại buổi và ghi trạng thái đúng cho học sinh.
                 </p>
             </div>
@@ -238,9 +238,10 @@
                     <p class="font-semibold text-slate-900">Giờ chốt 20:00 nghĩa là gì?</p>
                     <p class="mt-1 text-slate-600 leading-relaxed">
                         Từ giờ đã cấu hình (mặc định 20:00), với buổi <em>đã có người điểm danh</em>,
-                        học sinh chưa quét / chưa điểm được tính là vắng không phép trong báo cáo, Excel và điểm chuyên cần.
-                        Hệ thống không tạo bản ghi và không khóa buổi. Buổi trống hoàn toàn được bỏ qua. Đổi giờ hoặc tắt tại
-                        <a href="{{ route('parish.settings') }}" class="font-semibold text-primary-700 underline">Thông tin giáo xứ</a>.
+                        những em chưa được điểm danh sẽ tính là vắng không phép trong báo cáo, Excel và điểm chuyên cần.
+                        Hệ thống không tự đánh vắng vào từng em và không tự khóa buổi. Buổi chưa ai điểm danh thì bỏ qua.
+                        Đổi giờ hoặc tắt tại
+                        <a href="{{ route('session.index', ['tab' => 'settings']) }}" class="font-semibold text-primary-700 underline">Phiên điểm danh → Cài đặt điểm danh</a>.
                     </p>
                 </div>
                 <div>

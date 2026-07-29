@@ -55,6 +55,42 @@ class TeacherAttendanceSession extends Model
         return (int) $this->status === self::STATUS_OPENING;
     }
 
+    public function close(): bool
+    {
+        if ((int) $this->status !== self::STATUS_OPENING) {
+            return false;
+        }
+
+        return $this->update(['status' => self::STATUS_CLOSED]);
+    }
+
+    public function reopen(): bool
+    {
+        if ((int) $this->status !== self::STATUS_CLOSED) {
+            return false;
+        }
+
+        return $this->update(['status' => self::STATUS_OPENING]);
+    }
+
+    public function cancel(): bool
+    {
+        if (! in_array((int) $this->status, [self::STATUS_OPENING, self::STATUS_CLOSED], true)) {
+            return false;
+        }
+
+        return $this->update(['status' => self::STATUS_CANCELLED]);
+    }
+
+    public function restore(): bool
+    {
+        if ((int) $this->status !== self::STATUS_CANCELLED) {
+            return false;
+        }
+
+        return $this->update(['status' => self::STATUS_OPENING]);
+    }
+
     public static function typeLabel(int $type): string
     {
         return match ($type) {
@@ -63,6 +99,16 @@ class TeacherAttendanceSession extends Model
             self::TYPE_MEETING => 'Họp',
             default => 'Khác',
         };
+    }
+
+    public static function statusLabel(int $status): string
+    {
+        return AttendanceSession::statusLabel($status);
+    }
+
+    public static function statusClass(int $status): string
+    {
+        return AttendanceSession::statusClass($status);
     }
 
     public function getStatistics(): array

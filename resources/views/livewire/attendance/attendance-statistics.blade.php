@@ -267,7 +267,7 @@
                 </span>
                 <span class="flex items-center gap-1.5">
                     <span class="w-3 h-3 rounded-full bg-slate-300 inline-block"></span>
-                    Chưa điểm danh = chưa có bản ghi
+                    Chưa điểm danh = chưa ai đánh dấu cho em này
                 </span>
             </div>
         </div>

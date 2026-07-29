@@ -4,12 +4,12 @@ if (!function_exists('attendance_status_badge')) {
     function attendance_status_badge($status)
     {
         $badges = [
-            1 => '<span class="px-2 py-1 text-xs font-medium rounded bg-green-100 text-green-800">Có mặt</span>',
-            2 => '<span class="px-2 py-1 text-xs font-medium rounded bg-yellow-100 text-yellow-800">Vắng CP</span>',
-            3 => '<span class="px-2 py-1 text-xs font-medium rounded bg-red-100 text-red-800">Vắng KP</span>',
+            1 => '<span class="inline-flex items-center px-2 py-0.5 rounded-lg text-xs font-semibold bg-emerald-50/90 text-emerald-700 ring-1 ring-emerald-100/80">Có mặt</span>',
+            2 => '<span class="inline-flex items-center px-2 py-0.5 rounded-lg text-xs font-semibold bg-amber-50/90 text-amber-700 ring-1 ring-amber-100/80">Vắng CP</span>',
+            3 => '<span class="inline-flex items-center px-2 py-0.5 rounded-lg text-xs font-semibold bg-red-50/90 text-red-600 ring-1 ring-red-100/80">Vắng KP</span>',
         ];
 
-        return $badges[$status] ?? '<span class="px-2 py-1 text-xs font-medium rounded bg-gray-100 text-gray-800">-</span>';
+        return $badges[$status] ?? '<span class="inline-flex items-center px-2 py-0.5 rounded-lg text-xs font-semibold bg-slate-50/90 text-slate-500 ring-1 ring-slate-200/60">-</span>';
     }
 }
 
@@ -24,9 +24,9 @@ if (!function_exists('session_status_badge')) {
     function session_status_badge($status)
     {
         $badges = [
-            1 => '<span class="px-2 py-1 text-xs font-medium rounded bg-blue-100 text-blue-800">Đang mở</span>',
-            2 => '<span class="px-2 py-1 text-xs font-medium rounded bg-gray-100 text-gray-800">Đã đóng</span>',
-            3 => '<span class="px-2 py-1 text-xs font-medium rounded bg-red-100 text-red-800">Đã hủy</span>',
+            1 => '<span class="inline-flex items-center px-2 py-0.5 rounded-lg text-xs font-semibold bg-emerald-50/90 text-emerald-700 ring-1 ring-emerald-100/80">Hoạt động</span>',
+            2 => '<span class="inline-flex items-center px-2 py-0.5 rounded-lg text-xs font-semibold bg-slate-100/90 text-slate-600 ring-1 ring-slate-200/70">Đã khóa</span>',
+            3 => '<span class="inline-flex items-center px-2 py-0.5 rounded-lg text-xs font-semibold bg-red-50/90 text-red-600 ring-1 ring-red-100/80">Đã hủy</span>',
         ];
 
         return $badges[$status] ?? '';

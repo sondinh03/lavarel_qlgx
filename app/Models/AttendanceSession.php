@@ -194,7 +194,40 @@ class AttendanceSession extends Model
 
     public function cancel(): bool
     {
+        if (! in_array((int) $this->status, [self::STATUS_OPENING, self::STATUS_CLOSED], true)) {
+            return false;
+        }
+
         return $this->update(['status' => self::STATUS_CANCELLED]);
+    }
+
+    public function restore(): bool
+    {
+        if ($this->status !== self::STATUS_CANCELLED) {
+            return false;
+        }
+
+        return $this->update(['status' => self::STATUS_OPENING]);
+    }
+
+    public static function statusLabel(int $status): string
+    {
+        return match ($status) {
+            self::STATUS_OPENING   => 'Hoạt động',
+            self::STATUS_CLOSED    => 'Đã khóa',
+            self::STATUS_CANCELLED => 'Đã hủy',
+            default                => 'Không xác định',
+        };
+    }
+
+    public static function statusClass(int $status): string
+    {
+        return match ($status) {
+            self::STATUS_OPENING   => 'bg-emerald-50/90 text-emerald-700 ring-1 ring-emerald-100/80 shadow-mac-sm',
+            self::STATUS_CLOSED    => 'bg-slate-100/90 text-slate-600 ring-1 ring-slate-200/70 shadow-mac-sm',
+            self::STATUS_CANCELLED => 'bg-red-50/90 text-red-600 ring-1 ring-red-100/80 shadow-mac-sm',
+            default                => 'bg-slate-50/90 text-slate-500 ring-1 ring-slate-200/60 shadow-mac-sm',
+        };
     }
 
     public function isClass(): bool

@@ -27,7 +27,7 @@
                     @if($subjectTarget === 'teachers')
                         Buổi điểm danh giáo lý viên
                     @else
-                        Tạo / khóa buổi theo lớp
+                        Tạo / khóa / hủy buổi theo lớp
                     @endif
                     @if($total > 0)
                         · {{ $total }} buổi
@@ -43,6 +43,27 @@
                 icon-type="attendance"
                 :count="$total" />
             @endif
+
+            @if($canManageParishSettings ?? false)
+            <div class="{{ $isMobileUi ? 'px-3' : 'px-4 lg:px-6' }} py-3 mac-hairline-b bg-white/20">
+                <div class="flex gap-1 p-1 rounded-xl bg-black/[0.04] border border-black/[0.04] w-fit">
+                    @foreach(['sessions' => 'Danh sách phiên', 'settings' => 'Cài đặt điểm danh'] as $tab => $label)
+                    <button type="button"
+                        wire:click="switchTab('{{ $tab }}')"
+                        class="px-3 sm:px-4 py-1.5 text-sm font-semibold rounded-lg transition-all
+                            {{ $activeTab === $tab
+                                ? 'bg-white/90 text-primary-600 shadow-mac-sm'
+                                : 'text-slate-600 hover:text-slate-900' }}">
+                        {{ $label }}
+                    </button>
+                    @endforeach
+                </div>
+            </div>
+            @endif
+
+            @if($activeTab === 'settings' && ($canManageParishSettings ?? false))
+            @include('livewire.attendance.partials.attendance-settings')
+            @else
 
             <div class="{{ $isMobileUi ? 'p-3' : 'p-4 lg:p-6' }} mac-hairline-b bg-white/30">
                 <div class="flex flex-col gap-3 {{ $isMobileUi ? '' : 'gap-4' }}">
@@ -108,20 +129,22 @@
                     </x-inline-tip>
                     @endif
 
-                    @if(! $isMobileUi && $subjectTarget !== 'teachers' && ($autoFinalizeEnabled ?? true))
+                    @if(! $isMobileUi && $subjectTarget !== 'teachers' && $autoFinalizeEnabled)
                     <x-inline-tip>
-                        Giáo xứ đang kết luận số liệu lúc
-                        <strong>{{ $autoFinalizeTime ?? '20:00' }}</strong>:
-                        với buổi đã có người điểm danh, phần còn lại được coi là vắng không phép.
-                        Hệ thống không tạo bản ghi và không tự khóa; khóa buổi sẽ kết luận sớm.
+                        Giờ chốt số liệu của giáo xứ là <strong>{{ $autoFinalizeTime }}</strong>:
+                        với buổi đã có người điểm danh, những em chưa được điểm danh sẽ tính là vắng không phép.
+                        Muốn chốt sớm hơn thì bấm <strong>Khóa</strong> ở buổi đã điểm danh xong.
                         @if($canManageParishSettings ?? false)
-                        <a href="{{ route('parish.settings') }}" class="font-semibold text-primary-700 underline ml-1">Đổi giờ / tắt →</a>
+                        <button type="button" wire:click="switchTab('settings')"
+                            class="font-semibold text-primary-700 underline ml-1">Đổi giờ / tắt →</button>
                         @endif
                     </x-inline-tip>
                     @elseif(! $isMobileUi && $subjectTarget !== 'teachers' && ($canManageParishSettings ?? false))
                     <x-inline-tip tone="amber">
-                        Kết luận theo giờ chốt đang <strong>tắt</strong>; chỉ buổi được khóa mới kết luận học sinh còn thiếu là vắng không phép.
-                        <a href="{{ route('parish.settings') }}" class="font-semibold text-primary-700 underline ml-1">Bật lại tại Thông tin giáo xứ →</a>
+                        Tự động tính vắng sau giờ chốt đang <strong>tắt</strong>; chỉ buổi được khóa mới tính những em
+                        chưa được điểm danh là vắng không phép.
+                        <button type="button" wire:click="switchTab('settings')"
+                            class="font-semibold text-primary-700 underline ml-1">Bật lại tại tab Cài đặt điểm danh →</button>
                     </x-inline-tip>
                     @endif
 
@@ -162,7 +185,8 @@
             {{-- ── Mobile: card list ── --}}
             <div class="p-3 space-y-2.5">
                 @foreach($sessions as $session)
-                <div class="rounded-2xl bg-white/80 border border-black/[0.06] shadow-mac-sm p-3.5"
+                <div class="rounded-2xl bg-white/80 border border-black/[0.06] shadow-mac-sm p-3.5
+                    {{ ($session['cancelled'] ?? false) ? 'opacity-80' : '' }}"
                     wire:key="session-card-{{ $session['id'] }}">
                     <div class="flex items-start justify-between gap-3">
                         <div class="min-w-0">
@@ -170,24 +194,15 @@
                                 {{ $session['dayName'] }} · {{ $session['fullDate'] }}
                             </p>
                             <div class="mt-1.5 flex flex-wrap items-center gap-2">
-                                <span class="inline-flex items-center px-2 py-0.5 rounded-lg text-[11px] font-semibold
+                                <span class="inline-flex items-center px-2 py-0.5 rounded-lg text-[11px] font-semibold shadow-mac-sm
                                     {{ (int) $session['type'] === 1
-                                        ? 'bg-primary-50 text-primary-700'
+                                        ? 'bg-primary-50/90 text-primary-700 ring-1 ring-primary-100/80'
                                         : ((int) $session['type'] === 3
-                                            ? 'bg-amber-50 text-amber-700'
-                                            : 'bg-purple-50 text-purple-700') }}">
+                                            ? 'bg-amber-50/90 text-amber-700 ring-1 ring-amber-100/80'
+                                            : 'bg-violet-50/90 text-violet-700 ring-1 ring-violet-100/80') }}">
                                     {{ $session['typeLabel'] }}
                                 </span>
-                                <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg text-[11px] font-semibold
-                                    {{ $session['statusClass'] }}">
-                                    @if($session['locked'])
-                                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                            d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-                                    </svg>
-                                    @endif
-                                    {{ $session['statusLabel'] }}
-                                </span>
+                                @include('livewire.attendance.partials.session-status-badge', ['session' => $session])
                             </div>
                             <p class="mt-1.5 text-xs text-slate-500">
                                 @if($session['start_time'] || $session['end_time'])
@@ -201,50 +216,14 @@
                         </div>
                     </div>
 
-                    <div class="mt-3 flex items-center gap-2">
-                        @if($subjectTarget === 'teachers')
-                        <a href="{{ route('attendance.show', [
-                                'target' => 'teachers',
-                                'namHoc' => $selectedNamHoc,
-                                'type'   => $session['type'],
-                                'date'   => $session['dateStr'],
-                            ]) }}"
-                            class="flex-1 inline-flex items-center justify-center gap-1.5 h-10 rounded-xl
-                                bg-primary-50 text-primary-700 text-sm font-semibold hover:bg-primary-100 transition">
-                            Điểm danh
-                        </a>
-                        @else
-                        <a href="{{ route('attendance.show', [
-                                'classId' => $selectedClassId ?? '',
-                                'type'    => $session['type'],
-                                'date'    => $session['dateStr'],
-                            ]) }}"
-                            class="flex-1 inline-flex items-center justify-center gap-1.5 h-10 rounded-xl
-                                bg-primary-50 text-primary-700 text-sm font-semibold hover:bg-primary-100 transition">
-                            Điểm danh
-                        </a>
-                        @endif
-
-                        <button type="button"
-                            wire:click="toggleStatus({{ $session['id'] }})"
-                            wire:loading.attr="disabled"
-                            class="h-10 px-3 rounded-xl text-sm font-semibold border border-black/[0.06]
-                                {{ $session['locked']
-                                    ? 'bg-green-50 text-green-700'
-                                    : 'bg-amber-50 text-amber-700' }}">
-                            {{ $session['locked'] ? 'Mở' : 'Khóa' }}
-                        </button>
-
-                        @if($canDeleteSessions ?? false)
-                        <button type="button"
-                            wire:click="delete({{ $session['id'] }})"
-                            wire:confirm="Xóa phiên {{ $session['fullDate'] }}?"
-                            class="h-10 w-10 inline-flex items-center justify-center rounded-xl
-                                bg-red-50 text-red-600">
-                            <x-icon name="trash" />
-                        </button>
-                        @endif
-                    </div>
+                    @include('livewire.attendance.partials.session-actions', [
+                        'session' => $session,
+                        'subjectTarget' => $subjectTarget,
+                        'selectedNamHoc' => $selectedNamHoc,
+                        'selectedClassId' => $selectedClassId,
+                        'canDeleteSessions' => $canDeleteSessions ?? false,
+                        'layout' => 'mobile',
+                    ])
                 </div>
                 @endforeach
             </div>
@@ -285,7 +264,7 @@
                     </thead>
                     <tbody class="divide-y divide-black/[0.04]">
                         @foreach($sessions as $index => $session)
-                        <tr class="hover:bg-black/[0.03] transition-colors"
+                        <tr class="hover:bg-black/[0.03] transition-colors {{ ($session['cancelled'] ?? false) ? 'opacity-70' : '' }}"
                             wire:key="session-{{ $session['id'] }}">
 
                             <td class="px-4 py-3 text-sm font-semibold text-slate-500">
@@ -299,12 +278,12 @@
                             </td>
 
                             <td class="px-4 py-3">
-                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-lg text-xs font-semibold
+                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-lg text-xs font-semibold shadow-mac-sm
                                     {{ (int) $session['type'] === 1
-                                        ? 'bg-primary-50/80 text-primary-700'
+                                        ? 'bg-primary-50/90 text-primary-700 ring-1 ring-primary-100/80'
                                         : ((int) $session['type'] === 3
-                                            ? 'bg-amber-50/80 text-amber-700'
-                                            : 'bg-purple-50/80 text-purple-700') }}">
+                                            ? 'bg-amber-50/90 text-amber-700 ring-1 ring-amber-100/80'
+                                            : 'bg-violet-50/90 text-violet-700 ring-1 ring-violet-100/80') }}">
                                     {{ $session['typeLabel'] }}
                                 </span>
                             </td>
@@ -320,16 +299,16 @@
                             <td class="px-4 py-3">
                                 <div class="flex items-center justify-center gap-3 text-xs">
                                     <span class="flex items-center gap-1">
-                                        <span class="w-2 h-2 rounded-full bg-green-500"></span>
-                                        <span class="text-green-700 font-semibold">{{ $session['stats']['present'] }}</span>
+                                        <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+                                        <span class="text-emerald-700 font-semibold">{{ $session['stats']['present'] }}</span>
                                     </span>
                                     <span class="flex items-center gap-1">
-                                        <span class="w-2 h-2 rounded-full bg-yellow-400"></span>
-                                        <span class="text-yellow-700 font-semibold">{{ $session['stats']['absent_excused'] }}</span>
+                                        <span class="w-2 h-2 rounded-full bg-amber-400"></span>
+                                        <span class="text-amber-700 font-semibold">{{ $session['stats']['absent_excused'] }}</span>
                                     </span>
                                     <span class="flex items-center gap-1">
                                         <span class="w-2 h-2 rounded-full bg-red-500"></span>
-                                        <span class="text-red-700 font-semibold">{{ $session['stats']['absent_unexcused'] }}</span>
+                                        <span class="text-red-600 font-semibold">{{ $session['stats']['absent_unexcused'] }}</span>
                                     </span>
                                 </div>
                                 @if(($session['stats']['total'] ?? 0) > 0)
@@ -340,70 +319,18 @@
                             </td>
 
                             <td class="px-4 py-3 text-center">
-                                <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-lg text-xs font-semibold
-                                    {{ $session['statusClass'] }}">
-                                    @if($session['locked'])
-                                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                            d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-                                    </svg>
-                                    @endif
-                                    {{ $session['statusLabel'] }}
-                                </span>
+                                @include('livewire.attendance.partials.session-status-badge', ['session' => $session])
                             </td>
 
                             <td class="px-4 py-3 overflow-visible">
-                                <div class="flex items-center justify-center gap-2">
-                                    <x-tooltip content="Điểm danh">
-                                        @if($subjectTarget === 'teachers')
-                                        <a href="{{ route('attendance.show', [
-                                                'target' => 'teachers',
-                                                'namHoc' => $selectedNamHoc,
-                                                'type'   => $session['type'],
-                                                'date'   => $session['dateStr'],
-                                            ]) }}"
-                                            class="p-2 hover:bg-primary-50 text-primary-600 rounded-lg transition-all">
-                                            <x-icon name="clipboard" />
-                                        </a>
-                                        @else
-                                        <a href="{{ route('attendance.show', [
-                                                'classId' => $selectedClassId ?? '',
-                                                'type'    => $session['type'],
-                                                'date'    => $session['dateStr'],
-                                            ]) }}"
-                                            class="p-2 hover:bg-primary-50 text-primary-600 rounded-lg transition-all">
-                                            <x-icon name="clipboard" />
-                                        </a>
-                                        @endif
-                                    </x-tooltip>
-
-                                    <x-tooltip :content="$session['locked'] ? 'Mở lại phiên' : 'Khóa phiên'">
-                                        <button
-                                            wire:click="toggleStatus({{ $session['id'] }})"
-                                            wire:loading.attr="disabled"
-                                            class="p-2 rounded-lg transition-all
-                                                {{ $session['locked']
-                                                    ? 'hover:bg-green-50 text-green-700'
-                                                    : 'hover:bg-amber-50 text-amber-600' }}">
-                                            @if($session['locked'])
-                                            <x-icon name="check" />
-                                            @else
-                                            <x-icon name="archive" />
-                                            @endif
-                                        </button>
-                                    </x-tooltip>
-
-                                    @if($canDeleteSessions ?? false)
-                                    <x-tooltip content="Xóa phiên">
-                                        <button
-                                            wire:click="delete({{ $session['id'] }})"
-                                            wire:confirm="Xóa phiên điểm danh ngày {{ $session['fullDate'] }}?"
-                                            class="p-2 hover:bg-red-50 text-red-500 rounded-lg transition-all">
-                                            <x-icon name="trash" />
-                                        </button>
-                                    </x-tooltip>
-                                    @endif
-                                </div>
+                                @include('livewire.attendance.partials.session-actions', [
+                                    'session' => $session,
+                                    'subjectTarget' => $subjectTarget,
+                                    'selectedNamHoc' => $selectedNamHoc,
+                                    'selectedClassId' => $selectedClassId,
+                                    'canDeleteSessions' => $canDeleteSessions ?? false,
+                                    'layout' => 'desktop',
+                                ])
                             </td>
                         </tr>
                         @endforeach
@@ -413,15 +340,25 @@
 
             <div class="px-4 lg:px-6 py-3 mac-hairline-t bg-slate-50/40 flex flex-col sm:flex-row
                         items-start sm:items-center justify-between gap-4">
-                <div class="flex flex-wrap items-center gap-4 text-xs text-slate-600">
+                <div class="flex flex-wrap items-center gap-x-4 gap-y-2 text-xs text-slate-600">
                     <span class="flex items-center gap-1.5">
-                        <span class="w-2.5 h-2.5 rounded-full bg-green-500"></span> Có mặt
+                        <span class="w-2.5 h-2.5 rounded-full bg-emerald-500"></span> Có mặt
                     </span>
                     <span class="flex items-center gap-1.5">
-                        <span class="w-2.5 h-2.5 rounded-full bg-yellow-400"></span> Vắng có phép
+                        <span class="w-2.5 h-2.5 rounded-full bg-amber-400"></span> Vắng có phép
                     </span>
                     <span class="flex items-center gap-1.5">
                         <span class="w-2.5 h-2.5 rounded-full bg-red-500"></span> Vắng không phép
+                    </span>
+                    <span class="hidden sm:inline text-slate-300">|</span>
+                    <span class="flex items-center gap-1.5">
+                        <span class="w-2 h-2 rounded-full bg-emerald-500"></span> Hoạt động
+                    </span>
+                    <span class="flex items-center gap-1.5">
+                        <x-icon name="lock" class="w-3 h-3 text-slate-500" /> Đã khóa
+                    </span>
+                    <span class="flex items-center gap-1.5">
+                        <x-icon name="cancel" class="w-3 h-3 text-red-500" /> Đã hủy
                     </span>
                 </div>
             </div>
@@ -484,6 +421,8 @@
                 </x-slot>
             </x-stats.page-empty>
             @endif
+
+            @endif {{-- end tab --}}
         </x-mac-panel>
 
     </div>

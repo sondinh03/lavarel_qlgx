@@ -22,7 +22,7 @@ $variantClass = match($variant) {
     'subtle'  => 'bg-slate-100/80 text-slate-600 hover:bg-slate-200/80 focus-visible:ring-slate-300',
     'danger'  => 'bg-red-50/90 text-red-600 border border-red-200/80 hover:bg-red-100 focus-visible:ring-red-200',
     'warning' => 'bg-orange-50/90 text-orange-600 border border-orange-200/80 hover:bg-orange-100 focus-visible:ring-orange-200',
-    'success' => 'bg-green-50/90 text-green-700 border border-green-200/80 hover:bg-green-100 focus-visible:ring-green-200',
+    'success' => 'bg-emerald-50/90 text-emerald-700 border border-emerald-200/80 hover:bg-emerald-100 focus-visible:ring-emerald-200',
     'info'    => 'bg-blue-50/90 text-blue-600 border border-blue-200/80 hover:bg-blue-100 focus-visible:ring-blue-200',
     default   => 'bg-primary-500 text-white hover:bg-primary-600 focus-visible:ring-primary-500 shadow-mac-sm',
 };

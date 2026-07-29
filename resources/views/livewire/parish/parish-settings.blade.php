@@ -6,7 +6,7 @@
             <x-page-header
                 icon-type="default"
                 title="Thông tin giáo xứ"
-                description="Cập nhật thông tin giáo xứ và cách chốt điểm danh tự động.">
+                description="Cập nhật thông tin và logo của giáo xứ.">
             </x-page-header>
 
             <form wire:submit.prevent="save" class="p-4 lg:p-6 space-y-4">
@@ -173,50 +173,29 @@
                     </div>
                 </div>
 
-                {{-- Giờ chốt số liệu điểm danh --}}
-                <div class="rounded-xl border border-black/[0.06] bg-white/60 p-4 shadow-mac-sm space-y-3">
-                    <div class="flex items-start justify-between gap-3">
+                {{-- Giờ chốt số liệu điểm danh: quản lý tại trang Phiên điểm danh --}}
+                <div class="rounded-xl border border-black/[0.06] bg-white/60 p-4 shadow-mac-sm">
+                    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
                         <div class="min-w-0">
                             <p class="text-xs font-semibold text-slate-500 uppercase tracking-wide">Điểm danh</p>
-                            <p class="mt-1 text-sm font-semibold text-slate-800">Tự động kết luận sau giờ chốt</p>
+                            <p class="mt-1 text-sm font-semibold text-slate-800">
+                                Giờ chốt số liệu:
+                                <span class="tabular-nums">{{ $attendanceAutoFinalizeTime }}</span>
+                                <span class="ml-1 font-normal text-slate-500">
+                                    ({{ $attendanceAutoFinalizeEnabled ? 'đang bật' : 'đang tắt' }})
+                                </span>
+                            </p>
+                            <p class="mt-1 text-xs text-slate-500 leading-relaxed">
+                                Sau giờ này, những em chưa được điểm danh sẽ tính là vắng không phép
+                                (với buổi đã có người điểm danh).
+                            </p>
                         </div>
-                        <label class="inline-flex items-center gap-2 cursor-pointer select-none flex-shrink-0">
-                            <input type="checkbox" wire:model="attendanceAutoFinalizeEnabled" class="mac-checkbox">
-                            <span class="text-sm font-semibold text-slate-700">Bật</span>
-                        </label>
-                    </div>
-
-                    <div class="text-sm text-slate-600 leading-relaxed space-y-2 rounded-xl bg-slate-50/80 p-3">
-                        <p class="font-semibold text-slate-700">Quy tắc kết luận vắng:</p>
-                        <ul class="list-disc ml-5 space-y-1">
-                            <li>Buổi phải có ít nhất một người được điểm danh bằng QR hoặc điểm tay.</li>
-                            <li>Sau giờ chốt, học sinh chưa có bản ghi được <em>coi là vắng không phép</em> khi xem báo cáo, xuất Excel và tính điểm chuyên cần.</li>
-                            <li><strong>Khóa buổi</strong> kết luận ngay theo quy tắc trên và không cho quét/sửa thêm; có thể mở lại để sửa.</li>
-                        </ul>
-                        <p>
-                            Hệ thống không tạo thêm bản ghi vắng và không tự khóa buổi. Trước giờ chốt,
-                            học sinh chưa có bản ghi vẫn hiển thị là <strong>chưa điểm danh (?)</strong>.
-                        </p>
-                        <p class="text-xs text-slate-500">
-                            Buổi chưa có ai điểm danh không bị kết luận vắng cả lớp, tránh trừ oan khi buổi chưa diễn ra
-                            hoặc giáo lý viên quên điểm danh.
-                        </p>
-                    </div>
-
-                    <div class="{{ $attendanceAutoFinalizeEnabled ? '' : 'opacity-50 pointer-events-none' }}">
-                        <label class="block text-xs font-semibold text-slate-500 mb-1.5 tracking-wide uppercase">
-                            Giờ chốt số liệu
-                        </label>
-                        <input type="time" wire:model.defer="attendanceAutoFinalizeTime"
-                            class="w-full sm:w-40 h-11 px-4 py-2.5 rounded-xl border border-black/[0.06] text-sm
-                                bg-white/80 backdrop-blur-sm shadow-mac-sm tabular-nums
-                                focus:outline-none focus:ring-2 focus:ring-primary-500/25 focus:border-primary-300/40 transition-all" />
-                        <p class="mt-1.5 text-xs text-slate-400">
-                            Mặc định 20:00 (giờ Việt Nam). Nên đặt sau khi lớp cuối cùng trong ngày thường điểm danh xong.
-                        </p>
-                        @error('attendanceAutoFinalizeTime')
-                        <p class="mt-1 text-xs text-red-500">{{ $message }}</p>
-                        @enderror
+                        <a href="{{ route('session.index', ['tab' => 'settings']) }}"
+                            class="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold
+                                bg-white/80 text-slate-700 border border-black/[0.08] shadow-mac-sm
+                                hover:bg-white transition-all active:scale-[0.98] flex-shrink-0">
+                            Đổi trong Cài đặt điểm danh →
+                        </a>
                     </div>
                 </div>
 

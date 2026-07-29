@@ -7,6 +7,7 @@ use App\Models\AttendanceSession;
 use App\Models\CatechismClass;
 use App\Models\GradeLevel;
 use App\Models\NamHoc;
+use App\Models\ParishNew;
 use App\Models\TeacherAttendanceSession;
 use Carbon\Carbon;
 use Illuminate\Pagination\LengthAwarePaginator;
@@ -19,6 +20,11 @@ use Illuminate\Validation\ValidationException;
  */
 class SessionManager extends BaseComponent
 {
+    // ==================== TABS ====================
+
+    /** sessions | settings */
+    public string $activeTab = 'sessions';
+
     // ==================== FILTERS ====================
 
     /** students | teachers */
@@ -70,6 +76,14 @@ class SessionManager extends BaseComponent
     /** @var object|null Năm học hiện tại */
     public $currentNamHoc = null;
 
+    // ==================== CÀI ĐẶT ĐIỂM DANH (cấp giáo xứ) ====================
+
+    /** Bật/tắt việc tính học sinh chưa được điểm danh là vắng không phép sau giờ chốt. */
+    public bool $autoFinalizeEnabled = true;
+
+    /** Giờ chốt dạng H:i. */
+    public string $autoFinalizeTime = ParishNew::DEFAULT_ATTENDANCE_AUTO_FINALIZE_TIME;
+
     // ==================== SORT ====================
 
     protected array $allowedSortFields = ['date', 'type', 'status'];
@@ -110,6 +124,7 @@ class SessionManager extends BaseComponent
     protected function queryString(): array
     {
         return array_merge([
+            'activeTab'       => ['as' => 'tab',     'except' => 'sessions'],
             'subjectTarget'   => ['as' => 'target',  'except' => 'students'],
             'selectedNamHoc'  => ['as' => 'namHoc',  'except' => null],
             'selectedKhoi'    => ['as' => 'khoi',    'except' => null],
@@ -140,6 +155,7 @@ class SessionManager extends BaseComponent
     protected function loadInitialData(): void
     {
         $this->subjectTarget = $this->subjectTarget === 'teachers' ? 'teachers' : 'students';
+        $this->loadAttendanceSettings();
 
         if ($this->isTeachersTarget() && ! $this->canManageTeacherSessions()) {
             $this->subjectTarget = 'students';
@@ -175,6 +191,12 @@ class SessionManager extends BaseComponent
         parent::sanitizeQueryString();
 
         $this->subjectTarget = $this->subjectTarget === 'teachers' ? 'teachers' : 'students';
+
+        if (! in_array($this->activeTab, ['sessions', 'settings'], true)
+            || ($this->activeTab === 'settings' && ! $this->canManageAttendanceSettings())
+        ) {
+            $this->activeTab = 'sessions';
+        }
 
         $this->selectedNamHoc = is_numeric($this->selectedNamHoc)
             ? (int) $this->selectedNamHoc
@@ -258,6 +280,86 @@ class SessionManager extends BaseComponent
         } elseif ($this->selectedClassId) {
             $this->loadClassInfo();
             $this->syncDateDefaults();
+        }
+    }
+
+    public function switchTab(string $tab): void
+    {
+        $tab = in_array($tab, ['sessions', 'settings'], true) ? $tab : 'sessions';
+
+        if ($tab === 'settings' && ! $this->canManageAttendanceSettings()) {
+            $this->emit('toast', 'error', 'Bạn không có quyền thay đổi cài đặt điểm danh');
+
+            return;
+        }
+
+        if ($this->activeTab === $tab) {
+            return;
+        }
+
+        $this->resetErrorBag();
+        $this->activeTab = $tab;
+
+        if ($tab === 'settings') {
+            $this->loadAttendanceSettings();
+        }
+    }
+
+    // ==================== CÀI ĐẶT ĐIỂM DANH ====================
+
+    protected function canManageAttendanceSettings(): bool
+    {
+        $user = auth()->user();
+
+        return (bool) ($user && ($user->isParishAdmin() || $user->isCatechismAdmin()) && $this->parishId);
+    }
+
+    protected function loadAttendanceSettings(): void
+    {
+        $parish = $this->parishId ? ParishNew::query()->find($this->parishId) : null;
+
+        $this->autoFinalizeEnabled = (bool) ($parish?->attendance_auto_finalize_enabled ?? true);
+        $this->autoFinalizeTime = $parish?->attendanceAutoFinalizeTimeHi()
+            ?? ParishNew::DEFAULT_ATTENDANCE_AUTO_FINALIZE_TIME;
+    }
+
+    public function saveAttendanceSettings(): void
+    {
+        if (! $this->canManageAttendanceSettings()) {
+            $this->emit('toast', 'error', 'Bạn không có quyền thay đổi cài đặt điểm danh');
+
+            return;
+        }
+
+        $validated = $this->validate([
+            'autoFinalizeEnabled' => 'boolean',
+            'autoFinalizeTime'    => ['required', 'regex:/^\d{1,2}:\d{2}$/'],
+        ], [
+            'autoFinalizeTime.required' => 'Vui lòng chọn giờ chốt số liệu.',
+            'autoFinalizeTime.regex'    => 'Giờ chốt không hợp lệ (định dạng HH:MM).',
+        ]);
+
+        [$hour, $minute] = array_map('intval', explode(':', $validated['autoFinalizeTime']));
+
+        if ($hour > 23 || $minute > 59) {
+            $this->addError('autoFinalizeTime', 'Giờ chốt không hợp lệ.');
+
+            return;
+        }
+
+        try {
+            ParishNew::query()->findOrFail($this->parishId)->update([
+                'attendance_auto_finalize_enabled' => (bool) $validated['autoFinalizeEnabled'],
+                'attendance_auto_finalize_time'    => sprintf('%02d:%02d:00', $hour, $minute),
+            ]);
+
+            $this->loadAttendanceSettings();
+            $this->emit('toast', 'success', 'Đã lưu cài đặt điểm danh');
+        } catch (\Exception $e) {
+            $this->logError($e, 'Error saving attendance settings', [
+                'parishId' => $this->parishId,
+            ]);
+            $this->emit('toast', 'error', 'Có lỗi khi lưu cài đặt điểm danh');
         }
     }
 
@@ -454,9 +556,17 @@ class SessionManager extends BaseComponent
             'typeLabel'   => $session->type == AttendanceSession::TYPE_CLASS ? 'Đi học' : 'Đi lễ',
             'title'       => $session->title ?? $session->note,
             'status'      => $session->status,
-            'statusLabel' => $this->getStatusLabel($session->status),
-            'statusClass' => $this->getStatusClass($session->status),
-            'locked'      => $session->status === AttendanceSession::STATUS_CLOSED,
+            'statusLabel' => AttendanceSession::statusLabel((int) $session->status),
+            'statusClass' => AttendanceSession::statusClass((int) $session->status),
+            'locked'      => (int) $session->status === AttendanceSession::STATUS_CLOSED,
+            'cancelled'   => (int) $session->status === AttendanceSession::STATUS_CANCELLED,
+            'canLock'     => (int) $session->status === AttendanceSession::STATUS_OPENING,
+            'canReopen'   => (int) $session->status === AttendanceSession::STATUS_CLOSED,
+            'canCancel'   => in_array((int) $session->status, [
+                AttendanceSession::STATUS_OPENING,
+                AttendanceSession::STATUS_CLOSED,
+            ], true),
+            'canRestore'  => (int) $session->status === AttendanceSession::STATUS_CANCELLED,
             'start_time'  => $session->start_time?->format('H:i'),
             'end_time'    => $session->end_time?->format('H:i'),
             'stats'       => $stats,
@@ -466,6 +576,7 @@ class SessionManager extends BaseComponent
     protected function mapTeacherSession(TeacherAttendanceSession $session): array
     {
         $stats = $session->getStatistics();
+        $status = (int) $session->status;
 
         return [
             'id'          => $session->id,
@@ -475,10 +586,18 @@ class SessionManager extends BaseComponent
             'type'        => $session->type,
             'typeLabel'   => TeacherAttendanceSession::typeLabel((int) $session->type),
             'title'       => $session->note,
-            'status'      => $session->status,
-            'statusLabel' => $this->getStatusLabel((int) $session->status),
-            'statusClass' => $this->getStatusClass((int) $session->status),
-            'locked'      => (int) $session->status === TeacherAttendanceSession::STATUS_CLOSED,
+            'status'      => $status,
+            'statusLabel' => TeacherAttendanceSession::statusLabel($status),
+            'statusClass' => TeacherAttendanceSession::statusClass($status),
+            'locked'      => $status === TeacherAttendanceSession::STATUS_CLOSED,
+            'cancelled'   => $status === TeacherAttendanceSession::STATUS_CANCELLED,
+            'canLock'     => $status === TeacherAttendanceSession::STATUS_OPENING,
+            'canReopen'   => $status === TeacherAttendanceSession::STATUS_CLOSED,
+            'canCancel'   => in_array($status, [
+                TeacherAttendanceSession::STATUS_OPENING,
+                TeacherAttendanceSession::STATUS_CLOSED,
+            ], true),
+            'canRestore'  => $status === TeacherAttendanceSession::STATUS_CANCELLED,
             'start_time'  => $session->start_time?->format('H:i'),
             'end_time'    => $session->end_time?->format('H:i'),
             'stats'       => $stats,
@@ -773,10 +892,30 @@ class SessionManager extends BaseComponent
         }
     }
 
-    public function toggleStatus(int $id): void
+    public function lockSession(int $id): void
+    {
+        $this->changeSessionStatus($id, 'lock');
+    }
+
+    public function reopenSession(int $id): void
+    {
+        $this->changeSessionStatus($id, 'reopen');
+    }
+
+    public function cancelSession(int $id): void
+    {
+        $this->changeSessionStatus($id, 'cancel');
+    }
+
+    public function restoreSession(int $id): void
+    {
+        $this->changeSessionStatus($id, 'restore');
+    }
+
+    protected function changeSessionStatus(int $id, string $action): void
     {
         if ($this->isTeachersTarget()) {
-            $this->toggleTeacherStatus($id);
+            $this->changeTeacherSessionStatus($id, $action);
 
             return;
         }
@@ -785,26 +924,39 @@ class SessionManager extends BaseComponent
             $session = AttendanceSession::findOrFail($id);
             $this->authorize('update', $session);
 
-            $newStatus = $session->status === AttendanceSession::STATUS_OPENING
-                ? AttendanceSession::STATUS_CLOSED
-                : AttendanceSession::STATUS_OPENING;
+            $ok = match ($action) {
+                'lock'    => $session->close(),
+                'reopen'  => $session->reopen(),
+                'cancel'  => $session->cancel(),
+                'restore' => $session->restore(),
+                default   => false,
+            };
 
-            $session->update(['status' => $newStatus]);
+            if (! $ok) {
+                $this->emit('toast', 'error', 'Không thể chuyển trạng thái phiên này');
 
-            $label = $newStatus === AttendanceSession::STATUS_CLOSED
-                ? 'Đã khóa phiên điểm danh'
-                : 'Đã mở lại phiên điểm danh';
+                return;
+            }
 
-            $this->emit('toast', 'success', $label);
+            $this->emit('toast', 'success', match ($action) {
+                'lock'    => 'Đã khóa phiên điểm danh',
+                'reopen'  => 'Đã mở lại phiên điểm danh',
+                'cancel'  => 'Đã hủy phiên điểm danh',
+                'restore' => 'Đã khôi phục phiên điểm danh',
+                default   => 'Đã cập nhật trạng thái',
+            });
         } catch (\Illuminate\Auth\Access\AuthorizationException $e) {
             $this->emit('toast', 'error', 'Bạn không có quyền thay đổi trạng thái phiên');
         } catch (\Exception $e) {
-            $this->logError($e, 'Error toggling session status', ['id' => $id]);
+            $this->logError($e, 'Error changing session status', [
+                'id'     => $id,
+                'action' => $action,
+            ]);
             $this->emit('toast', 'error', 'Có lỗi khi thay đổi trạng thái');
         }
     }
 
-    protected function toggleTeacherStatus(int $id): void
+    protected function changeTeacherSessionStatus(int $id, string $action): void
     {
         if (! $this->canManageTeacherSessions()) {
             $this->emit('toast', 'error', 'Bạn không có quyền thay đổi trạng thái buổi GLV');
@@ -817,19 +969,32 @@ class SessionManager extends BaseComponent
                 ->where('parish_id', $this->parishId)
                 ->findOrFail($id);
 
-            $newStatus = (int) $session->status === TeacherAttendanceSession::STATUS_OPENING
-                ? TeacherAttendanceSession::STATUS_CLOSED
-                : TeacherAttendanceSession::STATUS_OPENING;
+            $ok = match ($action) {
+                'lock'    => $session->close(),
+                'reopen'  => $session->reopen(),
+                'cancel'  => $session->cancel(),
+                'restore' => $session->restore(),
+                default   => false,
+            };
 
-            $session->update(['status' => $newStatus]);
+            if (! $ok) {
+                $this->emit('toast', 'error', 'Không thể chuyển trạng thái buổi GLV này');
 
-            $label = $newStatus === TeacherAttendanceSession::STATUS_CLOSED
-                ? 'Đã khóa buổi điểm danh GLV'
-                : 'Đã mở lại buổi điểm danh GLV';
+                return;
+            }
 
-            $this->emit('toast', 'success', $label);
+            $this->emit('toast', 'success', match ($action) {
+                'lock'    => 'Đã khóa buổi điểm danh GLV',
+                'reopen'  => 'Đã mở lại buổi điểm danh GLV',
+                'cancel'  => 'Đã hủy buổi điểm danh GLV',
+                'restore' => 'Đã khôi phục buổi điểm danh GLV',
+                default   => 'Đã cập nhật trạng thái',
+            });
         } catch (\Exception $e) {
-            $this->logError($e, 'Error toggling teacher session status', ['id' => $id]);
+            $this->logError($e, 'Error changing teacher session status', [
+                'id'     => $id,
+                'action' => $action,
+            ]);
             $this->emit('toast', 'error', 'Có lỗi khi thay đổi trạng thái');
         }
     }
@@ -1037,26 +1202,6 @@ class SessionManager extends BaseComponent
         return ['Chúa Nhật', 'Thứ Hai', 'Thứ Ba', 'Thứ Tư', 'Thứ Năm', 'Thứ Sáu', 'Thứ Bảy'][$date->dayOfWeek];
     }
 
-    protected function getStatusLabel(int $status): string
-    {
-        return match ($status) {
-            AttendanceSession::STATUS_OPENING   => 'Đang mở',
-            AttendanceSession::STATUS_CLOSED    => 'Đã khóa',
-            AttendanceSession::STATUS_CANCELLED => 'Đã hủy',
-            default                             => 'Không xác định',
-        };
-    }
-
-    protected function getStatusClass(int $status): string
-    {
-        return match ($status) {
-            AttendanceSession::STATUS_OPENING   => 'bg-green-50/80 text-green-700',
-            AttendanceSession::STATUS_CLOSED    => 'bg-slate-100/80 text-slate-600',
-            AttendanceSession::STATUS_CANCELLED => 'bg-red-50/80 text-red-700',
-            default                             => 'bg-slate-50/80 text-slate-500',
-        };
-    }
-
     // ==================== COMPUTED PROPERTIES ====================
 
     public function getSelectedClassNameProperty(): string
@@ -1092,20 +1237,13 @@ class SessionManager extends BaseComponent
             : $this->mapSession($session)
         );
 
-        $parish = $this->parishId
-            ? \App\Models\ParishNew::query()->find($this->parishId)
-            : null;
-
         return view('livewire.attendance.session-manager', [
             'parishId'  => $this->parishId,
             'sessions'  => $sessions,
             'total'     => $paginator->total(),
             'canDeleteSessions' => (bool) auth()->user()?->canManageCatechism(),
             'isMobileUi' => (bool) auth()->user()?->usesCatechistLayout(),
-            'autoFinalizeEnabled' => (bool) ($parish?->attendance_auto_finalize_enabled ?? true),
-            'autoFinalizeTime'    => $parish?->attendanceAutoFinalizeTimeHi()
-                ?? \App\Models\ParishNew::DEFAULT_ATTENDANCE_AUTO_FINALIZE_TIME,
-            'canManageParishSettings' => (bool) (auth()->user()?->isParishAdmin() || auth()->user()?->isCatechismAdmin()),
+            'canManageParishSettings' => $this->canManageAttendanceSettings(),
         ])
             ->extends(auth()->user()?->usesCatechistLayout()
                 ? 'frontend.layout.catechist'

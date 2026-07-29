@@ -377,8 +377,8 @@ class AdminDashboard extends BaseComponent
         return $rows->map(function ($r) {
             $typeLabel = ((int) $r->type) === 2 ? 'Thánh lễ' : 'Giáo lý';
             $statusLabel = match ((int) $r->status) {
-                1 => 'Đang mở',
-                2 => 'Đã đóng',
+                1 => 'Hoạt động',
+                2 => 'Đã khóa',
                 3 => 'Đã hủy',
                 default => '—',
             };

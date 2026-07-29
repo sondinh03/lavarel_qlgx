@@ -32,10 +32,12 @@ class ParishSettings extends Component
 
     public ?string $ward = null;
 
-    /** Bật/tắt suy luận học sinh chưa điểm danh là KP sau giờ cắt. */
+    /**
+     * Chỉ để hiển thị: cài đặt giờ chốt được sửa tại Phiên điểm danh → Cài đặt điểm danh.
+     */
     public bool $attendanceAutoFinalizeEnabled = true;
 
-    /** Giờ chốt dạng H:i, mặc định 20:00. */
+    /** Giờ chốt dạng H:i, mặc định 20:00. Chỉ để hiển thị. */
     public string $attendanceAutoFinalizeTime = '20:00';
 
     /** Logo ban giáo lý → cột `image` (dùng trên thẻ HS/GLV). */
@@ -155,8 +157,6 @@ class ParishSettings extends Component
             'deaneryId'          => 'required|integer|exists:deanerys,id',
             'province'           => 'nullable|string|max:20',
             'ward'               => 'nullable|string|max:20',
-            'attendanceAutoFinalizeEnabled' => 'boolean',
-            'attendanceAutoFinalizeTime'    => ['required', 'regex:/^\d{2}:\d{2}$/'],
             'logo'               => 'nullable|image|mimes:jpg,jpeg,png,webp|max:2048',
             'parishLogo'         => 'nullable|image|mimes:jpg,jpeg,png,webp|max:2048',
         ], [
@@ -164,8 +164,6 @@ class ParishSettings extends Component
             'name.unique'        => 'Tên giáo xứ đã tồn tại.',
             'dioceseId.required' => 'Vui lòng chọn giáo phận.',
             'deaneryId.required' => 'Vui lòng chọn giáo hạt.',
-            'attendanceAutoFinalizeTime.required' => 'Vui lòng chọn giờ chốt điểm danh.',
-            'attendanceAutoFinalizeTime.regex'    => 'Giờ chốt không hợp lệ (định dạng HH:MM).',
             'logo.image'         => 'Logo ban giáo lý phải là tệp hình ảnh.',
             'logo.mimes'         => 'Logo ban giáo lý chỉ chấp nhận định dạng JPG, PNG hoặc WEBP.',
             'logo.max'           => 'Logo ban giáo lý không được vượt quá 2MB.',
@@ -173,13 +171,6 @@ class ParishSettings extends Component
             'parishLogo.mimes'   => 'Logo giáo xứ chỉ chấp nhận định dạng JPG, PNG hoặc WEBP.',
             'parishLogo.max'     => 'Logo giáo xứ không được vượt quá 2MB.',
         ]);
-
-        [$hour, $minute] = array_map('intval', explode(':', $validated['attendanceAutoFinalizeTime']));
-        if ($hour > 23 || $minute > 59) {
-            $this->addError('attendanceAutoFinalizeTime', 'Giờ chốt không hợp lệ.');
-
-            return;
-        }
 
         $deanery = Deanery::query()->find($validated['deaneryId']);
 
@@ -197,8 +188,6 @@ class ParishSettings extends Component
             'deanery_id'         => (int) $validated['deaneryId'],
             'province'           => $validated['province'] ?: null,
             'ward'               => $validated['ward'] ?: null,
-            'attendance_auto_finalize_enabled' => (bool) $validated['attendanceAutoFinalizeEnabled'],
-            'attendance_auto_finalize_time'    => sprintf('%02d:%02d:00', $hour, $minute),
         ];
 
         $uploader = app(UploadService::class);

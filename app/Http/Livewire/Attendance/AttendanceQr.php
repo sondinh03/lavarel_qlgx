@@ -180,7 +180,7 @@ class AttendanceQr extends BaseComponent
         $session = AttendanceSession::where('class_id', $class->id)
             ->where('type', $this->type)
             ->whereDate('date', today())
-            ->where('status', '!=', AttendanceSession::STATUS_CLOSED)
+            ->where('status', AttendanceSession::STATUS_OPENING)
             ->first();
 
         if (! $session) {
