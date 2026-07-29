@@ -3,7 +3,6 @@
 namespace App\Policies;
 
 use App\Models\CatechismClass;
-use App\Models\ParishNew;
 use App\Models\StudentScore;
 use App\Models\User;
 use App\Services\CatechistAccess;
@@ -56,14 +55,8 @@ class StudentScorePolicy
             return true;
         }
 
-        $access = app(CatechistAccess::class);
-        if (! $access->canManageParishScores($user) || ! $user->parish_id) {
-            return false;
-        }
-
-        return (bool) ParishNew::query()
-            ->whereKey($user->parish_id)
-            ->value('scores_entry_open');
+        return (bool) $user->parish_id
+            && app(CatechistAccess::class)->canManageParishScores($user);
     }
 
     /**

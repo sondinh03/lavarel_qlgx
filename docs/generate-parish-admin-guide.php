@@ -166,7 +166,7 @@ $addNote('Mật khẩu mặc định (nếu hệ thống tạo sẵn) nên đư�
 
 $section->addTitle('4.4.1. Cấp quyền hỗ trợ quản trị cho GLV', 3);
 $addPara('Mặc định GLV chỉ điểm danh và xem lớp được phân công. Khi cần một GLV (thường là Trưởng/Phó) hỗ trợ quản trị, mở màn sửa GLV (tài khoản đã tạo) và bật ở mục "Quyền hỗ trợ quản trị":');
-$addBullet('Quản lý điểm toàn giáo xứ: GLV xem, nhập và sửa điểm mọi lớp trong xứ khi cửa sổ nhập điểm đang mở.');
+$addBullet('Quản lý điểm toàn giáo xứ: GLV xem, nhập và sửa điểm mọi lớp trong xứ.');
 $addBullet('Sửa thông tin học sinh toàn giáo xứ: GLV cập nhật hồ sơ học sinh toàn xứ (không gồm tạo/xóa học sinh, thống kê hay import).');
 $addBullet('Điểm danh giáo lý viên: GLV điểm danh được các buổi GLV (đi dạy / đi lễ / họp).');
 $addBullet('Tạo phiên điểm danh: GLV tạo và khóa/mở phiên điểm danh học sinh và buổi điểm danh GLV (không xóa phiên).');

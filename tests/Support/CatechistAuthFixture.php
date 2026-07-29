@@ -97,13 +97,11 @@ class CatechistAuthFixture
         $this->parishA = ParishNew::query()->create([
             'name' => 'Test Parish A ' . $suffix,
             'code' => 'TA' . strtoupper(substr($suffix, 0, 4)),
-            'scores_entry_open' => true,
         ]);
 
         $this->parishB = ParishNew::query()->create([
             'name' => 'Test Parish B ' . $suffix,
             'code' => 'TB' . strtoupper(substr($suffix, 0, 4)),
-            'scores_entry_open' => true,
         ]);
 
         $this->yearA = NamHoc::query()->create([

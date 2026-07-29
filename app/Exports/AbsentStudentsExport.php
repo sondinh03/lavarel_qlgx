@@ -6,6 +6,7 @@ use App\Models\AttendanceRecord;
 use App\Models\AttendanceSession;
 use App\Models\CatechismClass;
 use App\Models\StudentNew;
+use App\Services\AttendanceStatusResolver;
 use Carbon\Carbon;
 use Illuminate\Support\Collection;
 use Maatwebsite\Excel\Concerns\FromCollection;
@@ -42,6 +43,8 @@ class AbsentStudentsExport implements FromCollection, WithHeadings, WithMapping,
     private array $absentStudentIds = [];
 
     private bool $recordsLoaded = false;
+
+    private string $cutoffLabel = '20:00';
 
     /**
      * @param  int|null  $attendanceType  1=đi học, 2=đi lễ, null=cả hai
@@ -199,6 +202,7 @@ class AbsentStudentsExport implements FromCollection, WithHeadings, WithMapping,
                     'Ngày xuất: ' . now()->format('d/m/Y H:i:s')
                         . " · {$typeLabel} · {$statusLabel}"
                         . " · {$this->rowIndex} học sinh · {$sessionCount} buổi"
+                        . " · Giờ chốt: {$this->cutoffLabel}"
                         . ' · Ký hiệu: CP = có phép, KP = không phép, ? = chưa điểm danh'
                 );
                 $sheet->mergeCells("A2:{$lastCol}2");
@@ -340,16 +344,25 @@ class AbsentStudentsExport implements FromCollection, WithHeadings, WithMapping,
                 $this->attendanceType !== null,
                 fn ($q) => $q->where('type', $this->attendanceType)
             )
+            ->where('status', '!=', AttendanceSession::STATUS_CANCELLED)
             ->whereHas('records', function ($q) {
-                $q->whereIn('status', $this->statuses)
+                $q->whereIn('status', [
+                    AttendanceRecord::STATUS_PRESENT,
+                    AttendanceRecord::STATUS_ABSENT_EXCUSED,
+                    AttendanceRecord::STATUS_ABSENT_UNEXCUSED,
+                ])
                     ->whereHas('student.classes', function ($qq) {
                         $qq->where('classes.id', $this->classId)
                             ->where('students_class.status', 1);
                     });
             })
+            ->with('catechismClass.parish')
             ->orderBy('type')
             ->orderBy('date')
-            ->get(['id', 'class_id', 'date', 'type', 'semester']);
+            ->get(['id', 'class_id', 'date', 'type', 'semester', 'status']);
+
+        $parish = $this->sessions->first()?->catechismClass?->parish;
+        $this->cutoffLabel = app(AttendanceStatusResolver::class)->cutoffLabel($parish);
     }
 
     private function loadRecordsMap(): void
@@ -368,7 +381,7 @@ class AbsentStudentsExport implements FromCollection, WithHeadings, WithMapping,
             return;
         }
 
-        // Lấy mọi bản ghi (kể cả có mặt) để phân biệt có mặt / chưa điểm danh
+        // Ghi chú vẫn lấy từ record thật; trạng thái hiệu lực lấy từ resolver chung.
         $records = AttendanceRecord::query()
             ->whereIn('session_id', $this->sessions->pluck('id'))
             ->whereHas('student.classes', function ($q) {
@@ -377,21 +390,36 @@ class AbsentStudentsExport implements FromCollection, WithHeadings, WithMapping,
             })
             ->get(['session_id', 'student_id', 'status', 'note']);
 
-        $absentIds = [];
         foreach ($records as $record) {
             $sid = (int) $record->student_id;
-            $status = $record->status !== null ? (int) $record->status : null;
 
             $this->recordsMap[$sid][(int) $record->session_id] = [
-                'status' => $status,
+                'status' => $record->status !== null ? (int) $record->status : null,
                 'note'   => $record->note,
             ];
+        }
 
-            if ($status !== null && in_array($status, $this->statuses, true)) {
-                $absentIds[$sid] = true;
+        $effectiveMatrix = app(AttendanceStatusResolver::class)->matrix($this->sessions);
+        $absentIds = [];
+        $qualifyingSessionIds = [];
+
+        foreach ($effectiveMatrix as $sessionId => $studentStatuses) {
+            foreach ($studentStatuses as $studentId => $status) {
+                $this->recordsMap[$studentId][$sessionId] = [
+                    'status' => $status,
+                    'note'   => $this->recordsMap[$studentId][$sessionId]['note'] ?? null,
+                ];
+
+                if ($status !== null && in_array($status, $this->statuses, true)) {
+                    $absentIds[$studentId] = true;
+                    $qualifyingSessionIds[$sessionId] = true;
+                }
             }
         }
 
+        $this->sessions = $this->sessions
+            ->filter(fn ($session) => isset($qualifyingSessionIds[(int) $session->id]))
+            ->values();
         $this->absentStudentIds = array_map('intval', array_keys($absentIds));
     }
 

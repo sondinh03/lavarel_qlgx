@@ -169,30 +169,12 @@
         <div class="rounded-2xl border border-black/[0.06] bg-white/50 backdrop-blur-sm shadow-mac-sm px-4 lg:px-6 py-4">
             <div class="flex flex-wrap items-center gap-x-6 gap-y-2 text-xs text-slate-500">
                 <span class="font-semibold text-slate-700">Ghi chú:</span>
+                @foreach(\App\Support\StudentRating::legend() as $level)
                 <span class="flex items-center gap-1.5">
-                    <span class="w-3 h-3 rounded-full bg-emerald-500 inline-block"></span>
-                    Xuất sắc (9.5-10)
+                    <span class="w-3 h-3 rounded-full {{ $level['dot'] }} inline-block"></span>
+                    {{ $level['label'] }} ({{ $level['range'] }})
                 </span>
-                <span class="flex items-center gap-1.5">
-                    <span class="w-3 h-3 rounded-full bg-blue-500 inline-block"></span>
-                    Giỏi (8-9.5)
-                </span>
-                <span class="flex items-center gap-1.5">
-                    <span class="w-3 h-3 rounded-full bg-amber-400 inline-block"></span>
-                    Khá (6.5-8)
-                </span>
-                <span class="flex items-center gap-1.5">
-                    <span class="w-3 h-3 rounded-full bg-yellow-400 inline-block"></span>
-                    Trung bình (5-6.5)
-                </span>
-                <span class="flex items-center gap-1.5">
-                    <span class="w-3 h-3 rounded-full bg-orange-500 inline-block"></span>
-                    Yếu (3.5-5)
-                </span>
-                <span class="flex items-center gap-1.5">
-                    <span class="w-3 h-3 rounded-full bg-red-500 inline-block"></span>
-                    Kém (0-3.5)
-                </span>
+                @endforeach
             </div>
         </div>
 

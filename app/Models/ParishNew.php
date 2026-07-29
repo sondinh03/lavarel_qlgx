@@ -30,14 +30,12 @@ class ParishNew extends Model
         'image',
         'parish_logo',
         'status',
-        'scores_entry_open',
         'attendance_auto_finalize_enabled',
         'attendance_auto_finalize_time',
     ];
 
     protected $casts = [
         'status'                            => 'boolean',
-        'scores_entry_open'                 => 'boolean',
         'attendance_auto_finalize_enabled'  => 'boolean',
     ];
 

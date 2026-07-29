@@ -7,6 +7,9 @@ use App\Exports\AttendanceWorkbookExport;
 use App\Http\Livewire\AttendanceManager;
 use App\Models\AttendanceRecord;
 use App\Models\AttendanceSession;
+use App\Models\StudentNew;
+use App\Models\StudentsClass;
+use Carbon\Carbon;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Livewire\Livewire;
 use Maatwebsite\Excel\Facades\Excel;
@@ -227,5 +230,70 @@ class AttendanceExportTest extends TestCase
             ->call('exportAttendance')
             ->assertHasNoErrors()
             ->assertEmitted('toast', 'warning', 'Chưa có buổi để xuất');
+    }
+
+    public function test_export_warns_before_cutoff_and_shows_inferred_kp_after_cutoff(): void
+    {
+        $class = $this->fx->classAssigned;
+        $this->fx->parishA->update([
+            'attendance_auto_finalize_enabled' => true,
+            'attendance_auto_finalize_time'    => '20:00:00',
+        ]);
+        $missing = StudentNew::query()->create([
+            'parish_id'  => $this->fx->parishA->id,
+            'last_name'  => 'Nguyễn Văn',
+            'first_name' => 'ZZ',
+            'gender'     => 'male',
+            'is_active'  => true,
+        ]);
+        StudentsClass::query()->create([
+            'student_id' => $missing->id,
+            'class_id'   => $class->id,
+            'status'     => StudentsClass::STATUS_ENROLLED,
+        ]);
+        $session = AttendanceSession::factory()->open()->create([
+            'class_id' => $class->id,
+            'date'     => now()->toDateString(),
+            'semester' => 1,
+            'type'     => AttendanceSession::TYPE_CLASS,
+        ]);
+        AttendanceRecord::query()->create([
+            'session_id' => $session->id,
+            'student_id' => $this->fx->studentAssigned->id,
+            'status'     => AttendanceRecord::STATUS_PRESENT,
+        ]);
+
+        Carbon::setTestNow(Carbon::today()->setTime(19, 0));
+        Livewire::actingAs($this->fx->parishAdmin)
+            ->test(AttendanceManager::class)
+            ->set('selectedNamHoc', $this->fx->yearA->id)
+            ->set('selectedClassId', $class->id)
+            ->call('exportAttendance')
+            ->assertEmitted('confirmEarlyAttendanceExport');
+
+        Carbon::setTestNow(Carbon::today()->setTime(21, 0));
+        $raw = Excel::raw(
+            new AttendanceExport($class->id, null, AttendanceSession::TYPE_CLASS),
+            \Maatwebsite\Excel\Excel::XLSX
+        );
+        $tmp = tempnam(sys_get_temp_dir(), 'att_inferred_') . '.xlsx';
+        file_put_contents($tmp, $raw);
+
+        try {
+            $sheet = IOFactory::load($tmp)->getActiveSheet();
+            $rows = $sheet->toArray();
+            $missingRow = collect($rows)->first(fn ($row) => ($row[3] ?? null) === 'ZZ');
+
+            $this->assertNotNull($missingRow);
+            $this->assertSame('KP', $missingRow[5]);
+            $this->assertStringContainsString('Giờ chốt: 20:00', (string) $sheet->getCell('A2')->getValue());
+            $this->assertDatabaseMissing('attendance_records', [
+                'session_id' => $session->id,
+                'student_id' => $missing->id,
+            ]);
+        } finally {
+            Carbon::setTestNow();
+            @unlink($tmp);
+        }
     }
 }

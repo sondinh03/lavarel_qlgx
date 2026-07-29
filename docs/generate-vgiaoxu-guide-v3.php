@@ -226,7 +226,7 @@ $addPara('B2: Thêm số điện thoại hoặc email đăng nhập → tích «
 
 $section->addTitle('4. Cấp quyền hỗ trợ quản trị cho GLV (mới V3)', 2);
 $addPara('Mặc định GLV chỉ điểm danh và xem lớp được phân công. Khi cần Trưởng/Phó hỗ trợ Ban giáo lý, mở Sửa GLV (tài khoản đã tạo) → mục «Quyền hỗ trợ quản trị»:');
-$addBullet('Quản lý điểm toàn giáo xứ — nhập/sửa điểm mọi lớp khi cửa sổ nhập điểm đang mở.');
+$addBullet('Quản lý điểm toàn giáo xứ — nhập/sửa điểm mọi lớp trong giáo xứ.');
 $addBullet('Sửa thông tin học sinh toàn giáo xứ — cập nhật hồ sơ học sinh toàn xứ (không gồm tạo/xóa/import).');
 $addBullet('Điểm danh giáo lý viên — điểm danh các buổi GLV (đi dạy / đi lễ / họp).');
 $addBullet('Tạo phiên điểm danh — tạo và khóa/mở phiên điểm danh học sinh và phiên điểm danh GLV (không gồm xóa phiên).');
@@ -302,7 +302,7 @@ $addPara('Có thể cấu hình riêng cho một Khối hoặc một Lớp theo 
 $section->addTitle('2. Nhập điểm', 2);
 $addPara('B1: Giáo lý → Kết quả học tập → Bảng điểm → Chọn Khối – Lớp – Học kỳ.');
 $addPara('B2: Kéo xuống cuối danh sách, chọn hiển thị 50 để thấy hết lớp → nhập điểm → Lưu tất cả.');
-$addNew('GLV được cấp «Quản lý điểm toàn giáo xứ» cũng nhập được điểm mọi lớp khi cửa sổ nhập điểm đang mở.');
+$addNew('GLV được cấp «Quản lý điểm toàn giáo xứ» nhập được điểm mọi lớp trong giáo xứ.');
 
 $section->addTitle('3. Xem Nhật ký sửa điểm', 2);
 $addPara('Menu Hệ thống → Nhật ký sửa điểm.');

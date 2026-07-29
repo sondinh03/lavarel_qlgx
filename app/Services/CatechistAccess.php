@@ -302,22 +302,17 @@ class CatechistAccess
         return in_array($classId, $this->assignedClassIds($user, $parishId), true);
     }
 
-    public function canEnterScoresForClass(User $user, int $classId, bool $scoresEntryOpen, ?int $parishId = null): bool
+    /**
+     * Nhập/sửa điểm: quản trị giáo lý luôn được; GLV chỉ cần quyền hỗ trợ
+     * quản lý điểm và còn phân công trong năm học hiện tại.
+     */
+    public function canEnterScoresForClass(User $user): bool
     {
         if ($user->canManageCatechism()) {
             return true;
         }
 
-        if (! $scoresEntryOpen) {
-            return false;
-        }
-
-        if (! $this->canManageParishScores($user)) {
-            return false;
-        }
-
-        // Elevated catechist: any class in own parish (caller must ensure parish match).
-        return $user->isCatechist();
+        return $this->canManageParishScores($user);
     }
 
     /**

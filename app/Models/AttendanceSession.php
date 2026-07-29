@@ -209,8 +209,10 @@ class AttendanceSession extends Model
 
     public function getStatistics(): array
     {
-        $records = $this->records;
-        $total   = $records->count();
+        $matrix = app(\App\Services\AttendanceStatusResolver::class)
+            ->matrix(collect([$this]));
+        $statuses = collect($matrix[(int) $this->id] ?? []);
+        $total = $statuses->count();
 
         if ($total === 0) {
             return [
@@ -223,10 +225,16 @@ class AttendanceSession extends Model
             ];
         }
 
-        $present         = $records->where('status', AttendanceRecord::STATUS_PRESENT)->count();
-        $absentExcused   = $records->where('status', AttendanceRecord::STATUS_ABSENT_EXCUSED)->count();
-        $absentUnexcused = $records->where('status', AttendanceRecord::STATUS_ABSENT_UNEXCUSED)->count();
-        $notChecked      = $records->whereNull('status')->count();
+        $present = $statuses->filter(
+            fn ($status) => $status === AttendanceRecord::STATUS_PRESENT
+        )->count();
+        $absentExcused = $statuses->filter(
+            fn ($status) => $status === AttendanceRecord::STATUS_ABSENT_EXCUSED
+        )->count();
+        $absentUnexcused = $statuses->filter(
+            fn ($status) => $status === AttendanceRecord::STATUS_ABSENT_UNEXCUSED
+        )->count();
+        $notChecked = $statuses->filter(fn ($status) => $status === null)->count();
 
         return [
             'total'            => $total,

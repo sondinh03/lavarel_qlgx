@@ -6,6 +6,7 @@ use App\Models\AttendanceRecord;
 use App\Models\AttendanceSession;
 use App\Models\CatechismClass;
 use App\Models\StudentNew;
+use App\Services\AttendanceStatusResolver;
 use Illuminate\Support\Collection;
 use Maatwebsite\Excel\Concerns\FromCollection;
 use Maatwebsite\Excel\Concerns\WithEvents;
@@ -44,6 +45,8 @@ class AttendanceExport implements FromCollection, WithHeadings, WithMapping, Wit
     private array $studentIds = [];
 
     private bool $recordsLoaded = false;
+
+    private string $cutoffLabel = '20:00';
 
     /**
      * @param  int|null  $semester  1|2 = học kỳ, 3 = hè, null = cả năm
@@ -233,6 +236,7 @@ class AttendanceExport implements FromCollection, WithHeadings, WithMapping, Wit
                     'A2',
                     'Ngày xuất: ' . now()->format('d/m/Y H:i:s')
                         . " · {$this->rowIndex} học sinh · {$sessionCount} buổi"
+                        . " · Giờ chốt: {$this->cutoffLabel}"
                         . ' · Ký hiệu: trống = có mặt, CP = có phép, KP = không phép, ? = chưa điểm danh'
                 );
                 $sheet->mergeCells("A2:{$lastCol}2");
@@ -501,9 +505,14 @@ class AttendanceExport implements FromCollection, WithHeadings, WithMapping, Wit
         }
 
         $this->sessions = $query
+            ->where('status', '!=', AttendanceSession::STATUS_CANCELLED)
+            ->with('catechismClass.parish')
             ->orderBy('date')
             ->orderBy('type')
-            ->get(['id', 'class_id', 'date', 'type', 'semester']);
+            ->get(['id', 'class_id', 'date', 'type', 'semester', 'status']);
+
+        $parish = $this->sessions->first()?->catechismClass?->parish;
+        $this->cutoffLabel = app(AttendanceStatusResolver::class)->cutoffLabel($parish);
     }
 
     private function loadRecordsMap(): void
@@ -531,6 +540,16 @@ class AttendanceExport implements FromCollection, WithHeadings, WithMapping, Wit
                 'status' => $status,
                 'note'   => $record->note,
             ];
+        }
+
+        $effectiveMatrix = app(AttendanceStatusResolver::class)->matrix($this->sessions);
+        foreach ($effectiveMatrix as $sessionId => $studentStatuses) {
+            foreach ($studentStatuses as $studentId => $status) {
+                $this->recordsMap[$studentId][$sessionId] = [
+                    'status' => $status,
+                    'note'   => $this->recordsMap[$studentId][$sessionId]['note'] ?? null,
+                ];
+            }
         }
     }
 

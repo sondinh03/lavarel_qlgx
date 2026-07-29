@@ -18,6 +18,7 @@ use App\Models\TeacherAttendanceSession;
 use App\Models\User;
 use App\Notifications\AttendanceSessionSummary;
 use App\Services\AttendanceService;
+use App\Services\AttendanceStatusResolver;
 use App\Services\SchoolYearResolver;
 use App\Support\NotificationRecipients;
 use Carbon\Carbon;
@@ -1235,7 +1236,7 @@ class AttendanceManager extends BaseComponent
         return $this->exportAttendance();
     }
 
-    public function exportAttendance()
+    public function exportAttendance(bool $confirmedEarly = false)
     {
         if ($this->subjectTarget === 'teachers') {
             return $this->exportTeacherAttendance();
@@ -1273,8 +1274,22 @@ class AttendanceManager extends BaseComponent
             return;
         }
 
-        if (! AttendanceSession::query()->where('class_id', $classId)->exists()) {
+        $exportSessions = AttendanceSession::query()
+            ->where('class_id', $classId)
+            ->where('status', '!=', AttendanceSession::STATUS_CANCELLED)
+            ->with('catechismClass.parish')
+            ->get(['id', 'class_id', 'date', 'status']);
+
+        if ($exportSessions->isEmpty()) {
             $this->emit('toast', 'warning', 'Chưa có buổi để xuất');
+
+            return;
+        }
+
+        if (! $confirmedEarly
+            && ($warning = $this->earlyStudentExportWarning($exportSessions)) !== null
+        ) {
+            $this->emit('confirmEarlyAttendanceExport', $warning, 'summary');
 
             return;
         }
@@ -1377,7 +1392,7 @@ class AttendanceManager extends BaseComponent
         $this->resetValidation();
     }
 
-    public function exportAbsentStudents()
+    public function exportAbsentStudents(bool $confirmedEarly = false)
     {
         if ($this->subjectTarget === 'teachers') {
             return $this->exportAbsentTeachers();
@@ -1423,18 +1438,30 @@ class AttendanceManager extends BaseComponent
             AttendanceRecord::STATUS_ABSENT_UNEXCUSED,
         ];
 
-        $hasAbsent = AttendanceRecord::query()
-            ->whereIn('status', $statuses)
-            ->whereHas('session', function ($q) use ($classIds, $type) {
-                $q->whereIn('class_id', $classIds)
-                    ->whereDate('date', '>=', $this->absentFromDate)
-                    ->whereDate('date', '<=', $this->absentToDate)
-                    ->when($type !== 0, fn ($qq) => $qq->where('type', $type));
-            })
-            ->exists();
+        $exportSessions = AttendanceSession::query()
+            ->whereIn('class_id', $classIds)
+            ->whereDate('date', '>=', $this->absentFromDate)
+            ->whereDate('date', '<=', $this->absentToDate)
+            ->when($type !== 0, fn ($query) => $query->where('type', $type))
+            ->where('status', '!=', AttendanceSession::STATUS_CANCELLED)
+            ->with('catechismClass.parish')
+            ->get(['id', 'class_id', 'date', 'status']);
+
+        $effectiveMatrix = app(AttendanceStatusResolver::class)->matrix($exportSessions);
+        $hasAbsent = collect($effectiveMatrix)
+            ->flatMap(fn ($studentStatuses) => array_values($studentStatuses))
+            ->contains(fn ($status) => in_array($status, $statuses, true));
 
         if (! $hasAbsent) {
             $this->emit('toast', 'warning', 'Không có học sinh vắng trong khoảng đã chọn');
+
+            return;
+        }
+
+        if (! $confirmedEarly
+            && ($warning = $this->earlyStudentExportWarning($exportSessions)) !== null
+        ) {
+            $this->emit('confirmEarlyAttendanceExport', $warning, 'absent');
 
             return;
         }
@@ -1466,6 +1493,21 @@ class AttendanceManager extends BaseComponent
                 \Maatwebsite\Excel\Excel::XLSX
             );
         }, 'HocSinhVang_ToanXu_' . $safeYear . "_{$fromLabel}_{$toLabel}_" . now()->format('His') . '.xlsx');
+    }
+
+    private function earlyStudentExportWarning($sessions): ?string
+    {
+        $resolver = app(AttendanceStatusResolver::class);
+        $pending = $resolver->pendingSessions($sessions);
+
+        if ($pending->isEmpty()) {
+            return null;
+        }
+
+        $cutoff = $resolver->cutoffLabel($pending->first()?->catechismClass?->parish);
+
+        return "Có {$pending->count()} buổi đã có dữ liệu nhưng chưa khóa và chưa tới giờ chốt {$cutoff}. "
+            . 'Học sinh chưa điểm danh vẫn hiển thị “?” nên số vắng không phép có thể chưa đầy đủ. Vẫn xuất file?';
     }
 
     protected function exportAbsentTeachers()
@@ -1845,7 +1887,18 @@ class AttendanceManager extends BaseComponent
                 }
             }
 
-            $stats = array_map(function ($session) use ($students) {
+            $studentIds = $students
+                ->map(fn ($student) => (int) (is_array($student) ? ($student['id'] ?? 0) : $student->id))
+                ->filter()
+                ->values();
+            $sessionModels = AttendanceSession::query()
+                ->whereIn('id', collect($this->sessions)->pluck('id'))
+                ->with('catechismClass.parish')
+                ->get(['id', 'class_id', 'date', 'status']);
+            $effectiveMatrix = app(AttendanceStatusResolver::class)
+                ->matrix($sessionModels, $studentIds);
+
+            $stats = array_map(function ($session) use ($students, $effectiveMatrix) {
                 $s = ['present' => 0, 'absentPermitted' => 0, 'absentNotPermitted' => 0];
 
                 foreach ($students as $student) {
@@ -1853,8 +1906,7 @@ class AttendanceManager extends BaseComponent
                     if ($sid <= 0) {
                         continue;
                     }
-                    $key = $sid . '_' . $session['id'];
-                    $status = $this->attendanceRecords[$key]['status'] ?? null;
+                    $status = $effectiveMatrix[(int) $session['id']][$sid] ?? null;
                     match ((int) $status) {
                         AttendanceRecord::STATUS_PRESENT => $s['present']++,
                         AttendanceRecord::STATUS_ABSENT_EXCUSED => $s['absentPermitted']++,

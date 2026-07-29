@@ -46,7 +46,7 @@ class CatechistAuthorizationMatrixTest extends TestCase
         $this->assertFalse($this->access->canManageParishScores($user));
     }
 
-    public function test_score_manager_catechist_can_enter_all_parish_classes_when_window_open(): void
+    public function test_score_manager_catechist_can_enter_all_parish_classes_with_support_permission(): void
     {
         $user = $this->fx->scoreManagerCatechist;
 
@@ -58,12 +58,6 @@ class CatechistAuthorizationMatrixTest extends TestCase
         $this->assertTrue($user->can('enterScoresForClass', $this->fx->classOtherSameParish));
         $this->assertFalse($user->can('enterScoresForClass', $this->fx->classOtherParish));
         $this->assertTrue($user->can('enterScores', StudentScore::class));
-
-        $this->fx->parishA->update(['scores_entry_open' => false]);
-        $user = $user->fresh();
-
-        $this->assertFalse($user->can('enterScoresForClass', $this->fx->classAssigned));
-        $this->assertFalse($user->can('enterScores', StudentScore::class));
     }
 
     public function test_student_editor_catechist_can_update_parish_students_but_not_create_delete_or_cross_parish(): void

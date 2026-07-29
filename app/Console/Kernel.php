@@ -33,11 +33,6 @@ class Kernel extends ConsoleKernel
 
         $schedule->command('telescope:prune')->daily();
 
-        // Chốt điểm danh theo giờ từng giáo xứ (mặc định 20:00). Chạy mỗi phút để đúng giờ.
-        $schedule->command('qlgx:auto-finalize-attendance')
-            ->everyMinute()
-            ->withoutOverlapping()
-            ->appendOutputTo(storage_path('logs/attendance-auto-finalize.log'));
     }
 
     /**

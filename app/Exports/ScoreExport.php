@@ -8,6 +8,7 @@ use App\Models\ScoreType;
 use App\Models\StudentNew;
 use App\Models\StudentScore;
 use App\Services\SemesterScoreCalculator;
+use App\Support\StudentRating;
 use Illuminate\Support\Collection;
 use Maatwebsite\Excel\Concerns\FromCollection;
 use Maatwebsite\Excel\Concerns\WithEvents;
@@ -36,15 +37,6 @@ class ScoreExport implements FromCollection, WithHeadings, WithMapping, WithStyl
     private const FIXED_COLUMNS = 5;
 
     private const SUMMARY_COLUMNS = 4;
-
-    private const RATING_LEVELS = [
-        'XUAT_SAC' => ['min' => 9.5, 'max' => 10],
-        'GIOI'     => ['min' => 8.0, 'max' => 9.5],
-        'KHA'      => ['min' => 6.5, 'max' => 8.0],
-        'TRUNG_BINH' => ['min' => 5.0, 'max' => 6.5],
-        'YEU'      => ['min' => 3.5, 'max' => 5.0],
-        'KEM'      => ['min' => 0, 'max' => 3.5],
-    ];
 
     public function __construct(
         private ?int $classId,
@@ -469,33 +461,12 @@ class ScoreExport implements FromCollection, WithHeadings, WithMapping, WithStyl
 
     private function getStudentRating(?float $average): ?string
     {
-        if ($average === null || $average < 0) {
-            return null;
-        }
-
-        foreach (self::RATING_LEVELS as $key => $rating) {
-            if (
-                $average >= $rating['min']
-                && ($average < $rating['max'] || ($rating['max'] === 10 && $average <= 10))
-            ) {
-                return $key;
-            }
-        }
-
-        return null;
+        return StudentRating::keyFor($average);
     }
 
     private function getRatingLabel(?float $average): string
     {
-        return match ($this->getStudentRating($average)) {
-            'XUAT_SAC' => 'Xuất sắc',
-            'GIOI' => 'Giỏi',
-            'KHA' => 'Khá',
-            'TRUNG_BINH' => 'Trung bình',
-            'YEU' => 'Yếu',
-            'KEM' => 'Kém',
-            default => '',
-        };
+        return StudentRating::labelFor($average);
     }
 
     private function appendGroupHeader(

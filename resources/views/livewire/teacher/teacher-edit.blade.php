@@ -313,7 +313,7 @@
                                     class="w-4 h-4 mt-0.5 rounded border-black/20 text-primary-500 focus:ring-primary-500/25" />
                                 <div>
                                     <span class="text-sm font-medium text-slate-700">Quản lý điểm toàn giáo xứ</span>
-                                    <p class="text-xs text-slate-500 mt-0.5">Xem, nhập và sửa điểm mọi lớp khi cửa sổ nhập điểm đang mở.</p>
+                                    <p class="text-xs text-slate-500 mt-0.5">Xem, nhập và sửa điểm mọi lớp trong giáo xứ.</p>
                                 </div>
                             </label>
                             <label class="flex items-start gap-3 cursor-pointer select-none">

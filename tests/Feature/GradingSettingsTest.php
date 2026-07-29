@@ -187,6 +187,27 @@ class GradingSettingsTest extends TestCase
             ->assertSee('Dưới 3,5');
     }
 
+    public function test_catechist_detail_modal_lists_weighted_components(): void
+    {
+        GradingSetting::query()->create(array_merge(GradingSetting::DEFAULTS, [
+            'parish_id'               => $this->fx->parishA->id,
+            'school_year_id'          => $this->fx->yearA->id,
+            'weight_academic'         => 60,
+            'weight_class_attendance' => 40,
+            'weight_mass_attendance'  => 0,
+        ]));
+
+        Livewire::actingAs($this->fx->ordinaryCatechist)
+            ->test(ScoreManager::class)
+            ->set('selectedLop', $this->fx->classAssigned->id)
+            ->call('openStudentScoreDetail', $this->fx->pivotAssigned->id)
+            ->assertSee((string) $this->fx->scoreTypeAssigned->name)
+            ->assertSee('Trung bình học tập')
+            ->assertSee('60% của TB kỳ')
+            ->assertSee('Chuyên cần học')
+            ->assertDontSee('Chuyên cần lễ');
+    }
+
     public function test_plain_catechist_cannot_open_weights_tab(): void
     {
         Livewire::actingAs($this->fx->ordinaryCatechist)

@@ -170,10 +170,11 @@ này có ở `StudentListNew`, `ScoreManager`, `AttendanceManager`.
 Ngoài ra FilterBar còn 1 sentinel UI khác: **học kỳ `3`** = "giữa 2 học kỳ / hè" (không tồn tại
 học kỳ 3 trong DB).
 
-### 3.6. Cửa nhập điểm `scores_entry_open`
+### 3.6. Quyền nhập điểm
 
-Bảng `parishes` có cột `scores_entry_open`. GLV có `manage_parish_scores` chỉ nhập điểm được khi
-cờ này bật (quản trị xứ bật/tắt). Quản trị thì nhập được bất kể cờ.
+GLV chỉ nhập/sửa điểm khi có quyền hỗ trợ `manage_parish_scores` và còn phân công
+trong năm học hiện tại. Quản trị giáo lý luôn nhập được. Không còn cửa sổ
+mở/khóa nhập điểm theo giáo xứ.
 
 ---
 

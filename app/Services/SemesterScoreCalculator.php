@@ -363,44 +363,62 @@ class SemesterScoreCalculator
             return [];
         }
 
-        $rows = DB::table('attendance_records')
-            ->join('attendance_sessions', 'attendance_records.session_id', '=', 'attendance_sessions.id')
-            ->whereIn('attendance_sessions.class_id', $classIds)
-            ->where('attendance_sessions.semester', $semester)
-            ->where('attendance_sessions.status', '!=', AttendanceSession::STATUS_CANCELLED)
-            ->whereIn('attendance_records.student_id', $studentIds)
-            ->whereNotNull('attendance_records.status')
-            ->groupBy(
-                'attendance_sessions.class_id',
-                'attendance_sessions.type',
-                'attendance_records.student_id'
-            )
-            ->selectRaw(
-                'attendance_sessions.class_id as class_id,
-                 attendance_sessions.type as session_type,
-                 attendance_records.student_id as student_id,
-                 COUNT(*) as counted,
-                 SUM(CASE WHEN attendance_records.status = ? THEN 1 ELSE 0 END) as present,
-                 SUM(CASE WHEN attendance_records.status = ? THEN 1 ELSE 0 END) as excused',
-                [AttendanceRecord::STATUS_PRESENT, AttendanceRecord::STATUS_ABSENT_EXCUSED]
-            )
-            ->get();
+        $sessions = AttendanceSession::query()
+            ->whereIn('class_id', $classIds)
+            ->where('semester', $semester)
+            ->where('status', '!=', AttendanceSession::STATUS_CANCELLED)
+            ->with('catechismClass.parish')
+            ->get(['id', 'class_id', 'date', 'type', 'status']);
 
-        $result = [];
+        $matrix = app(AttendanceStatusResolver::class)->matrix(
+            $sessions,
+            collect($studentIds)
+        );
+        $sessionMap = $sessions->keyBy(fn ($session) => (int) $session->id);
+        $counts = [];
 
-        foreach ($rows as $row) {
-            $classId = (int) $row->class_id;
-            $counted = (int) $row->counted;
-
-            if ($counted <= 0) {
+        foreach ($matrix as $sessionId => $studentStatuses) {
+            $session = $sessionMap->get((int) $sessionId);
+            if (! $session) {
                 continue;
             }
 
-            $settings = $settingsByClass[$classId] ?? GradingSetting::makeDefault();
-            $credited = (int) $row->present + $settings->excusedCredit() * (int) $row->excused;
+            foreach ($studentStatuses as $studentId => $status) {
+                if ($status === null) {
+                    continue;
+                }
 
-            $result[$classId][(int) $row->session_type][(int) $row->student_id]
-                = round(10 * $credited / $counted, 1);
+                $key = [(int) $session->class_id, (int) $session->type, (int) $studentId];
+                $counts[$key[0]][$key[1]][$key[2]]['counted']
+                    = ($counts[$key[0]][$key[1]][$key[2]]['counted'] ?? 0) + 1;
+                $counts[$key[0]][$key[1]][$key[2]]['present']
+                    = ($counts[$key[0]][$key[1]][$key[2]]['present'] ?? 0)
+                    + ($status === AttendanceRecord::STATUS_PRESENT ? 1 : 0);
+                $counts[$key[0]][$key[1]][$key[2]]['excused']
+                    = ($counts[$key[0]][$key[1]][$key[2]]['excused'] ?? 0)
+                    + ($status === AttendanceRecord::STATUS_ABSENT_EXCUSED ? 1 : 0);
+            }
+        }
+
+        $result = [];
+
+        foreach ($counts as $classId => $typeCounts) {
+            foreach ($typeCounts as $sessionType => $studentCounts) {
+                foreach ($studentCounts as $studentId => $count) {
+                    $counted = (int) $count['counted'];
+
+                    if ($counted <= 0) {
+                        continue;
+                    }
+
+                    $settings = $settingsByClass[$classId] ?? GradingSetting::makeDefault();
+                    $credited = (int) $count['present']
+                        + $settings->excusedCredit() * (int) $count['excused'];
+
+                    $result[$classId][$sessionType][$studentId]
+                        = round(10 * $credited / $counted, 1);
+                }
+            }
         }
 
         return $result;

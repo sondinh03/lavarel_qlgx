@@ -110,17 +110,17 @@
 
                     @if(! $isMobileUi && $subjectTarget !== 'teachers' && ($autoFinalizeEnabled ?? true))
                     <x-inline-tip>
-                        Giáo xứ đang bật <strong>tự động chốt</strong> lúc
+                        Giáo xứ đang kết luận số liệu lúc
                         <strong>{{ $autoFinalizeTime ?? '20:00' }}</strong>:
-                        buổi đã có người điểm danh sẽ được điền vắng không phép cho phần còn lại rồi khóa.
-                        Buổi chưa ai điểm danh thì bỏ qua.
+                        với buổi đã có người điểm danh, phần còn lại được coi là vắng không phép.
+                        Hệ thống không tạo bản ghi và không tự khóa; khóa buổi sẽ kết luận sớm.
                         @if($canManageParishSettings ?? false)
                         <a href="{{ route('parish.settings') }}" class="font-semibold text-primary-700 underline ml-1">Đổi giờ / tắt →</a>
                         @endif
                     </x-inline-tip>
                     @elseif(! $isMobileUi && $subjectTarget !== 'teachers' && ($canManageParishSettings ?? false))
                     <x-inline-tip tone="amber">
-                        Tự động chốt điểm danh đang <strong>tắt</strong>.
+                        Kết luận theo giờ chốt đang <strong>tắt</strong>; chỉ buổi được khóa mới kết luận học sinh còn thiếu là vắng không phép.
                         <a href="{{ route('parish.settings') }}" class="font-semibold text-primary-700 underline ml-1">Bật lại tại Thông tin giáo xứ →</a>
                     </x-inline-tip>
                     @endif

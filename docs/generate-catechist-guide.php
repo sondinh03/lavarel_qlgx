@@ -116,7 +116,7 @@ $addBullet('Xem danh sách và thông tin liên hệ học sinh.');
 $addBullet('Nhận thông báo liên quan công việc.');
 $addPara('Khác với Quản trị xứ / Quản trị giáo lý: GLV không tạo năm học, không tạo lớp, không phân công GLV, không nhập điểm, không quản lý giáo dân.');
 $addPara('Ngoại lệ — Quyền hỗ trợ quản trị: Quản trị xứ có thể cấp thêm cho một số GLV (thường là Trưởng/Phó) hai quyền mở rộng:');
-$addBullet('Quản lý điểm toàn giáo xứ: xem, nhập và sửa điểm mọi lớp trong xứ khi cửa sổ nhập điểm đang mở.');
+$addBullet('Quản lý điểm toàn giáo xứ: xem, nhập và sửa điểm mọi lớp trong xứ.');
 $addBullet('Sửa thông tin học sinh toàn giáo xứ: cập nhật hồ sơ học sinh toàn xứ (không gồm tạo/xóa học sinh hay liên kết giáo dân).');
 $addPara('Nếu tài khoản của bạn được cấp các quyền này, một số mục "GLV không làm" bên dưới sẽ trở thành làm được. Mọi thay đổi hồ sơ học sinh đều được hệ thống ghi nhật ký.');
 $addPara('Điều kiện bắt buộc — Phân công theo năm học: tài khoản GLV chỉ thao tác được khi đang được phân công vào ít nhất một lớp trong năm học hiện tại:');
@@ -220,7 +220,7 @@ $addBullet('Tạo / sửa / kích hoạt năm học.');
 $addBullet('Tạo lớp, xếp lớp hàng loạt, phân công GLV.');
 $addBullet('Tạo tài khoản GLV khác, import danh sách GLV.');
 $addBullet('Thêm / xóa / import học sinh; in thẻ hàng loạt. (Sửa hồ sơ học sinh: chỉ GLV được cấp quyền "Sửa thông tin học sinh toàn giáo xứ".)');
-$addBullet('Nhập điểm / quản lý kết quả học tập. (Ngoại lệ: GLV được cấp quyền "Quản lý điểm toàn giáo xứ" nhập được điểm mọi lớp khi cửa sổ nhập đang mở.)');
+$addBullet('Nhập điểm / quản lý kết quả học tập. (Ngoại lệ: GLV được cấp quyền "Quản lý điểm toàn giáo xứ" nhập được điểm mọi lớp.)');
 $addBullet('Quản lý cấu hình phiên điểm danh nâng cao của toàn xứ (nếu chỉ hiện trên trang quản trị).');
 $addBullet('Quản lý giáo dân, gia đình, giáo họ, hội đoàn.');
 $addBullet('Sửa Thông tin giáo xứ.');
@@ -248,7 +248,7 @@ $section->addTitle('11.3. Quét QR báo lỗi / không ghi nhận?', 2);
 $addPara('Kiểm tra camera, thẻ QR, và buổi điểm danh của lớp trong ngày. Thử điểm danh thủ công rồi báo quản trị nếu lỗi lặp lại.');
 
 $section->addTitle('11.4. Muốn nhập điểm số?', 2);
-$addPara('Tài khoản GLV thuần không vào được màn nhập điểm. Nếu bạn phụ trách điểm cho cả xứ, nhờ Quản trị xứ cấp quyền "Quản lý điểm toàn giáo xứ" (mục Quyền hỗ trợ quản trị khi sửa GLV); khi đó bạn nhập được điểm mọi lớp lúc cửa sổ nhập đang mở. Nếu không, liên hệ Quản trị giáo lý / Quản trị xứ để nhập giúp.');
+$addPara('Tài khoản GLV thuần không vào được màn nhập điểm. Nếu bạn phụ trách điểm cho cả xứ, nhờ Quản trị xứ cấp quyền "Quản lý điểm toàn giáo xứ" (mục Quyền hỗ trợ quản trị khi sửa GLV); khi đó bạn nhập được điểm mọi lớp trong xứ. Nếu không, liên hệ Quản trị giáo lý / Quản trị xứ để nhập giúp.');
 
 $section->addTitle('11.5. Quên mật khẩu?', 2);
 $addPara('Dùng chức năng quên mật khẩu nếu tài khoản có email nhận được; nếu chỉ dùng SĐT, liên hệ Quản trị xứ hoặc kênh hỗ trợ hệ thống để được đặt lại.');

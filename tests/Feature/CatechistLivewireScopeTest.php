@@ -33,7 +33,7 @@ class CatechistLivewireScopeTest extends TestCase
             ->assertSet('canEditScores', false)
             ->set("draftScores.{$pivotId}.{$typeId}", 8)
             ->call('saveAllScores')
-            ->assertEmitted('toast', 'error', 'Hiện chưa mở cửa sổ nhập/sửa điểm hoặc bạn không có quyền');
+            ->assertEmitted('toast', 'error', 'Bạn không có quyền nhập hoặc sửa điểm');
 
         $this->assertDatabaseMissing('student_scores', [
             'student_class_id' => $pivotId,

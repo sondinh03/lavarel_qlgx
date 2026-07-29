@@ -8,6 +8,7 @@ use App\Models\AttendanceSession;
 use App\Models\CatechismClass;
 use App\Models\GradeLevel;
 use App\Models\NamHoc;
+use App\Services\AttendanceStatusResolver;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Collection;
@@ -216,11 +217,11 @@ class AttendanceStatistics extends BaseComponent
                 return;
             }
 
-            $records = $this->fetchRecords($sessions->pluck('id'));
+            $matrix = app(AttendanceStatusResolver::class)->matrix($sessions);
 
-            $this->buildStatusChart($records, $sessions, $classIds);
-            $this->buildTrendChart($records, $sessions, $classIds);
-            $this->buildSummary($records, $sessions, $classIds);
+            $this->buildStatusChart($matrix);
+            $this->buildTrendChart($matrix, $sessions);
+            $this->buildSummary($matrix, $sessions, $classIds);
         } catch (\Exception $e) {
             $this->logError($e, 'Error building attendance chart data');
             $this->clearChartData();
@@ -262,6 +263,7 @@ class AttendanceStatistics extends BaseComponent
     {
         $query = AttendanceSession::whereIn('class_id', $classIds)
             ->where('type', $this->attendanceType)
+            ->where('status', '!=', AttendanceSession::STATUS_CANCELLED)
             ->orderBy('date');
 
         if ($this->selectedKy) {
@@ -292,19 +294,13 @@ class AttendanceStatistics extends BaseComponent
     /**
      * Donut: tổng hợp trạng thái toàn bộ slot (học sinh × buổi)
      */
-    protected function buildStatusChart(Collection $records, Collection $sessions, Collection $classIds): void
+    protected function buildStatusChart(array $matrix): void
     {
-        $totalStudents = DB::table('students_class')
-            ->whereIn('class_id', $classIds)
-            ->where('status', 1)
-            ->count();
-
-        $totalSlots = $totalStudents * $sessions->count();
-
-        $present   = $records->where('status', AttendanceRecord::STATUS_PRESENT)->count();
-        $excused   = $records->where('status', AttendanceRecord::STATUS_ABSENT_EXCUSED)->count();
-        $unexcused = $records->where('status', AttendanceRecord::STATUS_ABSENT_UNEXCUSED)->count();
-        $notMarked = max(0, $totalSlots - $present - $excused - $unexcused);
+        $statuses = collect($matrix)->flatMap(fn ($studentStatuses) => array_values($studentStatuses));
+        $present   = $statuses->filter(fn ($status) => $status === AttendanceRecord::STATUS_PRESENT)->count();
+        $excused   = $statuses->filter(fn ($status) => $status === AttendanceRecord::STATUS_ABSENT_EXCUSED)->count();
+        $unexcused = $statuses->filter(fn ($status) => $status === AttendanceRecord::STATUS_ABSENT_UNEXCUSED)->count();
+        $notMarked = $statuses->filter(fn ($status) => $status === null)->count();
 
         $total = $present + $excused + $unexcused + $notMarked;
 
@@ -322,22 +318,15 @@ class AttendanceStatistics extends BaseComponent
      * Line chart: tỷ lệ có mặt (%) theo ngày / tuần / tháng (hoặc theo khoảng thời gian).
      * Khi scope > class: gộp các buổi theo group key → tính có trọng số.
      */
-    protected function buildTrendChart(Collection $records, Collection $sessions, Collection $classIds): void
+    protected function buildTrendChart(array $matrix, Collection $sessions): void
     {
-        $studentCountByClass = DB::table('students_class')
-            ->whereIn('class_id', $classIds)
-            ->where('status', 1)
-            ->select('class_id', DB::raw('COUNT(*) as cnt'))
-            ->groupBy('class_id')
-            ->pluck('cnt', 'class_id');
-
-        $recordsBySession = $records->groupBy('session_id');
-
         $byBucket = [];
         foreach ($sessions as $session) {
-            $sessionRecords = $recordsBySession->get($session->id, collect());
-            $presentCount   = $sessionRecords->where('status', AttendanceRecord::STATUS_PRESENT)->count();
-            $totalStudents  = $studentCountByClass[$session->class_id] ?? 0;
+            $sessionStatuses = collect($matrix[(int) $session->id] ?? []);
+            $presentCount = $sessionStatuses
+                ->filter(fn ($status) => $status === AttendanceRecord::STATUS_PRESENT)
+                ->count();
+            $totalStudents = $sessionStatuses->count();
 
             if ($totalStudents === 0) continue;
 
@@ -365,7 +354,7 @@ class AttendanceStatistics extends BaseComponent
         }, $byBucket));
     }
 
-    protected function buildSummary(Collection $records, Collection $sessions, Collection $classIds): void
+    protected function buildSummary(array $matrix, Collection $sessions, Collection $classIds): void
     {
         $totalStudents = DB::table('students_class')
             ->whereIn('class_id', $classIds)
@@ -373,11 +362,11 @@ class AttendanceStatistics extends BaseComponent
             ->count();
 
         $totalSessions = $sessions->count();
-        $totalSlots    = $totalStudents * $totalSessions;
-
-        $present   = $records->where('status', AttendanceRecord::STATUS_PRESENT)->count();
-        $excused   = $records->where('status', AttendanceRecord::STATUS_ABSENT_EXCUSED)->count();
-        $unexcused = $records->where('status', AttendanceRecord::STATUS_ABSENT_UNEXCUSED)->count();
+        $statuses = collect($matrix)->flatMap(fn ($studentStatuses) => array_values($studentStatuses));
+        $totalSlots = $statuses->count();
+        $present   = $statuses->filter(fn ($status) => $status === AttendanceRecord::STATUS_PRESENT)->count();
+        $excused   = $statuses->filter(fn ($status) => $status === AttendanceRecord::STATUS_ABSENT_EXCUSED)->count();
+        $unexcused = $statuses->filter(fn ($status) => $status === AttendanceRecord::STATUS_ABSENT_UNEXCUSED)->count();
 
         $avgRate = !empty($this->trendChartData)
             ? round(collect($this->trendChartData)->avg('rate'), 1)

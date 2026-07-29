@@ -7,6 +7,7 @@ use App\Models\CatechismClass;
 use App\Models\GradeLevel;
 use App\Models\NamHoc;
 use App\Services\SemesterScoreCalculator;
+use App\Support\StudentRating;
 use Illuminate\Support\Collection;
 
 /**
@@ -22,17 +23,6 @@ use Illuminate\Support\Collection;
  */
 class ScoreStatistics extends BaseComponent
 {
-    // ==================== RATING LEVELS ====================
-
-    private const RATING_LEVELS = [
-        'XUAT_SAC'   => ['min' => 9.5, 'max' => 10,   'label' => 'Xuất sắc',   'color' => '#10b981'],
-        'GIOI'       => ['min' => 8.0, 'max' => 9.5,  'label' => 'Giỏi',       'color' => '#3b82f6'],
-        'KHA'        => ['min' => 6.5, 'max' => 8.0,  'label' => 'Khá',        'color' => '#f59e0b'],
-        'TRUNG_BINH' => ['min' => 5.0, 'max' => 6.5,  'label' => 'Trung bình', 'color' => '#eab308'],
-        'YEU'        => ['min' => 3.5, 'max' => 5.0,  'label' => 'Yếu',        'color' => '#f97316'],
-        'KEM'        => ['min' => 0,   'max' => 3.5,  'label' => 'Kém',        'color' => '#ef4444'],
-    ];
-
     // ==================== FILTERS ====================
 
     public $selectedNamHoc   = null;
@@ -304,8 +294,10 @@ class ScoreStatistics extends BaseComponent
 
     protected function buildRatingChart(array $averages): void
     {
+        $levels = StudentRating::levels();
+
         $counts = [];
-        foreach (self::RATING_LEVELS as $key => $info) {
+        foreach ($levels as $key => $info) {
             $counts[$key] = 0;
         }
 
@@ -319,12 +311,12 @@ class ScoreStatistics extends BaseComponent
         $total = array_sum($counts);
         $data  = [];
 
-        foreach (self::RATING_LEVELS as $key => $info) {
+        foreach ($levels as $key => $info) {
             $count = $counts[$key];
             $data[] = [
                 'key'        => $key,
                 'label'      => $info['label'],
-                'color'      => $info['color'],
+                'color'      => $info['hex'],
                 'count'      => $count,
                 'percentage' => $total > 0 ? round(($count / $total) * 100, 1) : 0,
             ];
@@ -514,19 +506,13 @@ class ScoreStatistics extends BaseComponent
 
     private function getRatingKey(?float $avg): ?string
     {
-        if ($avg === null) return null;
-
-        foreach (self::RATING_LEVELS as $key => $info) {
-            if ($avg >= $info['min'] && $avg < $info['max']) {
-                return $key;
-            }
-        }
-        // Trường hợp đặc biệt: avg = 10 rơi vào XUAT_SAC
-        if ($avg >= 10) return 'XUAT_SAC';
-
-        return null;
+        return StudentRating::keyFor($avg);
     }
 
+    /**
+     * Màu cho biểu đồ phân phối, chia theo từng mốc 1 điểm.
+     * Cố tình không dùng thang xếp loại vì mốc ở đây là 0-1, 1-2, ... 9-10.
+     */
     private function getColorForRange(int $bucket): string
     {
         return match (true) {

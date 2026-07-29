@@ -173,12 +173,12 @@
                     </div>
                 </div>
 
-                {{-- Tự động chốt điểm danh --}}
+                {{-- Giờ chốt số liệu điểm danh --}}
                 <div class="rounded-xl border border-black/[0.06] bg-white/60 p-4 shadow-mac-sm space-y-3">
                     <div class="flex items-start justify-between gap-3">
                         <div class="min-w-0">
                             <p class="text-xs font-semibold text-slate-500 uppercase tracking-wide">Điểm danh</p>
-                            <p class="mt-1 text-sm font-semibold text-slate-800">Tự động chốt cuối ngày</p>
+                            <p class="mt-1 text-sm font-semibold text-slate-800">Tự động kết luận sau giờ chốt</p>
                         </div>
                         <label class="inline-flex items-center gap-2 cursor-pointer select-none flex-shrink-0">
                             <input type="checkbox" wire:model="attendanceAutoFinalizeEnabled" class="mac-checkbox">
@@ -187,24 +187,25 @@
                     </div>
 
                     <div class="text-sm text-slate-600 leading-relaxed space-y-2 rounded-xl bg-slate-50/80 p-3">
-                        <p class="font-semibold text-slate-700">Chốt khác với khóa:</p>
+                        <p class="font-semibold text-slate-700">Quy tắc kết luận vắng:</p>
                         <ul class="list-disc ml-5 space-y-1">
-                            <li><strong>Chốt</strong> — với buổi đã có ít nhất một người được điểm danh (quét QR hoặc điểm tay), học sinh còn lại của lớp sẽ được ghi <em>vắng không phép</em>.</li>
-                            <li><strong>Khóa</strong> — buổi đóng lại, không cho quét/sửa thêm (trừ khi mở lại).</li>
+                            <li>Buổi phải có ít nhất một người được điểm danh bằng QR hoặc điểm tay.</li>
+                            <li>Sau giờ chốt, học sinh chưa có bản ghi được <em>coi là vắng không phép</em> khi xem báo cáo, xuất Excel và tính điểm chuyên cần.</li>
+                            <li><strong>Khóa buổi</strong> kết luận ngay theo quy tắc trên và không cho quét/sửa thêm; có thể mở lại để sửa.</li>
                         </ul>
                         <p>
-                            Hệ thống chạy chốt rồi khóa vào giờ bên dưới. Buổi chưa có ai điểm danh
-                            <strong>không</strong> bị đánh vắng cả lớp (tránh trừ oan khi quên tạo/điểm danh).
+                            Hệ thống không tạo thêm bản ghi vắng và không tự khóa buổi. Trước giờ chốt,
+                            học sinh chưa có bản ghi vẫn hiển thị là <strong>chưa điểm danh (?)</strong>.
                         </p>
                         <p class="text-xs text-slate-500">
-                            Có thể sửa từng học sinh sau khi mở lại buổi trên trang Điểm danh / Phiên điểm danh.
-                            Bản ghi tự động có ghi chú «Tự động chốt» trong nhật ký.
+                            Buổi chưa có ai điểm danh không bị kết luận vắng cả lớp, tránh trừ oan khi buổi chưa diễn ra
+                            hoặc giáo lý viên quên điểm danh.
                         </p>
                     </div>
 
                     <div class="{{ $attendanceAutoFinalizeEnabled ? '' : 'opacity-50 pointer-events-none' }}">
                         <label class="block text-xs font-semibold text-slate-500 mb-1.5 tracking-wide uppercase">
-                            Giờ chốt tự động
+                            Giờ chốt số liệu
                         </label>
                         <input type="time" wire:model.defer="attendanceAutoFinalizeTime"
                             class="w-full sm:w-40 h-11 px-4 py-2.5 rounded-xl border border-black/[0.06] text-sm

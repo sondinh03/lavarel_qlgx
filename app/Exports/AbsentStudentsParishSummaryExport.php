@@ -6,6 +6,7 @@ use App\Models\AttendanceRecord;
 use App\Models\AttendanceSession;
 use App\Models\CatechismClass;
 use App\Models\NamHoc;
+use App\Services\AttendanceStatusResolver;
 use Carbon\Carbon;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
@@ -37,6 +38,8 @@ class AbsentStudentsParishSummaryExport implements FromCollection, WithHeadings,
         'total'     => 0,
         'sessions'  => 0,
     ];
+
+    private string $cutoffLabel = '20:00';
 
     /**
      * @param  list<int>  $statuses
@@ -76,7 +79,7 @@ class AbsentStudentsParishSummaryExport implements FromCollection, WithHeadings,
             ->selectRaw('class_id, COUNT(DISTINCT student_id) as cnt')
             ->pluck('cnt', 'class_id');
 
-        $sessionCounts = AttendanceSession::query()
+        $sessions = AttendanceSession::query()
             ->whereIn('class_id', $classIds)
             ->whereDate('date', '>=', $this->fromDate)
             ->whereDate('date', '<=', $this->toDate)
@@ -84,48 +87,43 @@ class AbsentStudentsParishSummaryExport implements FromCollection, WithHeadings,
                 $this->attendanceType !== null,
                 fn ($q) => $q->where('type', $this->attendanceType)
             )
-            ->groupBy('class_id')
-            ->selectRaw('class_id, COUNT(*) as cnt')
-            ->pluck('cnt', 'class_id');
+            ->where('status', '!=', AttendanceSession::STATUS_CANCELLED)
+            ->with('catechismClass.parish')
+            ->get(['id', 'class_id', 'date', 'status']);
 
-        $absentStats = AttendanceRecord::query()
-            ->join('attendance_sessions', 'attendance_sessions.id', '=', 'attendance_records.session_id')
-            ->join('students_class', function ($join) {
-                $join->on('students_class.student_id', '=', 'attendance_records.student_id')
-                    ->on('students_class.class_id', '=', 'attendance_sessions.class_id')
-                    ->where('students_class.status', 1);
-            })
-            ->whereIn('attendance_sessions.class_id', $classIds)
-            ->whereDate('attendance_sessions.date', '>=', $this->fromDate)
-            ->whereDate('attendance_sessions.date', '<=', $this->toDate)
-            ->when(
-                $this->attendanceType !== null,
-                fn ($q) => $q->where('attendance_sessions.type', $this->attendanceType)
-            )
-            ->whereIn('attendance_records.status', $this->statuses)
-            ->groupBy('attendance_sessions.class_id')
-            ->selectRaw('
-                attendance_sessions.class_id,
-                COUNT(DISTINCT attendance_records.student_id) as absentees,
-                SUM(CASE WHEN attendance_records.status = ? THEN 1 ELSE 0 END) as cp,
-                SUM(CASE WHEN attendance_records.status = ? THEN 1 ELSE 0 END) as kp,
-                COUNT(*) as total
-            ', [
-                AttendanceRecord::STATUS_ABSENT_EXCUSED,
-                AttendanceRecord::STATUS_ABSENT_UNEXCUSED,
-            ])
-            ->get()
-            ->keyBy('class_id');
+        $sessionCounts = $sessions->groupBy('class_id')->map->count();
+        $this->cutoffLabel = app(AttendanceStatusResolver::class)
+            ->cutoffLabel($sessions->first()?->catechismClass?->parish);
 
-        $rows = $classes->map(function ($class) use ($studentCounts, $sessionCounts, $absentStats) {
+        $sessionClassMap = $sessions->pluck('class_id', 'id');
+        $effectiveMatrix = app(AttendanceStatusResolver::class)->matrix($sessions);
+        $statsByClass = [];
+
+        foreach ($effectiveMatrix as $sessionId => $studentStatuses) {
+            $classId = (int) ($sessionClassMap[$sessionId] ?? 0);
+            foreach ($studentStatuses as $studentId => $status) {
+                if ($status === null || ! in_array($status, $this->statuses, true)) {
+                    continue;
+                }
+
+                $statsByClass[$classId]['student_ids'][(int) $studentId] = true;
+                $statsByClass[$classId]['cp'] = ($statsByClass[$classId]['cp'] ?? 0)
+                    + ($status === AttendanceRecord::STATUS_ABSENT_EXCUSED ? 1 : 0);
+                $statsByClass[$classId]['kp'] = ($statsByClass[$classId]['kp'] ?? 0)
+                    + ($status === AttendanceRecord::STATUS_ABSENT_UNEXCUSED ? 1 : 0);
+                $statsByClass[$classId]['total'] = ($statsByClass[$classId]['total'] ?? 0) + 1;
+            }
+        }
+
+        $rows = $classes->map(function ($class) use ($studentCounts, $sessionCounts, $statsByClass) {
             $classId = (int) $class->id;
-            $stats = $absentStats->get($classId);
+            $stats = $statsByClass[$classId] ?? [];
             $students = (int) ($studentCounts[$classId] ?? 0);
             $sessions = (int) ($sessionCounts[$classId] ?? 0);
-            $absentees = (int) ($stats->absentees ?? 0);
-            $cp = (int) ($stats->cp ?? 0);
-            $kp = (int) ($stats->kp ?? 0);
-            $total = (int) ($stats->total ?? 0);
+            $absentees = count($stats['student_ids'] ?? []);
+            $cp = (int) ($stats['cp'] ?? 0);
+            $kp = (int) ($stats['kp'] ?? 0);
+            $total = (int) ($stats['total'] ?? 0);
 
             $this->totals['students'] += $students;
             $this->totals['absentees'] += $absentees;
@@ -239,6 +237,7 @@ class AbsentStudentsParishSummaryExport implements FromCollection, WithHeadings,
                     'Ngày xuất: ' . now()->format('d/m/Y H:i:s')
                         . " · {$typeLabel}"
                         . " · {$this->rowIndex} lớp"
+                        . " · Giờ chốt: {$this->cutoffLabel}"
                         . ' · Thống kê theo từng lớp (CP = có phép, KP = không phép)'
                 );
                 $sheet->mergeCells("A2:{$lastCol}2");

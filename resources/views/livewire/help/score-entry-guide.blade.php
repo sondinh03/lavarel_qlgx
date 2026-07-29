@@ -15,7 +15,7 @@
         <x-mac-panel :overflow="true">
             <x-page-header
                 title="Hướng dẫn nhập điểm"
-                description="Cấu hình loại điểm, cấp quyền nhập cho GLV hỗ trợ, mở cửa sổ nhập, rồi nhập điểm theo lớp và học kỳ trên trang Kết quả học tập."
+                description="Cấu hình loại điểm, cấp quyền cho GLV hỗ trợ rồi nhập điểm theo lớp và học kỳ trên trang Kết quả học tập."
                 icon-type="score">
                 <x-slot name="actions">
                     <a href="{{ route('scores.index') }}"
@@ -31,9 +31,9 @@
             <x-inline-tip tone="amber">
                 <p class="font-semibold text-sm mb-1">Ai được nhập điểm?</p>
                 <p class="text-amber-800/90">
-                    <strong>Ban quản trị</strong> (parish_admin / catechism_admin): cấu hình loại điểm, mở/khóa cửa sổ nhập, luôn được sửa điểm.
+                    <strong>Ban quản trị</strong> (parish_admin / catechism_admin): cấu hình loại điểm và luôn được sửa điểm.
                     <strong>GLV thuần</strong>: chỉ <em>xem</em> điểm lớp được phân công — không nhập/sửa.
-                    <strong>GLV có «Quản lý điểm toàn giáo xứ»</strong> (quyền hỗ trợ quản trị): nhập/sửa điểm <em>mọi lớp</em> trong xứ khi cửa sổ đang mở; khi khóa thì chỉ xem như GLV thuần.
+                    <strong>GLV có «Quản lý điểm toàn giáo xứ»</strong> (quyền hỗ trợ quản trị): nhập/sửa điểm <em>mọi lớp</em> trong xứ.
                     Điều kiện chung: GLV (kể cả có quyền hỗ trợ) phải <strong>đang được phân công</strong> vào ít nhất một lớp
                     trong năm học hiện tại — chưa phân công thì không xem/nhập được gì.
                 </p>
@@ -61,7 +61,7 @@
                 <div class="sm:hidden text-center text-slate-300 text-xs">↓</div>
                 <div class="flex-1 rounded-xl bg-primary-50 border border-primary-100 px-3 py-2.5 text-center">
                     <p class="text-[11px] text-primary-600 font-medium">Bước 3</p>
-                    <p class="font-semibold text-primary-900 text-xs sm:text-sm">Mở cửa sổ nhập</p>
+                    <p class="font-semibold text-primary-900 text-xs sm:text-sm">Cài đặt cách tính</p>
                 </div>
                 <div class="hidden sm:flex text-slate-300 px-1">→</div>
                 <div class="sm:hidden text-center text-slate-300 text-xs">↓</div>
@@ -167,32 +167,6 @@
             <div class="px-4 lg:px-6 py-4 mac-hairline-b bg-white/40 flex items-center gap-3">
                 <span class="w-8 h-8 rounded-full bg-primary-600 text-white text-sm font-bold flex items-center justify-center flex-shrink-0">4</span>
                 <div>
-                    <h2 class="text-base font-semibold text-slate-900">Mở / khóa cửa sổ nhập điểm</h2>
-                    <p class="text-xs text-slate-500">Cho phép hoặc dừng GLV hỗ trợ sửa điểm</p>
-                </div>
-            </div>
-            <div class="p-4 lg:p-6 space-y-3 text-sm text-slate-700 leading-relaxed">
-                <ol class="list-decimal list-inside space-y-2">
-                    <li>Trên trang Kết quả học tập, xem banner phía trên:
-                        <ul class="mt-2 ml-5 list-disc space-y-1 text-slate-600">
-                            <li>Màu xanh = <strong>Đang mở nhập/sửa điểm</strong></li>
-                            <li>Màu amber = <strong>Đang khóa</strong> (GLV chỉ xem)</li>
-                        </ul>
-                    </li>
-                    <li>Ban quản trị bấm <strong>Mở nhập điểm</strong> khi đến kỳ nhập; bấm <strong>Khóa nhập điểm</strong> khi xong.</li>
-                    <li>Ban quản trị <strong>luôn</strong> sửa được điểm, kể cả khi cửa sổ đang khóa.</li>
-                </ol>
-                <x-inline-tip>
-                    Cửa sổ áp dụng theo giáo xứ — mở một lần thì mọi GLV đã được cấp «Quản lý điểm toàn giáo xứ» đều nhập được
-                    điểm <strong>mọi lớp</strong> trong xứ. GLV thuần (chưa cấp quyền) vẫn chỉ xem, dù cửa sổ đang mở.
-                </x-inline-tip>
-            </div>
-        </x-mac-panel>
-
-        <x-mac-panel :overflow="true">
-            <div class="px-4 lg:px-6 py-4 mac-hairline-b bg-white/40 flex items-center gap-3">
-                <span class="w-8 h-8 rounded-full bg-primary-600 text-white text-sm font-bold flex items-center justify-center flex-shrink-0">5</span>
-                <div>
                     <h2 class="text-base font-semibold text-slate-900">Nhập điểm trên bảng điểm</h2>
                     <p class="text-xs text-slate-500">Màn: <span class="font-medium text-slate-700">Kết quả học tập</span> · tab Bảng điểm</p>
                 </div>
@@ -232,8 +206,7 @@
                     <p class="mt-1 text-slate-600 leading-relaxed">
                         Kiểm tra lần lượt: (1) GLV đã được <strong>phân công lớp trong năm học hiện tại</strong> chưa —
                         chưa phân công thì mọi quyền đều không có hiệu lực;
-                        (2) GLV đã được cấp «Quản lý điểm toàn giáo xứ» chưa — GLV thuần không nhập được;
-                        (3) banner cửa sổ đang khóa hay mở — nếu khóa thì mở «Mở nhập điểm» rồi bảo GLV tải lại trang.
+                        (2) GLV đã được cấp «Quản lý điểm toàn giáo xứ» chưa — GLV thuần không nhập được.
                     </p>
                 </div>
                 <div>
@@ -267,7 +240,7 @@
                     <p class="font-semibold text-slate-900">Muốn một GLV nhập điểm giúp ban quản trị?</p>
                     <p class="mt-1 text-slate-600 leading-relaxed">
                         Quản trị xứ vào <strong>Giáo lý viên → sửa GLV</strong>, bật <strong>«Quản lý điểm toàn giáo xứ»</strong>
-                        trong mục Quyền hỗ trợ quản trị. Sau đó mở cửa sổ nhập điểm — GLV đó sẽ nhập/sửa được điểm mọi lớp trong xứ.
+                        trong mục Quyền hỗ trợ quản trị. GLV đó sẽ nhập/sửa được điểm mọi lớp trong xứ ngay sau khi được cấp quyền.
                         Lưu ý: GLV đó phải đang được phân công vào ít nhất một lớp trong năm học hiện tại thì quyền mới có hiệu lực.
                     </p>
                 </div>

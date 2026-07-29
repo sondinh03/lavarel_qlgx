@@ -32,7 +32,7 @@ class ParishSettings extends Component
 
     public ?string $ward = null;
 
-    /** Bật/tắt tự động chốt điểm danh cuối ngày. */
+    /** Bật/tắt suy luận học sinh chưa điểm danh là KP sau giờ cắt. */
     public bool $attendanceAutoFinalizeEnabled = true;
 
     /** Giờ chốt dạng H:i, mặc định 20:00. */

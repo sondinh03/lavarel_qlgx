@@ -15,6 +15,16 @@
         document.addEventListener('livewire:load', () => {
             Livewire.on('openAbsentExportModal', () => { showAbsentExport = true; });
             Livewire.on('closeAbsentExportModal', () => { showAbsentExport = false; });
+            Livewire.on('confirmEarlyAttendanceExport', (message, exportKind) => {
+                if (!confirm(message)) return;
+
+                if (exportKind === 'absent') {
+                    @this.call('exportAbsentStudents', true);
+                    return;
+                }
+
+                @this.call('exportAttendance', true);
+            });
         });
     ">
 

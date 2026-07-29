@@ -165,9 +165,9 @@ Lưu ý:
 
 - Loại điểm (`ScoreType.type`): 1 khảo kinh, 2 mười lăm phút, 3 bốn lăm phút, 4 giữa kỳ, 5 cuối kỳ.
   Cấu hình loại điểm (hệ số, điểm tối đa) ngay trong modal của `ScoreManager`.
-- **Cửa nhập điểm** `parishes.scores_entry_open`: bật/tắt trong `ScoreManager` (quyền admin).
-  GLV có `manage_parish_scores` chỉ nhập được khi cửa mở; quản trị nhập được bất kể
-  (`StudentScorePolicy`, `CatechismClassPolicy`).
+- **Nhập điểm**: quản trị giáo lý luôn nhập được; GLV chỉ khi có
+  `manage_parish_scores` và còn phân công năm hiện tại
+  (`StudentScorePolicy`, `CatechismClassPolicy`). Không còn cửa sổ mở/khóa theo xứ.
 - GLV thường: chỉ **xem** điểm lớp mình. GLV chưa phân công: dropdown lớp sentinel `[0]`.
 - Điểm lưu trên `student_scores` treo vào pivot `students_class` (không trực tiếp student).
 - Export `ScoreExport`; mọi thay đổi ghi `ScoreEditLog`.
