@@ -1092,12 +1092,20 @@ class SessionManager extends BaseComponent
             : $this->mapSession($session)
         );
 
+        $parish = $this->parishId
+            ? \App\Models\ParishNew::query()->find($this->parishId)
+            : null;
+
         return view('livewire.attendance.session-manager', [
             'parishId'  => $this->parishId,
             'sessions'  => $sessions,
             'total'     => $paginator->total(),
             'canDeleteSessions' => (bool) auth()->user()?->canManageCatechism(),
             'isMobileUi' => (bool) auth()->user()?->usesCatechistLayout(),
+            'autoFinalizeEnabled' => (bool) ($parish?->attendance_auto_finalize_enabled ?? true),
+            'autoFinalizeTime'    => $parish?->attendanceAutoFinalizeTimeHi()
+                ?? \App\Models\ParishNew::DEFAULT_ATTENDANCE_AUTO_FINALIZE_TIME,
+            'canManageParishSettings' => (bool) (auth()->user()?->isParishAdmin() || auth()->user()?->isCatechismAdmin()),
         ])
             ->extends(auth()->user()?->usesCatechistLayout()
                 ? 'frontend.layout.catechist'

@@ -108,6 +108,23 @@
                     </x-inline-tip>
                     @endif
 
+                    @if(! $isMobileUi && $subjectTarget !== 'teachers' && ($autoFinalizeEnabled ?? true))
+                    <x-inline-tip>
+                        Giáo xứ đang bật <strong>tự động chốt</strong> lúc
+                        <strong>{{ $autoFinalizeTime ?? '20:00' }}</strong>:
+                        buổi đã có người điểm danh sẽ được điền vắng không phép cho phần còn lại rồi khóa.
+                        Buổi chưa ai điểm danh thì bỏ qua.
+                        @if($canManageParishSettings ?? false)
+                        <a href="{{ route('parish.settings') }}" class="font-semibold text-primary-700 underline ml-1">Đổi giờ / tắt →</a>
+                        @endif
+                    </x-inline-tip>
+                    @elseif(! $isMobileUi && $subjectTarget !== 'teachers' && ($canManageParishSettings ?? false))
+                    <x-inline-tip tone="amber">
+                        Tự động chốt điểm danh đang <strong>tắt</strong>.
+                        <a href="{{ route('parish.settings') }}" class="font-semibold text-primary-700 underline ml-1">Bật lại tại Thông tin giáo xứ →</a>
+                    </x-inline-tip>
+                    @endif
+
                     <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
                         <x-search-input
                             placeholder="Tìm theo ngày (vd: 12/03/2026)..."

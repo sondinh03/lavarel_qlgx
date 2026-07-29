@@ -6,10 +6,8 @@ use App\Http\Livewire\Base\BaseComponent;
 use App\Models\CatechismClass;
 use App\Models\GradeLevel;
 use App\Models\NamHoc;
-use App\Models\ScoreType;
-use App\Models\StudentScore;
+use App\Services\SemesterScoreCalculator;
 use Illuminate\Support\Collection;
-use Illuminate\Support\Facades\DB;
 
 /**
  * Component trang thống kê điểm
@@ -19,6 +17,8 @@ use Illuminate\Support\Facades\DB;
  * - Phân phối điểm TB: biểu đồ cột (histogram)
  * - So sánh TB giữa các lớp/khối: biểu đồ cột ngang
  * - Phạm vi tự động theo filter: lớp → khối → toàn xứ
+ *
+ * TB lấy từ SemesterScoreCalculator để khớp đúng bảng điểm và file Excel.
  */
 class ScoreStatistics extends BaseComponent
 {
@@ -195,7 +195,7 @@ class ScoreStatistics extends BaseComponent
             $this->buildRatingChart($averages);
             $this->buildDistributionChart($averages);
             $this->buildSummary($averages);
-            $this->buildClassComparison();
+            $this->buildClassComparison($averages);
         } catch (\Exception $e) {
             $this->logError($e, 'Error building chart data');
             $this->clearChartData();
@@ -208,91 +208,37 @@ class ScoreStatistics extends BaseComponent
      */
     protected function fetchAverages(): array
     {
+        $this->totalStudents          = 0;
+        $this->totalStudentsWithScore = 0;
+
         $classIds = $this->resolveClassIds();
 
         if ($classIds->isEmpty()) {
             return [];
         }
 
-        $semesters = $this->getIncludedSemesters();
+        $calculator = app(SemesterScoreCalculator::class);
 
-        // Load score types cho các lớp này
-        $scoreTypes = ScoreType::whereIn('class_id', $classIds)
-            ->whereIn('semester', $semesters)
-            ->where('is_active', true)
-            ->get()
-            ->groupBy('class_id');
+        $byClass = $this->isFullYear()
+            ? $calculator->forClassesYear($classIds->all())
+            : $calculator->forClassesSemester($classIds->all(), (int) $this->selectedSemester);
 
-        // Load điểm của học sinh
-        $scores = StudentScore::query()
-            ->join('students_class', 'student_scores.student_class_id', '=', 'students_class.id')
-            ->whereIn('students_class.class_id', $classIds)
-            ->whereIn('student_scores.score_type_id', ScoreType::whereIn('class_id', $classIds)
-                ->whereIn('semester', $semesters)
-                ->where('is_active', true)
-                ->pluck('id'))
-            ->select(
-                'students_class.id as student_class_id',
-                'students_class.class_id',
-                'student_scores.score_type_id',
-                'student_scores.score_value'
-            )
-            ->get()
-            ->groupBy('student_class_id');
-
-        // Load tất cả student_class
-        $allStudentClasses = DB::table('students_class')
-            ->whereIn('class_id', $classIds)
-            ->select('id', 'class_id')
-            ->get()
-            ->groupBy('class_id');
-
-        // Tính TB cho từng học sinh
         $averages = [];
-        $this->totalStudents = 0;
-        $this->totalStudentsWithScore = 0;
 
-        foreach ($classIds as $classId) {
-            $classStudents = $allStudentClasses[$classId] ?? collect();
-            $classScoreTypes = $scoreTypes[$classId] ?? collect();
-
-            foreach ($classStudents as $sc) {
+        foreach ($byClass as $classId => $students) {
+            foreach ($students as $pivotId => $row) {
                 $this->totalStudents++;
-                $scScores = $scores[$sc->id] ?? collect();
 
-                if ($scScores->isEmpty()) {
+                $avg = $this->isFullYear() ? $row['year'] : $row['total'];
+
+                if ($avg === null) {
                     continue;
                 }
 
-                $totalWeight = 0;
-                $totalScore  = 0;
-                $hasRequired = true;
-
-                foreach ($classScoreTypes as $st) {
-                    $scoreRow = $scScores->firstWhere('score_type_id', $st->id);
-
-                    if (!$scoreRow) {
-                        // Thiếu điểm cuối/giữa kỳ → chưa tính được (chỉ kiểm tra nếu xem theo kỳ)
-                        if (!$this->isFullYear() && in_array($st->type, [4, 5])) {
-                            $hasRequired = false;
-                            break;
-                        }
-                        continue;
-                    }
-
-                    $totalScore  += $scoreRow->score_value * $st->coefficient;
-                    $totalWeight += $st->coefficient;
-                }
-
-                if (!$hasRequired || $totalWeight === 0) {
-                    continue;
-                }
-
-                $avg = round($totalScore / $totalWeight, 2);
                 $averages[] = [
-                    'avg'              => $avg,
-                    'class_id'         => $classId,
-                    'student_class_id' => $sc->id,
+                    'avg'              => (float) $avg,
+                    'class_id'         => (int) $classId,
+                    'student_class_id' => (int) $pivotId,
                 ];
                 $this->totalStudentsWithScore++;
             }
@@ -340,12 +286,6 @@ class ScoreStatistics extends BaseComponent
     protected function isFullYear(): bool
     {
         return (int) $this->selectedSemester === 0;
-    }
-
-    /** @return int[] */
-    protected function getIncludedSemesters(): array
-    {
-        return $this->isFullYear() ? [1, 2] : [(int) $this->selectedSemester];
     }
 
     protected function getSemesterLabel(): string
@@ -438,66 +378,37 @@ class ScoreStatistics extends BaseComponent
     /**
      * Tính TB từng lớp để so sánh (scope = grade / parish)
      */
-    protected function buildClassComparison(): void
+    protected function buildClassComparison(array $averages): void
     {
-        if ($this->resolveScope() === 'class') {
+        if ($this->resolveScope() === 'class' || $averages === []) {
             $this->classComparisonData = [];
             return;
         }
 
-        $classIds = $this->resolveClassIds();
+        $grouped = collect($averages)->groupBy('class_id');
 
-        if ($classIds->isEmpty()) {
-            $this->classComparisonData = [];
-            return;
-        }
-
-        $semesters = $this->getIncludedSemesters();
-
-        $classes = CatechismClass::whereIn('id', $classIds)
+        $classes = CatechismClass::whereIn('id', $grouped->keys()->all())
             ->orderBy('grade_level_id')
             ->orderBy('name')
-            ->get(['id', 'name']);
+            ->get(['id', 'name'])
+            ->keyBy('id');
 
         $data = [];
 
-        foreach ($classes as $class) {
-            $scoreTypeIds = ScoreType::where('class_id', $class->id)
-                ->whereIn('semester', $semesters)
-                ->where('is_active', true)
-                ->pluck('id');
+        foreach ($grouped as $classId => $rows) {
+            $class = $classes->get($classId);
 
-            if ($scoreTypeIds->isEmpty()) {
+            if (! $class) {
                 continue;
             }
 
-            // Lấy raw averages cho lớp này
-            $avgRaw = StudentScore::query()
-                ->join('students_class', 'student_scores.student_class_id', '=', 'students_class.id')
-                ->join('score_types', 'student_scores.score_type_id', '=', 'score_types.id')
-                ->where('students_class.class_id', $class->id)
-                ->whereIn('student_scores.score_type_id', $scoreTypeIds)
-                ->selectRaw('
-                    students_class.id as sc_id,
-                    SUM(student_scores.score_value * score_types.coefficient) as weighted_score,
-                    SUM(score_types.coefficient) as total_weight
-                ')
-                ->groupBy('students_class.id')
-                ->get();
-
-            $classAvgs = $avgRaw
-                ->filter(fn($r) => $r->total_weight > 0)
-                ->map(fn($r) => round($r->weighted_score / $r->total_weight, 2));
-
-            if ($classAvgs->isEmpty()) {
-                continue;
-            }
+            $values = collect($rows)->pluck('avg');
 
             $data[] = [
                 'class_name' => $class->name,
-                'avg'        => round($classAvgs->avg(), 2),
-                'count'      => $classAvgs->count(),
-                'pass_rate'  => round(($classAvgs->filter(fn($v) => $v >= 5)->count() / $classAvgs->count()) * 100, 1),
+                'avg'        => round($values->avg(), 2),
+                'count'      => $values->count(),
+                'pass_rate'  => round(($values->filter(fn ($v) => $v >= 5)->count() / $values->count()) * 100, 1),
             ];
         }
 

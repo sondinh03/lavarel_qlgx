@@ -50,8 +50,8 @@ default => 'justify-start'
 
     </button>
     @else
-        <span class="tracking-wide">
+        <div class="tracking-wide {{ $align === 'center' ? 'flex justify-center' : ($align === 'right' ? 'flex justify-end' : '') }}">
             {{ $slot }}
-        </span>
+        </div>
     @endif
 </th>

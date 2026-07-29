@@ -31,12 +31,34 @@ class ParishNew extends Model
         'parish_logo',
         'status',
         'scores_entry_open',
+        'attendance_auto_finalize_enabled',
+        'attendance_auto_finalize_time',
     ];
 
     protected $casts = [
-        'status'            => 'boolean',
-        'scores_entry_open' => 'boolean',
+        'status'                            => 'boolean',
+        'scores_entry_open'                 => 'boolean',
+        'attendance_auto_finalize_enabled'  => 'boolean',
     ];
+
+    public const DEFAULT_ATTENDANCE_AUTO_FINALIZE_TIME = '20:00';
+
+    /** Giờ chốt tự động dạng H:i (mặc định 20:00). */
+    public function attendanceAutoFinalizeTimeHi(): string
+    {
+        $raw = $this->attendance_auto_finalize_time;
+
+        if ($raw === null || $raw === '') {
+            return self::DEFAULT_ATTENDANCE_AUTO_FINALIZE_TIME;
+        }
+
+        // Cột TIME có thể trả về "20:00:00" hoặc Carbon.
+        if ($raw instanceof \DateTimeInterface) {
+            return $raw->format('H:i');
+        }
+
+        return substr((string) $raw, 0, 5);
+    }
 
     public static function normalizeName(?string $name): string
     {

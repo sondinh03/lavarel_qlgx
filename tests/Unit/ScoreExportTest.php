@@ -4,6 +4,9 @@ namespace Tests\Unit;
 
 use App\Exports\ScoreExport;
 use App\Http\Livewire\Score\ScoreManager;
+use App\Models\AttendanceRecord;
+use App\Models\AttendanceSession;
+use App\Models\GradingSetting;
 use App\Models\ScoreType;
 use App\Models\StudentScore;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
@@ -64,26 +67,94 @@ class ScoreExportTest extends TestCase
             $sheet = IOFactory::load($tmp)->getActiveSheet();
 
             $this->assertStringContainsString('Bảng điểm cả năm', (string) $sheet->getCell('A1')->getValue());
+            $this->assertStringContainsString(
+                'TB học kỳ = trung bình học tập 100% + chuyên cần học 0% + chuyên cần lễ 0%',
+                (string) $sheet->getCell('A2')->getValue()
+            );
             $this->assertSame('Thông tin học sinh', (string) $sheet->getCell('A3')->getValue());
-            $this->assertSame('Học kỳ 1', (string) $sheet->getCell('H3')->getValue());
-            $this->assertSame('Học kỳ 2', (string) $sheet->getCell('J3')->getValue());
-            $this->assertSame('Tổng kết cả năm', (string) $sheet->getCell('L3')->getValue());
+            $this->assertSame('Học kỳ 1', (string) $sheet->getCell('F3')->getValue());
+            $this->assertSame('Học kỳ 2', (string) $sheet->getCell('K3')->getValue());
+            $this->assertSame('Tổng kết cả năm', (string) $sheet->getCell('P3')->getValue());
 
-            $this->assertSame('15p', (string) $sheet->getCell('H4')->getValue());
-            $this->assertSame('Trung bình học kỳ 1', (string) $sheet->getCell('I4')->getValue());
-            $this->assertSame('15p HK2', (string) $sheet->getCell('J4')->getValue());
-            $this->assertSame('Trung bình học kỳ 2', (string) $sheet->getCell('K4')->getValue());
-            $this->assertSame('Trung bình cả năm', (string) $sheet->getCell('L4')->getValue());
-            $this->assertSame('Xếp loại', (string) $sheet->getCell('M4')->getValue());
+            // Mỗi học kỳ: cột loại điểm → 3 hạng mục điểm → TB học kỳ
+            $this->assertSame('15p', (string) $sheet->getCell('F4')->getValue());
+            $this->assertSame('Trung bình học tập (100%)', (string) $sheet->getCell('G4')->getValue());
+            $this->assertSame('Chuyên cần học (0%)', (string) $sheet->getCell('H4')->getValue());
+            $this->assertSame('Chuyên cần lễ (0%)', (string) $sheet->getCell('I4')->getValue());
+            $this->assertSame('Trung bình học kỳ 1', (string) $sheet->getCell('J4')->getValue());
 
-            $this->assertEquals(8, (float) $sheet->getCell('H5')->getValue());
-            $this->assertEquals(8, (float) $sheet->getCell('I5')->getValue());
-            $this->assertEquals(6, (float) $sheet->getCell('J5')->getValue());
+            $this->assertSame('15p HK2', (string) $sheet->getCell('K4')->getValue());
+            $this->assertSame('Trung bình học tập (100%)', (string) $sheet->getCell('L4')->getValue());
+            $this->assertSame('Trung bình học kỳ 2', (string) $sheet->getCell('O4')->getValue());
+            $this->assertSame('Trung bình cả năm', (string) $sheet->getCell('P4')->getValue());
+            $this->assertSame('Xếp loại', (string) $sheet->getCell('Q4')->getValue());
+
+            $this->assertEquals(8, (float) $sheet->getCell('F5')->getValue());
+            $this->assertEquals(8, (float) $sheet->getCell('G5')->getValue());
+            $this->assertSame('', (string) $sheet->getCell('H5')->getValue());
+            $this->assertEquals(8, (float) $sheet->getCell('J5')->getValue());
             $this->assertEquals(6, (float) $sheet->getCell('K5')->getValue());
-            $this->assertEquals(7, (float) $sheet->getCell('L5')->getValue());
-            $this->assertSame('Khá', (string) $sheet->getCell('M5')->getValue());
+            $this->assertEquals(6, (float) $sheet->getCell('O5')->getValue());
+            $this->assertEquals(7, (float) $sheet->getCell('P5')->getValue());
+            $this->assertSame('Khá', (string) $sheet->getCell('Q5')->getValue());
 
-            $this->assertSame('H5', $sheet->getFreezePane());
+            $this->assertSame('E5', $sheet->getFreezePane());
+            $this->assertTrue($sheet->getStyle('D5')->getFont()->getBold());
+        } finally {
+            @unlink($tmp);
+        }
+    }
+
+    public function test_export_fills_attendance_components_and_weighted_average(): void
+    {
+        StudentScore::query()->create([
+            'student_class_id' => $this->fx->pivotAssigned->id,
+            'score_type_id'    => $this->fx->scoreTypeAssigned->id,
+            'score_value'      => 8,
+            'attempt'          => 1,
+        ]);
+
+        $session = AttendanceSession::query()->create([
+            'class_id' => $this->fx->classAssigned->id,
+            'date'     => now()->subDay()->toDateString(),
+            'semester' => ScoreType::SEMESTER_1,
+            'type'     => AttendanceSession::TYPE_CLASS,
+            'status'   => AttendanceSession::STATUS_CLOSED,
+        ]);
+
+        AttendanceRecord::query()->create([
+            'session_id' => $session->id,
+            'student_id' => $this->fx->studentAssigned->id,
+            'status'     => AttendanceRecord::STATUS_PRESENT,
+        ]);
+
+        GradingSetting::query()->create(array_merge(GradingSetting::DEFAULTS, [
+            'parish_id'               => $this->fx->parishA->id,
+            'school_year_id'          => $this->fx->yearA->id,
+            'weight_academic'         => 50,
+            'weight_class_attendance' => 50,
+            'weight_mass_attendance'  => 0,
+        ]));
+
+        $raw = Excel::raw(
+            new ScoreExport($this->fx->classAssigned->id),
+            \Maatwebsite\Excel\Excel::XLSX
+        );
+
+        $tmp = tempnam(sys_get_temp_dir(), 'score_export_') . '.xlsx';
+        file_put_contents($tmp, $raw);
+
+        try {
+            $sheet = IOFactory::load($tmp)->getActiveSheet();
+
+            $this->assertSame('Trung bình học tập (50%)', (string) $sheet->getCell('G4')->getValue());
+            $this->assertSame('Chuyên cần học (50%)', (string) $sheet->getCell('H4')->getValue());
+            $this->assertSame('Chuyên cần lễ (0%)', (string) $sheet->getCell('I4')->getValue());
+
+            $this->assertEquals(8, (float) $sheet->getCell('G5')->getValue());
+            $this->assertEquals(10, (float) $sheet->getCell('H5')->getValue());
+            // 8×0.5 + 10×0.5 = 9
+            $this->assertEquals(9, (float) $sheet->getCell('J5')->getValue());
         } finally {
             @unlink($tmp);
         }

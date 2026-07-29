@@ -65,10 +65,10 @@ default => 'justify-start'
 
     </button>
     <?php else: ?>
-        <span class="tracking-wide">
+        <div class="tracking-wide <?php echo e($align === 'center' ? 'flex justify-center' : ($align === 'right' ? 'flex justify-end' : '')); ?>">
             <?php echo e($slot); ?>
 
-        </span>
+        </div>
     <?php endif; ?>
 </th>
 <?php /**PATH D:\Document\WORKING\lavarel_qlgx\resources\views/components/table-header.blade.php ENDPATH**/ ?>

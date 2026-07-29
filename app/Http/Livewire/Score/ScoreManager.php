@@ -6,6 +6,7 @@ use App\Exports\ScoreExport;
 use App\Http\Livewire\Base\BaseComponent;
 use App\Models\CatechismClass;
 use App\Models\GradeLevel;
+use App\Models\GradingSetting;
 use App\Models\NamHoc;
 use App\Models\ParishNew;
 use App\Models\ScoreEditLog;
@@ -13,6 +14,8 @@ use App\Models\ScoreType;
 use App\Models\StudentScore;
 use App\Models\StudentsClass;
 use App\Services\CatechistAccess;
+use App\Services\GradingWeightResolver;
+use App\Services\SemesterScoreCalculator;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
@@ -23,7 +26,8 @@ use Illuminate\Database\Eloquent\ModelNotFoundException;
  * Features:
  * - Bảng điểm: xem & nhập điểm từng học sinh
  * - Cấu hình loại điểm (thêm/sửa/xoá cột điểm)
- * - Tính điểm trung bình học kỳ tự động (weighted average)
+ * - Cài đặt tỉ lệ tính TB học kỳ / cả năm
+ * - Tính điểm trung bình học kỳ tự động qua SemesterScoreCalculator
  */
 class ScoreManager extends BaseComponent
 {
@@ -57,7 +61,7 @@ class ScoreManager extends BaseComponent
 
     // ==================== TABS ====================
 
-    /** @var string Tab hiện tại: 'scores' | 'config' */
+    /** @var string Tab hiện tại: 'scores' | 'config' | 'weights' */
     public $activeTab = 'scores';
 
     /** Giáo xứ đang mở cửa sổ nhập/sửa điểm cho GLV */
@@ -117,6 +121,38 @@ class ScoreManager extends BaseComponent
     /** @var int|null Khối khi createScope = 'grade' */
     public $createScopeGradeId = null;
 
+    // ==================== GRADING WEIGHTS FORM ====================
+
+    /** @var string Phạm vi cài đặt: 'parish' (toàn xứ trong năm học) | 'grade' (riêng một khối) */
+    public $weightScope = 'parish';
+
+    /** @var int|null Khối khi weightScope = 'grade' */
+    public $weightScopeGradeId = null;
+
+    /** @var float % điểm trung bình học tập trong TB học kỳ */
+    public $weightAcademic = 100;
+
+    /** @var float % chuyên cần học */
+    public $weightClassAttendance = 0;
+
+    /** @var float % chuyên cần lễ */
+    public $weightMassAttendance = 0;
+
+    /** @var float % học kỳ 1 trong TB cả năm */
+    public $weightSemester1 = 50;
+
+    /** @var float % học kỳ 2 trong TB cả năm */
+    public $weightSemester2 = 50;
+
+    /** @var float Vắng có phép được tính bằng bao nhiêu % một buổi có mặt */
+    public $excusedCreditPercent = 50;
+
+    /** @var bool Phạm vi đang chọn đã có cấu hình riêng, hay đang thừa hưởng phạm vi rộng hơn */
+    public bool $weightOverrideExists = false;
+
+    /** @var string|null Nguồn cấu hình đang có hiệu lực (để hiển thị) */
+    public ?string $weightSourceLabel = null;
+
     // ==================== DATA ====================
 
     /** @var Collection Danh sách năm học */
@@ -134,8 +170,22 @@ class ScoreManager extends BaseComponent
     /** @var array Ma trận điểm [student_class_id => [score_type_id => [...]] ] */
     public $scoresMatrix = [];
 
-    /** @var array Điểm trung bình [student_class_id => float|null] */
+    /** @var array Điểm trung bình học kỳ [student_class_id => float|null] */
     public $averages = [];
+
+    /**
+     * Điểm thành phần + TB học kỳ của cả lớp
+     * [student_class_id => ['academic', 'class_attendance', 'mass_attendance', 'total', 'missing']]
+     *
+     * @var array
+     */
+    public array $scoreBreakdowns = [];
+
+    /** Đã tính TB cho lớp/kỳ hiện tại trong request này chưa (protected nên không giữ qua request). */
+    protected bool $breakdownsLoaded = false;
+
+    /** Cấu hình trọng số đang áp dụng cho lớp/bộ lọc hiện tại. */
+    protected ?GradingSetting $resolvedGradingSettings = null;
 
     /** @var bool Đánh dấu scoresMatrix đã được load trong request hiện tại */
     /** @var bool Đã load matrix điểm cho lớp/kỳ hiện tại (public để Livewire giữ qua request) */
@@ -176,6 +226,26 @@ class ScoreManager extends BaseComponent
         'typeCoefficient' => 'required|numeric|min:0.1|max:10',
         'typeMaxScore'    => 'required|numeric|min:1|max:100',
         'typeIsActive'    => 'required|boolean',
+    ];
+
+    protected $gradingRules = [
+        'weightScope'           => 'required|in:parish,grade',
+        'weightScopeGradeId'    => 'nullable|integer',
+        'weightAcademic'        => 'required|numeric|min:0|max:100',
+        'weightClassAttendance' => 'required|numeric|min:0|max:100',
+        'weightMassAttendance'  => 'required|numeric|min:0|max:100',
+        'weightSemester1'       => 'required|numeric|min:0|max:100',
+        'weightSemester2'       => 'required|numeric|min:0|max:100',
+        'excusedCreditPercent'  => 'required|numeric|min:0|max:100',
+    ];
+
+    protected $gradingMessages = [
+        'weightAcademic.required'        => 'Vui lòng nhập tỉ lệ điểm trung bình học tập',
+        'weightClassAttendance.required' => 'Vui lòng nhập tỉ lệ chuyên cần học',
+        'weightMassAttendance.required'  => 'Vui lòng nhập tỉ lệ chuyên cần lễ',
+        'weightSemester1.required'       => 'Vui lòng nhập tỉ lệ học kỳ 1',
+        'weightSemester2.required'       => 'Vui lòng nhập tỉ lệ học kỳ 2',
+        'excusedCreditPercent.required'  => 'Vui lòng nhập tỉ lệ quy đổi vắng có phép',
     ];
 
     protected $messages = [
@@ -228,7 +298,8 @@ class ScoreManager extends BaseComponent
         // Không authorize ở đây — guest cũng xem được (phụ huynh tra cứu)
         parent::mount();
 
-        if ($this->activeTab === 'config' && ! auth()->user()?->canManageCatechism()) {
+        if (in_array($this->activeTab, ['config', 'weights'], true)
+            && ! auth()->user()?->canManageCatechism()) {
             $this->activeTab = 'scores';
         }
     }
@@ -262,6 +333,10 @@ class ScoreManager extends BaseComponent
         if ($this->selectedLop) {
             $this->loadScoreTypes();
             $this->refreshScorePermissions();
+        }
+
+        if ($this->canManageScoreConfig) {
+            $this->loadGradingSettingsForm();
         }
     }
 
@@ -307,7 +382,7 @@ class ScoreManager extends BaseComponent
         $sem = (int) $this->selectedSemester;
         $this->selectedSemester = in_array($sem, [1, 2]) ? $sem : 1;
 
-        if (!in_array($this->activeTab, ['scores', 'config'])) {
+        if (!in_array($this->activeTab, ['scores', 'config', 'weights'])) {
             $this->activeTab = 'scores';
         }
 
@@ -412,6 +487,25 @@ class ScoreManager extends BaseComponent
         $this->averages       = [];
         $this->resetPage();
         $this->loadLops();
+        $this->refreshGradingContext();
+    }
+
+    /** Bỏ TB đã tính của lớp/kỳ cũ để render sau tính lại. */
+    protected function forgetCalculatedScores(): void
+    {
+        $this->resolvedGradingSettings = null;
+        $this->breakdownsLoaded        = false;
+        $this->scoreBreakdowns         = [];
+    }
+
+    /** Cấu hình trọng số gắn với năm học nên phải nạp lại form khi đổi năm/khối. */
+    protected function refreshGradingContext(): void
+    {
+        $this->forgetCalculatedScores();
+
+        if ($this->canManageScoreConfig) {
+            $this->loadGradingSettingsForm();
+        }
     }
 
     public function updatedSelectedKhoi(): void
@@ -423,6 +517,7 @@ class ScoreManager extends BaseComponent
         $this->averages     = [];
         $this->resetPage();
         $this->loadLops();
+        $this->refreshGradingContext();
     }
 
     public function updatedSelectedLop(): void
@@ -438,6 +533,7 @@ class ScoreManager extends BaseComponent
 
         $this->selectedLop  = $this->toInt($this->selectedLop);
         $this->assertSelectedScoreClassAllowed();
+        $this->forgetCalculatedScores();
         $this->scoresMatrix = [];
         $this->averages     = [];
         $this->draftScores  = [];
@@ -461,6 +557,7 @@ class ScoreManager extends BaseComponent
 
         $sem = (int) $this->selectedSemester;
         $this->selectedSemester = in_array($sem, [1, 2]) ? $sem : 1;
+        $this->forgetCalculatedScores();
         $this->scoresMatrix = [];
         $this->averages     = [];
         $this->draftScores  = [];
@@ -759,14 +856,14 @@ class ScoreManager extends BaseComponent
                         ];
                         $saved++;
                     }
-
-                    $this->recalculateAverage((int) $studentClassId);
                 }
             }
 
             DB::commit();
 
             $this->loadScoreTypes();
+            $this->ensureBreakdownsLoaded(true);
+            $this->recalculateRatingStatsFromClass();
 
             $this->scoresLoaded = true;
             $this->hasDraft     = false;
@@ -793,14 +890,18 @@ class ScoreManager extends BaseComponent
 
     public function switchTab(string $tab): void
     {
-        if (!in_array($tab, ['scores', 'config'])) {
+        if (!in_array($tab, ['scores', 'config', 'weights'])) {
             return;
         }
 
-        if ($tab === 'config' && ! $this->canManageScoreConfig) {
-            $this->emit('toast', 'error', 'Bạn không có quyền cấu hình loại điểm');
+        if (in_array($tab, ['config', 'weights'], true) && ! $this->canManageScoreConfig) {
+            $this->emit('toast', 'error', 'Bạn không có quyền cấu hình cách tính điểm');
 
             return;
+        }
+
+        if ($tab === 'weights') {
+            $this->loadGradingSettingsForm();
         }
 
         $this->activeTab = $tab;
@@ -890,7 +991,7 @@ class ScoreManager extends BaseComponent
 
                 $this->emit('toast', 'message', 'Cập nhật loại điểm thành công');
                 $this->closeScoreTypeForm();
-                $this->loadScoreTypes();
+                $this->afterScoreTypesChanged();
                 return;
             } catch (\Exception $e) {
                 $this->logError($e, 'Error updating score type');
@@ -948,7 +1049,7 @@ class ScoreManager extends BaseComponent
 
             $this->emit('toast', 'message', $msg);
             $this->closeScoreTypeForm();
-            $this->loadScoreTypes();
+            $this->afterScoreTypesChanged();
         } catch (\Exception $e) {
             DB::rollBack();
             $this->logError($e, 'Error saving score type');
@@ -1000,7 +1101,7 @@ class ScoreManager extends BaseComponent
             DB::commit();
 
             $this->emit('toast', 'message', 'Đã xoá loại điểm');
-            $this->loadScoreTypes();
+            $this->afterScoreTypesChanged();
         } catch (ModelNotFoundException $e) {
             DB::rollBack();
             $this->emit('toast', 'error', 'Không tìm thấy loại điểm');
@@ -1020,11 +1121,20 @@ class ScoreManager extends BaseComponent
             $st->update(['is_active' => !$st->is_active]);
 
             $this->emit('toast', 'message', $st->is_active ? 'Đã kích hoạt' : 'Đã tắt loại điểm');
-            $this->loadScoreTypes();
+            $this->afterScoreTypesChanged();
         } catch (\Exception $e) {
             $this->logError($e, 'Error toggling score type');
             $this->emit('toast', 'error', 'Có lỗi khi thay đổi trạng thái');
         }
+    }
+
+    /** Sau khi thêm/sửa/tắt/xoá loại điểm: làm mới cột và tính lại TB học tập. */
+    protected function afterScoreTypesChanged(): void
+    {
+        $this->loadScoreTypes();
+        $this->forgetCalculatedScores();
+        $this->ensureBreakdownsLoaded(true);
+        $this->recalculateRatingStatsFromClass();
     }
 
     public function closeScoreTypeForm(): void
@@ -1047,51 +1157,294 @@ class ScoreManager extends BaseComponent
         $this->createScopeGradeId = null;
     }
 
-    // ==================== AVERAGE CALCULATION ====================
+    // ==================== GRADING WEIGHTS ====================
 
-    /**
-     * Tính điểm trung bình học kỳ cho 1 học sinh
-     * Công thức: Σ(score × coefficient) / Σ(coefficient)
-     */
-    protected function recalculateAverage(int $studentClassId): void
+    /** Nạp form cài đặt theo phạm vi đang chọn (toàn xứ trong năm học, hoặc riêng một khối). */
+    protected function loadGradingSettingsForm(): void
     {
-        if ($this->scoreTypes->isEmpty()) {
-            $this->averages[$studentClassId] = null;
+        $resolver = app(GradingWeightResolver::class);
+
+        if ($this->weightScope === 'grade' && ! $this->weightScopeGradeId) {
+            $this->weightScopeGradeId = $this->selectedKhoi;
+        }
+
+        $gradeId = $this->weightScope === 'grade' && $this->weightScopeGradeId
+            ? (int) $this->weightScopeGradeId
+            : null;
+
+        $schoolYearId = $this->selectedNamHoc ? (int) $this->selectedNamHoc : null;
+
+        $exact    = $resolver->findExact($this->parishId, $schoolYearId, $gradeId);
+        $settings = $exact ?? $resolver->resolve($this->parishId, $schoolYearId, $gradeId);
+
+        $this->weightOverrideExists  = $exact !== null;
+        $this->weightSourceLabel     = $settings->scopeLabel();
+        $this->weightAcademic        = (float) $settings->weight_academic;
+        $this->weightClassAttendance = (float) $settings->weight_class_attendance;
+        $this->weightMassAttendance  = (float) $settings->weight_mass_attendance;
+        $this->weightSemester1       = (float) $settings->weight_semester_1;
+        $this->weightSemester2       = (float) $settings->weight_semester_2;
+        $this->excusedCreditPercent  = (float) $settings->excused_credit_percent;
+    }
+
+    public function updatedWeightScope(): void
+    {
+        if (! in_array($this->weightScope, ['parish', 'grade'], true)) {
+            $this->weightScope = 'parish';
+        }
+
+        $this->resetValidation();
+        $this->loadGradingSettingsForm();
+    }
+
+    public function updatedWeightScopeGradeId(): void
+    {
+        $this->weightScopeGradeId = $this->toInt($this->weightScopeGradeId);
+        $this->resetValidation();
+        $this->loadGradingSettingsForm();
+    }
+
+    public function saveGradingSettings(): void
+    {
+        $this->authorize('create', ScoreType::class);
+
+        if (! $this->parishId) {
+            $this->emit('toast', 'error', 'Không xác định được giáo xứ');
+
             return;
         }
 
-        $totalWeight = 0.0;
-        $totalScore  = 0.0;
+        if (! $this->selectedNamHoc) {
+            $this->emit('toast', 'warning', 'Vui lòng chọn năm học trước');
 
-        foreach ($this->scoreTypes as $st) {
-            $score = $this->scoresMatrix[$studentClassId][$st->id]['value'] ?? null;
-
-            if ($score === null) {
-                // Nếu thiếu điểm cuối kỳ/giữa kỳ thì chưa tính được TB
-                if (in_array($st->type, [ScoreType::TYPE_GIUA_KY, ScoreType::TYPE_CUOI_KY])) {
-                    $this->averages[$studentClassId] = null;
-                    return;
-                }
-                continue;
-            }
-
-            $totalScore  += $score * $st->coefficient;
-            $totalWeight += $st->coefficient;
+            return;
         }
 
-        $this->averages[$studentClassId] = $totalWeight > 0
-            ? round($totalScore / $totalWeight, 1)
-            : null;
+        $this->validate($this->gradingRules, $this->gradingMessages);
+
+        if ($this->weightScope === 'grade' && ! $this->weightScopeGradeId) {
+            $this->addError('weightScopeGradeId', 'Vui lòng chọn khối áp dụng');
+
+            return;
+        }
+
+        $componentSum = round(
+            (float) $this->weightAcademic
+            + (float) $this->weightClassAttendance
+            + (float) $this->weightMassAttendance,
+            2
+        );
+
+        if (abs($componentSum - 100) > 0.01) {
+            $this->addError(
+                'weightAcademic',
+                "Tổng ba tỉ lệ của học kỳ phải bằng 100%, hiện là {$componentSum}%"
+            );
+
+            return;
+        }
+
+        $semesterSum = round((float) $this->weightSemester1 + (float) $this->weightSemester2, 2);
+
+        if (abs($semesterSum - 100) > 0.01) {
+            $this->addError(
+                'weightSemester1',
+                "Tổng tỉ lệ hai học kỳ phải bằng 100%, hiện là {$semesterSum}%"
+            );
+
+            return;
+        }
+
+        try {
+            GradingSetting::updateOrCreate(
+                [
+                    'parish_id'      => (int) $this->parishId,
+                    'school_year_id' => (int) $this->selectedNamHoc,
+                    'grade_level_id' => $this->weightScope === 'grade'
+                        ? (int) $this->weightScopeGradeId
+                        : null,
+                ],
+                [
+                    'weight_academic'         => (float) $this->weightAcademic,
+                    'weight_class_attendance' => (float) $this->weightClassAttendance,
+                    'weight_mass_attendance'  => (float) $this->weightMassAttendance,
+                    'weight_semester_1'       => (float) $this->weightSemester1,
+                    'weight_semester_2'       => (float) $this->weightSemester2,
+                    'excused_credit_percent'  => (float) $this->excusedCreditPercent,
+                ]
+            );
+
+            $this->afterGradingSettingsChanged();
+            $this->emit('toast', 'message', 'Đã lưu cách tính điểm');
+        } catch (\Exception $e) {
+            $this->logError($e, 'Error saving grading settings');
+            $this->emit('toast', 'error', 'Có lỗi khi lưu cách tính điểm');
+        }
+    }
+
+    /** Xoá cấu hình riêng của phạm vi đang chọn để quay về thừa hưởng phạm vi rộng hơn. */
+    public function deleteGradingSettings(): void
+    {
+        $this->authorize('create', ScoreType::class);
+
+        if (! $this->parishId || ! $this->selectedNamHoc) {
+            return;
+        }
+
+        try {
+            GradingSetting::query()
+                ->where('parish_id', (int) $this->parishId)
+                ->where('school_year_id', (int) $this->selectedNamHoc)
+                ->where(
+                    'grade_level_id',
+                    $this->weightScope === 'grade' ? (int) $this->weightScopeGradeId : null
+                )
+                ->delete();
+
+            $this->afterGradingSettingsChanged();
+            $this->emit('toast', 'message', 'Đã xoá cấu hình riêng của phạm vi này');
+        } catch (\Exception $e) {
+            $this->logError($e, 'Error deleting grading settings');
+            $this->emit('toast', 'error', 'Có lỗi khi xoá cấu hình');
+        }
+    }
+
+    protected function afterGradingSettingsChanged(): void
+    {
+        $this->resolvedGradingSettings = null;
+        $this->loadGradingSettingsForm();
+        $this->ensureBreakdownsLoaded(true);
+        $this->recalculateRatingStatsFromClass();
     }
 
     /**
-     * Tính lại TB cho tất cả học sinh trong trang
+     * Xem trước TB học kỳ của một học sinh thật với tỉ lệ đang nhập trên form
+     * (chưa lưu), để quản trị viên kiểm chứng trước khi áp dụng cho cả xứ.
      */
-    protected function recalculateAllAverages(array $studentClassIds): void
+    public function buildGradingPreview(): ?array
     {
-        foreach ($studentClassIds as $id) {
-            $this->recalculateAverage($id);
+        if (! $this->selectedLop) {
+            return null;
         }
+
+        $this->ensureBreakdownsLoaded();
+
+        $pivotId = null;
+        foreach ($this->scoreBreakdowns as $id => $breakdown) {
+            if ($breakdown['academic'] !== null
+                || $breakdown['class_attendance'] !== null
+                || $breakdown['mass_attendance'] !== null) {
+                $pivotId = (int) $id;
+                break;
+            }
+        }
+
+        if (! $pivotId) {
+            return null;
+        }
+
+        $student = \App\Models\StudentNew::query()
+            ->join('students_class', 'students.id', '=', 'students_class.student_id')
+            ->where('students_class.id', $pivotId)
+            ->select('students.first_name', 'students.last_name')
+            ->first();
+
+        $calculator = app(SemesterScoreCalculator::class);
+
+        $draft = new GradingSetting([
+            'weight_academic'         => (float) $this->weightAcademic,
+            'weight_class_attendance' => (float) $this->weightClassAttendance,
+            'weight_mass_attendance'  => (float) $this->weightMassAttendance,
+            'weight_semester_1'       => (float) $this->weightSemester1,
+            'weight_semester_2'       => (float) $this->weightSemester2,
+            'excused_credit_percent'  => (float) $this->excusedCreditPercent,
+        ]);
+
+        $combined = $calculator->forClassSemester(
+            (int) $this->selectedLop,
+            (int) $this->selectedSemester,
+            $draft
+        )[$pivotId] ?? $calculator->combineComponents($this->scoreBreakdowns[$pivotId], $draft);
+
+        return [
+            'student_name' => trim(($student->last_name ?? '') . ' ' . ($student->first_name ?? '')),
+            'breakdown'    => $combined,
+            'missing'      => $calculator->describeMissing($combined['missing']),
+        ];
+    }
+
+    // ==================== AVERAGE CALCULATION ====================
+
+    /**
+     * Tính điểm thành phần + TB học kỳ cho cả lớp qua SemesterScoreCalculator.
+     *
+     * Tính một lần cho mỗi request: bảng điểm, xếp loại, sort và filter đều
+     * cần TB của toàn lớp chứ không riêng trang đang xem.
+     */
+    protected function ensureBreakdownsLoaded(bool $force = false): void
+    {
+        if ($this->breakdownsLoaded && ! $force) {
+            return;
+        }
+
+        $this->breakdownsLoaded = true;
+
+        if (! $this->selectedLop) {
+            $this->scoreBreakdowns = [];
+            $this->averages        = [];
+
+            return;
+        }
+
+        try {
+            $this->scoreBreakdowns = app(SemesterScoreCalculator::class)
+                ->forClassSemester((int) $this->selectedLop, (int) $this->selectedSemester);
+
+            $this->averages = array_map(
+                fn (array $breakdown) => $breakdown['total'],
+                $this->scoreBreakdowns
+            );
+        } catch (\Exception $e) {
+            $this->logError($e, 'Error calculating semester averages');
+            $this->scoreBreakdowns = [];
+            $this->averages        = [];
+        }
+    }
+
+    /** Cấu hình trọng số đang áp dụng cho lớp (hoặc bộ lọc) hiện tại. */
+    public function gradingSettings(): GradingSetting
+    {
+        if ($this->resolvedGradingSettings !== null) {
+            return $this->resolvedGradingSettings;
+        }
+
+        $resolver = app(GradingWeightResolver::class);
+
+        return $this->resolvedGradingSettings = $this->selectedLop
+            ? $resolver->forClass((int) $this->selectedLop)
+            : $resolver->resolve(
+                $this->parishId,
+                $this->selectedNamHoc ? (int) $this->selectedNamHoc : null,
+                $this->selectedKhoi ? (int) $this->selectedKhoi : null
+            );
+    }
+
+    public function getBreakdown(int $studentClassId): array
+    {
+        return $this->scoreBreakdowns[$studentClassId] ?? [
+            'academic'         => null,
+            'class_attendance' => null,
+            'mass_attendance'  => null,
+            'total'            => null,
+            'missing'          => [],
+        ];
+    }
+
+    /** Lý do chưa có TB, ví dụ "Chưa có điểm trung bình học tập, chuyên cần lễ". */
+    public function getMissingReason(int $studentClassId): ?string
+    {
+        return app(SemesterScoreCalculator::class)
+            ->describeMissing($this->getBreakdown($studentClassId)['missing'] ?? []);
     }
 
     // ==================== PAGINATED DATA ====================
@@ -1158,9 +1511,8 @@ class ScoreManager extends BaseComponent
      */
     private function loadScoresForStudents(Collection $students): void
     {
-        $pivotIds = $students->pluck('pivot_id')->toArray();
-        $this->loadScoresMatrix($pivotIds);
-        $this->recalculateAllAverages($pivotIds);
+        $this->loadScoresMatrix($students->pluck('pivot_id')->toArray());
+        $this->ensureBreakdownsLoaded();
     }
 
     private function getStudentsPaginated()
@@ -1209,9 +1561,8 @@ class ScoreManager extends BaseComponent
             $this->applySorting($query);
             $students = $query->paginate($this->perPage);
 
-            $pivotIds = $students->pluck('pivot_id')->toArray();
-            $this->loadScoresMatrix($pivotIds);
-            $this->recalculateAllAverages($pivotIds);
+            $this->loadScoresMatrix($students->pluck('pivot_id')->toArray());
+            $this->ensureBreakdownsLoaded();
 
             $this->recalculateRatingStatsFromClass();
 
@@ -1327,6 +1678,7 @@ class ScoreManager extends BaseComponent
         $this->scoresLoaded = false;
         $this->viewingPivotId = null;
         $this->resetPage();
+        $this->refreshGradingContext();
 
         if ($namHocChanged) {
             $this->loadLops();
@@ -1402,6 +1754,30 @@ class ScoreManager extends BaseComponent
 
     // ==================== RATING & STATISTICS ====================
 
+    /**
+     * Thang xếp loại học lực để hiển thị ở tab cách tính điểm.
+     * Thang này cố định theo hệ thống, không cấu hình theo giáo xứ.
+     *
+     * @return array<int, array{label: string, color: string, range: string}>
+     */
+    public function ratingScale(): array
+    {
+        $format = fn (float $value) => number_format($value, 1, ',', '');
+
+        return collect(self::RATING_LEVELS)
+            ->map(fn (array $level) => [
+                'label' => $level['label'],
+                'color' => $level['color'],
+                'range' => match (true) {
+                    $level['max'] >= 10 => 'Từ ' . $format($level['min']) . ' đến 10',
+                    $level['min'] <= 0  => 'Dưới ' . $format($level['max']),
+                    default             => 'Từ ' . $format($level['min']) . ' đến dưới ' . $format($level['max']),
+                },
+            ])
+            ->values()
+            ->all();
+    }
+
     private function getStudentRating(?float $average): ?string
     {
         if ($average === null || $average < 0) {
@@ -1414,110 +1790,57 @@ class ScoreManager extends BaseComponent
             }
         }
 
-        return null;
+        // Điểm 10 tuyệt đối rơi đúng biên trên của mức cao nhất.
+        return $average >= 10 ? 'XUAT_SAC' : null;
     }
 
     /**
-     * Tính thống kê xếp loại cho cả lớp (không chỉ trang hiện tại).
+     * Thống kê xếp loại cho cả lớp (không chỉ trang hiện tại).
      */
     private function recalculateRatingStatsFromClass(): void
     {
-        if (!$this->selectedLop || $this->scoreTypes->isEmpty()) {
+        if (!$this->selectedLop) {
             $this->ratingStats = [];
             return;
         }
 
-        try {
-            $allPivotIds = \App\Models\StudentsClass::query()
-                ->where('class_id', $this->selectedLop)
-                ->pluck('id')
-                ->toArray();
+        $this->ensureBreakdownsLoaded();
 
-            if (empty($allPivotIds)) {
-                $this->ratingStats = [];
-                return;
-            }
-
-            $scoreTypeIds = $this->scoreTypes->pluck('id')->toArray();
-            $scores = StudentScore::whereIn('student_class_id', $allPivotIds)
-                ->whereIn('score_type_id', $scoreTypeIds)
-                ->get();
-
-            $matrix = [];
-            foreach ($scores as $score) {
-                $matrix[$score->student_class_id][$score->score_type_id] = [
-                    'value' => (float) $score->score_value,
-                ];
-            }
-
-            $classAverages = [];
-            foreach ($allPivotIds as $pivotId) {
-                $classAverages[$pivotId] = $this->calculateAverageFromMatrix($matrix, $pivotId);
-            }
-
+        if ($this->averages === []) {
             $this->ratingStats = [];
-            $totalStudents   = 0;
-            $statsByRating   = [];
-
-            foreach ($classAverages as $avg) {
-                if ($avg === null) {
-                    continue;
-                }
-
-                $rating = $this->getStudentRating($avg);
-                if ($rating) {
-                    $statsByRating[$rating] = ($statsByRating[$rating] ?? 0) + 1;
-                    $totalStudents++;
-                }
-            }
-
-            foreach (self::RATING_LEVELS as $key => $ratingInfo) {
-                $count      = $statsByRating[$key] ?? 0;
-                $percentage = $totalStudents > 0
-                    ? round(($count / $totalStudents) * 100, 1)
-                    : 0;
-
-                $this->ratingStats[$key] = [
-                    'label'      => $ratingInfo['label'],
-                    'color'      => $ratingInfo['color'],
-                    'range'      => "{$ratingInfo['min']} - {$ratingInfo['max']}",
-                    'count'      => $count,
-                    'percentage' => $percentage,
-                ];
-            }
-        } catch (\Exception $e) {
-            $this->logError($e, 'Error calculating rating stats');
-            $this->ratingStats = [];
-        }
-    }
-
-    /**
-     * Tính TB từ ma trận điểm tạm (không ghi vào $this->averages).
-     */
-    private function calculateAverageFromMatrix(array $matrix, int $studentClassId): ?float
-    {
-        if ($this->scoreTypes->isEmpty()) {
-            return null;
+            return;
         }
 
-        $totalWeight = 0.0;
-        $totalScore  = 0.0;
+        $this->ratingStats = [];
+        $totalStudents     = 0;
+        $statsByRating     = [];
 
-        foreach ($this->scoreTypes as $st) {
-            $score = $matrix[$studentClassId][$st->id]['value'] ?? null;
-
-            if ($score === null) {
-                if (in_array($st->type, [ScoreType::TYPE_GIUA_KY, ScoreType::TYPE_CUOI_KY])) {
-                    return null;
-                }
+        foreach ($this->averages as $avg) {
+            if ($avg === null) {
                 continue;
             }
 
-            $totalScore  += $score * $st->coefficient;
-            $totalWeight += $st->coefficient;
+            $rating = $this->getStudentRating((float) $avg);
+            if ($rating) {
+                $statsByRating[$rating] = ($statsByRating[$rating] ?? 0) + 1;
+                $totalStudents++;
+            }
         }
 
-        return $totalWeight > 0 ? round($totalScore / $totalWeight, 1) : null;
+        foreach (self::RATING_LEVELS as $key => $ratingInfo) {
+            $count      = $statsByRating[$key] ?? 0;
+            $percentage = $totalStudents > 0
+                ? round(($count / $totalStudents) * 100, 1)
+                : 0;
+
+            $this->ratingStats[$key] = [
+                'label'      => $ratingInfo['label'],
+                'color'      => $ratingInfo['color'],
+                'range'      => "{$ratingInfo['min']} - {$ratingInfo['max']}",
+                'count'      => $count,
+                'percentage' => $percentage,
+            ];
+        }
     }
 
     /**
@@ -1576,6 +1899,10 @@ class ScoreManager extends BaseComponent
             'viewingStudent'             => $this->resolveViewingStudent($students),
             'scoreFilterAllowedClassIds' => $scoreFilterAllowedClassIds,
             'canBrowseAllScoreClasses'   => $this->canBrowseAllScoreClasses,
+            'gradingSettings'            => $this->gradingSettings(),
+            'gradingPreview'             => $this->activeTab === 'weights'
+                ? $this->buildGradingPreview()
+                : null,
         ])
             ->extends($layout)
             ->section('content');
@@ -1615,8 +1942,9 @@ class ScoreManager extends BaseComponent
 
         if (! isset($this->scoresMatrix[$student->pivot_id])) {
             $this->loadScoresMatrix([(int) $student->pivot_id]);
-            $this->recalculateAverage((int) $student->pivot_id);
         }
+
+        $this->ensureBreakdownsLoaded();
 
         return $student;
     }

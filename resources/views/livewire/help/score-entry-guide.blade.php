@@ -120,10 +120,10 @@
                             <li><strong>Theo giáo xứ</strong> — áp dụng rộng hơn trong xứ</li>
                         </ul>
                     </li>
-                    <li>Lưu. Có thể tắt/bật từng loại điểm khi chưa dùng.</li>
+                    <li>Lưu. Có thể tắt/bật từng loại điểm: cột đã tắt không hiện trên bảng điểm và không tính vào điểm trung bình học tập.</li>
                 </ol>
                 <x-inline-tip tone="amber">
-                    Điểm trung bình học kỳ tính theo <strong>trung bình có trọng số</strong> (hệ số từng loại điểm).
+                    Điểm trung bình học tập của một kỳ tính theo <strong>trung bình có trọng số</strong> (hệ số từng loại điểm).
                     Đặt hệ số đúng trước khi GLV nhập nhiều sẽ tránh phải sửa lại.
                 </x-inline-tip>
             </div>
@@ -132,6 +132,40 @@
         <x-mac-panel :overflow="true">
             <div class="px-4 lg:px-6 py-4 mac-hairline-b bg-white/40 flex items-center gap-3">
                 <span class="w-8 h-8 rounded-full bg-primary-600 text-white text-sm font-bold flex items-center justify-center flex-shrink-0">3</span>
+                <div>
+                    <h2 class="text-base font-semibold text-slate-900">Cách tính điểm trung bình</h2>
+                    <p class="text-xs text-slate-500">Màn: <span class="font-medium text-slate-700">Kết quả học tập</span> · tab Cách tính điểm</p>
+                </div>
+            </div>
+            <div class="p-4 lg:p-6 space-y-3 text-sm text-slate-700 leading-relaxed">
+                <p>Giáo xứ tự chọn tỉ lệ ba thành phần của điểm trung bình học kỳ:</p>
+                <div class="rounded-xl bg-slate-50/80 p-4 text-sm text-slate-700 space-y-2">
+                    <p><strong>TB học kỳ</strong> = trung bình học tập × %HT + chuyên cần học × %CC học + chuyên cần lễ × %CC lễ</p>
+                    <p><strong>TB cả năm</strong> = TB học kỳ 1 × %HK1 + TB học kỳ 2 × %HK2</p>
+                    <p><strong>Điểm chuyên cần</strong> = 10 × (số buổi có mặt + tỉ lệ quy đổi × số buổi vắng có phép) / số buổi đã điểm danh</p>
+                </div>
+                <ol class="list-decimal list-inside space-y-2">
+                    <li>Chọn <strong>năm học</strong> rồi mở tab <strong>Cách tính điểm</strong>.</li>
+                    <li>Chọn phạm vi: <strong>toàn giáo xứ</strong> trong năm học đó, hoặc <strong>riêng một khối</strong> (ghi đè cấu hình toàn xứ).</li>
+                    <li>Nhập tỉ lệ ba thành phần (cộng lại đúng 100%) và tỉ lệ hai học kỳ (cộng lại đúng 100%).</li>
+                    <li>Đặt <strong>tỉ lệ quy đổi vắng có phép</strong>, ví dụ 50% = tính bằng nửa buổi có mặt.</li>
+                    <li>Xem khung <strong>xem trước</strong> tính trên một học sinh thật của lớp đang chọn, rồi bấm <strong>Lưu cách tính</strong>.</li>
+                </ol>
+                <x-inline-tip>
+                    Cấu hình lưu theo từng năm học nên <strong>điểm các năm trước không đổi</strong>.
+                    Mặc định là 100% điểm trung bình học tập và cả năm chia đôi hai kỳ — giữ nguyên cách tính cũ.
+                </x-inline-tip>
+                <x-inline-tip tone="amber">
+                    Buổi bị hủy và buổi GLV chưa điểm danh <strong>không</strong> vào mẫu số, nên học sinh không bị trừ oan.
+                    Buổi đã được <strong>chốt tự động</strong> (cuối ngày) sẽ có đủ bản ghi: người chưa điểm danh thành vắng không phép.
+                    Nếu một thành phần có tỉ lệ lớn hơn 0 mà chưa có dữ liệu, cột TB hiển thị dấu «—» kèm lý do khi trỏ chuột vào.
+                </x-inline-tip>
+            </div>
+        </x-mac-panel>
+
+        <x-mac-panel :overflow="true">
+            <div class="px-4 lg:px-6 py-4 mac-hairline-b bg-white/40 flex items-center gap-3">
+                <span class="w-8 h-8 rounded-full bg-primary-600 text-white text-sm font-bold flex items-center justify-center flex-shrink-0">4</span>
                 <div>
                     <h2 class="text-base font-semibold text-slate-900">Mở / khóa cửa sổ nhập điểm</h2>
                     <p class="text-xs text-slate-500">Cho phép hoặc dừng GLV hỗ trợ sửa điểm</p>
@@ -157,7 +191,7 @@
 
         <x-mac-panel :overflow="true">
             <div class="px-4 lg:px-6 py-4 mac-hairline-b bg-white/40 flex items-center gap-3">
-                <span class="w-8 h-8 rounded-full bg-primary-600 text-white text-sm font-bold flex items-center justify-center flex-shrink-0">4</span>
+                <span class="w-8 h-8 rounded-full bg-primary-600 text-white text-sm font-bold flex items-center justify-center flex-shrink-0">5</span>
                 <div>
                     <h2 class="text-base font-semibold text-slate-900">Nhập điểm trên bảng điểm</h2>
                     <p class="text-xs text-slate-500">Màn: <span class="font-medium text-slate-700">Kết quả học tập</span> · tab Bảng điểm</p>
@@ -180,6 +214,12 @@
                     Có thể lọc theo xếp loại hoặc tìm tên học sinh ở ô tìm kiếm phía trên bảng.
                     Quản trị viên có thể <strong>Xuất Excel</strong> và xem
                     <a href="{{ route('scores.edit-logs') }}" class="font-semibold text-primary-700 underline">Nhật ký sửa điểm</a>.
+                </x-inline-tip>
+                <x-inline-tip>
+                    File Excel xuất cả năm và có đủ hạng mục điểm của từng kỳ: các cột loại điểm,
+                    <strong>trung bình học tập</strong>, <strong>chuyên cần học</strong>, <strong>chuyên cần lễ</strong>,
+                    trung bình học kỳ, trung bình cả năm và xếp loại. Tỉ lệ đang áp dụng được ghi ngay trên tiêu đề cột
+                    và dòng đầu file.
                 </x-inline-tip>
             </div>
         </x-mac-panel>
@@ -205,7 +245,16 @@
                 <div>
                     <p class="font-semibold text-slate-900">Điểm trung bình khác kỳ vọng?</p>
                     <p class="mt-1 text-slate-600 leading-relaxed">
-                        Kiểm tra hệ số từng loại điểm. TB = tổng (điểm × hệ số) / tổng hệ số các cột đã có điểm.
+                        Kiểm tra hai chỗ: hệ số từng loại điểm (trung bình học tập = tổng (điểm × hệ số) / tổng hệ số các cột đã có điểm)
+                        và tỉ lệ ba thành phần ở tab <strong>Cách tính điểm</strong>. Dòng công thức ngay trên bảng điểm cho biết
+                        lớp đang dùng tỉ lệ nào.
+                    </p>
+                </div>
+                <div>
+                    <p class="font-semibold text-slate-900">Cột TB hiện dấu «—» dù đã nhập điểm?</p>
+                    <p class="mt-1 text-slate-600 leading-relaxed">
+                        Một thành phần có tỉ lệ lớn hơn 0 đang thiếu dữ liệu: thiếu điểm giữa kỳ/cuối kỳ, hoặc kỳ đó chưa có buổi nào
+                        được điểm danh. Trỏ chuột vào dấu «—» sẽ thấy lý do cụ thể.
                     </p>
                 </div>
                 <div>

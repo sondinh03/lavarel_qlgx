@@ -3,9 +3,11 @@
 namespace App\Exports;
 
 use App\Models\CatechismClass;
+use App\Models\GradingSetting;
 use App\Models\ScoreType;
 use App\Models\StudentNew;
 use App\Models\StudentScore;
+use App\Services\SemesterScoreCalculator;
 use Illuminate\Support\Collection;
 use Maatwebsite\Excel\Concerns\FromCollection;
 use Maatwebsite\Excel\Concerns\WithEvents;
@@ -26,8 +28,12 @@ class ScoreExport implements FromCollection, WithHeadings, WithMapping, WithStyl
     private ?Collection $semesterOneTypes = null;
     private ?Collection $semesterTwoTypes = null;
     private array $scoresMap = [];
+    private ?GradingSetting $gradingSettings = null;
 
-    private const FIXED_COLUMNS = 7;
+    /** [students_class.id => ['semesters' => [1 => breakdown, 2 => breakdown], 'year' => ?float]] */
+    private array $breakdowns = [];
+
+    private const FIXED_COLUMNS = 5;
 
     private const SUMMARY_COLUMNS = 4;
 
@@ -61,13 +67,10 @@ class ScoreExport implements FromCollection, WithHeadings, WithMapping, WithStyl
         $this->loadScoresMap();
 
         if ($this->filterByRating) {
-            $students = $students->filter(function ($student) {
-                $avg = $this->calculateYearAverage(
-                    $this->calculateAverage($student->pivot_id, $this->semesterOneTypes),
-                    $this->calculateAverage($student->pivot_id, $this->semesterTwoTypes),
-                );
-                return $this->getStudentRating($avg) === $this->filterByRating;
-            })->values();
+            $students = $students->filter(
+                fn ($student) => $this->getStudentRating($this->yearAverage((int) $student->pivot_id))
+                    === $this->filterByRating
+            )->values();
         }
 
         return $students;
@@ -79,27 +82,69 @@ class ScoreExport implements FromCollection, WithHeadings, WithMapping, WithStyl
 
         $headings = [
             'STT',
-            'Mã học sinh',
             'Tên thánh',
             'Họ tên đệm',
             'Tên',
-            'Ngày sinh',
             'Giáo họ',
         ];
 
         foreach ($this->semesterOneTypes ?? [] as $type) {
             $headings[] = $type->name;
         }
+        foreach ($this->componentColumns() as $label) {
+            $headings[] = $label;
+        }
         $headings[] = 'Trung bình học kỳ 1';
 
         foreach ($this->semesterTwoTypes ?? [] as $type) {
             $headings[] = $type->name;
+        }
+        foreach ($this->componentColumns() as $label) {
+            $headings[] = $label;
         }
         $headings[] = 'Trung bình học kỳ 2';
         $headings[] = 'Trung bình cả năm';
         $headings[] = 'Xếp loại';
 
         return $headings;
+    }
+
+    /**
+     * Ba hạng mục điểm của một học kỳ. Luôn xuất đủ, kèm tỉ lệ đang áp dụng
+     * để người đọc file tự đối chiếu được cột trung bình học kỳ.
+     *
+     * @return array<string, string> [component key => nhãn cột]
+     */
+    private function componentColumns(): array
+    {
+        $settings = $this->settings();
+
+        return [
+            SemesterScoreCalculator::COMPONENT_ACADEMIC =>
+                'Trung bình học tập (' . $this->formatPercent($settings->weight_academic) . ')',
+            SemesterScoreCalculator::COMPONENT_CLASS_ATTENDANCE =>
+                'Chuyên cần học (' . $this->formatPercent($settings->weight_class_attendance) . ')',
+            SemesterScoreCalculator::COMPONENT_MASS_ATTENDANCE =>
+                'Chuyên cần lễ (' . $this->formatPercent($settings->weight_mass_attendance) . ')',
+        ];
+    }
+
+    private function formatPercent(float $value): string
+    {
+        return rtrim(rtrim(number_format($value, 2, ',', ''), '0'), ',') . '%';
+    }
+
+    /** Ghi rõ cách tính ngay trên file để người nhận không phải hỏi lại. */
+    private function describeFormula(): string
+    {
+        $settings = $this->settings();
+
+        return 'TB học kỳ = trung bình học tập '
+            . $this->formatPercent($settings->weight_academic)
+            . ' + chuyên cần học ' . $this->formatPercent($settings->weight_class_attendance)
+            . ' + chuyên cần lễ ' . $this->formatPercent($settings->weight_mass_attendance)
+            . ' · TB cả năm = học kỳ 1 ' . $this->formatPercent($settings->weight_semester_1)
+            . ' + học kỳ 2 ' . $this->formatPercent($settings->weight_semester_2);
     }
 
     public function map($student): array
@@ -109,11 +154,9 @@ class ScoreExport implements FromCollection, WithHeadings, WithMapping, WithStyl
 
         $row = [
             ++$this->rowIndex,
-            $student->student_code ?? '',
             $student->saint?->name ?? '',
             $student->last_name,
             $student->first_name,
-            $student->birthday?->format('d/m/Y') ?? '',
             $student->parishGroup?->name ?? '',
         ];
 
@@ -121,21 +164,35 @@ class ScoreExport implements FromCollection, WithHeadings, WithMapping, WithStyl
             $score = $this->scoresMap[$student->pivot_id][$type->id]['value'] ?? null;
             $row[] = $score ?? '';
         }
-        $semesterOneAverage = $this->calculateAverage($student->pivot_id, $this->semesterOneTypes);
-        $row[] = $semesterOneAverage ?? '';
+        $row = array_merge($row, $this->semesterColumns((int) $student->pivot_id, ScoreType::SEMESTER_1));
 
         foreach ($this->semesterTwoTypes ?? [] as $type) {
             $score = $this->scoresMap[$student->pivot_id][$type->id]['value'] ?? null;
             $row[] = $score ?? '';
         }
-        $semesterTwoAverage = $this->calculateAverage($student->pivot_id, $this->semesterTwoTypes);
-        $row[] = $semesterTwoAverage ?? '';
+        $row = array_merge($row, $this->semesterColumns((int) $student->pivot_id, ScoreType::SEMESTER_2));
 
-        $yearAverage = $this->calculateYearAverage($semesterOneAverage, $semesterTwoAverage);
+        $yearAverage = $this->yearAverage((int) $student->pivot_id);
         $row[] = $yearAverage ?? '';
         $row[] = $this->getRatingLabel($yearAverage);
 
         return $row;
+    }
+
+    /** Điểm thành phần (nếu có) và TB của một học kỳ. */
+    private function semesterColumns(int $pivotId, int $semester): array
+    {
+        $breakdown = $this->semesterBreakdown($pivotId, $semester);
+
+        $values = [];
+
+        foreach (array_keys($this->componentColumns()) as $component) {
+            $values[] = $breakdown[$component] ?? '';
+        }
+
+        $values[] = $breakdown['total'] ?? '';
+
+        return $values;
     }
 
     public function styles(Worksheet $sheet): array
@@ -165,8 +222,11 @@ class ScoreExport implements FromCollection, WithHeadings, WithMapping, WithStyl
                     ? $this->rowIndex + $headerRow
                     : $headerRow;
 
-                $semesterOneCount = $this->semesterOneTypes?->count() ?? 0;
-                $semesterTwoCount = $this->semesterTwoTypes?->count() ?? 0;
+                $componentCount   = count($this->componentColumns());
+                $typesOneCount    = $this->semesterOneTypes?->count() ?? 0;
+                $typesTwoCount    = $this->semesterTwoTypes?->count() ?? 0;
+                $semesterOneCount = $typesOneCount + $componentCount;
+                $semesterTwoCount = $typesTwoCount + $componentCount;
                 $semesterOneStartIndex = self::FIXED_COLUMNS + 1;
                 $semesterOneEndIndex = $semesterOneStartIndex + $semesterOneCount;
                 $semesterTwoStartIndex = $semesterOneEndIndex + 1;
@@ -200,7 +260,10 @@ class ScoreExport implements FromCollection, WithHeadings, WithMapping, WithStyl
                     ],
                 ]);
 
-                $sheet->setCellValue('A2', 'Ngày xuất: ' . now()->format('d/m/Y H:i:s'));
+                $sheet->setCellValue(
+                    'A2',
+                    'Ngày xuất: ' . now()->format('d/m/Y H:i:s') . ' · ' . $this->describeFormula()
+                );
                 $sheet->mergeCells("A2:{$lastCol}2");
 
                 $this->appendGroupHeader(
@@ -244,9 +307,23 @@ class ScoreExport implements FromCollection, WithHeadings, WithMapping, WithStyl
                     ],
                 ]);
 
-                // Các cột trung bình đặt bề rộng cố định để tiêu đề dài wrap xuống dòng,
+                // Cột hạng mục điểm (trung bình học tập, chuyên cần học, chuyên cần lễ) của hai kỳ
+                $componentCols = [];
+                for ($offset = 0; $offset < $componentCount; $offset++) {
+                    $componentCols[] = Coordinate::stringFromColumnIndex(
+                        $semesterOneStartIndex + $typesOneCount + $offset
+                    );
+                    $componentCols[] = Coordinate::stringFromColumnIndex(
+                        $semesterTwoStartIndex + $typesTwoCount + $offset
+                    );
+                }
+
+                // Các cột trung bình và hạng mục đặt bề rộng cố định để tiêu đề dài wrap xuống dòng,
                 // các cột còn lại autosize theo nội dung.
-                $fixedWidthCols = [$semesterOneEndCol, $semesterTwoEndCol, $summaryStartCol];
+                $fixedWidthCols = array_merge(
+                    [$semesterOneEndCol, $semesterTwoEndCol, $summaryStartCol],
+                    $componentCols
+                );
 
                 for ($columnIndex = 1; $columnIndex <= $lastColIndex; $columnIndex++) {
                     $col = Coordinate::stringFromColumnIndex($columnIndex);
@@ -263,9 +340,26 @@ class ScoreExport implements FromCollection, WithHeadings, WithMapping, WithStyl
                     ->getAlignment()
                     ->setVertical(Alignment::VERTICAL_CENTER);
 
-                $sheet->getStyle("H{$headerRow}:{$lastCol}{$dataLastRow}")
+                $sheet->getStyle("F{$headerRow}:{$lastCol}{$dataLastRow}")
                     ->getAlignment()
                     ->setHorizontal(Alignment::HORIZONTAL_CENTER);
+
+                if ($this->rowIndex > 0) {
+                    // Cột Tên in đậm cho dễ dò danh sách
+                    $sheet->getStyle('D' . ($headerRow + 1) . ":D{$dataLastRow}")
+                        ->getFont()
+                        ->setBold(true);
+
+                    foreach ($componentCols as $col) {
+                        $sheet->getStyle("{$col}" . ($headerRow + 1) . ":{$col}{$dataLastRow}")
+                            ->applyFromArray([
+                                'fill' => [
+                                    'fillType' => Fill::FILL_SOLID,
+                                    'startColor' => ['rgb' => 'F2F7FB'],
+                                ],
+                            ]);
+                    }
+                }
 
                 foreach ([$semesterOneEndCol, $semesterTwoEndCol, $summaryStartCol] as $col) {
                     $sheet->getStyle("{$col}{$headerRow}:{$col}{$dataLastRow}")->applyFromArray([
@@ -286,8 +380,8 @@ class ScoreExport implements FromCollection, WithHeadings, WithMapping, WithStyl
                 $sheet->getRowDimension(3)->setRowHeight(24);
                 $sheet->getRowDimension($headerRow)->setRowHeight(36);
 
-                // Cố định hàng 1-4 và các cột thông tin học sinh A-G.
-                $sheet->freezePane('H' . ($headerRow + 1));
+                // Cố định hàng 1-4 và các cột đến Tên (A-D).
+                $sheet->freezePane('E' . ($headerRow + 1));
             },
         ];
     }
@@ -337,39 +431,40 @@ class ScoreExport implements FromCollection, WithHeadings, WithMapping, WithStyl
         }
     }
 
-    private function calculateAverage(int $studentClassId, ?Collection $scoreTypes): ?float
+    private function settings(): GradingSetting
     {
-        if ($scoreTypes === null || $scoreTypes->isEmpty()) {
-            return null;
-        }
-
-        $totalWeight = 0.0;
-        $totalScore  = 0.0;
-
-        foreach ($scoreTypes as $type) {
-            $score = $this->scoresMap[$studentClassId][$type->id]['value'] ?? null;
-
-            if ($score === null) {
-                if (in_array($type->type, [ScoreType::TYPE_GIUA_KY, ScoreType::TYPE_CUOI_KY])) {
-                    return null;
-                }
-                continue;
-            }
-
-            $totalScore  += $score * $type->coefficient;
-            $totalWeight += $type->coefficient;
-        }
-
-        return $totalWeight > 0 ? round($totalScore / $totalWeight, 1) : null;
+        return $this->gradingSettings ??= app(SemesterScoreCalculator::class)
+            ->settingsForClass($this->classId);
     }
 
-    private function calculateYearAverage(?float $semesterOne, ?float $semesterTwo): ?float
+    private function loadBreakdowns(): void
     {
-        if ($semesterOne === null || $semesterTwo === null) {
-            return null;
+        if ($this->breakdowns !== [] || ! $this->classId) {
+            return;
         }
 
-        return round(($semesterOne + $semesterTwo) / 2, 1);
+        $this->breakdowns = app(SemesterScoreCalculator::class)
+            ->forClassYear((int) $this->classId);
+    }
+
+    private function semesterBreakdown(int $pivotId, int $semester): array
+    {
+        $this->loadBreakdowns();
+
+        return $this->breakdowns[$pivotId]['semesters'][$semester] ?? [
+            SemesterScoreCalculator::COMPONENT_ACADEMIC         => null,
+            SemesterScoreCalculator::COMPONENT_CLASS_ATTENDANCE => null,
+            SemesterScoreCalculator::COMPONENT_MASS_ATTENDANCE  => null,
+            'total'                                             => null,
+            'missing'                                           => [],
+        ];
+    }
+
+    private function yearAverage(int $pivotId): ?float
+    {
+        $this->loadBreakdowns();
+
+        return $this->breakdowns[$pivotId]['year'] ?? null;
     }
 
     private function getStudentRating(?float $average): ?string
@@ -413,7 +508,7 @@ class ScoreExport implements FromCollection, WithHeadings, WithMapping, WithStyl
         string $lastCol,
     ): void {
         $sheet->setCellValue('A3', 'Thông tin học sinh');
-        $sheet->mergeCells('A3:G3');
+        $sheet->mergeCells('A3:E3');
 
         $sheet->setCellValue("{$semesterOneStartCol}3", 'Học kỳ 1');
         $sheet->mergeCells("{$semesterOneStartCol}3:{$semesterOneEndCol}3");

@@ -74,7 +74,7 @@
                 <div class="sm:hidden text-center text-slate-300 text-xs">↓</div>
                 <div class="flex-1 rounded-xl bg-primary-50 border border-primary-100 px-3 py-2.5 text-center">
                     <p class="text-[11px] text-primary-600 font-medium">Bước 4</p>
-                    <p class="font-semibold text-primary-900 text-xs sm:text-sm">Khóa phiên (tuỳ chọn)</p>
+                    <p class="font-semibold text-primary-900 text-xs sm:text-sm">Chốt &amp; khóa</p>
                 </div>
             </div>
         </x-mac-panel>
@@ -164,18 +164,47 @@
             <div class="px-4 lg:px-6 py-4 mac-hairline-b bg-white/40 flex items-center gap-3">
                 <span class="w-8 h-8 rounded-full bg-primary-600 text-white text-sm font-bold flex items-center justify-center flex-shrink-0">4</span>
                 <div>
-                    <h2 class="text-base font-semibold text-slate-900">Khóa phiên (tuỳ chọn)</h2>
-                    <p class="text-xs text-slate-500">Tránh sửa nhầm sau khi điểm xong</p>
+                    <h2 class="text-base font-semibold text-slate-900">Chốt &amp; khóa phiên</h2>
+                    <p class="text-xs text-slate-500">Tự động cuối ngày hoặc khóa tay</p>
                 </div>
             </div>
             <div class="p-4 lg:p-6 space-y-3 text-sm text-slate-700 leading-relaxed">
+                <div class="rounded-xl bg-slate-50/80 border border-black/[0.04] p-3 space-y-2">
+                    <p class="font-semibold text-slate-800">Chốt khác khóa</p>
+                    <ul class="list-disc ml-5 space-y-1 text-slate-600">
+                        <li><strong>Chốt</strong> — điền đủ danh sách: học sinh chưa có bản ghi (chưa quét / chưa điểm) được ghi <em>vắng không phép</em>. Chỉ khi buổi đó đã có ít nhất một người được điểm danh.</li>
+                        <li><strong>Khóa</strong> — đóng buổi, không cho sửa/quét thêm (trừ khi mở lại).</li>
+                    </ul>
+                </div>
+
+                <p class="font-semibold text-slate-800">Tự động cuối ngày</p>
                 <ol class="list-decimal list-inside space-y-2">
-                    <li>Vào lại <strong>Phiên điểm danh</strong>.</li>
-                    <li>Với buổi đã điểm xong, bấm khóa phiên.</li>
-                    <li>Buổi đã khóa không cho sửa điểm trên trang Điểm danh (trừ khi mở lại).</li>
+                    <li>Ban quản trị vào
+                        <a href="{{ route('parish.settings') }}" class="font-semibold text-primary-700 underline">Thông tin giáo xứ</a>
+                        → mục <strong>Điểm danh</strong>.
+                    </li>
+                    <li>Bật <strong>Tự động chốt cuối ngày</strong> và chọn giờ (mặc định <strong>20:00</strong>).</li>
+                    <li>Đến giờ đó, hệ thống với mỗi buổi đang mở trong ngày (và các ngày trước còn mở):
+                        <ul class="mt-2 ml-5 list-disc space-y-1 text-slate-600">
+                            <li>Đã có người điểm danh → đánh vắng không phép phần còn lại, rồi khóa buổi.</li>
+                            <li>Chưa có ai điểm danh → bỏ qua (không đánh vắng cả lớp).</li>
+                        </ul>
+                    </li>
                 </ol>
+
+                <p class="font-semibold text-slate-800">Khóa tay (tuỳ chọn)</p>
+                <ol class="list-decimal list-inside space-y-2">
+                    <li>Vào <strong>Phiên điểm danh</strong>.</li>
+                    <li>Với buổi đã điểm xong, bấm khóa phiên (nếu muốn khóa sớm hơn giờ tự động).</li>
+                </ol>
+
+                <x-inline-tip>
+                    Quét QR toàn xứ: cứ quét bình thường trong buổi. Đến giờ chốt, các lớp đã có người quét sẽ được điền đủ phần còn lại là vắng không phép — không cần nút «Hoàn thành» trên trang QR.
+                </x-inline-tip>
+
                 <p class="text-slate-600">
                     Nhật ký sửa điểm danh nằm ở <strong>Hệ thống → Nhật ký điểm danh</strong> (nếu bạn có quyền xem).
+                    Bản ghi do hệ thống chốt có ghi chú «Tự động chốt».
                 </p>
             </div>
         </x-mac-panel>
@@ -201,6 +230,15 @@
                         GLV đó chưa có phân công lớp trong năm học đang vận hành (thường gặp với tài khoản từ năm học cũ).
                         Ban quản trị vào <strong>Lớp giáo lý → Phân công GLV</strong> (icon GLV ở cột Thao tác) để gán GLV
                         vào lớp của năm hiện tại; sau đó GLV tải lại trang là điểm danh được (mọi lớp trong xứ).
+                    </p>
+                </div>
+                <div>
+                    <p class="font-semibold text-slate-900">Tự động chốt lúc 20:00 nghĩa là gì?</p>
+                    <p class="mt-1 text-slate-600 leading-relaxed">
+                        Đến giờ đã cấu hình (mặc định 20:00), hệ thống chốt rồi khóa các buổi đang mở
+                        <em>đã có người điểm danh</em>: học sinh chưa quét / chưa điểm sẽ thành vắng không phép.
+                        Buổi trống hoàn toàn không bị đụng tới. Đổi giờ hoặc tắt tại
+                        <a href="{{ route('parish.settings') }}" class="font-semibold text-primary-700 underline">Thông tin giáo xứ</a>.
                     </p>
                 </div>
                 <div>

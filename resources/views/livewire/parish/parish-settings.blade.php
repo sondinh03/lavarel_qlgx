@@ -6,7 +6,7 @@
             <x-page-header
                 icon-type="default"
                 title="Thông tin giáo xứ"
-                description="Cập nhật thông tin giáo xứ bạn đang quản trị.">
+                description="Cập nhật thông tin giáo xứ và cách chốt điểm danh tự động.">
             </x-page-header>
 
             <form wire:submit.prevent="save" class="p-4 lg:p-6 space-y-4">
@@ -168,6 +168,52 @@
                             valueKey="id"
                             :value="$ward" />
                         @error('ward')
+                        <p class="mt-1 text-xs text-red-500">{{ $message }}</p>
+                        @enderror
+                    </div>
+                </div>
+
+                {{-- Tự động chốt điểm danh --}}
+                <div class="rounded-xl border border-black/[0.06] bg-white/60 p-4 shadow-mac-sm space-y-3">
+                    <div class="flex items-start justify-between gap-3">
+                        <div class="min-w-0">
+                            <p class="text-xs font-semibold text-slate-500 uppercase tracking-wide">Điểm danh</p>
+                            <p class="mt-1 text-sm font-semibold text-slate-800">Tự động chốt cuối ngày</p>
+                        </div>
+                        <label class="inline-flex items-center gap-2 cursor-pointer select-none flex-shrink-0">
+                            <input type="checkbox" wire:model="attendanceAutoFinalizeEnabled" class="mac-checkbox">
+                            <span class="text-sm font-semibold text-slate-700">Bật</span>
+                        </label>
+                    </div>
+
+                    <div class="text-sm text-slate-600 leading-relaxed space-y-2 rounded-xl bg-slate-50/80 p-3">
+                        <p class="font-semibold text-slate-700">Chốt khác với khóa:</p>
+                        <ul class="list-disc ml-5 space-y-1">
+                            <li><strong>Chốt</strong> — với buổi đã có ít nhất một người được điểm danh (quét QR hoặc điểm tay), học sinh còn lại của lớp sẽ được ghi <em>vắng không phép</em>.</li>
+                            <li><strong>Khóa</strong> — buổi đóng lại, không cho quét/sửa thêm (trừ khi mở lại).</li>
+                        </ul>
+                        <p>
+                            Hệ thống chạy chốt rồi khóa vào giờ bên dưới. Buổi chưa có ai điểm danh
+                            <strong>không</strong> bị đánh vắng cả lớp (tránh trừ oan khi quên tạo/điểm danh).
+                        </p>
+                        <p class="text-xs text-slate-500">
+                            Có thể sửa từng học sinh sau khi mở lại buổi trên trang Điểm danh / Phiên điểm danh.
+                            Bản ghi tự động có ghi chú «Tự động chốt» trong nhật ký.
+                        </p>
+                    </div>
+
+                    <div class="{{ $attendanceAutoFinalizeEnabled ? '' : 'opacity-50 pointer-events-none' }}">
+                        <label class="block text-xs font-semibold text-slate-500 mb-1.5 tracking-wide uppercase">
+                            Giờ chốt tự động
+                        </label>
+                        <input type="time" wire:model.defer="attendanceAutoFinalizeTime"
+                            class="w-full sm:w-40 h-11 px-4 py-2.5 rounded-xl border border-black/[0.06] text-sm
+                                bg-white/80 backdrop-blur-sm shadow-mac-sm tabular-nums
+                                focus:outline-none focus:ring-2 focus:ring-primary-500/25 focus:border-primary-300/40 transition-all" />
+                        <p class="mt-1.5 text-xs text-slate-400">
+                            Mặc định 20:00 (giờ Việt Nam). Nên đặt sau khi lớp cuối cùng trong ngày thường điểm danh xong.
+                        </p>
+                        @error('attendanceAutoFinalizeTime')
                         <p class="mt-1 text-xs text-red-500">{{ $message }}</p>
                         @enderror
                     </div>
