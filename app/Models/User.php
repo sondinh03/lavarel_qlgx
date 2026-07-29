@@ -33,6 +33,7 @@ class User extends Authenticatable
         'parish_id',
         'avatar_path',
         'is_active',
+        'last_login_at',
     ];
 
     /**
@@ -52,6 +53,7 @@ class User extends Authenticatable
      */
     protected $casts = [
         'email_verified_at' => 'datetime',
+        'last_login_at'     => 'datetime',
         'parish_id'         => 'integer',
         'is_active'         => 'boolean',
     ];

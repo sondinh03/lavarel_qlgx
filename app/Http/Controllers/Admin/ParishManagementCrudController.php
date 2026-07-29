@@ -65,8 +65,16 @@ class ParishManagementCrudController extends CrudController
             CRUD::addClause('where', 'id', !empty($user->parish_id) ? $user->parish_id : 0);
         }
 
-        // Eager load tránh N+1
-        $this->crud->query->with(['deanery', 'diocese']);
+        // Eager load tránh N+1 + đếm quy mô theo xứ
+        $this->crud->query->with(['deanery', 'diocese'])->withCount([
+            'students',
+            'teachers as teachers_active_count' => fn ($q) => $q->where('is_active', true),
+            'users',
+            'parishioners as parishioners_active_count' => fn ($q) => $q->where('is_active', true),
+            'classes as classes_active_year_count' => function ($q) {
+                $q->whereHas('schoolYear', fn ($y) => $y->active());
+            },
+        ]);
 
         CRUD::addColumn([
             'name'      => 'image',
@@ -95,6 +103,41 @@ class ParishManagementCrudController extends CrudController
             'type'      => 'text',
             'orderable' => false,
             'label'     => __('backend.code') ?? 'Mã',
+        ]);
+
+        CRUD::addColumn([
+            'name'      => 'students_count',
+            'type'      => 'number',
+            'orderable' => false,
+            'label'     => 'Học sinh',
+        ]);
+
+        CRUD::addColumn([
+            'name'      => 'classes_active_year_count',
+            'type'      => 'number',
+            'orderable' => false,
+            'label'     => 'Lớp (năm active)',
+        ]);
+
+        CRUD::addColumn([
+            'name'      => 'teachers_active_count',
+            'type'      => 'number',
+            'orderable' => false,
+            'label'     => 'GLV active',
+        ]);
+
+        CRUD::addColumn([
+            'name'      => 'parishioners_active_count',
+            'type'      => 'number',
+            'orderable' => false,
+            'label'     => 'Giáo dân active',
+        ]);
+
+        CRUD::addColumn([
+            'name'      => 'users_count',
+            'type'      => 'number',
+            'orderable' => false,
+            'label'     => 'Users',
         ]);
 
         CRUD::addColumn([

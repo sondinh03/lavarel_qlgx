@@ -338,6 +338,48 @@ $bp-radius:        0.75rem;
     margin-top: 0.15rem;
 }
 
+// ---- Dashboard alerts ----
+.bp-alert-card {
+    padding: 0.9rem 1rem;
+    border-radius: $bp-radius;
+    border: 1px solid $bp-slate-200;
+    background: #fff;
+    text-decoration: none !important;
+    color: $bp-slate-800;
+    transition: border-color 0.15s, box-shadow 0.15s;
+
+    &:hover {
+        color: $bp-slate-800;
+        box-shadow: 0 4px 12px rgba(15, 23, 42, 0.06);
+    }
+
+    &--danger {
+        border-color: rgba(239, 68, 68, 0.35);
+        background: linear-gradient(180deg, #fef2f2 0%, #fff 75%);
+    }
+
+    &--warning {
+        border-color: rgba(245, 158, 11, 0.35);
+        background: linear-gradient(180deg, #fffbeb 0%, #fff 75%);
+    }
+
+    &--info {
+        border-color: rgba(59, 130, 246, 0.3);
+        background: linear-gradient(180deg, #eff6ff 0%, #fff 75%);
+    }
+}
+
+.bp-alert-title {
+    font-size: 0.9rem;
+    font-weight: 700;
+    margin-bottom: 0.2rem;
+}
+
+.bp-alert-detail {
+    font-size: 0.8rem;
+    color: #64748b;
+}
+
 // ---- Footer ----
 .app-footer {
     border-top: 1px solid $bp-slate-200;

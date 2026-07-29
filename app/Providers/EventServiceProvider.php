@@ -46,6 +46,12 @@ class EventServiceProvider extends ServiceProvider
         Registered::class => [
             SendEmailVerificationNotification::class,
         ],
+        \Illuminate\Auth\Events\Login::class => [
+            \App\Listeners\RecordSuccessfulLogin::class,
+        ],
+        \Illuminate\Auth\Events\Failed::class => [
+            \App\Listeners\RecordFailedLogin::class,
+        ],
         \App\Events\MarriageCreated::class => [
             \App\Listeners\CreateFamilyOnMarriage::class,
         ],

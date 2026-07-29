@@ -73,36 +73,41 @@ class ParishNew extends Model
 
     public function users()
     {
-        return $this->hasMany(User::class);
+        return $this->hasMany(User::class, 'parish_id');
     }
 
     public function students()
     {
-        return $this->hasMany(StudentNew::class);
+        return $this->hasMany(StudentNew::class, 'parish_id');
     }
 
     public function teachers()
     {
-        return $this->hasMany(Teacher::class);
+        return $this->hasMany(Teacher::class, 'parish_id');
     }
 
     public function schoolYears()
     {
-        return $this->hasMany(NamHoc::class);
+        return $this->hasMany(NamHoc::class, 'parish_id');
     }
 
     public function gradeLevels()
     {
-        return $this->hasMany(GradeLevel::class);
+        return $this->hasMany(GradeLevel::class, 'parish_id');
     }
 
     public function classes()
     {
-        return $this->hasMany(CatechismClass::class);
+        return $this->hasMany(CatechismClass::class, 'parish_id');
     }
 
     public function parishGroups()
     {
-        return $this->hasMany(ParishGroup::class);
+        return $this->hasMany(ParishGroup::class, 'parish_id');
+    }
+
+    public function parishioners()
+    {
+        return $this->hasMany(Parishioner::class, 'parish_id');
     }
 }
