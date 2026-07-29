@@ -5,6 +5,7 @@ namespace App\Exports;
 use App\Models\AttendanceRecord;
 use App\Models\AttendanceSession;
 use App\Models\CatechismClass;
+use App\Models\StudentNew;
 use Carbon\Carbon;
 use Illuminate\Support\Collection;
 use Maatwebsite\Excel\Concerns\FromCollection;
@@ -18,13 +19,29 @@ use PhpOffice\PhpSpreadsheet\Cell\Coordinate;
 use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
 
 /**
- * Một sheet danh sách học sinh vắng của một lớp (format gần giống AttendanceExport).
+ * Ma trận học sinh vắng theo lớp.
+ *
+ * Cột cố định: STT | Tên thánh | Họ tên đệm | Tên | Giáo họ
+ * Hàng loại buổi: nhóm theo type (Đi học rồi Đi lễ), merge một nhãn / nhóm
+ * Hàng ngày: từng buổi
+ * Ô: CP / KP / ? (chưa điểm danh); có mặt để trống
  */
 class AbsentStudentsExport implements FromCollection, WithHeadings, WithMapping, WithStyles, WithEvents, WithTitle
 {
     private int $rowIndex = 0;
 
-    private const LAST_COL_INDEX = 12;
+    private const FIXED_COLUMNS = 5;
+
+    /** @var Collection<int, AttendanceSession>|null */
+    private ?Collection $sessions = null;
+
+    /** @var array<int, array<int, array{status: ?int, note: ?string}>> */
+    private array $recordsMap = [];
+
+    /** @var list<int> */
+    private array $absentStudentIds = [];
+
+    private bool $recordsLoaded = false;
 
     /**
      * @param  int|null  $attendanceType  1=đi học, 2=đi lễ, null=cả hai
@@ -44,75 +61,73 @@ class AbsentStudentsExport implements FromCollection, WithHeadings, WithMapping,
 
     public function collection(): Collection
     {
-        return AttendanceRecord::query()
-            ->with([
-                'student:id,student_code,saint_id,last_name,first_name,birthday,parish_group_id',
-                'student.saint:id,name',
-                'student.parishGroup:id,name',
-                'session:id,class_id,date,type,semester',
-            ])
-            ->whereIn('status', $this->statuses)
-            ->whereHas('session', function ($q) {
-                $q->where('class_id', $this->classId)
-                    ->whereDate('date', '>=', $this->fromDate)
-                    ->whereDate('date', '<=', $this->toDate)
-                    ->when(
-                        $this->attendanceType !== null,
-                        fn ($qq) => $qq->where('type', $this->attendanceType)
-                    );
-            })
-            ->whereHas('student.classes', function ($q) {
+        $this->loadSessions();
+        $this->loadRecordsMap();
+
+        if ($this->absentStudentIds === []) {
+            return collect();
+        }
+
+        return StudentNew::query()
+            ->whereIn('students.id', $this->absentStudentIds)
+            ->whereHas('classes', function ($q) {
                 $q->where('classes.id', $this->classId)
                     ->where('students_class.status', 1);
             })
-            ->get()
-            ->sortBy([
-                fn ($r) => optional($r->session?->date)->format('Y-m-d') ?? '',
-                fn ($r) => (int) ($r->session?->type ?? 0),
-                fn ($r) => $r->student?->first_name ?? '',
-                fn ($r) => $r->student?->last_name ?? '',
-            ])
-            ->values();
+            ->with(['saint:id,name', 'parishGroup:id,name'])
+            ->orderBy('students.first_name')
+            ->orderBy('students.last_name')
+            ->get([
+                'students.id',
+                'students.saint_id',
+                'students.last_name',
+                'students.first_name',
+                'students.parish_group_id',
+            ]);
     }
 
     public function headings(): array
     {
-        return [
+        $this->loadSessions();
+
+        $headings = [
             'STT',
-            'Mã học sinh',
             'Tên thánh',
             'Họ tên đệm',
             'Tên',
-            'Ngày sinh',
             'Giáo họ',
-            'Ngày',
-            'Thứ',
-            'Loại buổi',
-            'Trạng thái',
-            'Ghi chú',
         ];
+
+        foreach ($this->sessions ?? [] as $session) {
+            $date = $session->date;
+            $dayName = ['CN', 'T2', 'T3', 'T4', 'T5', 'T6', 'T7'][$date->dayOfWeek];
+            $headings[] = "{$dayName} {$date->format('d/m')}";
+        }
+
+        return $headings;
     }
 
-    public function map($record): array
+    public function map($student): array
     {
-        $student = $record->student;
-        $session = $record->session;
-        $date = $session?->date;
+        $this->loadSessions();
+        $this->loadRecordsMap();
 
-        return [
+        $row = [
             ++$this->rowIndex,
-            $student?->student_code ?? '',
-            $student?->saint?->name ?? '',
-            $student?->last_name ?? '',
-            $student?->first_name ?? '',
-            $student?->birthday?->format('d/m/Y') ?? '',
-            $student?->parishGroup?->name ?? '',
-            $date ? $date->format('d/m/Y') : '',
-            $date ? $this->vietnameseDayShort($date) : '',
-            $this->typeLabel((int) ($session?->type ?? 0)),
-            $this->statusLabel((int) $record->status),
-            $record->note ?? '',
+            $student->saint?->name ?? '',
+            $student->last_name ?? '',
+            $student->first_name ?? '',
+            $student->parishGroup?->name ?? '',
         ];
+
+        foreach ($this->sessions ?? [] as $session) {
+            $cell = $this->recordsMap[$student->id][$session->id] ?? null;
+            $row[] = $cell === null
+                ? $this->statusCell(null)
+                : $this->statusCell($cell['status'] ?? null);
+        }
+
+        return $row;
     }
 
     public function styles(Worksheet $sheet): array
@@ -138,7 +153,12 @@ class AbsentStudentsExport implements FromCollection, WithHeadings, WithMapping,
         return [
             AfterSheet::class => function (AfterSheet $event) {
                 $sheet = $event->sheet->getDelegate();
-                $lastCol = Coordinate::stringFromColumnIndex(self::LAST_COL_INDEX);
+                $this->loadSessions();
+
+                $sessionCount = $this->sessions?->count() ?? 0;
+                $lastColIndex = max(self::FIXED_COLUMNS, self::FIXED_COLUMNS + $sessionCount);
+                $lastCol = Coordinate::stringFromColumnIndex($lastColIndex);
+
                 $headerRow = 4;
                 $dataLastRow = $this->rowIndex > 0
                     ? $this->rowIndex + $headerRow
@@ -156,6 +176,7 @@ class AbsentStudentsExport implements FromCollection, WithHeadings, WithMapping,
                 $statusLabel = $this->statusesLabel();
 
                 $sheet->insertNewRowBefore(1, 3);
+
                 $sheet->setCellValue(
                     'A1',
                     "Danh sách học sinh vắng - Lớp {$className} - {$fromLabel} → {$toLabel}"
@@ -177,20 +198,22 @@ class AbsentStudentsExport implements FromCollection, WithHeadings, WithMapping,
                     'A2',
                     'Ngày xuất: ' . now()->format('d/m/Y H:i:s')
                         . " · {$typeLabel} · {$statusLabel}"
-                        . " · {$this->rowIndex} lượt vắng"
+                        . " · {$this->rowIndex} học sinh · {$sessionCount} buổi"
+                        . ' · Ký hiệu: CP = có phép, KP = không phép, ? = chưa điểm danh'
                 );
                 $sheet->mergeCells("A2:{$lastCol}2");
 
                 $sheet->setCellValue('A3', 'Thông tin học sinh');
-                $sheet->mergeCells('A3:G3');
-                $sheet->setCellValue('H3', 'Buổi vắng');
-                $sheet->mergeCells('H3:L3');
+                $sheet->mergeCells('A3:' . Coordinate::stringFromColumnIndex(self::FIXED_COLUMNS) . '3');
+
+                $this->appendTypeGroupHeader($sheet);
 
                 $sheet->getStyle("A3:{$lastCol}3")->applyFromArray([
                     'font' => ['bold' => true],
                     'alignment' => [
                         'horizontal' => 'center',
                         'vertical' => 'center',
+                        'wrapText' => true,
                     ],
                     'fill' => [
                         'fillType' => 'solid',
@@ -235,7 +258,8 @@ class AbsentStudentsExport implements FromCollection, WithHeadings, WithMapping,
                     ->setName('Times New Roman')
                     ->setSize(12);
 
-                for ($col = 1; $col <= self::LAST_COL_INDEX; $col++) {
+                // Cột thông tin HS: autosize
+                for ($col = 1; $col <= self::FIXED_COLUMNS; $col++) {
                     $sheet->getColumnDimension(Coordinate::stringFromColumnIndex($col))->setAutoSize(true);
                 }
 
@@ -243,13 +267,150 @@ class AbsentStudentsExport implements FromCollection, WithHeadings, WithMapping,
                     ->getAlignment()
                     ->setHorizontal('center');
 
-                $sheet->getStyle('H' . ($headerRow + 1) . ":K{$dataLastRow}")
-                    ->getAlignment()
-                    ->setHorizontal('center');
+                if ($sessionCount > 0) {
+                    for ($col = self::FIXED_COLUMNS + 1; $col <= $lastColIndex; $col++) {
+                        $dim = $sheet->getColumnDimension(Coordinate::stringFromColumnIndex($col));
+                        $dim->setAutoSize(false);
+                        $dim->setWidth(7);
+                    }
 
-                $sheet->freezePane('A' . ($headerRow + 1));
+                    $sessionStart = Coordinate::stringFromColumnIndex(self::FIXED_COLUMNS + 1);
+                    $sheet->getStyle("{$sessionStart}" . ($headerRow + 1) . ":{$lastCol}{$dataLastRow}")
+                        ->getAlignment()
+                        ->setHorizontal('center')
+                        ->setVertical('center')
+                        ->setWrapText(true);
+                }
+
+                // Đóng băng hàng tiêu đề + các cột đến hết "Tên" (cột D); cuộn ngang từ "Giáo họ"
+                $sheet->freezePane('E' . ($headerRow + 1));
             },
         ];
+    }
+
+    /**
+     * Hàng 3: merge nhãn loại buổi theo nhóm (Đi học | Đi lễ).
+     */
+    private function appendTypeGroupHeader(Worksheet $sheet): void
+    {
+        if ($this->sessions === null || $this->sessions->isEmpty()) {
+            return;
+        }
+
+        $groups = [];
+        foreach ($this->sessions as $index => $session) {
+            $type = (int) $session->type;
+            $label = $this->typeLabel($type);
+            $colIndex = self::FIXED_COLUMNS + $index + 1;
+
+            if ($groups === [] || $groups[array_key_last($groups)]['type'] !== $type) {
+                $groups[] = [
+                    'type'  => $type,
+                    'label' => $label,
+                    'start' => $colIndex,
+                    'end'   => $colIndex,
+                ];
+            } else {
+                $groups[array_key_last($groups)]['end'] = $colIndex;
+            }
+        }
+
+        foreach ($groups as $group) {
+            $start = Coordinate::stringFromColumnIndex($group['start']);
+            $end = Coordinate::stringFromColumnIndex($group['end']);
+            $sheet->setCellValue("{$start}3", $group['label']);
+            if ($start !== $end) {
+                $sheet->mergeCells("{$start}3:{$end}3");
+            }
+        }
+    }
+
+    private function loadSessions(): void
+    {
+        if ($this->sessions !== null) {
+            return;
+        }
+
+        // Gom cùng loại về một bên: Đi học trước, Đi lễ sau; trong nhóm sort theo ngày
+        $this->sessions = AttendanceSession::query()
+            ->where('class_id', $this->classId)
+            ->whereDate('date', '>=', $this->fromDate)
+            ->whereDate('date', '<=', $this->toDate)
+            ->when(
+                $this->attendanceType !== null,
+                fn ($q) => $q->where('type', $this->attendanceType)
+            )
+            ->whereHas('records', function ($q) {
+                $q->whereIn('status', $this->statuses)
+                    ->whereHas('student.classes', function ($qq) {
+                        $qq->where('classes.id', $this->classId)
+                            ->where('students_class.status', 1);
+                    });
+            })
+            ->orderBy('type')
+            ->orderBy('date')
+            ->get(['id', 'class_id', 'date', 'type', 'semester']);
+    }
+
+    private function loadRecordsMap(): void
+    {
+        if ($this->recordsLoaded) {
+            return;
+        }
+
+        $this->recordsLoaded = true;
+        $this->loadSessions();
+
+        if ($this->sessions === null || $this->sessions->isEmpty()) {
+            $this->recordsMap = [];
+            $this->absentStudentIds = [];
+
+            return;
+        }
+
+        // Lấy mọi bản ghi (kể cả có mặt) để phân biệt có mặt / chưa điểm danh
+        $records = AttendanceRecord::query()
+            ->whereIn('session_id', $this->sessions->pluck('id'))
+            ->whereHas('student.classes', function ($q) {
+                $q->where('classes.id', $this->classId)
+                    ->where('students_class.status', 1);
+            })
+            ->get(['session_id', 'student_id', 'status', 'note']);
+
+        $absentIds = [];
+        foreach ($records as $record) {
+            $sid = (int) $record->student_id;
+            $status = $record->status !== null ? (int) $record->status : null;
+
+            $this->recordsMap[$sid][(int) $record->session_id] = [
+                'status' => $status,
+                'note'   => $record->note,
+            ];
+
+            if ($status !== null && in_array($status, $this->statuses, true)) {
+                $absentIds[$sid] = true;
+            }
+        }
+
+        $this->absentStudentIds = array_map('intval', array_keys($absentIds));
+    }
+
+    private function statusCell(?int $status): string
+    {
+        if ($status === null) {
+            return '?';
+        }
+
+        if ($status === AttendanceRecord::STATUS_ABSENT_EXCUSED) {
+            return 'CP';
+        }
+
+        if ($status === AttendanceRecord::STATUS_ABSENT_UNEXCUSED) {
+            return 'KP';
+        }
+
+        // Có mặt — để trống trên sheet vắng
+        return '';
     }
 
     private function statusesLabel(): string
@@ -277,19 +438,5 @@ class AbsentStudentsExport implements FromCollection, WithHeadings, WithMapping,
             AttendanceSession::TYPE_CEREMONY => 'Đi lễ',
             default => 'Khác',
         };
-    }
-
-    private function statusLabel(int $status): string
-    {
-        return match ($status) {
-            AttendanceRecord::STATUS_ABSENT_EXCUSED => 'Vắng có phép',
-            AttendanceRecord::STATUS_ABSENT_UNEXCUSED => 'Vắng không phép',
-            default => 'Khác',
-        };
-    }
-
-    private function vietnameseDayShort(Carbon $date): string
-    {
-        return ['CN', 'T2', 'T3', 'T4', 'T5', 'T6', 'T7'][$date->dayOfWeek];
     }
 }

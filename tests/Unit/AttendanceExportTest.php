@@ -7,7 +7,6 @@ use App\Exports\AttendanceWorkbookExport;
 use App\Http\Livewire\AttendanceManager;
 use App\Models\AttendanceRecord;
 use App\Models\AttendanceSession;
-use App\Models\CatechismClass;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Livewire\Livewire;
 use Maatwebsite\Excel\Facades\Excel;
@@ -91,35 +90,45 @@ class AttendanceExportTest extends TestCase
             $this->assertStringContainsString('Đi học', (string) $sheet->getCell('A1')->getValue());
             $this->assertStringContainsString('2 buổi', (string) $sheet->getCell('A2')->getValue());
 
-            // Hàng 3 phân biệt các học kỳ
+            // Hàng 3 phân biệt học kỳ + tổng kết (cột buổi từ F)
             $this->assertSame('Thông tin học sinh', (string) $sheet->getCell('A3')->getValue());
-            $this->assertSame('Học kỳ 1', (string) $sheet->getCell('H3')->getValue());
-            $this->assertSame('Học kỳ 2', (string) $sheet->getCell('I3')->getValue());
-            $this->assertSame('Tổng kết', (string) $sheet->getCell('J3')->getValue());
+            $this->assertSame('Học kỳ 1', (string) $sheet->getCell('F3')->getValue());
+            $this->assertSame('Học kỳ 2', (string) $sheet->getCell('G3')->getValue());
+            $this->assertSame('Tổng kết', (string) $sheet->getCell('H3')->getValue());
 
-            // Header ở hàng 4
+            // Header ở hàng 4 — cột giống file vắng + tổng kết HS
             $this->assertSame('STT', (string) $sheet->getCell('A4')->getValue());
-            $this->assertSame('Có mặt', (string) $sheet->getCell('J4')->getValue());
-            $this->assertSame('Vắng CP', (string) $sheet->getCell('K4')->getValue());
+            $this->assertSame('Tên thánh', (string) $sheet->getCell('B4')->getValue());
+            $this->assertSame('Họ tên đệm', (string) $sheet->getCell('C4')->getValue());
+            $this->assertSame('Tên', (string) $sheet->getCell('D4')->getValue());
+            $this->assertSame('Giáo họ', (string) $sheet->getCell('E4')->getValue());
+            $this->assertSame('Có mặt', (string) $sheet->getCell('H4')->getValue());
+            $this->assertSame('Vắng CP', (string) $sheet->getCell('I4')->getValue());
+            $this->assertSame('Vắng KP', (string) $sheet->getCell('J4')->getValue());
+            $this->assertSame('Tỷ lệ có mặt (%)', (string) $sheet->getCell('K4')->getValue());
 
-            // Dòng học sinh: HK1 Có mặt, HK2 Vắng CP
-            $this->assertSame('Có mặt', (string) $sheet->getCell('H5')->getValue());
-            $this->assertSame('Vắng CP', (string) $sheet->getCell('I5')->getValue());
-            $this->assertEquals(1, (int) $sheet->getCell('J5')->getValue());
-            $this->assertEquals(1, (int) $sheet->getCell('K5')->getValue());
+            // Dòng học sinh: HK1 có mặt (trống), HK2 CP + tổng kết
+            $this->assertSame('', (string) $sheet->getCell('F5')->getValue());
+            $this->assertSame('CP', (string) $sheet->getCell('G5')->getValue());
+            $this->assertEquals(1, (int) $sheet->getCell('H5')->getValue());
+            $this->assertEquals(1, (int) $sheet->getCell('I5')->getValue());
+            $this->assertEquals(0, (int) $sheet->getCell('J5')->getValue());
+            $this->assertEquals(50.0, (float) $sheet->getCell('K5')->getValue());
 
-            // 3 dòng thống kê cuối
+            // 3 dòng thống kê cuối (giống UI)
             $this->assertStringContainsString('Thống kê — Có mặt', (string) $sheet->getCell('A6')->getValue());
-            $this->assertEquals(1, (int) $sheet->getCell('H6')->getValue());
-            $this->assertEquals(0, (int) $sheet->getCell('I6')->getValue());
+            $this->assertEquals(1, (int) $sheet->getCell('F6')->getValue());
+            $this->assertEquals(0, (int) $sheet->getCell('G6')->getValue());
 
-            $this->assertStringContainsString('Thống kê — Vắng CP', (string) $sheet->getCell('A7')->getValue());
-            $this->assertEquals(0, (int) $sheet->getCell('H7')->getValue());
-            $this->assertEquals(1, (int) $sheet->getCell('I7')->getValue());
+            $this->assertStringContainsString('Thống kê — Vắng có phép', (string) $sheet->getCell('A7')->getValue());
+            $this->assertEquals(0, (int) $sheet->getCell('F7')->getValue());
+            $this->assertEquals(1, (int) $sheet->getCell('G7')->getValue());
 
-            $this->assertStringContainsString('Thống kê — Vắng KP', (string) $sheet->getCell('A8')->getValue());
-            $this->assertEquals(0, (int) $sheet->getCell('H8')->getValue());
-            $this->assertEquals(0, (int) $sheet->getCell('I8')->getValue());
+            $this->assertStringContainsString('Thống kê — Vắng không phép', (string) $sheet->getCell('A8')->getValue());
+            $this->assertEquals(0, (int) $sheet->getCell('F8')->getValue());
+            $this->assertEquals(0, (int) $sheet->getCell('G8')->getValue());
+
+            $this->assertSame('E5', $sheet->getFreezePane());
         } finally {
             @unlink($tmp);
         }
@@ -165,18 +174,18 @@ class AttendanceExportTest extends TestCase
             );
             $this->assertSame(
                 'Học kỳ 1',
-                (string) $spreadsheet->getSheetByName('Đi học')->getCell('H3')->getValue()
+                (string) $spreadsheet->getSheetByName('Đi học')->getCell('F3')->getValue()
             );
             $this->assertSame(
                 'Học kỳ 2',
-                (string) $spreadsheet->getSheetByName('Đi lễ')->getCell('H3')->getValue()
+                (string) $spreadsheet->getSheetByName('Đi lễ')->getCell('F3')->getValue()
             );
         } finally {
             @unlink($tmp);
         }
     }
 
-    public function test_export_attendance_ignores_ui_semester_and_downloads_whole_year(): void
+    public function test_export_attendance_requires_selected_class_and_downloads(): void
     {
         $class = $this->fx->classAssigned;
 
@@ -187,16 +196,26 @@ class AttendanceExportTest extends TestCase
             'type'     => AttendanceSession::TYPE_CLASS,
         ]);
 
-        // Xuất toàn xứ theo năm học — không phụ thuộc học kỳ UI
         Livewire::actingAs($this->fx->parishAdmin)
             ->test(AttendanceManager::class)
             ->set('selectedNamHoc', $this->fx->yearA->id)
             ->set('selectedClassId', $class->id)
             ->set('selectedKy', 1)
-            ->set('summaryExportType', 1)
             ->call('exportAttendance')
             ->assertHasNoErrors()
+            ->assertEmitted('toast', 'info', 'File gồm 2 sheet: <strong>Đi học</strong> và <strong>Đi lễ</strong>.')
             ->assertFileDownloaded();
+    }
+
+    public function test_export_attendance_warns_when_no_class_selected(): void
+    {
+        Livewire::actingAs($this->fx->parishAdmin)
+            ->test(AttendanceManager::class)
+            ->set('selectedNamHoc', $this->fx->yearA->id)
+            ->set('selectedClassId', null)
+            ->call('exportAttendance')
+            ->assertHasNoErrors()
+            ->assertEmitted('toast', 'warning', 'Vui lòng chọn lớp để xuất');
     }
 
     public function test_export_attendance_warns_when_no_sessions(): void
@@ -204,7 +223,7 @@ class AttendanceExportTest extends TestCase
         Livewire::actingAs($this->fx->parishAdmin)
             ->test(AttendanceManager::class)
             ->set('selectedNamHoc', $this->fx->yearA->id)
-            ->set('summaryExportType', 1)
+            ->set('selectedClassId', $this->fx->classAssigned->id)
             ->call('exportAttendance')
             ->assertHasNoErrors()
             ->assertEmitted('toast', 'warning', 'Chưa có buổi để xuất');

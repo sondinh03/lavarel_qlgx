@@ -18,11 +18,23 @@ use PhpOffice\PhpSpreadsheet\Cell\Coordinate;
 use PhpOffice\PhpSpreadsheet\Style\Border;
 use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
 
+/**
+ * Ma trận điểm danh tổng kết theo lớp / loại buổi.
+ *
+ * Cột cố định: STT | Tên thánh | Họ tên đệm | Tên | Giáo họ
+ * Hàng ngày: từng buổi — ô: trống = có mặt, CP / KP / ?
+ * Cột tổng kết theo HS: Có mặt | Vắng CP | Vắng KP | Tỷ lệ (%)
+ * Cuối sheet: thống kê theo từng buổi
+ */
 class AttendanceExport implements FromCollection, WithHeadings, WithMapping, WithStyles, WithEvents, WithTitle
 {
     private int $rowIndex = 0;
 
-    /** @var Collection<int, AttendanceSession> */
+    private const FIXED_COLUMNS = 5;
+
+    private const SUMMARY_COLUMNS = 4;
+
+    /** @var Collection<int, AttendanceSession>|null */
     private ?Collection $sessions = null;
 
     /** @var array<int, array<int, array{status: ?int, note: ?string}>> */
@@ -31,9 +43,7 @@ class AttendanceExport implements FromCollection, WithHeadings, WithMapping, Wit
     /** @var list<int> */
     private array $studentIds = [];
 
-    private const FIXED_COLUMNS = 7;
-
-    private const SUMMARY_COLUMNS = 4;
+    private bool $recordsLoaded = false;
 
     /**
      * @param  int|null  $semester  1|2 = học kỳ, 3 = hè, null = cả năm
@@ -46,7 +56,7 @@ class AttendanceExport implements FromCollection, WithHeadings, WithMapping, Wit
         private string $sheetTitle = '',
     ) {}
 
-    public function collection()
+    public function collection(): Collection
     {
         $this->loadSessions();
         $this->loadRecordsMap();
@@ -56,10 +66,16 @@ class AttendanceExport implements FromCollection, WithHeadings, WithMapping, Wit
             ->join('students_class', 'students.id', '=', 'students_class.student_id')
             ->where('students_class.class_id', $this->classId)
             ->where('students_class.status', 1)
-            ->with(['saint', 'parishGroup'])
+            ->with(['saint:id,name', 'parishGroup:id,name'])
             ->orderBy('students.first_name')
             ->orderBy('students.last_name')
-            ->select('students.*')
+            ->select([
+                'students.id',
+                'students.saint_id',
+                'students.last_name',
+                'students.first_name',
+                'students.parish_group_id',
+            ])
             ->get();
 
         $this->studentIds = $students->pluck('id')->map(fn ($id) => (int) $id)->all();
@@ -73,27 +89,21 @@ class AttendanceExport implements FromCollection, WithHeadings, WithMapping, Wit
 
         $headings = [
             'STT',
-            'Mã học sinh',
             'Tên thánh',
             'Họ tên đệm',
             'Tên',
-            'Ngày sinh',
             'Giáo họ',
         ];
 
         foreach ($this->sessions ?? [] as $session) {
             $date = $session->date;
             $dayName = ['CN', 'T2', 'T3', 'T4', 'T5', 'T6', 'T7'][$date->dayOfWeek];
-            $typePrefix = '';
-            if ($this->attendanceType === null) {
-                $typePrefix = ((int) $session->type === AttendanceSession::TYPE_CEREMONY ? 'Lễ ' : 'Học ');
-            }
-            $headings[] = "{$typePrefix}{$dayName} {$date->format('d/m')}";
+            $headings[] = "{$dayName} {$date->format('d/m')}";
         }
 
         $headings[] = 'Có mặt';
-        $headings[] = 'Vắng có phép';
-        $headings[] = 'Vắng không phép';
+        $headings[] = 'Vắng CP';
+        $headings[] = 'Vắng KP';
         $headings[] = 'Tỷ lệ có mặt (%)';
 
         return $headings;
@@ -106,11 +116,9 @@ class AttendanceExport implements FromCollection, WithHeadings, WithMapping, Wit
 
         $row = [
             ++$this->rowIndex,
-            $student->student_code ?? '',
             $student->saint?->name ?? '',
-            $student->last_name,
-            $student->first_name,
-            $student->birthday?->format('d/m/Y') ?? '',
+            $student->last_name ?? '',
+            $student->first_name ?? '',
             $student->parishGroup?->name ?? '',
         ];
 
@@ -120,8 +128,11 @@ class AttendanceExport implements FromCollection, WithHeadings, WithMapping, Wit
         $sessionCount = $this->sessions?->count() ?? 0;
 
         foreach ($this->sessions ?? [] as $session) {
-            $status = $this->recordsMap[$student->id][$session->id]['status'] ?? null;
-            $row[] = $this->statusLabel($status);
+            $cell = $this->recordsMap[$student->id][$session->id] ?? null;
+            $status = is_array($cell) && $cell['status'] !== null
+                ? (int) $cell['status']
+                : null;
+            $row[] = $this->statusCell($status);
 
             match ($status) {
                 AttendanceRecord::STATUS_PRESENT => $present++,
@@ -220,7 +231,9 @@ class AttendanceExport implements FromCollection, WithHeadings, WithMapping, Wit
 
                 $sheet->setCellValue(
                     'A2',
-                    'Ngày xuất: ' . now()->format('d/m/Y H:i:s') . " · {$sessionCount} buổi"
+                    'Ngày xuất: ' . now()->format('d/m/Y H:i:s')
+                        . " · {$this->rowIndex} học sinh · {$sessionCount} buổi"
+                        . ' · Ký hiệu: trống = có mặt, CP = có phép, KP = không phép, ? = chưa điểm danh'
                 );
                 $sheet->mergeCells("A2:{$lastCol}2");
 
@@ -257,7 +270,28 @@ class AttendanceExport implements FromCollection, WithHeadings, WithMapping, Wit
                     ->setName('Times New Roman')
                     ->setSize(12);
 
-                for ($col = 1; $col <= $lastColIndex; $col++) {
+                for ($col = 1; $col <= self::FIXED_COLUMNS; $col++) {
+                    $sheet->getColumnDimension(Coordinate::stringFromColumnIndex($col))->setAutoSize(true);
+                }
+
+                if ($sessionCount > 0) {
+                    $lastSessionCol = self::FIXED_COLUMNS + $sessionCount;
+                    for ($col = self::FIXED_COLUMNS + 1; $col <= $lastSessionCol; $col++) {
+                        $dim = $sheet->getColumnDimension(Coordinate::stringFromColumnIndex($col));
+                        $dim->setAutoSize(false);
+                        $dim->setWidth(7);
+                    }
+
+                    $sessionStart = Coordinate::stringFromColumnIndex(self::FIXED_COLUMNS + 1);
+                    $sessionEnd = Coordinate::stringFromColumnIndex($lastSessionCol);
+                    $sheet->getStyle("{$sessionStart}" . ($headerRow + 1) . ":{$sessionEnd}{$dataLastRow}")
+                        ->getAlignment()
+                        ->setHorizontal('center')
+                        ->setVertical('center')
+                        ->setWrapText(true);
+                }
+
+                for ($col = self::FIXED_COLUMNS + $sessionCount + 1; $col <= $lastColIndex; $col++) {
                     $sheet->getColumnDimension(Coordinate::stringFromColumnIndex($col))->setAutoSize(true);
                 }
 
@@ -281,12 +315,13 @@ class AttendanceExport implements FromCollection, WithHeadings, WithMapping, Wit
                         ],
                     ]);
 
-                $statsLastRow = $this->appendSessionStatsRows($sheet, $headerRow, $dataLastRow, $lastColIndex);
+                $statsLastRow = $this->appendSessionStatsRows($sheet, $headerRow, $dataLastRow);
 
-                $sheet->freezePane('F' . ($headerRow + 1));
+                // Đóng băng đến hết cột "Tên" (D); cuộn ngang từ "Giáo họ"
+                $sheet->freezePane('E' . ($headerRow + 1));
 
                 if ($statsLastRow > $dataLastRow) {
-                    $sheet->getStyle("A" . ($dataLastRow + 1) . ":{$lastCol}{$statsLastRow}")
+                    $sheet->getStyle('A' . ($dataLastRow + 1) . ":{$lastCol}{$statsLastRow}")
                         ->applyFromArray([
                             'borders' => [
                                 'outline' => [
@@ -310,13 +345,12 @@ class AttendanceExport implements FromCollection, WithHeadings, WithMapping, Wit
     }
 
     /**
-     * Hàng 3 phân nhóm các cột ngày theo học kỳ, đồng thời đánh dấu
-     * vùng thông tin học sinh và vùng tổng kết.
+     * Hàng 3: Thông tin HS + nhóm cột buổi theo học kỳ + Tổng kết.
      */
     private function appendSemesterHeader(Worksheet $sheet, string $summaryStartCol, string $lastCol): void
     {
         $sheet->setCellValue('A3', 'Thông tin học sinh');
-        $sheet->mergeCells('A3:G3');
+        $sheet->mergeCells('A3:' . Coordinate::stringFromColumnIndex(self::FIXED_COLUMNS) . '3');
 
         $groups = [];
         foreach ($this->sessions ?? [] as $index => $session) {
@@ -355,6 +389,7 @@ class AttendanceExport implements FromCollection, WithHeadings, WithMapping, Wit
             'alignment' => [
                 'horizontal' => 'center',
                 'vertical' => 'center',
+                'wrapText' => true,
             ],
             'fill' => [
                 'fillType' => 'solid',
@@ -370,9 +405,9 @@ class AttendanceExport implements FromCollection, WithHeadings, WithMapping, Wit
     }
 
     /**
-     * Thêm 3 dòng thống kê theo từng buổi: Có mặt / Vắng CP / Vắng KP.
+     * 3 dòng thống kê theo buổi — giống footer trên giao diện điểm danh.
      */
-    private function appendSessionStatsRows(Worksheet $sheet, int $headerRow, int $dataLastRow, int $lastColIndex): int
+    private function appendSessionStatsRows(Worksheet $sheet, int $headerRow, int $dataLastRow): int
     {
         if ($this->sessions === null || $this->sessions->isEmpty()) {
             return $dataLastRow;
@@ -380,7 +415,6 @@ class AttendanceExport implements FromCollection, WithHeadings, WithMapping, Wit
 
         $studentIds = $this->studentIds;
         if ($studentIds === [] && $this->rowIndex > 0) {
-            // Fallback nếu collection() chưa gán (hiếm)
             $studentIds = array_keys($this->recordsMap);
         }
 
@@ -392,6 +426,7 @@ class AttendanceExport implements FromCollection, WithHeadings, WithMapping, Wit
 
             foreach ($studentIds as $studentId) {
                 $status = $this->recordsMap[$studentId][$session->id]['status'] ?? null;
+                $status = $status !== null ? (int) $status : null;
                 match ($status) {
                     AttendanceRecord::STATUS_PRESENT => $present++,
                     AttendanceRecord::STATUS_ABSENT_EXCUSED => $excused++,
@@ -427,7 +462,6 @@ class AttendanceExport implements FromCollection, WithHeadings, WithMapping, Wit
                 );
             }
 
-            // Các cột tổng hợp cuối để trống
             for ($i = 1; $i <= self::SUMMARY_COLUMNS; $i++) {
                 $col++;
                 $sheet->setCellValue(Coordinate::stringFromColumnIndex($col) . $rowNum, '');
@@ -449,34 +483,41 @@ class AttendanceExport implements FromCollection, WithHeadings, WithMapping, Wit
             return;
         }
 
-        $this->sessions = AttendanceSession::query()
+        $class = CatechismClass::query()->find($this->classId);
+        $namHoc = $class?->school_year_id
+            ? \App\Models\NamHoc::find((int) $class->school_year_id)
+            : null;
+
+        $query = AttendanceSession::query()
             ->where('class_id', $this->classId)
             ->when(
                 $this->attendanceType !== null,
                 fn ($q) => $q->where('type', $this->attendanceType)
-            )
-            ->when(
-                in_array($this->semester, [1, 2], true),
-                fn ($q) => $q->where('semester', $this->semester)
-            )
-            ->when(
-                $this->semester === 3,
-                fn ($q) => $q->whereNull('semester')
-            )
+            );
+
+        if (in_array($this->semester, [1, 2, 3], true)) {
+            app(\App\Services\SchoolYearResolver::class)
+                ->applyAttendanceKyFilter($query, $namHoc, $this->semester);
+        }
+
+        $this->sessions = $query
             ->orderBy('date')
             ->orderBy('type')
-            ->get();
+            ->get(['id', 'class_id', 'date', 'type', 'semester']);
     }
 
     private function loadRecordsMap(): void
     {
-        if (!empty($this->recordsMap)) {
+        if ($this->recordsLoaded) {
             return;
         }
 
+        $this->recordsLoaded = true;
         $this->loadSessions();
 
         if ($this->sessions === null || $this->sessions->isEmpty()) {
+            $this->recordsMap = [];
+
             return;
         }
 
@@ -485,20 +526,29 @@ class AttendanceExport implements FromCollection, WithHeadings, WithMapping, Wit
             ->get(['session_id', 'student_id', 'status', 'note']);
 
         foreach ($records as $record) {
-            $this->recordsMap[$record->student_id][$record->session_id] = [
-                'status' => $record->status,
+            $status = $record->status !== null ? (int) $record->status : null;
+            $this->recordsMap[(int) $record->student_id][(int) $record->session_id] = [
+                'status' => $status,
                 'note'   => $record->note,
             ];
         }
     }
 
-    private function statusLabel(?int $status): string
+    private function statusCell(?int $status): string
     {
-        return match ($status) {
-            AttendanceRecord::STATUS_PRESENT => 'Có mặt',
-            AttendanceRecord::STATUS_ABSENT_EXCUSED => 'Vắng có phép',
-            AttendanceRecord::STATUS_ABSENT_UNEXCUSED => 'Vắng không phép',
-            default => '',
-        };
+        if ($status === null) {
+            return '?';
+        }
+
+        if ($status === AttendanceRecord::STATUS_ABSENT_EXCUSED) {
+            return 'CP';
+        }
+
+        if ($status === AttendanceRecord::STATUS_ABSENT_UNEXCUSED) {
+            return 'KP';
+        }
+
+        // Có mặt — để trống, tránh rối mắt
+        return '';
     }
 }

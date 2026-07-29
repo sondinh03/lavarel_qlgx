@@ -114,6 +114,29 @@ class SchoolYearResolver
     }
 
     /**
+     * Lọc phiên theo kỳ UI (phân hoạch theo ngày năm học — không chồng lên nhau):
+     * - ky=1: date ∈ [start_date_one, end_date_one]
+     * - ky=2: date ∈ [start_date_two, end_date_two]
+     * - ky=3: date ngoài cả HK1 và HK2 (hè + nghỉ giữa kỳ)
+     *
+     * @param  \Illuminate\Database\Eloquent\Builder|\Illuminate\Database\Query\Builder  $query
+     */
+    public function applyAttendanceKyFilter($query, ?NamHoc $namHoc, ?int $ky): void
+    {
+        if (! in_array($ky, [1, 2, 3], true)) {
+            return;
+        }
+
+        if ($ky === 1 || $ky === 2) {
+            $this->constrainToSemesterDateRange($query, $namHoc, $ky);
+
+            return;
+        }
+
+        $this->constrainToOffSemesterDates($query, $namHoc);
+    }
+
+    /**
      * @param  \Illuminate\Database\Eloquent\Builder|\Illuminate\Database\Query\Builder  $query
      */
     public function applySessionPhaseFilter($query, OperatingSchoolYear $operating): void
@@ -121,26 +144,65 @@ class SchoolYearResolver
         $namHoc = $operating->namHoc;
 
         if ($operating->semester === 1 || $operating->semester === 2) {
-            $query->where('semester', $operating->semester);
+            $this->constrainToSemesterDateRange($query, $namHoc, $operating->semester);
 
             return;
         }
 
-        // Hè / nghỉ giữa kỳ: phiên ngoài HK1–HK2 (semester null) hoặc ngày ngoài khoảng kỳ
-        $query->where(function ($q) use ($namHoc, $operating) {
-            $q->whereNull('semester');
+        $this->constrainToOffSemesterDates($query, $namHoc);
+    }
 
-            if ($operating->isSummer() && $namHoc->end_date_two) {
-                $q->orWhereDate('date', '>', $namHoc->end_date_two->toDateString());
+    /**
+     * @param  \Illuminate\Database\Eloquent\Builder|\Illuminate\Database\Query\Builder  $query
+     */
+    protected function constrainToSemesterDateRange($query, ?NamHoc $namHoc, int $ky): void
+    {
+        $start = $ky === 1 ? $namHoc?->start_date_one : $namHoc?->start_date_two;
+        $end = $ky === 1 ? $namHoc?->end_date_one : $namHoc?->end_date_two;
+
+        if ($start && $end) {
+            $query->whereDate('date', '>=', $start->toDateString())
+                ->whereDate('date', '<=', $end->toDateString());
+
+            return;
+        }
+
+        // Năm thiếu mốc ngày — fallback cột semester (1|2)
+        $query->where('semester', $ky);
+    }
+
+    /**
+     * Buổi không thuộc HK1 và không thuộc HK2 (theo ngày).
+     *
+     * @param  \Illuminate\Database\Eloquent\Builder|\Illuminate\Database\Query\Builder  $query
+     */
+    protected function constrainToOffSemesterDates($query, ?NamHoc $namHoc): void
+    {
+        $hasHk1 = $namHoc?->start_date_one && $namHoc?->end_date_one;
+        $hasHk2 = $namHoc?->start_date_two && $namHoc?->end_date_two;
+
+        if (! $hasHk1 && ! $hasHk2) {
+            $query->whereNull('semester');
+
+            return;
+        }
+
+        $query->where(function ($q) use ($namHoc, $hasHk1, $hasHk2) {
+            if ($hasHk1) {
+                $start1 = $namHoc->start_date_one->toDateString();
+                $end1 = $namHoc->end_date_one->toDateString();
+                $q->where(function ($inner) use ($start1, $end1) {
+                    $inner->whereDate('date', '<', $start1)
+                        ->orWhereDate('date', '>', $end1);
+                });
             }
 
-            if ($operating->isBetweenSemesters()
-                && $namHoc->end_date_one
-                && $namHoc->start_date_two
-            ) {
-                $q->orWhere(function ($inner) use ($namHoc) {
-                    $inner->whereDate('date', '>', $namHoc->end_date_one->toDateString())
-                        ->whereDate('date', '<', $namHoc->start_date_two->toDateString());
+            if ($hasHk2) {
+                $start2 = $namHoc->start_date_two->toDateString();
+                $end2 = $namHoc->end_date_two->toDateString();
+                $q->where(function ($inner) use ($start2, $end2) {
+                    $inner->whereDate('date', '<', $start2)
+                        ->orWhereDate('date', '>', $end2);
                 });
             }
         });
@@ -162,6 +224,15 @@ class SchoolYearResolver
             && $todayStr <= $year->end_date_two->toDateString()
         ) {
             return OperatingSchoolYear::PHASE_SEMESTER_2;
+        }
+
+        // Trong [start_one, end_two] nhưng không thuộc HK1/HK2 → nghỉ giữa kỳ;
+        // ngoài end_two (resolve() path hè) cũng vào đây khi gọi từ in-range edge.
+        if (
+            $year->end_date_two
+            && $todayStr > $year->end_date_two->toDateString()
+        ) {
+            return OperatingSchoolYear::PHASE_SUMMER;
         }
 
         return OperatingSchoolYear::PHASE_BETWEEN;

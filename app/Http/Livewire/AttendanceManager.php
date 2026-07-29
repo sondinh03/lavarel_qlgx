@@ -3,7 +3,7 @@
 namespace App\Http\Livewire;
 
 use App\Exports\AbsentStudentsWorkbookExport;
-use App\Exports\AttendanceParishWorkbookExport;
+use App\Exports\AttendanceWorkbookExport;
 use App\Http\Livewire\Base\BaseComponent;
 use App\Models\AttendanceRecord;
 use App\Models\AttendanceSession;
@@ -69,11 +69,6 @@ class AttendanceManager extends BaseComponent
 
     /** 0 = cả hai loại vắng, 2 = có phép, 3 = không phép */
     public int $absentExportStatus = 0;
-
-    public bool $showSummaryExportModal = false;
-
-    /** 0 = cả hai, 1 = đi học, 2 = đi lễ */
-    public int $summaryExportType = 0;
 
     // ==================== VALIDATION ====================
 
@@ -267,7 +262,7 @@ class AttendanceManager extends BaseComponent
     }
 
     /**
-     * Lọc phiên theo kỳ: 1|2 theo semester; 3 = hè/giữa kỳ (semester null hoặc ngoài khoảng HK).
+     * Lọc phiên theo kỳ: 1|2 = khoảng ngày HK; 3 = ngoài HK1 và HK2.
      *
      * @param  \Illuminate\Database\Eloquent\Builder|\Illuminate\Database\Query\Builder  $query
      */
@@ -275,44 +270,12 @@ class AttendanceManager extends BaseComponent
     {
         $ky = is_numeric($this->selectedKy) ? (int) $this->selectedKy : null;
 
-        if (in_array($ky, [1, 2], true)) {
-            $query->where('semester', $ky);
-
-            return;
-        }
-
-        if ($ky !== 3) {
-            return;
-        }
-
         $namHoc = is_numeric($this->selectedNamHoc)
             ? NamHoc::find((int) $this->selectedNamHoc)
             : null;
 
-        $operating = app(SchoolYearResolver::class)
-            ->resolve($this->parishId ? (int) $this->parishId : null);
-
-        if ($operating && $namHoc && $operating->id() === (int) $namHoc->id) {
-            app(SchoolYearResolver::class)->applySessionPhaseFilter($query, $operating);
-
-            return;
-        }
-
-        // Năm chọn tay khác năm vận hành — vẫn lọc buổi ngoài HK
-        $query->where(function ($q) use ($namHoc) {
-            $q->whereNull('semester');
-
-            if ($namHoc?->end_date_two) {
-                $q->orWhereDate('date', '>', $namHoc->end_date_two->toDateString());
-            }
-
-            if ($namHoc?->end_date_one && $namHoc?->start_date_two) {
-                $q->orWhere(function ($inner) use ($namHoc) {
-                    $inner->whereDate('date', '>', $namHoc->end_date_one->toDateString())
-                        ->whereDate('date', '<', $namHoc->start_date_two->toDateString());
-                });
-            }
-        });
+        app(SchoolYearResolver::class)
+            ->applyAttendanceKyFilter($query, $namHoc, $ky);
     }
 
     protected function resetToDefaults(): void
@@ -1265,37 +1228,12 @@ class AttendanceManager extends BaseComponent
         $this->loadAttendanceRecords();
     }
 
-    public function openSummaryExportModal(): void
+    /**
+     * Alias tương thích — Alpine trong wire:ignore có thể còn gọi tên method cũ.
+     */
+    public function openSummaryExportModal()
     {
-        if ($this->subjectTarget === 'teachers') {
-            $this->emit('toast', 'info', 'Xuất điểm danh GLV sẽ bổ sung sau');
-
-            return;
-        }
-
-        if (! auth()->user()?->canManage()) {
-            $this->emit('toast', 'error', 'Bạn không có quyền xuất danh sách');
-
-            return;
-        }
-
-        if (! $this->selectedNamHoc || ! $this->parishId) {
-            $this->emit('toast', 'warning', 'Vui lòng chọn năm học');
-
-            return;
-        }
-
-        $this->summaryExportType = 0;
-        $this->showSummaryExportModal = true;
-        $this->resetValidation();
-        $this->emit('openSummaryExportModal');
-    }
-
-    public function closeSummaryExportModal(): void
-    {
-        $this->showSummaryExportModal = false;
-        $this->resetValidation();
-        $this->emit('closeSummaryExportModal');
+        return $this->exportAttendance();
     }
 
     public function exportAttendance()
@@ -1318,49 +1256,48 @@ class AttendanceManager extends BaseComponent
             return;
         }
 
-        $this->validate([
-            'summaryExportType' => 'required|integer|in:0,1,2',
-        ]);
-
-        $classIds = CatechismClass::query()
-            ->where('parish_id', $this->parishId)
-            ->where('school_year_id', (int) $this->selectedNamHoc)
-            ->active()
-            ->pluck('id');
-
-        if ($classIds->isEmpty()) {
-            $this->emit('toast', 'warning', 'Năm học chưa có lớp để xuất');
+        if (! $this->selectedClassId) {
+            $this->emit('toast', 'warning', 'Vui lòng chọn lớp để xuất');
 
             return;
         }
 
-        $type = (int) $this->summaryExportType;
-        $exportType = $type === 0 ? null : $type;
+        $classId = (int) $this->selectedClassId;
+        $class = CatechismClass::query()
+            ->where('id', $classId)
+            ->where('parish_id', $this->parishId)
+            ->where('school_year_id', (int) $this->selectedNamHoc)
+            ->active()
+            ->first();
 
-        $sessionsQuery = AttendanceSession::query()
-            ->whereIn('class_id', $classIds)
-            ->when($exportType !== null, fn ($q) => $q->where('type', $exportType));
+        if (! $class) {
+            $this->emit('toast', 'warning', 'Lớp không hợp lệ hoặc không thuộc năm học đang chọn');
 
-        if ($sessionsQuery->count() === 0) {
+            return;
+        }
+
+        if (! AttendanceSession::query()->where('class_id', $classId)->exists()) {
             $this->emit('toast', 'warning', 'Chưa có buổi để xuất');
 
             return;
         }
 
         $namHocName = NamHoc::where('id', $this->selectedNamHoc)->value('name') ?? 'NamHoc';
-        $parishId = (int) $this->parishId;
-        $namHocId = (int) $this->selectedNamHoc;
         $safeYear = preg_replace('/[\\\\\/\?\*\[\]\:]/', '-', (string) $namHocName) ?: 'NamHoc';
+        $safeClass = preg_replace('/[\\\\\/\?\*\[\]\:]/', '-', (string) $class->name) ?: 'Lop';
 
-        $this->showSummaryExportModal = false;
-        $this->emit('closeSummaryExportModal');
+        $this->emit(
+            'toast',
+            'info',
+            'File gồm 2 sheet: <strong>Đi học</strong> và <strong>Đi lễ</strong>.'
+        );
 
-        return response()->streamDownload(function () use ($parishId, $namHocId, $exportType) {
+        return response()->streamDownload(function () use ($classId) {
             echo \Maatwebsite\Excel\Facades\Excel::raw(
-                new AttendanceParishWorkbookExport($parishId, $namHocId, $exportType),
+                new AttendanceWorkbookExport($classId),
                 \Maatwebsite\Excel\Excel::XLSX
             );
-        }, 'DiemDanh_ToanXu_' . $safeYear . '_CaNam_' . now()->format('dmY_His') . '.xlsx');
+        }, 'DiemDanh_' . $safeClass . '_' . $safeYear . '_CaNam_' . now()->format('dmY_His') . '.xlsx');
     }
 
     public function openAbsentExportModal(): void

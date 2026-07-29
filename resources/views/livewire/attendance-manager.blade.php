@@ -10,13 +10,11 @@
 
 <div class="min-h-screen bg-apple-gray p-2 sm:p-4 lg:p-6"
     style="min-height: calc(100vh - 56px - var(--bottom-offset));"
-    x-data="{ showAbsentExport: false, showSummaryExport: false }"
+    x-data="{ showAbsentExport: false }"
     x-init="
         document.addEventListener('livewire:load', () => {
             Livewire.on('openAbsentExportModal', () => { showAbsentExport = true; });
             Livewire.on('closeAbsentExportModal', () => { showAbsentExport = false; });
-            Livewire.on('openSummaryExportModal', () => { showSummaryExport = true; });
-            Livewire.on('closeSummaryExportModal', () => { showSummaryExport = false; });
         });
     ">
 
@@ -154,7 +152,7 @@
             </div>
 
     <div wire:ignore
-        wire:key="attendance-{{ $subjectTarget }}-{{ $selectedClassId }}-{{ $selectedNamHoc }}-{{ $attendanceType }}-{{ $selectedKy }}-{{ $selectedDate }}"
+        wire:key="attendance-v2-{{ $subjectTarget }}-{{ $selectedClassId }}-{{ $selectedNamHoc }}-{{ $attendanceType }}-{{ $selectedKy }}-{{ $selectedDate }}"
         data-attendance-root
         x-data="{
             records: {},
@@ -319,7 +317,7 @@
 
             requestExport() {
                 this.requestLeave('xuất Excel', () => {
-                    this.getLivewire().call('openSummaryExportModal');
+                    this.getLivewire().call('exportAttendance');
                 });
             },
 
@@ -1702,89 +1700,6 @@
     </div>{{-- /alpine wire:key --}}
 
         </x-mac-panel>
-
-        {{-- Modal xuất tổng kết — ngoài mac-panel (giống trang Học sinh) --}}
-        <div
-            x-show="showSummaryExport"
-            x-cloak
-            x-transition.opacity
-            class="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50 p-4"
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="summary-export-title"
-            @click="showSummaryExport = false; $wire.closeSummaryExportModal()"
-            @keydown.escape.window="showSummaryExport = false; $wire.closeSummaryExportModal()">
-
-            <div
-                x-show="showSummaryExport"
-                x-transition
-                class="bg-white/90 backdrop-blur-xl rounded-2xl border border-black/[0.06] shadow-mac
-                    w-full max-w-xl max-h-[90vh] overflow-hidden flex flex-col"
-                @click.stop>
-
-                <div class="flex-shrink-0 px-6 py-5 border-b border-black/[0.06]">
-                    <div class="flex items-start justify-between gap-4">
-                        <div class="min-w-0">
-                            <h2 id="summary-export-title" class="text-xl font-semibold tracking-tight text-slate-900">
-                                Xuất tổng kết điểm danh
-                            </h2>
-                            <p class="text-sm text-slate-500 mt-1">
-                                Toàn giáo xứ · mỗi lớp một sheet · cả năm
-                                @if($selectedNamHoc)
-                                · {{ \App\Models\NamHoc::find($selectedNamHoc)?->name }}
-                                @endif
-                            </p>
-                        </div>
-                        <button type="button"
-                            @click="showSummaryExport = false; $wire.closeSummaryExportModal()"
-                            class="flex-shrink-0 p-1.5 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-black/[0.04] transition-colors">
-                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M6 18L18 6M6 6l12 12" />
-                            </svg>
-                        </button>
-                    </div>
-                </div>
-
-                <div class="flex-1 overflow-y-auto p-6 space-y-5">
-                    <div>
-                        <label class="block text-xs font-semibold text-slate-500 mb-2 tracking-wide uppercase">
-                            Loại buổi
-                        </label>
-                        <div class="grid grid-cols-3 gap-3">
-                            <x-radio-card wire:model="summaryExportType" :value="0" label="Đi học và đi lễ" :checked="(int) $summaryExportType === 0" />
-                            <x-radio-card wire:model="summaryExportType" :value="1" label="Đi học" :checked="(int) $summaryExportType === 1" />
-                            <x-radio-card wire:model="summaryExportType" :value="2" label="Đi lễ" :checked="(int) $summaryExportType === 2" />
-                        </div>
-                    </div>
-
-                    <div class="bg-primary-50/80 border border-primary-200/60 rounded-xl p-4 shadow-mac-sm">
-                        <ul class="text-sm text-primary-700 space-y-1">
-                            <li>• Xuất <strong>tất cả lớp</strong> của năm học đang chọn</li>
-                            <li>• Mỗi lớp là <strong>một sheet</strong> (ma trận cả năm)</li>
-                            <li>• Chọn «Đi học và đi lễ»: cột ngày ghi rõ loại buổi</li>
-                        </ul>
-                    </div>
-                </div>
-
-                <div class="flex-shrink-0 px-6 py-4 border-t border-black/[0.06] bg-slate-50/70 flex justify-end gap-3">
-                    <x-button type="button" variant="outline"
-                        @click="showSummaryExport = false; $wire.closeSummaryExportModal()">
-                        Hủy
-                    </x-button>
-                    <x-button type="button" variant="primary"
-                        wire:click="exportAttendance"
-                        wire:loading.attr="disabled"
-                        wire:target="exportAttendance">
-                        <span wire:loading.remove wire:target="exportAttendance" class="inline-flex items-center gap-2">
-                            <x-icon name="file-export" />
-                            Xuất Excel
-                        </span>
-                        <span wire:loading wire:target="exportAttendance">Đang xuất…</span>
-                    </x-button>
-                </div>
-            </div>
-        </div>
 
         {{-- Modal xuất học sinh vắng — ngoài mac-panel --}}
         <div

@@ -265,7 +265,11 @@ class AttendanceStatistics extends BaseComponent
             ->orderBy('date');
 
         if ($this->selectedKy) {
-            $query->where('semester', $this->selectedKy);
+            $namHoc = is_numeric($this->selectedNamHoc)
+                ? NamHoc::find((int) $this->selectedNamHoc)
+                : null;
+            app(\App\Services\SchoolYearResolver::class)
+                ->applyAttendanceKyFilter($query, $namHoc, (int) $this->selectedKy);
         }
 
         if ($this->dateFrom) {
