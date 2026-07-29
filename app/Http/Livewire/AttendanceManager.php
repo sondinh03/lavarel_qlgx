@@ -3,7 +3,9 @@
 namespace App\Http\Livewire;
 
 use App\Exports\AbsentStudentsWorkbookExport;
+use App\Exports\AbsentTeachersWorkbookExport;
 use App\Exports\AttendanceWorkbookExport;
+use App\Exports\TeacherAttendanceWorkbookExport;
 use App\Http\Livewire\Base\BaseComponent;
 use App\Models\AttendanceRecord;
 use App\Models\AttendanceSession;
@@ -1239,9 +1241,7 @@ class AttendanceManager extends BaseComponent
     public function exportAttendance()
     {
         if ($this->subjectTarget === 'teachers') {
-            $this->emit('toast', 'info', 'Xuất điểm danh GLV sẽ bổ sung sau');
-
-            return;
+            return $this->exportTeacherAttendance();
         }
 
         if (! auth()->user()?->canManage()) {
@@ -1300,12 +1300,52 @@ class AttendanceManager extends BaseComponent
         }, 'DiemDanh_' . $safeClass . '_' . $safeYear . '_CaNam_' . now()->format('dmY_His') . '.xlsx');
     }
 
-    public function openAbsentExportModal(): void
+    protected function exportTeacherAttendance()
     {
-        if ($this->subjectTarget === 'teachers') {
+        if (! auth()->user()?->canManage()) {
+            $this->emit('toast', 'error', 'Bạn không có quyền xuất danh sách');
+
             return;
         }
 
+        if (! $this->selectedNamHoc || ! $this->parishId) {
+            $this->emit('toast', 'warning', 'Vui lòng chọn năm học');
+
+            return;
+        }
+
+        $parishId = (int) $this->parishId;
+        $namHocId = (int) $this->selectedNamHoc;
+
+        if (! TeacherAttendanceSession::query()
+            ->where('parish_id', $parishId)
+            ->where('namhoc_id', $namHocId)
+            ->where('status', '!=', TeacherAttendanceSession::STATUS_CANCELLED)
+            ->exists()) {
+            $this->emit('toast', 'warning', 'Chưa có buổi để xuất');
+
+            return;
+        }
+
+        $namHocName = NamHoc::where('id', $namHocId)->value('name') ?? 'NamHoc';
+        $safeYear = preg_replace('/[\\\\\/\?\*\[\]\:]/', '-', (string) $namHocName) ?: 'NamHoc';
+
+        $this->emit(
+            'toast',
+            'info',
+            'File gồm 3 sheet: <strong>Đi dạy</strong>, <strong>Đi lễ</strong> và <strong>Họp</strong>.'
+        );
+
+        return response()->streamDownload(function () use ($parishId, $namHocId) {
+            echo \Maatwebsite\Excel\Facades\Excel::raw(
+                new TeacherAttendanceWorkbookExport($parishId, $namHocId),
+                \Maatwebsite\Excel\Excel::XLSX
+            );
+        }, 'DiemDanh_GLV_' . $safeYear . '_CaNam_' . now()->format('dmY_His') . '.xlsx');
+    }
+
+    public function openAbsentExportModal(): void
+    {
         if (! auth()->user()?->canManage()) {
             $this->emit('toast', 'error', 'Bạn không có quyền xuất danh sách');
 
@@ -1344,7 +1384,7 @@ class AttendanceManager extends BaseComponent
     public function exportAbsentStudents()
     {
         if ($this->subjectTarget === 'teachers') {
-            return;
+            return $this->exportAbsentTeachers();
         }
 
         if (! auth()->user()?->canManage()) {
@@ -1431,6 +1471,91 @@ class AttendanceManager extends BaseComponent
                 \Maatwebsite\Excel\Excel::XLSX
             );
         }, 'HocSinhVang_ToanXu_' . $safeYear . "_{$fromLabel}_{$toLabel}_" . now()->format('His') . '.xlsx');
+    }
+
+    protected function exportAbsentTeachers()
+    {
+        if (! auth()->user()?->canManage()) {
+            $this->emit('toast', 'error', 'Bạn không có quyền xuất danh sách');
+
+            return;
+        }
+
+        if (! $this->selectedNamHoc || ! $this->parishId) {
+            $this->emit('toast', 'warning', 'Vui lòng chọn năm học');
+
+            return;
+        }
+
+        $this->validate([
+            'absentFromDate' => 'required|date',
+            'absentToDate' => 'required|date|after_or_equal:absentFromDate',
+            'absentExportType' => 'required|integer|in:0,1,2,3',
+            'absentExportStatus' => 'required|integer|in:0,2,3',
+        ], [
+            'absentFromDate.required' => 'Vui lòng chọn từ ngày',
+            'absentToDate.required' => 'Vui lòng chọn đến ngày',
+            'absentToDate.after_or_equal' => 'Đến ngày phải từ ngày bắt đầu trở đi',
+        ]);
+
+        $type = (int) $this->absentExportType;
+        $statusFilter = (int) $this->absentExportStatus;
+        $statuses = $statusFilter === 0
+            ? [TeacherAttendanceRecord::STATUS_ABSENT_EXCUSED, TeacherAttendanceRecord::STATUS_ABSENT_UNEXCUSED]
+            : [$statusFilter];
+
+        $parishId = (int) $this->parishId;
+        $namHocId = (int) $this->selectedNamHoc;
+        $exportType = $type === 0 ? null : $type;
+
+        $hasAbsent = TeacherAttendanceRecord::query()
+            ->whereIn('status', $statuses)
+            ->whereHas('session', function ($q) use ($parishId, $namHocId, $exportType) {
+                $q->where('parish_id', $parishId)
+                    ->where('namhoc_id', $namHocId)
+                    ->whereDate('date', '>=', $this->absentFromDate)
+                    ->whereDate('date', '<=', $this->absentToDate)
+                    ->where('status', '!=', TeacherAttendanceSession::STATUS_CANCELLED)
+                    ->when($exportType !== null, fn ($qq) => $qq->where('type', $exportType));
+            })
+            ->whereHas('teacher', fn ($q) => $q->where('parish_id', $parishId)->active())
+            ->exists();
+
+        if (! $hasAbsent) {
+            $this->emit('toast', 'warning', 'Không có GLV vắng trong khoảng đã chọn');
+
+            return;
+        }
+
+        $namHocName = NamHoc::where('id', $namHocId)->value('name') ?? 'NamHoc';
+        $fromLabel = Carbon::parse($this->absentFromDate)->format('dmY');
+        $toLabel = Carbon::parse($this->absentToDate)->format('dmY');
+        $fromDate = $this->absentFromDate;
+        $toDate = $this->absentToDate;
+        $safeYear = preg_replace('/[\\\\\/\?\*\[\]\:]/', '-', (string) $namHocName) ?: 'NamHoc';
+
+        $this->showAbsentExportModal = false;
+        $this->emit('closeAbsentExportModal');
+
+        $sheetHint = $exportType === null
+            ? 'File gồm 3 sheet: <strong>Đi dạy</strong>, <strong>Đi lễ</strong> và <strong>Họp</strong>.'
+            : 'File gồm 1 sheet: <strong>' . TeacherAttendanceSession::typeLabel($exportType) . '</strong>.';
+
+        $this->emit('toast', 'info', $sheetHint);
+
+        return response()->streamDownload(function () use ($parishId, $namHocId, $fromDate, $toDate, $exportType, $statuses) {
+            echo \Maatwebsite\Excel\Facades\Excel::raw(
+                new AbsentTeachersWorkbookExport(
+                    $parishId,
+                    $namHocId,
+                    $fromDate,
+                    $toDate,
+                    $exportType,
+                    $statuses,
+                ),
+                \Maatwebsite\Excel\Excel::XLSX
+            );
+        }, 'GLV_Vang_' . $safeYear . "_{$fromLabel}_{$toLabel}_" . now()->format('His') . '.xlsx');
     }
 
     // ==================== EVENT HANDLERS ====================

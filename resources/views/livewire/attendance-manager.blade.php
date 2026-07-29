@@ -520,6 +520,20 @@
                                 Tạo phiên
                             </x-button>
                             @endif
+                            @if($isAdmin && $this->viewMode !== 'mobile')
+                            <x-dropdown label="Khác" icon="grid" align="right" width="56">
+                                <x-dropdown-item
+                                    icon="download"
+                                    x-on:click="open = false; $dispatch('attendance-export')">
+                                    Tổng kết điểm danh
+                                </x-dropdown-item>
+                                <x-dropdown-item
+                                    icon="download"
+                                    x-on:click="open = false; $dispatch('attendance-absent-export')">
+                                    GLV vắng
+                                </x-dropdown-item>
+                            </x-dropdown>
+                            @endif
                             @if($this->viewMode !== 'mobile')
                             <div x-show="hasDraft()" x-cloak class="flex items-center gap-2">
                                 <x-button variant="ghost" size="sm" x-on:click="discard()" x-bind:disabled="isSaving">
@@ -1724,10 +1738,14 @@
                     <div class="flex items-start justify-between gap-4">
                         <div class="min-w-0">
                             <h2 id="absent-export-title" class="text-xl font-semibold tracking-tight text-slate-900">
-                                Xuất học sinh vắng
+                                {{ $subjectTarget === 'teachers' ? 'Xuất GLV vắng' : 'Xuất học sinh vắng' }}
                             </h2>
                             <p class="text-sm text-slate-500 mt-1">
-                                Toàn giáo xứ · mỗi lớp một sheet
+                                @if($subjectTarget === 'teachers')
+                                    Toàn giáo xứ · mỗi loại buổi một sheet
+                                @else
+                                    Toàn giáo xứ · mỗi lớp một sheet
+                                @endif
                                 @if($selectedNamHoc)
                                 · {{ \App\Models\NamHoc::find($selectedNamHoc)?->name }}
                                 @endif
@@ -1778,11 +1796,20 @@
                         <label class="block text-xs font-semibold text-slate-500 mb-2 tracking-wide uppercase">
                             Loại buổi
                         </label>
+                        @if($subjectTarget === 'teachers')
+                        <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                            <x-radio-card wire:model="absentExportType" :value="0" label="Tất cả" :checked="(int) $absentExportType === 0" />
+                            <x-radio-card wire:model="absentExportType" :value="1" label="Đi dạy" :checked="(int) $absentExportType === 1" />
+                            <x-radio-card wire:model="absentExportType" :value="2" label="Đi lễ" :checked="(int) $absentExportType === 2" />
+                            <x-radio-card wire:model="absentExportType" :value="3" label="Họp" :checked="(int) $absentExportType === 3" />
+                        </div>
+                        @else
                         <div class="grid grid-cols-3 gap-3">
                             <x-radio-card wire:model="absentExportType" :value="0" label="Đi học và đi lễ" :checked="(int) $absentExportType === 0" />
                             <x-radio-card wire:model="absentExportType" :value="1" label="Đi học" :checked="(int) $absentExportType === 1" />
                             <x-radio-card wire:model="absentExportType" :value="2" label="Đi lễ" :checked="(int) $absentExportType === 2" />
                         </div>
+                        @endif
                     </div>
 
                     <div>
@@ -1798,9 +1825,15 @@
 
                     <div class="bg-primary-50/80 border border-primary-200/60 rounded-xl p-4 shadow-mac-sm">
                         <ul class="text-sm text-primary-700 space-y-1">
+                            @if($subjectTarget === 'teachers')
+                            <li>• Xuất GLV của <strong>năm học đang chọn</strong></li>
+                            <li>• Mỗi loại buổi là <strong>một sheet</strong> (Đi dạy / Đi lễ / Họp)</li>
+                            <li>• Định dạng giống tổng kết: CP / KP / ?</li>
+                            @else
                             <li>• Xuất <strong>tất cả lớp</strong> của năm học đang chọn</li>
                             <li>• Mỗi lớp là <strong>một sheet</strong> trong file Excel</li>
                             <li>• Định dạng giống bảng tổng kết điểm danh</li>
+                            @endif
                         </ul>
                     </div>
                 </div>
