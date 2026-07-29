@@ -7,7 +7,8 @@ use App\Models\CatechismClass;
 use Maatwebsite\Excel\Concerns\WithMultipleSheets;
 
 /**
- * Xuất học sinh vắng toàn giáo xứ — mỗi lớp một sheet.
+ * Xuất học sinh vắng toàn giáo xứ —
+ * sheet đầu: tổng hợp theo lớp; các sheet sau: chi tiết từng lớp.
  */
 class AbsentStudentsWorkbookExport implements WithMultipleSheets
 {
@@ -37,7 +38,16 @@ class AbsentStudentsWorkbookExport implements WithMultipleSheets
             ->get();
 
         $usedTitles = [];
-        $sheets = [];
+        $sheets = [
+            new AbsentStudentsParishSummaryExport(
+                $this->parishId,
+                $this->namHocId,
+                $this->fromDate,
+                $this->toDate,
+                $this->attendanceType,
+                $this->statuses,
+            ),
+        ];
 
         foreach ($classes as $class) {
             $base = $this->sanitizeSheetTitle((string) $class->name);

@@ -66,11 +66,8 @@ class AttendanceManager extends BaseComponent
 
     public ?string $absentToDate = null;
 
-    /** 0 = cả hai, 1 = đi học, 2 = đi lễ */
+    /** 0 = cả hai, 1 = đi học, 2 = đi lễ (GLV: 1=đi dạy, 2=đi lễ, 3=họp) */
     public int $absentExportType = 0;
-
-    /** 0 = cả hai loại vắng, 2 = có phép, 3 = không phép */
-    public int $absentExportStatus = 0;
 
     // ==================== VALIDATION ====================
 
@@ -1377,7 +1374,6 @@ class AttendanceManager extends BaseComponent
         $this->absentFromDate = $today;
         $this->absentToDate = $today;
         $this->absentExportType = 0;
-        $this->absentExportStatus = 0;
         $this->resetValidation();
     }
 
@@ -1403,7 +1399,6 @@ class AttendanceManager extends BaseComponent
             'absentFromDate' => 'required|date',
             'absentToDate' => 'required|date|after_or_equal:absentFromDate',
             'absentExportType' => 'required|integer|in:0,1,2',
-            'absentExportStatus' => 'required|integer|in:0,2,3',
         ], [
             'absentFromDate.required' => 'Vui lòng chọn từ ngày',
             'absentToDate.required' => 'Vui lòng chọn đến ngày',
@@ -1423,10 +1418,10 @@ class AttendanceManager extends BaseComponent
         }
 
         $type = (int) $this->absentExportType;
-        $statusFilter = (int) $this->absentExportStatus;
-        $statuses = $statusFilter === 0
-            ? [AttendanceRecord::STATUS_ABSENT_EXCUSED, AttendanceRecord::STATUS_ABSENT_UNEXCUSED]
-            : [$statusFilter];
+        $statuses = [
+            AttendanceRecord::STATUS_ABSENT_EXCUSED,
+            AttendanceRecord::STATUS_ABSENT_UNEXCUSED,
+        ];
 
         $hasAbsent = AttendanceRecord::query()
             ->whereIn('status', $statuses)
@@ -1491,7 +1486,6 @@ class AttendanceManager extends BaseComponent
             'absentFromDate' => 'required|date',
             'absentToDate' => 'required|date|after_or_equal:absentFromDate',
             'absentExportType' => 'required|integer|in:0,1,2,3',
-            'absentExportStatus' => 'required|integer|in:0,2,3',
         ], [
             'absentFromDate.required' => 'Vui lòng chọn từ ngày',
             'absentToDate.required' => 'Vui lòng chọn đến ngày',
@@ -1499,10 +1493,10 @@ class AttendanceManager extends BaseComponent
         ]);
 
         $type = (int) $this->absentExportType;
-        $statusFilter = (int) $this->absentExportStatus;
-        $statuses = $statusFilter === 0
-            ? [TeacherAttendanceRecord::STATUS_ABSENT_EXCUSED, TeacherAttendanceRecord::STATUS_ABSENT_UNEXCUSED]
-            : [$statusFilter];
+        $statuses = [
+            TeacherAttendanceRecord::STATUS_ABSENT_EXCUSED,
+            TeacherAttendanceRecord::STATUS_ABSENT_UNEXCUSED,
+        ];
 
         $parishId = (int) $this->parishId;
         $namHocId = (int) $this->selectedNamHoc;

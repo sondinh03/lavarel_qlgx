@@ -521,16 +521,16 @@
                             </x-button>
                             @endif
                             @if($isAdmin && $this->viewMode !== 'mobile')
-                            <x-dropdown label="Khác" icon="grid" align="right" width="56">
+                            <x-dropdown label="Khác" icon="grid" align="right" width="72">
                                 <x-dropdown-item
                                     icon="download"
                                     x-on:click="open = false; $dispatch('attendance-export')">
-                                    Tổng kết điểm danh
+                                    Xuất tổng kết điểm danh GLV
                                 </x-dropdown-item>
                                 <x-dropdown-item
                                     icon="download"
                                     x-on:click="open = false; $dispatch('attendance-absent-export')">
-                                    GLV vắng
+                                    Xuất danh sách GLV vắng
                                 </x-dropdown-item>
                             </x-dropdown>
                             @endif
@@ -576,16 +576,16 @@
                             </x-button>
 
                             @if($isAdmin)
-                            <x-dropdown label="Khác" icon="grid" align="right" width="56">
+                            <x-dropdown label="Khác" icon="grid" align="right" width="72">
                                 <x-dropdown-item
                                     icon="download"
                                     x-on:click="open = false; $dispatch('attendance-export')">
-                                    Tổng kết điểm danh
+                                    Xuất tổng kết điểm danh học sinh
                                 </x-dropdown-item>
                                 <x-dropdown-item
                                     icon="download"
                                     x-on:click="open = false; $dispatch('attendance-absent-export')">
-                                    Học sinh vắng
+                                    Xuất danh sách học sinh vắng
                                 </x-dropdown-item>
                             </x-dropdown>
                             @endif
@@ -1738,13 +1738,13 @@
                     <div class="flex items-start justify-between gap-4">
                         <div class="min-w-0">
                             <h2 id="absent-export-title" class="text-xl font-semibold tracking-tight text-slate-900">
-                                {{ $subjectTarget === 'teachers' ? 'Xuất GLV vắng' : 'Xuất học sinh vắng' }}
+                                {{ $subjectTarget === 'teachers' ? 'Xuất danh sách GLV vắng' : 'Xuất danh sách học sinh vắng' }}
                             </h2>
                             <p class="text-sm text-slate-500 mt-1">
                                 @if($subjectTarget === 'teachers')
                                     Toàn giáo xứ · mỗi loại buổi một sheet
                                 @else
-                                    Toàn giáo xứ · mỗi lớp một sheet
+                                    Toàn giáo xứ · sheet tổng hợp + chi tiết từng lớp
                                 @endif
                                 @if($selectedNamHoc)
                                 · {{ \App\Models\NamHoc::find($selectedNamHoc)?->name }}
@@ -1763,11 +1763,10 @@
                 </div>
 
                 <div class="flex-1 overflow-y-auto p-6 space-y-5">
-                    @if($errors->has('absentFromDate') || $errors->has('absentToDate') || $errors->has('absentExportType') || $errors->has('absentExportStatus'))
+                    @if($errors->has('absentFromDate') || $errors->has('absentToDate') || $errors->has('absentExportType'))
                     <div class="bg-red-50/90 border border-red-200/80 rounded-xl p-4 shadow-mac-sm text-sm text-red-700">
                         {{ $errors->first('absentFromDate')
-                            ?: ($errors->first('absentToDate')
-                            ?: ($errors->first('absentExportType') ?: $errors->first('absentExportStatus'))) }}
+                            ?: ($errors->first('absentToDate') ?: $errors->first('absentExportType')) }}
                     </div>
                     @endif
 
@@ -1812,27 +1811,16 @@
                         @endif
                     </div>
 
-                    <div>
-                        <label class="block text-xs font-semibold text-slate-500 mb-2 tracking-wide uppercase">
-                            Loại vắng
-                        </label>
-                        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                            <x-radio-card wire:model="absentExportStatus" :value="0" label="Có phép và không phép" :checked="(int) $absentExportStatus === 0" />
-                            <x-radio-card wire:model="absentExportStatus" :value="2" label="Vắng có phép" :checked="(int) $absentExportStatus === 2" />
-                            <x-radio-card wire:model="absentExportStatus" :value="3" label="Vắng không phép" :checked="(int) $absentExportStatus === 3" />
-                        </div>
-                    </div>
-
                     <div class="bg-primary-50/80 border border-primary-200/60 rounded-xl p-4 shadow-mac-sm">
                         <ul class="text-sm text-primary-700 space-y-1">
                             @if($subjectTarget === 'teachers')
-                            <li>• Xuất GLV của <strong>năm học đang chọn</strong></li>
+                            <li>• Xuất GLV vắng <strong>có phép và không phép</strong></li>
                             <li>• Mỗi loại buổi là <strong>một sheet</strong> (Đi dạy / Đi lễ / Họp)</li>
-                            <li>• Định dạng giống tổng kết: CP / KP / ?</li>
+                            <li>• Ký hiệu: CP / KP / ?</li>
                             @else
-                            <li>• Xuất <strong>tất cả lớp</strong> của năm học đang chọn</li>
-                            <li>• Mỗi lớp là <strong>một sheet</strong> trong file Excel</li>
-                            <li>• Định dạng giống bảng tổng kết điểm danh</li>
+                            <li>• Sheet đầu <strong>Tổng hợp</strong>: thống kê vắng theo từng lớp</li>
+                            <li>• Các sheet sau: chi tiết học sinh vắng từng lớp (CP / KP / ?)</li>
+                            <li>• Bao gồm cả vắng có phép và không phép</li>
                             @endif
                         </ul>
                     </div>
