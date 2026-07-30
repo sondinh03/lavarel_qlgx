@@ -8,6 +8,7 @@ use App\Models\Teacher;
 use App\Models\User;
 use App\Support\CatechistDefaultPassword;
 use App\Support\ExcelDateParser;
+use App\Support\TeacherImportDuplicateMessage;
 use App\Support\UserAccountEmailResolver;
 
 class ImportTeacherAction
@@ -18,7 +19,7 @@ class ImportTeacherAction
      *
      * @param  array  $rows     Mảng rows từ TeacherImportPreview::$rows
      * @param  int    $parishId
-     * @return array{imported: int, skipped: int, errors: array}
+     * @return array{imported: int, skipped: int, skipped_duplicate: int, errors: array}
      */
     public function handle(array $rows, int $parishId): array
     {
@@ -32,18 +33,50 @@ class ImportTeacherAction
             ->mapWithKeys(fn($id, $name) => [trim($name) => $id])
             ->toArray();
 
-        $imported = 0;
-        $skipped  = 0;
-        $errors   = [];
+        // Khoá hồ sơ đã có — chặn trùng ngay cả khi preview đã cũ
+        $existingKeys = [];
+        Teacher::where('parish_id', $parishId)
+            ->get(['saint_id', 'last_name', 'first_name', 'birthday'])
+            ->each(function (Teacher $teacher) use (&$existingKeys) {
+                $existingKeys[TeacherImportDuplicateMessage::duplicateKey(
+                    $teacher->saint_id,
+                    $teacher->last_name,
+                    $teacher->first_name,
+                    $teacher->birthday?->format('Y-m-d'),
+                )] = true;
+            });
+
+        $imported          = 0;
+        $skipped           = 0;
+        $skipped_duplicate = 0;
+        $errors            = [];
 
         foreach ($rows as $row) {
             $rowNumber = $row['row_number'];
 
+            // Họ tên tách thành 2 cột: ho_dem (họ + tên đệm) và ten
+            $lastName  = trim($row['ho_dem'] ?? '');
+            $firstName = trim($row['ten'] ?? '');
+
             // Bỏ qua dòng trống
-            if (empty(trim($row['ho_ten'] ?? ''))) {
+            if ($lastName === '' && $firstName === '') {
                 $skipped++;
                 continue;
             }
+
+            if ($firstName === '') {
+                $errors[] = "Dòng {$rowNumber}: Thiếu cột \"Tên\" — bỏ qua dòng";
+                $skipped++;
+                continue;
+            }
+
+            // Preview đã đánh dấu trùng (hồ sơ đã có, hoặc lặp trong file)
+            if (!empty($row['is_duplicate'])) {
+                $skipped_duplicate++;
+                continue;
+            }
+
+            $fullName = trim($lastName . ' ' . $firstName);
 
             try {
                 // Resolve saint_id
@@ -64,6 +97,19 @@ class ImportTeacherAction
                     $birthday = ExcelDateParser::parse($row['ngay_sinh']);
                 }
 
+                // Chốt lại lần cuối theo tên thánh + họ tên + ngày sinh
+                $duplicateKey = TeacherImportDuplicateMessage::duplicateKey(
+                    $saintId,
+                    $lastName,
+                    $firstName,
+                    $birthday
+                );
+
+                if (isset($existingKeys[$duplicateKey])) {
+                    $skipped_duplicate++;
+                    continue;
+                }
+
                 // Parse giới tính
                 $gender      = 'male';
                 $gioiTinhRaw = mb_strtolower(trim($row['gioi_tinh'] ?? ''), 'UTF-8');
@@ -71,13 +117,7 @@ class ImportTeacherAction
                     $gender = 'female';
                 }
 
-                // Tách họ tên
-                $fullName  = trim($row['ho_ten'] ?? '');
-                $parts     = explode(' ', $fullName);
-                $firstName = array_pop($parts);
-                $lastName  = implode(' ', $parts);
-
-                $phone = $row['so_dien_thoai'] ?? null;
+                $phone = trim((string) ($row['so_dien_thoai'] ?? '')) ?: null;
                 $email = trim($row['email'] ?? '') ?: null;
                 $normalizedPhone = $phone
                     ? UserAccountEmailResolver::normalizePhone((string) $phone)
@@ -133,12 +173,13 @@ class ImportTeacherAction
                     'is_active'       => true,
                 ]);
 
+                $existingKeys[$duplicateKey] = true;
                 $imported++;
             } catch (\Exception $e) {
                 $errors[] = "Dòng {$rowNumber}: " . $e->getMessage();
             }
         }
 
-        return compact('imported', 'skipped', 'errors');
+        return compact('imported', 'skipped', 'skipped_duplicate', 'errors');
     }
 }

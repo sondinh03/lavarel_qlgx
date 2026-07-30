@@ -9,6 +9,7 @@ use App\Models\Holymanagement;
 use App\Models\ParishGroup;
 use App\Models\Teacher;
 use App\Support\ExcelDateParser;
+use App\Support\TeacherImportDuplicateMessage;
 use Livewire\WithFileUploads;
 use Maatwebsite\Excel\Facades\Excel;
 
@@ -26,6 +27,12 @@ class TeacherImportPreview extends BaseComponent
     public array $fileErrors    = [];
     public array $warnings      = [];
     public bool  $readyToImport = false;
+
+    /** Số dòng trùng hồ sơ đã có trong giáo xứ */
+    public int $duplicateProfileCount = 0;
+
+    /** Số dòng lặp lại trong cùng file Excel */
+    public int $duplicateInFileCount = 0;
 
     // ==================== VALIDATION ====================
 
@@ -75,7 +82,8 @@ class TeacherImportPreview extends BaseComponent
 
             // Kiểm tra cột bắt buộc — hiển thị theo tiêu đề tiếng Việt người dùng thấy trong file
             $requiredHeaders = [
-                'ho_ten'        => 'Họ và tên',
+                'ho_dem'        => 'Họ đệm',
+                'ten'           => 'Tên',
                 'so_dien_thoai' => 'Số điện thoại',
             ];
             $firstRow = $data[0] ?? [];
@@ -91,8 +99,8 @@ class TeacherImportPreview extends BaseComponent
             }
 
             // Cache lookups để tránh N+1
-            $saintNames = Holymanagement::pluck('name')
-                ->map(fn($n) => strtolower(trim($n)))
+            $saintIdByName = Holymanagement::pluck('id', 'name')
+                ->mapWithKeys(fn($id, $name) => [strtolower(trim($name)) => $id])
                 ->toArray();
 
             $groupNames = ParishGroup::active()
@@ -100,17 +108,36 @@ class TeacherImportPreview extends BaseComponent
                 ->map(fn($n) => strtolower(trim($n)))
                 ->toArray();
 
-            // Load SĐT đã tồn tại — ParishScope tự filter parish_id
-            $existingPhones = Teacher::pluck('phone_number')
-                ->map(fn($p) => preg_replace('/[^0-9]/', '', $p ?? ''))
-                ->filter()
-                ->toArray();
+            // Load hồ sơ đã có để đối chiếu trùng — ParishScope tự filter parish_id
+            $existingByKey  = [];
+            $existingPhones = [];
+
+            Teacher::with('saint')->get()->each(function (Teacher $teacher) use (&$existingByKey, &$existingPhones) {
+                $existingByKey[TeacherImportDuplicateMessage::duplicateKey(
+                    $teacher->saint_id,
+                    $teacher->last_name,
+                    $teacher->first_name,
+                    $teacher->birthday?->format('Y-m-d'),
+                )] = $teacher;
+
+                $digits = preg_replace('/\D/', '', (string) $teacher->phone_number);
+                if ($digits !== '') {
+                    $existingPhones[$digits] = $teacher;
+                }
+            });
+
+            $seenKeys              = [];
+            $duplicateProfileCount = 0;
+            $duplicateInFileCount  = 0;
 
             foreach ($data as $index => $row) {
                 $rowNumber = $index + 6; // +6 vì data bắt đầu từ dòng 6
 
+                $hoDem = trim($row['ho_dem'] ?? '');
+                $ten   = trim($row['ten'] ?? '');
+
                 // Bỏ qua dòng trống
-                if (empty(trim($row['ho_ten'] ?? ''))) {
+                if ($hoDem === '' && $ten === '') {
                     continue;
                 }
 
@@ -119,11 +146,21 @@ class TeacherImportPreview extends BaseComponent
                 $tenThanh = trim($row['ten_thanh'] ?? '');
                 $giaoHo   = trim($row['giao_ho'] ?? '');
                 $ngaySinh = $row['ngay_sinh'] ?? '';
-                $phone    = preg_replace('/[^0-9]/', '', $row['so_dien_thoai'] ?? '');
+                $phoneRaw = trim((string) ($row['so_dien_thoai'] ?? ''));
+                $phone    = $this->normalizeExcelPhone($phoneRaw);
                 $email    = trim($row['email'] ?? '');
 
+                // Tên là bắt buộc — không có thì dòng sẽ bị bỏ qua khi import
+                if ($ten === '') {
+                    $rowWarnings[] = 'Thiếu cột "Tên" — dòng này sẽ bị bỏ qua khi import';
+                }
+
                 // Kiểm tra tên thánh
-                if (!empty($tenThanh) && !in_array(strtolower($tenThanh), $saintNames)) {
+                $saintId = $tenThanh !== ''
+                    ? ($saintIdByName[strtolower($tenThanh)] ?? null)
+                    : null;
+
+                if ($tenThanh !== '' && $saintId === null) {
                     $rowWarnings[] = "Tên thánh \"{$tenThanh}\" không tìm thấy trong hệ thống";
                 }
 
@@ -141,15 +178,36 @@ class TeacherImportPreview extends BaseComponent
                     }
                 }
 
-                // Kiểm tra SĐT trùng
-                $isDuplicate = !empty($phone) && in_array($phone, $existingPhones);
-                if ($isDuplicate) {
-                    $rowWarnings[] = "Số điện thoại \"{$phone}\" đã tồn tại trong hệ thống";
+                // Kiểm tra SĐT hợp lệ — dòng sai định dạng sẽ bị bỏ qua khi import
+                if ($phone !== '' && !preg_match('/^0\d{9}$/', $phone)) {
+                    $rowWarnings[] = "Số điện thoại \"{$phoneRaw}\" không hợp lệ (cần 10 số, bắt đầu bằng 0) — dòng này sẽ bị bỏ qua khi import";
+                }
+
+                // Kiểm tra SĐT trùng — chỉ cảnh báo, vẫn import
+                $phoneDuplicate = $phone !== '' && isset($existingPhones[$phone]);
+                if ($phoneDuplicate) {
+                    $rowWarnings[] = TeacherImportDuplicateMessage::forPhoneMatch($phone, $existingPhones[$phone]);
                 }
 
                 // Kiểm tra email
                 if (!empty($email) && !filter_var($email, FILTER_VALIDATE_EMAIL)) {
                     $rowWarnings[] = "Email \"{$email}\" không đúng định dạng";
+                }
+
+                // Kiểm tra trùng hồ sơ: tên thánh + họ tên + ngày sinh
+                $key         = TeacherImportDuplicateMessage::duplicateKey($saintId, $hoDem, $ten, $parsedDate);
+                $isDuplicate = false;
+
+                if (isset($existingByKey[$key])) {
+                    $isDuplicate = true;
+                    $duplicateProfileCount++;
+                    $rowWarnings[] = TeacherImportDuplicateMessage::forProfileMatch($existingByKey[$key]);
+                } elseif (isset($seenKeys[$key])) {
+                    $isDuplicate = true;
+                    $duplicateInFileCount++;
+                    $rowWarnings[] = TeacherImportDuplicateMessage::forDuplicateInFile($seenKeys[$key]);
+                } else {
+                    $seenKeys[$key] = $rowNumber;
                 }
 
                 if (!empty($rowWarnings)) {
@@ -159,26 +217,48 @@ class TeacherImportPreview extends BaseComponent
                 $this->rows[] = [
                     'row_number'    => $rowNumber,
                     'ten_thanh'     => $tenThanh,
-                    'ho_ten'        => trim($row['ho_ten'] ?? ''),
+                    'ho_dem'        => $hoDem,
+                    'ten'           => $ten,
                     'ngay_sinh'     => $ngaySinh,
                     'gioi_tinh'     => trim($row['gioi_tinh'] ?? ''),
                     'email'         => $email,
                     'so_dien_thoai' => $phone,
                     'giao_ho'       => $giaoHo,
-                    'tao_tai_khoan' => trim($row['tao_tai_khoan'] ?? ''),
-                    'has_warning'   => !empty($rowWarnings),
-                    'is_duplicate'  => $isDuplicate,
+                    'tao_tai_khoan'   => trim($row['tao_tai_khoan'] ?? ''),
+                    'has_warning'     => !empty($rowWarnings),
+                    'is_duplicate'    => $isDuplicate,
+                    'phone_duplicate' => $phoneDuplicate,
                 ];
             }
+
+            $this->duplicateProfileCount = $duplicateProfileCount;
+            $this->duplicateInFileCount  = $duplicateInFileCount;
 
             $this->readyToImport = empty($this->fileErrors) && !empty($this->rows);
 
             if ($this->readyToImport) {
-                $warningCount = count($this->warnings);
-                $msg = sprintf('Đã kiểm tra %d dòng dữ liệu. Sẵn sàng import.', count($this->rows));
-                if ($warningCount > 0) {
-                    $msg .= " ({$warningCount} dòng có cảnh báo)";
+                $duplicateCount = $duplicateProfileCount + $duplicateInFileCount;
+                $willImport     = count($this->rows) - $duplicateCount;
+
+                $parts   = [];
+                $parts[] = sprintf('Đã kiểm tra %d dòng dữ liệu.', count($this->rows));
+
+                if ($willImport > 0) {
+                    $parts[] = "Thêm mới {$willImport} giáo lý viên.";
                 }
+
+                if ($duplicateCount > 0) {
+                    $skipParts = [];
+                    if ($duplicateProfileCount > 0) {
+                        $skipParts[] = "{$duplicateProfileCount} người đã có hồ sơ trong giáo xứ";
+                    }
+                    if ($duplicateInFileCount > 0) {
+                        $skipParts[] = "{$duplicateInFileCount} dòng lặp trong file";
+                    }
+                    $parts[] = 'Bỏ qua ' . implode(', ', $skipParts) . '. Xem chi tiết bên dưới.';
+                }
+
+                $msg = implode(' ', $parts);
                 session()->flash('info', $msg);
                 $this->emit('toast', 'info', $msg);
             }
@@ -201,8 +281,12 @@ class TeacherImportPreview extends BaseComponent
 
             $message = "Import thành công {$result['imported']} giáo lý viên";
 
+            if ($result['skipped_duplicate'] > 0) {
+                $message .= " | Bỏ qua {$result['skipped_duplicate']} dòng trùng";
+            }
+
             if ($result['skipped'] > 0) {
-                $message .= " | Bỏ qua {$result['skipped']} dòng trống";
+                $message .= " | Bỏ qua {$result['skipped']} dòng trống/không hợp lệ";
             }
 
             if (!empty($result['errors'])) {
@@ -229,10 +313,35 @@ class TeacherImportPreview extends BaseComponent
 
     protected function resetPreview(): void
     {
-        $this->rows          = [];
-        $this->fileErrors    = [];
-        $this->warnings      = [];
-        $this->readyToImport = false;
+        $this->rows                  = [];
+        $this->fileErrors            = [];
+        $this->warnings              = [];
+        $this->readyToImport         = false;
+        $this->duplicateProfileCount = 0;
+        $this->duplicateInFileCount  = 0;
+    }
+
+    /**
+     * Excel lưu SĐT dạng số nên mất chữ số 0 đầu (0827686945 → 827686945).
+     * Phục hồi trước khi validate để dòng hợp lệ không bị bỏ qua.
+     */
+    protected function normalizeExcelPhone(string $value): string
+    {
+        $digits = preg_replace('/\D/', '', $value) ?? '';
+
+        if ($digits === '') {
+            return '';
+        }
+
+        if (str_starts_with($digits, '84') && strlen($digits) === 11) {
+            $digits = '0' . substr($digits, 2);
+        }
+
+        if (strlen($digits) === 9) {
+            $digits = '0' . $digits;
+        }
+
+        return $digits;
     }
 
     // ==================== RENDER ====================

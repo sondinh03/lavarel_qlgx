@@ -23,7 +23,7 @@
                     <p class="font-semibold mb-1 text-sm">Yêu cầu file Excel</p>
                     <p class="text-amber-800/90">Dùng đúng file mẫu, giữ nguyên thứ tự các cột theo tiêu đề:</p>
                     <div class="mt-2 flex flex-wrap gap-2">
-                        @foreach(['Họ và tên', 'Số điện thoại'] as $col)
+                        @foreach(['Họ đệm', 'Tên', 'Số điện thoại'] as $col)
                         <code class="px-2 py-0.5 bg-amber-100 text-amber-900 rounded text-xs">{{ $col }}</code>
                         @endforeach
                         @foreach(['Tên thánh', 'Ngày sinh', 'Giới tính', 'Email', 'Giáo họ', 'Tạo tài khoản'] as $col)
@@ -32,6 +32,7 @@
                     </div>
                     <p class="mt-2 text-amber-800/90">
                         • Nhập dữ liệu bắt đầu từ dòng ngay dưới dòng mô tả; không xoá / chèn thêm dòng tiêu đề<br>
+                        • <strong>Họ đệm</strong> / <strong>Tên</strong>: nhập tách riêng — vd "Nguyễn Văn" | "An"<br>
                         • <strong>Giới tính</strong>: nam / nữ<br>
                         • <strong>Ngày sinh</strong>: định dạng dd/mm/yyyy<br>
                         • <strong>Tạo tài khoản</strong>: có / không — mật khẩu mặc định = chuỗi ngày sinh <code>ddmmyyyy</code> (vd: 15/08/2000 → 15082000)<br>
@@ -126,6 +127,17 @@
                         ⚠ {{ count($warnings) }} dòng có cảnh báo — các giá trị không khớp sẽ được bỏ trống khi import
                     </p>
                     @endif
+                    @if($duplicateProfileCount > 0 || $duplicateInFileCount > 0)
+                    <p class="text-xs text-red-600 mt-0.5">
+                        @if($duplicateProfileCount > 0)
+                        {{ $duplicateProfileCount }} người đã có hồ sơ trong giáo xứ.
+                        @endif
+                        @if($duplicateInFileCount > 0)
+                        {{ $duplicateInFileCount }} dòng lặp trong file.
+                        @endif
+                        Các dòng này sẽ bị bỏ qua khi import.
+                    </p>
+                    @endif
                 </div>
 
                 <button wire:click="resetUpload" type="button"
@@ -146,7 +158,8 @@
                         <tr>
                             <th class="px-4 py-3 text-left text-xs font-semibold text-slate-600 uppercase">Dòng</th>
                             <th class="px-4 py-3 text-left text-xs font-semibold text-slate-600 uppercase">Tên thánh</th>
-                            <th class="px-4 py-3 text-left text-xs font-semibold text-slate-600 uppercase">Họ tên</th>
+                            <th class="px-4 py-3 text-left text-xs font-semibold text-slate-600 uppercase">Họ đệm</th>
+                            <th class="px-4 py-3 text-left text-xs font-semibold text-slate-600 uppercase">Tên</th>
                             <th class="px-4 py-3 text-left text-xs font-semibold text-slate-600 uppercase">Ngày sinh</th>
                             <th class="px-4 py-3 text-left text-xs font-semibold text-slate-600 uppercase">GT</th>
                             <th class="px-4 py-3 text-left text-xs font-semibold text-slate-600 uppercase">Email</th>
@@ -158,7 +171,7 @@
                     </thead>
                     <tbody class="divide-y divide-slate-100">
                         @foreach($rows as $row)
-                        <tr class="{{ $row['has_warning'] ? 'bg-amber-50' : ($row['is_duplicate'] ? 'bg-red-50' : 'hover:bg-slate-50') }}"
+                        <tr class="{{ $row['is_duplicate'] ? 'bg-red-50' : ($row['has_warning'] ? 'bg-amber-50' : 'hover:bg-slate-50') }}"
                             wire:key="preview-{{ $row['row_number'] }}">
                             <td class="px-4 py-3 text-xs text-slate-400 font-mono">{{ $row['row_number'] }}</td>
 
@@ -171,8 +184,17 @@
                                 @endif
                             </td>
 
-                            {{-- Họ tên --}}
-                            <td class="px-4 py-3 text-sm font-semibold text-slate-900">{{ $row['ho_ten'] ?: '—' }}</td>
+                            {{-- Họ đệm --}}
+                            <td class="px-4 py-3 text-sm text-slate-700">{{ $row['ho_dem'] ?: '—' }}</td>
+
+                            {{-- Tên --}}
+                            <td class="px-4 py-3 text-sm font-semibold text-slate-900">
+                                @if($row['ten'])
+                                {{ $row['ten'] }}
+                                @else
+                                <span class="text-red-600">Thiếu tên</span>
+                                @endif
+                            </td>
 
                             {{-- Ngày sinh --}}
                             <td class="px-4 py-3 text-sm text-slate-600">{{ $row['ngay_sinh'] ?: '—' }}</td>
@@ -227,10 +249,10 @@
                             {{-- Trạng thái --}}
                             <td class="px-4 py-3 text-center">
                                 @if($row['is_duplicate'])
-                                <span title="Số điện thoại đã tồn tại"
-                                    class="inline-flex items-center justify-center w-6 h-6
-                                               bg-red-100 text-red-600 rounded-full cursor-help text-xs font-bold">
-                                    !
+                                <span title="Trùng hồ sơ — dòng này sẽ bị bỏ qua"
+                                    class="inline-flex items-center px-2 py-0.5
+                                               bg-red-100 text-red-700 rounded-full cursor-help text-xs font-semibold">
+                                    Bỏ qua
                                 </span>
                                 @elseif($row['has_warning'])
                                 <span title="{{ implode(', ', $warnings[$row['row_number']] ?? []) }}"
@@ -257,7 +279,7 @@
                 <ul class="space-y-1">
                     @foreach($warnings as $rowNum => $rowWarnings)
                     @foreach($rowWarnings as $w)
-                    <li class="text-xs text-amber-700">• Dòng {{ $rowNum }}: {{ $w }}</li>
+                    <li class="text-xs text-amber-700">• Dòng {{ $rowNum }}: {!! $w !!}</li>
                     @endforeach
                     @endforeach
                 </ul>
@@ -266,8 +288,12 @@
 
             {{-- Action footer --}}
             <div class="px-6 py-4 border-t border-slate-200 bg-slate-50 flex items-center justify-between">
+                @php $skipCount = $duplicateProfileCount + $duplicateInFileCount; @endphp
                 <p class="text-sm text-slate-600">
-                    Sẽ import <span class="font-semibold text-slate-900">{{ count($rows) }} giáo lý viên</span>
+                    Sẽ import <span class="font-semibold text-slate-900">{{ count($rows) - $skipCount }} giáo lý viên</span>
+                    @if($skipCount > 0)
+                    <span class="text-red-600">— bỏ qua {{ $skipCount }} dòng trùng</span>
+                    @endif
                 </p>
                 <div class="flex gap-3">
                     <button wire:click="resetUpload" type="button"
