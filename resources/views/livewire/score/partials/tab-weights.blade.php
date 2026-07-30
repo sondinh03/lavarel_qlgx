@@ -159,7 +159,9 @@
             <div class="text-xs text-slate-500 leading-relaxed rounded-xl bg-slate-50/80 p-3">
                 <p class="font-semibold text-slate-600 mb-1">Công thức</p>
                 Điểm chuyên cần = 10 × (số buổi có mặt + tỉ lệ trên × số buổi vắng có phép) / số buổi đã điểm danh.
-                Buổi bị hủy và buổi giáo lý viên chưa điểm danh không bị tính.
+                Buổi bị hủy và buổi chưa ai điểm danh không vào mẫu số.
+                Ô trống sau giờ chốt / khi khóa được tính là KP.
+                <a href="{{ route('help.scores') }}" class="font-semibold text-primary-600 hover:text-primary-700">Xem hướng dẫn →</a>
             </div>
         </div>
     </div>

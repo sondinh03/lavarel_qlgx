@@ -16,18 +16,20 @@
                     <ul class="list-disc ml-5 space-y-1">
                         <li>Buổi phải có <strong>ít nhất một em được điểm danh</strong> (quét QR hoặc đánh tay).</li>
                         <li>
-                            Sau giờ chốt, những em <strong>chưa được điểm danh</strong> sẽ được tính là
-                            <strong>vắng không phép</strong> trong báo cáo, file Excel và điểm chuyên cần.
+                            Sau giờ chốt của <strong>ngày buổi đó</strong> (hoặc khi buổi được khóa), những em
+                            <strong>chưa được điểm danh</strong> sẽ được tính là <strong>KP</strong> trên lưới,
+                            Excel và điểm chuyên cần — hệ thống không ghi bản ghi vào database.
                         </li>
                         <li>
                             Chỉ buổi <strong>chưa khóa</strong> và <strong>chưa tới giờ chốt</strong> mới hiện
-                            <strong>chưa điểm danh</strong> (dấu «?»).
+                            <strong>chưa điểm danh</strong>.
                         </li>
-                        <li>Điểm danh bù sau đó thì số liệu tự đúng lại, không cần làm thêm gì.</li>
+                        <li>Điểm danh bù sau đó (buổi còn mở) thì số liệu tự đúng lại, không cần làm thêm gì.</li>
                     </ul>
                     <p class="text-xs text-slate-500">
                         Buổi chưa ai điểm danh sẽ không bị tính vắng cả lớp, tránh trừ oan khi buổi chưa diễn ra
                         hoặc giáo lý viên quên điểm danh. Lớp nghỉ hẳn thì nên <strong>hủy buổi</strong>.
+                        Xem chi tiết tại hướng dẫn bên dưới.
                     </p>
                 </div>
 
