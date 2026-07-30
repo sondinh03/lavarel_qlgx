@@ -66,7 +66,7 @@ class StudentEdit extends BaseComponent
         'saint_id'        => 'nullable|exists:holymanagements,id',
         'father_name'       => 'nullable|string|max:255',
         'mother_name'       => 'nullable|string|max:255',
-        'avatar_path'            => 'nullable|image|max:2048',
+        'avatar_path'            => 'nullable|image|max:5120',
     ];
 
     protected $messages = [
@@ -76,6 +76,7 @@ class StudentEdit extends BaseComponent
         'email.email'         => 'Email không hợp lệ',
         'parish_id.required'  => 'Vui lòng chọn giáo xứ',
         'parish_id.exists'    => 'Giáo xứ không tồn tại',
+        'avatar_path.max'     => 'Ảnh không được vượt quá 5MB.',
     ];
 
     // ==================== QUERY STRING ====================

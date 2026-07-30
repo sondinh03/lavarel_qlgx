@@ -163,12 +163,12 @@ class StudentListNew extends BaseComponent
 
         try {
             $this->validate([
-                $fileKey => 'required|image|mimes:jpg,jpeg,png,webp|max:2048',
+                $fileKey => 'required|image|mimes:jpg,jpeg,png,webp|max:5120',
             ], [
                 $fileKey . '.required' => 'Vui lòng chọn ảnh.',
                 $fileKey . '.image'    => 'Tệp phải là hình ảnh.',
                 $fileKey . '.mimes'    => 'Ảnh chỉ chấp nhận JPG, PNG hoặc WEBP.',
-                $fileKey . '.max'      => 'Ảnh không được vượt quá 2MB.',
+                $fileKey . '.max'      => 'Ảnh không được vượt quá 5MB.',
             ]);
         } catch (ValidationException $e) {
             unset($this->quickAvatars[$studentId]);
