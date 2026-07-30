@@ -78,10 +78,7 @@ class SessionManager extends BaseComponent
 
     // ==================== CÀI ĐẶT ĐIỂM DANH (cấp giáo xứ) ====================
 
-    /** Bật/tắt việc tính học sinh chưa được điểm danh là vắng không phép sau giờ chốt. */
-    public bool $autoFinalizeEnabled = true;
-
-    /** Giờ chốt dạng H:i. */
+    /** Giờ chốt dạng H:i. Luôn áp dụng khi đọc báo cáo / Excel / điểm chuyên cần. */
     public string $autoFinalizeTime = ParishNew::DEFAULT_ATTENDANCE_AUTO_FINALIZE_TIME;
 
     // ==================== SORT ====================
@@ -318,7 +315,6 @@ class SessionManager extends BaseComponent
     {
         $parish = $this->parishId ? ParishNew::query()->find($this->parishId) : null;
 
-        $this->autoFinalizeEnabled = (bool) ($parish?->attendance_auto_finalize_enabled ?? true);
         $this->autoFinalizeTime = $parish?->attendanceAutoFinalizeTimeHi()
             ?? ParishNew::DEFAULT_ATTENDANCE_AUTO_FINALIZE_TIME;
     }
@@ -332,8 +328,7 @@ class SessionManager extends BaseComponent
         }
 
         $validated = $this->validate([
-            'autoFinalizeEnabled' => 'boolean',
-            'autoFinalizeTime'    => ['required', 'regex:/^\d{1,2}:\d{2}$/'],
+            'autoFinalizeTime' => ['required', 'regex:/^\d{1,2}:\d{2}$/'],
         ], [
             'autoFinalizeTime.required' => 'Vui lòng chọn giờ chốt số liệu.',
             'autoFinalizeTime.regex'    => 'Giờ chốt không hợp lệ (định dạng HH:MM).',
@@ -349,7 +344,8 @@ class SessionManager extends BaseComponent
 
         try {
             ParishNew::query()->findOrFail($this->parishId)->update([
-                'attendance_auto_finalize_enabled' => (bool) $validated['autoFinalizeEnabled'],
+                // Cột cũ vẫn ghi true để dữ liệu lịch sử không còn trạng thái "tắt".
+                'attendance_auto_finalize_enabled' => true,
                 'attendance_auto_finalize_time'    => sprintf('%02d:%02d:00', $hour, $minute),
             ]);
 

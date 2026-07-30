@@ -184,11 +184,11 @@
                         <a href="{{ route('session.index', ['tab' => 'settings']) }}" class="font-semibold text-primary-700 underline">Phiên điểm danh</a>
                         → tab <strong>Cài đặt điểm danh</strong>.
                     </li>
-                    <li>Bật <strong>Tự động tính vắng sau giờ chốt</strong> và chọn giờ (mặc định <strong>20:00</strong>).</li>
+                    <li>Chọn <strong>giờ chốt số liệu</strong> (mặc định <strong>20:00</strong>). Giờ này luôn áp dụng khi đọc báo cáo.</li>
                     <li>Khi xem báo cáo, xuất Excel hoặc tính điểm chuyên cần:
                         <ul class="mt-2 ml-5 list-disc space-y-1 text-slate-600">
-                            <li>Đã có người điểm danh và đã qua giờ chốt → phần còn lại được tính vắng không phép.</li>
-                            <li>Chưa tới giờ chốt → phần còn lại vẫn là chưa điểm danh (?).</li>
+                            <li>Buổi đã khóa, hoặc đã có người điểm danh và đã qua giờ chốt → phần còn lại được tính vắng không phép.</li>
+                            <li>Buổi chưa khóa và chưa tới giờ chốt → phần còn lại vẫn là chưa điểm danh (?).</li>
                             <li>Chưa có ai điểm danh → bỏ qua, không tính vắng cả lớp.</li>
                         </ul>
                     </li>

@@ -54,6 +54,7 @@ class AttendanceManager extends BaseComponent
     public $sessions          = [];
     public $attendanceRecords = [];
     public $teacherAttendanceRecords = [];
+    public array $unmarkedConclusiveSessions = [];
 
     // ==================== CLASS NAME ====================
 
@@ -692,6 +693,7 @@ class AttendanceManager extends BaseComponent
     {
         if (!$this->selectedClassId) {
             $this->attendanceRecords = [];
+            $this->unmarkedConclusiveSessions = [];
             return;
         }
 
@@ -707,16 +709,81 @@ class AttendanceManager extends BaseComponent
                 }
             });
 
-            $this->attendanceRecords = $query->get()
+            $records = $query->get();
+            $this->attendanceRecords = $records
                 ->groupBy(fn($r) => $r->student_id . '_' . $r->session_id)
                 ->map(fn($group) => [
                     'status' => $group->first()->status,
                     'note'   => $group->first()->note,
+                    'inferred' => false,
                 ])
                 ->toArray();
+
+            $sessionIds = collect($this->sessions)
+                ->when(
+                    $this->viewMode === 'mobile' && $this->selectedDate,
+                    fn ($sessions) => $sessions->where('dateStr', $this->selectedDate)
+                )
+                ->pluck('id')
+                ->filter()
+                ->map(fn ($id) => (int) $id)
+                ->values();
+            $studentIds = collect($this->students)
+                ->map(fn ($student) => (int) (is_array($student) ? ($student['id'] ?? 0) : $student->id))
+                ->filter()
+                ->values();
+            $studentIdLookup = $studentIds->flip();
+            $sessionModels = AttendanceSession::query()
+                ->whereIn('id', $sessionIds)
+                ->with('catechismClass.parish')
+                ->get(['id', 'class_id', 'date', 'status']);
+            $resolver = app(AttendanceStatusResolver::class);
+            // Resolver phải xét tất cả học sinh để việc suy luận không phụ thuộc ô tìm kiếm.
+            $effectiveMatrix = $resolver->matrix($sessionModels);
+
+            foreach ($effectiveMatrix as $sessionId => $studentStatuses) {
+                foreach ($studentStatuses as $studentId => $status) {
+                    if (! $studentIdLookup->has((int) $studentId)) {
+                        continue;
+                    }
+
+                    $key = $studentId . '_' . $sessionId;
+                    $storedStatus = $this->attendanceRecords[$key]['status'] ?? null;
+                    if ($status !== null && ! AttendanceRecord::isValidStatus($storedStatus)) {
+                        $this->attendanceRecords[$key] = [
+                            'status' => $status,
+                            'note' => null,
+                            'inferred' => true,
+                        ];
+                    }
+                }
+            }
+
+            $recordedSessionIds = $records
+                ->filter(fn ($record) => AttendanceRecord::isValidStatus($record->status))
+                ->pluck('session_id')
+                ->map(fn ($id) => (int) $id)
+                ->flip();
+            $this->unmarkedConclusiveSessions = $sessionModels
+                ->filter(function (AttendanceSession $session) use ($recordedSessionIds, $resolver) {
+                    if ($recordedSessionIds->has((int) $session->id)
+                        || (int) $session->status === AttendanceSession::STATUS_CANCELLED) {
+                        return false;
+                    }
+
+                    return (int) $session->status === AttendanceSession::STATUS_CLOSED
+                        || $resolver->isPastCutoff($session, $session->catechismClass?->parish);
+                })
+                ->map(fn (AttendanceSession $session) => [
+                    'id' => (int) $session->id,
+                    'date' => $session->date?->format('d/m/Y') ?? '',
+                ])
+                ->values()
+                ->all();
         } catch (\Exception $e) {
             $this->logError($e, 'Error loading attendance records');
             $this->attendanceRecords = [];
+            $this->unmarkedConclusiveSessions = [];
         }
     }
 

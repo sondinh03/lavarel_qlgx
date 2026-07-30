@@ -2,9 +2,10 @@
 
 namespace App\Http\Livewire\Score;
 
-use App\Exports\ScoreExport;
+use App\Exports\ScoreParishWorkbookExport;
 use App\Http\Livewire\Base\BaseComponent;
 use App\Http\Livewire\Score\Concerns\CalculatesSemesterScores;
+use App\Http\Livewire\Score\Concerns\ExportsScoreDistribution;
 use App\Http\Livewire\Score\Concerns\ListsClassStudents;
 use App\Http\Livewire\Score\Concerns\ManagesGradingWeights;
 use App\Http\Livewire\Score\Concerns\ManagesScoreEntry;
@@ -16,6 +17,7 @@ use App\Models\ScoreType;
 use App\Models\StudentScore;
 use App\Services\CatechistAccess;
 use App\Services\SchoolYearResolver;
+use Illuminate\Support\Str;
 
 /**
  * Component quản lý điểm học sinh
@@ -30,6 +32,7 @@ use App\Services\SchoolYearResolver;
 class ScoreManager extends BaseComponent
 {
     use CalculatesSemesterScores;
+    use ExportsScoreDistribution;
     use ListsClassStudents;
     use ManagesGradingWeights;
     use ManagesScoreEntry;
@@ -253,29 +256,36 @@ class ScoreManager extends BaseComponent
     {
         $this->authorize('create', ScoreType::class);
 
-        if (! $this->selectedLop) {
-            $this->emit('toast', 'warning', 'Vui lòng chọn lớp trước khi xuất file');
+        if (! $this->selectedNamHoc) {
+            $this->emit('toast', 'warning', 'Vui lòng chọn năm học trước khi xuất file');
             return;
         }
 
-        $hasScoreTypes = ScoreType::query()
-            ->where('class_id', (int) $this->selectedLop)
-            ->where('is_active', true)
-            ->exists();
+        $classes = CatechismClass::query()
+            ->where('school_year_id', (int) $this->selectedNamHoc)
+            ->where('parish_id', (int) $this->parishId)
+            ->active()
+            ->orderBy('grade_level_id')
+            ->orderBy('name')
+            ->get(['id', 'name']);
 
-        if (! $hasScoreTypes) {
-            $this->emit('toast', 'warning', 'Lớp chưa có cấu hình loại điểm');
+        if ($classes->isEmpty()) {
+            $this->emit('toast', 'warning', 'Năm học đã chọn chưa có lớp để xuất');
             return;
         }
 
-        $className = CatechismClass::findOrFail($this->selectedLop)->name;
+        $schoolYearName = (string) (
+            $this->availableNamHocs?->firstWhere('id', (int) $this->selectedNamHoc)?->name
+            ?? 'NamHoc'
+        );
 
-        return response()->streamDownload(function () {
+        return response()->streamDownload(function () use ($classes) {
             echo \Maatwebsite\Excel\Facades\Excel::raw(
-                new ScoreExport($this->selectedLop, $this->filterByRating),
+                new ScoreParishWorkbookExport($classes),
                 \Maatwebsite\Excel\Excel::XLSX
             );
-        }, 'BangDiemCaNam_' . $className . '_' . now()->format('dmY_His') . '.xlsx');
+        }, 'BangDiemToanXu_' . Str::slug($schoolYearName, '_')
+            . '_' . now()->format('dmY_His') . '.xlsx');
     }
 
     // ==================== HELPERS ====================

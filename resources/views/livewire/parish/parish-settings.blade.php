@@ -181,13 +181,10 @@
                             <p class="mt-1 text-sm font-semibold text-slate-800">
                                 Giờ chốt số liệu:
                                 <span class="tabular-nums">{{ $attendanceAutoFinalizeTime }}</span>
-                                <span class="ml-1 font-normal text-slate-500">
-                                    ({{ $attendanceAutoFinalizeEnabled ? 'đang bật' : 'đang tắt' }})
-                                </span>
                             </p>
                             <p class="mt-1 text-xs text-slate-500 leading-relaxed">
-                                Sau giờ này, những em chưa được điểm danh sẽ tính là vắng không phép
-                                (với buổi đã có người điểm danh).
+                                Sau giờ này (hoặc khi buổi được khóa), những em chưa được điểm danh sẽ tính là
+                                vắng không phép với buổi đã có người điểm danh.
                             </p>
                         </div>
                         <a href="{{ route('session.index', ['tab' => 'settings']) }}"

@@ -91,7 +91,9 @@ class AbsentStudentsExport implements FromCollection, WithHeadings, WithMapping,
 
     public function headings(): array
     {
-        $this->loadSessions();
+        // WithHeadings được Laravel Excel gọi trước collection(). Phải resolve record và
+        // lọc buổi ngay tại đây để tiêu đề, dữ liệu và vùng định dạng dùng cùng danh sách.
+        $this->loadRecordsMap();
 
         $headings = [
             'STT',

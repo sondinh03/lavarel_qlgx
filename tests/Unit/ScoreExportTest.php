@@ -3,6 +3,7 @@
 namespace Tests\Unit;
 
 use App\Exports\ScoreExport;
+use App\Exports\ScoreParishWorkbookExport;
 use App\Http\Livewire\Score\ScoreManager;
 use App\Models\AttendanceRecord;
 use App\Models\AttendanceSession;
@@ -219,7 +220,40 @@ class ScoreExportTest extends TestCase
         );
     }
 
-    public function test_score_manager_downloads_whole_year_regardless_of_selected_semester(): void
+    public function test_parish_workbook_creates_one_sheet_for_each_class_in_selected_year(): void
+    {
+        $classes = \App\Models\CatechismClass::query()
+            ->where('parish_id', $this->fx->parishA->id)
+            ->where('school_year_id', $this->fx->yearA->id)
+            ->orderBy('name')
+            ->get(['id', 'name']);
+
+        $raw = Excel::raw(
+            new ScoreParishWorkbookExport($classes),
+            \Maatwebsite\Excel\Excel::XLSX
+        );
+        $tmp = tempnam(sys_get_temp_dir(), 'score_parish_') . '.xlsx';
+        file_put_contents($tmp, $raw);
+
+        try {
+            $workbook = IOFactory::load($tmp);
+
+            $this->assertCount(2, $workbook->getAllSheets());
+            $this->assertSame(
+                $classes->pluck('name')->map(fn (string $name) => mb_substr($name, 0, 31))->all(),
+                $workbook->getSheetNames()
+            );
+            $this->assertStringContainsString(
+                $this->fx->classAssigned->name,
+                (string) $workbook->getSheetByName(mb_substr($this->fx->classAssigned->name, 0, 31))
+                    ->getCell('A1')->getValue()
+            );
+        } finally {
+            @unlink($tmp);
+        }
+    }
+
+    public function test_score_manager_downloads_all_parish_classes_regardless_of_selected_class_or_semester(): void
     {
         ScoreType::query()->create([
             'class_id' => $this->fx->classAssigned->id,

@@ -3,11 +3,11 @@
 namespace App\Http\Livewire\Score;
 
 use App\Http\Livewire\Base\BaseComponent;
+use App\Http\Livewire\Score\Concerns\ExportsScoreDistribution;
 use App\Models\CatechismClass;
 use App\Models\GradeLevel;
 use App\Models\NamHoc;
-use App\Services\SemesterScoreCalculator;
-use App\Support\StudentRating;
+use App\Services\ScoreDistributionReport;
 use Illuminate\Support\Collection;
 
 /**
@@ -23,6 +23,8 @@ use Illuminate\Support\Collection;
  */
 class ScoreStatistics extends BaseComponent
 {
+    use ExportsScoreDistribution;
+
     // ==================== FILTERS ====================
 
     public $selectedNamHoc   = null;
@@ -198,79 +200,35 @@ class ScoreStatistics extends BaseComponent
      */
     protected function fetchAverages(): array
     {
-        $this->totalStudents          = 0;
-        $this->totalStudentsWithScore = 0;
-
         $classIds = $this->resolveClassIds();
 
         if ($classIds->isEmpty()) {
+            $this->totalStudents          = 0;
+            $this->totalStudentsWithScore = 0;
+
             return [];
         }
 
-        $calculator = app(SemesterScoreCalculator::class);
+        $report = app(ScoreDistributionReport::class)->summary(
+            $classIds->all(),
+            (int) $this->selectedSemester
+        );
 
-        $byClass = $this->isFullYear()
-            ? $calculator->forClassesYear($classIds->all())
-            : $calculator->forClassesSemester($classIds->all(), (int) $this->selectedSemester);
+        $this->totalStudents          = $report['total_students'];
+        $this->totalStudentsWithScore = $report['students_with_score'];
 
-        $averages = [];
-
-        foreach ($byClass as $classId => $students) {
-            foreach ($students as $pivotId => $row) {
-                $this->totalStudents++;
-
-                $avg = $this->isFullYear() ? $row['year'] : $row['total'];
-
-                if ($avg === null) {
-                    continue;
-                }
-
-                $averages[] = [
-                    'avg'              => (float) $avg,
-                    'class_id'         => (int) $classId,
-                    'student_class_id' => (int) $pivotId,
-                ];
-                $this->totalStudentsWithScore++;
-            }
-        }
-
-        return $averages;
+        return $report['averages'];
     }
 
     protected function resolveClassIds(): Collection
     {
-        if (!$this->selectedNamHoc) {
-            return collect();
-        }
-
-        $query = CatechismClass::where('school_year_id', $this->selectedNamHoc)
-            ->where('parish_id', $this->parishId)
-            ->active();
-
-        return match ($this->resolveScope()) {
-            'class'  => $this->selectedLop
-                ? collect([$this->selectedLop])
-                : collect(),
-            'grade'  => $this->selectedKhoi
-                ? $query->where('grade_level_id', $this->selectedKhoi)->pluck('id')
-                : collect(),
-            'parish' => $query->pluck('id'),
-            default  => collect(),
-        };
+        return $this->distributionClassIds();
     }
 
     /** Lớp đã chọn → lớp; chỉ khối → khối; còn lại → toàn xứ. */
     protected function resolveScope(): string
     {
-        if ($this->selectedLop) {
-            return 'class';
-        }
-
-        if ($this->selectedKhoi) {
-            return 'grade';
-        }
-
-        return 'parish';
+        return $this->distributionScope();
     }
 
     protected function isFullYear(): bool
@@ -294,58 +252,14 @@ class ScoreStatistics extends BaseComponent
 
     protected function buildRatingChart(array $averages): void
     {
-        $levels = StudentRating::levels();
-
-        $counts = [];
-        foreach ($levels as $key => $info) {
-            $counts[$key] = 0;
-        }
-
-        foreach ($averages as $row) {
-            $rating = $this->getRatingKey($row['avg']);
-            if ($rating) {
-                $counts[$rating]++;
-            }
-        }
-
-        $total = array_sum($counts);
-        $data  = [];
-
-        foreach ($levels as $key => $info) {
-            $count = $counts[$key];
-            $data[] = [
-                'key'        => $key,
-                'label'      => $info['label'],
-                'color'      => $info['hex'],
-                'count'      => $count,
-                'percentage' => $total > 0 ? round(($count / $total) * 100, 1) : 0,
-            ];
-        }
-
-        $this->ratingChartData = $data;
+        $this->ratingChartData = app(ScoreDistributionReport::class)
+            ->ratingBreakdown($averages);
     }
 
     protected function buildDistributionChart(array $averages): void
     {
-        // Chia thành 10 khoảng: 0-1, 1-2, ..., 9-10
-        $buckets = array_fill(0, 10, 0);
-
-        foreach ($averages as $row) {
-            $avg    = min(9.99, max(0, $row['avg']));
-            $bucket = (int) floor($avg);
-            $buckets[$bucket]++;
-        }
-
-        $data = [];
-        for ($i = 0; $i < 10; $i++) {
-            $data[] = [
-                'label' => $i . '-' . ($i + 1),
-                'count' => $buckets[$i],
-                'color' => $this->getColorForRange($i),
-            ];
-        }
-
-        $this->distributionChartData = $data;
+        $this->distributionChartData = app(ScoreDistributionReport::class)
+            ->distribution($averages);
     }
 
     protected function buildSummary(array $averages): void
@@ -355,16 +269,8 @@ class ScoreStatistics extends BaseComponent
             return;
         }
 
-        $avgs  = array_column($averages, 'avg');
-        $count = count($avgs);
-
-        $this->summary = [
-            'avg'    => round(array_sum($avgs) / $count, 2),
-            'max'    => round(max($avgs), 2),
-            'min'    => round(min($avgs), 2),
-            'count'  => $count,
-            'pass'   => count(array_filter($avgs, fn($v) => $v >= 5.0)),
-        ];
+        $this->summary = app(ScoreDistributionReport::class)
+            ->overview($averages, $this->totalStudents);
     }
 
     /**
@@ -490,6 +396,8 @@ class ScoreStatistics extends BaseComponent
         $this->reloadChartData();
     }
 
+    // ==================== EXPORT ====================
+
     // ==================== HELPERS ====================
 
     private function toInt($value): ?int
@@ -502,27 +410,6 @@ class ScoreStatistics extends BaseComponent
     {
         return app(\App\Services\SchoolYearResolver::class)
             ->resolveId($this->parishId ? (int) $this->parishId : null);
-    }
-
-    private function getRatingKey(?float $avg): ?string
-    {
-        return StudentRating::keyFor($avg);
-    }
-
-    /**
-     * Màu cho biểu đồ phân phối, chia theo từng mốc 1 điểm.
-     * Cố tình không dùng thang xếp loại vì mốc ở đây là 0-1, 1-2, ... 9-10.
-     */
-    private function getColorForRange(int $bucket): string
-    {
-        return match (true) {
-            $bucket >= 9  => '#10b981', // emerald
-            $bucket >= 8  => '#3b82f6', // blue
-            $bucket >= 6  => '#f59e0b', // amber
-            $bucket >= 5  => '#eab308', // yellow
-            $bucket >= 3  => '#f97316', // orange
-            default       => '#ef4444', // red
-        };
     }
 
     // ==================== RENDER ====================

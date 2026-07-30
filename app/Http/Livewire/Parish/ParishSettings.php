@@ -32,12 +32,7 @@ class ParishSettings extends Component
 
     public ?string $ward = null;
 
-    /**
-     * Chỉ để hiển thị: cài đặt giờ chốt được sửa tại Phiên điểm danh → Cài đặt điểm danh.
-     */
-    public bool $attendanceAutoFinalizeEnabled = true;
-
-    /** Giờ chốt dạng H:i, mặc định 20:00. Chỉ để hiển thị. */
+    /** Giờ chốt dạng H:i, mặc định 20:00. Chỉ để hiển thị; sửa tại Phiên điểm danh. */
     public string $attendanceAutoFinalizeTime = '20:00';
 
     /** Logo ban giáo lý → cột `image` (dùng trên thẻ HS/GLV). */
@@ -79,7 +74,6 @@ class ParishSettings extends Component
             : null;
         $this->currentLogoPath = $parish->image ?: null;
         $this->currentParishLogoPath = $parish->parish_logo ?: null;
-        $this->attendanceAutoFinalizeEnabled = (bool) ($parish->attendance_auto_finalize_enabled ?? true);
         $this->attendanceAutoFinalizeTime = $parish->attendanceAutoFinalizeTimeHi();
 
         $this->dioceseOptions = Diocese::query()

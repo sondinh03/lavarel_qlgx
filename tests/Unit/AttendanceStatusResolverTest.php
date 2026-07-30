@@ -122,30 +122,30 @@ class AttendanceStatusResolverTest extends TestCase
         );
     }
 
-    public function test_disabled_cutoff_only_concludes_when_session_is_closed(): void
+    public function test_open_session_past_cutoff_infers_unexcused_even_if_legacy_toggle_disabled(): void
     {
+        // Cột bật/tắt cũ không còn ảnh hưởng khi đọc số liệu.
         $this->fx->parishA->update(['attendance_auto_finalize_enabled' => false]);
         $session = $this->openSessionToday();
         $missing = $this->enrollSecondStudent();
         $this->markAssignedStudentPresent($session);
         $resolver = app(AttendanceStatusResolver::class);
 
-        $open = $resolver->matrix(
+        $beforeCutoff = $resolver->matrix(
             collect([$session->fresh()]),
             null,
-            Carbon::today()->setTime(21, 0)
+            Carbon::today()->setTime(19, 59)
         );
-        $session->update(['status' => AttendanceSession::STATUS_CLOSED]);
-        $closed = $resolver->matrix(
+        $afterCutoff = $resolver->matrix(
             collect([$session->fresh()]),
             null,
             Carbon::today()->setTime(21, 0)
         );
 
-        $this->assertNull($open[$session->id][$missing->id]);
+        $this->assertNull($beforeCutoff[$session->id][$missing->id]);
         $this->assertSame(
             AttendanceRecord::STATUS_ABSENT_UNEXCUSED,
-            $closed[$session->id][$missing->id]
+            $afterCutoff[$session->id][$missing->id]
         );
     }
 

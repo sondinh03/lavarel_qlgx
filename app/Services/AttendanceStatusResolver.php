@@ -13,7 +13,8 @@ use Illuminate\Support\Collection;
  * Nguồn sự thật duy nhất cho trạng thái điểm danh hiệu lực.
  *
  * Một ô chưa có bản ghi được suy luận là vắng không phép khi buổi đã có ít
- * nhất một người được điểm danh và buổi đã khóa hoặc đã qua giờ cắt của xứ.
+ * nhất một người được điểm danh và buổi đã khóa hoặc đã qua giờ chốt của xứ
+ * (mặc định 20:00). Dấu «?» chỉ còn ở buổi chưa khóa và chưa tới giờ chốt.
  * Service chỉ suy luận khi đọc, không tạo AttendanceRecord.
  */
 class AttendanceStatusResolver
@@ -111,16 +112,17 @@ class AttendanceStatusResolver
             return true;
         }
 
-        $parish = $session->catechismClass?->parish;
-
-        return $parish instanceof ParishNew
-            && (bool) $parish->attendance_auto_finalize_enabled
-            && $this->isPastCutoff($session, $parish, $at);
+        // Giờ chốt luôn áp dụng khi đọc số liệu; không phụ thuộc công tắc bật/tắt cũ.
+        return $this->isPastCutoff(
+            $session,
+            $session->catechismClass?->parish,
+            $at
+        );
     }
 
     public function isPastCutoff(
         AttendanceSession $session,
-        ParishNew $parish,
+        ?ParishNew $parish = null,
         ?Carbon $at = null
     ): bool {
         if (! $session->date) {
@@ -128,7 +130,9 @@ class AttendanceStatusResolver
         }
 
         $at = $at?->copy() ?? now();
-        [$hour, $minute] = array_map('intval', explode(':', $parish->attendanceAutoFinalizeTimeHi()));
+        $time = $parish?->attendanceAutoFinalizeTimeHi()
+            ?? ParishNew::DEFAULT_ATTENDANCE_AUTO_FINALIZE_TIME;
+        [$hour, $minute] = array_map('intval', explode(':', $time));
         $cutoff = $session->date->copy()->setTime($hour, $minute);
 
         return $at->greaterThanOrEqualTo($cutoff);

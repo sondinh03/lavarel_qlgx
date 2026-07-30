@@ -206,6 +206,11 @@
                 return this.records[key]?.note || null;
             },
 
+            isInferred(studentId, sessionId) {
+                const key = studentId + '_' + sessionId;
+                return this.draft[key] === undefined && this.records[key]?.inferred === true;
+            },
+
             /** Thống kê live từ records+draft — cần vì wire:ignore chặn morph Blade. */
             sessionStat(sessionId, field) {
                 let present = 0, absentPermitted = 0, absentNotPermitted = 0;
@@ -1123,6 +1128,25 @@
             @else
                 @if($students->count() > 0 && count($sessions) > 0)
 
+                @if(!empty($unmarkedConclusiveSessions))
+                @php
+                    $unmarkedDates = collect($unmarkedConclusiveSessions)->pluck('date');
+                    $unmarkedDateLabel = $unmarkedDates->take(5)->join(', ');
+                    if ($unmarkedDates->count() > 5) {
+                        $unmarkedDateLabel .= ', và ' . ($unmarkedDates->count() - 5) . ' buổi khác';
+                    }
+                @endphp
+                <div class="px-4 lg:px-6 py-3 mac-hairline-b">
+                    <x-inline-tip tone="amber">
+                        <strong>Chưa có ai được điểm danh</strong> trong
+                        {{ count($unmarkedConclusiveSessions) }} buổi đã khóa hoặc qua giờ chốt
+                        ({{ $unmarkedDateLabel }}).
+                        Hệ thống không tự tính cả lớp là KP để tránh trừ oan. Hãy kiểm tra và điểm danh ít nhất
+                        một em, hoặc hủy buổi nếu lớp nghỉ.
+                    </x-inline-tip>
+                </div>
+                @endif
+
                 {{-- Bảng theo role: desktop = admin; mobile = catechist thuần — không theo breakpoint --}}
                 @if($this->viewMode !== 'mobile')
                 <div class="overflow-x-auto overscroll-x-contain">
@@ -1203,6 +1227,7 @@
                                     $dbKey = $student->id . '_' . $session['id'];
                                     $dbStatus = $attendanceGrid[$student->id][$session['id']] ?? null;
                                     $dbNote = $attendanceRecords[$dbKey]['note'] ?? null;
+                                    $dbInferred = (bool) ($attendanceRecords[$dbKey]['inferred'] ?? false);
                                     @endphp
                                     <div class="flex items-center justify-center h-8" x-data="{ open: false }">
                                         @if($dbStatus == 1)
@@ -1228,7 +1253,10 @@
                                             @endif
                                         </div>
                                         @elseif($dbStatus == 3)
-                                        <span class="text-red-700 font-medium">✕</span>
+                                        <span class="text-red-700 font-medium"
+                                            title="{{ $dbInferred ? 'KP được suy luận sau giờ chốt' : 'Vắng không phép' }}">
+                                            {{ $dbInferred ? 'KP' : '✕' }}
+                                        </span>
                                         @else
                                         <span class="text-xs text-slate-400">-</span>
                                         @endif
@@ -1289,8 +1317,11 @@
                                             ? 'bg-red-500 text-white shadow-md scale-105'
                                             : 'bg-red-50 text-red-700 border border-red-200 hover:bg-red-100'"
                                             class="px-2 py-1 rounded text-xs font-medium transition-all"
-                                            aria-label="Vắng không phép">
-                                            ✕
+                                            :title="isInferred({{ $student->id }}, {{ $session['id'] }})
+                                                ? 'KP được suy luận sau giờ chốt; có thể chọn trạng thái khác để sửa'
+                                                : 'Vắng không phép'"
+                                            aria-label="Vắng không phép"
+                                            x-text="isInferred({{ $student->id }}, {{ $session['id'] }}) ? 'KP' : '✕'">
                                         </button>
                                     </div>
                                     @endif
@@ -1486,6 +1517,8 @@
                                         $mobileStatus = $mobileSessionId
                                         ? ($attendanceGrid[$student->id][$mobileSessionId] ?? null)
                                         : null;
+                                        $mobileKey = $student->id . '_' . $mobileSessionId;
+                                        $mobileInferred = (bool) ($attendanceRecords[$mobileKey]['inferred'] ?? false);
                                         @endphp
                                         <div class="flex justify-center">
                                             @if($mobileStatus == 1)
@@ -1501,10 +1534,14 @@
                                             </span>
                                             @elseif($mobileStatus == 3)
                                             <span class="w-11 h-11 rounded-xl bg-red-500 flex items-center justify-center shadow-sm">
+                                                @if($mobileInferred)
+                                                <span class="text-white text-xs font-bold">KP</span>
+                                                @else
                                                 <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3"
                                                         d="M6 18L18 6M6 6l12 12" />
                                                 </svg>
+                                                @endif
                                             </span>
                                             @else
                                             <span class="w-11 h-11 flex items-center justify-center text-slate-300 text-lg">—</span>
@@ -1548,8 +1585,14 @@
                                                 ? 'bg-red-500 text-white shadow-md ring-2 ring-red-300'
                                                 : 'bg-red-50 text-red-700 border border-red-200 active:bg-red-100'"
                                                 class="w-11 h-11 rounded-xl flex items-center justify-center transition-all active:scale-95"
+                                                :title="isInferred({{ $student->id }}, {{ $mobileSessionId }})
+                                                    ? 'KP được suy luận sau giờ chốt; có thể chọn trạng thái khác để sửa'
+                                                    : 'Vắng không phép'"
                                                 aria-label="Vắng không phép">
-                                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <span x-show="isInferred({{ $student->id }}, {{ $mobileSessionId }})"
+                                                    class="text-xs font-bold">KP</span>
+                                                <svg x-show="!isInferred({{ $student->id }}, {{ $mobileSessionId }})"
+                                                    class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3"
                                                         d="M6 18L18 6M6 6l12 12" />
                                                 </svg>

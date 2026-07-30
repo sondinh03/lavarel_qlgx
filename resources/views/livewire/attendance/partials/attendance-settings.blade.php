@@ -3,17 +3,11 @@
     <div class="mx-auto max-w-2xl space-y-4">
 
         <div class="rounded-2xl border border-black/[0.06] bg-white/70 backdrop-blur-sm shadow-mac-sm overflow-hidden">
-            <div class="px-5 py-4 mac-hairline-b bg-white/40 flex items-start justify-between gap-4">
-                <div class="min-w-0">
-                    <p class="text-xs font-semibold text-slate-500 uppercase tracking-wide">Áp dụng cho toàn giáo xứ</p>
-                    <h2 class="mt-1 text-base font-semibold tracking-tight text-slate-900">
-                        Tự động tính vắng sau giờ chốt
-                    </h2>
-                </div>
-                <label class="inline-flex items-center gap-2 cursor-pointer select-none flex-shrink-0">
-                    <input type="checkbox" wire:model="autoFinalizeEnabled" class="mac-checkbox">
-                    <span class="text-sm font-semibold text-slate-700">Bật</span>
-                </label>
+            <div class="px-5 py-4 mac-hairline-b bg-white/40">
+                <p class="text-xs font-semibold text-slate-500 uppercase tracking-wide">Áp dụng cho toàn giáo xứ</p>
+                <h2 class="mt-1 text-base font-semibold tracking-tight text-slate-900">
+                    Giờ chốt số liệu điểm danh
+                </h2>
             </div>
 
             <div class="p-5 space-y-4">
@@ -25,7 +19,10 @@
                             Sau giờ chốt, những em <strong>chưa được điểm danh</strong> sẽ được tính là
                             <strong>vắng không phép</strong> trong báo cáo, file Excel và điểm chuyên cần.
                         </li>
-                        <li>Trước giờ chốt, những em này vẫn hiện là <strong>chưa điểm danh</strong> (dấu «?»).</li>
+                        <li>
+                            Chỉ buổi <strong>chưa khóa</strong> và <strong>chưa tới giờ chốt</strong> mới hiện
+                            <strong>chưa điểm danh</strong> (dấu «?»).
+                        </li>
                         <li>Điểm danh bù sau đó thì số liệu tự đúng lại, không cần làm thêm gì.</li>
                     </ul>
                     <p class="text-xs text-slate-500">
@@ -34,7 +31,7 @@
                     </p>
                 </div>
 
-                <div class="{{ $autoFinalizeEnabled ? '' : 'opacity-50 pointer-events-none' }}">
+                <div>
                     <label class="block text-xs font-semibold text-slate-500 mb-1.5 tracking-wide uppercase">
                         Giờ chốt số liệu
                     </label>

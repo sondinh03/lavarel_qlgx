@@ -8,6 +8,7 @@
             :show-khoi="false"
             :show-lop="true"
             :show-ky="true"
+            :allow-all-year="false"
             :selected-nam-hoc="$selectedNamHoc"
             :selected-khoi="$selectedKhoi"
             :selected-lop="$selectedLop"
@@ -31,6 +32,7 @@
                 :show-khoi="true"
                 :show-lop="true"
                 :show-ky="true"
+                :allow-all-year="false"
                 :selected-nam-hoc="$selectedNamHoc"
                 :selected-khoi="$selectedKhoi"
                 :selected-lop="$selectedLop"
@@ -68,10 +70,32 @@
                 </x-button>
                 @endif
                 @if($canManageScoreConfig)
-                <x-button wire:click="exportScores" variant="outline">
-                    <x-icon name="file-export" />
-                    Xuất Excel
-                </x-button>
+                <x-dropdown label="Xuất Excel" icon="download" align="right" width="72">
+                    <x-dropdown-item
+                        wire:click="exportScores"
+                        wire:loading.attr="disabled"
+                        wire:target="exportScores"
+                        icon="download"
+                        @click="open = false">
+                        <span class="flex flex-col gap-0.5">
+                            <span wire:loading.remove wire:target="exportScores">Xuất bảng điểm</span>
+                            <span wire:loading wire:target="exportScores">Đang tạo file...</span>
+                            <span class="text-xs font-normal text-slate-500">Toàn xứ · mỗi lớp một sheet</span>
+                        </span>
+                    </x-dropdown-item>
+                    <x-dropdown-item
+                        wire:click="exportScoreStatistics"
+                        wire:loading.attr="disabled"
+                        wire:target="exportScoreStatistics"
+                        icon="download"
+                        @click="open = false">
+                        <span class="flex flex-col gap-0.5">
+                            <span wire:loading.remove wire:target="exportScoreStatistics">Xuất thống kê điểm</span>
+                            <span wire:loading wire:target="exportScoreStatistics">Đang tạo file...</span>
+                            <span class="text-xs font-normal text-slate-500">Tổng quan · Phân phối · Chi tiết</span>
+                        </span>
+                    </x-dropdown-item>
+                </x-dropdown>
                 @endif
                 @endif
                 @if($activeTab === 'config' && $canManageScoreConfig)

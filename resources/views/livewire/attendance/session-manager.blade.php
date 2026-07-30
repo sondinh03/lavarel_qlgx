@@ -129,22 +129,15 @@
                     </x-inline-tip>
                     @endif
 
-                    @if(! $isMobileUi && $subjectTarget !== 'teachers' && $autoFinalizeEnabled)
+                    @if(! $isMobileUi && $subjectTarget !== 'teachers')
                     <x-inline-tip>
                         Giờ chốt số liệu của giáo xứ là <strong>{{ $autoFinalizeTime }}</strong>:
-                        với buổi đã có người điểm danh, những em chưa được điểm danh sẽ tính là vắng không phép.
-                        Muốn chốt sớm hơn thì bấm <strong>Khóa</strong> ở buổi đã điểm danh xong.
+                        với buổi đã có người điểm danh, những em chưa được điểm danh sẽ tính là vắng không phép
+                        sau giờ này (hoặc ngay khi buổi được <strong>Khóa</strong>).
                         @if($canManageParishSettings ?? false)
                         <button type="button" wire:click="switchTab('settings')"
-                            class="font-semibold text-primary-700 underline ml-1">Đổi giờ / tắt →</button>
+                            class="font-semibold text-primary-700 underline ml-1">Đổi giờ →</button>
                         @endif
-                    </x-inline-tip>
-                    @elseif(! $isMobileUi && $subjectTarget !== 'teachers' && ($canManageParishSettings ?? false))
-                    <x-inline-tip tone="amber">
-                        Tự động tính vắng sau giờ chốt đang <strong>tắt</strong>; chỉ buổi được khóa mới tính những em
-                        chưa được điểm danh là vắng không phép.
-                        <button type="button" wire:click="switchTab('settings')"
-                            class="font-semibold text-primary-700 underline ml-1">Bật lại tại tab Cài đặt điểm danh →</button>
                     </x-inline-tip>
                     @endif
 
