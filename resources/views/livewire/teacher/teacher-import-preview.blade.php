@@ -26,7 +26,7 @@
                         @foreach(['Họ đệm', 'Tên', 'Số điện thoại'] as $col)
                         <code class="px-2 py-0.5 bg-amber-100 text-amber-900 rounded text-xs">{{ $col }}</code>
                         @endforeach
-                        @foreach(['Tên thánh', 'Ngày sinh', 'Giới tính', 'Email', 'Giáo họ', 'Tạo tài khoản'] as $col)
+                        @foreach(['Tên thánh', 'Ngày sinh', 'Giới tính', 'Email', 'Giáo họ', 'Tạo tài khoản', 'Mã GLV'] as $col)
                         <code class="px-2 py-0.5 bg-white/70 text-amber-800 border border-amber-200 rounded text-xs">{{ $col }}</code>
                         @endforeach
                     </div>
@@ -37,6 +37,7 @@
                         • <strong>Ngày sinh</strong>: định dạng dd/mm/yyyy<br>
                         • <strong>Tạo tài khoản</strong>: có / không — mật khẩu mặc định = chuỗi ngày sinh <code>ddmmyyyy</code> (vd: 15/08/2000 → 15082000)<br>
                         • <strong>Tên thánh</strong>, <strong>Giáo họ</strong>: phải khớp tên trong hệ thống (nếu không khớp sẽ bỏ trống)<br>
+                        • <strong>Mã GLV</strong>: để trống khi thêm mới; điền mã đã có để <strong>cập nhật</strong> thông tin<br>
                         • Các cột viền trắng là tùy chọn
                     </p>
                     <a href="{{ asset('templates/teacher_import_template.xlsx') }}?v={{ filemtime(public_path('templates/teacher_import_template.xlsx')) }}"
@@ -127,7 +128,7 @@
                         ⚠ {{ count($warnings) }} dòng có cảnh báo — các giá trị không khớp sẽ được bỏ trống khi import
                     </p>
                     @endif
-                    @if($duplicateProfileCount > 0 || $duplicateInFileCount > 0)
+                    @if($duplicateProfileCount > 0 || $duplicateInFileCount > 0 || $duplicateInvalidCount > 0)
                     <p class="text-xs text-red-600 mt-0.5">
                         @if($duplicateProfileCount > 0)
                         {{ $duplicateProfileCount }} người đã có hồ sơ trong giáo xứ.
@@ -135,7 +136,16 @@
                         @if($duplicateInFileCount > 0)
                         {{ $duplicateInFileCount }} dòng lặp trong file.
                         @endif
+                        @if($duplicateInvalidCount > 0)
+                        {{ $duplicateInvalidCount }} dòng lỗi mã GLV.
+                        @endif
                         Các dòng này sẽ bị bỏ qua khi import.
+                    </p>
+                    @endif
+                    @php $updateCount = collect($rows)->where('will_update', true)->count(); @endphp
+                    @if($updateCount > 0)
+                    <p class="text-xs text-primary-700 mt-0.5">
+                        {{ $updateCount }} dòng sẽ được <strong>cập nhật</strong> theo mã GLV.
                     </p>
                     @endif
                 </div>
@@ -157,6 +167,7 @@
                     <thead class="bg-slate-50">
                         <tr>
                             <th class="px-4 py-3 text-left text-xs font-semibold text-slate-600 uppercase">Dòng</th>
+                            <th class="px-4 py-3 text-left text-xs font-semibold text-slate-600 uppercase">Mã GLV</th>
                             <th class="px-4 py-3 text-left text-xs font-semibold text-slate-600 uppercase">Tên thánh</th>
                             <th class="px-4 py-3 text-left text-xs font-semibold text-slate-600 uppercase">Họ đệm</th>
                             <th class="px-4 py-3 text-left text-xs font-semibold text-slate-600 uppercase">Tên</th>
@@ -171,9 +182,12 @@
                     </thead>
                     <tbody class="divide-y divide-slate-100">
                         @foreach($rows as $row)
-                        <tr class="{{ $row['is_duplicate'] ? 'bg-red-50' : ($row['has_warning'] ? 'bg-amber-50' : 'hover:bg-slate-50') }}"
+                        <tr class="{{ $row['is_duplicate'] ? 'bg-red-50' : (($row['will_update'] ?? false) ? 'bg-primary-50/50' : ($row['has_warning'] ? 'bg-amber-50' : 'hover:bg-slate-50')) }}"
                             wire:key="preview-{{ $row['row_number'] }}">
                             <td class="px-4 py-3 text-xs text-slate-400 font-mono">{{ $row['row_number'] }}</td>
+
+                            {{-- Mã GLV --}}
+                            <td class="px-4 py-3 text-sm font-mono text-slate-700">{{ $row['ma_giao_ly_vien'] ?: '—' }}</td>
 
                             {{-- Tên thánh --}}
                             <td class="px-4 py-3 text-sm text-slate-700">
@@ -254,6 +268,12 @@
                                                bg-red-100 text-red-700 rounded-full cursor-help text-xs font-semibold">
                                     Bỏ qua
                                 </span>
+                                @elseif($row['will_update'] ?? false)
+                                <span title="Sẽ cập nhật theo mã GLV"
+                                    class="inline-flex items-center px-2 py-0.5
+                                               bg-primary-100 text-primary-700 rounded-full cursor-help text-xs font-semibold">
+                                    Cập nhật
+                                </span>
                                 @elseif($row['has_warning'])
                                 <span title="{{ implode(', ', $warnings[$row['row_number']] ?? []) }}"
                                     class="inline-flex items-center justify-center w-6 h-6
@@ -288,11 +308,21 @@
 
             {{-- Action footer --}}
             <div class="px-6 py-4 border-t border-slate-200 bg-slate-50 flex items-center justify-between">
-                @php $skipCount = $duplicateProfileCount + $duplicateInFileCount; @endphp
+                @php
+                    $skipCount = $duplicateProfileCount + $duplicateInFileCount + $duplicateInvalidCount;
+                    $updateCount = collect($rows)->where('will_update', true)->count();
+                    $newCount = count($rows) - $skipCount - $updateCount;
+                @endphp
                 <p class="text-sm text-slate-600">
-                    Sẽ import <span class="font-semibold text-slate-900">{{ count($rows) - $skipCount }} giáo lý viên</span>
+                    @if($newCount > 0)
+                    Thêm mới <span class="font-semibold text-slate-900">{{ $newCount }}</span>
+                    @endif
+                    @if($updateCount > 0)
+                    @if($newCount > 0) · @endif
+                    Cập nhật <span class="font-semibold text-primary-700">{{ $updateCount }}</span>
+                    @endif
                     @if($skipCount > 0)
-                    <span class="text-red-600">— bỏ qua {{ $skipCount }} dòng trùng</span>
+                    <span class="text-red-600">— bỏ qua {{ $skipCount }} dòng</span>
                     @endif
                 </p>
                 <div class="flex gap-3">

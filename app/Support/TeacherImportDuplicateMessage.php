@@ -31,14 +31,33 @@ class TeacherImportDuplicateMessage
 
         if (! $teacher->is_active) {
             $parts[] = 'Hồ sơ này đang ở trạng thái <strong>đã nghỉ</strong>.'
-                . ' → Nếu người này quay lại, hãy mở trang <strong>Giáo lý viên</strong> và bật lại hoạt động thay vì import mới.';
+                . ' → Nếu người này quay lại, hãy mở trang <strong>Giáo lý viên</strong> và bật lại hoạt động'
+                . ", hoặc điền mã <strong>{$code}</strong> vào cột «Mã GLV» để cập nhật.";
         } else {
-            $parts[] = '→ Nếu cần sửa thông tin, hãy cập nhật trực tiếp trên trang <strong>Giáo lý viên</strong>.';
+            $parts[] = "→ Điền mã <strong>{$code}</strong> vào cột «Mã GLV» rồi import lại để"
+                . ' <strong>cập nhật</strong> thông tin (SĐT, giáo họ, email…).';
         }
 
         $parts[] = 'Dòng này sẽ bị <strong>bỏ qua</strong> khi xác nhận import.';
 
         return implode(' ', $parts);
+    }
+
+    public static function forCodeWillUpdate(string $teacherCode): string
+    {
+        $code = e($teacherCode);
+
+        return "Giáo lý viên mã <strong>{$code}</strong> đã có trong giáo xứ"
+            . ' — thông tin sẽ được <strong>cập nhật</strong> khi xác nhận.';
+    }
+
+    public static function forInvalidCode(string $teacherCode): string
+    {
+        $code = e($teacherCode);
+
+        return "Mã GLV <strong>{$code}</strong> không tồn tại trong giáo xứ."
+            . ' → Kiểm tra lại mã, hoặc bỏ trống cột mã để hệ thống tự nhận diện theo tên thánh, họ tên và ngày sinh.'
+            . ' Dòng này sẽ bị <strong>bỏ qua</strong> khi xác nhận import.';
     }
 
     public static function forDuplicateInFile(int $firstRowNumber): string

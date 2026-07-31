@@ -34,6 +34,9 @@ class TeacherImportPreview extends BaseComponent
     /** Số dòng lặp lại trong cùng file Excel */
     public int $duplicateInFileCount = 0;
 
+    /** Số dòng có mã GLV không hợp lệ */
+    public int $duplicateInvalidCount = 0;
+
     // ==================== VALIDATION ====================
 
     protected $rules = [
@@ -110,9 +113,14 @@ class TeacherImportPreview extends BaseComponent
 
             // Load hồ sơ đã có để đối chiếu trùng — ParishScope tự filter parish_id
             $existingByKey  = [];
+            $existingByCode = [];
             $existingPhones = [];
 
-            Teacher::with('saint')->get()->each(function (Teacher $teacher) use (&$existingByKey, &$existingPhones) {
+            Teacher::with('saint')->get()->each(function (Teacher $teacher) use (&$existingByKey, &$existingByCode, &$existingPhones) {
+                if ($teacher->teacher_code) {
+                    $existingByCode[$teacher->teacher_code] = $teacher;
+                }
+
                 $existingByKey[TeacherImportDuplicateMessage::duplicateKey(
                     $teacher->saint_id,
                     $teacher->last_name,
@@ -129,6 +137,7 @@ class TeacherImportPreview extends BaseComponent
             $seenKeys              = [];
             $duplicateProfileCount = 0;
             $duplicateInFileCount  = 0;
+            $duplicateInvalidCount = 0;
 
             foreach ($data as $index => $row) {
                 $rowNumber = $index + 6; // +6 vì data bắt đầu từ dòng 6
@@ -149,6 +158,7 @@ class TeacherImportPreview extends BaseComponent
                 $phoneRaw = trim((string) ($row['so_dien_thoai'] ?? ''));
                 $phone    = $this->normalizeExcelPhone($phoneRaw);
                 $email    = trim($row['email'] ?? '');
+                $teacherCode = trim((string) ($row['ma_giao_ly_vien'] ?? ''));
 
                 // Tên là bắt buộc — không có thì dòng sẽ bị bỏ qua khi import
                 if ($ten === '') {
@@ -183,10 +193,14 @@ class TeacherImportPreview extends BaseComponent
                     $rowWarnings[] = "Số điện thoại \"{$phoneRaw}\" không hợp lệ (cần 10 số, bắt đầu bằng 0) — dòng này sẽ bị bỏ qua khi import";
                 }
 
-                // Kiểm tra SĐT trùng — chỉ cảnh báo, vẫn import
+                // Kiểm tra SĐT trùng — chỉ cảnh báo, vẫn import/cập nhật
                 $phoneDuplicate = $phone !== '' && isset($existingPhones[$phone]);
                 if ($phoneDuplicate) {
-                    $rowWarnings[] = TeacherImportDuplicateMessage::forPhoneMatch($phone, $existingPhones[$phone]);
+                    $matchedByPhone = $existingPhones[$phone];
+                    // Không cảnh báo nếu SĐT thuộc chính hồ sơ đang được cập nhật theo mã
+                    if (! ($teacherCode !== '' && ($matchedByPhone->teacher_code ?? '') === $teacherCode)) {
+                        $rowWarnings[] = TeacherImportDuplicateMessage::forPhoneMatch($phone, $matchedByPhone);
+                    }
                 }
 
                 // Kiểm tra email
@@ -194,11 +208,21 @@ class TeacherImportPreview extends BaseComponent
                     $rowWarnings[] = "Email \"{$email}\" không đúng định dạng";
                 }
 
-                // Kiểm tra trùng hồ sơ: tên thánh + họ tên + ngày sinh
+                // Kiểm tra mã GLV & trùng hồ sơ (tên thánh + họ tên + ngày sinh)
                 $key         = TeacherImportDuplicateMessage::duplicateKey($saintId, $hoDem, $ten, $parsedDate);
                 $isDuplicate = false;
+                $willUpdate  = false;
 
-                if (isset($existingByKey[$key])) {
+                if ($teacherCode !== '') {
+                    if (isset($existingByCode[$teacherCode])) {
+                        $willUpdate    = true;
+                        $rowWarnings[] = TeacherImportDuplicateMessage::forCodeWillUpdate($teacherCode);
+                    } else {
+                        $isDuplicate = true;
+                        $duplicateInvalidCount++;
+                        $rowWarnings[] = TeacherImportDuplicateMessage::forInvalidCode($teacherCode);
+                    }
+                } elseif (isset($existingByKey[$key])) {
                     $isDuplicate = true;
                     $duplicateProfileCount++;
                     $rowWarnings[] = TeacherImportDuplicateMessage::forProfileMatch($existingByKey[$key]);
@@ -215,30 +239,34 @@ class TeacherImportPreview extends BaseComponent
                 }
 
                 $this->rows[] = [
-                    'row_number'    => $rowNumber,
-                    'ten_thanh'     => $tenThanh,
-                    'ho_dem'        => $hoDem,
-                    'ten'           => $ten,
-                    'ngay_sinh'     => $ngaySinh,
-                    'gioi_tinh'     => trim($row['gioi_tinh'] ?? ''),
-                    'email'         => $email,
-                    'so_dien_thoai' => $phone,
-                    'giao_ho'       => $giaoHo,
+                    'row_number'      => $rowNumber,
+                    'ma_giao_ly_vien' => $teacherCode,
+                    'ten_thanh'       => $tenThanh,
+                    'ho_dem'          => $hoDem,
+                    'ten'             => $ten,
+                    'ngay_sinh'       => $ngaySinh,
+                    'gioi_tinh'       => trim($row['gioi_tinh'] ?? ''),
+                    'email'           => $email,
+                    'so_dien_thoai'   => $phone,
+                    'giao_ho'         => $giaoHo,
                     'tao_tai_khoan'   => trim($row['tao_tai_khoan'] ?? ''),
                     'has_warning'     => !empty($rowWarnings),
                     'is_duplicate'    => $isDuplicate,
+                    'will_update'     => $willUpdate,
                     'phone_duplicate' => $phoneDuplicate,
                 ];
             }
 
             $this->duplicateProfileCount = $duplicateProfileCount;
             $this->duplicateInFileCount  = $duplicateInFileCount;
+            $this->duplicateInvalidCount = $duplicateInvalidCount;
 
             $this->readyToImport = empty($this->fileErrors) && !empty($this->rows);
 
             if ($this->readyToImport) {
-                $duplicateCount = $duplicateProfileCount + $duplicateInFileCount;
-                $willImport     = count($this->rows) - $duplicateCount;
+                $duplicateCount = collect($this->rows)->where('is_duplicate', true)->count();
+                $updateCount    = collect($this->rows)->where('will_update', true)->count();
+                $willImport     = count($this->rows) - $duplicateCount - $updateCount;
 
                 $parts   = [];
                 $parts[] = sprintf('Đã kiểm tra %d dòng dữ liệu.', count($this->rows));
@@ -246,7 +274,9 @@ class TeacherImportPreview extends BaseComponent
                 if ($willImport > 0) {
                     $parts[] = "Thêm mới {$willImport} giáo lý viên.";
                 }
-
+                if ($updateCount > 0) {
+                    $parts[] = "Cập nhật {$updateCount} giáo lý viên.";
+                }
                 if ($duplicateCount > 0) {
                     $skipParts = [];
                     if ($duplicateProfileCount > 0) {
@@ -254,6 +284,9 @@ class TeacherImportPreview extends BaseComponent
                     }
                     if ($duplicateInFileCount > 0) {
                         $skipParts[] = "{$duplicateInFileCount} dòng lặp trong file";
+                    }
+                    if ($duplicateInvalidCount > 0) {
+                        $skipParts[] = "{$duplicateInvalidCount} dòng lỗi mã";
                     }
                     $parts[] = 'Bỏ qua ' . implode(', ', $skipParts) . '. Xem chi tiết bên dưới.';
                 }
@@ -280,6 +313,10 @@ class TeacherImportPreview extends BaseComponent
                 ->handle($this->rows, $this->parishId);
 
             $message = "Import thành công {$result['imported']} giáo lý viên";
+
+            if (($result['updated'] ?? 0) > 0) {
+                $message .= " | Cập nhật {$result['updated']} giáo lý viên";
+            }
 
             if ($result['skipped_duplicate'] > 0) {
                 $message .= " | Bỏ qua {$result['skipped_duplicate']} dòng trùng";
@@ -319,6 +356,7 @@ class TeacherImportPreview extends BaseComponent
         $this->readyToImport         = false;
         $this->duplicateProfileCount = 0;
         $this->duplicateInFileCount  = 0;
+        $this->duplicateInvalidCount = 0;
     }
 
     /**

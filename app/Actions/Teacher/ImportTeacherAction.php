@@ -19,11 +19,10 @@ class ImportTeacherAction
      *
      * @param  array  $rows     Mảng rows từ TeacherImportPreview::$rows
      * @param  int    $parishId
-     * @return array{imported: int, skipped: int, skipped_duplicate: int, errors: array}
+     * @return array{imported: int, updated: int, skipped: int, skipped_duplicate: int, errors: array}
      */
     public function handle(array $rows, int $parishId): array
     {
-        // Cache lookups để tránh N+1
         $saintMap = Holymanagement::pluck('id', 'name')
             ->mapWithKeys(fn($id, $name) => [trim($name) => $id])
             ->toArray();
@@ -33,7 +32,7 @@ class ImportTeacherAction
             ->mapWithKeys(fn($id, $name) => [trim($name) => $id])
             ->toArray();
 
-        // Khoá hồ sơ đã có — chặn trùng ngay cả khi preview đã cũ
+        // Khoá hồ sơ đã có — chặn trùng khi tạo mới (không áp dụng khi cập nhật theo mã)
         $existingKeys = [];
         Teacher::where('parish_id', $parishId)
             ->get(['saint_id', 'last_name', 'first_name', 'birthday'])
@@ -47,18 +46,17 @@ class ImportTeacherAction
             });
 
         $imported          = 0;
+        $updated           = 0;
         $skipped           = 0;
         $skipped_duplicate = 0;
         $errors            = [];
 
         foreach ($rows as $row) {
-            $rowNumber = $row['row_number'];
+            $rowNumber   = $row['row_number'] ?? '?';
+            $teacherCode = trim((string) ($row['ma_giao_ly_vien'] ?? ''));
+            $lastName    = trim($row['ho_dem'] ?? '');
+            $firstName   = trim($row['ten'] ?? '');
 
-            // Họ tên tách thành 2 cột: ho_dem (họ + tên đệm) và ten
-            $lastName  = trim($row['ho_dem'] ?? '');
-            $firstName = trim($row['ten'] ?? '');
-
-            // Bỏ qua dòng trống
             if ($lastName === '' && $firstName === '') {
                 $skipped++;
                 continue;
@@ -70,8 +68,14 @@ class ImportTeacherAction
                 continue;
             }
 
-            // Preview đã đánh dấu trùng (hồ sơ đã có, hoặc lặp trong file)
-            if (!empty($row['is_duplicate'])) {
+            // Không có mã + đã đánh dấu duplicate từ preview → skip
+            if ($teacherCode === '' && !empty($row['is_duplicate'])) {
+                $skipped_duplicate++;
+                continue;
+            }
+
+            // Có mã nhưng preview đánh dấu invalid → skip
+            if ($teacherCode !== '' && !empty($row['is_duplicate'])) {
                 $skipped_duplicate++;
                 continue;
             }
@@ -79,38 +83,21 @@ class ImportTeacherAction
             $fullName = trim($lastName . ' ' . $firstName);
 
             try {
-                // Resolve saint_id
                 $saintId = null;
                 if (!empty(trim($row['ten_thanh'] ?? ''))) {
                     $saintId = $saintMap[trim($row['ten_thanh'])] ?? null;
                 }
 
-                // Resolve parish_group_id
                 $parishGroupId = null;
                 if (!empty(trim($row['giao_ho'] ?? ''))) {
                     $parishGroupId = $parishGroupMap[trim($row['giao_ho'])] ?? null;
                 }
 
-                // Parse ngày sinh
                 $birthday = null;
                 if (!empty($row['ngay_sinh'])) {
                     $birthday = ExcelDateParser::parse($row['ngay_sinh']);
                 }
 
-                // Chốt lại lần cuối theo tên thánh + họ tên + ngày sinh
-                $duplicateKey = TeacherImportDuplicateMessage::duplicateKey(
-                    $saintId,
-                    $lastName,
-                    $firstName,
-                    $birthday
-                );
-
-                if (isset($existingKeys[$duplicateKey])) {
-                    $skipped_duplicate++;
-                    continue;
-                }
-
-                // Parse giới tính
                 $gender      = 'male';
                 $gioiTinhRaw = mb_strtolower(trim($row['gioi_tinh'] ?? ''), 'UTF-8');
                 if (in_array($gioiTinhRaw, ['nữ', 'nu', 'female', 'f', '0'])) {
@@ -129,6 +116,47 @@ class ImportTeacherAction
                     continue;
                 }
 
+                $data = [
+                    'last_name'       => $lastName,
+                    'first_name'      => $firstName,
+                    'saint_id'        => $saintId,
+                    'gender'          => $gender,
+                    'birthday'        => $birthday,
+                    'email'           => $email,
+                    'phone_number'    => $normalizedPhone ?? $phone,
+                    'parish_group_id' => $parishGroupId,
+                    'is_active'       => true,
+                ];
+
+                if ($teacherCode !== '') {
+                    $teacher = Teacher::where('teacher_code', $teacherCode)
+                        ->where('parish_id', $parishId)
+                        ->first();
+
+                    if (! $teacher) {
+                        $errors[] = "Dòng {$rowNumber}: Không tìm thấy giáo lý viên với mã '{$teacherCode}'";
+                        $skipped_duplicate++;
+                        continue;
+                    }
+
+                    $teacher->update($data);
+                    $updated++;
+                    continue;
+                }
+
+                // Không có mã → double-check duplicate rồi create
+                $duplicateKey = TeacherImportDuplicateMessage::duplicateKey(
+                    $saintId,
+                    $lastName,
+                    $firstName,
+                    $birthday
+                );
+
+                if (isset($existingKeys[$duplicateKey])) {
+                    $skipped_duplicate++;
+                    continue;
+                }
+
                 // Tạo user account nếu tao_tai_khoan = có
                 $userId      = null;
                 $taotk       = mb_strtolower(trim($row['tao_tai_khoan'] ?? ''), 'UTF-8');
@@ -144,7 +172,6 @@ class ImportTeacherAction
                     }
 
                     if (User::where('email', $accountEmail)->exists()) {
-                        // Không throw — chỉ ghi warning, vẫn tạo teacher
                         $errors[] = "Dòng {$rowNumber}: \"{$accountEmail}\" đã tồn tại — bỏ qua tạo tài khoản";
                     } else {
                         $user = User::create([
@@ -159,19 +186,10 @@ class ImportTeacherAction
                     }
                 }
 
-                Teacher::create([
-                    'last_name'       => $lastName,
-                    'first_name'      => $firstName,
-                    'saint_id'        => $saintId,
-                    'gender'          => $gender,
-                    'birthday'        => $birthday,
-                    'email'           => $email,
-                    'phone_number'    => $normalizedPhone ?? $phone,
-                    'parish_group_id' => $parishGroupId,
-                    'parish_id'       => $parishId,
-                    'user_id'         => $userId,
-                    'is_active'       => true,
-                ]);
+                Teacher::create(array_merge($data, [
+                    'parish_id' => $parishId,
+                    'user_id'   => $userId,
+                ]));
 
                 $existingKeys[$duplicateKey] = true;
                 $imported++;
@@ -180,6 +198,6 @@ class ImportTeacherAction
             }
         }
 
-        return compact('imported', 'skipped', 'skipped_duplicate', 'errors');
+        return compact('imported', 'updated', 'skipped', 'skipped_duplicate', 'errors');
     }
 }
