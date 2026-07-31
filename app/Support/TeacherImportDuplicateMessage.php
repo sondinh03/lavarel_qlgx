@@ -51,6 +51,19 @@ class TeacherImportDuplicateMessage
             . ' — thông tin sẽ được <strong>cập nhật</strong> khi xác nhận.';
     }
 
+    public static function forAccountAlreadyExists(): string
+    {
+        return 'Hồ sơ <strong>đã có tài khoản</strong> — cột «Tạo tài khoản» sẽ bị <strong>bỏ qua</strong>'
+            . ' (không tạo mới, không đổi mật khẩu).';
+    }
+
+    public static function forAccountWillCreateOnUpdate(): string
+    {
+        return 'Hồ sơ <strong>chưa có tài khoản</strong> và cột «Tạo tài khoản» = có'
+            . ' — sẽ <strong>tạo tài khoản</strong> kèm cập nhật hồ sơ.'
+            . ' Mật khẩu mặc định = chuỗi ngày sinh <code>ddmmyyyy</code>.';
+    }
+
     public static function forInvalidCode(string $teacherCode): string
     {
         $code = e($teacherCode);

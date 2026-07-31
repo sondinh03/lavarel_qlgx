@@ -215,8 +215,19 @@ class TeacherImportPreview extends BaseComponent
 
                 if ($teacherCode !== '') {
                     if (isset($existingByCode[$teacherCode])) {
-                        $willUpdate    = true;
-                        $rowWarnings[] = TeacherImportDuplicateMessage::forCodeWillUpdate($teacherCode);
+                        $matchedTeacher = $existingByCode[$teacherCode];
+                        $willUpdate     = true;
+                        $rowWarnings[]  = TeacherImportDuplicateMessage::forCodeWillUpdate($teacherCode);
+
+                        $taotk        = mb_strtolower(trim($row['tao_tai_khoan'] ?? ''), 'UTF-8');
+                        $shouldCreate = in_array($taotk, ['có', 'co', 'yes', '1'], true);
+                        $hasAccount   = ! empty($matchedTeacher->user_id);
+
+                        if ($shouldCreate && $hasAccount) {
+                            $rowWarnings[] = TeacherImportDuplicateMessage::forAccountAlreadyExists();
+                        } elseif ($shouldCreate && ! $hasAccount) {
+                            $rowWarnings[] = TeacherImportDuplicateMessage::forAccountWillCreateOnUpdate();
+                        }
                     } else {
                         $isDuplicate = true;
                         $duplicateInvalidCount++;

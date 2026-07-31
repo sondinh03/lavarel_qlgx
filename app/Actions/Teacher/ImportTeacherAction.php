@@ -128,6 +128,9 @@ class ImportTeacherAction
                     'is_active'       => true,
                 ];
 
+                $taotk        = mb_strtolower(trim($row['tao_tai_khoan'] ?? ''), 'UTF-8');
+                $shouldCreate = in_array($taotk, ['có', 'co', 'yes', '1'], true);
+
                 if ($teacherCode !== '') {
                     $teacher = Teacher::where('teacher_code', $teacherCode)
                         ->where('parish_id', $parishId)
@@ -140,6 +143,31 @@ class ImportTeacherAction
                     }
 
                     $teacher->update($data);
+
+                    // Chỉ tạo tài khoản khi cập nhật nếu hồ sơ chưa có user_id và cột = có
+                    if ($shouldCreate && empty($teacher->user_id)) {
+                        $accountResult = $this->createCatechistAccount(
+                            $fullName,
+                            $email,
+                            $normalizedPhone,
+                            $birthday,
+                            $parishId,
+                            $rowNumber,
+                        );
+
+                        if ($accountResult['error'] !== null && $accountResult['user_id'] === null) {
+                            // Thiếu SĐT/email để tạo TK — vẫn giữ cập nhật hồ sơ, ghi lỗi
+                            $errors[] = $accountResult['error'];
+                        } elseif ($accountResult['error'] !== null) {
+                            $errors[] = $accountResult['error'];
+                        }
+
+                        if ($accountResult['user_id'] !== null) {
+                            $teacher->update(['user_id' => $accountResult['user_id']]);
+                        }
+                    }
+                    // Đã có tài khoản → bỏ qua cột tạo TK (không reset mật khẩu)
+
                     $updated++;
                     continue;
                 }
@@ -157,33 +185,30 @@ class ImportTeacherAction
                     continue;
                 }
 
-                // Tạo user account nếu tao_tai_khoan = có
-                $userId      = null;
-                $taotk       = mb_strtolower(trim($row['tao_tai_khoan'] ?? ''), 'UTF-8');
-                $shouldCreate = in_array($taotk, ['có', 'co', 'yes', '1']);
+                $userId = null;
 
                 if ($shouldCreate) {
-                    try {
-                        $accountEmail = UserAccountEmailResolver::resolveAccountEmail($email, $normalizedPhone);
-                    } catch (\InvalidArgumentException $e) {
-                        $errors[] = "Dòng {$rowNumber}: {$e->getMessage()}";
+                    $accountResult = $this->createCatechistAccount(
+                        $fullName,
+                        $email,
+                        $normalizedPhone,
+                        $birthday,
+                        $parishId,
+                        $rowNumber,
+                    );
+
+                    if ($accountResult['error'] !== null && $accountResult['user_id'] === null
+                        && str_contains($accountResult['error'], 'Cần có SĐT hoặc email')) {
+                        $errors[] = $accountResult['error'];
                         $skipped++;
                         continue;
                     }
 
-                    if (User::where('email', $accountEmail)->exists()) {
-                        $errors[] = "Dòng {$rowNumber}: \"{$accountEmail}\" đã tồn tại — bỏ qua tạo tài khoản";
-                    } else {
-                        $user = User::create([
-                            'name'      => $fullName,
-                            'email'     => $accountEmail,
-                            'password'  => CatechistDefaultPassword::fromBirthday($birthday),
-                            'parish_id' => $parishId,
-                        ]);
-
-                        $user->assignRole('catechist');
-                        $userId = $user->id;
+                    if ($accountResult['error'] !== null) {
+                        $errors[] = $accountResult['error'];
                     }
+
+                    $userId = $accountResult['user_id'];
                 }
 
                 Teacher::create(array_merge($data, [
@@ -199,5 +224,47 @@ class ImportTeacherAction
         }
 
         return compact('imported', 'updated', 'skipped', 'skipped_duplicate', 'errors');
+    }
+
+    /**
+     * @return array{user_id: int|null, error: string|null}
+     */
+    private function createCatechistAccount(
+        string $fullName,
+        ?string $email,
+        ?string $normalizedPhone,
+        ?string $birthday,
+        int $parishId,
+        int|string $rowNumber,
+    ): array {
+        try {
+            $accountEmail = UserAccountEmailResolver::resolveAccountEmail($email, $normalizedPhone);
+        } catch (\InvalidArgumentException $e) {
+            return [
+                'user_id' => null,
+                'error'   => "Dòng {$rowNumber}: {$e->getMessage()}",
+            ];
+        }
+
+        if (User::where('email', $accountEmail)->exists()) {
+            return [
+                'user_id' => null,
+                'error'   => "Dòng {$rowNumber}: \"{$accountEmail}\" đã tồn tại — bỏ qua tạo tài khoản",
+            ];
+        }
+
+        $user = User::create([
+            'name'      => $fullName,
+            'email'     => $accountEmail,
+            'password'  => CatechistDefaultPassword::fromBirthday($birthday),
+            'parish_id' => $parishId,
+        ]);
+
+        $user->assignRole('catechist');
+
+        return [
+            'user_id' => $user->id,
+            'error'   => null,
+        ];
     }
 }

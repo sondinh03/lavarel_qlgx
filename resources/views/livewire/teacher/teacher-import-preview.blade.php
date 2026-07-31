@@ -38,6 +38,7 @@
                         • <strong>Tạo tài khoản</strong>: có / không — mật khẩu mặc định = chuỗi ngày sinh <code>ddmmyyyy</code> (vd: 15/08/2000 → 15082000)<br>
                         • <strong>Tên thánh</strong>, <strong>Giáo họ</strong>: phải khớp tên trong hệ thống (nếu không khớp sẽ bỏ trống)<br>
                         • <strong>Mã GLV</strong>: để trống khi thêm mới; điền mã đã có để <strong>cập nhật</strong> thông tin<br>
+                        • <strong>Tạo tài khoản</strong> khi cập nhật: nếu GLV <strong>đã có TK</strong> → bỏ qua (không đổi mật khẩu); nếu <strong>chưa có TK</strong> và ghi «có» → tạo kèm cập nhật<br>
                         • Các cột viền trắng là tùy chọn
                     </p>
                     <a href="{{ asset('templates/teacher_import_template.xlsx') }}?v={{ filemtime(public_path('templates/teacher_import_template.xlsx')) }}"
