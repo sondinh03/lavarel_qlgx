@@ -26,6 +26,8 @@ class StudentExport implements FromCollection, WithHeadings, WithMapping, WithSt
         return StudentNew::query()
             ->whereHas('classes', fn($q) => $q->where('classes.id', $this->classId))
             ->with(['saint', 'parishGroup'])
+            ->orderBy('first_name')
+            ->orderBy('last_name')
             ->get();
     }
 
