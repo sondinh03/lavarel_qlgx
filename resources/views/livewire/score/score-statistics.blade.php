@@ -24,7 +24,7 @@
                     </div>
                 </div>
 
-                <div class="flex items-center gap-2 flex-wrap justify-end">
+                <div class="flex items-center gap-4 flex-wrap justify-end">
                     <x-tooltip
                         content="Xuất một file gồm HK1, HK2 và cả năm trong 3 sheet: Tổng quan, Phân phối, Chi tiết">
                         <x-button
@@ -32,21 +32,15 @@
                             wire:loading.attr="disabled"
                             wire:target="exportScoreStatistics"
                             variant="primary">
-                            <x-icon name="file-export" />
+                            <x-icon name="download" />
                             <span wire:loading.remove wire:target="exportScoreStatistics">Xuất thống kê điểm</span>
                             <span wire:loading wire:target="exportScoreStatistics">Đang tạo file...</span>
                         </x-button>
                     </x-tooltip>
 
-                    <a href="{{ route('scores.index') }}"
-                       class="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl border border-black/[0.08]
-                              bg-white/80 shadow-mac-sm text-sm font-semibold text-slate-600
-                              hover:bg-white transition-all active:scale-[0.98]">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
-                        </svg>
+                    <x-button as="a" href="{{ route('scores.index') }}" variant="secondary">
                         Quay lại bảng điểm
-                    </a>
+                    </x-button>
                 </div>
             </div>
 

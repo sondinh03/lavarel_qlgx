@@ -40,14 +40,14 @@
                         debounce="500ms"
                         class="max-w-md" />
 
-                    <div class="flex items-center gap-2 flex-wrap justify-end">
-                        <x-button wire:click="export" variant="outline" wire:loading.attr="disabled">
-                            <x-icon name="download"/>
-                            Xuất Excel
-                        </x-button>
+                    <div class="flex items-center gap-4 flex-wrap justify-end">
                         <x-button wire:click="create" variant="primary">
                             <x-icon name="plus"/>
                             Thêm Tên thánh
+                        </x-button>
+                        <x-button wire:click="export" variant="secondary" wire:loading.attr="disabled">
+                            <x-icon name="download"/>
+                            Xuất Excel
                         </x-button>
                     </div>
                 </div>
@@ -132,9 +132,10 @@
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
                                             d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
                                     </x-slot>
-                                    <x-action-button wire="create" icon="plus">
+                                    <x-button wire:click="create" variant="primary">
+                                        <x-icon name="plus" />
                                         Thêm tên thánh
-                                    </x-action-button>
+                                    </x-button>
                                 </x-stats.page-empty>
                             </td>
                         </tr>
@@ -245,15 +246,16 @@
             </div>
 
             {{-- Footer --}}
-            <div class="flex-shrink-0 px-4 py-3 border-t border-slate-200 bg-slate-50 flex justify-end gap-3">
-                <x-action-button
-                    @click="showModal = false; $wire.closeModal()"
-                    variant="secondary">
+            <div class="flex-shrink-0 px-4 py-3 border-t border-slate-200 bg-slate-50 flex justify-end gap-4">
+                <x-button
+                    variant="secondary"
+                    @click="showModal = false; $wire.closeModal()">
                     Hủy
-                </x-action-button>
-                <x-action-button wire:click="save" icon="save" :loading="true">
+                </x-button>
+                <x-button wire:click="save" variant="primary" wire:loading.attr="disabled" wire:target="save">
+                    <x-icon name="save" />
                     {{ $holyId ? 'Cập nhật' : 'Thêm mới' }}
-                </x-action-button>
+                </x-button>
             </div>
 
         </div>

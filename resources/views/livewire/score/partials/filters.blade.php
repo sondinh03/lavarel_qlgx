@@ -46,23 +46,8 @@
                 debounce="400ms"
                 class="max-w-md" />
 
-            <div class="flex items-center gap-2 flex-wrap justify-end">
+            <div class="flex items-center gap-4 flex-wrap justify-end">
                 @if($activeTab === 'scores')
-                @if($canManageScoreConfig)
-                <x-button
-                    as="a"
-                    href="{{ route('scores.statistics', ['namHoc' => $selectedNamHoc, 'khoi' => $selectedKhoi, 'lop' => $selectedLop, 'semester' => $selectedSemester]) }}"
-                    variant="outline">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-                    </svg>
-                    Thống kê
-                </x-button>
-                <x-button as="a" href="{{ route('scores.edit-logs') }}" variant="outline">
-                    Nhật ký sửa
-                </x-button>
-                @endif
                 @if($canEditScores)
                 <x-button wire:click="saveAllScores" variant="primary">
                     <x-icon name="save" />
@@ -70,7 +55,21 @@
                 </x-button>
                 @endif
                 @if($canManageScoreConfig)
-                <x-dropdown label="Xuất Excel" icon="download" align="right" width="72">
+                <x-button
+                    as="a"
+                    href="{{ route('scores.statistics', ['namHoc' => $selectedNamHoc, 'khoi' => $selectedKhoi, 'lop' => $selectedLop, 'semester' => $selectedSemester]) }}"
+                    variant="secondary">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                    </svg>
+                    Thống kê
+                </x-button>
+                <x-dropdown label="Khác" icon="grid" align="right" width="72" variant="secondary">
+                    <x-dropdown-item as="a" href="{{ route('scores.edit-logs') }}" icon="clipboard">
+                        Nhật ký sửa
+                    </x-dropdown-item>
+                    <div class="h-px bg-slate-100 my-1"></div>
                     <x-dropdown-item
                         wire:click="exportScores"
                         wire:loading.attr="disabled"

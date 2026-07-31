@@ -88,30 +88,29 @@
                 :description="$headerDesc"
                 :count="$teachers->count() ?: null">
                 <x-slot name="actions">
-                    <x-button as="a" href="{{ route('catechists.index') }}" variant="outline">
-                        <x-icon name="cancel" />
-                        Quay lại
-                    </x-button>
-
-                    @if($teachers->count() > 0)
-                    <x-button type="button" variant="success" @click="downloadPdf()" x-bind:disabled="downloading">
-                        <template x-if="!downloading">
-                            <x-icon name="download" />
-                        </template>
-                        <template x-if="downloading">
-                            <svg class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
-                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
-                                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-                            </svg>
-                        </template>
-                        <span x-text="downloading ? 'Đang tạo PDF...' : 'Tải PDF'"></span>
-                    </x-button>
-
-                    <x-button wire:click="printCards" variant="primary">
-                        <x-icon name="printer" />
-                        In {{ $teachers->count() }} thẻ
-                    </x-button>
-                    @endif
+                    <div class="flex items-center gap-4 flex-wrap justify-end">
+                        @if($teachers->count() > 0)
+                        <x-button wire:click="printCards" variant="primary">
+                            <x-icon name="printer" />
+                            In {{ $teachers->count() }} thẻ
+                        </x-button>
+                        <x-button type="button" variant="secondary" @click="downloadPdf()" x-bind:disabled="downloading">
+                            <template x-if="!downloading">
+                                <x-icon name="download" />
+                            </template>
+                            <template x-if="downloading">
+                                <svg class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
+                                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                                </svg>
+                            </template>
+                            <span x-text="downloading ? 'Đang tạo PDF...' : 'Tải PDF'"></span>
+                        </x-button>
+                        @endif
+                        <x-button as="a" href="{{ route('catechists.index') }}" variant="secondary">
+                            Quay lại
+                        </x-button>
+                    </div>
                 </x-slot>
             </x-page-header>
 

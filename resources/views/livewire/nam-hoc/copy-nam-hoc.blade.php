@@ -161,10 +161,10 @@
             @endif
 
             <div class="flex justify-end">
-                <x-action-button wire="proceedToConfirm" icon="arrow-right"
+                <x-button wire:click="proceedToConfirm" variant="primary"
                     :disabled="!$sourceNamHocId || !$targetNamHocId || $sourceClasses->isEmpty()">
                     Xem xác nhận
-                </x-action-button>
+                </x-button>
             </div>
         </x-mac-panel>
         @endif
@@ -216,13 +216,15 @@
                 Lớp trùng tên trong năm đích sẽ bị bỏ qua. Thao tác không thể hoàn tác tự động.
             </x-inline-tip>
 
-            <div class="flex justify-between">
-                <x-action-button wire="backToSelectYear" variant="secondary" icon="arrow-left">
+            <div class="flex items-center justify-between gap-4">
+                <x-button wire:click="backToSelectYear" variant="secondary">
                     Quay lại
-                </x-action-button>
-                <x-action-button wire="confirmCopy" icon="save" :loading="true" :disabled="$processing">
+                </x-button>
+                <x-button wire:click="confirmCopy" variant="primary" wire:loading.attr="disabled" wire:target="confirmCopy"
+                    :disabled="$processing">
+                    <x-icon name="save" />
                     {{ $processing ? 'Đang xử lý...' : 'Xác nhận copy' }}
-                </x-action-button>
+                </x-button>
             </div>
         </x-mac-panel>
         @endif
@@ -270,21 +272,16 @@
                 </p>
             </div>
 
-            <div class="flex justify-between">
-                <a href="{{ route('school-years.index') }}"
-                    class="inline-flex items-center gap-2 px-4 py-2 border border-slate-300
-                           text-slate-600 rounded-xl hover:bg-slate-50 transition text-sm font-semibold">
+            <div class="flex items-center justify-between gap-4 flex-wrap">
+                <x-button as="a" href="{{ route('school-years.index') }}" variant="secondary">
                     Bỏ qua, về năm học
-                </a>
-                <a href="{{ route('school-years.copy', ['source' => $sourceNamHocId, 'target' => $targetNamHocId]) }}"
-                    class="inline-flex items-center gap-2 px-4 py-2 bg-primary-600 text-white
-                           rounded-xl hover:bg-primary-700 transition text-sm font-semibold">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" />
-                    </svg>
+                </x-button>
+                <x-button as="a"
+                    href="{{ route('school-years.copy', ['source' => $sourceNamHocId, 'target' => $targetNamHocId]) }}"
+                    variant="primary">
+                    <x-icon name="users" />
                     Xếp học sinh ngay
-                </a>
+                </x-button>
             </div>
         </x-mac-panel>
         @endif
@@ -304,10 +301,9 @@
                             Năm đích: <span class="font-semibold text-primary-600">{{ $result['target_name'] }}</span>
                         </p>
                     </div>
-                    <button wire:click="startOver"
-                        class="text-sm text-slate-400 hover:text-slate-600 transition">
+                    <x-button wire:click="startOver" variant="secondary" size="sm">
                         Làm lại từ đầu
-                    </button>
+                    </x-button>
                 </div>
             </x-mac-panel>
 
@@ -363,19 +359,15 @@
                     {{-- Nút lưu --}}
                     @if($targetClassId && !empty($selectedStudents))
                     <div class="pt-2 mac-hairline-t">
-                        <button wire:click="saveAssignment"
-                            wire:loading.attr="disabled"
-                            class="w-full flex items-center justify-center gap-2 px-4 py-2.5
-                                   bg-primary-600 text-white rounded-xl hover:bg-primary-700
-                                   disabled:opacity-60 disabled:cursor-not-allowed
-                                   transition text-sm font-semibold">
+                        <x-button wire:click="saveAssignment" variant="primary" class="w-full justify-center"
+                            wire:loading.attr="disabled" wire:target="saveAssignment">
                             <span wire:loading.remove wire:target="saveAssignment">
                                 Xếp {{ count($selectedStudents) }} học sinh vào lớp
                             </span>
                             <span wire:loading wire:target="saveAssignment">
                                 Đang lưu...
                             </span>
-                        </button>
+                        </x-button>
                     </div>
                     @endif
                 </x-mac-panel>
@@ -448,10 +440,9 @@
 
             {{-- Link về năm học --}}
             <div class="text-center">
-                <a href="{{ route('school-years.index') }}"
-                    class="text-sm text-slate-400 hover:text-slate-600 transition">
-                    Hoàn tất, về quản lý năm học →
-                </a>
+                <x-button as="a" href="{{ route('school-years.index') }}" variant="secondary" size="sm">
+                    Hoàn tất, về quản lý năm học
+                </x-button>
             </div>
         </div>
         @endif

@@ -67,7 +67,7 @@
                                 :selected-lop="$selectedLop" />
                         </div>
                         <div class="flex-shrink-0 pb-0.5">
-                            <x-button wire:click="resetFilters" variant="subtle">
+                            <x-button wire:click="resetFilters" variant="secondary">
                                 <x-icon name="refresh" />
                                 Đặt lại
                             </x-button>
@@ -81,11 +81,12 @@
                             debounce="500ms"
                             class="max-w-md" />
 
-                        <div class="flex items-center gap-2 flex-wrap justify-end">
+                        <div class="flex items-center gap-4 flex-wrap justify-end">
                             @if($showManageActions)
                             <x-tooltip content="Vui lòng chọn lớp trước" :show="!$selectedLop">
                                 <x-button
                                     wire:click="openEnrollModal('existing')"
+                                    variant="primary"
                                     :disabled="!$selectedLop">
                                     <x-icon name="user-plus" />
                                     Ghi danh
@@ -97,7 +98,7 @@
                             <x-button
                                 as="a"
                                 href="{{ route('students.statistics', ['namHoc' => $selectedNamHoc]) }}"
-                                variant="outline">
+                                variant="secondary">
                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                         d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
@@ -107,14 +108,14 @@
 
                             <x-dropdown label="Khác" icon="grid" align="right" position="fixed">
                                 <x-dropdown-item wire:click="printSelected" icon="printer">
-                                    In thẻ
+                                    In thẻ học sinh
                                 </x-dropdown-item>
                                 <div class="my-1 border-t border-slate-100"></div>
                                 <x-dropdown-item as="a" :href="$this->importUrl" icon="upload">
                                     Import Excel
                                 </x-dropdown-item>
                                 <x-dropdown-item wire:click="export" icon="download">
-                                    Export Excel
+                                    Tải file Excel danh sách học sinh
                                 </x-dropdown-item>
                             </x-dropdown>
                             @endif
@@ -351,31 +352,11 @@
                             </td>
 
                             <td class="px-4 py-3 overflow-visible">
-                                <div class="flex items-center justify-center gap-1">
-                                    @if($showManageActions)
-                                    @if($student->parishioner_id)
-                                    <x-tooltip content="Xem hồ sơ giáo dân (tab mới)">
-                                        <a href="{{ route('parishioners.show', $student->parishioner_id) }}"
-                                            target="_blank"
-                                            rel="noopener noreferrer"
-                                            class="p-2 text-emerald-600 hover:bg-emerald-50 rounded-lg transition-all">
-                                            <x-icon name="link" />
-                                        </a>
-                                    </x-tooltip>
-                                    @else
-                                    <x-tooltip content="Liên kết giáo dân">
-                                        <button type="button"
-                                            wire:click="openLinkParishioner({{ $student->id }})"
-                                            class="p-2 hover:bg-slate-100 text-slate-400 rounded-lg transition-all">
-                                            <x-icon name="link" />
-                                        </button>
-                                    </x-tooltip>
-                                    @endif
-                                    @endif
-
+                                <div class="flex items-center justify-end gap-1">
                                     <x-tooltip content="Xem chi tiết">
                                         <a href="{{ route('students.show', $student->id) }}"
-                                            class="p-2 hover:bg-slate-100 text-slate-600 rounded-lg transition-all">
+                                            title="Xem chi tiết"
+                                            class="p-2 hover:bg-slate-100 text-slate-600 rounded-xl transition-all duration-200">
                                             <x-icon name="eye" />
                                         </a>
                                     </x-tooltip>
@@ -383,11 +364,13 @@
                                     @if($showEditActions)
                                     <x-tooltip content="Chỉnh sửa">
                                         <a href="{{ route('students.edit', $student->id) }}"
-                                            class="p-2 hover:bg-primary-50 text-primary-600 rounded-lg transition-all">
+                                            title="Chỉnh sửa"
+                                            class="p-2 hover:bg-primary-50 text-primary-600 rounded-xl transition-all duration-200">
                                             <x-icon name="edit" />
                                         </a>
                                     </x-tooltip>
                                     @endif
+
                                     @if($showManageActions)
                                     <x-dropdown icon="more-vertical" align="right" variant="subtle" position="fixed">
                                         @if($student->parishioner_id)
@@ -407,6 +390,13 @@
                                             icon="link"
                                             class="text-amber-700 hover:bg-amber-50">
                                             Hủy liên kết giáo dân
+                                        </x-dropdown-item>
+                                        <div class="h-px bg-slate-100 my-1"></div>
+                                        @else
+                                        <x-dropdown-item
+                                            wire:click="openLinkParishioner({{ $student->id }})"
+                                            icon="link">
+                                            Liên kết giáo dân
                                         </x-dropdown-item>
                                         <div class="h-px bg-slate-100 my-1"></div>
                                         @endif
@@ -446,14 +436,16 @@
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
                     d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
             </x-slot>
+            <div class="flex flex-wrap items-center justify-center gap-4">
             <x-button wire:click="openEnrollModal('existing')" variant="primary">
                 <x-icon name="user-plus" />
                 Ghi danh
             </x-button>
-            <x-button as="a" :href="$this->importUrl" variant="outline">
+            <x-button as="a" :href="$this->importUrl" variant="secondary">
                 <x-icon name="upload" />
                 Import Excel
             </x-button>
+            </div>
         </x-stats.page-empty>
         @else
         <x-stats.page-empty
@@ -613,8 +605,8 @@
                 </div>
 
                 {{-- Footer --}}
-                <div class="flex-shrink-0 px-6 py-4 border-t border-black/[0.06] bg-slate-50/70 flex justify-end gap-3">
-                    <x-button variant="outline" @click="showLink = false; $wire.closeLinkModal()">
+                <div class="flex-shrink-0 px-6 py-4 border-t border-black/[0.06] bg-slate-50/70 flex justify-end gap-4">
+                    <x-button variant="secondary" @click="showLink = false; $wire.closeLinkModal()">
                         Hủy
                     </x-button>
                 </div>
@@ -690,7 +682,7 @@
                             Tạo mới
                         </a>
 
-                        {{-- Tab 3: Import giáo dân --}}
+                        {{-- Tab 3: Đồng bộ từ giáo dân --}}
                         <button type="button"
                             wire:click="switchEnrollTab('parishioner')"
                             class="inline-flex items-center gap-2 px-4 py-2 text-sm font-semibold
@@ -702,8 +694,17 @@
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                     d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
                             </svg>
-                            Import giáo dân
+                            Đồng bộ từ giáo dân
                         </button>
+
+                        {{-- Tab 4: Import Excel — điều hướng sang trang import --}}
+                        <a href="{{ $this->importUrl }}"
+                            class="inline-flex items-center gap-2 px-4 py-2 text-sm font-semibold
+                                rounded-lg transition-all
+                                text-slate-500 hover:text-slate-700 hover:bg-white/50">
+                            <x-icon name="upload" class="w-4 h-4" />
+                            Import Excel
+                        </a>
 
                     </div>
                 </div>
@@ -810,14 +811,14 @@
                                     d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
                             </svg>
                             <p class="mt-4 text-lg text-slate-500">Không có học sinh nào để thêm</p>
-                            <p class="mt-1 text-sm text-slate-400">Thử tab "Tạo mới" hoặc "Import giáo dân"</p>
+                            <p class="mt-1 text-sm text-slate-400">Thử tab "Tạo mới" hoặc "Đồng bộ từ giáo dân"</p>
                         </div>
                         @endif
 
                     </div>
                     @endif
 
-                    {{-- ════════ TAB 3: Import giáo dân ════════ --}}
+                    {{-- ════════ TAB 3: Đồng bộ từ giáo dân ════════ --}}
                     @if($enrollTab === 'parishioner')
                     <div class="p-6 space-y-4">
 
@@ -954,8 +955,8 @@
                         <span class="text-sm text-slate-600">
                             Đã chọn: <span class="font-semibold text-primary-600">{{ count($studentsToAdd) }}</span> học sinh
                         </span>
-                        <div class="flex gap-3">
-                            <x-button variant="outline" @click="showEnroll = false; $wire.closeEnrollModal()">
+                        <div class="flex gap-4">
+                            <x-button variant="secondary" @click="showEnroll = false; $wire.closeEnrollModal()">
                                 Hủy
                             </x-button>
                             <x-button
@@ -976,8 +977,8 @@
                         <span class="text-sm text-slate-600">
                             Đã chọn: <span class="font-semibold text-primary-600">{{ count($selectedParishioners) }}</span> giáo dân
                         </span>
-                        <div class="flex gap-3">
-                            <x-button variant="outline" @click="showEnroll = false; $wire.closeEnrollModal()">
+                        <div class="flex gap-4">
+                            <x-button variant="secondary" @click="showEnroll = false; $wire.closeEnrollModal()">
                                 Hủy
                             </x-button>
                             <x-button
@@ -1009,14 +1010,14 @@
                 <span class="text-sm font-semibold text-slate-800">
                     Đã chọn <span class="text-primary-700">{{ count($selectedStudents) }}</span> học sinh
                 </span>
-                <div class="flex items-center gap-2 flex-wrap justify-end">
+                <div class="flex items-center gap-4 flex-wrap justify-end">
                     <x-button wire:click="printSelected" variant="primary" size="sm">
                         <x-icon name="printer" />
                         In thẻ
                     </x-button>
                     <x-button
                         type="button"
-                        variant="warning"
+                        variant="secondary"
                         size="sm"
                         x-on:click="$dispatch('open-confirm', {
                             message: 'Gỡ {{ count($selectedStudents) }} học sinh đã chọn khỏi lớp?',
@@ -1029,6 +1030,7 @@
                         type="button"
                         variant="danger"
                         size="sm"
+                        class="ml-2"
                         x-on:click="$dispatch('open-confirm', {
                             message: 'Xóa vĩnh viễn {{ count($selectedStudents) }} hồ sơ học sinh? Hành động này không thể hoàn tác.',
                             wireMethod: 'deleteSelectedProfiles'
@@ -1036,11 +1038,9 @@
                         <x-icon name="trash" />
                         Xóa hồ sơ
                     </x-button>
-                    <button type="button" wire:click="$set('selectedStudents', [])"
-                        class="px-3 py-1.5 text-sm font-medium text-slate-600
-                            hover:bg-black/[0.04] rounded-lg transition">
+                    <x-button type="button" wire:click="$set('selectedStudents', [])" variant="secondary" size="sm">
                         Bỏ chọn
-                    </button>
+                    </x-button>
                 </div>
             </div>
         </div>

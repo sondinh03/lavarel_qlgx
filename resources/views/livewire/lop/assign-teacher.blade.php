@@ -33,10 +33,7 @@
                     : 'Chọn năm học và lớp để phân công giáo lý viên'"
                 icon-type="teacher">
                 <x-slot name="actions">
-                    <x-button as="a" href="{{ $fromCatechistHub ? route('catechists.index') : route('classes.index') }}" variant="subtle">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
-                        </svg>
+                    <x-button as="a" href="{{ $fromCatechistHub ? route('catechists.index') : route('classes.index') }}" variant="secondary">
                         {{ $fromCatechistHub ? 'Về danh sách GLV' : 'Về danh sách lớp' }}
                     </x-button>
                 </x-slot>

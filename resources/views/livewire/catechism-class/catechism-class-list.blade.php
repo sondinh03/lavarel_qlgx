@@ -38,7 +38,7 @@
                         </div>
 
                         <div class="flex-shrink-0 pb-0.5">
-                            <x-button wire:click="resetFilters" variant="subtle">
+                            <x-button wire:click="resetFilters" variant="secondary">
                                 <x-icon name="refresh" />
                                 Đặt lại
                             </x-button>
@@ -159,25 +159,24 @@
                                 <div class="flex items-center justify-center gap-1">
                                     <x-tooltip content="Danh sách học sinh">
                                         <a href="{{ route('students.index', ['class' => $class->id]) }}"
-                                            class="p-2 hover:bg-primary-50 text-primary-600 rounded-lg transition-all">
+                                            class="p-2 hover:bg-primary-50 text-primary-600 rounded-xl transition-all duration-200">
                                             <x-icon name="users" class="w-4 h-4" />
                                         </a>
                                     </x-tooltip>
                                     <x-tooltip content="Phân công GLV">
                                         <a href="{{ route('classes.catechists', ['id' => $class->id]) }}"
-                                            class="p-2 hover:bg-primary-50 text-primary-600 rounded-lg transition-all">
+                                            class="p-2 hover:bg-primary-50 text-primary-600 rounded-xl transition-all duration-200">
                                             <x-icon name="catechists" class="w-4 h-4" />
                                         </a>
                                     </x-tooltip>
-                                    <x-tooltip content="Chỉnh sửa">
-                                        <button
-                                            wire:click="edit({{ $class->id }})"
-                                            class="p-2 hover:bg-primary-50 text-primary-600 rounded-lg transition-all">
-                                            <x-icon name="edit" />
-                                        </button>
-                                    </x-tooltip>
 
                                     <x-dropdown icon="more-vertical" align="right" variant="subtle" position="fixed">
+                                        <x-dropdown-item
+                                            wire:click="edit({{ $class->id }})"
+                                            icon="edit">
+                                            Chỉnh sửa
+                                        </x-dropdown-item>
+                                        <div class="h-px bg-slate-100 my-1"></div>
                                         <x-dropdown-item
                                             x-on:click="$dispatch('open-confirm', {
                                                 message: 'Xóa lớp {{ $class->name }}?',
@@ -331,8 +330,8 @@
                 @endif
             </div>
 
-            <div class="flex-shrink-0 px-6 py-4 border-t border-slate-200 bg-slate-50 flex justify-end gap-3">
-                <x-button variant="outline" @click="showForm = false; $wire.closeModal()">Hủy</x-button>
+            <div class="flex-shrink-0 px-6 py-4 border-t border-slate-200 bg-slate-50 flex justify-end gap-4">
+                <x-button variant="secondary" @click="showForm = false; $wire.closeModal()">Hủy</x-button>
                 <x-button variant="primary" wire:click="save" :loading="true" loading-target="save"
                     :disabled="$availableGradeLevels->isEmpty()">
                     <x-icon name="save" />

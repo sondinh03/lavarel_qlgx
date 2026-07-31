@@ -138,8 +138,8 @@
             @endif
         </div>
 
-        <div class="flex gap-2 pt-1">
-            <x-button type="button" variant="outline" class="flex-1" wire:click="closeStudentScoreDetail">
+        <div class="flex gap-4 pt-1">
+            <x-button type="button" variant="secondary" class="flex-1" wire:click="closeStudentScoreDetail">
                 Đóng
             </x-button>
             @if($canEditScores)

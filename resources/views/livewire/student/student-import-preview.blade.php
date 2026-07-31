@@ -15,7 +15,22 @@
             <x-page-header
                 title="Import học sinh từ Excel"
                 :description="$this->className ? 'Lớp: ' . $this->className : 'Tải lên file Excel để ghi danh hàng loạt'"
-                icon-type="students" />
+                icon-type="students">
+                <x-slot name="actions">
+                    <div class="flex items-center gap-4 flex-wrap justify-end">
+                        <x-button as="a"
+                            href="{{ asset('templates/student_import_template.xlsx') }}?v={{ filemtime(public_path('templates/student_import_template.xlsx')) }}"
+                            variant="primary"
+                            size="sm">
+                            <x-icon name="download" />
+                            Tải file mẫu
+                        </x-button>
+                        <x-button as="a" href="{{ route('students.index') }}" variant="secondary" size="sm">
+                            Quay lại
+                        </x-button>
+                    </div>
+                </x-slot>
+            </x-page-header>
 
             {{-- Hướng dẫn + download template --}}
             <div class="px-4 lg:px-6 py-4 mac-hairline-b space-y-3">
@@ -38,16 +53,6 @@
                         • <strong>email</strong>: định dạng email hợp lệ<br>
                         • Các cột viền trắng là tùy chọn
                     </p>
-                    <a href="{{ asset('templates/student_import_template.xlsx') }}?v={{ filemtime(public_path('templates/student_import_template.xlsx')) }}"
-                        class="mt-3 inline-flex items-center gap-1.5 px-3 py-2
-                               bg-amber-100 hover:bg-amber-200 text-amber-800 text-xs font-semibold
-                               rounded-lg transition shadow-mac-sm">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                        </svg>
-                        Tải file mẫu
-                    </a>
                 </x-inline-tip>
 
                 @if(!$selectedLop)
@@ -142,10 +147,9 @@
                                 <li class="text-sm text-red-700">{!! $err !!}</li>
                                 @endforeach
                             </ul>
-                            <button wire:click="resetUpload" type="button"
-                                class="mt-3 px-3 py-1.5 bg-red-100 text-red-700 text-sm font-medium rounded-lg hover:bg-red-200 transition">
+                            <x-button wire:click="resetUpload" variant="secondary" size="sm" class="mt-3">
                                 Upload lại
-                            </button>
+                            </x-button>
                         </div>
                     </div>
                 </div>
@@ -176,15 +180,10 @@
                     @endif
                 </div>
 
-                <button wire:click="resetUpload" type="button"
-                    class="inline-flex items-center gap-1.5 px-3 py-2
-                           text-sm text-slate-600 hover:bg-slate-100 rounded-xl transition">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                    </svg>
+                <x-button wire:click="resetUpload" variant="secondary" size="sm">
+                    <x-icon name="refresh" />
                     Upload lại
-                </button>
+                </x-button>
             </div>
 
             {{-- Table --}}
@@ -333,7 +332,7 @@
             @endif
 
             {{-- Action footer --}}
-            <div class="px-4 lg:px-6 py-4 mac-hairline-t bg-white/40 flex items-center justify-between gap-3 flex-wrap">
+            <div class="px-4 lg:px-6 py-4 mac-hairline-t bg-white/40 flex items-center justify-between gap-4 flex-wrap">
                 <div class="text-sm text-slate-600 space-y-0.5">
                     Sẽ thêm mới
                     <span class="font-semibold text-slate-900">{{ $this->newCount }} học sinh</span>
@@ -354,31 +353,15 @@
                     </p>
                     @endif
                 </div>
-                <div class="flex gap-3">
-                    <button wire:click="resetUpload" type="button"
-                        class="px-4 py-2.5 bg-slate-100 text-slate-700 text-sm font-semibold
-                               rounded-xl hover:bg-slate-200 active:scale-95 transition-all shadow-mac-sm">
+                <div class="flex gap-4">
+                    <x-button wire:click="resetUpload" variant="secondary">
                         Hủy
-                    </button>
-                    <button wire:click="confirmImport" type="button"
-                        @disabled(!$readyToImport)
-                        wire:loading.attr="disabled"
-                        class="px-4 py-2.5 bg-gradient-to-r from-primary-500 to-primary-600 text-white
-                               text-sm font-semibold rounded-xl hover:from-primary-600 hover:to-primary-700
-                               active:scale-95 transition-all disabled:opacity-50 disabled:cursor-not-allowed
-                               inline-flex items-center gap-2 shadow-mac-sm">
-                        <svg wire:loading wire:target="confirmImport"
-                            class="animate-spin w-4 h-4" fill="none" viewBox="0 0 24 24">
-                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
-                        </svg>
-                        <svg wire:loading.remove wire:target="confirmImport"
-                            class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
-                        </svg>
+                    </x-button>
+                    <x-button wire:click="confirmImport" variant="primary" :disabled="!$readyToImport"
+                        wire:loading.attr="disabled" wire:target="confirmImport">
+                        <x-icon name="upload" />
                         Xác nhận import
-                    </button>
+                    </x-button>
                 </div>
             </div>
         </x-mac-panel>

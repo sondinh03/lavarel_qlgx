@@ -48,12 +48,13 @@
                         </div>
                     </div>
 
-                    <div class="flex items-center gap-2 flex-shrink-0">
+                    <div class="flex items-center gap-4 flex-shrink-0">
                         <x-button wire:click="edit" variant="primary">
                             <x-icon name="edit" />
                             Chỉnh sửa
                         </x-button>
                         <x-button variant="danger"
+                            class="ml-2"
                             confirm="Xóa giáo lý viên này sẽ xóa luôn tài khoản đăng nhập. Bạn chắc chắn?"
                             wire="deleteTeacher">
                             <x-icon name="trash" />

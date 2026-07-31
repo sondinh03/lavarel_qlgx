@@ -187,27 +187,19 @@
                                 vắng không phép với buổi đã có người điểm danh.
                             </p>
                         </div>
-                        <a href="{{ route('session.index', ['tab' => 'settings']) }}"
-                            class="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold
-                                bg-white/80 text-slate-700 border border-black/[0.08] shadow-mac-sm
-                                hover:bg-white transition-all active:scale-[0.98] flex-shrink-0">
+                        <x-button as="a" href="{{ route('session.index', ['tab' => 'settings']) }}" variant="secondary" size="sm">
                             Đổi trong Cài đặt điểm danh →
-                        </a>
+                        </x-button>
                     </div>
                 </div>
 
                 <div class="pt-2 flex justify-end">
-                    <button type="submit"
+                    <x-button type="submit" variant="primary"
                         wire:loading.attr="disabled"
-                        wire:target="logo,parishLogo,save"
-                        class="inline-flex items-center justify-center px-5 py-2.5 rounded-xl
-                            bg-primary-500 text-white text-sm font-semibold shadow-mac-sm
-                            hover:bg-primary-600 disabled:opacity-60
-                            focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/40
-                            active:scale-[0.98] transition-all">
+                        wire:target="logo,parishLogo,save">
                         <span wire:loading.remove wire:target="logo,parishLogo,save">Lưu thay đổi</span>
                         <span wire:loading wire:target="logo,parishLogo,save">Đang lưu...</span>
-                    </button>
+                    </x-button>
                 </div>
             </form>
         </x-mac-panel>

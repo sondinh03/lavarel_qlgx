@@ -14,7 +14,7 @@
                 description="Theo dõi các lần thêm, sửa hoặc xóa điểm trong giáo xứ"
                 icon-type="score">
                 <x-slot name="actions">
-                    <x-button as="a" href="{{ route('scores.index') }}" variant="outline">
+                    <x-button as="a" href="{{ route('scores.index') }}" variant="secondary">
                         ← Bảng điểm
                     </x-button>
                 </x-slot>

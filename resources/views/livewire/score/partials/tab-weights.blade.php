@@ -228,7 +228,7 @@
     </x-inline-tip>
     @endif
 
-    <div class="flex flex-wrap gap-3">
+    <div class="flex flex-wrap items-center gap-4">
         <x-button type="button" variant="primary" wire:click="saveGradingSettings" wire:loading.attr="disabled">
             <x-icon name="save" />
             Lưu cách tính
@@ -237,6 +237,7 @@
         @if($weightOverrideExists)
         <x-button
             variant="danger"
+            class="ml-2"
             wire="deleteGradingSettings"
             confirm="Xoá cấu hình riêng của phạm vi này? Các lớp sẽ quay về dùng cấu hình rộng hơn.">
             Xoá cấu hình riêng

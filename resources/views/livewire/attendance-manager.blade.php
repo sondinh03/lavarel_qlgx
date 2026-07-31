@@ -343,7 +343,7 @@
             },
 
             saveButtonLabel() {
-                return this.isSaving ? 'Đang lưu…' : 'Lưu';
+                return this.isSaving ? 'Đang lưu…' : 'Lưu diểm danh';
             },
 
             save() {
@@ -524,19 +524,10 @@
                         @endif
                     </div>
 
-                    <div class="flex flex-wrap items-center gap-2 justify-end flex-shrink-0 w-full lg:w-auto">
+                    <div class="flex flex-wrap items-center gap-4 justify-end flex-shrink-0 w-full lg:w-auto">
                         @if($subjectTarget === 'teachers')
-                            @if($canCreateSessions)
-                            <x-button as="a" variant="{{ $this->viewMode === 'mobile' ? 'primary' : 'outline' }}" size="sm"
-                                class="{{ $this->viewMode === 'mobile' ? 'w-full justify-center' : '' }}"
-                                href="{{ route('session.index', ['target' => 'teachers', 'namHoc' => $selectedNamHoc]) }}"
-                                x-on:click="if (!confirmLeave('tạo phiên')) { $event.preventDefault(); return; }">
-                                <x-icon name="plus" />
-                                Tạo phiên
-                            </x-button>
-                            @endif
                             @if($isAdmin && $this->viewMode !== 'mobile')
-                            <x-dropdown label="Khác" icon="grid" align="right" width="72">
+                            <x-dropdown label="Khác" icon="grid" align="right" width="72" variant="secondary">
                                 <x-dropdown-item
                                     icon="download"
                                     x-on:click="open = false; $dispatch('attendance-export')">
@@ -550,48 +541,57 @@
                             </x-dropdown>
                             @endif
                             @if($this->viewMode !== 'mobile')
-                            <div x-show="hasDraft()" x-cloak class="flex items-center gap-2">
-                                <x-button variant="ghost" size="sm" x-on:click="discard()" x-bind:disabled="isSaving">
+                            <div class="flex items-center gap-4">
+                                <x-button variant="secondary" size="sm" x-on:click="discard()"
+                                    x-bind:disabled="isSaving || !hasDraft()">
                                     Hủy
                                 </x-button>
-                                <x-button variant="primary" size="sm" x-on:click="save()" x-bind:disabled="isSaving">
+                                <x-button variant="primary" size="sm" x-on:click="save()"
+                                    x-bind:disabled="isSaving || !hasDraft()">
                                     <span x-text="saveButtonLabel()"></span>
                                 </x-button>
                             </div>
                             @endif
                         @elseif($selectedClassId)
-                            @if($canCreateSessions)
-                            <x-button as="a" variant="{{ $this->viewMode === 'mobile' ? 'primary' : 'outline' }}" size="sm"
-                                class="{{ $this->viewMode === 'mobile' ? 'w-full justify-center' : '' }}"
-                                href="{{ route('session.index', array_filter([
+                            @php
+                                $sessionManageUrl = route('session.index', array_filter([
                                     'namHoc'  => $selectedNamHoc,
                                     'classId' => $selectedClassId,
                                     'khoi'    => $selectedKhoi ?: null,
-                                ])) }}"
-                                x-on:click="if (!confirmLeave('tạo phiên')) { $event.preventDefault(); return; }">
-                                <x-icon name="plus" />
-                                Tạo phiên
-                            </x-button>
-                            @endif
-
-                            @if($this->viewMode !== 'mobile')
-                            <x-button as="a" variant="outline" size="sm" href="{{ route('attendance.statistics', [
+                                ]));
+                                $statisticsUrl = route('attendance.statistics', [
                                     'namHoc'  => $selectedNamHoc,
                                     'classId' => $selectedClassId,
                                     'khoi'    => $selectedKhoi,
                                     'ky'      => $selectedKy,
                                     'type'    => $attendanceType,
-                            ]) }}"
-                                x-on:click="if (!confirmLeave('xem thống kê')) { $event.preventDefault(); return; } resetEditingState();">
-                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                        d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-                                </svg>
-                                Thống kê
-                            </x-button>
+                                ]);
+                            @endphp
 
-                            @if($isAdmin)
-                            <x-dropdown label="Khác" icon="grid" align="right" width="72">
+                            <x-dropdown
+                                label="Khác"
+                                icon="grid"
+                                align="right"
+                                width="72"
+                                variant="secondary">
+                                @if($canCreateSessions)
+                                <x-dropdown-item
+                                    as="a"
+                                    :href="$sessionManageUrl"
+                                    icon="calendar"
+                                    x-on:click="open = false; if (!confirmLeave('quản lý phiên điểm danh')) { $event.preventDefault(); }">
+                                    Quản lý phiên điểm danh
+                                </x-dropdown-item>
+                                @endif
+                                <x-dropdown-item
+                                    as="a"
+                                    :href="$statisticsUrl"
+                                    icon="clipboard"
+                                    x-on:click="open = false; if (!confirmLeave('xem thống kê')) { $event.preventDefault(); return; } resetEditingState();">
+                                    Thống kê
+                                </x-dropdown-item>
+                                @if($isAdmin)
+                                <div class="h-px bg-slate-100 my-1"></div>
                                 <x-dropdown-item
                                     icon="download"
                                     x-on:click="open = false; $dispatch('attendance-export')">
@@ -602,14 +602,17 @@
                                     x-on:click="open = false; $dispatch('attendance-absent-export')">
                                     Xuất danh sách học sinh vắng
                                 </x-dropdown-item>
+                                @endif
                             </x-dropdown>
-                            @endif
 
-                            <div x-show="hasDraft()" x-cloak class="flex items-center gap-2">
-                                <x-button variant="ghost" size="sm" x-on:click="discard()" x-bind:disabled="isSaving">
+                            @if($this->viewMode !== 'mobile')
+                            <div class="flex items-center gap-4">
+                                <x-button variant="secondary" size="sm" x-on:click="discard()"
+                                    x-bind:disabled="isSaving || !hasDraft()">
                                     Hủy
                                 </x-button>
-                                <x-button variant="primary" size="sm" x-on:click="save()" x-bind:disabled="isSaving">
+                                <x-button variant="primary" size="sm" x-on:click="save()"
+                                    x-bind:disabled="isSaving || !hasDraft()">
                                     <span x-text="saveButtonLabel()"></span>
                                 </x-button>
                             </div>
@@ -653,9 +656,9 @@
                 <x-inline-tip tone="amber">
                     Chưa có buổi {{ \App\Models\TeacherAttendanceSession::typeLabel((int) $attendanceType) }}.
                     @if($canCreateSessions)
-                    Vào
+                    Bấm vào <strong>tài khoản</strong> (góc dưới sidebar) →
                     <a href="{{ route('session.index', ['target' => 'teachers', 'namHoc' => $selectedNamHoc]) }}"
-                        class="font-semibold underline hover:text-amber-950">Phiên điểm danh → Giáo lý viên</a>
+                        class="font-semibold underline hover:text-amber-950">Phiên điểm danh</a>
                     để tạo phiên, rồi quay lại trang này.
                     @else
                     Liên hệ Ban quản trị giáo lý để tạo phiên.
@@ -665,19 +668,12 @@
             <x-stats.page-empty
                 :panel="false"
                 title="Chưa có phiên điểm danh GLV"
-                description="Tạo phiên tại Phiên điểm danh, rồi quay lại trang này để điểm."
+                description="Tạo phiên tại menu tài khoản → Phiên điểm danh, rồi quay lại trang này để điểm."
                 tone="primary">
                 <x-slot name="icon">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
                         d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
                 </x-slot>
-                @if($canCreateSessions)
-                <x-button as="a" variant="primary"
-                    href="{{ route('session.index', ['target' => 'teachers', 'namHoc' => $selectedNamHoc]) }}">
-                    <x-icon name="plus" />
-                    Tạo phiên
-                </x-button>
-                @endif
             </x-stats.page-empty>
             @else
                 @if($this->viewMode !== 'mobile')
@@ -1060,17 +1056,17 @@
                     </div>
 
                     <div
-                        x-show="hasDraft() && !noteModal.open"
+                        x-show="!noteModal.open"
                         x-cloak
                         class="fixed left-0 right-0 z-20 bg-white/90 backdrop-blur border-t border-black/[0.06] px-4 py-3"
                         style="bottom: calc(env(safe-area-inset-bottom) + 60px);">
-                        <div class="flex items-center gap-2 max-w-7xl mx-auto">
+                        <div class="flex items-center gap-4 max-w-7xl mx-auto">
                             <x-button
-                                variant="ghost"
+                                variant="secondary"
                                 size="sm"
                                 class="flex-shrink-0"
                                 x-on:click="discard()"
-                                x-bind:disabled="isSaving">
+                                x-bind:disabled="isSaving || !hasDraft()">
                                 Hủy
                             </x-button>
 
@@ -1079,13 +1075,13 @@
                                 size="sm"
                                 class="flex-1"
                                 x-on:click="save()"
-                                x-bind:disabled="isSaving">
+                                x-bind:disabled="isSaving || !hasDraft()">
                                 <span x-text="saveButtonLabel()"></span>
                             </x-button>
                         </div>
                     </div>
 
-                    <div x-show="hasDraft()" x-cloak class="h-24"></div>
+                    <div class="h-24"></div>
                 </div>
                 @endif
             @endif
@@ -1607,19 +1603,19 @@
                         </table>
                     </div>
 
-                    {{-- Sticky Lưu — chỉ render khi viewMode mobile --}}
+                    {{-- Sticky Lưu — luôn hiện trên mobile khi có bảng điểm danh --}}
                     <div
-                        x-show="hasDraft() && !noteModal.open"
+                        x-show="!noteModal.open"
                         x-cloak
                         class="fixed left-0 right-0 z-20 bg-white/90 backdrop-blur border-t border-black/[0.06] px-4 py-3"
                         style="bottom: calc(env(safe-area-inset-bottom) + 60px);">
-                        <div class="flex items-center gap-2 max-w-7xl mx-auto">
+                        <div class="flex items-center gap-4 max-w-7xl mx-auto">
                             <x-button
-                                variant="ghost"
+                                variant="secondary"
                                 size="sm"
                                 class="flex-shrink-0"
                                 x-on:click="discard()"
-                                x-bind:disabled="isSaving">
+                                x-bind:disabled="isSaving || !hasDraft()">
                                 Hủy
                             </x-button>
 
@@ -1628,13 +1624,13 @@
                                 size="sm"
                                 class="flex-1"
                                 x-on:click="save()"
-                                x-bind:disabled="isSaving">
+                                x-bind:disabled="isSaving || !hasDraft()">
                                 <span x-text="saveButtonLabel()"></span>
                             </x-button>
                         </div>
                     </div>
 
-                    <div x-show="hasDraft()" x-cloak class="h-24"></div>
+                    <div class="h-24"></div>
                 </div>
                 @endif
 
@@ -1670,16 +1666,16 @@
                                 d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
                         </x-slot>
                         @if(empty($sessions) && $canCreateSessions)
-                        <div class="flex flex-wrap items-center justify-center gap-3">
+                        <div class="flex flex-wrap items-center justify-center gap-4">
                             <x-button as="a" href="{{ route('session.index', array_filter([
                                 'namHoc' => $selectedNamHoc,
                                 'classId' => $selectedClassId,
                                 'khoi' => $selectedKhoi ?: null,
                             ])) }}" variant="primary">
-                                <x-icon name="plus" />
-                                Tạo phiên điểm danh
+                                <x-icon name="calendar" />
+                                Quản lý phiên điểm danh
                             </x-button>
-                            <x-button as="a" href="{{ route('help.attendance') }}" variant="outline">
+                            <x-button as="a" href="{{ route('help.attendance') }}" variant="secondary">
                                 Xem hướng dẫn
                             </x-button>
                         </div>
@@ -1879,8 +1875,8 @@
                     </div>
                 </div>
 
-                <div class="flex-shrink-0 px-6 py-4 border-t border-black/[0.06] bg-slate-50/70 flex justify-end gap-3">
-                    <x-button type="button" variant="outline"
+                <div class="flex-shrink-0 px-6 py-4 border-t border-black/[0.06] bg-slate-50/70 flex justify-end gap-4">
+                    <x-button type="button" variant="secondary"
                         @click="showAbsentExport = false; $wire.closeAbsentExportModal()">
                         Hủy
                     </x-button>

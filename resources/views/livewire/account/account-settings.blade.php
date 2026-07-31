@@ -69,17 +69,12 @@
                 </div>
 
                 <div class="pt-2 flex justify-end">
-                    <button type="submit"
+                    <x-button type="submit" variant="primary"
                         wire:loading.attr="disabled"
-                        wire:target="updateProfile,avatar_path"
-                        class="inline-flex items-center justify-center px-5 py-2.5 rounded-xl
-                            bg-primary-500 text-white text-sm font-semibold shadow-mac-sm
-                            hover:bg-primary-600 disabled:opacity-60
-                            focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/40
-                            active:scale-[0.98] transition-all">
+                        wire:target="updateProfile,avatar_path">
                         <span wire:loading.remove wire:target="updateProfile">Lưu thông tin</span>
                         <span wire:loading wire:target="updateProfile">Đang lưu...</span>
-                    </button>
+                    </x-button>
                 </div>
             </form>
         </x-mac-panel>
@@ -132,16 +127,12 @@
                 </div>
 
                 <div class="pt-2 flex justify-end">
-                    <button type="submit"
+                    <x-button type="submit" variant="primary"
                         wire:loading.attr="disabled"
-                        class="inline-flex items-center justify-center px-5 py-2.5 rounded-xl
-                            bg-primary-500 text-white text-sm font-semibold shadow-mac-sm
-                            hover:bg-primary-600 disabled:opacity-60
-                            focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/40
-                            active:scale-[0.98] transition-all">
+                        wire:target="updatePassword">
                         <span wire:loading.remove wire:target="updatePassword">Đổi mật khẩu</span>
                         <span wire:loading wire:target="updatePassword">Đang lưu...</span>
-                    </button>
+                    </x-button>
                 </div>
             </form>
         </x-mac-panel>

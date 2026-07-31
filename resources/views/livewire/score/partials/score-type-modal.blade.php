@@ -156,8 +156,8 @@
             </div>
         </div>
 
-        <div class="flex-shrink-0 px-6 py-4 border-t border-black/[0.06] bg-white/40 flex justify-end gap-3">
-            <x-button type="button" variant="outline" wire:click="closeScoreTypeForm">Huỷ</x-button>
+        <div class="flex-shrink-0 px-6 py-4 border-t border-black/[0.06] bg-white/40 flex justify-end gap-4">
+            <x-button type="button" variant="secondary" wire:click="closeScoreTypeForm">Huỷ</x-button>
             <x-button type="button" variant="primary" wire:click="saveScoreType" wire:loading.attr="disabled">
                 <x-icon name="save" />
                 Lưu

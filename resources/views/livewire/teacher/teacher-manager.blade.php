@@ -43,7 +43,7 @@
                         </div>
 
                         <div class="flex-shrink-0 pb-0.5">
-                            <x-button wire:click="resetFilters" variant="subtle">
+                            <x-button wire:click="resetFilters" variant="secondary">
                                 <x-icon name="refresh" />
                                 Đặt lại
                             </x-button>
@@ -57,16 +57,16 @@
                             debounce="500ms"
                             class="max-w-md" />
 
-                        <div class="flex items-center gap-2 flex-wrap justify-end">
+                        <div class="flex items-center gap-4 flex-wrap justify-end">
                             <x-button as="a" href="{{ route('catechists.create') }}" variant="primary">
                                 <x-icon name="plus" />
                                 Thêm giáo lý viên
                             </x-button>
-                            <x-button as="a" href="{{ route('catechists.assign') }}" variant="outline">
+                            <x-button as="a" href="{{ route('catechists.assign') }}" variant="secondary">
                                 <x-icon name="catechists" />
                                 Phân công giảng dạy
                             </x-button>
-                            <x-dropdown label="Khác" icon="grid" align="right" position="fixed">
+                            <x-dropdown label="Khác" icon="grid" align="right" variant="secondary" position="fixed">
                                 <x-dropdown-item wire:click="export" icon="download">
                                     Xuất Excel
                                 </x-dropdown-item>
@@ -84,7 +84,7 @@
             @if($teachers->count() > 0)
             <div class="px-4 lg:px-6 py-3 mac-hairline-b space-y-2">
                 <x-inline-tip>
-                    Chọn checkbox từng giáo lý viên (hoặc chọn cả trang) để <strong>In thẻ</strong>,
+                    Chọn từng giáo lý viên (hoặc chọn cả trang) để <strong>In thẻ</strong>,
                     <strong>Đánh dấu đã nghỉ</strong> hoặc <strong>Xóa</strong> hàng loạt.
                 </x-inline-tip>
                 <x-inline-tip tone="amber">
@@ -207,28 +207,29 @@
                                 <div class="flex items-center justify-center gap-1">
                                     <x-tooltip content="Xem chi tiết">
                                         <a href="{{ route('catechists.show', $teacher->id) }}"
-                                            class="p-2 hover:bg-slate-100 text-slate-600 rounded-lg transition-all">
+                                            class="p-2 hover:bg-slate-100 text-slate-600 rounded-xl transition-all duration-200">
                                             <x-icon name="eye" />
                                         </a>
                                     </x-tooltip>
 
                                     <x-tooltip content="Chỉnh sửa">
                                         <a href="{{ route('catechists.edit', $teacher->id) }}"
-                                            class="p-2 hover:bg-slate-100 text-slate-600 rounded-lg transition-all">
+                                            class="p-2 hover:bg-primary-50 text-primary-600 rounded-xl transition-all duration-200">
                                             <x-icon name="edit" />
                                         </a>
                                     </x-tooltip>
 
-                                    <x-tooltip content="Xóa">
-                                        <button type="button"
-                                            @click="$dispatch('open-confirm', {
+                                    <x-dropdown icon="more-vertical" align="right" variant="subtle" position="fixed">
+                                        <x-dropdown-item
+                                            x-on:click="$dispatch('open-confirm', {
                                                 message: 'Xóa giáo lý viên này sẽ xóa luôn tài khoản đăng nhập. Bạn chắc chắn?',
                                                 wireMethod: 'delete({{ $teacher->id }})'
                                             })"
-                                            class="p-2 hover:bg-red-50 text-red-500 rounded-lg transition-all">
-                                            <x-icon name="trash" />
-                                        </button>
-                                    </x-tooltip>
+                                            icon="trash"
+                                            class="text-red-600 hover:bg-red-50">
+                                            Xóa
+                                        </x-dropdown-item>
+                                    </x-dropdown>
                                 </div>
                             </td>
                         </tr>
@@ -254,10 +255,16 @@
                         d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
                 </x-slot>
                 @if(!($search || $filterParishGroup || $filterPermission || $filterActive))
-                <x-button as="a" href="{{ route('catechists.create') }}" variant="primary">
-                    <x-icon name="plus" />
-                    Thêm giáo lý viên
-                </x-button>
+                <div class="flex flex-wrap items-center justify-center gap-4">
+                    <x-button as="a" href="{{ route('catechists.create') }}" variant="primary">
+                        <x-icon name="plus" />
+                        Thêm giáo lý viên
+                    </x-button>
+                    <x-button as="a" href="{{ route('catechists.import') }}" variant="secondary">
+                        <x-icon name="upload" />
+                        Import Excel
+                    </x-button>
+                </div>
                 @endif
             </x-stats.page-empty>
             @endif
@@ -274,29 +281,30 @@
                 <span class="text-sm font-semibold text-slate-800">
                     Đã chọn <span class="text-primary-700">{{ count($selectedTeachers) }}</span> giáo lý viên
                 </span>
-                <div class="flex items-center gap-2 flex-wrap justify-end">
+                <div class="flex items-center gap-4 flex-wrap justify-end">
                     <x-button wire:click="printSelected" variant="primary" size="sm">
                         <x-icon name="printer" />
                         In thẻ
                     </x-button>
                     <x-button
-                        variant="warning"
+                        variant="secondary"
                         size="sm"
                         wire="markSelectedInactive"
                         confirm="Đánh dấu các giáo lý viên đã chọn là đã nghỉ? Họ sẽ không còn ở trạng thái hoạt động.">
                         <x-icon name="archive" />
                         Đánh dấu đã nghỉ
                     </x-button>
+                    <x-button type="button" variant="secondary" size="sm" wire:click="$set('selectedTeachers', [])">
+                        Bỏ chọn
+                    </x-button>
                     <x-button
                         variant="danger"
                         size="sm"
+                        class="ml-2"
                         wire="deleteSelected"
                         confirm="Xóa các giáo lý viên đã chọn sẽ xóa luôn tài khoản đăng nhập. Bạn chắc chắn?">
                         <x-icon name="trash" />
                         Xóa
-                    </x-button>
-                    <x-button type="button" variant="subtle" size="sm" wire:click="$set('selectedTeachers', [])">
-                        Bỏ chọn
                     </x-button>
                 </div>
             </div>

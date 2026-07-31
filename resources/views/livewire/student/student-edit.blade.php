@@ -242,8 +242,8 @@
 
                     </div>
 
-                    <div class="px-4 lg:px-6 py-4 mac-hairline-t bg-white/30 flex items-center justify-end gap-3">
-                        <x-button as="a" variant="outline" href="{{
+                    <div class="px-4 lg:px-6 py-4 mac-hairline-t bg-white/30 flex items-center justify-end gap-4">
+                        <x-button as="a" variant="secondary" href="{{
                             $isEdit
                                 ? route('students.show', $studentId)
                                 : route('students.index', $classId ? ['class' => $classId] : [])

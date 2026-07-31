@@ -195,40 +195,25 @@
                     <div class="p-4 mac-hairline-b bg-white/30">
                         <h3 class="text-sm font-bold text-slate-900">Thao tác nhanh</h3>
                     </div>
-                    <div class="p-4 space-y-2">
-                        {{-- Primary Action: Danh sách học sinh --}}
-                        <a href="{{ route('classes.students', $lopData['id'] ?? 0) }}"
-                            class="flex items-center justify-center gap-2 w-full px-4 py-3 bg-gradient-to-r from-primary-500 to-primary-600 text-white rounded-xl hover:from-primary-600 hover:to-primary-700 active:scale-[0.98] transition-all shadow-sm font-semibold">
-                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
-                            </svg>
+                    <div class="p-4 space-y-3">
+                        <x-button as="a" href="{{ route('classes.students', $lopData['id'] ?? 0) }}" variant="primary" class="w-full justify-center">
+                            <x-icon name="users" />
                             Danh sách học sinh
-                        </a>
+                        </x-button>
 
-                        {{-- Secondary Actions --}}
-                        <a href="{{ route('attendance.show', ['classId' => $lopData['id'] ?? 0]) }}"
-                            class="flex items-center gap-3 w-full px-4 py-2.5 bg-slate-50 hover:bg-slate-100 text-slate-900 rounded-xl transition-all font-medium">
-                            <svg class="w-5 h-5 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-                            </svg>
-                            <span>Điểm danh</span>
-                        </a>
+                        <x-button as="a" href="{{ route('attendance.show', ['classId' => $lopData['id'] ?? 0]) }}" variant="secondary" class="w-full justify-start">
+                            <x-icon name="clipboard" />
+                            Điểm danh
+                        </x-button>
 
-                        <a href="{{ route('dashboard', $lopData['id'] ?? 0) }}"
-                            class="flex items-center gap-3 w-full px-4 py-2.5 bg-slate-50 hover:bg-slate-100 text-slate-900 rounded-xl transition-all font-medium">
-                            <svg class="w-5 h-5 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-                            </svg>
-                            <span>Kết quả học tập</span>
-                        </a>
+                        <x-button as="a" href="{{ route('dashboard', $lopData['id'] ?? 0) }}" variant="secondary" class="w-full justify-start">
+                            Kết quả học tập
+                        </x-button>
 
-                        <a href="{{ route('classes.edit', $lopData['id'] ?? 0) }}"
-                            class="flex items-center gap-3 w-full px-4 py-2.5 bg-slate-50 hover:bg-slate-100 text-slate-900 rounded-xl transition-all font-medium">
-                            <svg class="w-5 h-5 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                            </svg>
-                            <span>Chỉnh sửa lớp</span>
-                        </a>
+                        <x-button as="a" href="{{ route('classes.edit', $lopData['id'] ?? 0) }}" variant="secondary" class="w-full justify-start">
+                            <x-icon name="edit" />
+                            Chỉnh sửa lớp
+                        </x-button>
                     </div>
                 </x-mac-panel>
 
@@ -261,9 +246,10 @@
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
                             </svg>
                             <p class="text-sm text-slate-600 font-medium mb-3">Chưa phân công giáo lý viên</p>
-                            <button class="text-xs text-primary-600 hover:text-primary-700 font-semibold">
-                                + Phân công ngay
-                            </button>
+                            <x-button as="a" href="{{ route('classes.catechists', ['id' => $lopData['id'] ?? 0]) }}" variant="secondary" size="sm">
+                                <x-icon name="plus" />
+                                Phân công ngay
+                            </x-button>
                         </div>
                         @endif
                     </div>

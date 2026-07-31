@@ -96,13 +96,14 @@
                 :description="$headerDesc"
                 :count="$students->count() ?: null">
                 <x-slot name="actions">
-                    <x-button as="a" href="javascript:history.back()" variant="outline">
+                    <div class="flex items-center gap-4 flex-wrap justify-end">
+                    <x-button as="a" href="javascript:history.back()" variant="secondary">
                         <x-icon name="cancel" />
                         Quay lại
                     </x-button>
 
                     @if($students->count() > 0)
-                    <x-button type="button" variant="success" @click="downloadPdf()" x-bind:disabled="downloading">
+                    <x-button type="button" variant="secondary" @click="downloadPdf()" x-bind:disabled="downloading">
                         <template x-if="!downloading">
                             <x-icon name="download" />
                         </template>
@@ -120,6 +121,7 @@
                         In {{ $students->count() }} thẻ
                     </x-button>
                     @endif
+                    </div>
                 </x-slot>
             </x-page-header>
 

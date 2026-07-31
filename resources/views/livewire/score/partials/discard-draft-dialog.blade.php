@@ -13,8 +13,8 @@
             <p class="text-sm text-slate-500">
                 Nếu tiếp tục, điểm đã nhập nhưng chưa lưu sẽ bị mất.
             </p>
-            <div class="flex gap-3 pt-1">
-                <x-button type="button" variant="outline" class="flex-1" @click="show = false">
+            <div class="flex gap-4 pt-1">
+                <x-button type="button" variant="secondary" class="flex-1" @click="show = false">
                     Ở lại
                 </x-button>
                 <x-button type="button" variant="danger" class="flex-1"

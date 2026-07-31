@@ -68,7 +68,7 @@
             <div class="{{ $isMobileUi ? 'p-3' : 'p-4 lg:p-6' }} mac-hairline-b bg-white/30">
                 <div class="flex flex-col gap-3 {{ $isMobileUi ? '' : 'gap-4' }}">
                     @if(auth()->user()?->canCreateAttendanceSessions())
-                    <div class="flex items-center justify-between gap-2">
+                    <div class="flex items-center justify-between gap-4">
                         <div class="flex gap-1 p-1 rounded-xl bg-black/[0.04] border border-black/[0.04] w-fit flex-shrink-0 min-w-0">
                             <button type="button" wire:click="switchSubjectTarget('students')"
                                 class="px-3 sm:px-4 py-1.5 text-sm font-semibold rounded-lg transition-all
@@ -87,7 +87,7 @@
                         </div>
 
                         <x-tooltip content="Vui lòng chọn năm học trước" :show="!$selectedNamHoc">
-                            <x-button wire:click="create" size="sm" :disabled="!$selectedNamHoc"
+                            <x-button wire:click="create" variant="primary" size="sm" :disabled="!$selectedNamHoc"
                                 class="flex-shrink-0 whitespace-nowrap">
                                 <x-icon name="plus" />
                                 Tạo phiên mới
@@ -607,7 +607,7 @@
                                     text-slate-900 shadow-mac-sm
                                     focus:outline-none focus:ring-2 focus:ring-primary-500/25 focus:border-primary-300/40 transition-all" />
                         </div>
-                        <x-button type="button" variant="outline" wire:click="addSelectedDate">
+                        <x-button type="button" variant="secondary" wire:click="addSelectedDate">
                             <x-icon name="plus" />
                             Thêm
                         </x-button>
@@ -698,8 +698,8 @@
             </div>
 
             {{-- Footer --}}
-            <div class="flex-shrink-0 px-6 py-4 border-t border-black/[0.06] bg-slate-50/70 flex justify-end gap-3">
-                <x-button type="button" variant="outline" wire:click="closeModal">
+            <div class="flex-shrink-0 px-6 py-4 border-t border-black/[0.06] bg-slate-50/70 flex justify-end gap-4">
+                <x-button type="button" variant="secondary" wire:click="closeModal">
                     Hủy
                 </x-button>
                 <x-button type="button" variant="primary"

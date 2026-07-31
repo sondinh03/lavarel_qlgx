@@ -345,11 +345,10 @@
                     </section>
                 </div>
 
-                <div class="px-4 lg:px-6 py-4 mac-hairline-t bg-white/30 flex items-center justify-end gap-3">
-                    <x-button as="a" variant="outline" href="{{
+                <div class="px-4 lg:px-6 py-4 mac-hairline-t bg-white/30 flex items-center justify-end gap-4">
+                    <x-button as="a" variant="secondary" href="{{
                         $isEdit ? route('catechists.show', $teacherId) : route('catechists.index')
                     }}">
-                        <x-icon name="cancel" />
                         Hủy
                     </x-button>
                     <x-button type="submit" variant="primary" wire:loading.attr="disabled" wire:target="avatar_path,save">

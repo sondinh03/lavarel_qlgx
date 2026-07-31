@@ -3,7 +3,7 @@
     'icon'    => null,
     'align'   => 'right',
     'width'   => '48',
-    'variant' => 'outline',
+    'variant' => 'secondary',
 ])
 
 <div x-data="{ open: false }" class="relative">

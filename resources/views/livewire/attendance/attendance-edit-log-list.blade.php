@@ -14,7 +14,7 @@
                 description="Mỗi dòng là một đợt gửi điểm danh. Bấm Chi tiết để xem từng học sinh."
                 icon-type="attendance">
                 <x-slot name="actions">
-                    <x-button as="a" href="{{ route('attendance.show') }}" variant="outline">
+                    <x-button as="a" href="{{ route('attendance.show') }}" variant="secondary">
                         ← Điểm danh
                     </x-button>
                 </x-slot>
@@ -80,14 +80,13 @@
                                 {{ (int) $batch->changes_count }}
                             </td>
                             <td class="px-4 py-3 text-right">
-                                <button
+                                <x-button
                                     type="button"
-                                    wire:click="openBatchDetail('{{ $batch->batch_id }}')"
-                                    class="inline-flex items-center px-3 py-1.5 rounded-xl text-xs font-semibold
-                                        text-primary-700 bg-primary-50/90 ring-1 ring-primary-100/70
-                                        hover:bg-primary-100/80 transition-colors">
+                                    size="sm"
+                                    variant="secondary"
+                                    wire:click="openBatchDetail('{{ $batch->batch_id }}')">
                                     Chi tiết
-                                </button>
+                                </x-button>
                             </td>
                         </tr>
                         @empty
