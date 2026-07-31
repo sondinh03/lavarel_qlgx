@@ -193,16 +193,6 @@ class TeacherImportPreview extends BaseComponent
                     $rowWarnings[] = "Số điện thoại \"{$phoneRaw}\" không hợp lệ (cần 10 số, bắt đầu bằng 0) — dòng này sẽ bị bỏ qua khi import";
                 }
 
-                // Kiểm tra SĐT trùng — chỉ cảnh báo, vẫn import/cập nhật
-                $phoneDuplicate = $phone !== '' && isset($existingPhones[$phone]);
-                if ($phoneDuplicate) {
-                    $matchedByPhone = $existingPhones[$phone];
-                    // Không cảnh báo nếu SĐT thuộc chính hồ sơ đang được cập nhật theo mã
-                    if (! ($teacherCode !== '' && ($matchedByPhone->teacher_code ?? '') === $teacherCode)) {
-                        $rowWarnings[] = TeacherImportDuplicateMessage::forPhoneMatch($phone, $matchedByPhone);
-                    }
-                }
-
                 // Kiểm tra email
                 if (!empty($email) && !filter_var($email, FILTER_VALIDATE_EMAIL)) {
                     $rowWarnings[] = "Email \"{$email}\" không đúng định dạng";
@@ -212,11 +202,13 @@ class TeacherImportPreview extends BaseComponent
                 $key         = TeacherImportDuplicateMessage::duplicateKey($saintId, $hoDem, $ten, $parsedDate);
                 $isDuplicate = false;
                 $willUpdate  = false;
+                $hasExistingProfile = false;
 
                 if ($teacherCode !== '') {
                     if (isset($existingByCode[$teacherCode])) {
                         $matchedTeacher = $existingByCode[$teacherCode];
                         $willUpdate     = true;
+                        $hasExistingProfile = true;
                         $rowWarnings[]  = TeacherImportDuplicateMessage::forCodeWillUpdate($teacherCode);
 
                         $taotk        = mb_strtolower(trim($row['tao_tai_khoan'] ?? ''), 'UTF-8');
@@ -235,6 +227,7 @@ class TeacherImportPreview extends BaseComponent
                     }
                 } elseif (isset($existingByKey[$key])) {
                     $isDuplicate = true;
+                    $hasExistingProfile = true;
                     $duplicateProfileCount++;
                     $rowWarnings[] = TeacherImportDuplicateMessage::forProfileMatch($existingByKey[$key]);
                 } elseif (isset($seenKeys[$key])) {
@@ -243,6 +236,13 @@ class TeacherImportPreview extends BaseComponent
                     $rowWarnings[] = TeacherImportDuplicateMessage::forDuplicateInFile($seenKeys[$key]);
                 } else {
                     $seenKeys[$key] = $rowNumber;
+                }
+
+                // Trùng SĐT chỉ cảnh báo khi thêm mới — đã có hồ sơ thì không cần
+                $phoneDuplicate = false;
+                if (! $hasExistingProfile && $phone !== '' && isset($existingPhones[$phone])) {
+                    $phoneDuplicate = true;
+                    $rowWarnings[] = TeacherImportDuplicateMessage::forPhoneMatch($phone, $existingPhones[$phone]);
                 }
 
                 if (!empty($rowWarnings)) {
