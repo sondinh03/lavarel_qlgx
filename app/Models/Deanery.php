@@ -21,7 +21,7 @@ class Deanery extends Model
 
     protected $guarded = ['id'];
 
-    protected $fillable = ['name', 'did', 'created_at', 'updated_at'];
+    protected $fillable = ['name', 'did', 'status', 'created_at', 'updated_at'];
 
     protected bool $revisionCleanup = true;
 

@@ -57,8 +57,9 @@ class ApproveParishAdminRegistrationAction
                     $deaneryId = $existingDeanery->id;
                 } else {
                     $deanery = Deanery::create([
-                        'name' => $deaneryName,
-                        'did'  => $request->diocese_id,
+                        'name'   => $deaneryName,
+                        'did'    => $request->diocese_id,
+                        'status' => 1,
                     ]);
                     $deaneryId = $deanery->id;
                 }
