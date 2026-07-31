@@ -36,8 +36,30 @@
                 <p class="text-sm text-slate-500 max-w-md mx-auto leading-relaxed">
                     Bạn đã đăng ký tài khoản với vai trò
                     <strong class="font-semibold text-slate-700">{{ $submittedRoleLabel }}</strong>.
-                    Quản trị hệ thống sẽ duyệt yêu cầu. Sau khi được duyệt, đăng nhập bằng email và mật khẩu đã đăng ký.
+                    Yêu cầu đang chờ quản trị hệ thống duyệt.
                 </p>
+                <div class="max-w-md mx-auto p-4 rounded-xl bg-amber-50/95 border border-amber-200/90
+                    shadow-mac-sm text-left" role="alert">
+                    <div class="flex items-start gap-3">
+                        <svg class="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                        </svg>
+                        <div>
+                            <p class="text-sm font-semibold text-amber-900">
+                                Vui lòng kiểm tra email trong khoảng 2–3 giờ tới
+                            </p>
+                            <p class="mt-1 text-xs text-amber-800/90 leading-relaxed">
+                                Kết quả duyệt hoặc từ chối sẽ được gửi tới email bạn vừa đăng ký.
+                                Nếu không thấy thư trong hộp thư đến, hãy kiểm tra thêm mục Spam / Quảng cáo.
+                                Sau khi được duyệt, bạn có thể đăng nhập bằng email và mật khẩu đã đăng ký.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                <div class="max-w-md mx-auto w-full">
+                    <x-support-contact variant="panel" />
+                </div>
                 <div class="flex flex-wrap items-center justify-center gap-3 pt-2">
                     <a href="{{ route('login') }}"
                         class="inline-flex items-center justify-center px-5 py-2.5 rounded-xl
