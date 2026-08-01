@@ -8,11 +8,13 @@
 <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
 <link rel="shortcut icon" href="/favicon.ico" />
 <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="default" />
 <meta name="apple-mobile-web-app-title" content="MVGX" />
 <link rel="manifest" href="/site.webmanifest" />
 
-<meta name="msapplication-TileColor" content="#ed4238">
-<meta name="theme-color" content="#ffffff">
+<meta name="msapplication-TileColor" content="#D1F4E3">
+<meta name="theme-color" content="#D1F4E3">
 <meta name="csrf-token" content="{{ csrf_token() }}">
 {{-- SEO --}}
 <meta name="google-site-verification" content="{{config('settings.google_site_verification')}}"/>

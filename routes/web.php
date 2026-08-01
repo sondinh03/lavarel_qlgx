@@ -148,6 +148,15 @@ Route::middleware('auth')->group(function () {
     Route::get('/thong-bao', NotificationIndex::class)
         ->name('notifications.index');
 
+    Route::prefix('push')->name('push.')->group(function () {
+        Route::get('/status', [\App\Http\Controllers\PushSubscriptionController::class, 'status'])
+            ->name('status');
+        Route::post('/subscribe', [\App\Http\Controllers\PushSubscriptionController::class, 'subscribe'])
+            ->name('subscribe');
+        Route::post('/unsubscribe', [\App\Http\Controllers\PushSubscriptionController::class, 'unsubscribe'])
+            ->name('unsubscribe');
+    });
+
     Route::get('/thong-tin-giao-xu', ParishSettings::class)
         ->middleware('role:parish_admin|catechism_admin')
         ->name('parish.settings');

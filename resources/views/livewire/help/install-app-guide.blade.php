@@ -234,10 +234,28 @@
             </x-mac-panel>
         </div>
 
+        <x-mac-panel class="p-4 lg:p-6 space-y-3">
+            <p class="text-xs font-semibold text-slate-400 uppercase tracking-wide">Bước tiếp theo: thông báo đẩy</p>
+            <ol class="list-decimal pl-5 space-y-2 text-sm text-slate-700 leading-relaxed">
+                <li>Mở app từ biểu tượng trên màn hình chính.</li>
+                <li>Bấm biểu tượng <strong>chuông</strong> góc trên.</li>
+                <li>Chọn <strong>Bật</strong> ở mục «Thông báo đẩy» và cho phép khi hệ thống hỏi.</li>
+                <li>Thoát app hoàn toàn — bạn vẫn nhận được thông báo mới (phân công lớp, điểm danh, bảng tin…).</li>
+            </ol>
+        </x-mac-panel>
+
         {{-- FAQ --}}
         <x-mac-panel class="p-4 lg:p-6 space-y-4">
             <p class="text-xs font-semibold text-slate-400 uppercase tracking-wide">Câu hỏi thường gặp</p>
             <div class="space-y-4 text-sm text-slate-700">
+                <div>
+                    <p class="font-semibold text-slate-900">Làm sao nhận thông báo khi đã thoát app?</p>
+                    <p class="mt-1 text-slate-600 leading-relaxed">
+                        Sau khi thêm vào màn hình chính, mở app → bấm chuông thông báo →
+                        <strong>Bật thông báo đẩy</strong> và cho phép quyền.
+                        Trên iPhone cần iOS 16.4+ và mở từ biểu tượng PWA (không phải tab Safari thường).
+                    </p>
+                </div>
                 <div>
                     <p class="font-semibold text-slate-900">Tại sao iPhone không thấy «Thêm vào Màn hình chính»?</p>
                     <p class="mt-1 text-slate-600 leading-relaxed">

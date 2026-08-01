@@ -2,12 +2,14 @@
 
 namespace App\Notifications;
 
+use App\Notifications\Concerns\SendsWebPush;
 use Illuminate\Bus\Queueable;
 use Illuminate\Notifications\Notification;
 
 class CatechismBoardAnnouncement extends Notification
 {
     use Queueable;
+    use SendsWebPush;
 
     public function __construct(
         public string $title,
@@ -19,7 +21,7 @@ class CatechismBoardAnnouncement extends Notification
 
     public function via($notifiable): array
     {
-        return ['database'];
+        return $this->viaWebPushChannels(['database']);
     }
 
     public function toArray($notifiable): array

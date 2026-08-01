@@ -3,12 +3,14 @@
 namespace App\Notifications;
 
 use App\Models\ParishionerRegistrationRequest;
+use App\Notifications\Concerns\SendsWebPush;
 use Illuminate\Bus\Queueable;
 use Illuminate\Notifications\Notification;
 
 class ParishionerRegistrationRejected extends Notification
 {
     use Queueable;
+    use SendsWebPush;
 
     public function __construct(public ParishionerRegistrationRequest $request)
     {
@@ -16,7 +18,7 @@ class ParishionerRegistrationRejected extends Notification
 
     public function via($notifiable): array
     {
-        return ['database'];
+        return $this->viaWebPushChannels(['database']);
     }
 
     public function toArray($notifiable): array

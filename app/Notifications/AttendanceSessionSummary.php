@@ -2,12 +2,14 @@
 
 namespace App\Notifications;
 
+use App\Notifications\Concerns\SendsWebPush;
 use Illuminate\Bus\Queueable;
 use Illuminate\Notifications\Notification;
 
 class AttendanceSessionSummary extends Notification
 {
     use Queueable;
+    use SendsWebPush;
 
     /**
      * @param  array{class_name: string, present: int, absent_excused: int, absent_unexcused: int, total: int}  $summary
@@ -20,7 +22,7 @@ class AttendanceSessionSummary extends Notification
 
     public function via($notifiable): array
     {
-        return ['database'];
+        return $this->viaWebPushChannels(['database']);
     }
 
     public function toArray($notifiable): array

@@ -1,5 +1,8 @@
 <div class="relative" data-layout-livewire="notification-bell"
-    x-data="{ open: false }" @click.outside="open = false">
+    x-data="(typeof notificationBellPush === 'function' ? notificationBellPush() : { open: false, pushSupported: false, pushEnabled: false, pushBusy: false, pushError: '', pushHint: '', init() {}, refreshPushStatus() {}, togglePush() {} })"
+    x-init="init()"
+    @click.outside="open = false"
+    @mvgx:push-changed.window="refreshPushStatus()">
     <button type="button"
         @click="open = !open"
         class="relative p-2 rounded-xl text-slate-500 hover:bg-black/[0.04] hover:text-primary-600
@@ -44,6 +47,29 @@
             </button>
             @endif
         </div>
+
+        <template x-if="pushSupported">
+            <div class="px-4 py-2.5 border-b border-black/[0.06] bg-slate-50/70">
+                <div class="flex items-start justify-between gap-3">
+                    <div class="min-w-0">
+                        <p class="text-xs font-semibold text-slate-800">Thông báo đẩy</p>
+                        <p class="text-[11px] text-slate-500 mt-0.5 leading-relaxed"
+                            x-text="pushHint"></p>
+                    </div>
+                    <button type="button"
+                        class="flex-shrink-0 text-xs font-semibold px-2.5 py-1.5 rounded-lg transition"
+                        :class="pushEnabled
+                            ? 'text-slate-600 bg-white border border-black/[0.08] hover:bg-slate-50'
+                            : 'text-white bg-primary-600 hover:bg-primary-700'"
+                        :disabled="pushBusy"
+                        @click.stop="togglePush()">
+                        <span x-show="!pushBusy" x-text="pushEnabled ? 'Tắt' : 'Bật'"></span>
+                        <span x-show="pushBusy" x-cloak>...</span>
+                    </button>
+                </div>
+                <p class="text-[11px] text-red-600 mt-1.5" x-show="pushError" x-text="pushError" x-cloak></p>
+            </div>
+        </template>
 
         <div class="max-h-80 overflow-y-auto divide-y divide-slate-100">
             @forelse ($notifications as $notification)

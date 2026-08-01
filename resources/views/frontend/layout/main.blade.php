@@ -841,6 +841,7 @@ $isDashboard = request()->routeIs('parish-admin.dashboard');
         });
     </script>
 
+    @include('frontend.layout.partials.webpush-bootstrap')
     <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
     @livewireScripts
     @include('frontend.layout.partials.livewire-alpine-bridge')

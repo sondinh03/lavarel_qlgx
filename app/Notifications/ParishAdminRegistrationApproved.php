@@ -3,6 +3,7 @@
 namespace App\Notifications;
 
 use App\Models\ParishAdminRegistrationRequest;
+use App\Notifications\Concerns\SendsWebPush;
 use Illuminate\Bus\Queueable;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
@@ -10,6 +11,7 @@ use Illuminate\Notifications\Notification;
 class ParishAdminRegistrationApproved extends Notification
 {
     use Queueable;
+    use SendsWebPush;
 
     public function __construct(public ParishAdminRegistrationRequest $request)
     {
@@ -17,7 +19,7 @@ class ParishAdminRegistrationApproved extends Notification
 
     public function via($notifiable): array
     {
-        return ['database', 'mail'];
+        return $this->viaWebPushChannels(['database', 'mail']);
     }
 
     public function toMail($notifiable): MailMessage

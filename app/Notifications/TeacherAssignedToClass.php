@@ -4,12 +4,14 @@ namespace App\Notifications;
 
 use App\Models\CatechismClass;
 use App\Models\Teacher;
+use App\Notifications\Concerns\SendsWebPush;
 use Illuminate\Bus\Queueable;
 use Illuminate\Notifications\Notification;
 
 class TeacherAssignedToClass extends Notification
 {
     use Queueable;
+    use SendsWebPush;
 
     public function __construct(
         public CatechismClass $class,
@@ -20,7 +22,7 @@ class TeacherAssignedToClass extends Notification
 
     public function via($notifiable): array
     {
-        return ['database'];
+        return $this->viaWebPushChannels(['database']);
     }
 
     public function toArray($notifiable): array

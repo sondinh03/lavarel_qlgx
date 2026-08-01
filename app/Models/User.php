@@ -11,6 +11,7 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Facades\Hash;
 use Laravel\Sanctum\HasApiTokens;
+use NotificationChannels\WebPush\HasPushSubscriptions;
 use App\Notifications\ResetPasswordNotification;
 use App\Services\CatechistAccess;
 use App\Support\CatechistPermissions;
@@ -20,6 +21,7 @@ class User extends Authenticatable
     use CrudTrait;
     use HasApiTokens, HasFactory, Notifiable;
     use HasRoles;
+    use HasPushSubscriptions;
 
     /**
      * The attributes that are mass assignable.
