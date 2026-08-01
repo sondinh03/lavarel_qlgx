@@ -34,7 +34,8 @@
         "predis/predis": "^3.4",
         "simplesoftwareio/simple-qrcode": "4.2",
         "spatie/laravel-settings": "^3.4",
-        "stolz/assets": "^0.2.0"
+        "stolz/assets": "^0.2.0",
+        "web-token/jwt-util-ecc": "^3.0.2"
     },
     "require-dev": {
         "backpack/generators": "^3.1",
