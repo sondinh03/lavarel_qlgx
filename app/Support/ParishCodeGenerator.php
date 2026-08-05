@@ -12,6 +12,9 @@ class ParishCodeGenerator
      */
     public static function suggest(string $name): string
     {
+        // Bỏ tiền tố "Giáo xứ" — mã chỉ lấy từ tên riêng (giống ParishNew::normalizeName).
+        $name = static::stripParishPrefix($name);
+
         // Bước 1: Chuyển về không dấu
         $name = static::removeAccents($name);
 
@@ -20,7 +23,7 @@ class ParishCodeGenerator
         $words = array_filter($words); // bỏ khoảng trắng thừa
 
         if ($words === []) {
-            return 'GXU';
+            return 'PAR';
         }
 
         $code = match (count($words)) {
@@ -36,9 +39,14 @@ class ParishCodeGenerator
                      . substr($words[2], 0, 1),
         };
 
-        $code = strtoupper(preg_replace('/[^A-Z0-9]/', '', (string) $code) ?: 'GXU');
+        $code = strtoupper(preg_replace('/[^A-Z0-9]/', '', (string) $code) ?: 'PAR');
 
         return substr($code, 0, 3); // đảm bảo tối đa 3 ký tự
+    }
+
+    private static function stripParishPrefix(string $name): string
+    {
+        return trim((string) preg_replace('/^(?:giáo\s*xứ\s*)+/iu', '', trim($name)));
     }
 
     /**
