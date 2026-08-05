@@ -69,4 +69,29 @@ class NotificationController extends Controller
 
         return back();
     }
+
+    public function destroy(string $id): RedirectResponse
+    {
+        $user = backpack_user();
+        abort_unless($user, 403);
+
+        $notification = $user->notifications()->where('id', $id)->firstOrFail();
+        $notification->delete();
+
+        \Alert::success('Đã xóa thông báo.')->flash();
+
+        return back();
+    }
+
+    public function destroyAll(): RedirectResponse
+    {
+        $user = backpack_user();
+        abort_unless($user, 403);
+
+        $user->notifications()->delete();
+
+        \Alert::success('Đã xóa tất cả thông báo.')->flash();
+
+        return back();
+    }
 }

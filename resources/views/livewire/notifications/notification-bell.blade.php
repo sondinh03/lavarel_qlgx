@@ -77,30 +77,47 @@
                 $data = $notification->data ?? [];
                 $unread = $notification->unread();
             @endphp
-            <button type="button"
-                wire:click="openNotification('{{ $notification->id }}')"
-                @click="open = false"
-                class="w-full text-left px-4 py-3 hover:bg-slate-50 transition
-                    {{ $unread ? 'bg-primary-50/40' : '' }}">
-                <div class="flex items-start gap-2.5">
-                    @if ($unread)
-                    <span class="mt-1.5 w-2 h-2 rounded-full bg-primary-500 flex-shrink-0"></span>
-                    @else
-                    <span class="mt-1.5 w-2 h-2 rounded-full bg-transparent flex-shrink-0"></span>
-                    @endif
-                    <div class="min-w-0 flex-1">
-                        <p class="text-sm font-medium text-slate-900 truncate">
-                            {{ $data['title'] ?? 'Thông báo' }}
-                        </p>
-                        <p class="text-xs text-slate-500 mt-0.5 line-clamp-2">
-                            {{ $data['body'] ?? '' }}
-                        </p>
-                        <p class="text-[11px] text-slate-400 mt-1">
-                            {{ $notification->created_at?->diffForHumans() }}
-                        </p>
+            <div class="group flex items-start gap-1 px-2 py-1
+                {{ $unread ? 'bg-primary-50/40' : '' }}">
+                <button type="button"
+                    wire:click="openNotification('{{ $notification->id }}')"
+                    @click="open = false"
+                    class="min-w-0 flex-1 text-left px-2 py-2 rounded-xl hover:bg-slate-50 transition">
+                    <div class="flex items-start gap-2.5">
+                        @if ($unread)
+                        <span class="mt-1.5 w-2 h-2 rounded-full bg-primary-500 flex-shrink-0"></span>
+                        @else
+                        <span class="mt-1.5 w-2 h-2 rounded-full bg-transparent flex-shrink-0"></span>
+                        @endif
+                        <div class="min-w-0 flex-1">
+                            <p class="text-sm font-medium text-slate-900 truncate">
+                                {{ $data['title'] ?? 'Thông báo' }}
+                            </p>
+                            <p class="text-xs text-slate-500 mt-0.5 line-clamp-2">
+                                {{ $data['body'] ?? '' }}
+                            </p>
+                            <p class="text-[11px] text-slate-400 mt-1">
+                                {{ $notification->created_at?->diffForHumans() }}
+                            </p>
+                        </div>
                     </div>
-                </div>
-            </button>
+                </button>
+                <button type="button"
+                    class="flex-shrink-0 mt-2 p-1.5 rounded-lg text-slate-400
+                        hover:text-red-600 hover:bg-red-50 transition"
+                    title="Xóa thông báo"
+                    aria-label="Xóa thông báo"
+                    @click.stop="$dispatch('open-confirm', {
+                        message: 'Xóa thông báo này? Hành động không thể hoàn tác.',
+                        wireMethod: {{ \Illuminate\Support\Js::from('deleteNotification(\'' . $notification->id . '\')') }},
+                        componentId: @js($_instance->id)
+                    })">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                    </svg>
+                </button>
+            </div>
             @empty
             <div class="px-4 py-8 text-center text-sm text-slate-500">
                 Chưa có thông báo nào.

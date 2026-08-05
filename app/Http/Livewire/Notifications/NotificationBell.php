@@ -37,6 +37,23 @@ class NotificationBell extends Component
         $this->emit('toast', 'message', 'Đã đánh dấu tất cả là đã đọc.');
     }
 
+    public function deleteNotification(string $id): void
+    {
+        $user = Auth::user();
+        if (! $user) {
+            return;
+        }
+
+        $notification = $user->notifications()->where('id', $id)->first();
+        if (! $notification) {
+            return;
+        }
+
+        $notification->delete();
+        $this->emit('toast', 'message', 'Đã xóa thông báo.');
+        $this->emit('notificationUpdated');
+    }
+
     public function openNotification(string $id)
     {
         $user = Auth::user();

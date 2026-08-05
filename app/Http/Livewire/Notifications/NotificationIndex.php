@@ -42,6 +42,32 @@ class NotificationIndex extends Component
         $this->emit('toast', 'message', 'Đã đánh dấu tất cả là đã đọc.');
     }
 
+    public function deleteNotification(string $id): void
+    {
+        $user = Auth::user();
+        abort_unless($user, 403);
+
+        $notification = $user->notifications()->where('id', $id)->first();
+        if (! $notification) {
+            return;
+        }
+
+        $notification->delete();
+        $this->emit('toast', 'message', 'Đã xóa thông báo.');
+        $this->emit('notificationUpdated');
+    }
+
+    public function deleteAllNotifications(): void
+    {
+        $user = Auth::user();
+        abort_unless($user, 403);
+
+        $user->notifications()->delete();
+        $this->resetPage();
+        $this->emit('toast', 'message', 'Đã xóa tất cả thông báo.');
+        $this->emit('notificationUpdated');
+    }
+
     public function openNotification(string $id)
     {
         $user = Auth::user();

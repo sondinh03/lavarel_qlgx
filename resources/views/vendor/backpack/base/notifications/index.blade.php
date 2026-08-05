@@ -15,16 +15,27 @@
 <div class="row">
     <div class="col-md-12">
         <div class="card">
-            <div class="card-header d-flex align-items-center justify-content-between">
+            <div class="card-header d-flex align-items-center justify-content-between flex-wrap">
                 <strong>Hộp thư thông báo</strong>
-                @if($unreadCount > 0)
-                <form method="POST" action="{{ route('backpack.notifications.mark-all-read') }}" class="mb-0">
-                    @csrf
-                    <button type="submit" class="btn btn-sm btn-outline-primary">
-                        <i class="la la-check-double"></i> Đánh dấu tất cả đã đọc
-                    </button>
-                </form>
-                @endif
+                <div class="d-flex align-items-center flex-wrap" style="gap:.5rem">
+                    @if($unreadCount > 0)
+                    <form method="POST" action="{{ route('backpack.notifications.mark-all-read') }}" class="mb-0">
+                        @csrf
+                        <button type="submit" class="btn btn-sm btn-outline-primary">
+                            <i class="la la-check-double"></i> Đánh dấu tất cả đã đọc
+                        </button>
+                    </form>
+                    @endif
+                    @if($notifications->total() > 0)
+                    <form method="POST" action="{{ route('backpack.notifications.destroy-all') }}" class="mb-0"
+                        onsubmit="return confirm('Xóa tất cả thông báo? Hành động không thể hoàn tác.');">
+                        @csrf
+                        <button type="submit" class="btn btn-sm btn-outline-danger">
+                            <i class="la la-trash"></i> Xóa tất cả
+                        </button>
+                    </form>
+                    @endif
+                </div>
             </div>
             <div class="card-body p-0">
                 @forelse($notifications as $notification)
@@ -69,6 +80,13 @@
                                     <button type="submit" class="btn btn-sm btn-link">Đánh dấu đã đọc</button>
                                 </form>
                                 @endif
+                                <form method="POST"
+                                    action="{{ route('backpack.notifications.destroy', $notification->id) }}"
+                                    class="d-inline"
+                                    onsubmit="return confirm('Xóa thông báo này?');">
+                                    @csrf
+                                    <button type="submit" class="btn btn-sm btn-link text-danger">Xóa</button>
+                                </form>
                             </div>
                         </div>
                     </div>

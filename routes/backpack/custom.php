@@ -134,4 +134,8 @@ Route::group([
         ->name('backpack.notifications.read');
     Route::post('notifications/mark-all-read', [NotificationController::class, 'markAllAsRead'])
         ->name('backpack.notifications.mark-all-read');
+    Route::post('notifications/delete-all', [NotificationController::class, 'destroyAll'])
+        ->name('backpack.notifications.destroy-all');
+    Route::post('notifications/{id}/delete', [NotificationController::class, 'destroy'])
+        ->name('backpack.notifications.destroy');
 }); // this should be the absolute last line of this file
