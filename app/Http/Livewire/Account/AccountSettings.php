@@ -4,6 +4,7 @@ namespace App\Http\Livewire\Account;
 
 use App\Services\UploadService;
 use App\Support\UserAccountEmailResolver;
+use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rule;
@@ -53,29 +54,50 @@ class AccountSettings extends Component
         abort_unless($user, 403);
 
         $validated = $this->validate([
-            'name'        => 'nullable|string|max:255',
-            'email'       => [
-                'required',
-                'email',
-                'max:255',
-                Rule::unique('users', 'email')->ignore($user->id),
-            ],
-            'avatar_path' => 'nullable|image|max:2048',
+            'name'             => 'nullable|string|max:255',
+            'login_identifier' => ['required', 'string', 'max:255'],
+            'avatar_path'      => 'nullable|image|max:2048',
         ], [
-            'email.required'  => 'Email là bắt buộc để đăng nhập.',
-            'email.unique'    => 'Email này đã được sử dụng.',
+            'login_identifier.required' => 'Vui lòng nhập tên đăng nhập (email hoặc số điện thoại).',
             'avatar_path.image' => 'File phải là ảnh (jpg, png, webp...).',
             'avatar_path.max'   => 'Ảnh không được vượt quá 2MB.',
         ]);
 
+        $resolvedEmail = UserAccountEmailResolver::resolveLoginIdentifier(
+            (string) ($validated['login_identifier'] ?? '')
+        );
+
+        $emailValidator = Validator::make(
+            ['email' => $resolvedEmail],
+            [
+                'email' => [
+                    'required',
+                    'email',
+                    'max:255',
+                    Rule::unique('users', 'email')->ignore($user->id),
+                ],
+            ],
+            [
+                'email.email' => 'Tên đăng nhập phải là email hoặc số điện thoại hợp lệ.',
+                'email.unique' => 'Email/SĐT này đã được sử dụng.',
+            ]
+        );
+
+        if ($emailValidator->fails()) {
+            foreach ($emailValidator->errors()->get('email') as $message) {
+                $this->addError('login_identifier', $message);
+            }
+            return;
+        }
+
         $displayName = trim((string) ($validated['name'] ?? ''));
         if ($displayName === '') {
-            $displayName = strstr($validated['email'], '@', true) ?: $validated['email'];
+            $displayName = strstr($resolvedEmail, '@', true) ?: $resolvedEmail;
         }
 
         $data = [
             'name'  => $displayName,
-            'email' => strtolower(trim($validated['email'])),
+            'email' => strtolower(trim($resolvedEmail)),
         ];
 
         if ($this->avatar_path) {
