@@ -14,7 +14,7 @@ use Illuminate\Support\Facades\DB;
  * - Danh sách giáo họ theo giáo xứ (BelongsToParish scope tự filter)
  * - CRUD với modal form
  * - Toggle status
- * - Chỉ parish_admin mới quản lý được
+ * - parish_admin / parishioner_admin / catechism_admin dùng chung trang này (ParishGroupPolicy)
  */
 
 class ParishGroupManager extends BaseComponent
@@ -211,6 +211,7 @@ class ParishGroupManager extends BaseComponent
         $this->applySorting($query);
 
         $groups = $query->paginate($this->perPage);
+
         return view('livewire.parish.parish-group-manager', [
             'groups' => $groups,
         ])

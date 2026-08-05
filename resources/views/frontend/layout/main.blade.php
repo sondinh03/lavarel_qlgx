@@ -468,6 +468,13 @@ $isDashboard = request()->routeIs('parish-admin.dashboard');
                     ])
                     @include('frontend.layout.partials.sidebar-sub-item', ['route' => 'attendance.edit-logs', 'label' => 'Nhật ký điểm danh'])
                     @include('frontend.layout.partials.sidebar-sub-item', ['route' => 'scores.edit-logs', 'label' => 'Nhật ký sửa điểm'])
+                    @if(auth()->user()?->canManageCatechism() && ! auth()->user()?->canManageParishioners())
+                    @include('frontend.layout.partials.sidebar-sub-item', [
+                        'route' => 'parish-group.index',
+                        'label' => 'Giáo họ',
+                        'active' => 'parish-group.*',
+                    ])
+                    @endif
                     @include('frontend.layout.partials.sidebar-sub-item', [
                         'route' => 'holy-names.index',
                         'label' => 'Tên thánh',
@@ -494,6 +501,13 @@ $isDashboard = request()->routeIs('parish-admin.dashboard');
                     ])
                     @include('frontend.layout.partials.flyout-item', ['route' => 'attendance.edit-logs', 'label' => 'Nhật ký điểm danh'])
                     @include('frontend.layout.partials.flyout-item', ['route' => 'scores.edit-logs', 'label' => 'Nhật ký sửa điểm'])
+                    @if(auth()->user()?->canManageCatechism() && ! auth()->user()?->canManageParishioners())
+                    @include('frontend.layout.partials.flyout-item', [
+                        'route' => 'parish-group.index',
+                        'label' => 'Giáo họ',
+                        'active' => 'parish-group.*',
+                    ])
+                    @endif
                     @include('frontend.layout.partials.flyout-item', [
                         'route' => 'holy-names.index',
                         'label' => 'Tên thánh',
@@ -615,12 +629,6 @@ $isDashboard = request()->routeIs('parish-admin.dashboard');
                         class="block px-4 py-2.5 text-sm text-slate-700 hover:bg-slate-50">
                         Tài khoản
                     </a>
-                    @if(Auth::user()->canCreateAttendanceSessions())
-                    <a href="{{ route('session.index', ['target' => 'teachers']) }}"
-                        class="block px-4 py-2.5 text-sm text-slate-700 hover:bg-slate-50">
-                        Phiên điểm danh
-                    </a>
-                    @endif
                     @if(Auth::user()->isParishAdmin() || Auth::user()->isCatechismAdmin())
                     <a href="{{ route('parish.settings') }}"
                         class="block px-4 py-2.5 text-sm text-slate-700 hover:bg-slate-50">
@@ -650,12 +658,6 @@ $isDashboard = request()->routeIs('parish-admin.dashboard');
                         class="block px-4 py-2 text-sm text-slate-700 hover:bg-slate-50">
                         Tài khoản
                     </a>
-                    @if(Auth::user()->canCreateAttendanceSessions())
-                    <a href="{{ route('session.index', ['target' => 'teachers']) }}"
-                        class="block px-4 py-2 text-sm text-slate-700 hover:bg-slate-50">
-                        Phiên điểm danh
-                    </a>
-                    @endif
                     @if(Auth::user()->isParishAdmin() || Auth::user()->isCatechismAdmin())
                     <a href="{{ route('parish.settings') }}"
                         class="block px-4 py-2 text-sm text-slate-700 hover:bg-slate-50">

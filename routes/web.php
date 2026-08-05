@@ -418,10 +418,12 @@ Route::middleware('auth')->group(function () {
             ->name('show');
     });
 
-    Route::middleware('role:parish_admin|parishioner_admin')->group(function () {
+    Route::middleware('role:parish_admin|parishioner_admin|catechism_admin')->group(function () {
         Route::get('/giao-ho', ParishGroupManager::class)
             ->name('parish-group.index');
+    });
 
+    Route::middleware('role:parish_admin|parishioner_admin')->group(function () {
         Route::get('/hoi-doan', AssociationManager::class)
             ->name('associations.index');
 

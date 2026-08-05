@@ -20,23 +20,23 @@ class ParishGroupPolicy
 
     public function viewAny(User $user): bool
     {
-        return $user->canManageParishioners();
+        return $user->canManage();
     }
 
     public function create(User $user): bool
     {
-        return $user->canManageParishioners();
+        return $user->canManage();
     }
 
     public function update(User $user, ParishGroup $group): bool
     {
-        return $user->canManageParishioners()
+        return $user->canManage()
             && $user->parish_id === $group->parish_id;
     }
 
     public function delete(User $user, ParishGroup $group): bool
     {
-        return $user->canManageParishioners()
+        return $user->canManage()
             && $user->parish_id === $group->parish_id;
     }
 }

@@ -191,6 +191,17 @@
             </nav>
 
             <div class="flex-shrink-0 p-3 border-t border-black/[0.06] space-y-1">
+                @if(auth()->user()?->canCreateAttendanceSessions())
+                <a href="{{ route('session.index') }}"
+                    class="w-full flex items-center gap-3 px-3 py-3 rounded-xl
+                        text-slate-700 hover:bg-black/[0.04] transition-all touch-feedback">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                    </svg>
+                    <span class="text-sm font-medium">Phiên điểm danh</span>
+                </a>
+                @endif
                 <a href="{{ route('account.settings') }}"
                     class="w-full flex items-center gap-3 px-3 py-3 rounded-xl
                         text-slate-700 hover:bg-black/[0.04] transition-all touch-feedback">
