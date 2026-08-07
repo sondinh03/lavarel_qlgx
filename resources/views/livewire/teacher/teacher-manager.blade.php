@@ -16,6 +16,12 @@
                 description="Quản lý hồ sơ và tài khoản giáo lý viên"
                 icon-type="students" />
 
+            @if(! config('qlgx.print_cards.enabled'))
+            <div class="px-4 lg:px-6 py-3 mac-hairline-b">
+                <x-print-cards-maintenance />
+            </div>
+            @endif
+
             <div class="p-4 lg:p-6 mac-hairline-b bg-white/30">
                 <div class="flex flex-col gap-4">
                     <div class="flex items-end gap-3">

@@ -166,6 +166,12 @@
             </div>
             @endif
 
+            @if(! config('qlgx.print_cards.enabled'))
+            <div class="px-4 lg:px-6 py-3 mac-hairline-b">
+                <x-print-cards-maintenance />
+            </div>
+            @endif
+
             @if($isCatechist)
         {{-- ══ CATECHIST: Card list ══ --}}
         <div class="p-4 lg:p-4 space-y-3" wire:key="student-cards-{{ $listContext }}">

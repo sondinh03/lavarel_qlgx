@@ -321,6 +321,12 @@ class TeacherManager extends BaseComponent
     {
         $this->requireManager();
 
+        if (! config('qlgx.print_cards.enabled')) {
+            $this->emit('toast', 'warning', config('qlgx.print_cards.maintenance_message'));
+
+            return;
+        }
+
         $ids = $this->normalizeIdList($this->selectedTeachers);
         if ($ids === []) {
             $this->emit('toast', 'warning', 'Vui lòng chọn giáo lý viên để in thẻ.');

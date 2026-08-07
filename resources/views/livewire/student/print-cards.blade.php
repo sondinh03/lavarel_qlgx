@@ -10,7 +10,10 @@
     style="min-height: calc(100vh - 56px - var(--bottom-offset));"
     x-data="{
         downloading: false,
+        printEnabled: {{ $printEnabled ? 'true' : 'false' }},
         async downloadPdf() {
+            if (!this.printEnabled) return;
+
             this.downloading = true;
             await this.$nextTick();
 
@@ -33,7 +36,7 @@
 
             try {
                 await html2pdf().set({
-                    margin: [8, 8, 8, 8],
+                    margin: 0,
                     filename: '{{ \Str::slug(($cardType === 'annual' ? 'the-nam-hoc' : 'the-vinh-vien') . '-' . ($lop->name ?? 'hoc-sinh') . '-' . ($parishName ?: 'giao-xu')) }}.pdf',
                     image: { type: 'jpeg', quality: 0.95 },
                     html2canvas: {
@@ -47,7 +50,7 @@
                         windowHeight: document.documentElement.scrollHeight,
                     },
                     jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
-                    pagebreak: { mode: ['css', 'legacy'] },
+                    pagebreak: { mode: ['css'], avoid: ['.print-page', '.print-grid', '.student-card'] },
                 }).from(area).save();
             } finally {
                 area.style.display = 'none';
@@ -61,6 +64,10 @@
 
     {{-- ══ UI (ẩn khi in) ══ --}}
     <div id="print-cards-main" class="print:hidden mx-auto max-w-5xl">
+
+        <div class="mb-4">
+            <x-print-cards-maintenance />
+        </div>
 
         @if(session()->has('message') || session()->has('warning') || session()->has('error'))
         <div class="mb-4" role="status" aria-live="polite">
@@ -102,7 +109,7 @@
                         Quay lại
                     </x-button>
 
-                    @if($students->count() > 0)
+                    @if($students->count() > 0 && $printEnabled)
                     <x-button type="button" variant="secondary" @click="downloadPdf()" x-bind:disabled="downloading">
                         <template x-if="!downloading">
                             <x-icon name="download" />
@@ -245,7 +252,7 @@
     @if($students->count() > 0)
     <div id="print-area"
         wire:key="print-{{ $cardType }}-{{ $theme }}"
-        style="display:none; width: 794px; padding: 38px; box-sizing: border-box;">
+        style="display:none;">
         @foreach($students->chunk(8) as $chunk)
         <div class="print-page">
             <div class="print-grid">
@@ -301,22 +308,43 @@
         }
     }
 
-    .print-grid {
-        display: grid;
-        grid-template-columns: 323px 323px;
-        gap: 23px;
-        width: 669px;
-        max-width: 669px;
+    /*
+     * Không đặt height: 297mm — cao đúng A4 + page-break-after khiến html2pdf
+     * chèn thêm 1 trang trắng giữa các khối 8 thẻ.
+     * Gap/padding mm cố định → khoảng cách thẻ vẫn đều trên mọi trang.
+     */
+    #print-area {
+        width: 210mm;
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+        background: #fff;
     }
 
     .print-page {
+        width: 210mm;
+        padding: 12mm;
+        box-sizing: border-box;
         page-break-after: always;
         break-after: page;
+        page-break-inside: avoid;
+        break-inside: avoid;
     }
 
     .print-page:last-child {
         page-break-after: avoid;
         break-after: avoid;
+    }
+
+    .print-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 85.60mm);
+        grid-auto-rows: 53.98mm;
+        column-gap: 8mm;
+        row-gap: 8mm;
+        width: 100%;
+        justify-content: center;
+        align-content: start;
     }
 
     @media print {
@@ -337,7 +365,7 @@
 
         @page {
             size: A4 portrait;
-            margin: 10mm;
+            margin: 0;
         }
 
         .print-page {

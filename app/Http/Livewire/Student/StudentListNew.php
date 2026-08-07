@@ -1230,6 +1230,12 @@ class StudentListNew extends BaseComponent
     // Trong StudentListNew.php — thêm method này
     public function printSelected(): void
     {
+        if (! config('qlgx.print_cards.enabled')) {
+            $this->emit('toast', 'warning', config('qlgx.print_cards.maintenance_message'));
+
+            return;
+        }
+
         if (empty($this->selectedStudents) && !$this->selectedLop) {
             $this->emit('toast', 'warning', 'Vui lòng chọn học sinh hoặc lớp.');
             return;

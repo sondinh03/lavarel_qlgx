@@ -177,6 +177,12 @@ class PrintCards extends BaseComponent
 
     public function printCards(): void
     {
+        if (! config('qlgx.print_cards.enabled')) {
+            session()->flash('warning', config('qlgx.print_cards.maintenance_message'));
+
+            return;
+        }
+
         if ($this->students->isEmpty()) {
             session()->flash('warning', 'Không có học sinh nào để in nhé!');
             return;
@@ -198,6 +204,7 @@ class PrintCards extends BaseComponent
             'theme'         => $this->theme,
             'themes'        => CardTheme::all(),
             'colors'        => CardTheme::resolve($this->theme),
+            'printEnabled'  => (bool) config('qlgx.print_cards.enabled'),
         ])
             ->extends('frontend.layout.main')
             ->section('content');
