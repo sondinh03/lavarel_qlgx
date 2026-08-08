@@ -9,6 +9,7 @@ use App\Models\Holymanagement;
 use App\Models\ParishGroup;
 use App\Models\Teacher;
 use App\Support\ExcelDateParser;
+use App\Support\ExcelString;
 use App\Support\TeacherImportDuplicateMessage;
 use Livewire\WithFileUploads;
 use Maatwebsite\Excel\Facades\Excel;
@@ -103,12 +104,12 @@ class TeacherImportPreview extends BaseComponent
 
             // Cache lookups để tránh N+1
             $saintIdByName = Holymanagement::pluck('id', 'name')
-                ->mapWithKeys(fn($id, $name) => [strtolower(trim($name)) => $id])
+                ->mapWithKeys(fn($id, $name) => [ExcelString::lower($name) => $id])
                 ->toArray();
 
             $groupNames = ParishGroup::active()
                 ->pluck('name')
-                ->map(fn($n) => strtolower(trim($n)))
+                ->map(fn($n) => ExcelString::lower($n))
                 ->toArray();
 
             // Load hồ sơ đã có để đối chiếu trùng — ParishScope tự filter parish_id
@@ -142,8 +143,8 @@ class TeacherImportPreview extends BaseComponent
             foreach ($data as $index => $row) {
                 $rowNumber = $index + 6; // +6 vì data bắt đầu từ dòng 6
 
-                $hoDem = trim($row['ho_dem'] ?? '');
-                $ten   = trim($row['ten'] ?? '');
+                $hoDem = ExcelString::trim($row['ho_dem'] ?? '');
+                $ten   = ExcelString::trim($row['ten'] ?? '');
 
                 // Bỏ qua dòng trống
                 if ($hoDem === '' && $ten === '') {
@@ -152,13 +153,18 @@ class TeacherImportPreview extends BaseComponent
 
                 $rowWarnings = [];
 
-                $tenThanh = trim($row['ten_thanh'] ?? '');
-                $giaoHo   = trim($row['giao_ho'] ?? '');
-                $ngaySinh = $row['ngay_sinh'] ?? '';
-                $phoneRaw = trim((string) ($row['so_dien_thoai'] ?? ''));
-                $phone    = $this->normalizeExcelPhone($phoneRaw);
-                $email    = trim($row['email'] ?? '');
-                $teacherCode = trim((string) ($row['ma_giao_ly_vien'] ?? ''));
+                $tenThanh    = ExcelString::clean($row['ten_thanh'] ?? '');
+                $giaoHo      = ExcelString::clean($row['giao_ho'] ?? '');
+                $ngaySinhRaw = $row['ngay_sinh'] ?? '';
+                $ngaySinh    = is_scalar($ngaySinhRaw) || $ngaySinhRaw === null
+                    ? ExcelString::trim($ngaySinhRaw)
+                    : $ngaySinhRaw;
+                $phoneRaw    = ExcelString::trim((string) ($row['so_dien_thoai'] ?? ''));
+                $phone       = $this->normalizeExcelPhone($phoneRaw);
+                $email       = ExcelString::trim($row['email'] ?? '');
+                $teacherCode = ExcelString::trim((string) ($row['ma_giao_ly_vien'] ?? ''));
+                $gioiTinh    = ExcelString::clean($row['gioi_tinh'] ?? '');
+                $taoTaiKhoan = ExcelString::clean($row['tao_tai_khoan'] ?? '');
 
                 // Tên là bắt buộc — không có thì dòng sẽ bị bỏ qua khi import
                 if ($ten === '') {
@@ -167,7 +173,7 @@ class TeacherImportPreview extends BaseComponent
 
                 // Kiểm tra tên thánh
                 $saintId = $tenThanh !== ''
-                    ? ($saintIdByName[strtolower($tenThanh)] ?? null)
+                    ? ($saintIdByName[ExcelString::lower($tenThanh)] ?? null)
                     : null;
 
                 if ($tenThanh !== '' && $saintId === null) {
@@ -175,26 +181,27 @@ class TeacherImportPreview extends BaseComponent
                 }
 
                 // Kiểm tra giáo họ
-                if (!empty($giaoHo) && !in_array(strtolower($giaoHo), $groupNames)) {
+                if ($giaoHo !== '' && ! in_array(ExcelString::lower($giaoHo), $groupNames, true)) {
                     $rowWarnings[] = "Giáo họ \"{$giaoHo}\" không tìm thấy trong hệ thống";
                 }
 
                 // Kiểm tra ngày sinh
                 $parsedDate = null;
-                if (!empty($ngaySinh)) {
-                    $parsedDate = ExcelDateParser::parse($ngaySinh);
+                if ($ngaySinhRaw !== null && $ngaySinhRaw !== '') {
+                    $parsedDate = ExcelDateParser::parse($ngaySinhRaw);
                     if ($parsedDate === null) {
-                        $rowWarnings[] = "Ngày sinh \"{$ngaySinh}\" không hợp lệ (định dạng: dd/mm/yyyy)";
+                        $displayDate = is_scalar($ngaySinh) ? $ngaySinh : (string) $ngaySinhRaw;
+                        $rowWarnings[] = "Ngày sinh \"{$displayDate}\" không hợp lệ (định dạng: dd/mm/yyyy)";
                     }
                 }
 
                 // Kiểm tra SĐT hợp lệ — dòng sai định dạng sẽ bị bỏ qua khi import
-                if ($phone !== '' && !preg_match('/^0\d{9}$/', $phone)) {
+                if ($phone !== '' && ! preg_match('/^0\d{9}$/', $phone)) {
                     $rowWarnings[] = "Số điện thoại \"{$phoneRaw}\" không hợp lệ (cần 10 số, bắt đầu bằng 0) — dòng này sẽ bị bỏ qua khi import";
                 }
 
                 // Kiểm tra email
-                if (!empty($email) && !filter_var($email, FILTER_VALIDATE_EMAIL)) {
+                if ($email !== '' && ! filter_var($email, FILTER_VALIDATE_EMAIL)) {
                     $rowWarnings[] = "Email \"{$email}\" không đúng định dạng";
                 }
 
@@ -211,7 +218,7 @@ class TeacherImportPreview extends BaseComponent
                         $hasExistingProfile = true;
                         $rowWarnings[]  = TeacherImportDuplicateMessage::forCodeWillUpdate($teacherCode);
 
-                        $taotk        = mb_strtolower(trim($row['tao_tai_khoan'] ?? ''), 'UTF-8');
+                        $taotk        = ExcelString::lower($taoTaiKhoan);
                         $shouldCreate = in_array($taotk, ['có', 'co', 'yes', '1'], true);
                         $hasAccount   = ! empty($matchedTeacher->user_id);
 
@@ -245,7 +252,7 @@ class TeacherImportPreview extends BaseComponent
                     $rowWarnings[] = TeacherImportDuplicateMessage::forPhoneMatch($phone, $existingPhones[$phone]);
                 }
 
-                if (!empty($rowWarnings)) {
+                if (! empty($rowWarnings)) {
                     $this->warnings[$rowNumber] = $rowWarnings;
                 }
 
@@ -256,12 +263,12 @@ class TeacherImportPreview extends BaseComponent
                     'ho_dem'          => $hoDem,
                     'ten'             => $ten,
                     'ngay_sinh'       => $ngaySinh,
-                    'gioi_tinh'       => trim($row['gioi_tinh'] ?? ''),
+                    'gioi_tinh'       => $gioiTinh,
                     'email'           => $email,
                     'so_dien_thoai'   => $phone,
                     'giao_ho'         => $giaoHo,
-                    'tao_tai_khoan'   => trim($row['tao_tai_khoan'] ?? ''),
-                    'has_warning'     => !empty($rowWarnings),
+                    'tao_tai_khoan'   => $taoTaiKhoan,
+                    'has_warning'     => ! empty($rowWarnings),
                     'is_duplicate'    => $isDuplicate,
                     'will_update'     => $willUpdate,
                     'phone_duplicate' => $phoneDuplicate,

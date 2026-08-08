@@ -13,16 +13,30 @@ class ExcelDateParser
      */
     public static function parse(mixed $value): ?string
     {
-        if (empty($value)) return null;
+        if ($value === null || $value === '') {
+            return null;
+        }
 
-        // Excel serial number
-        if (is_numeric($value)) {
+        // Excel serial number (kiểu số thật)
+        if (is_int($value) || is_float($value)) {
+            return Date::excelToDateTimeObject((float) $value)
+                ->format('Y-m-d');
+        }
+
+        $value = ExcelString::trim($value);
+
+        if ($value === '') {
+            return null;
+        }
+
+        // Serial dạng text ("41650") — không nhầm với dd/mm/yyyy
+        if (is_numeric($value) && ! str_contains($value, '/')) {
             return Date::excelToDateTimeObject((float) $value)
                 ->format('Y-m-d');
         }
 
         try {
-            $date = Carbon::createFromFormat('d/m/Y', trim($value));
+            $date = Carbon::createFromFormat('d/m/Y', $value);
 
             // Kiểm tra overflow: 31/02, 15/13...
             $errors = Carbon::getLastErrors();

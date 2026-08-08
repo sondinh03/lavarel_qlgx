@@ -8,6 +8,7 @@ use App\Models\Teacher;
 use App\Models\User;
 use App\Support\CatechistDefaultPassword;
 use App\Support\ExcelDateParser;
+use App\Support\ExcelString;
 use App\Support\TeacherImportDuplicateMessage;
 use App\Support\UserAccountEmailResolver;
 
@@ -24,12 +25,12 @@ class ImportTeacherAction
     public function handle(array $rows, int $parishId): array
     {
         $saintMap = Holymanagement::pluck('id', 'name')
-            ->mapWithKeys(fn($id, $name) => [trim($name) => $id])
+            ->mapWithKeys(fn ($id, $name) => [ExcelString::lower($name) => $id])
             ->toArray();
 
         $parishGroupMap = ParishGroup::active()
             ->pluck('id', 'name')
-            ->mapWithKeys(fn($id, $name) => [trim($name) => $id])
+            ->mapWithKeys(fn ($id, $name) => [ExcelString::lower($name) => $id])
             ->toArray();
 
         // Khoá hồ sơ đã có — chặn trùng khi tạo mới (không áp dụng khi cập nhật theo mã)
@@ -53,9 +54,9 @@ class ImportTeacherAction
 
         foreach ($rows as $row) {
             $rowNumber   = $row['row_number'] ?? '?';
-            $teacherCode = trim((string) ($row['ma_giao_ly_vien'] ?? ''));
-            $lastName    = trim($row['ho_dem'] ?? '');
-            $firstName   = trim($row['ten'] ?? '');
+            $teacherCode = ExcelString::trim((string) ($row['ma_giao_ly_vien'] ?? ''));
+            $lastName    = ExcelString::trim($row['ho_dem'] ?? '');
+            $firstName   = ExcelString::trim($row['ten'] ?? '');
 
             if ($lastName === '' && $firstName === '') {
                 $skipped++;
@@ -69,43 +70,43 @@ class ImportTeacherAction
             }
 
             // Không có mã + đã đánh dấu duplicate từ preview → skip
-            if ($teacherCode === '' && !empty($row['is_duplicate'])) {
+            if ($teacherCode === '' && ! empty($row['is_duplicate'])) {
                 $skipped_duplicate++;
                 continue;
             }
 
             // Có mã nhưng preview đánh dấu invalid → skip
-            if ($teacherCode !== '' && !empty($row['is_duplicate'])) {
+            if ($teacherCode !== '' && ! empty($row['is_duplicate'])) {
                 $skipped_duplicate++;
                 continue;
             }
 
-            $fullName = trim($lastName . ' ' . $firstName);
+            $fullName = ExcelString::trim($lastName . ' ' . $firstName);
 
             try {
-                $saintId = null;
-                if (!empty(trim($row['ten_thanh'] ?? ''))) {
-                    $saintId = $saintMap[trim($row['ten_thanh'])] ?? null;
-                }
+                $tenThanh = ExcelString::clean($row['ten_thanh'] ?? '');
+                $saintId  = $tenThanh !== ''
+                    ? ($saintMap[ExcelString::lower($tenThanh)] ?? null)
+                    : null;
 
-                $parishGroupId = null;
-                if (!empty(trim($row['giao_ho'] ?? ''))) {
-                    $parishGroupId = $parishGroupMap[trim($row['giao_ho'])] ?? null;
-                }
+                $giaoHo        = ExcelString::clean($row['giao_ho'] ?? '');
+                $parishGroupId = $giaoHo !== ''
+                    ? ($parishGroupMap[ExcelString::lower($giaoHo)] ?? null)
+                    : null;
 
                 $birthday = null;
-                if (!empty($row['ngay_sinh'])) {
+                if (($row['ngay_sinh'] ?? null) !== null && ($row['ngay_sinh'] ?? '') !== '') {
                     $birthday = ExcelDateParser::parse($row['ngay_sinh']);
                 }
 
                 $gender      = 'male';
-                $gioiTinhRaw = mb_strtolower(trim($row['gioi_tinh'] ?? ''), 'UTF-8');
-                if (in_array($gioiTinhRaw, ['nữ', 'nu', 'female', 'f', '0'])) {
+                $gioiTinhRaw = ExcelString::lower($row['gioi_tinh'] ?? '');
+                if (in_array($gioiTinhRaw, ['nữ', 'nu', 'female', 'f', '0'], true)) {
                     $gender = 'female';
                 }
 
-                $phone = trim((string) ($row['so_dien_thoai'] ?? '')) ?: null;
-                $email = trim($row['email'] ?? '') ?: null;
+                $phone = ExcelString::trim((string) ($row['so_dien_thoai'] ?? '')) ?: null;
+                $email = ExcelString::trim($row['email'] ?? '') ?: null;
                 $normalizedPhone = $phone
                     ? UserAccountEmailResolver::normalizePhone((string) $phone)
                     : null;
@@ -128,7 +129,7 @@ class ImportTeacherAction
                     'is_active'       => true,
                 ];
 
-                $taotk        = mb_strtolower(trim($row['tao_tai_khoan'] ?? ''), 'UTF-8');
+                $taotk        = ExcelString::lower($row['tao_tai_khoan'] ?? '');
                 $shouldCreate = in_array($taotk, ['có', 'co', 'yes', '1'], true);
 
                 if ($teacherCode !== '') {

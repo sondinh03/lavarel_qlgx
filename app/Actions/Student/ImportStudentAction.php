@@ -8,6 +8,7 @@ use App\Models\Holymanagement;
 use App\Models\ParishGroup;
 use App\Models\StudentNew;
 use App\Support\ExcelDateParser;
+use App\Support\ExcelString;
 use Maatwebsite\Excel\Facades\Excel;
 
 class ImportStudentAction
@@ -25,11 +26,12 @@ class ImportStudentAction
         $catechismClass = CatechismClass::findOrFail($classId);
 
         $saintMap = Holymanagement::pluck('id', 'name')
-            ->mapWithKeys(fn($id, $name) => [trim($name) => $id])
+            ->mapWithKeys(fn ($id, $name) => [ExcelString::lower($name) => $id])
             ->toArray();
 
         $parishGroupMap = ParishGroup::active()
             ->pluck('id', 'name')
+            ->mapWithKeys(fn ($id, $name) => [ExcelString::lower($name) => $id])
             ->toArray();
 
         $rows = Excel::toArray(new StudentPreviewImport, $file)[0] ?? [];
@@ -42,58 +44,60 @@ class ImportStudentAction
 
         foreach ($rows as $index => $row) {
             $rowNumber   = $index + 2;
-            $studentCode = trim($row['ma_hoc_sinh'] ?? '');
+            $studentCode = ExcelString::trim($row['ma_hoc_sinh'] ?? '');
+            $hoTenDem    = ExcelString::trim($row['ho_ten_dem'] ?? '');
+            $ten         = ExcelString::trim($row['ten'] ?? '');
 
-            if (empty(trim($row['ho_ten_dem'] ?? '')) && empty(trim($row['ten'] ?? ''))) {
+            if ($hoTenDem === '' && $ten === '') {
                 $skipped_empty++;
                 continue;
             }
 
             try {
                 $birthday = null;
-                if (!empty($row['ngay_sinh'])) {
+                if (($row['ngay_sinh'] ?? null) !== null && ($row['ngay_sinh'] ?? '') !== '') {
                     $birthday = ExcelDateParser::parse($row['ngay_sinh']);
                 }
 
-                $saintId = null;
-                if (!empty(trim($row['ten_thanh'] ?? ''))) {
-                    $saintId = $saintMap[trim($row['ten_thanh'])] ?? null;
-                }
+                $tenThanh = ExcelString::clean($row['ten_thanh'] ?? '');
+                $saintId  = $tenThanh !== ''
+                    ? ($saintMap[ExcelString::lower($tenThanh)] ?? null)
+                    : null;
 
-                $parishGroupId = null;
-                if (!empty(trim($row['giao_ho'] ?? ''))) {
-                    $parishGroupId = $parishGroupMap[trim($row['giao_ho'])] ?? null;
-                }
+                $giaoHo        = ExcelString::clean($row['giao_ho'] ?? '');
+                $parishGroupId = $giaoHo !== ''
+                    ? ($parishGroupMap[ExcelString::lower($giaoHo)] ?? null)
+                    : null;
 
                 $gender      = 'male';
-                $gioiTinhRaw = mb_strtolower(trim($row['gioi_tinh'] ?? ''), 'UTF-8');
-                if (in_array($gioiTinhRaw, ['nữ', 'nu', 'female', 'f', '0'])) {
+                $gioiTinhRaw = ExcelString::lower($row['gioi_tinh'] ?? '');
+                if (in_array($gioiTinhRaw, ['nữ', 'nu', 'female', 'f', '0'], true)) {
                     $gender = 'female';
                 }
 
                 $data = [
-                    'last_name'       => trim($row['ho_ten_dem'] ?? ''),
-                    'first_name'      => trim($row['ten'] ?? ''),
+                    'last_name'       => $hoTenDem,
+                    'first_name'      => $ten,
                     'saint_id'        => $saintId,
                     'gender'          => $gender,
                     'birthday'        => $birthday,
-                    'father_name'     => trim($row['ho_ten_bo'] ?? '') ?: null,
-                    'mother_name'     => trim($row['ho_ten_me'] ?? '') ?: null,
+                    'father_name'     => ExcelString::trim($row['ho_ten_bo'] ?? '') ?: null,
+                    'mother_name'     => ExcelString::trim($row['ho_ten_me'] ?? '') ?: null,
                     'parish_group_id' => $parishGroupId,
                     'parish_id'       => $parishId,
                     'is_active'       => true,
-                    'phone'           => trim($row['so_dien_thoai'] ?? '') ?: null,
-                    'email'           => trim($row['email'] ?? '') ?: null,
-                    'note'            => trim($row['ghi_chu'] ?? '') ?: null,
+                    'phone'           => ExcelString::trim($row['so_dien_thoai'] ?? '') ?: null,
+                    'email'           => ExcelString::trim($row['email'] ?? '') ?: null,
+                    'note'            => ExcelString::trim($row['ghi_chu'] ?? '') ?: null,
                 ];
 
-                if ($studentCode) {
+                if ($studentCode !== '') {
                     // Có mã → tìm và update
                     $student = StudentNew::where('student_code', $studentCode)
                         ->where('parish_id', $parishId)
                         ->first();
 
-                    if (!$student) {
+                    if (! $student) {
                         $errors[] = "Dòng {$rowNumber}: Không tìm thấy học sinh với mã '{$studentCode}'";
                         continue;
                     }
@@ -102,7 +106,7 @@ class ImportStudentAction
                     $updated++;
                 } else {
                     // Không có mã → check duplicate (tên thánh + họ tên + ngày sinh) rồi create
-                    $fullName    = mb_strtolower(trim(($row['ho_ten_dem'] ?? '') . ' ' . ($row['ten'] ?? '')), 'UTF-8');
+                    $fullName    = ExcelString::lower($hoTenDem . ' ' . $ten);
                     $isDuplicate = StudentNew::whereRaw(
                         "LOWER(CONCAT(TRIM(last_name), ' ', TRIM(first_name))) = ?",
                         [$fullName]
@@ -137,11 +141,12 @@ class ImportStudentAction
         $catechismClass = CatechismClass::findOrFail($classId);
 
         $saintMap = Holymanagement::pluck('id', 'name')
-            ->mapWithKeys(fn($id, $name) => [trim($name) => $id])
+            ->mapWithKeys(fn ($id, $name) => [ExcelString::lower($name) => $id])
             ->toArray();
 
         $parishGroupMap = ParishGroup::active()
             ->pluck('id', 'name')
+            ->mapWithKeys(fn ($id, $name) => [ExcelString::lower($name) => $id])
             ->toArray();
 
         $imported          = 0;
@@ -152,64 +157,66 @@ class ImportStudentAction
 
         foreach ($rows as $row) {
             $rowNumber   = $row['row_number'] ?? '?';
-            $studentCode = trim($row['ma_hoc_sinh'] ?? '');
+            $studentCode = ExcelString::trim($row['ma_hoc_sinh'] ?? '');
+            $hoTenDem    = ExcelString::trim($row['ho_ten_dem'] ?? '');
+            $ten         = ExcelString::trim($row['ten'] ?? '');
 
-            if (empty(trim($row['ho_ten_dem'] ?? '')) && empty(trim($row['ten'] ?? ''))) {
+            if ($hoTenDem === '' && $ten === '') {
                 $skipped_empty++;
                 continue;
             }
 
             // Không có mã + đã đánh dấu duplicate từ preview → skip
-            if (!$studentCode && !empty($row['is_duplicate'])) {
+            if ($studentCode === '' && ! empty($row['is_duplicate'])) {
                 $skipped_duplicate++;
                 continue;
             }
 
             try {
                 $birthday = null;
-                if (!empty($row['ngay_sinh'])) {
+                if (($row['ngay_sinh'] ?? null) !== null && ($row['ngay_sinh'] ?? '') !== '') {
                     $birthday = ExcelDateParser::parse($row['ngay_sinh']);
                 }
 
-                $saintId = null;
-                if (!empty(trim($row['ten_thanh'] ?? ''))) {
-                    $saintId = $saintMap[trim($row['ten_thanh'])] ?? null;
-                }
+                $tenThanh = ExcelString::clean($row['ten_thanh'] ?? '');
+                $saintId  = $tenThanh !== ''
+                    ? ($saintMap[ExcelString::lower($tenThanh)] ?? null)
+                    : null;
 
-                $parishGroupId = null;
-                if (!empty(trim($row['giao_ho'] ?? ''))) {
-                    $parishGroupId = $parishGroupMap[trim($row['giao_ho'])] ?? null;
-                }
+                $giaoHo        = ExcelString::clean($row['giao_ho'] ?? '');
+                $parishGroupId = $giaoHo !== ''
+                    ? ($parishGroupMap[ExcelString::lower($giaoHo)] ?? null)
+                    : null;
 
                 $gender      = 'male';
-                $gioiTinhRaw = mb_strtolower(trim($row['gioi_tinh'] ?? ''), 'UTF-8');
-                if (in_array($gioiTinhRaw, ['nữ', 'nu', 'female', 'f', '0'])) {
+                $gioiTinhRaw = ExcelString::lower($row['gioi_tinh'] ?? '');
+                if (in_array($gioiTinhRaw, ['nữ', 'nu', 'female', 'f', '0'], true)) {
                     $gender = 'female';
                 }
 
                 $data = [
-                    'last_name'       => trim($row['ho_ten_dem'] ?? ''),
-                    'first_name'      => trim($row['ten'] ?? ''),
+                    'last_name'       => $hoTenDem,
+                    'first_name'      => $ten,
                     'saint_id'        => $saintId,
                     'gender'          => $gender,
                     'birthday'        => $birthday,
-                    'father_name'     => trim($row['ho_ten_bo'] ?? '') ?: null,
-                    'mother_name'     => trim($row['ho_ten_me'] ?? '') ?: null,
+                    'father_name'     => ExcelString::trim($row['ho_ten_bo'] ?? '') ?: null,
+                    'mother_name'     => ExcelString::trim($row['ho_ten_me'] ?? '') ?: null,
                     'parish_group_id' => $parishGroupId,
                     'parish_id'       => $parishId,
                     'is_active'       => true,
-                    'phone'           => trim($row['so_dien_thoai'] ?? '') ?: null,
-                    'email'           => trim($row['email'] ?? '') ?: null,
-                    'note'            => trim($row['ghi_chu'] ?? '') ?: null,
+                    'phone'           => ExcelString::trim($row['so_dien_thoai'] ?? '') ?: null,
+                    'email'           => ExcelString::trim($row['email'] ?? '') ?: null,
+                    'note'            => ExcelString::trim($row['ghi_chu'] ?? '') ?: null,
                 ];
 
-                if ($studentCode) {
+                if ($studentCode !== '') {
                     // Có mã → update (will_update đã được đánh dấu từ preview)
                     $student = StudentNew::where('student_code', $studentCode)
                         ->where('parish_id', $parishId)
                         ->first();
 
-                    if (!$student) {
+                    if (! $student) {
                         $errors[] = "Dòng {$rowNumber}: Không tìm thấy học sinh với mã '{$studentCode}'";
                         continue;
                     }
@@ -218,16 +225,7 @@ class ImportStudentAction
                         ->where('class_id', $catechismClass->id)
                         ->exists();
 
-                    if (!$belongsToClass) {
-                        $errors[] = "Dòng {$rowNumber}: Học sinh '{$studentCode}' không thuộc lớp này, không thể cập nhật";
-                        continue;
-                    }
-
-                    $belongsToClass = $student->classes()
-                        ->where('class_id', $catechismClass->id)
-                        ->exists();
-
-                    if (!$belongsToClass) {
+                    if (! $belongsToClass) {
                         $errors[] = "Dòng {$rowNumber}: Học sinh '{$studentCode}' không thuộc lớp này, không thể cập nhật";
                         continue;
                     }
@@ -236,7 +234,7 @@ class ImportStudentAction
                     $updated++;
                 } else {
                     // Không có mã → double-check duplicate (tên thánh + họ tên + ngày sinh) rồi create
-                    $fullName    = mb_strtolower(trim(($row['ho_ten_dem'] ?? '') . ' ' . ($row['ten'] ?? '')), 'UTF-8');
+                    $fullName    = ExcelString::lower($hoTenDem . ' ' . $ten);
                     $isDuplicate = StudentNew::whereRaw(
                         "LOWER(CONCAT(TRIM(last_name), ' ', TRIM(first_name))) = ?",
                         [$fullName]

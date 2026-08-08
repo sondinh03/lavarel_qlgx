@@ -11,6 +11,7 @@ use App\Models\NamHoc;
 use App\Models\ParishGroup;
 use App\Models\StudentNew;
 use App\Support\ExcelDateParser;
+use App\Support\ExcelString;
 use App\Support\StudentImportDuplicateMessage;
 use Illuminate\Support\Facades\Log;
 use Livewire\WithFileUploads;
@@ -195,16 +196,16 @@ class StudentImportPreview extends BaseComponent
             $importClassName      = $importClass?->name;
 
             $saintNames = Holymanagement::pluck('name')
-                ->map(fn($n) => strtolower(trim($n)))
+                ->map(fn($n) => ExcelString::lower($n))
                 ->toArray();
 
             $saintIdByName = Holymanagement::pluck('id', 'name')
-                ->mapWithKeys(fn($id, $name) => [strtolower(trim($name)) => $id])
+                ->mapWithKeys(fn($id, $name) => [ExcelString::lower($name) => $id])
                 ->toArray();
 
             $groupNames = ParishGroup::active()
                 ->pluck('name')
-                ->map(fn($n) => strtolower(trim($n)))
+                ->map(fn($n) => ExcelString::lower($n))
                 ->toArray();
 
             $studentsByKey  = [];
@@ -230,23 +231,31 @@ class StudentImportPreview extends BaseComponent
             foreach ($data as $index => $row) {
                 $rowNumber = $index + 6;
 
-                if (empty(trim($row['ho_ten_dem'] ?? '')) && empty(trim($row['ten'] ?? ''))) {
+                $hoTenDem = ExcelString::trim($row['ho_ten_dem'] ?? '');
+                $ten      = ExcelString::trim($row['ten'] ?? '');
+
+                if ($hoTenDem === '' && $ten === '') {
                     continue;
                 }
 
                 $rowWarnings = [];
-                $tenThanh    = trim($row['ten_thanh'] ?? '');
-                $giaoHo      = trim($row['giao_ho'] ?? '');
-                $ngaySinh    = $row['ngay_sinh'] ?? '';
-                $email       = trim($row['email'] ?? '');
-                $ghiChu      = trim($row['ghi_chu'] ?? '');
-                $gioi_tinh   = trim($row['gioi_tinh'] ?? '');
+                $tenThanh    = ExcelString::clean($row['ten_thanh'] ?? '');
+                $giaoHo      = ExcelString::clean($row['giao_ho'] ?? '');
+                $ngaySinhRaw = $row['ngay_sinh'] ?? '';
+                $ngaySinh    = is_scalar($ngaySinhRaw) || $ngaySinhRaw === null
+                    ? ExcelString::trim($ngaySinhRaw)
+                    : $ngaySinhRaw;
+                $email       = ExcelString::trim($row['email'] ?? '');
+                $ghiChu      = ExcelString::trim($row['ghi_chu'] ?? '');
+                $gioi_tinh   = ExcelString::clean($row['gioi_tinh'] ?? '');
+                $hoTenBo     = ExcelString::trim($row['ho_ten_bo'] ?? '');
+                $hoTenMe     = ExcelString::trim($row['ho_ten_me'] ?? '');
 
                 // Normalize SĐT
                 $soDienThoai = null;
-                $phoneRaw    = trim($row['so_dien_thoai'] ?? '');
-                if ($phoneRaw) {
-                    $phone = preg_replace('/\D/', '', (string) $phoneRaw);
+                $phoneRaw    = ExcelString::trim($row['so_dien_thoai'] ?? '');
+                if ($phoneRaw !== '') {
+                    $phone = preg_replace('/\D/', '', $phoneRaw);
                     if (str_starts_with($phone, '84') && strlen($phone) === 11) {
                         $phone = '0' . substr($phone, 2);
                     }
@@ -257,48 +266,50 @@ class StudentImportPreview extends BaseComponent
                 }
 
                 // Validate giới tính
-                if (!empty($gioi_tinh) && !in_array(strtolower($gioi_tinh), $validGenders)) {
+                if ($gioi_tinh !== '' && ! in_array(ExcelString::lower($gioi_tinh), $validGenders, true)) {
                     $rowWarnings[] = "Giới tính <strong>\"{$gioi_tinh}\"</strong> không hợp lệ — chỉ chấp nhận: nam / nữ.";
                 }
 
                 // Validate tên thánh
-                if (!empty($tenThanh) && !in_array(strtolower($tenThanh), $saintNames)) {
+                $tenThanhKey = ExcelString::lower($tenThanh);
+                if ($tenThanh !== '' && ! in_array($tenThanhKey, $saintNames, true)) {
                     $rowWarnings[] = "Tên thánh <strong>\"{$tenThanh}\"</strong> không tìm thấy trong hệ thống.";
                 }
 
                 // Validate giáo họ
-                if (!empty($giaoHo) && !in_array(strtolower($giaoHo), $groupNames)) {
+                if ($giaoHo !== '' && ! in_array(ExcelString::lower($giaoHo), $groupNames, true)) {
                     $rowWarnings[] = "Giáo họ <strong>\"{$giaoHo}\"</strong> không tìm thấy trong hệ thống.";
                 }
 
                 // Validate ngày sinh
                 $parsedDate = null;
-                if (!empty($ngaySinh)) {
-                    $parsedDate = ExcelDateParser::parse($ngaySinh);
+                if ($ngaySinhRaw !== null && $ngaySinhRaw !== '') {
+                    $parsedDate = ExcelDateParser::parse($ngaySinhRaw);
                     if ($parsedDate === null) {
-                        $rowWarnings[] = "Ngày sinh <strong>\"{$ngaySinh}\"</strong> không hợp lệ — định dạng yêu cầu: <strong>dd/MM/yyyy</strong>.";
+                        $displayDate = is_scalar($ngaySinh) ? $ngaySinh : (string) $ngaySinhRaw;
+                        $rowWarnings[] = "Ngày sinh <strong>\"{$displayDate}\"</strong> không hợp lệ — định dạng yêu cầu: <strong>dd/MM/yyyy</strong>.";
                     }
                 }
 
                 // Validate email
-                if (!empty($email) && !filter_var($email, FILTER_VALIDATE_EMAIL)) {
+                if ($email !== '' && ! filter_var($email, FILTER_VALIDATE_EMAIL)) {
                     $rowWarnings[] = "Email <strong>\"{$email}\"</strong> không đúng định dạng.";
                 }
 
                 // Validate SĐT
-                if ($soDienThoai && !preg_match('/^0[0-9]{9}$/', $soDienThoai)) {
+                if ($soDienThoai && ! preg_match('/^0[0-9]{9}$/', $soDienThoai)) {
                     $rowWarnings[] = "Số điện thoại <strong>\"{$phoneRaw}\"</strong> không hợp lệ — yêu cầu 10 số, bắt đầu bằng 0.";
                 }
 
                 // Kiểm tra mã học sinh & duplicate (tên thánh + họ tên + ngày sinh)
-                $studentCode = trim($row['ma_hoc_sinh'] ?? '');
-                $saintId     = !empty($tenThanh)
-                    ? ($saintIdByName[strtolower($tenThanh)] ?? null)
+                $studentCode = ExcelString::trim($row['ma_hoc_sinh'] ?? '');
+                $saintId     = $tenThanh !== ''
+                    ? ($saintIdByName[$tenThanhKey] ?? null)
                     : null;
                 $key         = StudentImportDuplicateMessage::duplicateKey(
                     $saintId,
-                    trim($row['ho_ten_dem'] ?? ''),
-                    trim($row['ten'] ?? ''),
+                    $hoTenDem,
+                    $ten,
                     $parsedDate,
                 );
                 $isDuplicate = false;
@@ -346,18 +357,18 @@ class StudentImportPreview extends BaseComponent
                 $this->rows[] = [
                     'row_number'    => $rowNumber,
                     'ten_thanh'     => $tenThanh,
-                    'ho_ten_dem'    => trim($row['ho_ten_dem'] ?? ''),
-                    'ten'           => trim($row['ten'] ?? ''),
+                    'ho_ten_dem'    => $hoTenDem,
+                    'ten'           => $ten,
                     'ngay_sinh'     => $ngaySinh,
                     'gioi_tinh'     => $gioi_tinh,
                     'giao_ho'       => $giaoHo,
-                    'ho_ten_bo'     => trim($row['ho_ten_bo'] ?? ''),
-                    'ho_ten_me'     => trim($row['ho_ten_me'] ?? ''),
+                    'ho_ten_bo'     => $hoTenBo,
+                    'ho_ten_me'     => $hoTenMe,
                     'so_dien_thoai' => $soDienThoai,
                     'email'         => $email,
                     'ghi_chu'       => $ghiChu,
                     'ma_hoc_sinh'   => $studentCode,
-                    'has_warning'   => !empty($rowWarnings),
+                    'has_warning'   => ! empty($rowWarnings),
                     'is_duplicate'  => $isDuplicate,
                     'will_update'   => $willUpdate,
                 ];
